@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dppMCMC_C</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A Reference Class that provides DPP functionality</h2>
+
+<h3>Description</h3>
+
+<p>This class implements the main functionality of this package.
+The consturctor receives a numeric vector (Y) and priors. A model should be provided specifying  the distributions
+to be used for inference (e.g. NormalModel for Normal distributions or GammaModel for Gamma distributions).
+Then an MCMC algorithm will be used to infer a number of distributions (k) that fit the data.
+The prior for the number of distributions is specified by the concentration_parameter_alpha and expected_k.
+Once the data and priors are specified the method run is used to start the inference.
+</p>
+
+
+<h3>Details</h3>
+
+<p>Class dppMCMC_C
+Class <code>dppMCMC_C</code> A Reference Class that provides DPP functionality
+</p>
+
+
+<h3>Fields</h3>
+
+
+<dl>
+<dt><code>dpp_mcmc_object</code></dt>
+<dd>
+<p>a DPPmcmc object</p>
+</dd>
+</dl>
+<h3>Methods</h3>
+
+
+<dl>
+<dt><code>getNumCategoryProbabilities(burnin_cutoff = 0.25)</code></dt>
+<dd>
+<p>returns the probabilities vector for inferred number of categories</p>
+</dd>
+<dt><code>getNumCategoryTrace(burnin_cutoff = 0.25)</code></dt>
+<dd>
+<p>returns the trace vector for the inferred number of categories in the data</p>
+</dd>
+<dt><code>initialize(data, output, model, num_auxiliary_tables = 4, expected_k = 2,
+  power = 1, verbose = TRUE, sample.num.clusters = TRUE)</code></dt>
+<dd>
+<p>the class constructor, initializes DPPmcmc object with data and parameters</p>
+</dd>
+<dt><code>run(generations, sample_freq = generations/1000, log_file, allocation_file,
+  param_file, append = TRUE, random = FALSE, auto_stop = FALSE,
+  min_ess = 500, max_gen = 1e+05)</code></dt>
+<dd>
+<p>starts the MCMC run</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">normal.model&lt;-new(NormalModel,
+                 mean_prior_mean=0.5,
+                 mean_prior_sd=0.1,
+                 sd_prior_shape=3,
+                 sd_prior_rate=20,
+                 estimate_concentration_parameter=TRUE,
+                 concentration_parameter_alpha=10,
+                  proposal_disturbance_sd=0.1)
+
+#simulating three normal distributions
+y &lt;- c(rnorm(100,mean=0.2,sd=0.05), rnorm(100,0.7,0.05), rnorm(100,1.3,0.1))
+hist(y,breaks=30)
+
+#setwd("~/yourwd") #mcmc log files will be saved here
+## Not run: 
+my_dpp_analysis &lt;- dppMCMC_C(data=y,
+                             output = "output_prefix_",
+                             model=normal.model,
+                             num_auxiliary_tables=4,
+                             expected_k=1.5,
+                             power=1)
+#running the mcmc  , generations will be ignored because auto_stop=true
+my_dpp_analysis$run(generations=1000,auto_stop=TRUE,max_gen = 10000,min_ess = 500)
+
+#we get rid of the first 25% of the output (burn-in)
+hist(my_dpp_analysis$getNumCategoryTrace(0.25))
+
+my_dpp_analysis$getNumCategoryProbabilities(0.25)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

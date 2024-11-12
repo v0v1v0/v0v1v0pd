@@ -1,0 +1,274 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>expectreg.ipc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Expectile regression for right-censored data</h2>
+
+<h3>Description</h3>
+
+<p>This function extends expectile regression with inverse probability of censoring (IPC) weights to right-censored data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">expectreg.ipc(
+  formula,
+  data = NULL,
+  smooth = c("schall", "ocv", "aic", "bic", "cvgrid", "lcurve", "fixed"),
+  lambda = 1,
+  expectiles = NA,
+  LAWSmaxCores = 1,
+  IPC_weights = c("IPCRR", "IPCKM"),
+  KMweights = NULL,
+  ci = FALSE,
+  hat1 = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula object, with the response on the left of the ‘~’
+operator, and the terms on the right.  The response must be a
+<code>Surv</code> object as returned by the <code>Surv</code> 
+function. Only right censored data are allowed. Splines can be specified through the function <code>rb</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Optional data frame containing the variables used in the model, if the data is not explicitly given in the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth</code></td>
+<td>
+<p>The smoothing method that shall be used.
+There are different smoothing algorithms that should prevent overfitting. The '<code>schall</code>' algorithm balances 
+variance of errors and contrasts. Ordinary cross- validation '<code>ocv</code>' minimizes a score-function using <code>nlminb</code> or with a grid search by '<code>cvgrid</code>'
+or the function uses a fixed penalty. The numerical minimizatioin is also possible with AIC or BIC as score. 
+The L-curve is an experimental grid search by Frasso and Eilers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The fixed penalty can be adjusted. Also serves as starting value for the smoothing algorithms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expectiles</code></td>
+<td>
+<p>In default setting, the expectiles (0.01,0.02,0.05,0.1,0.2,0.5,0.8,0.9,0.95,0.98,0.99) are 
+calculated. You may specify your own set of expectiles in a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LAWSmaxCores</code></td>
+<td>
+<p>How many cores should maximally be used by parallelization. Currently only implemented for Unix-like OS.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IPC_weights</code></td>
+<td>
+<p>Denotes the kind of IPC weights to use. <code>IPCRR</code> weights differ from <code>IPCKM</code> weights by modifying the weights for the last observation if it is censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>KMweights</code></td>
+<td>
+<p>Custom IPC weights can be supplied here. This argument is used by <code>modreg</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>If TRUE, calculates the covariance matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hat1</code></td>
+<td>
+<p>If TRUE, the hat matrix for the last asymetry level is calculated. This argument is mainly used by <code>modreg</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Fits least asymmetrically weighted squares (LAWS) for each expectile. This function is intended
+for right-censored data. For uncensored data, <code>expectreg.ls</code> should be used instead.
+This function modifies <code>expectreg.ls</code> by adding IPC weights. See Seipp et al. (2021) for details on
+the IPC weights. P-splines can be used with <code>rb</code>. The Schall algorithm is used for choosing the penalty.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The final smoothing parameters for all expectiles and for all effects in a list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercepts</code></td>
+<td>
+<p>The intercept for each expectile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>A matrix of all the coefficients, for each base element a row and for each expectile a column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p>The fitted values for each observation and all expectiles, separately in a list for each effect in the model, sorted in order of ascending covariate values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Vector of the response variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>List with the values of the covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The formula object that was given to the function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asymmetries</code></td>
+<td>
+<p>Vector of fitted expectile asymmetries as given by argument <code>expectiles</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effects</code></td>
+<td>
+<p>List of characters giving the types of covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helper</code></td>
+<td>
+<p>List of additional parameters like neighbourhood structure for spatial effects or <code class="reqn">\phi</code> for kriging.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>Complete design matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bases</code></td>
+<td>
+<p>Bases components of each covariate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted</code></td>
+<td>
+<p>Fitted values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covmat</code></td>
+<td>
+<p>Covariance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diag.hatma</code></td>
+<td>
+<p>Diagonal of the hat matrix. Used for model selection criteria.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Original data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth_orig</code></td>
+<td>
+<p>Unchanged original type of smoothing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>KMweights</code></td>
+<td>
+<p>Vector with IPC weights used in fitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aic</code></td>
+<td>
+<p>Area under the AIC, approximated with a Riemannian sum.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hat</code></td>
+<td>
+<p>The hat matrix for the last asymmetry level. This is used by <code>modreg</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Seipp, A, Uslar, V, Weyhe, D, Timmer, A, Otto-Sobotka, F. Weighted expectile regression for right-censored data. Statistics in Medicine. 2021; 40(25): 5501- 5520. https://doi.org/10.1002/sim.9137
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(colcancer)
+
+# linear effect
+expreg &lt;- expectreg.ipc(Surv(logfollowup, death) ~ sex + age, data = colcancer, 
+                        expectiles = c(0.05, 0.2, 0.5, 0.8, 0.95))
+coef(expreg)
+
+
+# with p-splines, smoothing parameter selection with schall algorithm
+expreg2 &lt;- expectreg.ipc(Surv(logfollowup, death) ~ sex + rb(age), data = colcancer)
+# smoothing parameter selection with AIC
+expreg3 &lt;- expectreg.ipc(Surv(logfollowup, death) ~ sex + rb(age), data = colcancer, smooth = "aic")
+# manually selected smoothing parameter
+expreg4 &lt;- expectreg.ipc(Surv(logfollowup, death) ~ sex + rb(age), data = colcancer, 
+                         smooth = "fixed", lambda = 2)
+
+plot(expreg2)
+plot(expreg3)
+plot(expreg4)
+
+
+
+
+</code></pre>
+
+
+</div>

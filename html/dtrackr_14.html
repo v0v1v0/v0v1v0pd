@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exclude_all</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Exclude all items matching one or more criteria</h2>
+
+<h3>Description</h3>
+
+<p>Apply a set of filters and summarise the actions of the filter to the <code>dtrackr</code>
+history graph. Because of the ... filter specification, all parameters MUST BE
+NAMED. The filters work in an combinatorial manner, i.e. the results EXCLUDE ALL
+rows that match any of the criteria. If <code>na.rm = TRUE</code> they also remove
+anything that cannot be evaluated by any criteria.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">exclude_all(
+  .data,
+  ...,
+  .headline = .defaultHeadline(),
+  na.rm = FALSE,
+  .type = "exclusion",
+  .asOffshoot = TRUE,
+  .stage = (if (is.null(.tag)) "" else .tag),
+  .tag = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>a dataframe which may be grouped</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>a dplyr filter specification as a set of formulae where the LHS are
+predicates to test the data set against, items that match any of the predicates will
+be excluded. The RHS is a glue specification, defining the message, to be
+entered in the history graph for each predicate. This can refer to grouping variables
+variables from the environment and {.excluded} and {.matched} or
+{.missing} (excluded = matched+missing), {.count} and {.total} -
+group and overall counts respectively, e.g. "excluding {.matched} items
+and {.missing} with missing values".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.headline</code></td>
+<td>
+<p>a glue specification which can refer to grouping variables
+of .data, or any variables defined in the calling environment</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>(default FALSE) if the filter cannot be evaluated for a row
+count that row as missing and either exclude it (TRUE) or don't exclude it
+(FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.type</code></td>
+<td>
+<p>default "exclusion": used to define formatting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.asOffshoot</code></td>
+<td>
+<p>do you want this comment to be an offshoot of the main
+flow (default = TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.stage</code></td>
+<td>
+<p>a name for this step in the pathway</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.tag</code></td>
+<td>
+<p>if you want the summary data from this step in the future then
+give it a name with .tag.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the filtered .data dataframe with the history graph updated with the
+summary of excluded items as a new offshoot stage
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(dtrackr)
+
+iris %&gt;% track() %&gt;% capture_exclusions() %&gt;% exclude_all(
+      Petal.Length &gt; 5 ~ "{.excluded} long ones",
+      Petal.Length &lt; 2 ~ "{.excluded} short ones"
+) %&gt;% history()
+
+
+# simultaneous evaluation of criteria:
+data.frame(a = 1:10) %&gt;%
+  track() %&gt;%
+  exclude_all(
+    # These two criteria identify the same value and one item is excluded
+    a &gt; 9 ~ "{.excluded} value &gt; 9",
+    a == max(a) ~ "{.excluded} max value",
+  ) %&gt;%
+  status() %&gt;%
+  history()
+
+# the behaviour is equivalent to the inverse of dplyr's filter function:
+data.frame(a=1:10) %&gt;%
+  dplyr::filter(a &lt;= 9, a != max(a)) %&gt;%
+  nrow()
+
+# step-wise evaluation of criteria results in a different output
+data.frame(a = 1:10) %&gt;%
+  track() %&gt;%
+  # Performing the same exclusion sequentially results in 2 items
+  # being excluded as the criteria no longer identify the same
+  # item.
+  exclude_all(a &gt; 9 ~ "{.excluded} value &gt; 9") %&gt;%
+  exclude_all(a == max(a) ~ "{.excluded} max value") %&gt;%
+  status() %&gt;%
+  history()
+
+# the behaviour is equivalent to the inverse of dplyr's filter function:
+data.frame(a=1:10) %&gt;%
+  dplyr::filter(a &lt;= 9) %&gt;%
+  dplyr::filter(a != max(a)) %&gt;%
+  nrow()
+
+</code></pre>
+
+
+</div>

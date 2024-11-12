@@ -1,0 +1,280 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mcSimulation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform a Monte Carlo simulation.</h2>
+
+<h3>Description</h3>
+
+<p>This function generates a random sample of an output distribution defined as the transformation 
+of an input distribution by a mathematical model, i.e. a mathematical function. This is called a
+Monte Carlo simulation. For details cf. below.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mcSimulation(
+  estimate,
+  model_function,
+  ...,
+  numberOfModelRuns,
+  randomMethod = "calculate",
+  functionSyntax = "data.frameNames",
+  relativeTolerance = 0.05,
+  verbosity = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p><code>estimate</code>: estimate of the joint probability distribution of
+the input variables. This can be read from a csv file and calculated with the <code>estimate_read_csv</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_function</code></td>
+<td>
+<p><code>function</code>: The function that transforms the input distribution. It 
+has to return a single <code>numeric</code> value or a <code>list</code> with named <code>numeric</code> values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional arguments of <code>model_function</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numberOfModelRuns</code></td>
+<td>
+<p>The number of times running the model function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomMethod</code></td>
+<td>
+<p><code>character</code>: The method to be used to sample the distribution
+representing the input estimate. For details see option <code>method</code> in 
+<code>random.estimate</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>functionSyntax</code></td>
+<td>
+<p><code>character</code>: The syntax which has to be used to implement the model
+function. Possible values are <code>"data.frameNames"</code>,
+<code>"matrixNames"</code> or <code>"plainNames"</code>. Details are given below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relativeTolerance</code></td>
+<td>
+<p><code>numeric</code>: the relative tolerance level of deviation of the
+generated confidence interval from the specified interval. If this deviation is greater than
+<code>relativeTolerance</code> a warning is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbosity</code></td>
+<td>
+<p><code>integer</code>: if <code>0</code> the function is silent; the larger the value the
+more verbose is output information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This method solves the following problem. Given a multivariate random variable <code class="reqn">x =
+(x_1,\ldots,x_k)</code> with joint probability distribution <code class="reqn">P</code>, i.e. 
+</p>
+<p style="text-align: center;"><code class="reqn">x \sim P.</code>
+</p>
+ 
+<p>Then the continuous function 
+</p>
+<p style="text-align: center;"><code class="reqn">f:R^k \rightarrow R^l, y = f(x)</code>
+</p>
+ 
+<p>defines another random variable with distribution 
+</p>
+<p style="text-align: center;"><code class="reqn">y \sim f(P).</code>
+</p>
+
+<p>Given a probability density <code class="reqn">\rho</code> of x that defines <code class="reqn">P</code> the problem is the determination 
+of the probability density <code class="reqn">\phi</code> that defines <code class="reqn">f(P)</code>. This method samples the 
+probability density <code class="reqn">\phi</code> of <code class="reqn">y</code> as follows: The input distribution <code class="reqn">P</code> is provided 
+as <code>estimate</code>. From <code>estimate</code> a sample <code>x</code> with <code>numberOfModelRuns</code> is  
+generated using <code>random.estimate</code>. Then the function values <code class="reqn">y=f(x)</code> are 
+calculated, where <code class="reqn">f</code> is <code>model_function</code>.
+</p>
+<p><code>functionSyntax</code> defines the syntax of <code>model_function</code>, which has to be used, as 
+follows:
+</p>
+
+<dl>
+<dt><code>"data.frameNames"</code></dt>
+<dd>
+<p>The model function is constructed, e.g. like this:
+</p>
+<pre>
+         profit&lt;-function(x){
+           x[["revenue"]]-x[["costs"]]
+         }
+       </pre>
+<p>or like this:
+</p>
+<pre>
+         profit&lt;-function(x){
+           x$revenue-x$costs
+         }
+       </pre>
+</dd>
+<dt><code>"matrixNames"</code></dt>
+<dd>
+<p>The model function is constructed, e.g. like this:
+</p>
+<pre>
+           profit&lt;-function(x){
+             x[,"revenue"]-x[,"costs"]
+           }
+        </pre>     
+</dd>
+<dt><code>"plainNames"</code></dt>
+<dd>
+<p><code>model_function</code> is constructed, e.g. like this:
+</p>
+<pre>
+         profit&lt;-function(x){
+           revenue-costs
+         }
+       </pre>
+<p><dfn>Note</dfn>: this is the slowest of the possibilities for <code>functionSyntax</code>.
+</p>
+</dd>     
+</dl>
+<h3>Value</h3>
+
+<p>An object of <code>class mcSimulation</code>, which is a <code>list</code> with elements:
+</p>
+
+<dl>
+<dt><code>$x</code></dt>
+<dd>
+<p><code>data.frame</code> containing the sampled <code class="reqn">x -</code> (input) values which are generated 
+from <code>estimate</code>.
+</p>
+</dd>
+<dt><code>$y</code></dt>
+<dd>
+<p><code>data.frame</code> containing the simulated <code class="reqn">y -</code> (output) values, i.e. the model 
+function values for <code>x</code>.The return of the decision model function may include the
+assignment of names for the output variables, e.g. like this:
+</p>
+<pre>
+           profit &lt;- function(x){
+            revenue - costs
+            return(list(Revenue = revenue,
+                   Costs = cost))
+         }
+       </pre>
+</dd>
+</dl>
+<h3>See Also</h3>
+
+<p><code>print.mcSimulation</code>, <code>summary.mcSimulation</code>, <code>hist.mcSimulation</code>, <code>estimate</code>, <code>random.estimate</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> #############################################################
+ # Example 1 (Creating the estimate from the command line):
+ #############################################################
+ # Create the estimate object:
+ variable=c("revenue","costs")
+ distribution=c("norm","norm")
+ lower=c(10000,  5000)
+ upper=c(100000, 50000)
+ costBenefitEstimate&lt;-as.estimate(variable, distribution, lower, upper)
+ # (a) Define the model function without name for the return value:
+ profit1&lt;-function(x){
+   x$revenue-x$costs
+ }
+ # Perform the Monte Carlo simulation:
+ predictionProfit1&lt;-mcSimulation( estimate=costBenefitEstimate, 
+                                 model_function=profit1, 
+                                 numberOfModelRuns=10000,
+                                 functionSyntax="data.frameNames")
+ # Show the simulation results:
+ print(summary(predictionProfit1))
+ hist(predictionProfit1,xlab="Profit")
+ #############################################################
+ # (b) Define the model function with a name for the return value:
+ profit1&lt;-function(x){
+   list(Profit=x$revenue-x$costs)
+ } 
+ # Perform the Monte Carlo simulation:
+ predictionProfit1&lt;-mcSimulation( estimate=costBenefitEstimate, 
+                                 model_function=profit1, 
+                                 numberOfModelRuns=10000,
+                                 functionSyntax="data.frameNames")
+ # Show the simulation results:
+ print(summary(predictionProfit1, classicView=TRUE))
+ hist(predictionProfit1) 
+ #########################################################
+ # (c) Using plain names in the model function syntax
+ profit1&lt;-function(){
+   list(Profit=revenue-costs)
+ } 
+ # Perform the Monte Carlo simulation:
+ predictionProfit1&lt;-mcSimulation( estimate=costBenefitEstimate, 
+                                 model_function=profit1, 
+                                 numberOfModelRuns=1000,
+                                 functionSyntax="plainNames")
+ # Show the simulation results:
+ print(summary(predictionProfit1, probs=c(0.05,0.50,0.95)))
+ hist(predictionProfit1) 
+ #########################################################
+ # (d) Using plain names in the model function syntax and
+ #     define the model function without name for the return value:
+ profit1&lt;-function() revenue-costs
+ # Perform the Monte Carlo simulation:
+ predictionProfit1&lt;-mcSimulation( estimate=costBenefitEstimate,
+                                  model_function=profit1,
+                                  numberOfModelRuns=1000,
+                                  functionSyntax="plainNames")
+ # Show the simulation results:
+ print(summary(predictionProfit1, probs=c(0.05,0.50,0.95)))
+ hist(predictionProfit1, xlab="Profit")
+ #############################################################
+ # Example 2(Reading the estimate from file):
+ #############################################################
+ # Define the model function:
+ profit2&lt;-function(x){
+   Profit&lt;-x[["sales"]]*(x[["productprice"]] - x[["costprice"]])
+   list(Profit=Profit)
+ }  
+ # Read the estimate of sales, productprice and costprice from file:
+ inputFileName=system.file("extdata","profit-4.csv",package="decisionSupport")
+ parameterEstimate&lt;-estimate_read_csv(fileName=inputFileName)
+ print(parameterEstimate)
+ # Perform the Monte Carlo simulation:
+ predictionProfit2&lt;-mcSimulation( estimate=parameterEstimate, 
+                                 model_function=profit2, 
+                                 numberOfModelRuns=10000,
+                                 functionSyntax="data.frameNames")
+ # Show the simulation results:
+ print(summary(predictionProfit2))
+ hist(predictionProfit2) 
+</code></pre>
+
+
+</div>

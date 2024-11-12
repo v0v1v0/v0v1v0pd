@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crossval</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimator of the Mean Squared Prediction Error using Cross-Validation.</h2>
+
+<h3>Description</h3>
+
+<p>Estimator of the mean squared prediction error of
+different learners using cross-validation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crossval(
+  y,
+  X,
+  Z = NULL,
+  learners,
+  cv_folds = 5,
+  cv_subsamples = NULL,
+  silent = FALSE,
+  progress = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The outcome variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A (sparse) matrix of predictive variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>Optional additional (sparse) matrix of predictive variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>learners</code></td>
+<td>
+<p><code>learners</code> is a list of lists, each containing four
+named elements:
+</p>
+
+<ul>
+<li>
+<p><code>fun</code> The base learner function. The function must be
+such that it predicts a named input <code>y</code> using a named input
+<code>X</code>.
+</p>
+</li>
+<li>
+<p><code>args</code> Optional arguments to be passed to <code>fun</code>.
+</p>
+</li>
+<li>
+<p><code>assign_X</code> An optional vector of column indices
+corresponding to variables in <code>X</code> that are passed to
+the base learner.
+</p>
+</li>
+<li>
+<p><code>assign_Z</code> An optional vector of column indices
+corresponding to variables in <code>Z</code> that are passed to the
+base learner.
+</p>
+</li>
+</ul>
+<p>Omission of the <code>args</code> element results in default arguments being
+used in <code>fun</code>. Omission of <code>assign_X</code> (and/or <code>assign_Z</code>)
+results in inclusion of all predictive variables in <code>X</code> (and/or
+<code>Z</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv_folds</code></td>
+<td>
+<p>Number of folds used for cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv_subsamples</code></td>
+<td>
+<p>List of vectors with sample indices for
+cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Boolean to silence estimation updates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>String to print before learner and cv fold progress.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>crossval</code> returns a list containing the following components:
+</p>
+
+<dl>
+<dt><code>mspe</code></dt>
+<dd>
+<p>A vector of MSPE estimates,
+each corresponding to a base learners (in chronological order).</p>
+</dd>
+<dt><code>oos_resid</code></dt>
+<dd>
+<p>A matrix of out-of-sample prediction errors,
+each column corresponding to a base learners (in chronological
+order).</p>
+</dd>
+<dt><code>cv_subsamples</code></dt>
+<dd>
+<p>Pass-through of <code>cv_subsamples</code>.
+See above.</p>
+</dd>
+</dl>
+<h3>See Also</h3>
+
+<p>Other utilities: 
+<code>crosspred()</code>,
+<code>shortstacking()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Construct variables from the included Angrist &amp; Evans (1998) data
+y = AE98[, "worked"]
+X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+
+# Compare ols, lasso, and ridge using 4-fold cross-validation
+cv_res &lt;- crossval(y, X,
+                   learners = list(list(fun = ols),
+                                   list(fun = mdl_glmnet),
+                                   list(fun = mdl_glmnet,
+                                        args = list(alpha = 0))),
+                   cv_folds = 4,
+                   silent = TRUE)
+cv_res$mspe
+</code></pre>
+
+
+</div>

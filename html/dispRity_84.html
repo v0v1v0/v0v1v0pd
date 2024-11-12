@@ -1,0 +1,258 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>multi.ace</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ancestral states estimations with multiple trees</h2>
+
+<h3>Description</h3>
+
+<p>Fast ancestral states estimations run on multiple trees using the Mk model from castor::asr_mk_model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">multi.ace(
+  data,
+  tree,
+  models = "ER",
+  threshold = TRUE,
+  special.tokens,
+  special.behaviours,
+  brlen.multiplier,
+  verbose = FALSE,
+  parallel = FALSE,
+  output,
+  castor.options,
+  estimation.details = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>matrix</code> or <code>list</code> with the characters for each taxa.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tree</code></td>
+<td>
+<p>A <code>phylo</code> or <code>mutiPhylo</code> object (if the <code>tree</code> argument contains node labels, they will be used to name the output).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>A <code>vector</code> of models to be passed to <code>castor::asr_mk_model</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>either <code>logical</code> for applying a relative threshold (<code>TRUE</code> - default) or no threshold (<code>FALSE</code>) or a <code>numeric</code> value of the threshold (e.g. 0.95). See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>special.tokens</code></td>
+<td>
+<p>optional, a named <code>vector</code> of special tokens to be passed to <code>grep</code> (make sure to protect the character with <code>"\\"</code>). By default <code>special.tokens &lt;- c(missing = "\\?", inapplicable = "\\-", polymorphism = "\\&amp;", uncertainty = "\\/")</code>. Note that <code>NA</code> values are not compared and that the symbol "@" is reserved and cannot be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>special.behaviours</code></td>
+<td>
+<p>optional, a <code>list</code> of one or more functions for a special behaviour for <code>special.tokens</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>brlen.multiplier</code></td>
+<td>
+<p>optional, a vector of branch length modifiers (e.g. to convert time branch length in changes branch length) or a list of vectors (the same length as <code>tree</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>logical</code>, whether to be verbose (<code>TRUE</code>) or not (<code>FALSE</code> - default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p><code>logical</code>, whether to use parallel algorithm (<code>TRUE</code>) or not (<code>FALSE</code> - default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>optional, see Value section below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>castor.options</code></td>
+<td>
+<p>optional, a named list of options to be passed to function called by <code>castor::asr_mk_model</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimation.details</code></td>
+<td>
+<p>optional, whether to also return the details for each estimation as returned by <code>castor::asr_mk_model</code>. This argument can be left <code>NULL</code> (default) or be any combination of the elements returned by <code>castor::asr_mk_model</code> (e.g. <code>c("loglikelihood", "transition_matrix")</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>models</code> argument can be a single or a list of transition <code>matrix</code>, a single or a a vector of built-in model(s) (see below) or a list of both matrices and built-in models:
+The available built-in models in <code>castor::asr_mk_model</code> are:
+</p>
+
+<ul>
+<li> <p><code>"ER"</code> for all equal rates
+</p>
+</li>
+<li> <p><code>"SYM"</code> for symmetric rates
+</p>
+</li>
+<li> <p><code>"ARD"</code> all rates are different
+</p>
+</li>
+<li> <p><code>"SUEDE"</code> equal stepwise transitions (e.g. for meristic/counting characters)
+</p>
+</li>
+<li> <p><code>"SRD"</code> different stepwise transitions 
+</p>
+</li>
+</ul>
+<p>See directly <code>castor::asr_mk_model</code> for more models.
+</p>
+<p>The <code>threshold</code> option allows to convert ancestral states likelihoods into discrete states. When <code>threshold = FALSE</code>, the ancestral state estimated is the one with the highest likelihood (or at random if likelihoods are equal). When <code>threshold = TRUE</code>, the ancestral state estimated are all the ones that are have a scaled likelihood greater than the maximum observed scaled likelihood minus the inverse number of possible states (i.e. <code>select_state &gt;= (max(likelihood) - 1/n_states)</code>). This option makes the threshold selection depend on the number of states (i.e. if there are more possible states, a lower scaled likelihood for the best state is expected). Finally using a numerical value for the threshold option (e.g. <code>threshold = 0.95</code>) will simply select only the ancestral states estimates with a scaled likelihood equal or greater than the designated value. This option makes the threshold selection absolute. Regardless, if more than one value is select, the uncertainty token (<code>special.tokens["uncertainty"]</code>) will be used to separate the states. If no value is selected, the uncertainty token will be use between all observed characters (<code>special.tokens["uncertainty"]</code>).
+</p>
+<p><code>special.behaviours</code> allows to generate a special rule for the <code>special.tokens</code>. The functions should can take the arguments <code>character, all_states</code> with <code>character</code> being the character that contains the special token and <code>all_states</code> for the character (which is automatically detected by the function). By default, missing data returns and inapplicable returns all states, and polymorphisms and uncertainties return all present states.
+</p>
+
+<ul>
+<li>
+<p><code>missing = function(x,y) y</code>
+</p>
+</li>
+<li>
+<p><code>inapplicable = function(x,y) y</code>
+</p>
+</li>
+<li>
+<p><code>polymorphism = function(x,y) strsplit(x, split = "\\&amp;")[[1]]</code>
+</p>
+</li>
+<li>
+<p><code>uncertainty = function(x,y) strsplit(x, split = "\\/")[[1]]</code>
+</p>
+</li>
+</ul>
+<p>Functions in the list must be named following the special token of concern (e.g. <code>missing</code>), have only <code>x, y</code> as inputs and a single output a single value (that gets coerced to <code>integer</code> automatically). For example, the special behaviour for the special token <code>"?"</code> can be coded as: <code>special.behaviours = list(missing = function(x, y) return(NA)</code> to make ignore the character for taxa containing <code>"?"</code>. 
+</p>
+<p>When using the parallel option (either through using <code>parallel = TRUE</code> by using the number of available cores minus on or manually setting the number of cores - e.g. <code>parallel = 5</code>), the <code>castor::asr_mk_model</code> function will use the designated number of cores (using the option <code>Nthreads = &lt;requested_number_of_cores&gt;</code>). Additionally, if the input <code>tree</code> is a <code>"multiPhylo"</code> object, the trees will be run in parallel for each number of cores, thus decreasing computation time accordingly (e.g. if 3 cores are requested and <code>tree</code> contains 12 <code>"phylo"</code> objects, 4 different <code>"phylo"</code> objects will be run in parallel on the 3 cores making the calculation around 3 times faster).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a <code>"matrix"</code> or <code>"list"</code> of ancestral states. By default, the function returns the ancestral states in the same format as the input <code>matrix</code>. This can be changed using the option <code>output = "matrix"</code> or <code>"list"</code> to force the class of the output.
+To output the combined ancestral states and input, you can use <code>"combined"</code> (using the input format) or <code>"combined.matrix"</code> or <code>"combined.list"</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>castor::asr_mk_model</code>, <code>char.diff</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+## A simple example:
+## A random tree with 10 tips
+tree &lt;- rcoal(10)
+## Setting up the parameters
+my_rates = c(rgamma, rate = 10, shape = 5)
+
+## A random Mk matrix (10*50)
+matrix_simple &lt;- sim.morpho(tree, characters = 50, model = "ER", rates = my_rates,
+                            invariant = FALSE)
+
+## Run a basic ancestral states estimations
+ancestral_states &lt;- multi.ace(matrix_simple, tree)
+ancestral_states[1:5, 1:5]
+
+## A more complex example
+## Create a multiple list of 5 trees
+multiple_trees &lt;- rmtree(5, 10)
+
+## Modify the matrix to contain missing and special data
+matrix_complex &lt;- matrix_simple
+matrix_complex[sample(1:length(matrix_complex), 50)] &lt;- "-"
+matrix_complex[sample(1:length(matrix_complex), 50)] &lt;- "0%2"
+matrix_complex[sample(1:length(matrix_complex), 50)] &lt;- "?"
+matrix_complex[1:5,1:5]
+
+## Set a list of extra special tokens
+my_spec_tokens &lt;- c("weirdtoken" = "%")
+
+## Set some special behaviours for the "weirdtoken" and for "-" and "?"
+my_spec_behaviours &lt;- list()
+## Inapplicable tokens "-" are ignored
+my_spec_behaviours$inapplicable &lt;- function(x,y) return(NA)
+## Missing tokens "?" are considered as all states
+my_spec_behaviours$missing      &lt;- function(x,y) return(y)
+## Weird tokens are considered as state 0 and 3
+my_spec_behaviours$weirdtoken   &lt;- function(x,y) return(c(1,2))
+
+## Create a random branch length modifier to apply to each tree
+branch_lengths &lt;- rnorm(18)^2
+
+## Setting a list of model ("ER" for the 25 first characters and then "SYM")
+my_models &lt;- c(rep("ER", 25), rep("SYM", 25))
+
+## Run the ancestral states on all the tree with multiple options
+ancestral_states &lt;- multi.ace(matrix_complex, multiple_trees,
+                              verbose = TRUE,
+                              models = my_models,
+                              threshold = 0.95,
+                              special.tokens = my_spec_tokens,
+                              special.behaviours = my_spec_behaviours,
+                              brlen.multiplier = branch_lengths,
+                              output = "combined.matrix")
+
+## The results for the the two first characters for the first tree
+ancestral_states[[1]][, 1:2]
+
+## Not run: 
+## The same example but running in parallel
+ancestral_states &lt;- multi.ace(matrix_complex, multiple_trees,
+                              verbose = TRUE,
+                              models = my_models,
+                              threshold = 0.95,
+                              special.tokens = my_spec_tokens,
+                              special.behaviours = my_spec_behaviours,
+                              brlen.multiplier = branch_lengths,
+                              output = "combined.matrix",
+                              parallel = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

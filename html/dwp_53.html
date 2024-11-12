@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estpsi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate Probability Carcass lands in Searched Area</h2>
+
+<h3>Description</h3>
+
+<p>Estimated probability that carcass lands in searched area. This
+is an intermediate step in estimating dwp but is also interesting in its own
+right. The estimation involves integrating the modeled carcass distribution 
+(<code>model</code>) over the  search plots at the turbines. Data for the search 
+plots is stored in the generic argument, <code>x</code>, which can take any of a
+number of different forms, as described in the <code>Arguments</code> section (below).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estpsi(x, ...)
+
+## S3 method for class 'rings'
+estpsi(x, model, extent = "full", nsim = 1000, zrad = 200, ...)
+
+## S3 method for class 'ringscc'
+estpsi(
+  x,
+  model,
+  modnames = NULL,
+  extent = "full",
+  nsim = 1000,
+  zrad = 200,
+  ...
+)
+
+## S3 method for class 'xyLayout'
+estpsi(x, model, extent = "full", nsim = 1000, zrad = 200, ...)
+
+## S3 method for class 'rpA'
+estpsi(x, model, extent = "full", nsim = 1000, zrad = 200, ...)
+
+## S3 method for class 'rdat'
+estpsi(x, model, extent = "full", nsim = 1000, zrad = 200, ...)
+
+## S3 method for class 'data.frame'
+estpsi(x, model, extent = "full", nsim = 1000, zrad = 200, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data </p>
+
+<dl>
+<dt><code>rings</code></dt>
+<dd>
+<p>a formatted site map created from raw data via function
+<code>prepRing</code> (or as a component of a list returned by 
+<code>addCarcass</code>).</p>
+</dd>
+<dt><code>ringscc</code></dt>
+<dd>
+<p>a list of <code>rings</code> objects, one for each carcass
+class; created from raw data via function <code>prepRing</code> (or as a 
+component of a list returned by <code>addCarcass</code>).</p>
+</dd>
+<dt><code>xyLayout</code></dt>
+<dd>
+<p>formatted site map data derived from (x, y) coordinates
+covering every square meter of searched areas at each turbine; derived from
+the function <code>initLayout</code>, when called with <code>xy</code> data.</p>
+</dd>
+<dt><code>rpA</code></dt>
+<dd>
+<p>(intended as an internal function that would rarely be 
+called directly by users) a list of data frames (one for each turbine) 
+giving the fraction of area searched (<code>pinc</code> at  each distance 
+(<code>r</code>). <code>rpA</code> data are embedded in <code>rings</code> 
+objects that are created from site "maps" via <code>prepRing</code>.</p>
+</dd>
+<dt><code>rdat</code></dt>
+<dd>
+<p>(intended as an internal function that would rarely be 
+called directly by users) list of data frames giving the area searched 
+(<code>"exposure"</code>), in a 1 meter ring with outer radius <code>"r"</code> and the 
+number of carcasses found <code>"ncarc"</code> in each ring, with search class 
+<code>scVar</code> optional. There is also a summary data frame 
+<code>$rdat[["total"]]</code> that sums the exposures and carcass counts for all 
+turbines across the site. The <code>$rdat[["total"]]</code> is the data frame 
+used in fitting the GLMs. <code>rdat</code> objects are components of the return
+value of <code>prepRing</code></p>
+</dd>
+<dt><code>data.frame</code></dt>
+<dd>
+<p>(intended as an internal function that would rarely be 
+called directly by users) a data frame giving the fraction of area searched 
+(<code>pinc</code> at  each distance (<code>r</code>).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A fitted <code>dd</code> model or an array of estimated parameters
+(<code>ddSim</code> object); or, if <code>x</code> is a <code>ringscc</code> object, a list
+of <code>dd</code> models (one for each carcass class), or a <code>ddArraycc</code>
+accompanied by a vector of model names to use (one for each carcass class).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extent</code></td>
+<td>
+<p>calculate dwp within searched radius only (<code>"win"</code>) or
+for full complement of carcasses (<code>"full"</code>), including those that fall
+outside the search radius.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>number of parametric bootstrap iterations for accounting for
+uncertainty in the estimator. Default is <code>nsim = 1000</code>. Use 
+<code>nsim = 0</code> for the estimate of <code>psi</code> based on the  MLE of
+the given model without accounting for uncertainty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zrad</code></td>
+<td>
+<p>radius</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modnames</code></td>
+<td>
+<p>if <code>x</code> is a <code>ringscc</code> object, a vector of names of 
+model to use for each carcass class; otherwise, <code>modnames</code> is ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>psiHat</code> object, which is either 1) an array giving the 
+expected fraction  of carcasses lying in the searched area at each turbine 
+with <code>nsim</code> rows and one column for each turbine + one row for the 
+total; or 2) a list of such arrays, one for each carcass class if <code>x</code> 
+is a <code>ringscc</code> object. The uncertainty in the expected fractions is
+characterized by simulation and reflected in the variation in <code>psi</code>
+values within each column.
+</p>
+
+
+</div>

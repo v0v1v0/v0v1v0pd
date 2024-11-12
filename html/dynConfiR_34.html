@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>PDFtoQuantiles</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get Quantiles from vectors of PDF or CDF values</h2>
+
+<h3>Description</h3>
+
+<p><code>CDFtoQuantiles</code> computes quantiles for a given CDF.
+<code>PDFtoQuantiles</code> computes the quantiles for given PDF values within
+groups of other variables, if available.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">PDFtoQuantiles(pdf_df, p = c(0.1, 0.3, 0.5, 0.7, 0.9), agg_over = NULL,
+  scaled = FALSE)
+
+CDFtoQuantiles(cdf, x = NULL, p)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pdf_df</code></td>
+<td>
+<p>dataframe. Should have at least two columns:
+</p>
+
+<ul>
+<li> <p><code>rt</code> (for reaction times) or <code>x</code> for the support values of the pdf
+</p>
+</li>
+<li> <p><code>dens</code> or <code>pdf</code> for the pdf values
+</p>
+</li>
+<li>
+<p> All other columns will be used as grouping factors, for which separate quantiles will be returned.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>numeric vector. Probabilities for returned quantiles. Default:
+c(.1, .3, .5, .7, .9).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>agg_over</code></td>
+<td>
+<p>character. Names of columns in <code>pdf_df</code> to aggregate over (using the mean of
+densities, which is valid only, if groups occur with equal probabilities) before
+computing the quantiles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaled</code></td>
+<td>
+<p>logical. Indicating whether the pdf values are from a proper probability
+distribution. Non-scaled pdfs will scaled to 1. If <code>scaled</code> is TRUE, this may cause
+problems with high probabilities. In any case we strongly recommend to cover the most
+probability mass with the values in the support vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cdf</code></td>
+<td>
+<p>numeric. A increasing vector of the same length as <code>x</code> giving the CDF for respective x-Values.
+Dataframe inputs are accepted. If a column <code>x</code> is available there, this will be used as support values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric. A increasing vector of same length as <code>cdf</code>. Can also be specified as column of <code>cdf</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For a reasonable accuracy the number of steps in the support column (<code>rt</code>/<code>x</code>)
+should be high, i.e. the distance between values small.
+We recommend, to ensure that the support vector in the input to be equidistant,
+i.e. the difference between consecutive support values should be constant, though
+this is not required.
+If both column names <code>x</code> and <code>rt</code> are present in <code>pdf_df</code>, <code>rt</code> will be preferred.
+Attention should be given to the columns of <code>pdf_df</code> other than <code>rt</code>/<code>x</code>
+and <code>dens</code>/<code>pdf</code>.
+</p>
+<p>The column for the pdf may be scaled to integrate to 1 but do not have to.
+</p>
+
+
+<h4>Quantile computation in the <code>dynConfiR</code> package</h4>
+
+<p>As argument <code>pdf_df</code>, the outputs of <code>predictRT</code> and <code>predictRTModels</code> from the
+<code>dynConfiR</code> package can be used. In the context of confidence models grouping factors
+often used are conditions, correct/incorrect answers and confidence ratings.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p><code>PDFtoQuantiles</code> returns a <code>tibble</code> with columns p and q indicating
+probabilities and respective quantiles. Furthermore, the output has grouping columns
+identical to the additional columns in the input (without <code>rt</code>/<code>x</code>, <code>dens</code> and <code>densscaled</code>),
+but without the ones in the <code>agg_over</code> argument. <code>CDFtoQuantiles</code>
+returns only a <code>data.frame</code> with columns <code>p</code> and <code>q</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastian Hellmann.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Demonstrate PDFtoQuantiles
+pred &lt;- expand.grid(model = c("dynWEV", "PCRMt"),
+                    rt =  seq(0, 15, length.out=1200),
+                    condition = c(1,2,3),
+                    rating = c(1,2))
+pred$dens &lt;- dchisq(pred$rt, 3) # pdf may also be used as column name
+head(pred)
+res &lt;- PDFtoQuantiles(pred, p=c(0.3, 0.5, 0.7))
+head(res)
+nrow(res) #= 3(quantiles)*2(models)*3(conditions)*2(rating)
+# Compare to true quantiles of Chi-square distribution
+qchisq(p=c(0.3, 0.5, 0.7), 3)
+res$q[1:3]
+
+
+res2 &lt;- PDFtoQuantiles(pred, p=c(0.3, 0.5, 0.7), agg_over = "model")
+nrow(res2) #=18 because res aggregated over models
+
+
+  pred$pdf &lt;- dchisq(pred$rt, 3)
+  head(pred)
+  # following call throws a warning, because both columns pdf and dens are present
+  PDFtoQuantiles(pred, p=c(0.3, 0.5, 0.7), agg_over = "model")
+
+
+
+  pred2 &lt;- data.frame(rt=seq(0, 7, length.out=100))
+  pred2$dens &lt;- dchisq(pred2$rt, 5)
+  # following call throws a warning, because density is assumed to be scaled (scaled=TRUE), i.e.
+  # integrate to 1, but the .95 quantile is not reached in the rt column
+  PDFtoQuantiles(pred2, p=c(0.3, 0.5, 0.95), scaled=TRUE) # Gives a warning
+
+
+## Demonstrate CDFtoQuantiles
+X &lt;- seq(-2, 2, length.out=300)
+pdf_values &lt;- pnorm(X)
+CDFtoQuantiles(pdf_values, X, p=c(0.2, 0.5, 0.8))
+qnorm(c(0.2, 0.5, 0.8))
+</code></pre>
+
+
+</div>

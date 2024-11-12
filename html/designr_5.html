@@ -1,0 +1,203 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>output.design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Summary of Factor Designs</h2>
+
+<h3>Description</h3>
+
+<p>These functions return useful summaries of a factor design, including the design matrix itself as well as other parameters and a list of random factors as experimental units.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">output.design(
+  design,
+  group_by = NULL,
+  order_by = NULL,
+  randomize = FALSE,
+  rename_random = TRUE
+)
+
+design.formula(
+  design,
+  contrasts = NULL,
+  expand_contrasts = !missing(contrasts),
+  interactions = TRUE,
+  intercepts = TRUE,
+  response = "dv",
+  env = parent.frame()
+)
+
+design.units(design, rename_random = TRUE, include_interactions = FALSE)
+
+design.codes(
+  design,
+  group_by = NULL,
+  order_by = names(random.factors(design, include_interactions = FALSE)),
+  randomize = FALSE,
+  rename_random = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>The <code>factorDesign</code> object to summarize.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_by</code></td>
+<td>
+<p>If not <code>NULL</code>, the design matrix is grouped by these factors. Factors must be valid columns of the design matrix. If used, <code>$codes</code> will be a list matched to the entries in <code>$groups</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order_by</code></td>
+<td>
+<p>If not <code>NULL</code>, output within each output group is ordered by these columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomize</code></td>
+<td>
+<p>After ordering, remaining rows in the same order rank are randomly shuffled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rename_random</code></td>
+<td>
+<p>Should random factor levels be renamed? If <code>TRUE</code>, levels are renamed as strings composed of the factor name and factor level (e.g., Subj01, Subj02, ...). <code>FALSE</code> disables renaming of random factor levels. Alternatively, you may provide a function which should accept the vectorized ID (integer) as a first argument and the name (single character value) of the random factor as second argument or ignore it. Functions such as <code>as.double</code> or <code>as.integer</code> *are* possible because they ignore the second argument and only convert the ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>The contrasts to override (<code>NULL</code> if none to override)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand_contrasts</code></td>
+<td>
+<p>If <code>TRUE</code>, factors with more than one contrast are replaced by so many contrasts, i.e. the result contains the names of the individual contrasts, not of the factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interactions</code></td>
+<td>
+<p>Should fixed effects be additive or interactive?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercepts</code></td>
+<td>
+<p>Should an intercept be included?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>The left-hand side of the equation. Typically, this is just the response/dependent variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>The environment in which to embed the formula</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_interactions</code></td>
+<td>
+<p>Whether to include random factor interactions (i.e., counterbalancing factors) in the output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>design.units</code> returns the experimental units of the design. Those are defined by random factors and their levels. See <code>units</code> return value below.
+</p>
+<p><code>design.codes</code> returns a dataframe or <code>tibble</code> of all planned observations including each observation's experimental codes, i.e. fixed and random factor levels. If you group the output, a list is returned. See <code>codes</code> return value below.
+</p>
+<p><code>design.formula</code> returns a list of formulas suitable for regression analysis. Currently, formulas for <code>lm</code> and <code>lme4</code> are returned. See <code>formulas</code> entry,
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>output.design</code> returns a list containing all output summaries, including the following named entities:
+</p>
+
+<dl>
+<dt><code>codes</code></dt>
+<dd>
+<p>Either a <code>tibble</code> with all experimental codes or a list of <code>tibble</code>s of experimental codes. The list entries are matched to the rows of <code>$groups</code>.</p>
+</dd>
+<dt><code>groups</code></dt>
+<dd>
+<p>If grouped, contains a tibble in which each row represents an output group, matched to the entries in $codes. If not grouped, this is <code>NULL</code>.</p>
+</dd>
+<dt><code>ordered</code></dt>
+<dd>
+<p>If ordered, contains a vector of order criteria. If not ordered, this is <code>NULL</code>.</p>
+</dd>
+<dt><code>randomized</code></dt>
+<dd>
+<p>Value of <code>randomized</code>.</p>
+</dd>
+<dt><code>units</code></dt>
+<dd>
+<p>A list of random factors and their levels for this design as tibbles. Empty list if no random factors in the design.</p>
+</dd>
+<dt><code>formulas</code></dt>
+<dd>
+<p>A list of possible model formulas for use with functions such as <code>lm()</code> and <code>lmer()</code>.</p>
+</dd>
+</dl>
+<p>The functions <code>design.codes</code>, <code>design.formula</code> and <code>design.units</code> only return the values of the fields <code>codes</code> (a <code>tibble</code> or list or <code>tibble</code>s of experimental codes), <code>formulas</code> (a list of model formulas), and <code>units</code> (a list of random factors and their levels), respectively.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>design.formula()</code>: Retrieve only the model formulas suitable for the design
+</p>
+</li>
+<li> <p><code>design.units()</code>: Retrieve only the experimental units of a design
+</p>
+</li>
+<li> <p><code>design.codes()</code>: Retrieve only the codes of planned observations of an experimental design
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>design.formula</code> for more options generating model formulae other than the suggested default ones in the summary.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+des &lt;- fixed.factor("Factor1", c("1A","1B")) +
+       fixed.factor("Factor2", c("2A","2B")) +
+       random.factor("Subject", c("Factor1"))
+       
+output.design(des)
+design.codes(des)
+design.units(des)
+design.formula(des)
+
+</code></pre>
+
+
+</div>

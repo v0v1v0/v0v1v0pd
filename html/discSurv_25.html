@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gumbel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Gumbel Link Function</h2>
+
+<h3>Description</h3>
+
+<p>Constructs the link function with gumbel distribution in approriate format
+for use in generalized, linear models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gumbel()
+</code></pre>
+
+
+<h3>Details</h3>
+
+<p>Insert this function into a binary regression model
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+<p>Matthias Schmid <a href="mailto:matthias.schmid@imbie.uni-bonn.de">matthias.schmid@imbie.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with copenhagen stroke study
+library(pec)
+data(cost)
+head(cost)
+
+# Take subsample and convert time to months
+costSub &lt;- cost [1:50, ]
+costSub$time &lt;- ceiling(costSub$time/30)
+costLong &lt;- dataLong(dataShort = costSub, timeColumn = "time", eventColumn = "status",
+timeAsFactor=TRUE)
+gumbelModel &lt;- glm(formula = y ~ timeInt + diabetes, data = costLong, 
+family = binomial(link = gumbel()))
+
+# Estimate hazard given prevStroke and no prevStroke
+hazPrevStroke &lt;- predict(gumbelModel, newdata=data.frame(timeInt = factor(1:143), 
+diabetes = factor(rep("yes", 143), levels = c("no", "yes"))), type = "response")
+hazWoPrevStroke &lt;- predict(gumbelModel, newdata = data.frame(timeInt = factor(1:143), 
+diabetes=factor(rep("no", 143), levels = c("no", "yes"))), type = "response")
+
+# Estimate survival function
+SurvPrevStroke &lt;- cumprod(1 - hazPrevStroke)
+SurvWoPrevStroke &lt;- cumprod(1 - hazWoPrevStroke)
+
+# Example graphics of survival curves with and without diabetes
+plot(x = 1:143, y = SurvWoPrevStroke, type = "l", xlab = "Months", 
+ylab = "S (t|x)", las = 1, lwd = 2, ylim = c(0,1))
+lines(x = 1:143, y = SurvPrevStroke, col = "red", lwd = 2)
+legend("topright", legend = c("Without diabetes", "Diabetes"), 
+lty = 1, lwd =2, col = c("black", "red"))
+
+</code></pre>
+
+
+</div>

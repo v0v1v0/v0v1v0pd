@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mesh_exsets</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Search excursion set of nD function, sampled by a mesh</h2>
+
+<h3>Description</h3>
+
+<p>Search excursion set of nD function, sampled by a mesh
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mesh_exsets(
+  f,
+  vectorized = FALSE,
+  threshold,
+  sign,
+  intervals,
+  mesh = "seq",
+  mesh.sizes = 11,
+  maxerror_f = 1e-09,
+  tol = .Machine$double.eps^0.25,
+  ex_filter.tri = all,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>Function to inverse at 'threshold'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vectorized</code></td>
+<td>
+<p>boolean: is f already vectorized ? (default: FALSE) or if function: vectorized version of f.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>target value to inverse</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sign</code></td>
+<td>
+<p>focus at conservative for above (sign=1) or below (sign=-1) the threshold</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervals</code></td>
+<td>
+<p>bounds to inverse in, each column contains min and max of each dimension</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh</code></td>
+<td>
+<p>function or "unif" or "seq" (default) to preform interval partition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh.sizes</code></td>
+<td>
+<p>number of parts for mesh (duplicate for each dimension if using "seq")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxerror_f</code></td>
+<td>
+<p>maximal tolerance on f precision</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>the desired accuracy (convergence tolerance on f arg).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ex_filter.tri</code></td>
+<td>
+<p>boolean function to validate a geometry::tri as considered in excursion : 'any' or 'all'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>parameters to forward to mesh_roots(...) call</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># mesh_exsets(function(x) x, threshold=.51, sign=1, intervals=rbind(0,1),
+#   maxerror_f=1E-2,tol=1E-2) # for faster testing
+# mesh_exsets(function(x) x, threshold=.50000001, sign=1, intervals=rbind(0,1),
+#   maxerror_f=1E-2,tol=1E-2) # for faster testing
+# mesh_exsets(function(x) sum(x), threshold=.51,sign=1, intervals=cbind(rbind(0,1),rbind(0,1)),
+#   maxerror_f=1E-2,tol=1E-2) # for faster testing
+# mesh_exsets(sin,threshold=0,sign="sup",interval=c(pi/2,5*pi/2),
+#   maxerror_f=1E-2,tol=1E-2) # for faster testing
+
+if (identical(Sys.getenv("NOT_CRAN"), "true")) { # too long for CRAN on Windows
+
+  e = mesh_exsets(function(x) (0.25+x[1])^2+(0.5+x[2])^2 ,
+                threshold =0.25,sign=-1, intervals=matrix(c(-1,1,-1,1),nrow=2),
+                maxerror_f=1E-2,tol=1E-2) # for faster testing
+
+  plot(e$p,xlim=c(-1,1),ylim=c(-1,1));
+  apply(e$tri,1,function(tri) polygon(e$p[tri,],col=rgb(.4,.4,.4,.4)))
+
+  if (requireNamespace("rgl")) {
+    e = mesh_exsets(function(x) (0.5+x[1])^2+(-0.5+x[2])^2+(0.+x[3])^2,
+                  threshold = .25,sign=-1, mesh="unif",
+                  intervals=matrix(c(-1,1,-1,1,-1,1),nrow=2),
+                  maxerror_f=1E-2,tol=1E-2) # for faster testing
+
+    rgl::plot3d(e$p,xlim=c(-1,1),ylim=c(-1,1),zlim=c(-1,1));
+    apply(e$tri,1,function(tri)rgl::lines3d(e$p[tri,]))
+  }
+}
+</code></pre>
+
+
+</div>

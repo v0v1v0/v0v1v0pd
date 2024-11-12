@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qtR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> Implementation of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s C-level t-Distribution Quantiles <code>qt()</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>A pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> implementation of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s Mathlib own C-level <code>qt()</code> function.
+<br><code>qtR()</code> is simply defined as </p>
+<pre>qtR &lt;- Vectorize(qtR1, c("p","df"))</pre>
+<p>where in <code>qtR1(p, df, *)</code> both <code>p</code> and <code>df</code> must be of length one.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qtR1(p, df, lower.tail = TRUE, log.p = FALSE,
+     eps = 1e-12, d1_accu = 1e-13, d1_eps = 1e-11,
+     itNewt = 10L, epsNewt = 1e-14, logNewton = log.p,
+     verbose = FALSE)
+qtR (p, df, lower.tail = TRUE, log.p = FALSE,
+     eps = 1e-12, d1_accu = 1e-13, d1_eps = 1e-11,
+     itNewt = 10L, epsNewt = 1e-14, logNewton = log.p,
+     verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p, df</code></td>
+<td>
+<p>vectors of probabilities and degrees of freedom, see <code>qt</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail, log.p</code></td>
+<td>
+<p>logical; see <code>qt</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>non-negative tolerance for checking if <code>df</code> is
+“very close” to <code>1</code> or <code>2</code>, respectively (when a
+special branch will be chosen).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d1_accu, d1_eps</code></td>
+<td>
+<p>non-negative tolerances only for the <code>df &lt; 1</code> cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itNewt</code></td>
+<td>
+<p>integer, the maximal number of final Newton(-Raphson) steps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsNewt</code></td>
+<td>
+<p>non-negative convergence tolerance for the final Newton steps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logNewton</code></td>
+<td>
+<p>logical, in case of <code>log.p=TRUE</code> indicating if
+final Newton steps should happen in log-scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical indicating if diagnostic console output should be produced.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>numeric vector of t quantiles, properly recycled in <code>(p, df)</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>qtU</code> and <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>qt</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Inspired from Bugzilla PR#16380
+pxy &lt;- curve(pt(-x, df = 1.09, log.p = TRUE), 4e152, 1e156, log="x", n=501)
+qxy &lt;- curve(-qt(x, df = 1.09, log.p = TRUE), -392, -385, n=501, log="y", col=4, lwd=2)
+lines(x ~ y, data=pxy, col = adjustcolor(2, 1/2), lwd=5, lty=3)
+## now our "pure R" version:
+
+qRy &lt;- -qtR(qxy$x, df = 1.09, log.p = TRUE)
+all.equal(qRy, qxy$y) # "'is.NA' value mismatch: 14 in current 0 in target" for R &lt;= 4.2.1
+cbind(as.data.frame(qxy), qRy, D = qxy$y - qRy)
+plot((y - qRy) ~ x, data = qxy, type="o", cex=1/4)
+
+qtR1(.1, .1, verbose=TRUE)
+pt(qtR(-390.5, df=1.10, log.p=TRUE, verbose=TRUE, itNewt = 100), df=1.10, log.p=TRUE)/-390.5 - 1
+## qt(p=     -390.5, df=        1.1, *) -- general case
+##  -&gt; P=2.55861e-170, neg=TRUE, is_neg_lower=TRUE; -&gt; final P=5.11723e-170
+## usual 'df' case:  P_ok:= P_ok1 = TRUE, y=3.19063e-308, P..., !P_ok: log.p2=-390.5, y=3.19063e-308
+## !P_ok &amp;&amp; x &lt; -36.04: q=5.87162e+153
+## P_ok1: log-scale Taylor (iterated):
+## it= 1, .. d{q}1=exp(lF - dt(q,df,log=T))*(lF - log(P/2)) = -5.03644e+152; n.q=5.36798e+153
+## it= 2, .. d{q}1=exp(lF - dt(q,df,log=T))*(lF - log(P/2)) =  2.09548e+151; n.q=5.38893e+153
+## it= 3, .. d{q}1=exp(lF - dt(q,df,log=T))*(lF - log(P/2)) =  4.09533e+148; n.q=5.38897e+153
+## it= 4, .. d{q}1=exp(lF - dt(q,df,log=T))*(lF - log(P/2)) =   1.5567e+143; n.q=5.38897e+153
+## [1] 0
+##    === perfect!
+pt(qtR(-391, df=1.10, log.p=TRUE, verbose=TRUE),
+   df=1.10, log.p=TRUE)/-391 - 1 # now perfect
+</code></pre>
+
+
+</div>

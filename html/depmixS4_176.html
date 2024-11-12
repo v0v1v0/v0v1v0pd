@@ -1,0 +1,348 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>depmix</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dependent Mixture Model Specifiction</h2>
+
+<h3>Description</h3>
+
+<p><code>depmix</code> creates an object of class <code>depmix</code>, a dependent
+mixture model, otherwise known as hidden Markov model.  For a short
+description of the package see <code>depmixS4</code>. See the vignette 
+for an introduction to hidden Markov models and the package. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	
+	depmix(response, data=NULL, nstates, transition=~1, family=gaussian(), 
+		prior=~1, initdata=NULL, respstart=NULL, trstart=NULL, instart=NULL,
+		ntimes=NULL,...)
+	
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>The response to be modeled; either a formula or a list 
+of formulae (in the multivariate case); this interfaces to the glm
+and other distributions. See 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An optional <code>data.frame</code> to interpret the variables in
+the response and transition arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstates</code></td>
+<td>
+<p>The number of states of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transition</code></td>
+<td>
+<p>A one-sided formula specifying the model for the 
+transitions. See 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>A family argument for the response. This must be a list
+of <code>family</code>'s if the response is multivariate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>A one-sided formula specifying the density for the prior
+or initial state probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initdata</code></td>
+<td>
+<p>An optional data.frame to interpret the variables
+occuring in <code>prior</code>.  The number of rows of this data.frame
+must be equal to the number of cases being modeled,
+<code>length(ntimes)</code>.  See 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>respstart</code></td>
+<td>
+<p>Starting values for the parameters of the response
+models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trstart</code></td>
+<td>
+<p>Starting values for the parameters of the transition
+models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>instart</code></td>
+<td>
+<p>Starting values for the parameters of the prior or
+initial state probability model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntimes</code></td>
+<td>
+<p>A vector specifying the lengths of individual, i.e.
+independent, time series. If not specified, the responses are
+assumed to form a single time series, i.e. <code>ntimes=nrow(data)</code>.
+If the <code>data</code> argument has an attribute <code>ntimes</code>, then this 
+is used. The first example in <code>fit</code> uses this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Not used currently.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+ 
+<p>The function <code>depmix</code> creates an S4 object of class <code>depmix</code>,
+which needs to be fitted using <code>fit</code> to optimize the
+parameters.
+</p>
+<p>The response model(s) are by default created by call(s) to
+<code>GLMresponse</code> using the <code>formula</code> and the <code>family</code>
+arguments, the latter specifying the error distribution.  See
+<code>GLMresponse</code> for possible values of the <code>family</code>
+argument for <code>glm</code>-type responses (ie a subset of the <code>glm</code>
+family options, and the multinomial).  Alternative response
+distributions are specified by using the <code>makeDepmix</code>
+function.  Its help page has examples of specifying a model with a
+multivariate normal response, as well as an example of adding a
+user-defined response model, in this case for the ex-gauss
+distribution. 
+</p>
+<p>If <code>response</code> is a list of formulae, the <code>response</code>'s are
+assumed to be independent conditional on the latent state.
+</p>
+<p>The transitions are modeled as a multinomial logistic model for each
+state.  Hence, the transition matrix can be modeled using time-varying
+covariates.  The prior density is also modeled as a multinomial
+logistic.  Both of these models are created by calls to
+<code>transInit</code>.
+</p>
+<p>Starting values for the initial, transition, and response models may be
+provided by their respective arguments.  NB: note that the starting
+values for the initial and transition models as well as of the
+multinomial logit response models are interpreted as probabilities, and
+internally converted to multinomial logit parameters.  The order in
+which parameters must be provided can be easily studied by using the
+<code>setpars</code> and <code>getpars</code> functions.
+</p>
+<p>Linear constraints on parameters can be provided as argument to the
+<code>fit</code> function.
+</p>
+<p>The print function prints the formulae for the response, transition and
+prior models along with their parameter values.
+</p>
+<p>Missing values are allowed in the data, but missing values in the 
+covariates lead to errors. 
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>depmix</code> returns an object of class <code>depmix</code> which has the
+following slots:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>A list of a list of response models; the first
+index runs over states; the second index runs over the independent 
+responses in case a multivariate response is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transition</code></td>
+<td>
+<p>A list of <code>transInit</code> models, ie multinomial
+logistic models with length the number of states.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>A multinomial logistic model for the initial state
+probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dens,trDens,init</code></td>
+<td>
+<p>See <code>depmix-class</code> help for
+details.  For internal use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stationary</code></td>
+<td>
+<p>Logical indicating whether the transitions are
+time-dependent or not; for internal use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntimes</code></td>
+<td>
+<p>A vector containing the lengths of independent time
+series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstates</code></td>
+<td>
+<p>The number of states of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nresp</code></td>
+<td>
+<p>The number of independent responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npars</code></td>
+<td>
+<p>The total number of parameters of the model.  Note: this
+is <em>not</em> the degrees of freedom because there are redundancies in the
+parameters, in particular in the multinomial models for the transitions
+and prior probabilities.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Models are not fitted; the return value of <code>depmix</code> is a model
+specification without optimized parameter values. Use the <code>fit</code>
+function to optimize parameters, and to specify additional constraints.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ingmar Visser &amp; Maarten Speekenbrink</p>
+
+
+<h3>References</h3>
+
+<p>Ingmar Visser and Maarten Speekenbrink (2010).  depmixS4: An R Package for
+Hidden Markov Models. <em>Journal of Statistical Software, 36(7)</em>, p. 1-21.
+</p>
+<p>Lawrence R. Rabiner (1989).  A tutorial on hidden Markov models and
+selected applications in speech recognition.  <em>Proceedings of
+IEEE</em>, 77-2, p. 267-295.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fit</code>, <code>transInit</code>, <code>GLMresponse</code>,
+<code>depmix-methods</code> for accessor functions to <code>depmix</code>
+objects. 	
+</p>
+<p>For full control see the <code>makeDepmix</code> help page and its
+example section for the possibility to add user-defined response
+distributions. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# create a 2 state model with one continuous and one binary response
+# ntimes is used to specify the lengths of 3 separate series
+data(speed)	
+mod &lt;- depmix(list(rt~1,corr~1),data=speed,nstates=2,
+    family=list(gaussian(),multinomial("identity")),ntimes=c(168,134,137))
+# print the model, formulae and parameter values
+mod
+set.seed(1)
+# fit the model by calling fit
+fm &lt;- fit(mod)
+
+# Volatility of S &amp; P 500 returns
+# (thanks to Chen Haibo for providing this example)
+
+data(sp500)
+
+# fit some models
+msp &lt;- depmix(logret~1,nstates=2,data=sp500)
+set.seed(1)
+fmsp &lt;- fit(msp)	
+
+# plot posterior state sequence for the 2-state model
+plot(ts(posterior(fmsp, type="smoothing")[,1], start=c(1950,2),deltat=1/12),ylab="probability",
+main="Posterior probability of state 1 (volatile, negative markets).",
+frame=FALSE)
+
+## Not run: 
+
+# this creates data with a single change point with Poisson data
+set.seed(3)
+y1 &lt;- rpois(50,1)
+y2 &lt;- rpois(50,2)
+ydf &lt;- data.frame(y=c(y1,y2))
+
+# fit models with 1 to 3 states
+m1 &lt;- depmix(y~1,ns=1,family=poisson(),data=ydf)
+set.seed(1)
+fm1 &lt;- fit(m1)
+m2 &lt;- depmix(y~1,ns=2,family=poisson(),data=ydf)
+set.seed(1)
+fm2 &lt;- fit(m2)
+m3 &lt;- depmix(y~1,ns=3,family=poisson(),data=ydf)
+set.seed(1)
+fm3 &lt;- fit(m3,em=em.control(maxit=500))
+
+# plot the BICs to select the proper model
+plot(1:3,c(BIC(fm1),BIC(fm2),BIC(fm3)),ty="b")
+
+
+## End(Not run)
+
+## Not run: 
+# similar to the binomial model, data may also be entered in 
+# multi-column format where the n for each row can be different
+dt &lt;- data.frame(y1=c(0,1,1,2,4,5),y2=c(1,0,1,0,1,0),y3=c(4,4,3,2,1,1))
+# specify a mixture model ...
+m2 &lt;- mix(cbind(y1,y2,y3)~1,data=dt,ns=2,family=multinomial("identity"))
+set.seed(1)
+fm2 &lt;- fit(m2)
+# ... or dependent mixture model
+dm2 &lt;- depmix(cbind(y1,y2,y3)~1,data=dt,ns=2,family=multinomial("identity"))
+set.seed(1)
+fdm2 &lt;- fit(dm2)
+
+## End(Not run)
+
+
+
+</code></pre>
+
+
+</div>

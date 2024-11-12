@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>any_back_colonisation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Detects any cases where a non-endemic species or species not present on the
+island has likely been on the island given its ancestral state reconstruction
+indicating ancestral presence on the island and so is likely a back
+colonisation from the island to the mainland (or potentially different
+island). This function is useful if using extraction_method = "min" in
+<code>DAISIEprep::extract_island_species()</code> as it may brake up a single colonist
+into multiple colonists because of back-colonisation.</h2>
+
+<h3>Description</h3>
+
+<p>Detects any cases where a non-endemic species or species not present on the
+island has likely been on the island given its ancestral state reconstruction
+indicating ancestral presence on the island and so is likely a back
+colonisation from the island to the mainland (or potentially different
+island). This function is useful if using extraction_method = "min" in
+<code>DAISIEprep::extract_island_species()</code> as it may brake up a single colonist
+into multiple colonists because of back-colonisation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">any_back_colonisation(phylod, only_tips = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>phylod</code></td>
+<td>
+<p>A <code>phylo4d</code> object from the package <code>phylobase</code> containing
+phylogenetic and endemicity data for each species.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>only_tips</code></td>
+<td>
+<p>A boolean determing whether only the tips (i.e. terminal
+branches) are searched for back colonisation events.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A single or vector of character strings. Character string is in the
+format ancestral_node -&gt; focal_node, where the ancestral node is not on
+mainland but the focal node is. In the case of no back colonisations a
+different message string is returned.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example with no back colonisation
+phylod &lt;- create_test_phylod(test_scenario = 15)
+any_back_colonisation(phylod)
+
+# Example with back colonisation
+set.seed(
+  3,
+  kind = "Mersenne-Twister",
+  normal.kind = "Inversion",
+  sample.kind = "Rejection"
+)
+phylo &lt;- ape::rcoal(5)
+phylo$tip.label &lt;- c("bird_a", "bird_b", "bird_c", "bird_d", "bird_e")
+phylo &lt;- phylobase::phylo4(phylo)
+endemicity_status &lt;- c("endemic", "endemic", "not_present",
+                       "endemic", "not_present")
+phylod &lt;- phylobase::phylo4d(phylo, as.data.frame(endemicity_status))
+phylod &lt;- add_asr_node_states(phylod = phylod, asr_method = "parsimony")
+# aritificially modify data to produce back-colonisation
+phylobase::tdata(phylod)$island_status[8] &lt;- "endemic"
+any_back_colonisation(phylod = phylod)
+</code></pre>
+
+
+</div>

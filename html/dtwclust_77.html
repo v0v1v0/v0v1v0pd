@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ssdtwclust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A shiny app for semi-supervised DTW-based clustering</h2>
+
+<h3>Description</h3>
+
+<p>Display a shiny user interface that implements the approach in Dau et al. (2016).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ssdtwclust(series, ..., complexity = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>series</code></td>
+<td>
+<p>Time series in the formats accepted by <code>compare_clusterings()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>More arguments for <code>shiny::runApp()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>complexity</code></td>
+<td>
+<p>A function to calculate a constraint's complexity. See details in the Cluster
+section.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The approach developed in Dau et al. (2016) argues that finding a good value of <code>window.size</code> for
+the DTW distance is very important, and suggests how to find one by using user-provided feedback.
+After clustering is done, a pair of series is presented at a time, and the user must annotate the
+pair as:
+</p>
+
+<ul>
+<li>
+<p> Must link: the series should be in the same cluster.
+</p>
+</li>
+<li>
+<p> Cannot link: the series should <em>not</em> be in the same cluster.
+</p>
+</li>
+<li>
+<p> Skip: the choice is unclear.
+</p>
+</li>
+</ul>
+<p>After each step, a good value of the window size is suggested by evaluating which clusterings
+fulfill the constraint(s) so far, and how (see Dau et al. (2016) for more information), and
+performing a majority vote using the window sizes inferred from each constraint. The (main)
+procedure is thus interactive and can be abandoned at any point.
+</p>
+
+
+<h3>Explore</h3>
+
+<p>This part of the app is simply to see some basic characteristics of the provided series and
+plot some of them. The field for integer IDs expects a valid R expression that specifies which
+of the <code>series</code> should be plotted. Multivariate series are plotted with each variable in a
+different facet.
+</p>
+
+
+<h3>Cluster</h3>
+
+<p>This part of the app implements the main procedure by leveraging <code>compare_clusterings()</code>. The
+interface is similar to <code>interactive_clustering()</code>, so it's worth checking its documentation
+too. Since <code>compare_clusterings()</code> supports parallelization with <code>foreach::foreach()</code>, you can
+register a parallel backend before opening the shiny app, but you should pre-load the workers
+with the necessary packages and/or functions. See <code>parallel::clusterEvalQ()</code> and
+<code>parallel::clusterExport()</code>, as well as the examples below.
+</p>
+<p>The range of window sizes is specified with a slider, and represents the size as a percentage
+of the shortest series' length. The <code>step</code> parameter indicates how spaced apart should the
+sizes be (parameter <code>'by'</code> in <code>base::seq()</code>). A 0-size window should only be used if all series
+have the same length. If the series have different lengths, using small window sizes can be
+problematic if the length differences are very big, see the notes in <code>dtw_basic()</code>.
+</p>
+<p>A <code>window.size</code> should <em>not</em> be specified in the extra parameters, it will be replaced with the
+computed values based on the slider. Using <code>dba()</code> centroid is detected, and will use the same
+window sizes.
+</p>
+<p>For partitional clusterings with many repetitions, and hierarchical clusterings with many
+linkage methods, the resulting partitions are aggregated by calling <code>clue::cl_medoid()</code> with
+the specified aggregation <code>method</code>.
+</p>
+<p>By default, complexity of a constraint is calculated differently from what is suggested in Dau
+et al. (2016):
+</p>
+
+<ul>
+<li>
+<p> Allocate a logical flag vector with length equal to the number of tested window sizes.
+</p>
+</li>
+<li>
+<p> For each window size, set the corresponding flag to <code>TRUE</code> if the constraint given by the
+user is fulfilled.
+</p>
+</li>
+<li>
+<p> Calculate complexity as: (number of sign changes in the vector) / (number of window sizes -
+1L) / (maximum number of <em>contiguous</em> <code>TRUE</code> flags).
+</p>
+</li>
+</ul>
+<p>You can provide your own function in the <code>complexity</code> parameter. It will receive the flag
+vector as only input, and a single number is expected as a result.
+</p>
+<p>The complexity threshold can be specified in the app. Any constraint whose complexity is higher
+than the threshold will not be considered for the majority vote. Constraints with a complexity
+of 0 are also ignored. An infinite complexity means that the constraint is never fulfilled by
+any clustering.
+</p>
+
+
+<h3>Evaluate</h3>
+
+<p>This section provides numerical results for reference. The latest results can be saved in the
+global environment, which includes clustering results, constraints so far, and the suggested
+window size. Since this includes everything returned by <code>compare_clusterings()</code>, you could also
+use <code>repeat_clustering()</code> afterwards.
+</p>
+<p>The constraint plots depict if the constraints are fulfilled or not for the given window sizes,
+where 1 means it was fulfilled and 0 means it wasn't. An error about a zero-dimension viewport
+indicates the plot height is too small to fit the plots, so please increase the height.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The optimization mentioned in section 3.4 of Dau et al. (2016) is also implemented here.
+</p>
+<p>Tracing is printed to the console.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alexis Sarda-Espinosa
+</p>
+
+
+<h3>References</h3>
+
+<p>Dau, H. A., Begum, N., &amp; Keogh, E. (2016). Semi-supervision dramatically improves time series
+clustering under dynamic time warping. In Proceedings of the 25th ACM International on Conference
+on Information and Knowledge Management (pp. 999-1008). ACM.
+<a href="https://sites.google.com/site/dtwclustering/">https://sites.google.com/site/dtwclustering/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>interactive_clustering()</code>, <code>compare_clusterings()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+require(doParallel)
+workers &lt;- makeCluster(detectCores())
+clusterEvalQ(workers, {
+    library(dtwclust)
+    RcppParallel::setThreadOptions(1L)
+})
+registerDoParallel(workers)
+ssdtwclust(reinterpolate(CharTraj[1L:20L], 150L))
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

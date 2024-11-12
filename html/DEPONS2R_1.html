@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ais.to.DeponsShips</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert ship tracks to DeponsShips object</h2>
+
+<h3>Description</h3>
+
+<p>Convert Automatic Identification System (AIS) data for ships to
+ship track objects. This is done by cropping one or more ship tracks to the
+extent of a landscape and converting the data to a <code>DeponsShips-class</code>
+object. If the AIS data does not include ship positions recorded in half-hour
+steps, the tracks are interpolated to make objects suitable for use in DEPONS.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ais.to.DeponsShips(data, landsc, title = "NA", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame with ship positions and the times at which the
+positions were recorded. Must contain the columns 'id', 'time' (of the form
+"
+type, character), 'length' (ship length, meters), 'x', and 'y' (position,
+meters/UTM).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>landsc</code></td>
+<td>
+<p>A <code>DeponsRaster</code> object corresponding to the
+landscape that the ships move in. It is assumed that the spatial projection
+of the ship positions corresponds to that of the DeponsRaster object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>Title of the output object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional parameters, including 'startday' and 'endday'
+("
+from 'data'. If startday = endday the output object will contain up to
+49 positions from the selected date for each vessel track.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a <code>DeponsShips</code> object containing one or more ships
+assigned to each of the routes in the object. All ships on a particular
+route move at the same speed along the route. The routes are
+defined by x and y coordinates based on the same coordinate reference
+system as the landscape they are located in. The speed that ships use after
+reaching a particular position (a particular 'virtual buoy') is calculated
+from the distance to the following position, and the time it takes reaching
+that position. If speed is included in the input AIS data, this is NOT used.
+The routes include one position per half-hour time step, corresponding to
+the default time step used in the DEPONS model. If input data does not
+include one position per half hour, new positions are generated using linear
+interpolation. If the input data contains many positions in a particular
+half-hour interval, only the positions closest to the half-hour interval are
+used. The routes contain information about the number of half-hour
+intervals were ships 'pause' at a particular location, e.g. in a
+port. These are calculated based on the input AIS data.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>aisdata</code> for an example of data that can be used as
+input to ais.to.DeponsShips. The function builds on
+<code>interpolate.ais.data</code>, which interpolates tracks to ensure
+that there is a position every 30 minutes.
+See <code>write.DeponsShips</code> for conversion of
+<code>DeponsShips</code> objects to json-files to be used in DEPONS. Use
+<code>routes</code>, <code>ships</code>, and <code>title</code> for
+inspection/modification of the ship tracks.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(aisdata)
+plot(aisdata$x, aisdata$y, type="n", asp=1)
+ids &lt;- sort(unique(aisdata$id))
+my.colors &lt;- heat.colors(length(ids))
+for (i in 1:length(ids)) {
+  id &lt;- ids[i]
+  points(aisdata$x[aisdata$id==id], aisdata$y[aisdata$id==id],
+     cex=0.6, col=my.colors[i])
+}
+data(bathymetry)
+plot(bathymetry, add=TRUE)
+depons.ais &lt;- ais.to.DeponsShips(aisdata, bathymetry)
+the.routes &lt;- routes(depons.ais)
+for (i in 1:length(ids)) {
+points(the.routes[[i]]$x, the.routes[[i]]$y,
+        cex=0.6, pch=16, col=my.colors[i])
+}
+depons.ais &lt;- ais.to.DeponsShips(aisdata, bathymetry,
+   startday="2015-12-20", endday="2015-12-20")
+routes(depons.ais)
+aisdata2 &lt;- aisdata
+aisdata2$time &lt;- format(as.POSIXct(aisdata$time)+300)
+depons.ais2 &lt;- ais.to.DeponsShips(aisdata2, bathymetry,
+                               startday="2015-12-20", endday="2015-12-21")
+routes(depons.ais2)
+</code></pre>
+
+
+</div>

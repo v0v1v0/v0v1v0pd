@@ -1,0 +1,305 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hdbscan</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Hierarchical DBSCAN (HDBSCAN)</h2>
+
+<h3>Description</h3>
+
+<p>Fast C++ implementation of the HDBSCAN (Hierarchical DBSCAN) and its related
+algorithms.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">hdbscan(
+  x,
+  minPts,
+  gen_hdbscan_tree = FALSE,
+  gen_simplified_tree = FALSE,
+  verbose = FALSE
+)
+
+## S3 method for class 'hdbscan'
+print(x, ...)
+
+## S3 method for class 'hdbscan'
+plot(
+  x,
+  scale = "suggest",
+  gradient = c("yellow", "red"),
+  show_flat = FALSE,
+  ...
+)
+
+coredist(x, minPts)
+
+mrdist(x, minPts, coredist = NULL)
+
+## S3 method for class 'hdbscan'
+predict(object, newdata, data, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data matrix (Euclidean distances are used) or a dist object
+calculated with an arbitrary distance metric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minPts</code></td>
+<td>
+<p>integer; Minimum size of clusters. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gen_hdbscan_tree</code></td>
+<td>
+<p>logical; should the robust single linkage tree be
+explicitly computed (see cluster tree in Chaudhuri et al, 2010).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gen_simplified_tree</code></td>
+<td>
+<p>logical; should the simplified hierarchy be
+explicitly computed (see Campello et al, 2013).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>report progress.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments are passed on.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>integer; used to scale condensed tree based on the graphics
+device. Lower scale results in wider trees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gradient</code></td>
+<td>
+<p>character vector; the colors to build the condensed tree
+coloring with.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_flat</code></td>
+<td>
+<p>logical; whether to draw boxes indicating the most stable
+clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coredist</code></td>
+<td>
+<p>numeric vector with precomputed core distances (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>clustering object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>new data points for which the cluster membership should be
+predicted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>the data set used to create the clustering object.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This fast implementation of HDBSCAN (Campello et al., 2013) computes the
+hierarchical cluster tree representing density estimates along with the
+stability-based flat cluster extraction. HDBSCAN essentially computes the
+hierarchy of all DBSCAN* clusterings, and
+then uses a stability-based extraction method to find optimal cuts in the
+hierarchy, thus producing a flat solution.
+</p>
+<p>HDBSCAN performs the following steps:
+</p>
+
+<ol>
+<li>
+<p> Compute mutual reachability distance mrd between points
+(based on distances and core distances).
+</p>
+</li>
+<li>
+<p> Use mdr as a distance measure to construct a minimum spanning tree.
+</p>
+</li>
+<li>
+<p> Prune the tree using stability.
+</p>
+</li>
+<li>
+<p> Extract the clusters.
+</p>
+</li>
+</ol>
+<p>Additional, related algorithms including the "Global-Local Outlier Score
+from Hierarchies" (GLOSH; see section 6 of Campello et al., 2015)
+is available in function <code>glosh()</code>
+and the ability to cluster based on instance-level constraints (see
+section 5.3 of Campello et al. 2015) are supported. The algorithms only need
+the parameter <code>minPts</code>.
+</p>
+<p>Note that <code>minPts</code> not only acts as a minimum cluster size to detect,
+but also as a "smoothing" factor of the density estimates implicitly
+computed from HDBSCAN.
+</p>
+<p><code>coredist()</code>: The core distance is defined for each point as
+the distance to the <code>MinPts</code>'s neighbor. It is a density estimate.
+</p>
+<p><code>mrdist()</code>: The mutual reachability distance is defined between two points as
+<code>mrd(a, b) = max(coredist(a), coredist(b), dist(a, b))</code>. This distance metric is used by
+HDBSCAN. It has the effect of increasing distances in low density areas.
+</p>
+<p><code>predict()</code> assigns each new data point to the same cluster as the nearest point
+if it is not more than that points core distance away. Otherwise the new point
+is classified as a noise point (i.e., cluster ID 0).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>hdbscan()</code> returns object of class <code>hdbscan</code> with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>cluster </code></td>
+<td>
+<p>A integer vector with cluster assignments. Zero indicates
+noise points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minPts </code></td>
+<td>
+<p> value of the <code>minPts</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_scores </code></td>
+<td>
+<p>The sum of the stability scores for each salient
+(flat) cluster. Corresponds to cluster IDs given the in <code>"cluster"</code> element.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>membership_prob </code></td>
+<td>
+<p>The probability or individual stability of a
+point within its clusters. Between 0 and 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outlier_scores </code></td>
+<td>
+<p>The GLOSH outlier score of each point. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hc </code></td>
+<td>
+<p>An hclust object of the HDBSCAN hierarchy. </p>
+</td>
+</tr>
+</table>
+<p><code>coredist()</code> returns a vector with the core distance for each data point.
+</p>
+<p><code>mrdist()</code> returns a dist object containing pairwise mutual reachability distances.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matt Piekenbrock
+</p>
+
+
+<h3>References</h3>
+
+<p>Campello RJGB, Moulavi D, Sander J (2013). Density-Based Clustering Based on
+Hierarchical Density Estimates. Proceedings of the 17th Pacific-Asia
+Conference on Knowledge Discovery in Databases, PAKDD 2013, <em>Lecture Notes
+in Computer Science</em> 7819, p. 160.
+<a href="https://doi.org/10.1007/978-3-642-37456-2_14">doi:10.1007/978-3-642-37456-2_14</a>
+</p>
+<p>Campello RJGB, Moulavi D, Zimek A, Sander J (2015). Hierarchical density
+estimates for data clustering, visualization, and outlier detection.
+<em>ACM Transactions on Knowledge Discovery from Data (TKDD),</em> 10(5):1-51.
+<a href="https://doi.org/10.1145/2733381">doi:10.1145/2733381</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other clustering functions: 
+<code>dbscan()</code>,
+<code>extractFOSC()</code>,
+<code>jpclust()</code>,
+<code>optics()</code>,
+<code>sNNclust()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## cluster the moons data set with HDBSCAN
+data(moons)
+
+res &lt;- hdbscan(moons, minPts = 5)
+res
+
+plot(res)
+plot(moons, col = res$cluster + 1L)
+
+## cluster the moons data set with HDBSCAN using Manhattan distances
+res &lt;- hdbscan(dist(moons, method = "manhattan"), minPts = 5)
+plot(res)
+plot(moons, col = res$cluster + 1L)
+
+## DS3 from Chameleon
+data("DS3")
+
+res &lt;- hdbscan(DS3, minPts = 50)
+res
+
+## Plot the simplified tree, highlight the most stable clusters
+plot(res, show_flat = TRUE)
+
+## Plot the actual clusters (noise has cluster id 0 and is shown in black)
+plot(DS3, col = res$cluster + 1L, cex = .5)
+</code></pre>
+
+
+</div>

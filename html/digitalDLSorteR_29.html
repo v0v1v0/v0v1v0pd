@@ -1,0 +1,219 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deconvDDLSObj</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Deconvolute bulk gene expression samples (bulk RNA-Seq)</h2>
+
+<h3>Description</h3>
+
+<p>Deconvolute bulk gene expression samples (bulk RNA-Seq). This function
+requires a <code>DigitalDLSorter</code> object with a trained Deep Neural Network
+model (<code>trained.model</code> slot) and the new bulk RNA-Seq samples to
+be deconvoluted in the <code>deconv.data</code> slot. See
+<code>?loadDeconvData</code> for more details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deconvDDLSObj(
+  object,
+  name.data = "Bulk.DT",
+  normalize = TRUE,
+  scaling = "standardize",
+  simplify.set = NULL,
+  simplify.majority = NULL,
+  use.generator = FALSE,
+  batch.size = 64,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p><code>DigitalDLSorter</code> object with
+<code>trained.data</code> and <code>deconv.data</code> slots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name.data</code></td>
+<td>
+<p>Name of the data stored in the <code>DigitalDLSorter</code>
+object. If not provided, the first data set will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p>Normalize data before deconvolution (<code>TRUE</code> by
+default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaling</code></td>
+<td>
+<p>How to scale data before training. It may be:
+<code>"standardize"</code> (values are centered around the mean with a unit
+standard deviation) or <code>"rescale"</code> (values are shifted and rescaled so
+that they end up ranging between 0 and 1). If <code>normalize = FALSE</code>,
+data is not scaled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify.set</code></td>
+<td>
+<p>List specifying which cell types should be compressed
+into a new label whose name will be the list item. See examples for
+details. If provided, results are stored in a list with 'raw' and
+'simpli.set' results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify.majority</code></td>
+<td>
+<p>List specifying which cell types should be
+compressed into the cell type with the highest proportion in each sample.
+Unlike <code>simplify.set</code>, it allows to maintain the complexity of the
+results while compressing the information, as no new labels are created. If
+provided, the results are stored in a list with 'raw' and 'simpli.majority'
+results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.generator</code></td>
+<td>
+<p>Boolean indicating whether to use generators for
+prediction (<code>FALSE</code> by default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batch.size</code></td>
+<td>
+<p>Number of samples per batch. Only when <code>use.generator
+= TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Show informative messages during the execution.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is intended for users who have built a devonvolution model
+using their own single-cell RNA-Seq data. If you want to use a pre-trained
+model to deconvolute your samples, see <code>?deconvDigitalDLSorter</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>DigitalDLSorter</code> object with
+<code>deconv.results</code> slot. The resulting information is a data frame with
+samples (<code class="reqn">i</code>) as rows and cell types (<code class="reqn">j</code>) as columns. Each entry
+represents the proportion of <code class="reqn">j</code> cell type in <code class="reqn">i</code> sample. If
+<code>simplify.set</code> or/and <code>simpplify.majority</code> are provided, the
+<code>deconv.results</code> slot will contain a list with raw and simplified
+results.
+</p>
+
+
+<h3>References</h3>
+
+<p>Torroja, C. and Sánchez-Cabo, F. (2019). digitalDLSorter: A Deep
+Learning algorithm to quantify immune cell populations based on scRNA-Seq
+data. Frontiers in Genetics 10, 978. doi: <a href="https://doi.org/10.3389/fgene.2019.00978">doi:10.3389/fgene.2019.00978</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>trainDDLSModel</code>
+<code>DigitalDLSorter</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+set.seed(123)
+sce &lt;- SingleCellExperiment::SingleCellExperiment(
+  assays = list(
+    counts = matrix(
+      rpois(30, lambda = 5), nrow = 15, ncol = 20,
+      dimnames = list(paste0("Gene", seq(15)), paste0("RHC", seq(20)))
+    )
+  ),
+  colData = data.frame(
+    Cell_ID = paste0("RHC", seq(20)),
+    Cell_Type = sample(x = paste0("CellType", seq(6)), size = 20,
+                       replace = TRUE)
+  ),
+  rowData = data.frame(
+    Gene_ID = paste0("Gene", seq(15))
+  )
+)
+DDLS &lt;- createDDLSobject(
+  sc.data = sce,
+  sc.cell.ID.column = "Cell_ID",
+  sc.gene.ID.column = "Gene_ID",
+  sc.filt.genes.cluster = FALSE, 
+  sc.log.FC = FALSE
+)
+probMatrixValid &lt;- data.frame(
+  Cell_Type = paste0("CellType", seq(6)),
+  from = c(1, 1, 1, 15, 15, 30),
+  to = c(15, 15, 30, 50, 50, 70)
+)
+DDLS &lt;- generateBulkCellMatrix(
+  object = DDLS,
+  cell.ID.column = "Cell_ID",
+  cell.type.column = "Cell_Type",
+  prob.design = probMatrixValid,
+  num.bulk.samples = 50,
+  verbose = TRUE
+)
+# training of DDLS model
+tensorflow::tf$compat$v1$disable_eager_execution()
+DDLS &lt;- trainDDLSModel(
+  object = DDLS,
+  on.the.fly = TRUE,
+  batch.size = 15,
+  num.epochs = 5
+)
+# simulating bulk RNA-Seq data
+countsBulk &lt;- matrix(
+  stats::rpois(100, lambda = sample(seq(4, 10), size = 100, replace = TRUE)),
+  nrow = 40, ncol = 15,
+  dimnames = list(paste0("Gene", seq(40)), paste0("Bulk", seq(15)))
+)
+seBulk &lt;- SummarizedExperiment(assay = list(counts = countsBulk))
+DDLS &lt;- loadDeconvData(
+  object = DDLS,
+  data = seBulk,
+  name.data = "Example"
+)
+# simplify arguments
+simplify &lt;- list(CellGroup1 = c("CellType1", "CellType2", "CellType4"),
+                 CellGroup2 = c("CellType3", "CellType5"))
+DDLS &lt;- deconvDDLSObj(
+  object = DDLS,
+  name.data = "Example",
+  simplify.set = simplify,
+  simplify.majority = simplify
+)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

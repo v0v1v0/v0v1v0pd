@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dnt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Non-central t-Distribution Density - Algorithms and Approximations</h2>
+
+<h3>Description</h3>
+
+<p><code>dntJKBf1</code> implements the summation formulas
+of Johnson, Kotz and Balakrishnan (1995),
+(31.15) on page 516 and (31.15') on p.519, the latter being typo-corrected
+for a missing  factor <code class="reqn">1 / j!</code>.
+</p>
+<p><code>dntJKBf()</code> is <code>Vectorize(dntJKBf1,
+    c("x","df","ncp"))</code>, i.e., works vectorized in all three main
+arguments <code>x</code>, <code>df</code> and <code>ncp</code>.
+</p>
+<p>The functions <code>.dntJKBch1()</code> and  <code>.dntJKBch()</code> are only there
+for didactical reasons allowing to check that indeed formula (31.15')
+in the reference is missing a <code class="reqn">j!</code> factor in the denominator.
+</p>
+<p>The <code>dntJKBf*()</code> functions are written to also work with
+arbitrary precise numbers of <code>class</code>
+<code>"mpfr"</code> (from package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>)
+as arguments.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+dntJKBf1(x, df, ncp, log = FALSE, M = 1000)
+dntJKBf (x, df, ncp, log = FALSE, M = 1000)
+
+## The "checking" versions, only for proving correctness of formula:
+.dntJKBch1(x, df, ncp, log = FALSE, M = 1000, check=FALSE, tol.check = 1e-7)
+.dntJKBch (x, df, ncp, log = FALSE, M = 1000, check=FALSE, tol.check = 1e-7)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, df, ncp</code></td>
+<td>
+<p>see <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>dt()</code>; note that each can be
+of class <code>"mpfr"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>as in <code>dt()</code>, a logical indicating if
+<code class="reqn">\log(f(x,*))</code> should be returned instead of <code class="reqn">f(x,*)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>the number of terms to be used, a positive integer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check</code></td>
+<td>
+<p>logical indicating if checks of the formula equalities
+should be done.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol.check</code></td>
+<td>
+<p>tolerance to be used for <code>all.equal()</code>
+when <code>check</code> is true.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>How to choose <code>M</code> optimally has not been investigated yet and
+is probably also a function of the precision of the first three arguments (see
+
+<code>getPrec</code> from <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>).
+</p>
+<p>Note that relatedly, 
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s source code ‘<span class="file">R/src/nmath/dnt.c</span>’ has claimed from 2003 till 2014
+but <b>wrongly</b> that the noncentral t density <code class="reqn">f(x, *)</code> was </p>
+<pre>
+    f(x, df, ncp) =
+ 	df^(df/2) * exp(-.5*ncp^2) /
+ 	(sqrt(pi)*gamma(df/2)*(df+x^2)^((df+1)/2)) *
+ 	   sum_{k=0}^Inf  gamma((df + k + df)/2)*ncp^k / prod(1:k)*(2*x^2/(df+x^2))^(k/2) .</pre>
+<p>These functions (and this help page) prove that it was wrong.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a number for <code>dntJKBf1()</code> and <code>.dntJKBch1()</code>.
+</p>
+<p>a numeric vector of the same length as the maximum of the lengths of
+<code>x, df, ncp</code> for  <code>dntJKBf()</code> and <code>.dntJKBch()</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Johnson, N.L., Kotz, S. and Balakrishnan, N. (1995)
+Continuous Univariate Distributions Vol~2, 2nd ed.; Wiley;
+chapter 31, Section <em>5  Distribution Function</em>, p.514 ff
+</p>
+
+
+<h3>See Also</h3>
+
+<p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>dt</code>;
+(an improved version of) Viechtbauer's proposal: <code>dtWV</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tt &lt;-  seq(0, 10, length.out = 21)
+ncp &lt;- seq(0,  6, length.out = 31)
+dt3R   &lt;- outer(tt, ncp, dt,     df = 3)
+dt3JKB &lt;- outer(tt, ncp, dntJKBf, df = 3)
+all.equal(dt3R, dt3JKB) # Lnx(64-b): 51 NA's in dt3R
+
+x &lt;- seq(-1,12, by=1/16)
+fx &lt;- dt(x, df=3, ncp=5)
+re1 &lt;- 1 - .dntJKBch(x, df=3, ncp=5) / fx ; summary(warnings()) # slow, with warnings
+op &lt;- options(warn = 2) # (=&gt; warning == error, for now)
+re2 &lt;- 1 -  dntJKBf (x, df=3, ncp=5) / fx  # faster, no warnings
+stopifnot(all.equal(re1[!is.na(re1)], re2[!is.na(re1)], tol=1e-6))
+head( cbind(x, fx, re1, re2) , 20)
+matplot(x, log10(abs(cbind(re1, re2))), type = "o", cex = 1/4)
+
+## One of the numerical problems in "base R"'s non-central t-density:
+options(warn = 0) # (factory def.)
+x &lt;- 2^seq(-12, 32, by=1/8) ; df &lt;- 1/10
+dtm &lt;- cbind(dt(x, df=df,           log=TRUE),
+             dt(x, df=df, ncp=df/2, log=TRUE),
+             dt(x, df=df, ncp=df,   log=TRUE),
+             dt(x, df=df, ncp=df*2, log=TRUE)) #.. quite a few warnings:
+summary(warnings())
+matplot(x, dtm, type="l", log = "x", xaxt="n",
+        main = "dt(x, df=1/10, log=TRUE) central and noncentral")
+sfsmisc::eaxis(1)
+legend("right", legend=c("", paste0("ncp = df",c("/2","","*2"))),
+       lty=1:4, col=1:4, bty="n")
+
+(doExtras &lt;- DPQ:::doExtras()) # TRUE e.g. if interactive()
+(ncp &lt;- seq(0, 12, by = if(doExtras) 3/4 else 2))
+names(ncp) &lt;- nnMs &lt;- paste0("ncp=", ncp)
+tt  &lt;- seq(0, 5, by =  1)
+dt3R &lt;- outer(tt, ncp, dt,   df = 3)
+if(requireNamespace("Rmpfr")) withAutoprint({
+   mt  &lt;- Rmpfr::mpfr(tt , 128)
+   mcp &lt;- Rmpfr::mpfr(ncp, 128)
+   system.time(
+       dt3M &lt;- outer(mt, mcp, dntJKBf, df = 3,
+                     M = if(doExtras) 1024 else 256)) # M=1024: 7 sec [10 sec on Winb]
+   relE &lt;- Rmpfr::asNumeric(sfsmisc::relErrV(dt3M, dt3R))
+   relE[tt != 0, ncp != 0]
+})
+
+## all.equal(dt3R, dt3V, tol=0) # 1.2e-12
+
+ # ---- using MPFR high accuracy arithmetic (too slow for routine testing) ---
+## no such kink here:
+x. &lt;- if(requireNamespace("Rmpfr")) Rmpfr::mpfr(x, 256) else x
+system.time(dtJKB &lt;- dntJKBf(x., df=df, ncp=df, log=TRUE)) # 43s, was 21s and only 7s ???
+lines(x, dtJKB, col=adjustcolor(3, 1/2), lwd=3)
+options(op) # reset to prev.
+
+## Relative Difference / Approximation errors :
+plot(x, 1 - dtJKB / dtm[,3], type="l", log="x")
+plot(x, 1 - dtJKB / dtm[,3], type="l", log="x", xaxt="n", ylim=c(-1,1)*1e-3); sfsmisc::eaxis(1)
+plot(x, 1 - dtJKB / dtm[,3], type="l", log="x", xaxt="n", ylim=c(-1,1)*1e-7); sfsmisc::eaxis(1)
+plot(x, abs(1 - dtJKB / dtm[,3]), type="l", log="xy", axes=FALSE, main =
+     "dt(*, 1/10, 1/10, log=TRUE) relative approx. error",
+     sub= paste("Copyright (C) 2019  Martin Maechler  --- ", R.version.string))
+for(j in 1:2) sfsmisc::eaxis(j)
+
+</code></pre>
+
+
+</div>

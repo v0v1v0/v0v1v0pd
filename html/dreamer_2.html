@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dreamerplot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Posterior Plot of Bayesian Model Averaging</h2>
+
+<h3>Description</h3>
+
+<p>Plots the posterior mean and quantiles over the dose range and
+plots error bars at the observed doses. If the <code>data</code> argument is
+specified, the observed means at each dose are also plotted.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dreamer_mcmc'
+plot(
+  x,
+  doses = attr(x, "doses"),
+  times = attr(x, "times"),
+  probs = c(0.025, 0.975),
+  data = NULL,
+  n_smooth = 50,
+  predictive = 0,
+  width = bar_width(doses),
+  reference_dose = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from a call to <code>dreamer_mcmc</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>a vector of doses at which to plot the dose response curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>a vector of the times at which to plot the posterior (for
+longitudinal models only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>quantiles of the posterior to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a dataframe with column names of "dose" and "response" for
+individual patient data.  Optional columns "n" and "sample_var" can
+be specified if aggregate data is supplied, but it is recommended that
+patient-level data be supplied where possible for continuous models, as the
+posterior weights differ if aggregated data is used.
+For aggregated continuous
+data, "response" should be the average of "n" subjects with a sample
+variance of "sample_var".  For aggregated binary data, "response" should
+be the number of successes, "n" should be the total number of subjects
+(the "sample_var" column is irrelevant in binary cases and is ignored).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_smooth</code></td>
+<td>
+<p>the number of points to calculate the smooth dose response
+interpolation.  Must be sufficiently high to accurately depict the
+dose response curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictive</code></td>
+<td>
+<p>the size of sample for which to plot posterior predictive
+intervals for the mean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width</code></td>
+<td>
+<p>the width of the error bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_dose</code></td>
+<td>
+<p>the dose at which to adjust the posterior plot.
+Specifying
+a dose returns the plot of pr(trt_dose - trt_reference_dose | data).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>model definitions created using the model creation functions
+in model.  If arguments are named, the names are
+retained in the return values.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns the ggplot object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e4,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+plot(output)
+
+## Not run: 
+# with data
+plot(output, data = data)
+
+# predictive distribution
+plot(output, data = data, predictive = 1)
+
+# single model
+plot(output$mod_linear)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>geom_dhb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Geom for DHB hexmap
+</h2>
+
+<h3>Description</h3>
+
+<p>A <code>ggplot2</code> geom for the District Health Board hexmap: <code>geom_dhb</code> wraps <code>geom_map</code> and <code>geom_label_dhb</code> wraps <code>geom_text</code>. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">geom_dhb(mapping = NULL, data = NULL, stat="identity",...,
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,coord=TRUE)
+geom_label_dhb(mapping = NULL, data = NULL, ...,
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE, short=FALSE)
+geom_dhbtri(mapping = NULL, data = NULL, stat="identity",...,
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,coord=TRUE)
+geom_region(mapping = NULL, data = NULL, stat="identity",...,
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,coord=TRUE)
+geom_label_region(mapping = NULL, data = NULL, ...,
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,short=FALSE)
+geom_regiontri(mapping = NULL, data = NULL,stat="identity", ...,
+  na.rm = FALSE, show.legend = NA, inherit.aes = TRUE,coord=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mapping</code></td>
+<td>
+
+<p>Set of aesthetic mappings created by <code>aes()</code> or <code>aes_()</code>. For <code>geom_dhb</code>  and <code>geom_region</code> you must specify <code>map_id</code> with the unit names, and for <code>geom_dhbtri</code> and <code>geom_regiontri</code> additionally specify <code>class_id</code> giving the order of triangles within a hex.  The <code>radius</code> aesthetic controls the size of the hexes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>The data to be displayed in this layer. Usually inherited from the plot data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+<p>The statistical transformation to use on the data for this layer, as a string.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Other arguments passed on to layer(), such as aesthetics, used to set an aesthetic to a fixed value, like <code>colour = "white"</code> or <code>cex = 3</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+
+<p>If <code>FALSE</code>, warn when missing values are removed
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show.legend</code></td>
+<td>
+
+<p>logical. Should this layer be included in the legends? <code>NA</code>, the default, includes if any aesthetics are mapped. <code>FALSE</code> never includes, and <code>TRUE</code> always includes. It can also be a named logical vector to finely select the aesthetics to display.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inherit.aes</code></td>
+<td>
+
+<p>If <code>FALSE</code>, overrides the default aesthetics, rather than combining with them.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coord</code></td>
+<td>
+<p>If <code>TRUE</code>, set the aspect ratio and plot limits.  The main reason to have <code>coord=FALSE</code> is if you are stacking two <code>geom_dhb</code> layers </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>short</code></td>
+<td>
+<p>If <code>TRUE</code>, use the ‘short’ (mostly 1-character) abbreviations for DHB or region names</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The geoms
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dhb_fixname</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(immune)
+summary(immune)
+
+immune$vax_pct&lt;-cut(immune$Pcttotal,c(0,.80,.85,.90,.95,1))
+ggplot(immune)+
+	geom_dhb(aes(fill=vax_pct,map_id=dhb_fixname(DHB)))+
+	scale_fill_viridis_d(drop=FALSE)+
+	geom_label_dhb(short=TRUE,colour="white")
+
+## size variation, plus stacking to show the full-size hexes underneath,
+## plus no labels
+ggplot(immune)+
+	geom_dhb(aes(map_id=dhb_fixname(DHB)),fill="white",colour="grey",coord=FALSE)+
+	geom_dhb(aes(fill=vax_pct,map_id=dhb_fixname(DHB),radius=sqrt(Ntotal)),alpha=0.5)+
+	scale_fill_viridis_d(drop=FALSE)
+
+
+data(immune_long)
+ggplot(immune_long) + 
+   	geom_dhb(aes(map_id=dhb_fixname(DHB),fill=pct_vax),
+		alpha=0.5,colour="lightgrey") +
+   	scale_fill_viridis_d(drop=FALSE)+
+   	geom_label_dhb(short=TRUE,colour="black",cex=3)+
+   	facet_wrap(~ethnicity)
+
+
+data(dhb_cars)
+tris&lt;-tri_alloc(dhb_cars[,-1], c("0","1","2","3+"), names=dhb_cars$dhb )
+tri_data&lt;-data.frame(DHB=rep(rownames(tris),6),
+                     cars=as.vector(tris),
+		     tri_id=rep(1:6,each=nrow(tris)))
+
+ggplot(tri_data)+
+	geom_dhbtri(aes(map_id=DHB,class_id=tri_id, fill=cars),alpha=0.5)+
+	scale_fill_viridis_d()+
+	geom_label_dhb(short=TRUE)
+
+
+
+data(region_ethnicity)
+tri_eth&lt;-tri_alloc(as.matrix(region_ethnicity[,-1]),
+	classes=c("Asian","Euro","Maori","MELAA","Pacific"),
+	names=region_ethnicity$Area)
+
+
+tri_data&lt;-data.frame(Region=rep(rownames(tri_eth),6),
+                     ethnicity=as.vector(tri_eth),
+		     tri_id=rep(1:6,each=nrow(tri_eth)))
+
+ggplot(tri_data)+
+	geom_regiontri(aes(map_id=Region,class_id=tri_id, fill=ethnicity))+
+	geom_label_region(colour="Black", short=TRUE,cex=3)
+
+</code></pre>
+
+
+</div>

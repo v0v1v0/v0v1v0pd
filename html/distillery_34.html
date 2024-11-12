@@ -1,0 +1,412 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tibber</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Test-Inversion Bootstrap
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculate (1 - alpha) * 100 percent confidence intervals for an estimated parameter using the test-inversion bootstrap method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tibber(x, statistic, B, rmodel, test.pars, rsize, block.length = 1, v.terms,
+    shuffle = NULL, replace = TRUE, alpha = 0.05, verbose = FALSE, ...)
+
+tibberRM(x, statistic, B, rmodel, startval, rsize, block.length = 1, 
+    v.terms, shuffle = NULL, replace = TRUE, alpha = 0.05, step.size, 
+    tol = 1e-04, max.iter = 1000, keep.iters = TRUE, verbose = FALSE, 
+    ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>numeric vector or data frame giving the original data series.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+
+<p>function giving the estimated parameter value.  Must minimally contain arguments <code>data</code> and <code>...</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+
+<p>number of replicated bootstrap samples to use.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rmodel</code></td>
+<td>
+
+<p>function that simulates data based on the nuisance parameter provided by <code>test.pars</code>.  Must minimally take arguments: <code>data</code>, <code>par</code>, <code>n</code>, and <code>...</code>.  The first, <code>data</code>, is the data series (it need not be used by the function, but it must have this argument, and the original data are passed to it via this argument), <code>par</code> is the nuisance parameter, <code>n</code> is the sample size, and <code>...</code> are any additional arguments that might be needed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test.pars</code></td>
+<td>
+
+<p>single number or vector giving the nuisance parameter value.  If a vector of length greater than one, then the interpolation method will be applied to estimate the confidence bounds.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startval</code></td>
+<td>
+<p>one or two numbers giving the starting value for the nuisance parameter in the Robbins-Monro algorithm.  If two numbers are given, the first is used as the starting value for the lower bound, and the second for the upper.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rsize</code></td>
+<td>
+
+<p>(optional) numeric less than the length of the series given by <code>x</code>, used if an m-out-of-n bootstrap sampling procedure should be used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.length</code></td>
+<td>
+
+<p>(optional) length of blocks to use if the circular block bootstrap resampling scheme is to be used (default is iid sampling).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v.terms</code></td>
+<td>
+
+<p>(optional) gives the positions of the variance estimate in the output from <code>statistic</code>.  If supplied, then Studentized intervals are returned instead of (<code>tibberRM</code>) of in addition to (<code>tibber</code>) the regular intervals.  Generally, such intervals are not ideal for the test-inversion method.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shuffle</code></td>
+<td>
+
+<p><code>n</code> (or <code>rsize</code>) by <code>B</code> matrix giving the indices for the resampling procedure (obviates arguments <code>block.length</code> and <code>B</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+
+<p>logical stating whether or not to sample with replacement.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>significance level for the test.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step.size</code></td>
+<td>
+<p> Step size for the Robbins-Monro algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p> tolerance giving the value for how close the estimated p-value needs to be to <code>alpha</code> before stopping the Robbins-Monro algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+<p>Maximum number of iterations to perform before stopping the Robbins-Monro algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.iters</code></td>
+<td>
+<p>logical, should information from each iteration of the Robbins-Monro algorithm be saved?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>logical should progress information be printed to the screen.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Optional arguments to <code>booter</code>, <code>statistic</code> and <code>rmodel</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The test-inversion bootstrap (Carpenter 1999; Carpenter and Bithell 2000; Kabaila 1993) is a parametric bootstrap procedure that attempts to take advantage of the duality between confidence intervals and hypothesis tests in order to create bootstrap confidence intervals.  Let X = X_1,...,X_n be a series of random variables, T, is a parameter of interest, and R(X) is an estimator for T.  Further, let x = x_1,...,x_n be an observed realization of X, and r(x) an estimate for R(X), and let x* be a bootstrap resample of x, etc.  Suppose that X is distributed according to a distribution, F, with parameter T and nuisance parameter V.
+</p>
+<p>The procedure is carried out by estimating the p-value, say p*, from r*_1, ..., r*_B estimated from a simulated sample from <code>rmodel</code> assuming a specific value of V by way of finding the sum of r*_i &lt; r(x) (with an additional correction for the ties r*_i = r(x)).  The procedure is repeated for each of k values of V to form a sample of p-values, p*_1, ..., p*_k.  Finally, some form of root-finding algorithm must be employed to find the values r*_L and r*_U that estimate the lower and upper values, resp., for R(X) associated with (1 - alpha) * 100 percent confidence limits.  For <code>tibber</code>, the routine can be executed one time if <code>test.pars</code> is of length one, which will enable a user to employ their own root-finding algorithm.  If <code>test.pars</code> is a vector, then an interpolation estimate is found for the confidence end points.  <code>tibberRM</code> makes successive calls to <code>tibber</code> and uses the Robbins-Monro algorithm (Robbins and Monro 1951) to try to find the appropriate bounds, as suggested by Garthwaite and Buckland (1992).
+</p>
+
+
+<h3>Value</h3>
+
+<p>For tibber, if test.pars is of length one, then a 3 by 1 matrix is returned (or, if <code>v.terms</code> is supplied, then a 4 by 1 matrix) where the first two rows give estimates for R(X) based on the original simulated series and the median from the bootstrap samples, respectively.  the last row gives the estimated p-value.  If <code>v.terms</code> is supplied, then the fourth row gives the p-value associated with the Studentized p-value.
+</p>
+<p>If test.pars is a vector with length k &gt; 1, then a list object of class “tibbed” is returned, which has components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>results</code></td>
+<td>
+<p>3 by k matrix (or 4 by k, if <code>v.terms</code> is not missing) giving two estimates for R(X) (one from the simulated series and one of the median of the bootstrap resamples, resp.) and the third row giving the estimated p-value for each value of V. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TIB.interpolated, STIB.interpolated</code></td>
+<td>
+<p>numeric vector of length 3 giving the lower bound estimate, the estimate from the original data (i.e., r(x)), and the estimated upper bound as obtained from interpolating over the vector of possible values for V given by test.pars.  The Studentized TIB interval, <code>STIB.interpolated</code>, is only returned if <code>v.terms</code> is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Plow, Pup, PstudLow, PstudUp</code></td>
+<td>
+<p>Estimated p-values used for interpolation of p-value. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the original function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>the original data passed by the x argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic, B, rmodel, test.pars, rsize, block.length, alpha, replace</code></td>
+<td>
+<p>arguments passed into the orignal function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>original sample size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total.time</code></td>
+<td>
+<p>Total time it took for the function to run.</p>
+</td>
+</tr>
+</table>
+<p>For tibberRM, a list of class “tibRMed” is returned with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the original function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, statistic, B, rmodel, rsize, block.length, alpha, replace</code></td>
+<td>
+<p>arguments passed into the orignal function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>result</code></td>
+<td>
+<p>vector of length 3 giving the estimated confidence interval with the original parameter estimate in the second component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code> lower.p.value, upper.p.value </code></td>
+<td>
+<p>Estimated achieved p-values for the lower and upper bounds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code> lower.nuisance.par, upper.nuisance.par </code></td>
+<td>
+<p> nuisance parameter values associated with the lower and upper bounds. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code> lower.iterations, upper.iterations</code></td>
+<td>
+<p> number of iterations of the Robbins-Monro algorithm it took to find the lower and upper bounds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total.time</code></td>
+<td>
+<p>Total time it took for the function to run.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Eric Gilleland
+</p>
+
+
+<h3>References</h3>
+
+<p>Carpenter, James (1999) Test inversion bootstrap confidence intervals.  <em>J. R. Statist. Soc. B</em>, <b>61</b> (1), 159–172.
+</p>
+<p>Carpenter, James and Bithell, John (2000) Bootstrap confidence intervals: when, which, what?  A practical guide for medical statisticians.  <em>Statist. Med.</em>, <b>19</b>, 1141–1164.
+</p>
+<p>Garthwaite, P. H. and Buckland, S. T. (1992) Generating Monte Carlo confidence intervals by the Robbins-Monro process.  <em>Appl. Statist.</em>, <b>41</b>, 159–171.
+</p>
+<p>Kabaila, Paul (1993) Some properties of profile bootstrap confidence intervals.  <em>Austral. J. Statist.</em>, <b>35</b> (2), 205–214.
+</p>
+<p>Robbins, Herbert and Monro, Sutton (1951) A stochastic approximation method.  <em>Ann. Math Statist.</em>, <b>22</b> (3), 400–407.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>booter</code>, <code>pbooter</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The following example follows the example provided at:
+#
+# http://influentialpoints.com/Training/bootstrap_confidence_intervals.htm
+#
+# which is provided with a creative commons license:
+#
+# https://creativecommons.org/licenses/by/3.0/ 
+#
+y &lt;- c( 7, 7, 6, 9, 8, 7, 8, 7, 7, 7, 6, 6, 6, 8, 7, 7, 7, 7, 6, 7,
+        8, 7, 7, 6, 8, 7, 8, 7, 8, 7, 7, 7, 5, 7, 7, 7, 6, 7, 8, 7, 7,
+        8, 6, 9, 7, 14, 12, 10, 13, 15 )
+
+trm &lt;- function( data, ... ) {
+
+    res &lt;- try( mean( data, trim = 0.1, ... ) )
+    if( class( res ) == "try-error" ) return( NA )
+    else return( res )
+
+} # end of 'trm' function.
+
+genf &lt;- function( data, par, n, ... ) {
+
+    y &lt;- data * par
+    h &lt;- 1.06 * sd( y ) / ( n^( 1 / 5 ) )
+    y &lt;- y + rnorm( rnorm( n, 0, h ) )
+    y &lt;- round( y * ( y &gt; 0 ) )
+
+    return( y )
+
+} # end of 'genf' function.
+
+look &lt;- tibber( x = y, statistic = trm, B = 500, rmodel = genf,
+    test.pars = seq( 0.85, 1.15, length.out = 100 ) )
+
+look
+
+plot( look )
+# outer vertical blue lines should cross horizontal blue lines
+# near where an estimated p-value is located.
+
+tibber( x = y, statistic = trm, B = 500, rmodel = genf, test.pars = 1 )
+
+
+## Not run: 
+look2 &lt;- tibberRM(x = y, statistic = trm, B = 500, rmodel = genf, startval = 1,
+    step.size = 0.03, verbose = TRUE )
+
+look2
+# lower achieved est. p-value should be close to 0.025
+# upper should be close to 0.975.
+
+plot( look2 )
+
+trm2 &lt;- function( data, par, n, ... ) {
+
+    a &lt;- list( ... )
+    res &lt;- try( mean( data, trim = a$trim ) )
+    if( class( res ) == "try-error" ) return( NA )
+    else return( res )
+
+} # end of 'trm2' function.
+
+tibber( x = y, statistic = trm2, B = 500, rmodel = genf,
+    test.pars = seq( 0.85, 1.15, length.out = 100 ), trim = 0.1 )
+
+# Try getting the STIB interval.  v.terms = 2 below because mfun
+# returns the variance of the estimated parameter in the 2nd position.
+#
+# Note: the STIB interval can be a bit unstable.
+
+mfun &lt;- function( data, ... ) return( c( mean( data ), var( data ) ) )
+
+gennorm &lt;- function( data, par, n, ... ) {
+
+    return( rnorm( n = n, mean = mean( data ), sd = sqrt( par ) ) )
+
+} # end of 'gennorm' function.
+
+set.seed( 1544 )
+z &lt;- rnorm( 50 )
+mean( z )
+var( z )
+
+# Trial-and-error is necessary to get a good result with interpolation method.
+res &lt;- tibber( x = z, statistic = mfun, B = 500, rmodel = gennorm,
+    test.pars = seq( 0.95, 1.10, length.out = 100 ), v.terms = 2 )
+
+res
+
+plot( res )
+
+# Much trial-and-error is necessary to get a good result with RM method.
+# If it fails to converge, try increasing the tolerance.
+res2 &lt;- tibberRM( x = z, statistic = mfun, B = 500, rmodel = gennorm,
+    startval = c( 0.95, 1.1 ), step.size = 0.003, tol = 0.001, v.terms = 2,
+    verbose = TRUE )
+# Note that it only gives the STIB interval.
+
+res2
+
+plot( res2 )
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

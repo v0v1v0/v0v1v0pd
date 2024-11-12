@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drake_envir</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get the environment where drake builds targets
+<a href="https://lifecycle.r-lib.org/articles/stages.html#questioning"><img src="../help/figures/lifecycle-questioning.svg" alt="[Questioning]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Call this function inside the commands in your plan
+to get the environment where <code>drake</code> builds targets.
+Advanced users can use it to strategically remove targets from memory
+while <code>make()</code> is running.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drake_envir(which = c("targets", "dynamic", "subtargets", "imports"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>which</code></td>
+<td>
+<p>Character of length 1, which environment
+to select. See the details of this help file.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p><code>drake</code> manages in-memory targets in 4 environments:
+one with sub-targets, one with whole dynamic targets, one with
+static targets, and one with imported global objects and functions.
+This last environment is usually the environment
+from which you call <code>make()</code>.
+Select the appropriate environment for your
+use case with the <code>which</code> argument of <code>drake_envir()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The environment where <code>drake</code> builds targets.
+</p>
+
+
+<h3>Keywords</h3>
+
+<p><code>drake_plan()</code> understands special keyword functions for your commands.
+With the exception of <code>target()</code>, each one is a proper function
+with its own help file.
+</p>
+
+<ul>
+<li> <p><code>target()</code>: give the target more than just a command.
+Using <code>target()</code>, you can apply a transformation
+(examples: <code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#large-plans⁠</code>), # nolint
+supply a trigger (<code style="white-space: pre;">⁠https://books.ropensci.org/drake/triggers.html⁠</code>), # nolint
+or set any number of custom columns.
+</p>
+</li>
+<li> <p><code>file_in()</code>: declare an input file dependency.
+</p>
+</li>
+<li> <p><code>file_out()</code>: declare an output file to be produced
+when the target is built.
+</p>
+</li>
+<li> <p><code>knitr_in()</code>: declare a <code>knitr</code> file dependency such as an
+R Markdown (<code style="white-space: pre;">⁠*.Rmd⁠</code>) or R LaTeX (<code style="white-space: pre;">⁠*.Rnw⁠</code>) file.
+</p>
+</li>
+<li> <p><code>ignore()</code>: force <code>drake</code> to entirely ignore a piece of code:
+do not track it for changes and do not analyze it for dependencies.
+</p>
+</li>
+<li> <p><code>no_deps()</code>: tell <code>drake</code> to not track the dependencies
+of a piece of code. <code>drake</code> still tracks the code itself for changes.
+</p>
+</li>
+<li> <p><code>id_chr()</code>: Get the name of the current target.
+</p>
+</li>
+<li> <p><code>drake_envir()</code>: get the environment where drake builds targets.
+Intended for advanced custom memory management.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>from_plan()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("contain side effects", {
+plan &lt;- drake_plan(
+  large_data_1 = sample.int(1e4),
+  large_data_2 = sample.int(1e4),
+  subset = c(large_data_1[seq_len(10)], large_data_2[seq_len(10)]),
+  summary = {
+    print(ls(envir = parent.env(drake_envir())))
+    # We don't need the large_data_* targets in memory anymore.
+    rm(large_data_1, large_data_2, envir = drake_envir("targets"))
+    print(ls(envir = drake_envir("targets")))
+    mean(subset)
+  }
+)
+make(plan, cache = storr::storr_environment(), session_info = FALSE)
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

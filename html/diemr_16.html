@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>vcf2diem</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert vcf files to diem format</h2>
+
+<h3>Description</h3>
+
+<p>Reads vcf files and writes genotypes of the most frequent alleles based on
+chromosome positions to diem format.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">vcf2diem(SNP, filename, chunk = 1L, requireHomozygous = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>SNP</code></td>
+<td>
+<p>A character vector with a path to the '.vcf' or '.vcf.gz' file, or an <code>vcfR</code>
+object. Diploid data are currently supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>A character vector with a path where to save the converted genotypes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chunk</code></td>
+<td>
+<p>Numeric indicating by how many markers should the result be split into
+separate files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>requireHomozygous</code></td>
+<td>
+<p>Logical whether to require the marker to have at least one
+homozygous individual for each allele.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Importing vcf files larger than 1GB, and those containing multiallelic
+genotypes is not recommended. Instead, use the path to the
+vcf file in <code>SNP</code>. <code>vcf2diem</code> then reads the file line by line, which is
+a preferred solution for data conversion, especially for
+very large and complex genomic datasets.
+</p>
+<p>The number of files <code>vcf2diem</code> creates depends on the <code>chunk</code> argument
+and class of the <code>SNP</code> object.
+</p>
+
+<ul>
+<li>
+<p> Values of <code>chunk &lt; 100</code> are interpreted as the number of files into which to
+split data in <code>SNP</code>. For <code>SNP</code> object of class <code>vcfR</code>, the number
+of markers per file is calculated from the dimensions of <code>SNP</code>. When class
+of <code>SNP</code> is <code>character</code>, the number of markers per file is approximated
+from a model with a message. If this number of markers per file is inappropriate
+for the expected
+output, provide the intended number of markers per file in <code>chunk</code> greater
+than 100 (values greater than 10000 are recommended for genomic data).
+<code>vcf2diem</code> will scan the whole input specified in the <code>SNP</code> file, creating
+additional output files until the last line in <code>SNP</code> is reached.
+</p>
+</li>
+<li>
+<p> Values of <code>chunk &gt;= 100</code> mean that each output file
+in diem format will contain <code>chunk</code> number of lines with the data in <code>SNP</code>.
+</p>
+</li>
+</ul>
+<p>When the vcf file contains markers not informative for genome polarisation,
+those are removed and listed in a file ending with <em>omittedSites.txt</em> in the
+directory specified in the <code>SNP</code> argument or in the working directory.
+The omitted loci are identified by their information in the CHROM and POS columns,
+and include the QUAL column data. The last column is an integer specifying
+the reason why the respective marker was omitted. The reasons why markers are
+not informative for genome polarisation using <code>diem</code> are:
+</p>
+
+<ol>
+<li>
+<p> Marker has fewer than 2 alleles representing substitutions.
+</p>
+</li>
+<li>
+<p> Required homozygous individuals for the 2 most frequent alleles are not present
+(optional, controlled
+by the <code>requireHomozygous</code> argument).
+</p>
+</li>
+<li>
+<p> The second most frequent allele is found only in one heterozygous individual.
+</p>
+</li>
+<li>
+<p> Dataset is invariant for the most frequent allele.
+</p>
+</li>
+<li>
+<p> Dataset is invariant for the allele listed as the first ALT in the vcf input.
+</p>
+</li>
+</ol>
+<p>The CHROM, POS, and QUAL information for loci included in the converted files are
+listed in the file ending with <em>includedSites.txt</em>. Additional columns show which
+allele is
+encoded as 0 in its homozygous state and which is encoded as 2.
+</p>
+
+
+<h3>Value</h3>
+
+<p>No value returned, called for side effects.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Natalia Martinkova
+</p>
+<p>Filip Jagos <a href="mailto:521160@mail.muni.cz">521160@mail.muni.cz</a>
+</p>
+<p>Jachym Postulka <a href="mailto:506194@mail.muni.cz">506194@mail.muni.cz</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# vcf2diem will write files to a working directory or a specified folder
+# make sure the working directory or the folder are at a location with write permission
+myofile &lt;- system.file("extdata", "myotis.vcf", package = "diemr")
+
+vcf2diem(SNP = myofile, filename = "test1")
+vcf2diem(SNP = myofile, filename = "test2", chunk = 3)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ddsPLS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data-Driven Sparse Partial Least Squares</h2>
+
+<h3>Description</h3>
+
+<p>The main function of the package. It does both start the ddsPLS algorithm,
+using bootstrap analysis. Also it estimates automatically the number of
+components and the regularization coefficients.
+One regularization parameter per component only is needed to select both in
+<code>x</code> and in <code>y</code>. Build the optimal model, of the class
+<code>ddsPLS</code>.
+Among the different parameters, the <code>lambda</code> is the vector of parameters that are
+tested by the algorithm along each component for each bootstrap sample. The total number
+of bootstrap samples is fixed by the parameter <code>n_B</code>, for this parameter, the more
+the merrier, even if costs more in computation time.
+This gives access to 3 S3 methods (<code>summary.ddsPLS</code>, <code>plot.ddsPLS</code> and <code>predict.ddsPLS</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ddsPLS(
+  X,
+  Y,
+  criterion = "diffR2Q2",
+  doBoot = TRUE,
+  LD = FALSE,
+  lambdas = NULL,
+  n_B = 50,
+  n_lambdas = 100,
+  lambda_roof = NULL,
+  lowQ2 = 0,
+  NCORES = 1,
+  errorMin = 1e-09,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>matrix, the covariate matrix (n,p).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>matrix, the response matrix (n,q).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>character, whether <code>diffR2Q2</code> to be minimized, default,
+or <code>Q2</code> to be maximized.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doBoot</code></td>
+<td>
+<p>logical, whether performing bootstrap operations, default to
+<code>TRUE</code>. If equal to
+<code>FALSE</code>, a model with is built on the parameters <code>lambda</code> and the
+number of components is the length of this vector.
+In that context, the parameter <code>n_B</code> is ignored. If equal to
+<code>TRUE</code>, the ddsPLS algorithm, through bootstrap validation,
+is started using <code>lambda</code> as a grid and <code>n_B</code> as
+the total number of bootstrap samples to simulate per component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LD</code></td>
+<td>
+<p>Boolean, wether or not consider Low-Dimensional dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdas</code></td>
+<td>
+<p>vector, the to be tested values for <code>lambda</code>.
+Each value for <code>lambda</code> can be interpreted in terms of correlation
+allowed in the model.
+More precisely, a covariate 'x[j]' is not selected if its empirical
+correlation with all the response variables 'y[1..q]' is below <code>lambda</code>.
+A response variable 'y[k]' is not selected if its empirical correlation
+with all the covariates 'x[1..p]' is below <code>lambda</code>.
+Default to <code>seq(0,1,length.out = 30)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_B</code></td>
+<td>
+<p>integer, the number of to be simulated bootstrap samples.
+Default to <code>50</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_lambdas</code></td>
+<td>
+<p>integer, the number of lambda values. Taken into account
+only if <code>lambdas</code> is <code>NULL</code>. Default to 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda_roof</code></td>
+<td>
+<p>limit value to be considered in the optimization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowQ2</code></td>
+<td>
+<p>real, the minimum value of Q^2_B to accept the
+current lambda value. Default to <code>0.0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NCORES</code></td>
+<td>
+<p>integer, the number of cores used. Default to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>errorMin</code></td>
+<td>
+<p>real, not to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>boolean, whether to print current results. Defaut to
+<code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with different interesting output describing the built model
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.ddsPLS</code>, <code>plot.ddsPLS</code>, <code>predict.ddsPLS</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># n &lt;- 100 ; d &lt;- 2 ; p &lt;- 20 ; q &lt;- 2
+# phi &lt;- matrix(rnorm(n*d),n,d)
+# a &lt;- rep(1,p/4) ; b &lt;- rep(1,p/2)
+# X &lt;- phi%*%matrix(c(1*a,0*a,0*b,
+#                     1*a,3*b,0*a),nrow = d,byrow = TRUE) + matrix(rnorm(n*p),n,p)
+# Y &lt;- phi%*%matrix(c(1,0,
+#                     0,0),nrow = d,byrow = TRUE) + matrix(rnorm(n*q),n,q)
+# model_ddsPLS &lt;- ddsPLS(X,Y,verbose=TRUE)
+
+</code></pre>
+
+
+</div>

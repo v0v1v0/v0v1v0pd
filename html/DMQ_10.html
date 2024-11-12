@@ -1,0 +1,121 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SimulateDMQ</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Simulate from the DMQ model
+</h2>
+
+<h3>Description</h3>
+
+<p>Approximate simulation from the DMQ model. Allows to simulate quantiles and observations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SimulateDMQ(iT, vQ_0, vTau, iTau_star, vPn, ScalingType = "InvSqrt", fSim = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>iT</code></td>
+<td>
+<p> Number of observations to simulate.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>vQ_0</code></td>
+<td>
+ <p><code>numeric</code> vector of limiting quantiles.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>vTau</code></td>
+<td>
+<p><code>numeric</code> vector of length Jx1 containing probability levels at which quantiles are estimated.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>iTau_star</code></td>
+<td>
+<p>Integer indicating the position in <code>vTau</code> where the reference quantile is placed. For instance, if <code>vTau = seq(0.01, 0.99, 0.01)</code> then <code>iTau_star = 50</code> means that the median is used as the reference quantile.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>vPn</code></td>
+<td>
+<p><code>numeric</code> named vector of length 4x1 with starting values for the optimizer. For example <code>vPn = c("phi" = 0.9, "gamma" = 0.05, "alpha" = 0.01, "beta" = 0.7)</code>.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>ScalingType</code></td>
+<td>
+<p><code>character</code> Indicating the scaling mechanism for the conditional quasi score. Possible choices are <code>"Identity"</code>, <code>"Inv"</code>,<code>"InvSqrt"</code>. When  <code>ScalingType = "InvSqrt"</code> quasi scores are scaled by their standard deviation. When  <code>ScalingType = "Inv"</code> quasi scores are scaled by their variance. When  <code>ScalingType = "Identity"</code> quasi scores are not scaled. Default value <code>ScalingType = "InvSqrt"</code>.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>fSim</code></td>
+<td>
+<p><code>function</code> to simulate from the discretized distribution implied by the simulated quantiles. By default <code>fSim = NULL</code> meaning that an internal simulation scheme is employed. See details.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>Given a set of simulated quantiles a Uniform variable drawn. The discretized quantile function is linearly interpoled at the simulated Uniform draw to obtain an observations. When the Uniform draw is outside the range spanned by <code>vTau</code> a Gaussian quantile function is used. The mean and variance of the Gaussian quantile distribution are set to those implied by the simulated quantiles using the same scheme of MomentsDMQ.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>list</code> with two elements:
+
+</p>
+<table><tr style="vertical-align: top;">
+<td><code>vY</code></td>
+<td>
+<p> A <code>numeric</code> vector of T simulated observations.</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>mQ</code></td>
+<td>
+<p> A <code>numeric</code> TxJ matrix of simulated quantiles.</p>
+</td>
+</tr></table>
+<h3>Author(s)</h3>
+
+<p>Leopoldo Catania</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(123)
+
+# Simulate 500 observations from the DMQ model.
+
+# Use the percentiles
+vTau = seq(0.01, 0.99, 0.01)
+
+# Median as reference quantile
+iTau_star = 50
+
+# Standard Gaussian limiting distribution
+vQ_0 = qnorm(vTau)
+
+# vector of parameters
+vPn = c("phi" = 0.95, "gamma" = 0.10, "alpha" = 0.01, "beta" = 0.7)
+
+lSim = SimulateDMQ(iT = 500, vQ_0, vTau, iTau_star, vPn)
+
+plot.ts(lSim$vY)
+plot.ts(lSim$mQ, plot.type = "single")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,275 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>density_polygons</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Density polygons</h2>
+
+<h3>Description</h3>
+
+<p>Given numeric vectors <code>x</code> and <code>y</code>, <code>density_polygons()</code> will return
+a data frame, or list of a data frames, of the polygon defining 2d kernel
+densities.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">density_polygons(
+  x,
+  y,
+  probs = 0.5,
+  as_sf = FALSE,
+  as_list = FALSE,
+  range_mult = 0.25,
+  rangex = NULL,
+  rangey = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>Numeric data dimensions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>Probabilities to compute density polygons for</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_sf</code></td>
+<td>
+<p>Should the returned values be sf::sf? Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_list</code></td>
+<td>
+<p>Should the returned value be a list? Defaults to <code>FALSE</code> to
+work with <code>dplyr::reframe()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range_mult</code></td>
+<td>
+<p>A multiplier to the range of <code>x</code> and <code>y</code> across which the
+probability density will be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rangex, rangey</code></td>
+<td>
+<p>Custom ranges across <code>x</code> and <code>y</code> ranges across which the
+probability density will be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to <code>ggdensity::get_hdr()</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When using <code>density_polygons()</code> together with <code>dplyr::summarise()</code>, <code>as_list</code>
+should be <code>TRUE</code>.
+</p>
+<p>If both <code>rangex</code> and <code>rangey</code> are defined, <code>range_mult</code> will be disregarded.
+If only one or the other of <code>rangex</code> and <code>rangey</code> are defined, <code>range_mult</code>
+will be used to produce the range of the undefined one.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of data frames, if <code>as_list=TRUE</code>, or just a data frame,
+if <code>as_list=FALSE</code>.
+</p>
+
+
+<h4>Data frame output</h4>
+
+<p>If <code>as_sf=FALSE</code>, the data frame has the following columns:
+</p>
+
+<dl>
+<dt>level_id</dt>
+<dd>
+<p>An integer id for each probability level</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>An integer id for each sub-polygon within a probabilty level</p>
+</dd>
+<dt>prob</dt>
+<dd>
+<p>The probability level (originally passed to <code>probs</code>)</p>
+</dd>
+<dt>x, y</dt>
+<dd>
+<p>The values along the original <code>x</code> and <code>y</code> dimensions defining
+the density polygon. These will be renamed to the original input variable
+names.</p>
+</dd>
+<dt>order</dt>
+<dd>
+<p>The original plotting order of the polygon points, for
+convenience.</p>
+</dd>
+</dl>
+<h4>sf output</h4>
+
+<p>If <code>as_sf=TRUE</code>, the data frame has the following columns:
+</p>
+
+<dl>
+<dt>level_id</dt>
+<dd>
+<p>An integer id for each probability level</p>
+</dd>
+<dt>prob</dt>
+<dd>
+<p>The probability level (originally passed to <code>probs</code>)</p>
+</dd>
+<dt>geometry</dt>
+<dd>
+<p>A column of <code>sf::st_polygon()</code>s.</p>
+</dd>
+</dl>
+<p>This output will need to be passed to <code>sf::st_sf()</code> to utilize many of the
+features of sf.
+</p>
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(densityarea)
+library(dplyr)
+library(purrr)
+library(sf)
+
+ggplot2_inst &lt;- require(ggplot2)
+tidyr_inst &lt;- require(tidyr)
+
+set.seed(10)
+x &lt;- c(rnorm(100))
+y &lt;- c(rnorm(100))
+
+# ordinary data frame output
+poly_df &lt;- density_polygons(x,
+                            y,
+                            probs = ppoints(5))
+
+head(poly_df)
+
+# It's necessary to specify a grouping factor that combines `level_id` and `id`
+# for cases of multimodal density distributions
+if(ggplot2_inst){
+  ggplot(poly_df, aes(x, y)) +
+    geom_path(aes(group = paste0(level_id, id),
+                  color = prob))
+}
+
+# sf output
+poly_sf &lt;- density_polygons(x,
+                            y,
+                            probs = ppoints(5),
+                            as_sf = TRUE)
+
+head(poly_sf)
+
+# `geom_sf()` is from the `{sf}` package.
+if(ggplot2_inst){
+  poly_sf |&gt;
+    arrange(desc(prob)) |&gt;
+    ggplot() +
+    geom_sf(aes(fill = prob))
+}
+
+# Tidyverse usage
+
+data(s01)
+
+# Data transformation
+s01 &lt;- s01 |&gt;
+  mutate(log_F1 = -log(F1),
+         log_F2 = -log(F2))
+
+## Basic usage with `dplyr::reframe()`
+### Data frame output
+s01 |&gt;
+  group_by(name) |&gt;
+  reframe(density_polygons(log_F2,
+                           log_F1,
+                           probs = ppoints(5))) -&gt;
+  speaker_poly_df
+
+if(ggplot2_inst){
+  speaker_poly_df |&gt;
+    ggplot(aes(log_F2, log_F1)) +
+    geom_path(aes(group = paste0(level_id, id),
+                  color = prob)) +
+    coord_fixed()
+}
+
+### sf output
+s01 |&gt;
+  group_by(name) |&gt;
+  reframe(density_polygons(log_F2,
+                           log_F1,
+                           probs = ppoints(5),
+                           as_sf = TRUE)) |&gt;
+  st_sf() -&gt;
+  speaker_poly_sf
+
+if(ggplot2_inst){
+  speaker_poly_sf |&gt;
+    ggplot() +
+    geom_sf(aes(color = prob),
+            fill = NA)
+}
+
+## basic usage with dplyr::summarise()
+### data frame output
+
+if(tidyr_inst){
+  s01 |&gt;
+    group_by(name) |&gt;
+    summarise(poly = density_polygons(log_F2,
+                                      log_F1,
+                                      probs = ppoints(5),
+                                      as_list = TRUE)) |&gt;
+    unnest(poly) -&gt;
+    speaker_poly_df
+}
+### sf output
+
+if(tidyr_inst){
+  s01 |&gt;
+    group_by(name) |&gt;
+    summarise(poly = density_polygons(
+      log_F2,
+      log_F1,
+      probs = ppoints(5),
+      as_list = TRUE,
+      as_sf = TRUE
+    )) |&gt;
+    unnest(poly) |&gt;
+    st_sf() -&gt;
+    speaker_poly_sf
+}
+</code></pre>
+
+
+</div>

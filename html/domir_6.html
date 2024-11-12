@@ -1,0 +1,499 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>domir</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dominance analysis methods</h2>
+
+<h3>Description</h3>
+
+<p>Parses input object to obtain list of names, determines all required
+combinations of subsets of the name list, submits name list subsets to
+a function as the input type, and computes dominance decomposition
+statistics based on the returned values from the function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">domir(.obj, ...)
+
+## S3 method for class 'formula'
+domir(
+  .obj,
+  .fct,
+  .set = NULL,
+  .wst = NULL,
+  .all = NULL,
+  .adj = FALSE,
+  .cdl = TRUE,
+  .cpt = TRUE,
+  .rev = FALSE,
+  .cst = NULL,
+  .prg = FALSE,
+  ...
+)
+
+## S3 method for class 'formula_list'
+domir(
+  .obj,
+  .fct,
+  .set = NULL,
+  .wst = NULL,
+  .all = NULL,
+  .adj = FALSE,
+  .cdl = TRUE,
+  .cpt = TRUE,
+  .rev = FALSE,
+  .cst = NULL,
+  .prg = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.obj</code></td>
+<td>
+<p>A <code>formula</code> or <code>formula_list</code>.
+</p>
+<p>Parsed to produce list of names. Combinations of subsets the name list are
+<code>sapply</code>-ed to <code>.fct</code>.
+</p>
+<p>The name list subsets submitted to <code>.fct</code> are formatted to be of
+the same <code>class</code> as <code>.obj</code> and are submitted to
+<code>.fct</code> as the first, unnamed argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Passes arguments to other methods during method dispatch;
+passes arguments to the function in <code>.fct</code> during function execution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.fct</code></td>
+<td>
+<p>A <code>function</code> or string function name.
+</p>
+<p>Applied to all subsets of elements as received from <code>.obj</code>.
+Must return a length 1/scalar, numeric, atomic vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.set</code></td>
+<td>
+<p>A <code>list</code>.
+</p>
+<p>Must be comprised of elements of the same class as <code>.obj</code>.
+Elements of the list can be named.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.wst</code></td>
+<td>
+<p>Not yet used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.all</code></td>
+<td>
+<p>A <code>formula</code> or <code>formula_list</code>.
+</p>
+<p>Must be the same class as <code>.obj</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.adj</code></td>
+<td>
+<p>Logical.
+</p>
+<p>If <code>TRUE</code> then a model including only an intercept is submitted to <code>.fct</code>
+and the value returned is subtracted from the values returned from all
+subsets in the dominance analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.cdl</code></td>
+<td>
+<p>Logical.
+</p>
+<p>If <code>FALSE</code> then conditional dominance matrix is not computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.cpt</code></td>
+<td>
+<p>Logical.
+</p>
+<p>If <code>FALSE</code> then complete dominance matrix is not computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.rev</code></td>
+<td>
+<p>Logical.
+</p>
+<p>If <code>TRUE</code> then standardized vector, ranks, and complete dominance
+designations are reversed in their interpretation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.cst</code></td>
+<td>
+<p>Object of class c("SOCKcluster", "cluster") from
+<code>parallel-package</code>.
+</p>
+<p>When non-<code>NULL</code>, will alter the method for collecting values from all
+combinations of names from using <code>sapply</code> to <code>parallel::parSapply</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.prg</code></td>
+<td>
+<p>Logical.
+</p>
+<p>If <code>TRUE</code> then a progress bar is displayed during collection of values
+to indicate progress.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Element Parsing</h4>
+
+<p><code>.obj</code>s is parsed into a name list that is used to determine
+the required number of combinations of subsets of the name list
+included the dominance analysis.  How the name list is obtained
+depends on <code>.obj</code>'s class.
+</p>
+
+
+<h5><code>formula</code></h5>
+
+<p>The <code>formula</code> creates a name list using all terms in the formula.
+The terms are obtained using <code>terms.formula</code>. All processing
+that is normally applied to the right hand side of a formula is
+implemented (see <code>formula</code>).
+</p>
+<p>A response/left hand side is not required but, if present, is
+included in all <code>formula</code>s passed to <code>.fct</code>.
+</p>
+
+
+
+<h5><code>formula_list</code></h5>
+
+<p>The <code>formula_list</code> creates a name list out of response-term pairs.
+The terms are obtained using <code>terms.formula</code> applied to each individual
+formula in the list.
+</p>
+
+
+
+<h5>Additional Details</h5>
+
+<p>By default, names obtained from <code>.obj</code> are all considered separate
+'value-generating names' with the same priority.
+Each value-generating name will be a separate element when
+computing combination subsets and will be compared to all other
+value-generating names.
+</p>
+<p><code>formula</code>s and <code>formula_list</code> elements are assumed to have an intercept
+except if explicitly removed with a <code>- 1</code> in the <code>formula</code>(s) in <code>.obj</code>.
+If removed, the intercept will be removed in all <code>formula</code>(s) in each
+<code>sapply</code>-ed subset to <code>.fct</code>.
+</p>
+<p>If <code>offset</code>s are included, they are passed, like intercepts, while
+<code>sapply</code>-ing subsets to <code>.fct</code>.
+</p>
+
+
+
+
+<h4>Changing Element Parsing</h4>
+
+<p>All methods' default behavior that considers all value-generating names
+to be of equal priority can be overriden using <code>.set</code> and <code>.all</code> arguments.
+</p>
+<p>Names in <code>.set</code> and <code>.all</code> must also be present in <code>.obj</code>.
+</p>
+
+
+<h5><code>.set</code></h5>
+
+<p><code>.set</code> binds together value-generating names such that
+they are of equal priority and are never separated when submitted to
+<code>.fct</code>.
+Thus, the elements in <code>.set</code> bound together contribute jointly to the
+returned value and are considered, effectively, a single
+value-generating name.
+</p>
+<p>If list elements in <code>.set</code> are named, this name will be used in all
+returned results as the name of the set of value-generating names bound
+together.
+</p>
+<p><code>.set</code> thus considers the value-generating names an 'inseparable set' in the
+dominance analysis and are always included or excluded together.
+</p>
+
+
+
+<h5><code>.all</code></h5>
+
+<p><code>.all</code> gives immediate priority to value-generating names.
+The value-generating names in <code>.all</code> are bound together, are
+ascribed their full amount of the returned value from <code>.fct</code>, and
+are not adjusted for contribution of other value-generating names.
+</p>
+<p>The value of <code>.fct</code> ascribed to the value-generating names bound
+together in <code>.all</code> is returned separately from, and not directly
+compared to, the other value-generating names.
+</p>
+<p>The <code>formula</code> method for <code>.all</code> does not allowthe submitted formula to have
+a left hand side.
+</p>
+<p><code>.all</code> includes the value-generating names in 'all subsets' submitted to
+the dominance analysis which effectively removes the value associated with
+this set of names.
+</p>
+
+
+
+<h5><code>.adj</code></h5>
+
+<p><code>.adj</code> indicates that an intercept-only model should be supplied to <code>.fct</code>.
+This intercept-only subset is given most immediate priority and the
+value of <code>.fct</code> ascribed to it is removed from all other
+value-generating names and sets including those in <code>.all</code>.
+</p>
+<p>The <code>formula</code> method will submit an intercept-only formula to <code>.fct</code>.
+The <code>formula_list</code> method creates a separate, intercept-only subset for each
+of the <code>formula</code>s in the list.
+Both the <code>formula</code> and <code>formula_list</code> methods will respect the user's
+removal of an intercept and or inclusion of an <code>offset</code>.
+</p>
+<p><code>.adj</code> then 'adjusts' the returned value for a non-0 value-returning
+null model when no value generating names are included. This is often
+useful when a predictive model's fit metric is not 0 when no
+predictive factors are included in the model.
+</p>
+
+
+
+<h5>Additional Details</h5>
+
+<p>All methods submit combinations of names as an object of the same class as
+<code>.obj</code>. A <code>formula</code> in <code>.obj</code> will submit all combinations of names as
+<code>formula</code>s to <code>.fct</code>. A <code>formula_list</code> in <code>.obj</code> will submit all
+combinations of subsets of names as <code>formula_list</code>s to <code>.fct</code>.
+In the case that <code>.fct</code> requires a different <code>class</code> (e.g.,
+a character vector of names, a <code>Formula::Formula</code> see <code>fmllst2Fml</code>) the
+subsets of names will have to be processed in <code>.fct</code> to obtain the correct
+<code>class</code>.
+</p>
+<p>The all subsets of names will be submitted to <code>.fct</code> as the first, unnamed
+argument.
+</p>
+
+
+
+
+<h4>
+<code>.fct</code> as Analysis Pipeline</h4>
+
+<p><code>.fct</code> is expected to be a complete analysis pipeline that receives a
+subset of names of the same <code>class</code> as <code>.obj</code> and uses these names in the
+<code>class</code> as submitted to generate a returned value of the appropriate
+type to dominance analyze. Typically, the returned value is a
+scalar fit statistic/metric extracted from a predictive model.
+</p>
+<p>At current, only atomic (i.e., non-<code>list</code>), numeric scalars (i.e.,
+vectors of length 1) are allowed as returned values.
+</p>
+<p>The <code>.fct</code> argument is strict about names submitted and returned value
+requirements for functions used. A series of checks to ensure the submitted
+names and returned value adhere to these requirements.
+The checks include whether the <code>.obj</code> can be submitted to <code>.fct</code> without
+producing an error and whether the returned value from <code>.fct</code> is a length 1,
+atomic, numeric vector.
+In most circumstances, the user will have to make their own named or
+anonymous function to supply as <code>.fct</code> to satisfy the checks.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>Returns an object of <code>class</code> "domir" composed of:
+</p>
+
+<dl>
+<dt><code>General_Dominance</code></dt>
+<dd>
+<p>Vector of general dominance values.</p>
+</dd>
+<dt><code>Standardized</code></dt>
+<dd>
+<p>Vector of general dominance values normalized
+to sum to 1.</p>
+</dd>
+<dt><code>Ranks</code></dt>
+<dd>
+<p>Vector of ranks applied to the general dominance values.</p>
+</dd>
+<dt><code>Conditional_Dominance</code></dt>
+<dd>
+<p>Matrix of conditional dominance values.
+Each row represents an element in <code>.obj</code>;
+each column represents a number of elements from <code>.obj</code> in a subset.</p>
+</dd>
+<dt><code>Complete_Dominance</code></dt>
+<dd>
+<p>Matrix of proportions of subsets where the
+name in the row has a larger value than the name in the column.
+The se proportions determine complete dominance when a value of
+1 or 0.</p>
+</dd>
+<dt><code>Value</code></dt>
+<dd>
+<p>Value returned by <code>.fct</code> with all elements (i.e.,
+from <code>.obj</code>, <code>.all</code>, and <code>.adj</code>.</p>
+</dd>
+<dt><code>Value_All</code></dt>
+<dd>
+<p>Value of <code>.fct</code> associated with elements included
+in <code>.all</code>;
+when elements are in <code>.adj</code>, will be adjusted for <code>Value_Adjust</code>.</p>
+</dd>
+<dt><code>Value_Adjust</code></dt>
+<dd>
+<p>Value of <code>.fct</code> associated with elements in <code>.adj</code>.</p>
+</dd>
+<dt><code>Call</code></dt>
+<dd>
+<p>The matched call.</p>
+</dd>
+</dl>
+<h3>Notes</h3>
+
+
+
+<h4>
+<code>formula</code> method</h4>
+
+<p>Prior to version 1.1.0, the <code>formula</code> method allowed a <code>formula</code>
+to be submitted to <code>.adj</code>.
+Submitting an intercept-only <code>formula</code> as opposed to a
+logical has been depreciated and submitting a <code>formula</code> with more than an
+intercept is defunct.
+</p>
+<p>The <code>formula</code> and <code>formula_list</code> methods can be used to pass responses,
+intercepts, and <code>offset</code>s to all combinations of names.
+If the user seeks to include other model components integral to
+estimation
+(i.e., a random effect term in <code>lme4::glmer()</code>) include them as
+<code>update</code> to the submitted <code>formula</code> or <code>formula_list</code>
+imbedded in <code>.fct</code>.
+</p>
+<p>Second-order or higher terms (i.e., interactions like <code>~ a*b</code>) are parsed
+by default but not used differently from first-order terms for producing
+subsets. The values ascribed to such terms may not be valid unless
+the user ensures that second-order and
+higher terms are used appropriately in <code>.fct</code>.
+</p>
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Linear model returning r-square
+lm_r2 &lt;-
+  function(fml, data) {
+    lm_res &lt;- lm(fml, data = data)
+    summary(lm_res)[["r.squared"]]
+ }
+
+domir(mpg ~ am + vs + cyl, lm_r2, data = mtcars)
+
+
+## Linear model including set
+domir(
+  mpg ~ am + vs + cyl + carb + gear + disp + wt,
+  lm_r2,
+  .set = list(~ carb + gear, ~ disp + wt),
+  data = mtcars
+)
+
+
+## Multivariate regression with multivariate r-square and
+## all subsets variable
+mlm_rxy &lt;-
+  function(fml, data, dvnames) {
+    mlm_res &lt;- lm(fml, data = data)
+    mlm_pred &lt;- predict(mlm_res)
+    cancor(mlm_pred, data[dvnames])$cor[[1]]^2
+  }
+
+domir(
+  cbind(wt, mpg) ~ vs + cyl + am + carb,
+  mlm_rxy,
+  .all = ~ carb,
+  data = mtcars,
+  dvnames = c("wt", "mpg")
+)
+
+
+## Named sets
+domir(
+  mpg ~ am + gear + cyl + vs + qsec + drat,
+  lm_r2,
+  data = mtcars,
+  .set =
+    list( 
+      trns = ~ am + gear,
+      eng = ~ cyl + vs, 
+      misc = ~ qsec + drat
+    )
+)
+
+
+## Linear model returning AIC
+lm_aic &lt;-
+  function(fml, data) {
+    lm_res &lt;- lm(fml, data = data)
+    AIC(lm_res)
+ }
+
+domir(
+  mpg ~ am + carb + cyl,
+  lm_aic,
+  .adj = TRUE,
+  .rev = TRUE,
+  data = mtcars
+ )
+
+
+## 'systemfit' with 'formula_list' method returning AIC
+if (requireNamespace("systemfit", quietly = TRUE)) {
+  domir(
+    formula_list(mpg ~ am + cyl + carb, qsec ~ wt + cyl + carb),
+    function(fml) {
+      res &lt;- systemfit::systemfit(fml, data = mtcars)
+      AIC(res)
+    },
+    .adj = TRUE, .rev = TRUE
+  )
+}
+
+</code></pre>
+
+
+</div>

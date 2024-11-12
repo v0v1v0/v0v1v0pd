@@ -1,0 +1,169 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>odemodel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate the model objects for use in Xs (models with sensitivities)</h2>
+
+<h3>Description</h3>
+
+<p>Generate the model objects for use in Xs (models with sensitivities)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">odemodel(
+  f,
+  deriv = TRUE,
+  forcings = NULL,
+  events = NULL,
+  outputs = NULL,
+  fixed = NULL,
+  estimate = NULL,
+  modelname = "odemodel",
+  solver = c("deSolve", "Sundials"),
+  gridpoints = NULL,
+  verbose = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>Something that can be converted to eqnvec,
+e.g. a named character vector with the ODE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv</code></td>
+<td>
+<p>logical, generate sensitivities or not</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forcings</code></td>
+<td>
+<p>Character vector with the names of the forcings</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>events</code></td>
+<td>
+<p>data.frame of events with columns "var" (character, the name of the state to be
+affected), "time" (character or numeric, time point), "value" (character or numeric, value),
+"method" (character, either
+"replace" or "add"). See events. Events need to be defined here if they contain
+parameters, like the event time or value. If both, time and value are purely numeric, they
+can be specified in <code>Xs()</code>, too.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outputs</code></td>
+<td>
+<p>Named character vector for additional output variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>Character vector with the names of parameters (initial values and dynamic) for which
+no sensitivities are required (will speed up the integration).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p>Character vector specifying parameters (initial values and dynamic) for which
+sensitivities are returned. If estimate is specified, it overwrites 'fixed'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modelname</code></td>
+<td>
+<p>Character, the name of the C file being generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solver</code></td>
+<td>
+<p>Solver for which the equations are prepared.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gridpoints</code></td>
+<td>
+<p>Integer, the minimum number of time points where the ODE is evaluated internally</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Print compiler output to R command line.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments being passed to funC.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list with <code>func</code> (ODE object) and <code>extended</code> (ODE+Sensitivities object)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+## Generate a compiled ODE model from an equation vector
+## The model will not return sensitivities for "switch"
+## Files will be generated in your working directory!
+
+f &lt;- eqnvec(A = "-k*A + switch*F")
+model &lt;- odemodel(f, forcings = "F", fixed = "switch")
+print(model)
+
+## Generate the same model from an equation list
+f &lt;- addReaction(NULL, from = "", to = "A", rate = "switch*F", description = "production")
+f &lt;- addReaction(f   , from = "A", to = "", rate = "k*A", description = "degradation")
+print(f)
+
+model &lt;- odemodel(f, forcings = "F", fixed = "switch")
+print(model)
+
+
+# create forcings
+forc1 &lt;- data.frame(name = "F", time = seq(0,5, 0.1), value = sin(seq(0,5,0.1)))
+forc2 &lt;- data.frame(name = "F", time = seq(0,5, 0.1), value = exp(-seq(0,5,0.1)))
+forc3 &lt;- data.frame(name = "F", time= 0,              value = 0.1)
+
+
+x &lt;- Xs(model, forc1, condition = "forc1") + 
+  Xs(model, forc2, condition = "forc2") + 
+  Xs(model, forc3, condition = "forc3")
+
+g &lt;- Y(c(out1 = "F * A", out2 = "F"), x)
+
+times &lt;-  seq(0,5, 0.001)
+pars &lt;- setNames(runif(length(getParameters(x))), getParameters(x))
+
+pred &lt;- (g*x)(times, pars)  
+plot(pred)
+
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

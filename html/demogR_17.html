@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>leslie.matrix</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Leslie Matrix </h2>
+
+<h3>Description</h3>
+
+<p>Generates a Leslie matrix for demographic projection from vectors of
+age-specific cumulative survival and fertility.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">leslie.matrix(lx, mx, 
+		    L = TRUE, 
+		    peryear = 5, 
+		    one.sex = TRUE, 
+		    SRB = 1.05, 
+		    infant.class = TRUE) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lx</code></td>
+<td>
+<p> vector of either age-specific cumulative survival or
+person-years lived in the interval </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mx</code></td>
+<td>
+<p> age-specific fertility rates </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p> logical; if 'TRUE', <code>lx</code> is taken to be person-years
+lived in the interval nLx, while if 'FALSE', <code>lx</code> is taken to
+be cumulative survival to exact age x+n.  Defaults to 'TRUE'. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>peryear</code></td>
+<td>
+<p> Multiplier for fertility.  Defaults to <code>peryear=5</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>one.sex</code></td>
+<td>
+<p> logical; If 'TRUE', fertility rates will be divided
+by (1+SRB). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SRB</code></td>
+<td>
+<p> sex ratio at birth.  Defaults to <code>SRB=1.05</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>infant.class</code></td>
+<td>
+<p> logical;  'TRUE' if <code>lx</code> contains a value
+for the infant age-class.   </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+ 
+<p>Constructs a k x k age-classified demographic projection matrix with
+age-specific survival probabilities along the sub-diagonal and
+age-specific fertilities along the first row of the
+matrix. 
+</p>
+<p><code>lx</code> and <code>mx</code> are assumed to be of the same
+length.  The resulting matrix is truncated to insure that there are
+no post-reproductive classes.  This is important for ensuring
+irreducibility of the resulting matrix.
+</p>
+<p>If <code>mx</code> is longer than <code>lx</code>, <code>mx</code> is trucated to be
+the same length as <code>lx</code>.  If <code>lx</code> is longer than
+<code>mx</code>, a warning is issed and <code>lx</code> is truncated to be the
+same length as <code>mx</code>.
+</p>
+<p>Fertility is assumed to be birth-flow (Caswell 2001).  That is,
+breeding is assumed to be continuous and the individual elements of
+the first row of the Leslie matrix are averaged over successive
+age-classes.  Fertility rates are typically given in annualized
+form.  If this is the case and the age-classes are wider than one
+year, then <code>peryear</code> can be used to appropriately scale up the
+annual values.
+</p>
+<p>The default behavior is to use person-years lived in the interval as
+the survival measure.   If <code>infant.class=TRUE</code>, lx is taken to
+have a value for the infant age class (i.e., a shorter class width
+than the other elements of <code>lx</code>.  What is done when there is an
+infant class depends on what the values in <code>lx</code> represent. If
+<code>L=TRUE</code>, then the first two values of lx are combined to form
+the total person-years for the first age-class in the Leslie
+matrix.  Human demographic data from abridged life tables typically
+come with age classes x = 0, 1, 5, 10, ... Thus, combining the
+person-years for the first two age classes gives an initial age
+class of the correct width. If <code>infant.class=TRUE</code> and
+<code>L=FALSE</code>, the second element of <code>lx</code> is deleted.
+Creating a Leslie matrix from other forms of non-standard early
+age-classes can be accomplished by pre-processing <code>lx</code> and
+using the option <code>infant.class=FALSE</code>.
+</p>
+<p>The human sex ratio at birth (male births/female births) is
+remarkably close to SRB=1.05 across a wide range of populations and
+this is the default value for <code>SRB</code>.
+</p>
+<p>The resulting matrix has class "leslie.matrix". This class is
+not used extensively but will be in future development. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A k x k age-classified demographic projection matrix with class
+"leslie.matrix". </p>
+
+
+<h3>References</h3>
+
+ 
+<p>Keyfitz, N. 1977. Introduction to the mathematics of populations. 2nd
+ed. Menlo Park: Addison-Wesley.
+</p>
+<p>Preston, S.H., P. Heuveline, and F. Guillot. 2001. Demography:
+Measuring and modeling population processes. Oxford: Blackwell. 
+</p>
+<p>Caswell, H. 2001. Matrix population models: Construction, analysis,
+and interpretation. 2nd ed. Sunderland, MA: Sinauer. 
+</p>
+
+
+<h3>See Also</h3>
+
+  <p><code>odiag</code>, <code>leslie.row1</code>  </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Construct lx and mx values
+data(goodman)
+mlt &lt;- with(goodman, life.table(x=age, nDx=mad.nDx, nKx=mad.nKx))
+mx &lt;- goodman$mad.bx/goodman$mad.nKx
+
+## Now make the Leslie matrix
+mad &lt;- leslie.matrix(lx=mlt$nLx, mx=mx)
+
+## Might as well do something with it too!
+eigen.analysis(mad)
+</code></pre>
+
+
+</div>

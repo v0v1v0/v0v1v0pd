@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>boot.modreg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate confidence intervals and standard errors for the mode regression fit</h2>
+
+<h3>Description</h3>
+
+<p>Performs bootstrap on the modreg object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">boot.modreg(
+  reg,
+  nboot,
+  level = 0.95,
+  newdata = NULL,
+  bw = c("variable", "fixed"),
+  quiet = FALSE,
+  terms = NULL,
+  seed = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>reg</code></td>
+<td>
+<p>an object of class modreg (output of the modreg function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nboot</code></td>
+<td>
+<p>number of bootstrap replications</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>confidence level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Should be a data frame containing all the variables needed for predictions. If supplied, confidence intervals are calculated for the corresponding predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>Either "<code>variable</code>" or "<code>fix</code>", determining if the bandwidth of the 
+original fit should be used for the bootstrap fits (<code>fix</code>) or if the bandwith 
+should be recalculated (<code>variable</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>if TRUE, printing of the status is suppressed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms</code></td>
+<td>
+<p>character scalar. If supplied, uses this term for confidence intervals of the prediction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>the seed to use</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A nonparametric residual bootstrap is performed to calculate standard errors of parameters and confidence intervals. More details can be found in Seipp et al. (2022).
+<code>newdata</code> can be supplied to get confidence intervals for specific predictions. <code>terms</code> can be specified to calculate confidence interval for the contribution of one covariate (useful for P-splines).
+<code>variable</code> bandwidth is the default, which has higher coverage than <code>fix</code>, but is computationally much more demanding. A <code>seed</code> can be supplied to guarantee a reproducible result.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list with the following elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>confpredict</code></td>
+<td>
+<p>data frame, the confidence intervals for the predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confparams</code></td>
+<td>
+<p>data frame, the confidence intervals and standard errors for the parametric regression coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>confidence level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na</code></td>
+<td>
+<p>scalar, stating the number of NA bootstrap repetitions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>scalar, the used seed.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Seipp, A., Uslar, V., Weyhe, D., Timmer, A., &amp; Otto-Sobotka, F. (2022). Flexible Semiparametric Mode Regression for Time-to-Event Data. Manuscript submitted for publication.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data(colcancer)
+colcancer80 &lt;- colcancer[1:80, ]
+
+# linear mode regression
+regL &lt;- modreg(Surv(logfollowup, death) ~ sex + age, data = colcancer80)
+
+# bootstrap with a fixed bandwidth and 3 iterations, chosen to speed up the function. 
+# Should in practice be much more than 3 iterations.
+btL &lt;- boot.modreg(regL, 3, bw = "fixed", level = 0.9, seed = 100)
+
+# coefficients, SE and confidence intervals
+cbind(coef(regL), btL$confparams)
+
+
+## confidence inverval for smooth effect / predictions
+
+reg &lt;- modreg(Surv(logfollowup, death) ~ sex + s(age, bs = "ps"), data = colcancer80, 
+              control = modreg.control(tol_opt = 10^-2, tol_opt2 = 10^-2, tol = 10^-3))
+ndat &lt;- data.frame(sex = rep(colcancer80$sex[1], 200), age = seq(50, 90, length = 200))
+
+# iterations should in practice be much more than 2!
+bt &lt;- boot.modreg(reg, 2, bw = "fixed", newdata = ndat, terms = "s(age)", seed = 100)
+
+pr &lt;- predict(reg, newdata = ndat, type = "terms", terms = "s(age)")[, 1]
+
+plot(ndat$age, pr, ylim = c(-0.75, 1.5), type = "l", xlab = "age", ylab = "s(age)")
+lines(ndat$age, bt$confpredict$lower, lty = 2)
+lines(ndat$age, bt$confpredict$upper, lty = 2)
+
+
+
+
+</code></pre>
+
+
+</div>

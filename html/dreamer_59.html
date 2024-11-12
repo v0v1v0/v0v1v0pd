@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pr_med</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pr(minimum efficacious dose)</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the posterior probability that each specified doses
+are the minimum effective dose in the set; i.e. the smallest
+dose that has a clinically significant difference (CSD).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pr_med(
+  x,
+  doses = attr(x, "doses"),
+  csd = NULL,
+  reference_dose = NULL,
+  greater = TRUE,
+  time = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from a call to <code>dreamer_mcmc()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>the doses for which pr(MED) is to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>csd</code></td>
+<td>
+<p>the treatment effect that is clinically relevant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_dose</code></td>
+<td>
+<p>a single dose that is used as the reference when
+defining the MED relative to a dose (rather than in absolute terms).  When
+<code>reference_dose</code> is specified, this function calculates the
+posterior probability
+that each dose is the smallest dose such that
+(effect_dose - effect_reference_dose &gt; CSD).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greater</code></td>
+<td>
+<p>if <code>TRUE</code>, higher responses indicate better efficacy.  If
+<code>FALSE</code>, lower responses indicate better efficacy.'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>the time (scalar) at which the Pr(MED) should be calculated.
+Applies only to longitudinal models.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A tibble listing each dose and the posterior probability that
+each dose is the minimum efficacious dose.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e3,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+pr_med(output, csd = 10)
+
+# difference of two doses
+pr_med(output, csd = 3, reference_dose = 0)
+
+# single model
+pr_med(output$mod_quad, csd = 10)
+</code></pre>
+
+
+</div>

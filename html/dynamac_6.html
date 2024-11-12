@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynardl.simulation.plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a plot of a simulated response in a <code>dynardl</code> model</h2>
+
+<h3>Description</h3>
+
+<p>Create a plot of a simulated response in a <code>dynardl</code> model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynardl.simulation.plot(
+  x,
+  type = "area",
+  response = "levels",
+  bw = FALSE,
+  last.period = NULL,
+  tol = (abs(x$model$ymean) * 0.01),
+  start.period = 1,
+  abs.errors = "none",
+  ylim = NULL,
+  ylab = NULL,
+  xlab = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a <code>dynardl</code> model with a simulation to be plotted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>whether the plot should be an area plot (<code>area</code>) or a spike plot (<code>spike</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>whether the plot of the response should be shown in levels of the dependent variable (<code>levels</code>), levels from the mean of the dependent variable (<code>levels.from.mean</code>), period-over-period changes in the dependent variable (<code>diffs</code>), the absolute value of the (decreasing) change in the dependent variable  in each time period due to the shock (<code>shock.effect.decay</code>), the sum of the period-over-period changes (<code>cumulative.diffs</code>), or the absolute value of the cumulative differences (where negative effects are treated as positive) (<code>cumulative.abs.diffs</code>). The default is <code>levels</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>should the colors be in black and white (for publication)? The default is <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>last.period</code></td>
+<td>
+<p>when deciding when to stop calculating the absolute value of the shocks to the dependent variable, you can specify a specific period in which to stop calculating absolute cumulative differences. Specify a <code>tol</code> or a <code>last.period</code>. If both are specified, <code>last.period</code> overrides <code>tol</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>when deciding when to stop calculating the absolute value of the shocks to the dependent variable, you can specify the minimum amount of movement required to qualify as a non-noise change over time periods (for calculating absolute cumulative differences). The default is 0.1 percent of the mean of the dependent variable. Specify a <code>tol</code> or a <code>last.period</code>. If both are specified, <code>last.period</code> overrides <code>tol</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start.period</code></td>
+<td>
+<p>which period of the simulation to begin the plot with. You can view the equilibriating behavior of the dependent variable, or you can skip forward in time (maybe to just before the shock). The default is <code>1</code> (the first period of the simulation)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abs.errors</code></td>
+<td>
+<p>when calculating confidence for the absolute cumulative effect, should differences accumulate in each time time period (<code>cumulate</code>, which could be explosive if the error in the model is large), should differences be observed at each time (<code>within.period</code>, which will have smaller values in equilibrium than when changing), or should only the values be plotted (<code>none</code>). The default is <code>none</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylim</code></td>
+<td>
+<p>a user-defined y-limit to be used instead of the default (for instance, for shared axes)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylab</code></td>
+<td>
+<p>a user-defined y-label to be used instead of the default</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab</code></td>
+<td>
+<p>a user-defined x-label to be used instead of the default</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments to be passed to the call to plot</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When running <code>dynardl</code>, <code>simulate</code> must be <code>TRUE</code> so that there is a simulation to plot. For types <code>cumulative.diffs</code> and <code>cumulative.abs.diffs</code>, <code>fullsims</code> must be <code>TRUE</code> in the <code>dynardl</code> simulation
+</p>
+
+
+<h3>Value</h3>
+
+<p>a plot of the simulated dynardl model
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Soren Jordan and Andrew Q. Philips
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Using the ineq data in dynamac
+# Shocking Income Top 10
+# Not run: simulations are time-intensive to estimate as an example
+## Not run: 
+set.seed(1)
+ardl.model &lt;- dynardl(concern ~ incshare10 + urate, data = ineq, 
+       lags = list("concern" = 1, "incshare10" = 1),
+       diffs = c("incshare10", "urate"), 
+       lagdiffs = list("concern" = 1),
+       ec = TRUE, simulate = TRUE, range = 30,
+       shockvar = "incshare10", fullsims = TRUE)
+
+# Shows absolute levels
+dynardl.simulation.plot(ardl.model)	
+# Shows changes from mean level
+dynardl.simulation.plot(ardl.model, response = "levels.from.mean")  
+# Same plot, but with spikeplot
+dynardl.simulation.plot(ardl.model, type = "spike", response = "levels.from.mean")  
+# Grayscale plots
+dynardl.simulation.plot(ardl.model, bw = TRUE)
+
+## End(Not run)	 
+</code></pre>
+
+
+</div>

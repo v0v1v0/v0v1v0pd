@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_ti_method_r</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a TI method from an R function wrapper</h2>
+
+<h3>Description</h3>
+
+<p>Create a TI method from an R function wrapper
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_ti_method_r(
+  definition,
+  run_fun,
+  package_required = character(),
+  package_loaded = character(),
+  remotes_package = character(),
+  return_function = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>definition</code></td>
+<td>
+<p>A definition, see <code>definition()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>run_fun</code></td>
+<td>
+<p>A function to infer a trajectory, with parameters counts/expression, parameters, priors, verbose and seed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>package_required</code></td>
+<td>
+<p>The packages that need to be installed before executing the method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>package_loaded</code></td>
+<td>
+<p>The packages that need to be loaded before executing the method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>remotes_package</code></td>
+<td>
+<p>Package from which the remote locations of dependencies have to be extracted, eg. <code>dynmethods</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_function</code></td>
+<td>
+<p>Whether to return a function that allows you to override the default parameters, or just return the method meta data as is.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A method definition
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># define the parameters and other metadata
+definition &lt;- definition(
+  method = def_method(
+    id = "comp1"
+  ),
+  parameters = def_parameters(
+    dynparam::integer_parameter(
+      id = "component",
+      default = 1,
+      distribution = dynparam::uniform_distribution(1, 10),
+      description = "The nth component to use"
+    )
+  ),
+  wrapper = def_wrapper(
+    input_required = "expression",
+    input_optional = "start_id"
+  )
+)
+
+# define a wrapper function
+run_fun &lt;- function(expression, priors, parameters, seed, verbose) {
+  pca &lt;- prcomp(expression)
+
+  pseudotime &lt;- pca$x[, parameters$component]
+
+  # flip pseudotimes using start_id
+  if (!is.null(priors$start_id)) {
+    if(mean(pseudotime[start_id]) &gt; 0.5) {
+     pseudotime &lt;- 1-pseudotime
+    }
+  }
+
+  wrap_data(cell_ids = rownames(expression)) %&gt;%
+    add_linear_trajectory(pseudotime = pseudotime)
+}
+
+method &lt;- create_ti_method_r(definition, run_fun, package_loaded = "dplyr")
+trajectory &lt;- infer_trajectory(example_dataset, method())
+
+</code></pre>
+
+
+</div>

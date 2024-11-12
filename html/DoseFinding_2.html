@@ -1,0 +1,373 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitMod</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit non-linear dose-response model</h2>
+
+<h3>Description</h3>
+
+<p>Fits a dose-response model. Built-in dose-response models are "linlog", "linear", "quadratic", "emax", "exponential",
+"sigEmax", "betaMod" and "logistic" (see <code>drmodels</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fitMod(
+  dose,
+  resp,
+  data = NULL,
+  model = NULL,
+  S = NULL,
+  type = c("normal", "general"),
+  addCovars = ~1,
+  placAdj = FALSE,
+  bnds,
+  df = NULL,
+  start = NULL,
+  na.action = na.fail,
+  control = NULL,
+  addArgs = NULL
+)
+
+## S3 method for class 'DRMod'
+coef(object, sep = FALSE, ...)
+
+## S3 method for class 'DRMod'
+vcov(object, ...)
+
+## S3 method for class 'DRMod'
+predict(
+  object,
+  predType = c("full-model", "ls-means", "effect-curve"),
+  newdata = NULL,
+  doseSeq = NULL,
+  se.fit = FALSE,
+  ...
+)
+
+## S3 method for class 'DRMod'
+plot(
+  x,
+  CI = FALSE,
+  level = 0.95,
+  plotData = c("means", "meansCI", "raw", "none"),
+  plotGrid = TRUE,
+  colMn = 1,
+  colFit = 1,
+  ...
+)
+
+## S3 method for class 'DRMod'
+logLik(object, ...)
+
+## S3 method for class 'DRMod'
+AIC(object, ..., k = 2)
+
+## S3 method for class 'DRMod'
+gAIC(object, ..., k = 2)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dose, resp</code></td>
+<td>
+<p>Either vectors of equal length specifying dose and response values, or names of variables in the
+data frame specified in ‘<span class="samp">⁠data⁠</span>’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame containing the variables referenced in dose and resp if ‘<span class="samp">⁠data⁠</span>’ is not specified it is
+assumed that ‘<span class="samp">⁠dose⁠</span>’ and ‘<span class="samp">⁠resp⁠</span>’ are variables referenced from data (and no vectors)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The dose-response model to be used for fitting the data. Built-in models are "linlog", "linear",
+"quadratic", "emax", "exponential", "sigEmax", "betaMod" and "logistic" (see drmodels).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>The inverse weighting matrix used in case, when ‘<span class="samp">⁠type = "general"⁠</span>’, see Description. For later
+inference statements (vcov or predict methods) it is assumed this is the estimated covariance of the estimates in
+the first stage fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Determines whether inference is based on an ANCOVA model under a homoscedastic normality assumption (when
+‘<span class="samp">⁠type = "normal"⁠</span>’), or estimates at the doses and their covariance matrix and degrees of freedom are specified
+directly in ‘<span class="samp">⁠resp⁠</span>’, ‘<span class="samp">⁠S⁠</span>’ and ‘<span class="samp">⁠df⁠</span>’. See also the Description above and Pinheiro et al. (2014).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addCovars</code></td>
+<td>
+<p>Formula specifying additional additive linear covariates (only for ‘<span class="samp">⁠type = "normal"⁠</span>’)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>placAdj</code></td>
+<td>
+<p>Logical, if true, it is assumed that placebo-adjusted
+estimates are specified in ‘<span class="samp">⁠resp⁠</span>’ (only possible for ‘<span class="samp">⁠type =
+"general"⁠</span>’).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bnds</code></td>
+<td>
+<p>Bounds for non-linear parameters. If missing the the default bounds from <code>defBnds</code> is used.
+</p>
+<p>When the dose-response model has only one non-linear parameter (for example Emax or exponential model), ‘<span class="samp">⁠bnds⁠</span>’
+needs to be a vector containing upper and lower bound. For models with two non-linear parameters ‘<span class="samp">⁠bnds⁠</span>’ needs
+to be a matrix containing the bounds in the rows, see the Description section of <code>defBnds</code> for details
+on the formatting of the bounds for the individual models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Degrees of freedom to use in case of ‘<span class="samp">⁠type = "general"⁠</span>’. If this argument is missing ‘<span class="samp">⁠df = Inf⁠</span>’
+is used. For ‘<span class="samp">⁠type = "normal"⁠</span>’ this argument is ignored as the exact degrees of freedom can be deduced from
+the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>Vector of starting values for the nonlinear parameters (ignored for linear models). When equal to NULL,
+a grid optimization is performed and the best value is used as starting value for the local optimizer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>A function which indicates what should happen when the data contain NAs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list with entries: "nlminbcontrol", "optimizetol" and "gridSize".
+</p>
+<p>The entry nlminbcontrol needs to be a list and it is passed directly to control argument in the nlminb function,
+that is used internally for models with 2 nonlinear parameters.
+</p>
+<p>The entry optimizetol is passed directly to the tol argument of the optimize function, which is used for models
+with 1 nonlinear parameters.
+</p>
+<p>The entry gridSize needs to be a list with entries dim1 and dim2 giving the size of the grid for the gridsearch in
+1d or 2d models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addArgs</code></td>
+<td>
+<p>List containing two entries named "scal" and "off" for the "betaMod" and "linlog" model. When addArgs
+is NULL the following defaults is used ‘<span class="samp">⁠list(scal = 1.2*max(doses), off = 0.01*max(doses))⁠</span>’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object, x</code></td>
+<td>
+<p>DRMod object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>Logical determining whether all coefficients should be returned in one numeric or separated in a list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments for plotting for the plot method. For all other cases additional arguments are
+ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predType, newdata, doseSeq, se.fit</code></td>
+<td>
+<p>predType determines whether predictions are returned for the full model
+(including potential covariates), the ls-means (SAS type) or the effect curve (difference to placebo).
+</p>
+<p>newdata gives the covariates to use in producing the predictions (for predType = "full-model"), if missing the
+covariates used for fitting are used.
+</p>
+<p>doseSeq dose-sequence on where to produce predictions (for predType = "effect-curve" and predType = "ls-means"). If
+missing the doses used for fitting are used.
+</p>
+<p>se.fit: logical determining, whether the standard error should be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CI, level, plotData, plotGrid, colMn, colFit</code></td>
+<td>
+<p>Arguments for plot method: ‘<span class="samp">⁠CI⁠</span>’ determines whether confidence
+intervals should be plotted. ‘<span class="samp">⁠level⁠</span>’ determines the level of the confidence intervals. ‘<span class="samp">⁠plotData⁠</span>’
+determines how the data are plotted: Either as means or as means with CI, raw data or none. In case of ‘<span class="samp">⁠type =
+"normal"⁠</span>’ and covariates the ls-means are displayed, when ‘<span class="samp">⁠type = "general"⁠</span>’ the option "raw" is not available.
+‘<span class="samp">⁠colMn⁠</span>’ and ‘<span class="samp">⁠colFit⁠</span>’ determine the colors of fitted model and the raw means.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Penalty to use for model-selection criterion (AIC uses 2, BIC uses log(n)).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When ‘<span class="samp">⁠type = "normal"⁠</span>’ ordinary least squares is used and additional additive covariates can be specified in
+‘<span class="samp">⁠addCovars⁠</span>’. The underlying assumption is hence normally distributed data and homoscedastic variance.
+</p>
+<p>For ‘<span class="samp">⁠type = "general"⁠</span>’ a generalized least squares criterion is used
+</p>
+<p style="text-align: center;"><code class="reqn">
+(f(dose,\theta)-resp)'S^{-1}(f(dose,\theta)-resp)</code>
+</p>
+
+<p>and an inverse weighting matrix is specified in ‘<span class="samp">⁠S⁠</span>’, ‘<span class="samp">⁠type =
+"general"⁠</span>’ is primarily of interest, when fitting a model to AN(C)OVA type
+estimates obtained in a first stage fit, then ‘<span class="samp">⁠resp⁠</span>’ contains the estimates and ‘<span class="samp">⁠S⁠</span>’ is the estimated
+covariance matrix for the estimates in ‘<span class="samp">⁠resp⁠</span>’. Statistical inference (e.g. confidence intervals) rely on
+asymptotic normality of the first stage estimates, which makes this method of interest only for sufficiently large
+sample size for the first stage fit. A modified model-selection criterion can be applied to these model fits (see
+also Pinheiro et al. 2014 for details).
+</p>
+<p>For details on the implemented numerical optimizer see the Details section below.
+</p>
+<p>Details on numerical optimizer for model-fitting:<br> For linear models fitting is done using numerical linear algebra
+based on the QR decomposition.  For nonlinear models numerical optimization is performed only in the nonlinear
+parameters in the model and optimizing over the linear parameters in each iteration (similar as the Golub-Pereyra
+implemented in <code>nls</code>). For models with 1 nonlinear parameter the <code>optimize</code> function is used
+for 2 nonlinear parameters the <code>nlminb</code> function is used. The starting value is generated using a
+grid-search (with the grid size specified via ‘<span class="samp">⁠control$gridSize⁠</span>’), or can directly be handed over via
+‘<span class="samp">⁠start⁠</span>’.
+</p>
+<p>For details on the asymptotic approximation used for ‘<span class="samp">⁠type = "normal"⁠</span>’, see Seber and Wild (2003, chapter 5).
+For details on the asymptotic approximation used for ‘<span class="samp">⁠type = "general"⁠</span>’, and the gAIC, see Pinheiro et al.
+(2014).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class DRMod. Essentially a list containing information about the fitted model coefficients, the
+residual sum of squares (or generalized residual sum of squares),
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>References</h3>
+
+<p>Pinheiro, J. C., Bornkamp, B., Glimm, E. and Bretz, F. (2014) Model-based dose finding under model
+uncertainty using general parametric models, <em>Statistics in Medicine</em>, <b>33</b>, 1646–1661
+</p>
+<p>Seber, G.A.F. and Wild, C.J. (2003). Nonlinear Regression, Wiley.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>defBnds</code>, <code>drmodels</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Fit the emax model to the IBScovars data set
+data(IBScovars)
+fitemax &lt;- fitMod(dose, resp, data=IBScovars, model="emax",
+                  bnds = c(0.01, 4))
+
+## methods for DRMod objects
+summary(fitemax)
+## extracting coefficients
+coef(fitemax)
+## (asymptotic) covariance matrix of estimates
+vcov(fitemax)
+## predicting
+newdat &lt;- data.frame(dose = c(0,0.5,1), gender=factor(1))
+predict(fitemax, newdata=newdat, predType = "full-model", se.fit = TRUE)
+## plotting
+plot(fitemax, plotData = "meansCI", CI=TRUE)
+
+## now include (additive) covariate gender
+fitemax2 &lt;- fitMod(dose, resp, data=IBScovars, model="emax",
+                   addCovars = ~gender, bnds = c(0.01, 4))
+vcov(fitemax2)
+plot(fitemax2)
+## fitted log-likelihood
+logLik(fitemax2)
+## extracting AIC (or BIC)
+AIC(fitemax2)
+
+## Illustrating the "general" approach for a binary regression
+## produce first stage fit (using dose as factor)
+data(migraine)
+PFrate &lt;- migraine$painfree/migraine$ntrt
+doseVec &lt;- migraine$dose
+doseVecFac &lt;- as.factor(migraine$dose)
+## fit logistic regression with dose as factor
+fitBin &lt;- glm(PFrate~doseVecFac-1, family = binomial,
+              weights = migraine$ntrt)
+drEst &lt;- coef(fitBin)
+vCov &lt;- vcov(fitBin)
+## now fit an Emax model (on logit scale)
+gfit &lt;- fitMod(doseVec, drEst, S=vCov, model = "emax", bnds = c(0,100),
+                type = "general")
+## model fit on logit scale
+plot(gfit, plotData = "meansCI", CI = TRUE)
+## model on probability scale
+logitPred &lt;- predict(gfit, predType ="ls-means", doseSeq = 0:200,
+                     se.fit=TRUE)
+plot(0:200, 1/(1+exp(-logitPred$fit)), type = "l", ylim = c(0, 0.5),
+     ylab = "Probability of being painfree", xlab = "Dose")
+LB &lt;- logitPred$fit-qnorm(0.975)*logitPred$se.fit
+UB &lt;- logitPred$fit+qnorm(0.975)*logitPred$se.fit
+lines(0:200, 1/(1+exp(-LB)))
+lines(0:200, 1/(1+exp(-UB)))
+
+
+## now illustrate "general" approach for placebo-adjusted data (on
+## IBScovars) note that the estimates are identical to fitemax2 above)
+anovaMod &lt;- lm(resp~factor(dose)+gender, data=IBScovars)
+drFit &lt;- coef(anovaMod)[2:5] # placebo adjusted estimates at doses
+vCov &lt;- vcov(anovaMod)[2:5,2:5]
+dose &lt;- sort(unique(IBScovars$dose))[-1]
+## now fit an emax model to these estimates
+gfit2 &lt;- fitMod(dose, drFit, S=vCov, model = "emax", type = "general",
+               placAdj = TRUE, bnds = c(0.01, 2))
+## some outputs
+summary(gfit2)
+coef(gfit2)
+vcov(gfit2)
+predict(gfit2, se.fit = TRUE, doseSeq = c(1,2,3,4), predType = "effect-curve")
+plot(gfit2, CI=TRUE, plotData = "meansCI")
+gAIC(gfit2)
+
+</code></pre>
+
+
+</div>

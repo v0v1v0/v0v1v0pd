@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>NNpredict</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>NNpredict function</h2>
+
+<h3>Description</h3>
+
+<p>A function to produce predictions from a trained network
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">NNpredict(
+  net,
+  param,
+  newdata,
+  newtruth = NULL,
+  freq = 1000,
+  record = FALSE,
+  plot = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>net</code></td>
+<td>
+<p>an object of class network, see ?network</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>vector of trained parameters from the network, see ?train</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>input data to be predicted, a list of vectors (i.e. ragged array)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newtruth</code></td>
+<td>
+<p>the truth, a list of vectors to compare with output from the feed-forward network</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>freq</code></td>
+<td>
+<p>frequency to print progress updates to the console, default is every 1000th training point</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>record</code></td>
+<td>
+<p>logical, whether to record details of the prediction. Default is FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>locical, whether to produce diagnostic plots. Default is FALSE</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>if record is FALSE, the output of the neural network is returned. Otherwise a list of objects is returned including: rec, the predicted probabilities; err, the L1 error between truth and prediction; pred, the predicted categories based on maximum probability; pred_MC, the predicted categories based on maximum probability; truth, the object newtruth, turned into an integer class number
+</p>
+
+
+<h3>References</h3>
+
+
+<ol>
+<li>
+<p> Ian Goodfellow, Yoshua Bengio, Aaron Courville, Francis Bach. Deep Learning. (2016)
+</p>
+</li>
+<li>
+<p> Terrence J. Sejnowski. The Deep Learning Revolution (The MIT Press). (2018)
+</p>
+</li>
+<li>
+<p> Neural Networks YouTube playlist by 3brown1blue: <a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi">https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi</a>
+</p>
+</li>
+<li>
+<p>http://neuralnetworksanddeeplearning.com/
+</p>
+</li>
+</ol>
+<h3>See Also</h3>
+
+<p>NNpredict.regression, network, train, backprop_evaluate, MLP_net, backpropagation_MLP,
+logistic, ReLU, smoothReLU, ident, softmax, Qloss, multinomial,
+NNgrad_test, weights2list, bias2list, biasInit, memInit, gradInit,
+addGrad, nnetpar, nbiaspar, addList, no_regularisation, L1_regularisation,
+L2_regularisation
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example 1 - mnist data
+
+# See example at mnist repository under user bentaylor1 on githib
+
+# Example 2
+
+N &lt;- 1000
+d &lt;- matrix(rnorm(5*N),ncol=5)
+
+fun &lt;- function(x){
+    lp &lt;- 2*x[2]
+    pr &lt;- exp(lp) / (1 + exp(lp))
+    ret &lt;- c(0,0)
+    ret[1+rbinom(1,1,pr)] &lt;- 1
+    return(ret)
+}
+
+d &lt;- lapply(1:N,function(i){return(d[i,])})
+
+truth &lt;- lapply(d,fun)
+
+net &lt;- network( dims = c(5,10,2),
+                activ=list(ReLU(),softmax()))
+
+netwts &lt;- train( dat=d,
+                 truth=truth,
+                 net=net,
+                 eps=0.01,
+                 tol=100,            # run for 100 iterations
+                 batchsize=10,       # note this is not enough
+                 loss=multinomial(), # for convergence
+                 stopping="maxit")
+
+pred &lt;- NNpredict(  net=net,
+                    param=netwts$opt,
+                    newdata=d,
+                    newtruth=truth,
+                    record=TRUE,
+                    plot=TRUE)
+
+</code></pre>
+
+
+</div>

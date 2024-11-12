@@ -1,0 +1,238 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kNN</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find the k Nearest Neighbors</h2>
+
+<h3>Description</h3>
+
+<p>This function uses a kd-tree to find all k nearest neighbors in a data
+matrix (including distances) fast.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">kNN(
+  x,
+  k,
+  query = NULL,
+  sort = TRUE,
+  search = "kdtree",
+  bucketSize = 10,
+  splitRule = "suggest",
+  approx = 0
+)
+
+## S3 method for class 'kNN'
+sort(x, decreasing = FALSE, ...)
+
+## S3 method for class 'kNN'
+adjacencylist(x, ...)
+
+## S3 method for class 'kNN'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data matrix, a dist object or a kNN object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>number of neighbors to find.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>query</code></td>
+<td>
+<p>a data matrix with the points to query. If query is not
+specified, the NN for all the points in <code>x</code> is returned. If query is
+specified then <code>x</code> needs to be a data matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sort</code></td>
+<td>
+<p>sort the neighbors by distance? Note that some search methods
+already sort the results. Sorting is expensive and <code>sort = FALSE</code> may
+be much faster for some search methods. kNN objects can be sorted using
+<code>sort()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>search</code></td>
+<td>
+<p>nearest neighbor search strategy (one of <code>"kdtree"</code>, <code>"linear"</code> or
+<code>"dist"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bucketSize</code></td>
+<td>
+<p>max size of the kd-tree leafs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitRule</code></td>
+<td>
+<p>rule to split the kd-tree. One of <code>"STD"</code>, <code>"MIDPT"</code>, <code>"FAIR"</code>,
+<code>"SL_MIDPT"</code>, <code>"SL_FAIR"</code> or <code>"SUGGEST"</code> (SL stands for sliding). <code>"SUGGEST"</code> uses
+ANNs best guess.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>approx</code></td>
+<td>
+<p>use approximate nearest neighbors. All NN up to a distance of
+a factor of <code>1 + approx</code> eps may be used. Some actual NN may be omitted
+leading to spurious clusters and noise points.  However, the algorithm will
+enjoy a significant speedup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>decreasing</code></td>
+<td>
+<p>sort in decreasing order?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>Ties:</strong> If the kth and the (k+1)th nearest neighbor are tied, then the
+neighbor found first is returned and the other one is ignored.
+</p>
+<p><strong>Self-matches:</strong> If no query is specified, then self-matches are
+removed.
+</p>
+<p>Details on the search parameters:
+</p>
+
+<ul>
+<li> <p><code>search</code> controls if
+a kd-tree or linear search (both implemented in the ANN library; see Mount
+and Arya, 2010). Note, that these implementations cannot handle NAs.
+<code>search = "dist"</code> precomputes Euclidean distances first using R. NAs are
+handled, but the resulting distance matrix cannot contain NAs. To use other
+distance measures, a precomputed distance matrix can be provided as <code>x</code>
+(<code>search</code> is ignored).
+</p>
+</li>
+<li> <p><code>bucketSize</code> and <code>splitRule</code> influence how the kd-tree is
+built. <code>approx</code> uses the approximate nearest neighbor search
+implemented in ANN. All nearest neighbors up to a distance of
+<code>eps / (1 + approx)</code> will be considered and all with a distance
+greater than <code>eps</code> will not be considered. The other points might be
+considered. Note that this results in some actual nearest neighbors being
+omitted leading to spurious clusters and noise points. However, the
+algorithm will enjoy a significant speedup. For more details see Mount and
+Arya (2010).
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>An object of class <code>kNN</code> (subclass of NN) containing a
+list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>dist </code></td>
+<td>
+<p>a matrix with distances. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id </code></td>
+<td>
+<p>a matrix with <code>ids</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k </code></td>
+<td>
+<p>number <code>k</code> used. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric </code></td>
+<td>
+<p> used distance metric. </p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michael Hahsler
+</p>
+
+
+<h3>References</h3>
+
+<p>David M. Mount and Sunil Arya (2010). ANN: A Library for
+Approximate Nearest Neighbor Searching,
+<a href="http://www.cs.umd.edu/~mount/ANN/">http://www.cs.umd.edu/~mount/ANN/</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other NN functions: 
+<code>NN</code>,
+<code>comps()</code>,
+<code>frNN()</code>,
+<code>kNNdist()</code>,
+<code>sNN()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(iris)
+x &lt;- iris[, -5]
+
+# Example 1: finding kNN for all points in a data matrix (using a kd-tree)
+nn &lt;- kNN(x, k = 5)
+nn
+
+# explore neighborhood of point 10
+i &lt;- 10
+nn$id[i,]
+plot(x, col = ifelse(1:nrow(iris) %in% nn$id[i,], "red", "black"))
+
+# visualize the 5 nearest neighbors
+plot(nn, x)
+
+# visualize a reduced 2-NN graph
+plot(kNN(nn, k = 2), x)
+
+# Example 2: find kNN for query points
+q &lt;- x[c(1,100),]
+nn &lt;- kNN(x, k = 10, query = q)
+
+plot(nn, x, col = "grey")
+points(q, pch = 3, lwd = 2)
+
+# Example 3: find kNN using distances
+d &lt;- dist(x, method = "manhattan")
+nn &lt;- kNN(d, k = 1)
+plot(nn, x)
+</code></pre>
+
+
+</div>

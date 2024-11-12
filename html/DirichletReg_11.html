@@ -1,0 +1,357 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DirichReg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting a Dirichlet Regression</h2>
+
+<h3>Description</h3>
+
+<p>This function allows for fitting Dirichlet regression models using two different parametrizations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DirichReg(formula, data, model = c("common", "alternative"),
+          subset, sub.comp, base, weights, control, verbosity = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the model formula (for different specifications see “Details”)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a <code>data.frame</code> containing independent <strong>and</strong> dependent variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>specifies whether the <code>"common"</code> (<code class="reqn">\alpha\mathrm{s}</code>) or <code>"alternative"</code> (<code class="reqn">\mu/\phi</code>) parametrization is employed (see “Details”)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>estimates the model for a subset of the data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sub.comp</code></td>
+<td>
+<p>analyze a subcomposition by selecting specific components (see “Details”)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+<p>redefine the base variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>frequency weights</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list containing control parameters used for the optimization</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbosity</code></td>
+<td>
+<p>prints information about the function's progress, see Details</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Formula Specification and Models</h4>
+
+<p><code>formula</code> determines the used predictors.
+The responses <strong>must</strong> be prepared by <code>DR_data</code> and can be optionally stored in the object containing all covariates which is then specified as the argument <code>data</code>.
+(Although “on-the-fly” processing of <code>DR_data</code> in a formula works, it is only intended for testing purposes and may be removed at any time – use at your own risk.)
+</p>
+<p>There are two different parametrization (controlled by the argument <code>model</code>, see below):
+</p>
+
+<ul>
+<li>
+<p> the <em>“common”</em> param. that models each <code class="reqn">\alpha</code> by an (possibly individual) set of predictors, and
+</p>
+</li>
+<li>
+<p> the <em>“alternative”</em> param. that models expected values (<code class="reqn">\mu</code>; as in multinomial logistic regression) and precision parameters (<code class="reqn">\phi</code>) with two sets of predictors.
+</p>
+</li>
+</ul>
+<p>As the two models offer different modeling strategies, the specification of their formulae differ:
+</p>
+
+
+<h5>Formulae for the “Common” Model</h5>
+
+<p>The simplest possible model here is to include only an intercept for all components.
+If <code>DV</code> is the <em>‘dependent variable’</em> (i.e., compositional data) with three components, we can request this null-model by <code>DV ~ 1</code>.
+We always have at least two dependent variables, so simple formulae as the one given above will be expanded to <code>DV ~ 1 | 1 | 1</code>, because <code>DV</code> hast three components.
+Likewise, it is possible to specify a common set of predictors for all components, as in <code>DV ~ p1 * p2</code>, where <code>p1</code> and <code>p2</code> are predictors.
+</p>
+<p>If the covariates of the components shall differ, one has to set up a complete formula for each subcomposition, using <code>|</code> as separators between the components, for example, <code>DV ~ p1 | p1 + p2 | p1 * p2</code> will lead to a model where the first response in <code>DV</code> will be modeled using <code>p1</code>, the second will be predicted by <code>p1 + p2</code> and the third by <code>p1 * p2</code>.
+Note that if you use the latter approach, the predictors have to be stated
+explicitly for all response variables.
+</p>
+
+
+
+<h5>Formulae for the “Alternative” Model</h5>
+
+<p>The simplest possible model here is to include an intercept for all components (except the base) and an intercept for precision. This can be achieved by <code>DV ~ 1</code>, which is expanded to <code>DV ~ 1 | 1</code>. The part modeling the ‘mean’ (first element on the right-hand side) is mandatory, if no specification for precision is included, an intercept will be added. Note that you need to set <code>model = "alternative"</code> to use this parametrization!
+</p>
+<p>The alternative parametrization consists of two parts: modeled expected values (<code class="reqn">\mu</code>) and their ‘precision’ (<code class="reqn">\phi</code>). 
+As in multinomial logistic regression, one response variable is omitted (by default the first, but this can be changed by the <code>base</code> argument in <code>DR_data</code> or <code>DirichReg</code>) and for the rest a set of predictors is used with a multinomial logit-link.
+For precisions, a different set of predictors can be set up using a log-link.
+</p>
+<p><code>DV ~ p1 * p2 | p1 + p2</code> will set up a model where the expected values are predicted by <code>p1 * p2</code> and precision are modeled using <code>p1 + p2</code>.
+</p>
+
+
+
+
+<h4>Data Preparation</h4>
+
+<p>The <code>data</code> argument accepts a <code>data.frame</code> that <strong>must</strong> include the dependent variable as a named element (see examples how to do this).
+</p>
+
+
+
+<h4>Changing the Base Component and Analyzing Subcompositions</h4>
+
+<p>The base-component (i.e., omitted component) is initially set during the stage of data preparation <code>DR_data</code>, but can easily be changed using the argument <code>base</code> which takes integer values from 1 to the maximum number of components.
+</p>
+<p>If a data set contains a large number of components, of which only a few are relevant, the latter can be ‘sorted out’ and the irrelevant (i.e., not selected) components will be aggregated into a single variable (row sums) that automatically becomes the base category for the model, unless specified otherwise by <code>base</code>. The positioning of variables will necessarily change: the aggregated variable takes the first column and the others are appended in their order of selection.
+</p>
+
+
+
+<h4>Subsets and Weights</h4>
+
+<p>Using <code>subset</code>, the model can be fitted only to a part of the data, for more information about this functionality, see <code>subset</code>.<br>
+Note that, unlike in <code>glm</code>, <code>weights</code> are <strong>not</strong> treated as prior weights, but as frequency weights!
+</p>
+
+
+
+<h4>Optimization and Verbosity</h4>
+
+<p>Using the <code>control</code> argument, the settings passed to the optimizers can be altered.
+This argument takes a named list.
+To supply user-defined starting values, use <code>control = list(sv=c(...))</code> and supply a vector containing initial values for all parameters.
+Optimizer-specific options include the number of iterations (<code>iterlim = 1000</code>) and convergence criteria for the BFGS- and NR-optimization ((<code>tol1 = 1e-5</code>) and (<code>tol2 = 1e-10</code>)).
+</p>
+<p>Verbosity takes integer values from <code>0</code> to <code>4</code>.
+<code>0</code>, no information is printed (default).
+<code>1</code> prints information about 3 stages (preparation, starting values, estimation).
+<code>2</code> prints little information about optimization (<code>verbosity</code> values greater than one are passed to <code>print.default = verbosity - 1</code> of <code>maxBFGS</code> and <code>maxNR</code>).
+<code>3</code> prints more information about optimization.
+<code>4</code> prints all information about optimization.
+</p>
+
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>[<code>language</code>] function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parametrization</code></td>
+<td>
+<p>[<code>character</code>] used parametrization</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varnames</code></td>
+<td>
+<p>[<code>character</code>] components' names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.vars</code></td>
+<td>
+<p>[<code>numeric</code>] vector with the number of parameters per set of predictors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dims</code></td>
+<td>
+<p>[<code>numeric</code>] number of components</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>[<code>numeric</code>] used components</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>[<code>numeric list</code>] sets of predictors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>[<code>numeric list</code>] sets of predictors (only for the alternative parametrization)</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>sub.comp</code></td>
+<td>
+<p>[<code>numeric</code>] vector of single components</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+<p>[<code>numeric</code>] base (only for the alternative parametrization)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>[<code>numeric</code>] vector of frequency weights</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orig.resp</code></td>
+<td>
+<p>[<code>DirichletRegData</code>] the original response</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>[<code>data.frame</code>] original data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>[<code>data.frame</code>] used data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>[<code>Formula</code>] expanded formula</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mf_formula</code></td>
+<td>
+<p>[<code>language</code>] expression for generating the model frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npar</code></td>
+<td>
+<p>[<code>numeric</code>] number of parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>[<code>numeric</code>] named vector of parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefnames</code></td>
+<td>
+<p>[<code>character</code>] names of the parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>[<code>list of matrices</code>] list containing alpha's, mu's, phi's for the observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logLik</code></td>
+<td>
+<p>[<code>numeric</code>] the log-likelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>[<code>matrix</code>] covariance-matrix of parameter estimates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hessian</code></td>
+<td>
+<p>[<code>matrix</code>] (observed) Hessian</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>[<code>numeric</code>] vector of standard errors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimization</code></td>
+<td>
+<p>[<code>list</code>] contains details about the optimization process provided by <code>maxBFGS</code> and <code>maxNR</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Marco J. Maier</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">ALake &lt;- ArcticLake
+ALake$Y &lt;- DR_data(ALake[,1:3])
+
+# fit a quadratic Dirichlet regression models ("common")
+res1 &lt;- DirichReg(Y ~ depth + I(depth^2), ALake)
+
+# fit a Dirichlet regression with quadratic predictor for the mean and
+# a linear predictor for precision ("alternative")
+res2 &lt;- DirichReg(Y ~ depth + I(depth^2) | depth, ALake, model="alternative")
+
+# test both models
+anova(res1, res2)
+
+res1
+summary(res2)
+</code></pre>
+
+
+</div>

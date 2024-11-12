@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.covar</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>as.covar</h2>
+
+<h3>Description</h3>
+
+<p>Changes a dispRity metric to use the covar element from a dispRity object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">as.covar(fun, ..., VCV = TRUE, loc = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>a <code>function</code> to apply to the <code>$covar</code> element of <code>dispRity</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>any additional arguments to pass to fun.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VCV</code></td>
+<td>
+<p>logical, whether to use the <code>$VCV</code> component of the elements in <code>dispRity$covar</code> (<code>TRUE</code>; default) or not (<code>FALSE</code>) (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loc</code></td>
+<td>
+<p>logical, whether to use the <code>$loc</code> component of the elements in <code>dispRity$covar</code> (<code>TRUE</code>) or not (<code>FALSE</code>; default) (see details).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function effectively transforms the input argument from <code>matrix</code> (or <code>matrix2</code>) to <code>matrix = matrix$VCV</code> and adds a evaluation after the return call to indicate that the function works on a <code>$covar</code> element.
+Note that if the function does not have an argument called <code>matrix</code>, the first argument is estimated as being the one to be transformed (e.g. if the function has its first argument <code>x</code>, it will transform it to <code>x = x$VCV</code>).
+</p>
+<p>You can toggle between using the <code>$VCV</code> or the <code>$loc</code> argument in the <code>$covar</code> matrix by using either <code>VCV = TRUE, loc = FALSE</code> (to access only <code>fun(matrix = matrix$VCV, ...)</code>), <code>VCV = FALSE, loc = TRUE</code> (to access only <code>matrix = matrix(matrix$loc, nrow = 1), ...</code>) or <code>VCV = TRUE, loc = TRUE</code> (to access <code>fun(matrix = matrix$VCV, loc = matrix$loc, ...)</code>; provided <code>fun</code> has an extra <code>loc</code> argument).
+</p>
+<p>For <code>between.groups</code> metrics with <code>matrix</code> and <code>matrix2</code> arguments, you can provide multiple logicals for <code>VCV</code> and <code>loc</code> to be applied repspectively to <code>matrix</code> and <code>matrix2</code>. For example <code>VCV = TRUE</code> will reinterpret <code>matrix</code> and <code>matrix2</code> as <code>matrix$VCV</code> and <code>matrix2$VCV</code> but <code>loc = c(TRUE, FALSE)</code> will only reinterpret <code>matrix</code> as <code>matrix$loc</code> (and <code>matrix2</code> will not be reinterpreted).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dispRity</code> <code>MCMCglmm.subsets</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Creating a dispRity
+data(charadriiformes)
+
+## Creating a dispRity object from the charadriiformes model
+covar_data &lt;- MCMCglmm.subsets(data       = charadriiformes$data,
+                               posteriors = charadriiformes$posteriors)
+
+## Get one matrix and one covar matrix
+one_matrix &lt;- get.matrix(covar_data, subsets = 1)
+one_covar  &lt;- get.covar(covar_data, subsets = 1, n = 1)[[1]][[1]]
+
+## Measure the centroids
+centroids(one_matrix)
+
+## Measure the centroids on the covar matrix
+as.covar(centroids)(one_covar)
+## Is the same as:
+centroids(one_covar$VCV)
+
+## Apply the measurement on a dispRity object:
+## On the traitspace:
+summary(dispRity(covar_data, metric = c(sum, centroids))) 
+## On the covariance matrices:
+summary(dispRity(covar_data, metric = c(sum, as.covar(centroids))))
+## The same but with additional options (centre = 100)
+summary(dispRity(covar_data,
+                 metric = c(sum, as.covar(centroids)),
+                 centre = 100))
+
+## Example with the VCV and loc options
+## A metric that works with both VCV and loc
+## (the sum of the variances minus the distance from the location)
+sum.var.dist &lt;- function(matrix, loc = rep(0, ncol(matrix))) {
+    ## Get the sum of the diagonal of the matrix
+    sum_diag &lt;- sum(diag(matrix))
+    ## Get the distance between 0 and the loc
+    dist_loc &lt;- dist(matrix(c(rep(0, ncol(matrix)), loc), nrow = 2, byrow = TRUE))[1]
+    ## Return the sum of the diagonal minus the distance
+    return(sum_diag - dist_loc)
+}
+## Changing the $loc on one_covar for the demonstration
+one_covar$loc &lt;- c(1, 2, 3)
+## Metric on the VCV part only
+as.covar(sum.var.dist, VCV = TRUE, loc = FALSE)(one_covar)
+## Metric on the loc part only
+as.covar(sum.var.dist, VCV = FALSE, loc = TRUE)(one_covar)
+## Metric on both parts
+as.covar(sum.var.dist, VCV = TRUE, loc = TRUE)(one_covar)
+
+</code></pre>
+
+
+</div>

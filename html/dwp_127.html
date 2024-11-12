@@ -1,0 +1,240 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ddd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Probability Functions for Distance Distributions</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the standard d/p/q/r family of R probability functions for distance
+distributions (<code>dd</code>) as well as the relative carcass 
+density (<code>rcd</code>). Usage broadly parallels that of the d/p/q/r probability 
+functions like <code>dnorm</code>, <code>pnorm</code>, <code>qnorm</code>, and 
+<code>rnorm</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ddd(x, model, parms = NULL, extent = "full", zrad = 200)
+
+pdd(q, model, parms = NULL, extent = "full", zrad = 200, silent = FALSE)
+
+qdd(p, model, parms = NULL, extent = "full", zrad = 200, subdiv = 1000)
+
+rdd(n, model, parms = NULL, extent = "full", zrad = 200, subdiv = 1000)
+
+rcd(x, model, parms = NULL, extent = "full", zrad = 200)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, q, p, n</code></td>
+<td>
+<p>numeric, <code class="reqn">x \ge 0</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>either a <code>dd</code> object or a <code>ddSim</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms</code></td>
+<td>
+<p>model parameters; required if model is specified as a character 
+string rather than a <code>dd</code> or <code>ddSim</code> object (otherwise optional and ignored)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extent</code></td>
+<td>
+<p>for a full distribution extrapolated beyond the search radius
+to account for all carcasses, use <code>extent = "full"</code>; for a distribution
+restricted solely to carcasses falling within the search radius, use
+<code>extent = "win"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zrad</code></td>
+<td>
+<p>the distance at which carcass density is assumed to be zero; to
+be used only in simulation reps in which simulated parameters do not yield
+extensible distributions, essentially returning 0 rather than NA for those
+pathological cases.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>If <code>TRUE</code>, then console messages are suppressed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subdiv</code></td>
+<td>
+<p>if the number of values to calculate with <code>rdd</code> or <code>qdd</code>
+is &gt;1, the function uses breaks the PDF into <code>subdiv</code> subdivisions and
+interpolates to solve the inverse. More subdivisions gives greater accuracy
+but is slower.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The probability density function (PDF(<em>x</em>) = <em>f</em>(<em>x</em>) = <code>ddd(x, ...)</code>) 
+gives the probability that a carcass falls in a 1 meter ring centered at the 
+turbine and with an outer radius of <code>x</code> meters. The cumulative distribution 
+function [CDF(<em>x</em>) = <em>F</em>(<em>x</em>) = <code>pdd(x, ...)</code>] gives the 
+probability that a carcass falls within <code>x</code> meters from the turbine. For 
+a given probability, <code>p</code>, the inverse CDF [<code>qdd(p,...)</code>] gives the 
+<code>p</code> quantile of carcass distances. For example, <code>qdd(0.5,...)</code> 
+gives the median carcass distance, and <code>qdd(0.9, ...)</code> gives the radius 
+that 90% of the carcasses are expected to fall in. Random carcass distances 
+can be generated using <code>rdd</code>.
+</p>
+<p>The relative carcass density function(<code>rcd</code>) gives relative carcass 
+densities at a point <code>x</code> meters from a turbine. In general, rcd is 
+proportional to PDF(x)/x, normalized so that the surface of rotation of rcd(x) 
+has total volume of 1. There are more stringent contstraints on the allowable 
+parameters in the fitted (or simulated) glm's because the integral of PDF(x)/x 
+must converge.
+</p>
+<p>Distributions may be extrapolated beyond the search radius to account for all
+carcasses, including those that land beyond the search radius 
+(<code>extent = "full"</code>), or may be restricted to carcasses falling within the
+searched area (<code>extent = "win"</code>). Typically, in estimating <code>dwp</code> for
+a fatality estimator like <code>eoa</code> or <code>GenEst</code>, the full distributions
+would be used.
+</p>
+<p>The probability functions have a number of purposes. A few of the more commonly
+used are listed below.
+</p>
+
+<dl>
+<dt>PDF and CDF (<code>ddd</code> and <code>pdd</code>):</dt>
+<dd>
+
+<ul>
+<li>
+<p>to calculate the probability that carcass lands at a distance
+<code>x</code> meters from the turbine (or, more precisely, within 0.5 meters of 
+<code>x</code>) or within <code>x</code> meters from the turbine, use a scalar value
+of <code>x</code> and a single model (<code>dd</code> or <code>ddSim</code>)
+with <code>ddd</code> or <code>pdd</code>, repspectively;
+</p>
+</li>
+<li>
+<p>to account for uncertainty in the probabilities at <code>x</code>, use 
+<code>ddd</code> or <code>pdd</code> for with scalar <code>x</code> and a simulated set of
+parameters from the fitted model (<code>ddSim</code> object). This would 
+be useful for calculating confidence intervals for the probabilities;
+</p>
+</li>
+<li>
+<p>to calculate probabilities for a range of <code>x</code> values according 
+to a single model, use a vector <code>x</code> with a <code>dd</code> object or 
+a <code>ddSim</code> object with one row. This would be useful for 
+drawing graphs of PDFs or CDFs;
+</p>
+</li>
+<li>
+<p>to calculate simulated probabilites for a range of <code>x</code> values,
+use a vector <code>x</code> and a <code>ddSim</code> object of simulated parameter sets.
+This would be useful for drawing confidence regions around a fitted PDF or
+CDF.
+</p>
+</li>
+</ul>
+</dd>
+<dt>Inverse CDF (<code>qdd</code>):</dt>
+<dd>
+
+<ul>
+<li>
+<p>to calculate the distance that 100<code>p</code>% of the carcasses are 
+expected to fall, use a scalar <code>p</code> in the interval (0, 1) and a 
+single model (<code>dd</code>) or parameter set (<code>ddSim</code> with
+one row);
+</p>
+</li>
+<li>
+<p>to calculate account for the uncertainty in estimating the inverse 
+CDF for a given <code>p</code>, use a scalar <code>p</code> and a <code>ddSim</code>
+object. This would be useful for calculating a confidence interval for,
+say, the median or the expected 90th percentile of carcass distances;
+</p>
+</li>
+<li>
+<p>to calculate the inverse CDF for a range of probabilities for a single
+model, use a vector <code>p</code> and a single model (<code>dd</code> or 
+<code>ddSim</code> object with one row.
+</p>
+</li>
+</ul>
+</dd>
+<dt>Random Carcasses Distances (<code>rdd</code>):</dt>
+<dd>
+
+<ul>
+<li>
+<p>to generate <code>n</code> random carcass distances for a given (fixed)
+model, use a <code>dd</code> object or a <code>ddSim</code> object with
+a single row;
+</p>
+</li>
+<li>
+<p>to generate <code>n</code> random carcass distances for a model and account
+for the uncertainty in estimating the model, use a <code>ddSim</code> 
+object with <code>n</code> rows, where <code>n</code> is also used as the <code>n</code>
+argument in the call to <code>rdd</code>.
+</p>
+</li>
+</ul>
+</dd>
+<dt>Relative Carcass Density (per m^2):</dt>
+<dd>
+
+<ul><li>
+<p>to calculate the relative carcass density at a number of distances,
+use a vector <code>x</code>. This would be useful in generating maps of carcass
+density at a site.
+</p>
+</li></ul>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>vector or matrix of values; a vector is returned unless <code>model</code> 
+is a <code>ddSim</code> object with more than one row and is to be calculated for
+more than one value (<code>x</code>, <code>q</code>, <code>p</code>), in which case an array 
+with dimensions <code>length(x)</code> by <code>nrow(model)</code> is returned (where 
+"<code>x</code>" is <code>x</code>, <code>q</code>, or <code>p</code>, depending on whether <code>ddd</code>,
+<code>pdd</code>, or <code>qdd</code> is called).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(layout_simple)
+data(carcass_simple)
+sitedata &lt;- initLayout(layout_simple)
+ringdata &lt;- prepRing(sitedata)
+ringsWithCarcasses &lt;- addCarcass(carcass_simple, data_ring = ringdata)
+distanceModels &lt;- ddFit(ringsWithCarcasses)
+modelEvaluations &lt;- modelFilter(distanceModels)
+bestModel &lt;- modelEvaluations$filtered
+pdd(100, model = bestModel) # estimated fraction of carcasses within 100m
+ddd(1:150, model = bestModel) # estimated PDF of the carcass distances
+qdd(0.9, model = bestModel) # estimated 0.9 quantile of carcass distances
+rdd(1000, model = bestModel) # 1000 random draws from estimated carcass distribution
+</code></pre>
+
+
+</div>

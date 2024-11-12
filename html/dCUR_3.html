@@ -1,0 +1,205 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>CUR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>CUR</h2>
+
+<h3>Description</h3>
+
+<p>This function computes the canonical CUR decomposition using top scores as selection criteria to identify the most relevant columns and rows of a given data matrix. It also provides an option to use an extension of CUR decomposition, which reconfigures leverage scores by using the partial and semi partial correlations with an external variable of interest. Additionally, this function lets the user fit a probability distribution of leverage scores with Mixtures Gaussian Models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">CUR(
+  data,
+  variables,
+  k = NULL,
+  rows,
+  columns,
+  standardize = FALSE,
+  cur_method = "sample_cur",
+  correlation = NULL,
+  correlation_type = c("partial", "semipartial"),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing the variables to be used in CUR decomposition and other externals variables with which you want to correlate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variables</code></td>
+<td>
+<p>correspond to the variables used to compute the leverage scores in CUR analysis. The external variable’s names must not be included. dplyr package notation can be used to specify the variables (see the example).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>corresponds to the number of principal components used to compute the leverage scores. If NULL, it is considered the number of k main components that accumulate 80% of the variability explained. This argument can also be a proportion, in which case the function takes this value as the desired cumulative explained variance and automatically chooses the k.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rows</code></td>
+<td>
+<p>correspond to the proportion of rows to be selected from the total number of rows in the data matrix. When all the rows are needed and <code>mixture</code> is used as cur_method, a proportion of 0.999 must be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>columns</code></td>
+<td>
+<p>correspond to the proportion of columns (variables) to be selected from the total number of variables in the data matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardize</code></td>
+<td>
+<p>If <code>TRUE</code> the data is standardized (by subtracting the average and dividing by the standard deviation)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cur_method</code></td>
+<td>
+<p>character. If <code>sample_cur</code>, the selection of leverage scores is made according to the top score selection criteria set out by Mahoney &amp; Drineas (2009). If <code>mixture</code> method is specified, the best Mixture Gaussian Model is fitted for the leverages, and the selection of the most relevant variables is based on a tabular value given the critical area specified in rows and columns arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correlation</code></td>
+<td>
+<p>character. It specifies the name of the external variable the computation of leverage must be adjusted with.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correlation_type</code></td>
+<td>
+<p>character. It specifies if the computation of leverage must be adjusted by the <code>semipartial</code> or <code>partial</code> correlation with an external variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments to be passed to <code>pcor</code> or <code>spcor</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Extension of classic CUR descomposition with top scores selection criteria.
+</p>
+<p>CUR decomposition chooses columns and rows that exhibit high leverage scores and exert a disproportionately large “influence” on the best low-rank fit of the data matrix. The main advantage of CUR Decomposition over SVD is that the original data matrix can be expressed as a reduced number of rows and columns instead of obtaining factorial axes resulting from a linear combination of all the original variables to facilitate interpretation.
+</p>
+<p>The reconfiguration of the leverage scores according to the methodology of Villegas et al. (2018) dividing the leverage score by <code class="reqn">(1-\rho^2)</code>. Where <code class="reqn">\rho</code> rho represents the partial or semi-partial correlation that the variables used in CUR decomposition have with an external variable, its purpose is recalibrating the relative importance of the leverage scores according to an external variable of interest.
+</p>
+<p>The correlation type selection could be partial or semi-partial, according to Seongho (2015) of the package in R ppcor.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Number of principal components with which leverages scores are computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CUR</code></td>
+<td>
+<p>CUR matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>absolute_error</code></td>
+<td>
+<p>Absolute error computed as the Frobenius norm of the original data -detnoted as A- and CUR matrix: ||A-CUR||</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relative_error</code></td>
+<td>
+<p>Relative error <code class="reqn">\frac{||A-CUR||}{||A||}</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leverage_columns_sorted</code></td>
+<td>
+<p>a data frame which specifies the names of relevant columns and its leverages scores arranged downwardly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leverage_rows_sorted </code></td>
+<td>
+<p>a data frame which specifies the number of relevant rows and its leverages scores arranged downwardly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leverage_columns </code></td>
+<td>
+<p>a data frame which specifies the names of all columns and its leverages scores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leverage_rows </code></td>
+<td>
+<p>a data frame which specifies the number of all rows and its leverages scores.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Cesar Gamboa-Sanabria, Stefany Matarrita-Munoz, Katherine Barquero-Mejias, Greibin Villegas-Barahona, Mercedes Sanchez-Barba and Maria Purificacion Galindo-Villardon.
+</p>
+
+
+<h3>References</h3>
+
+<p>Mahoney MW, Drineas P (2009).
+“CUR matrix decompositions for improved data analysis.”
+<em>Proceedings of the National Academy of Sciences</em>, <b>106</b>(3), 697–702.
+ISSN 0027-8424, <a href="https://doi.org/10.1073/pnas.0803205106">doi:10.1073/pnas.0803205106</a>.
+Villegas G, others (2018).
+“Modelo estadistico pedagogico para la toma de decisiones administrativas y academicas con impacto en el mejoramiento continuo del rendimiento de los estudiantes universitarios, basado en los metodos de seleccion CUR.”
+<a href="https://doi.org/10.14201/gredos.139405">doi:10.14201/gredos.139405</a>.
+Villegas G, Martin-Barreiro C, Gonzalez-Garcia N, Hernandez-Gonzalez S, Sanchez-Barba M, Galindo-Villardon M (2019).
+“Dynamic CUR, an alternative to variable selection in CUR decomposition.”
+<em>Revistas Investigacion Operacional</em>, <b>40</b>(3), 391–399.
+Drineas P, Mahoney MW, Muthukrishnan S (2008).
+“Relative-error cur matrix decompositions.”
+<em>SIAM Journal on Matrix Analysis and Applications</em>, <b>30</b>(2), 844–881.
+<a href="https://doi.org/10.1137/07070471X">https://doi.org/10.1137/07070471X</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+ #Classic CUR with top scores selection criteria.
+ result &lt;- CUR(data=AASP, variables=hoessem:notabachillerato,
+           k=20, rows = 1, columns = .2, standardize = TRUE,
+           cur_method = "sample_cur")
+ result
+#Extension of classic CUR: Recalibrating leverages scores
+#and adjusting a mixtures Gaussian models to leverages.
+ result &lt;- CUR(data=AASP, variables=hoessem:notabachillerato,
+           k=20, rows = 1, columns = .2, standardize = TRUE,
+           cur_method = "mixture",
+           correlation = R1, correlation_type = "partial")
+ result
+
+
+</code></pre>
+
+
+</div>

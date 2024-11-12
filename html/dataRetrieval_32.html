@@ -1,0 +1,331 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>readNWISdata</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>General Data Import from NWIS</h2>
+
+<h3>Description</h3>
+
+<p>Returns data from the NWIS web service.
+Arguments to the function should be based on <a href="https://waterservices.usgs.gov">https://waterservices.usgs.gov</a> service calls.
+See examples below for ideas of constructing queries.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">readNWISdata(..., asDateTime = TRUE, convertType = TRUE, tz = "UTC")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>see <a href="https://waterservices.usgs.gov/docs/site-service/">https://waterservices.usgs.gov/docs/site-service/</a> for
+a complete list of options.  A
+list of arguments can also be supplied. One important argument to include is
+"service". Possible values are "iv"
+(for instantaneous), 
+"dv" (for daily values), "gwlevels" (for groundwater levels),
+"site" (for site service), "measurement", and "stat" (for
+statistics service). Note: "measurement" calls go to:
+<a href="https://nwis.waterdata.usgs.gov/usa/nwis">https://nwis.waterdata.usgs.gov/usa/nwis</a> for data requests, and use different call requests schemes.
+The statistics service has a limited selection of arguments
+(see <a href="https://waterservices.usgs.gov/docs/site-service/">https://waterservices.usgs.gov/docs/site-service/</a>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asDateTime</code></td>
+<td>
+<p>logical, if <code>TRUE</code> returns date and time as POSIXct, if <code>FALSE</code>, Date</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convertType</code></td>
+<td>
+<p>logical, defaults to <code>TRUE</code>. If <code>TRUE</code>, the
+function will convert the data to dates, datetimes,
+numerics based on a standard algorithm. If false, everything is returned as a character</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz</code></td>
+<td>
+<p>character to set timezone attribute of dateTime. Default is "UTC", and converts the
+date times to UTC, properly accounting for daylight savings times based on the data's provided tz_cd column.
+Possible values to provide are "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
+"America/Anchorage", as well as the following which do not use daylight savings time: "America/Honolulu",
+"America/Jamaica", "America/Managua", "America/Phoenix", and "America/Metlakatla". See also  <code>OlsonNames()</code>
+for more information on time zones.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function requires users to create their own arguments
+based on the NWIS web services. It is a more complicated function to use
+compared to other NWIS functions such as <code>readNWISdv</code>, <code>readNWISuv</code>,
+<code>readNWISgwl</code>, etc. However, this function adds a lot of
+flexibility to the possible queries. This function will also behave exactly 
+as NWIS when it comes to date queries. NWIS by default will only return the latest
+value for the daily and instantaneous services. So if you do not provide
+a starting date, you will only get back the latest value. If you want
+the full period of record, you can use "startDate = '1900-01-01'". Other options
+for dates are periods, such as "period = 'P7D'" which translates to a period
+of 7 days. For period, use only a positive ISO-8601 duration format, which should
+not be expressed in periods of less than a day, or in increments of months M or years Y. 
+period returns data for a site generally from now to a time in the past. 
+Note that when period is used all data up to the most recent value are returned.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with the following columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+agency </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The NWIS code for the agency reporting the data</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+site </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The USGS site number </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+dateTime </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> The date and time (if applicable) of the measurement,
+          converted to UTC for unit value data. R only allows one time zone attribute per column. For unit data
+          spanning a time zone change, converting the data to UTC solves this problem. For daily data,
+          the time zone attribute is the time zone of the first returned measurement.
+           </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+tz_cd </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The time zone code for dateTime column</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+code </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> Any codes that qualify the corresponding value</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+value </td>
+<td style="text-align: left;"> numeric </td>
+<td style="text-align: left;"> The numeric value for the parameter </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>Note that code and value are repeated for the parameters requested. The names are of the form
+X_D_P_S, where X is literal,
+D is an option description of the parameter,
+P is the parameter code,
+and S is the statistic code (if applicable).
+</p>
+<p>There are also several useful attributes attached to the data frame:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+url </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The url used to generate the data </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+siteInfo </td>
+<td style="text-align: left;"> data.frame </td>
+<td style="text-align: left;"> A data frame containing information on the requested sites </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+variableInfo </td>
+<td style="text-align: left;"> data.frame </td>
+<td style="text-align: left;"> A data frame containing information on the requested parameters </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+statisticInfo </td>
+<td style="text-align: left;"> data.frame </td>
+<td style="text-align: left;"> A data frame containing information on the requested statistics on the data </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+queryTime </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> The time the data was returned </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>renameNWISColumns</code>,  <code>importWaterML1</code>, <code>importRDB1</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Examples not run for time considerations
+
+dataTemp &lt;- readNWISdata(stateCd = "OH", parameterCd = "00010", service = "dv")
+instFlow &lt;- readNWISdata(
+  sites = "05114000", service = "iv",
+  parameterCd = "00060",
+  startDate = "2014-05-01T00:00Z", endDate = "2014-05-01T12:00Z"
+)
+
+instFlowCDT &lt;- readNWISdata(
+  sites = "05114000", service = "iv",
+  parameterCd = "00060",
+  startDate = "2014-05-01T00:00", endDate = "2014-05-01T12:00",
+  tz = "America/Chicago"
+)
+
+multiSite &lt;- readNWISdata(
+  sites = c("04025500", "040263491"),
+  service = "iv", parameterCd = "00060"
+)
+
+bBoxEx &lt;- readNWISdata(bBox = c(-83, 36.5, -81, 38.5), parameterCd = "00010")
+
+startDate &lt;- as.Date("2013-10-01")
+endDate &lt;- as.Date("2014-09-30")
+waterYear &lt;- readNWISdata(
+  bBox = c(-83, 36.5, -82.5, 36.75),
+  parameterCd = "00010",
+  service = "dv",
+  startDate = startDate,
+  endDate = endDate
+)
+
+siteInfo &lt;- readNWISdata(
+  stateCd = "WI", parameterCd = "00010",
+  hasDataTypeCd = "iv", service = "site"
+)
+temp &lt;- readNWISdata(
+  bBox = c(-83, 36.5, -82.5, 36.75), parameterCd = "00010", service = "site",
+  seriesCatalogOutput = TRUE
+)
+GWL &lt;- readNWISdata(site_no = c("392725077582401", 
+                                "375907091432201"),
+                    parameterCd = "62610",
+                    service = "gwlevels")
+                    
+levels &lt;- readNWISdata(stateCd = "WI", 
+                       service = "gwlevels",
+                       startDate = "2024-05-01",
+                       endDate = "2024-05-30") 
+                    
+meas &lt;- readNWISdata(
+  state_cd = "WI", service = "measurements",
+  format = "rdb_expanded"
+)
+
+waterYearStat &lt;- readNWISdata(
+  site = c("01646500"),
+  service = "stat",
+  statReportType = "annual",
+  statYearType = "water",
+  missingData = "on"
+)
+monthlyStat &lt;- readNWISdata(
+  site = c("01646500"),
+  service = "stat",
+  statReportType = "monthly"
+)
+
+dailyStat &lt;- readNWISdata(
+  site = c("01646500"),
+  service = "stat",
+  statReportType = "daily",
+  statType = c("p25", "p50", "p75", "min", "max"),
+  parameterCd = "00060"
+)
+
+arg.list &lt;- list(
+  site = "03111548",
+  statReportType = "daily",
+  statType = c("p25", "p50", "p75", "min", "max"),
+  parameterCd = "00060"
+)
+allDailyStats_2 &lt;- readNWISdata(arg.list, service = "stat")
+
+# use county names to get data
+dailyStaffordVA &lt;- readNWISdata(
+  stateCd = "Virginia",
+  countyCd = "Stafford",
+  parameterCd = "00060",
+  startDate = "2015-01-01",
+  endDate = "2015-01-30"
+)
+va_counties &lt;- c("51001", "51003", "51005", "51007", "51009", "51011", "51013", "51015")
+va_counties_data &lt;- readNWISdata(
+  startDate = "2015-01-01", endDate = "2015-12-31",
+  parameterCd = "00060", countycode = va_counties
+)
+
+site_id &lt;- "01594440"
+rating_curve &lt;- readNWISdata(service = "rating", site_no = site_id, file_type = "base")
+all_sites_base &lt;- readNWISdata(service = "rating", file_type = "base")
+all_sites_core &lt;- readNWISdata(service = "rating", file_type = "corr")
+all_sites_exsa &lt;- readNWISdata(service = "rating", file_type = "exsa")
+all_sites_24hrs &lt;- readNWISdata(service = "rating", file_type = "exsa", period = 24)
+
+peak_data &lt;- readNWISdata(
+  service = "peak",
+  site_no = c("01594440", "040851325"),
+  range_selection = "data_range"
+)
+
+peak_data &lt;- readNWISdata(
+  service = "peak",
+  state_cd = "PA"
+)
+
+peak_data &lt;- readNWISdata(
+  service = "peak",
+  huc2_cd = "20"
+)
+
+
+</code></pre>
+
+
+</div>

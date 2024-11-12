@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gl.filter.parent.offspring</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Filters putative parent offspring within a population</h2>
+
+<h3>Description</h3>
+
+<p>This script removes individuals suspected of being related as
+parent-offspring,using the output of the function
+<code>gl.report.parent.offspring</code>, which examines the frequency of
+pedigree inconsistent loci, that is, those loci that are homozygotes in the
+parent for the reference allele, and homozygous in the offspring for the
+alternate allele. This condition is not consistent with any pedigree,
+regardless of the (unknown) genotype of the other parent.
+The pedigree inconsistent loci are counted as an indication of whether or not
+it is reasonable to propose the two individuals are in a parent-offspring
+relationship.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gl.filter.parent.offspring(
+  x,
+  min.rdepth = 12,
+  min.reproducibility = 1,
+  range = 1.5,
+  method = "best",
+  rm.monomorphs = FALSE,
+  plot.out = TRUE,
+  plot_theme = theme_dartR(),
+  plot_colors = two_colors,
+  save2tmp = FALSE,
+  verbose = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Name of the genlight object containing the SNP genotypes [required].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.rdepth</code></td>
+<td>
+<p>Minimum read depth to include in analysis [default 12].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.reproducibility</code></td>
+<td>
+<p>Minimum reproducibility to include in analysis
+[default 1].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range</code></td>
+<td>
+<p>Specifies the range to extend beyond the interquartile range for
+delimiting outliers [default 1.5 interquartile ranges].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Method of selecting the individual to retain from each pair of
+parent offspring relationship, 'best' (based on CallRate) or 'random'
+[default 'best'].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rm.monomorphs</code></td>
+<td>
+<p>If TRUE, remove monomorphic loci after filtering
+individuals [default FALSE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.out</code></td>
+<td>
+<p>Specify if plot is to be produced [default TRUE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_theme</code></td>
+<td>
+<p>Theme for the plot. See Details for options
+[default theme_dartR()].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_colors</code></td>
+<td>
+<p>List of two color names for the borders and fill of the
+plots [default two_colors].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save2tmp</code></td>
+<td>
+<p>If TRUE, saves any ggplots and listings to the session
+temporary directory (tempdir) [default FALSE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+progress log ; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If two individuals are in a parent offspring relationship, the true number of
+pedigree inconsistent loci should be zero, but SNP calling is not infallible.
+Some loci will be miss-called. The problem thus becomes one of determining if
+the two focal individuals have a count of pedigree inconsistent loci less
+than would be expected of typical unrelated individuals. There are some quite
+sophisticated software packages available to formally apply likelihoods to
+the decision, but we use a simple outlier comparison.
+</p>
+<p>To reduce the frequency of miss-calls, and so emphasize the difference
+between true parent-offspring pairs and unrelated pairs, the data can be
+filtered on read depth. Typically minimum read depth is set to 5x, but you
+can examine the distribution of read depths with the function
+<code>gl.report.rdepth</code> and push this up with an acceptable loss of
+loci. 12x might be a good minimum for this particular analysis. It is
+sensible also to push the minimum reproducibility up to 1, if that does not
+result in an unacceptable loss of loci. Reproducibility is stored in the slot
+<code>@other$loc.metrics$RepAvg</code> and is defined as the proportion of
+technical replicate assay pairs for which the marker score is consistent.
+You can examine the distribution of reproducibility with the function
+<code>gl.report.reproducibility</code>.
+</p>
+<p>Note that the null expectation is not well defined, and the power reduced, if
+the population from which the putative parent-offspring pairs are drawn
+contains many sibs. Note also that if an individual has been genotyped twice
+in the dataset, the replicate pair will be assessed by this script as being
+in a parent-offspring relationship.
+</p>
+<p>You should run <code>gl.report.parent.offspring</code> before filtering. Use
+this report to decide min.rdepth and min.reproducibility and assess impact on
+your dataset.
+</p>
+<p>Note that if your dataset does not contain RepAvg or rdepth among the locus
+metrics, the filters for reproducibility and read depth are no used.
+</p>
+<p><strong> Function's output </strong>
+</p>
+<p>Plots and table are saved to the temporal directory (tempdir) and can be
+accessed with the function <code>gl.print.reports</code> and listed with
+the function <code>gl.list.reports</code>. Note that they can be accessed
+only in the current R session because tempdir is cleared each time that the
+R session is closed.
+</p>
+<p>Examples of other themes that can be used can be consulted in </p>
+
+<ul>
+<li> <p><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">https://ggplot2.tidyverse.org/reference/ggtheme.html</a> and </p>
+</li>
+<li>
+<p><a href="https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/">https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/</a>
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>the filtered genlight object without A set of individuals in
+parent-offspring relationship. NULL if no parent-offspring relationships were
+found.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Custodian: Arthur Georges – Post to
+<a href="https://groups.google.com/d/forum/dartr">https://groups.google.com/d/forum/dartr</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gl.list.reports</code>, <code>gl.report.rdepth</code> ,
+<code>gl.print.reports</code>,<code>gl.report.reproducibility</code>,
+<code>gl.report.parent.offspring</code>
+</p>
+<p>Other filter functions: 
+<code>gl.filter.allna()</code>,
+<code>gl.filter.callrate()</code>,
+<code>gl.filter.heterozygosity()</code>,
+<code>gl.filter.hwe()</code>,
+<code>gl.filter.ld()</code>,
+<code>gl.filter.locmetric()</code>,
+<code>gl.filter.maf()</code>,
+<code>gl.filter.monomorphs()</code>,
+<code>gl.filter.overshoot()</code>,
+<code>gl.filter.pa()</code>,
+<code>gl.filter.rdepth()</code>,
+<code>gl.filter.reproducibility()</code>,
+<code>gl.filter.secondaries()</code>,
+<code>gl.filter.sexlinked()</code>,
+<code>gl.filter.taglength()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">out &lt;- gl.filter.parent.offspring(testset.gl[1:10,1:50])
+
+</code></pre>
+
+
+</div>

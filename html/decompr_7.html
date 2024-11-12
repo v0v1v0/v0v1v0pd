@@ -1,0 +1,270 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>load_tables_vectors</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Load the Input-Output and Final Demand Tables</h2>
+
+<h3>Description</h3>
+
+<p>This function loads the demand tables
+and creates all matrices and variables required for the GVC decompositions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">load_tables_vectors(
+  iot,
+  x,
+  y,
+  k,
+  i,
+  o = NULL,
+  v = NULL,
+  null_inventory = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>iot</code></td>
+<td>
+<p>a Input Output Table object - a list with elements 'inter' (= x), 'final' (= y), 'output' (= o), 'countries' (= k) and 'industries' (= i) of class 'iot'. 
+Alternatively these objects can be passed directly to the function, at least x, y, k and i need to be supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>intermediate demand table supplied as a numeric matrix of dimensions GN x GN (G = no. of country, N = no. of industries). 
+Both rows and columns should be arranged first by country, then by industry (e.g. C1I1, C1I2, ..., C2I1, C2I2, ...) and should match (symmetry), 
+such that rows and columns refer to the same country-industries.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>final demand table supplied as a numeric matrix of dimensions GN x MN (M = no. of final demand categories recorded for each country). 
+The rows of y need to match the rows of x, and the columns should also be arranged first by country, then by final demand category (e.g. C1FD1, C1FD2, ..., C2FD1, C2FD2, ...) with the order of the 
+countries the same as in x.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>character. A vector of country or region names of length G, arranged in the same order as they occur in the rows and columns of x, y.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>character. A vector of country or region names of length N, arranged in the same order as they occur in the rows and columns of x and rows of y.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>o</code></td>
+<td>
+<p>numeric. A vector of final outputs for each country-industry matching the rows of x and y. If not provided it will be computed as <code>rowSums(x) + rowSums(y)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>numeric. A vector of value added for each country-industry matching the columns of x. If not provided it will be computed as <code>o - colSums(x)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null_inventory</code></td>
+<td>
+<p>logical. <code>TRUE</code> sets the inventory (last final demand category for each country) to zero.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Adapted from code by Fei Wang.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A 'decompr' class object - a list with the following elements:
+</p>
+
+<table>
+<tr>
+<td style="text-align: right;">
+ Am </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Imported / Exported goods IO shares matrix (<code>x</code> column-normalized by output <code>o</code>, with domestic entries set to 0). </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ B  </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Leontief Inverse matrix <code class="reqn">(I - A)^{-1}</code> where <code class="reqn">A</code> is <code>x</code> column-normalized by output <code>o</code>. </td>
+</tr>
+<tr>
+<td style="text-align: right;">               
+ Bd </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Domestic part of Leontief Inverse matrix (inter-country elements of <code class="reqn">B</code> set to 0, needed for WWZ decomposition). </td>
+</tr>
+<tr>
+<td style="text-align: right;">                 
+ Bm </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Imported / Exported part of Leontief Inverse matrix (domestic elements of <code class="reqn">B</code> set to 0, needed for WWZ decomposition). </td>
+</tr>
+<tr>
+<td style="text-align: right;">              
+ L  </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Domestic economy Leontief Inverse matrix <code class="reqn">(I - Ad)^{-1}</code> where <code class="reqn">Ad</code> is <code class="reqn">A</code> with all inter-country elements set to 0. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ E  </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Total Exports (output of each country-industry servicing foreign production or foreign final demand). </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ ESR </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Total Exports by destination country. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ Eint </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Exports for intermediate production by destination country. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ Efd </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Exports for final demand by destination country. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ Vc </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Value added content of output (<code>v / o</code>). </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ G </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Number of countries. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ N </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Number of industries. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ GN </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Number of country-industries. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ k </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Vector of country names. </td>
+</tr>
+<tr>
+<td style="text-align: right;">  
+ i </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Vector of industry names. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ rownam </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Unique country-industry names identifying the rows / columns of x and rows of y. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ X </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Total Output (<code> = o</code>). </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ Y </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Total Final Demand by destination country. </td>
+</tr>
+<tr>
+<td style="text-align: right;"> 
+ Yd </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Domestic Final Demand. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ Ym </td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"> Foreign Final Demand. </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+ </td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Bastiaan Quast
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>leontief</code>, <code>kww</code>, <code>wwz</code>, <code>decompr-package</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load example data
+data(leather)
+
+# Create intermediate object (class 'decompr')
+decompr_object &lt;- load_tables_vectors(leather)
+
+# Examine the object                                    
+str(decompr_object)
+</code></pre>
+
+
+</div>

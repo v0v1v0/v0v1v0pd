@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calc_evppi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimation of the Expected Value of Partial Perfect Information (EVPPI)
+using a linear regression metamodel approach</h2>
+
+<h3>Description</h3>
+
+<p><code>evppi</code> is used to estimate the Expected Value of Partial Perfect
+Information (EVPPI) using a linear regression metamodel approach from a
+probabilistic sensitivity analysis (PSA) dataset.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calc_evppi(
+  psa,
+  wtp,
+  params = NULL,
+  outcome = c("nmb", "nhb"),
+  type = c("gam", "poly"),
+  poly.order = 2,
+  k = -1,
+  pop = 1,
+  progress = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>psa</code></td>
+<td>
+<p>object of class psa, produced by <code>make_psa_obj</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wtp</code></td>
+<td>
+<p>willingness-to-pay threshold</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>A vector of parameter names to be analyzed in terms of EVPPI.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+<p>either net monetary benefit (<code>"nmb"</code>)
+or net health benefit (<code>"nhb"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>either generalized additive models (<code>"gam"</code>) or
+polynomial models (<code>"poly"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>poly.order</code></td>
+<td>
+<p>order of the polynomial, if <code>type == "poly"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>basis dimension, if <code>type == "gam"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pop</code></td>
+<td>
+<p>scalar that corresponds to the total population</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p><code>TRUE</code> or <code>FALSE</code> for whether or not function progress
+should be displayed in console.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The expected value of partial pefect information (EVPPI) is the expected
+value of perfect information from a subset of parameters of interest,
+<code class="reqn">\theta_I</code>, of a cost-effectiveness analysis (CEA) of <code class="reqn">D</code> different
+strategies with parameters <code class="reqn">\theta = \{ \theta_I, \theta_C\}</code>, where
+<code class="reqn">\theta_C</code> is the set of complimenatry parameters of the CEA. The
+function <code>calc_evppi</code> computes the EVPPI of <code class="reqn">\theta_I</code> from a
+matrix of net monetary benefits <code class="reqn">B</code> of the CEA. Each column of <code class="reqn">B</code>
+corresponds to the net benefit <code class="reqn">B_d</code> of strategy <code class="reqn">d</code>. The function
+<code>calc_evppi</code> computes the EVPPI using a linear regression metamodel
+approach following these steps:
+</p>
+
+<ol>
+<li>
+<p> Determine the optimal strategy <code class="reqn">d^*</code> from the expected net
+benefits <code class="reqn">\bar{B}</code>
+</p>
+<p style="text-align: center;"><code class="reqn">d^* = argmax_{d} \{\bar{B}\}</code>
+</p>
+
+</li>
+<li>
+<p> Compute the opportunity loss for each <code class="reqn">d</code> strategy, <code class="reqn">L_d</code>
+</p>
+<p style="text-align: center;"><code class="reqn">L_d = B_d - B_{d^*}</code>
+</p>
+
+</li>
+<li>
+<p> Estimate a linear metamodel for the opportunity loss of each <code class="reqn">d</code>
+strategy, <code class="reqn">L_d</code>, by regressing them on the spline basis functions of
+<code class="reqn">\theta_I</code>, <code class="reqn">f(\theta_I)</code>
+</p>
+<p style="text-align: center;"><code class="reqn">L_d = \beta_0 + f(\theta_I) + \epsilon,</code>
+</p>
+
+<p>where <code class="reqn">\epsilon</code> is the residual term that captures the complementary
+parameters <code class="reqn">\theta_C</code> and the difference between the original simulation
+model and the metamodel.
+</p>
+</li>
+<li>
+<p> Compute the EVPPI of <code class="reqn">\theta_I</code> using the estimated losses for
+each <code class="reqn">d</code> strategy, <code class="reqn">\hat{L}_d</code> from the linear regression metamodel
+and applying the following equation:
+</p>
+<p style="text-align: center;"><code class="reqn">EVPPI_{\theta_I} = \frac{1}{K}\sum_{i=1}^{K}\max_d(\hat{L}_d)</code>
+</p>
+
+<p>The spline model in step 3 is fitted using the 'mgcv' package.
+</p>
+</li>
+</ol>
+<h3>Value</h3>
+
+<p>A list containing 1) a data.frame with WTP thresholds and corresponding EVPPIs
+for the selected parameters and 2) a list of metamodels used to estimate EVPPI for each
+strategy at each willingness to pay threshold.
+</p>
+
+
+<h3>References</h3>
+
+
+<ol>
+<li>
+<p> Jalal H, Alarid-Escudero F. A General Gaussian Approximation Approach
+for Value of Information Analysis. Med Decis Making. 2018;38(2):174-188.
+</p>
+</li>
+<li>
+<p> Strong M, Oakley JE, Brennan A. Estimating Multiparameter Partial
+Expected Value of Perfect Information from a Probabilistic Sensitivity
+Analysis Sample: A Nonparametric Regression Approach. Med Decis Making.
+2014;34(3):311–26.
+</p>
+</li>
+</ol>
+</div>

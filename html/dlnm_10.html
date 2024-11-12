@@ -1,0 +1,295 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crossreduce</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Reduce the Fit of a DLNM to One-Dimensional Summaries </h2>
+
+<h3>Description</h3>
+
+<p>The function reduces the fit of bi-dimensional distributed lag linear (DLMs) or non-linear (DLNMs) models to summaries defined in the the dimension of predictor or lags only, and re-expresses it in terms of modified parameters of the one-dimensional basis functions chosen for that space.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crossreduce(basis, model=NULL, type="overall", value=NULL, coef=NULL, vcov=NULL,
+  model.link=NULL, at=NULL, from=NULL, to=NULL, by=NULL, lag, bylag=1, cen=NULL,
+  ci.level=0.95)
+  
+## S3 method for class 'crossreduce'
+summary(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>basis </code></td>
+<td>
+<p> an object of class <code>"crossbasis"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model </code></td>
+<td>
+<p> a model object for which the reduction and prediction are desired. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef, vcov, model.link </code></td>
+<td>
+<p> user-provided coefficients, (co)variance matrix and model link for the reduction and then prediction. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type </code></td>
+<td>
+<p> type of reduction. Possible options are <code>"overall"</code> (default) for reduction to the overall cumulative exposure-response association, <code>"lag"</code> for reduction to a lag-specific exposure-response association, or <code>"var"</code> for reduction to a predictor-specific lag-response association. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value </code></td>
+<td>
+<p> the single value of predictor or lag at which predictor-specific or lag-specific associations must be defined, respectively. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at </code></td>
+<td>
+<p> vector of values used for prediction in the dimension of predictor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from, to</code></td>
+<td>
+<p> range of predictor values used for prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag </code></td>
+<td>
+<p> either an integer scalar or vector of length 2, defining the lag range used for prediction. Defalut to values used for estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by, bylag</code></td>
+<td>
+<p> increment of the sequences of predictor and lag values used for prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cen </code></td>
+<td>
+<p> logical or a numeric scalar. It specifies the centering value, then used as a reference for predictions. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.level </code></td>
+<td>
+<p> confidence level for the computation of confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object </code></td>
+<td>
+<p>  an object of class <code>"crossreduce"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>... </code></td>
+<td>
+<p> additional arguments to be passed to <code>summary</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The dimension to which the fit is reduced is chosen by <code>type</code>, computing summaries for overall cumulative or lag-specific associations defining an exposure-response relationship in the predictor space, or predictor-specific associations defining a lag-response relationship in the lag space. The function re-expresses the original fit of the model, defined by the parameters of the bi-dimensional cross-basis functions, in summaries defined by the one-dimensional basis for the related space and a (usually smaller) set of modified parameters.
+</p>
+<p>Similarly to <code>crosspred</code>, the object <code>basis</code> must be the same containing the cross-basis matrix included in <code>model</code>, with its attributes and class. The function computes predictions for specific values of predictor (for <code>type</code> equal to <code>"overall"</code> and <code>"lag"</code>) or lag (for for <code>type</code> equal to <code>"var"</code>). Values are set to default or chosen thorugh <code>at</code>/<code>from</code>/<code>to</code>/<code>by</code> and <code>lag</code>/<code>bylag</code>, respectively.
+</p>
+<p>Predictions are computed versus a reference value, with default values dependent on the function used in <code>basis</code>, or manually set through <code>cen</code>. Briefly, sensible default values are automatically defined for <code>strata</code>, <code>thr</code> and <code>integer</code> (corresponding to the reference region), and for <code>lin</code> (corresponding to 0). For other choices, such as <code>ns</code>, <code>bs</code>, <code>poly</code> or other existing or user-defined functions, the centering value is set by default to the mid-range. The inclusion of the intercept in <code>basis</code> term nullifies the centering.
+</p>
+<p>Exponentiated predictions are included if <code>model.link</code> is equal to <code>"log"</code> or <code>"logit"</code>. Confidence intervals computed using a normal approximation and a confidence level of <code>ci.level</code>. <code>model.link</code> is automatically selected from <code>model</code> for some classes when set to <code>NULL</code> (default), but needs to be provided for different classes.
+</p>
+<p>The function automatically works with model objects from regression function <code>lm</code> and <code>glm</code>, <code>gam</code> (package <span class="pkg">mgcv</span>), <code>coxph</code> and <code>clogit</code> (package <span class="pkg">survival</span>), <code>lme</code> and <code>nlme</code> (package <span class="pkg">nlme</span>), <code>lmer</code> and <code>glmer</code> and <code>nlmer</code> (package <span class="pkg">lme4</span>), <code>gee</code> (package <span class="pkg">gee</span>), <code>geeglm</code> (package <span class="pkg">geepack</span>). The function also works with any regression function for which <code>coef</code> and <code>vcov</code> methods are available and return appropriately named objects. Otherwise, the user needs to input the coefficients and associated (co)variance matrix related to the parameters of the crossbasis as arguments <code>coef</code> and <code>vcov</code>. In this case, their dimensions and order must match the variables included in <code>basis</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list object of class <code>"crossreduce"</code> with the following (optional) components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients, vcov </code></td>
+<td>
+<p> reduced parameters of the original fitted model for the chosen dimension.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>basis </code></td>
+<td>
+<p> basis matrix computed at <code>predvar</code> or for the sequence of lags defined by <code>lag</code>, depending on the chosen dimension.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type, value </code></td>
+<td>
+<p> type of reduction and (optional) value, as arguments above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cen </code></td>
+<td>
+<p> (optional) numeric scalar defining the centering value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predvar </code></td>
+<td>
+<p> vector of observations used for prediction, if the reduction is in the dimension of predictor.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag </code></td>
+<td>
+<p> integer vector defining the lag range.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bylag </code></td>
+<td>
+<p> increment of the sequence of lag values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit, se </code></td>
+<td>
+<p> vectors of the predicted association and related standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>low, high </code></td>
+<td>
+<p> vectors of confidence intervals for <code>fit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RRfit </code></td>
+<td>
+<p> vector of exponentiated predicted associations from <code>fit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RRlow, RRhigh </code></td>
+<td>
+<p> vectors of confidence intervals for <code>RRfit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.level </code></td>
+<td>
+<p> confidence level used for the computation of confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.class </code></td>
+<td>
+<p> class of the model command used for estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.link </code></td>
+<td>
+<p> a specification for the model link function.</p>
+</td>
+</tr>
+</table>
+<h3>Warnings</h3>
+
+<p>In case of collinear variables in the <code>basis</code> object, some of them are discarded and the related parameters not included in <code>model</code>. Then, <code>crossreduce</code> will return an error. Check that the specification of the variables is meaningful through <code>summary</code>.
+</p>
+<p>The name of the object <code>basis</code>  will be used to extract the related estimated parameters from <code>model</code>. If more than one variable is transformed by cross-basis functions in the same model, different names must be specified.
+</p>
+
+
+<h3>Note</h3>
+
+<p>All the predictions are generated using a reference value, which if not directly specific by <code>cen</code> is given default values corresponding to (approximately) the mid-range point for continuous functions. Before version 2.2.0 of <span class="pkg">dlnm</span>, centering was produced in <code>crossbasis</code> (see the related help page), and for backward compatibility this information is kept (with a warning) and used in <code>crossreduce</code> unless <code>cen</code> is directly defined as an argument.
+</p>
+<p>Exponentiated predictions are included if <code>model.link</code> (selected by the user or specified automatically by <code>model</code>) is equal to <code>"log"</code> or <code>"logit"</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Antonio Gasparrini &lt;<a href="mailto:antonio.gasparrini@lshtm.ac.uk">antonio.gasparrini@lshtm.ac.uk</a>&gt;</p>
+
+
+<h3>References</h3>
+
+<p>Gasparrini A., Armstrong, B., Kenward M. G. Reducing and meta-analyzing estimates from distributed lag non-linear models.<em>BMC Medical Research Methodology</em>. 2013;<b>13</b>(1):1. [freely available <a href="http://www.ag-myresearch.com/2013_gasparrini_bmcmrm.html">here</a>].
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>crossbasis</code> to generate cross-basis matrices. <code>crosspred</code> to obtain predictions after model fitting. The method function <code>plot</code> to plot the association.
+</p>
+<p>See <code>dlnm-package</code> for an introduction to the package and for links to package vignettes providing more detailed information.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># create the crossbasis object
+lagnk &lt;- 3
+lagknots &lt;- exp(((1+log(30))/(lagnk+1) * seq(lagnk))-1)
+cb4 &lt;- crossbasis(chicagoNMMAPS$temp, lag=30, argvar=list(fun="thr",
+  thr=c(10,25)), arglag=list(knots=lagknots))
+
+# # run the model and get the predictions
+library(splines)
+model4 &lt;- glm(death ~  cb4 + ns(time, 7*14) + dow, family=quasipoisson(),
+  chicagoNMMAPS)
+pred4 &lt;- crosspred(cb4, model4, by=1)
+
+# reduce to overall cumulative association
+redall &lt;- crossreduce(cb4, model4)
+summary(redall)
+# reduce to exposure-response association for lag 5
+redlag &lt;- crossreduce(cb4, model4, type="lag", value=5)
+# reduce to lag-response association for value 33
+redvar &lt;- crossreduce(cb4, model4, type="var", value=33)
+
+# compare number of parameters
+length(coef(pred4))
+length(coef(redall))
+length(coef(redlag))
+length(coef(redvar))
+
+# test
+plot(pred4, "overall", xlab="Temperature", ylab="RR",
+  ylim=c(0.8,1.6), main="Overall cumulative association")
+lines(redall, ci="lines",col=4,lty=2)
+legend("top",c("Original","Reduced"),col=c(2,4),lty=1:2,ins=0.1)
+
+# reconstruct the fit in terms of uni-dimensional function
+b4 &lt;- onebasis(0:30,knots=attributes(cb4)$arglag$knots,int=TRUE)
+pred4b &lt;- crosspred(b4,coef=coef(redvar),vcov=vcov(redvar),model.link="log",by=1)
+
+# test
+plot(pred4, "slices", var=33, ylab="RR", ylim=c(0.9,1.2),
+  main="Lag-response association at 33C")
+lines(redvar, ci="lines", col=4, lty=2)
+points(pred4b, pch=19, cex=0.6)
+legend("top",c("Original","Reduced","Reconstructed"),col=c(2,4,1),lty=c(1:2,NA),
+  pch=c(NA,NA,19),pt.cex=0.6,ins=0.1)
+</code></pre>
+
+
+</div>

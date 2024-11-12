@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>report_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate report from existing objects</h2>
+
+<h3>Description</h3>
+
+<p>Generate report from previously-created <code>daiquiri_source_data</code> and
+<code>daiquiri_aggregated_data</code> objects
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">report_data(
+  source_data,
+  aggregated_data,
+  report_title = "daiquiri data quality report",
+  save_directory = ".",
+  save_filename = NULL,
+  format = "html",
+  show_progress = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>source_data</code></td>
+<td>
+<p>A <code>daiquiri_source_data</code> object returned from
+<code>prepare_data()</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregated_data</code></td>
+<td>
+<p>A <code>daiquiri_aggregated_data</code> object returned from
+<code>aggregate_data()</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>report_title</code></td>
+<td>
+<p>Title to appear on the report</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_directory</code></td>
+<td>
+<p>String specifying directory in which to save the
+report. Default is current directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_filename</code></td>
+<td>
+<p>String specifying filename for the report, excluding any
+file extension. If no filename is supplied, one will be automatically
+generated with the format <code>daiquiri_report_YYMMDD_HHMMSS</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>File format of the report. Currently only <code>"html"</code> is supported</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_progress</code></td>
+<td>
+<p>Print progress to console. Default = <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further parameters to be passed to <code>rmarkdown::render()</code>. Cannot
+include any of <code>input</code>, <code>output_dir</code>, <code>output_file</code>, <code>params</code>, <code>quiet</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A string containing the name and path of the saved report
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>prepare_data()</code>, <code>aggregate_data()</code>,
+<code>daiquiri_report()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# load example data into a data.frame
+raw_data &lt;- read_data(
+  system.file("extdata", "example_prescriptions.csv", package = "daiquiri"),
+  delim = ",",
+  col_names = TRUE
+)
+
+# validate and prepare the data for aggregation
+source_data &lt;- prepare_data(
+  raw_data,
+  field_types = field_types(
+    PrescriptionID = ft_uniqueidentifier(),
+    PrescriptionDate = ft_timepoint(),
+    AdmissionDate = ft_datetime(includes_time = FALSE),
+    Drug = ft_freetext(),
+    Dose = ft_numeric(),
+    DoseUnit = ft_categorical(),
+    PatientID = ft_ignore(),
+    Location = ft_categorical(aggregate_by_each_category = TRUE)
+  ),
+  override_column_names = FALSE,
+  na = c("", "NULL"),
+  dataset_description = "Example data provided with package",
+  show_progress = TRUE
+)
+
+# aggregate the data
+aggregated_data &lt;- aggregate_data(
+  source_data,
+  aggregation_timeunit = "day",
+  show_progress = TRUE
+)
+
+# save a report in the current directory using the previously-created objects
+report_data(
+  source_data,
+  aggregated_data,
+  report_title = "daiquiri data quality report",
+  save_directory = ".",
+  save_filename = "example_data_report",
+  show_progress = TRUE
+)
+
+
+
+</code></pre>
+
+
+</div>

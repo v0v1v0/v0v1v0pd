@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mcmc.target.seq</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find MCMC Target Sequence</h2>
+
+<h3>Description</h3>
+
+<p><code>mcmc.target.seq</code> uses MCMC to find a configuration of DNA positions
+to get as close as possible to a given tree.
+</p>
+<p><code>boot.samples.idxs</code> bootstraps over indices into a DNA matrix.
+</p>
+<p><code>lookup.samples</code> goes from an index representation of a configuration
+of DNA to the actual DNAbin format.
+</p>
+<p><code>convert.table.to.idx</code> converts a table of counts for positions 1..n
+into a list of indices corresponding to positions (i.e. goes from the
+tabled form to a vector whose tabling matches the input).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mcmc.target.seq(data, x, F, n)
+
+boot.samples.idxs(data, B = 100, block = 1)
+
+lookup.samples(data, idxs)
+
+convert.table.to.idx(T)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A DNA matrix in DNAbin format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A tree of class 'phylo' to estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F</code></td>
+<td>
+<p>A tree estimation function, accepting a DNA matrix in DNAbin
+format and returning a tree of class 'phylo.'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>The number of MCMC iterations to perform.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p> The number of bootstrap replicates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block</code></td>
+<td>
+<p>The block size to use during bootstrapping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idxs</code></td>
+<td>
+<p>A list of numeric vectors of indices to use for lookup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>T</code></td>
+<td>
+<p>A table or table-like vector to convert.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>mcmc.target.seq</code> performs an MCMC with simulated annealing to locate
+a configuration of DNA positions from the original matrix that gets as
+close as possible to a target tree. Propositions for the MCMC replacing
+one character with another uniformly at random.
+</p>
+<p>The remaining functions are intended to be used as support functions.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>mcmc.target.seq</code> returns a list of 4 elements: a numeric vector of
+counts of each position in the original matrix, the best estimated
+tree, the best distance from the estimated tree to the target tree, and
+a numeric vector of the distances for every iteration of the
+simulation.
+</p>
+<p><code>boot.samples.idxs</code> returns a numeric vector representing the
+bootstrapped idices.
+</p>
+<p><code>lookup.samples</code> returns a list of objects of class DNAbin
+corresponding to the DNA sequences generated from indices into the original
+DNA matrix.
+</p>
+<p><code>convert.table.to.idx</code> returns a numeric vector of indices based on
+the table counts.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>John Chakerian</p>
+
+
+<h3>References</h3>
+
+<p>Chakerian, J. and Holmes, S. P. Computational Tools for Evaluating
+Phylogenetic and Heirarchical Clustering Trees. arXiv:1006.1015v1.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dist.multiPhylo</code>, <code>orthant.boundary.tree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## This example has been excluded from checks:
+## copy/paste the code to try it
+
+data(woodmouse)
+otree &lt;- root(fastme.ols(dist.dna(woodmouse)), "No305", resolve.root=TRUE)
+breps &lt;- 200
+
+trees &lt;- boot.phylo(otree, woodmouse, B=breps, function(x)
+        root(fastme.ols(dist.dna(x)), "No305", resolve.root=TRUE),
+        trees = TRUE)
+
+combined.trees &lt;- c(list(otree), trees$trees)
+
+binning &lt;- bin.multiPhylo(combined.trees)
+
+tree.a &lt;- combined.trees[[match(1, binning)]]
+i &lt;- 2
+max.bin &lt;- max(binning)
+tree.b &lt;- combined.trees[[match(2, binning)]]
+
+while(length(distinct.edges(tree.a,tree.b)) &gt; 1 &amp;&amp; i &lt; max.bin)
+{
+    i = i + 1
+    tree.b = combined.trees[[match(i, binning)]]
+}
+
+bdy.tree &lt;- orthant.boundary.tree(tree.a, tree.b)
+
+f.est &lt;- function(x) root(nj(dist.dna(x)), "No305", resolve.root=TRUE)
+
+res &lt;- mcmc.target.seq(woodmouse, bdy.tree, f.est, 1000)
+
+par(mfrow=c(2,1))
+plot(res$tree)
+plot(res$vals)
+
+## End(Not run)</code></pre>
+
+
+</div>

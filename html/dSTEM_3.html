@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cpTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Multiple testing of change points for kernel smoothed data</h2>
+
+<h3>Description</h3>
+
+<p>Multiple testing of change points for kernel smoothed data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cpTest(
+  x,
+  order,
+  alpha,
+  gamma,
+  sigma,
+  breaks,
+  slope,
+  untest,
+  nu,
+  is.constant,
+  margin
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of kernel smoothed data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>order of derivative of data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>global significant level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>bandwidth of Gaussian kernel</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>standard deviation of kernel smoothed noise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>vector of rough estimate of change-point locations, only required when order is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slope</code></td>
+<td>
+<p>vector of rough estimate of slopes associated with <code>breaks</code>, only required when order is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>untest</code></td>
+<td>
+<p>vector of locations unnecessary to test</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nu</code></td>
+<td>
+<p>standard deviation of Gaussian kernel used to generate autocorrelated Gaussian noise,
+it is 0 if the noise is Gaussian white noise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is.constant</code></td>
+<td>
+<p>logical value indicating if the signal is piecewise constant,
+if TRUE, <code>breaks</code> and <code>slope</code> are not necessary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>margin</code></td>
+<td>
+<p>length of one period of data <code>x</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list of estimated change-point locations and threshold for p-value
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## piecewise linear signal
+l = 1200
+h = seq(150,by=150,length.out=6)
+jump = rep(0,7)
+beta1 = c(2,-1,2.5,-3,-0.2,2.5)/50
+beta1 = c(beta1,-sum(beta1*(c(h[1],diff(h))))/(l-tail(h,1)))
+signal = gen.signal(l,h,jump,beta1)
+noise = rnorm(length(signal),0,2)
+gamma = 25
+sdata = smth.gau(signal+noise,gamma)
+ddy = diff(sdata,differences=2)
+model2 = cpTest(x=ddy,order=2,gamma=gamma,alpha=0.05)
+## piecewise constant
+l = 1200
+h = seq(150,by=150,length.out=6)
+jump = c(0,1.5,2,2.2,1.8,2,1.5)
+beta1 = rep(0,length(h)+1)
+signal = gen.signal(l,h,jump,beta1)
+noise = rnorm(length(signal),0,1)
+gamma = 25
+sdata = smth.gau(signal+noise,gamma)
+dy = diff(sdata)
+model1 = cpTest(x=dy,order=1,alpha=0.05,gamma=gamma,is.constant=TRUE)
+## piecewise linear with jump
+l = 1200
+h = seq(150,by=150,length.out=6)
+jump = c(0,1.5,2,2.2,1.8,2,1.5)*3
+beta1 = c(2,-1,2.5,-3,-0.2,2.5,-0.5)/50
+signal = gen.signal(l=l,h=h,jump=jump,b1=beta1)
+noise = rnorm(length(signal),0,1)
+gamma = 25
+sdata = smth.gau(signal+noise,gamma)
+dy = diff(sdata)
+ddy = diff(sdata,differences=2)
+model2 = cpTest(x=ddy,order=2,gamma=gamma,alpha=0.1)
+breaks = est.pair(vall=model2$vall,peak=model2$peak,gamma=gamma)$cp
+slope = est.slope(x=(signal+noise),breaks=breaks)
+</code></pre>
+
+
+</div>

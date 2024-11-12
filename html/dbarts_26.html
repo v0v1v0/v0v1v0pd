@@ -1,0 +1,724 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bart</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bayesian Additive Regression Trees</h2>
+
+<h3>Description</h3>
+
+<p>BART is a Bayesian “sum-of-trees” model in which each tree is constrained by a prior to be a weak learner.
+</p>
+
+<ul>
+<li>
+<p> For numeric response <code class="reqn">y = f(x) + \epsilon</code>, where <code class="reqn">\epsilon \sim N(0, \sigma^2)</code>.
+</p>
+</li>
+<li>
+<p> For binary response <code class="reqn">y</code>, <code class="reqn">P(Y = 1 \mid x) = \Phi(f(x))</code>, where <code class="reqn">\Phi</code> denotes the standard normal cdf (probit link).
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">bart(
+    x.train, y.train, x.test = matrix(0.0, 0, 0),
+    sigest = NA, sigdf = 3, sigquant = 0.90,
+    k = 2.0,
+    power = 2.0, base = 0.95, splitprobs = 1 / numvars,
+    binaryOffset = 0.0, weights = NULL,
+    ntree = 200,
+    ndpost = 1000, nskip = 100,
+    printevery = 100, keepevery = 1, keeptrainfits = TRUE,
+    usequants = FALSE, numcut = 100, printcutoffs = 0,
+    verbose = TRUE, nchain = 1, nthread = 1, combinechains = TRUE,
+    keeptrees = FALSE, keepcall = TRUE, sampleronly = FALSE,
+    seed = NA_integer_,
+    proposalprobs = NULL,
+    keepsampler = keeptrees)
+
+bart2(
+    formula, data, test, subset, weights, offset, offset.test = offset,
+    sigest = NA_real_, sigdf = 3.0, sigquant = 0.90,
+    k = NULL,
+    power = 2.0, base = 0.95, split.probs = 1 / num.vars,
+    n.trees = 75L,
+    n.samples = 500L, n.burn = 500L,
+    n.chains = 4L, n.threads = min(dbarts::guessNumCores(), n.chains),
+    combineChains = FALSE,
+    n.cuts = 100L, useQuantiles = FALSE,
+    n.thin = 1L, keepTrainingFits = TRUE,
+    printEvery = 100L, printCutoffs = 0L,
+    verbose = TRUE, keepTrees = FALSE, 
+    keepCall = TRUE, samplerOnly = FALSE,
+    seed = NA_integer_,
+    proposal.probs = NULL,
+    keepSampler = keepTrees,
+    ...)
+
+## S3 method for class 'bart'
+plot(
+    x,
+    plquants = c(0.05, 0.95), cols = c('blue', 'black'),
+    ...)
+
+## S3 method for class 'bart'
+predict(
+    object, newdata, offset, weights,
+    type = c("ev", "ppd", "bart"),
+    combineChains = TRUE, ...)
+
+extract(object, ...)
+## S3 method for class 'bart'
+extract(
+    object,
+    type = c("ev", "ppd", "bart", "trees"),
+    sample = c("train", "test"),
+    combineChains = TRUE, ...)
+
+## S3 method for class 'bart'
+fitted(
+    object,
+    type = c("ev", "ppd", "bart"),
+    sample = c("train", "test"),
+    ...)
+
+## S3 method for class 'bart'
+residuals(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x.train</code></td>
+<td>
+
+<p>Explanatory variables for training (in sample) data. May be a matrix or a data frame, with rows corresponding to observations and columns to variables. If a variable is a factor in a data frame, it is replaced with dummies. Note that <code class="reqn">q</code> dummies are created if <code class="reqn">q &gt; 2</code> and one dummy is created if <code class="reqn">q = 2</code>, where <code class="reqn">q</code> is the number of levels of the factor.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.train</code></td>
+<td>
+
+<p>Dependent variable for training (in sample) data. If <code>y.train</code> is numeric a continous response model is fit (normal errors). If <code>y.train</code> is a binary factor or has only values 0 and 1, then a binary response model with a probit link is fit.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.test</code></td>
+<td>
+
+<p>Explanatory variables for test (out of sample) data. Should have same column structure as <code>x.train</code>. <code>bart</code> will generate draws of <code class="reqn">f(x)</code> for each <code class="reqn">x</code> which is a row of <code>x.test</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigest</code></td>
+<td>
+
+<p>For continuous response models, an estimate of the error variance, <code class="reqn">\sigma^2</code>, used to calibrate an inverse-chi-squared prior used on that parameter. If not supplied, the least-squares estimate is derived instead. See <code>sigquant</code> for more information. Not applicable when <code class="reqn">y</code> is binary.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigdf</code></td>
+<td>
+
+<p>Degrees of freedom for error variance prior. Not applicable when <code class="reqn">y</code> is binary.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigquant</code></td>
+<td>
+
+<p>The quantile of the error variance prior that the rough estimate (<code>sigest</code>) is placed at. The closer the quantile is to 1, the more aggresive the fit will be as you are putting more prior weight on error standard deviations (<code class="reqn">\sigma</code>) less than the rough estimate. Not applicable when <code class="reqn">y</code> is binary.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>For numeric <code class="reqn">y</code>, <code>k</code> is the number of prior standard deviations <code class="reqn">E(Y|x) = f(x)</code> is away from <code class="reqn">\pm 0.5</code>. The response (<code>y.train</code>) is internally scaled to range from <code class="reqn">-0.5</code> to <code class="reqn">0.5</code>. For binary <code class="reqn">y</code>, <code>k</code> is the number of prior standard deviations <code class="reqn">f(x)</code> is away from <code class="reqn">\pm 3</code>. In both cases, the bigger <code class="reqn">k</code> is, the more conservative the fitting will be. The value can be either a fixed number, or the a <em>hyperprior</em> of the form <code>chi(degreesOfFreedom = 1.25, scale = Inf)</code>. For <code>bart2</code>, the default of <code>NULL</code> uses the value 2 for continuous reponses and a <code>chi</code> hyperprior for binary ones. The default <code>chi</code> hyperprior is improper, and slightly penalizes small values of <code>k</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+
+<p>Power parameter for tree prior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+
+<p>Base parameter for tree prior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitprobs, split.probs</code></td>
+<td>
+
+<p>Prior and transition probabilities of variables used to generate splits. Can be missing/empty/<code>NULL</code> for equiprobability, a numeric vector of length equal to the number variables, or a named numeric vector with only a subset of the variables specified and a <code>.default</code> named value. Values given for factor variables are replicated for each resulting column in the generated model matrix. <code>numvars</code> and <code>num.vars</code> symbols will be rebound before execution to the number of columns in the model matrix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>binaryOffset</code></td>
+<td>
+
+<p>Used for binary <code class="reqn">y</code>. When present, the model is <code class="reqn">P(Y = 1 \mid x) = \Phi(f(x) + \mathrm{binaryOffset})</code>, allowing fits with probabilities shrunk towards values other than <code class="reqn">0.5</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>An optional vector of weights to be used in the fitting process. When present, BART fits a model with observations <code class="reqn">y \mid x \sim N(f(x), \sigma^2 / w)</code>, where <code class="reqn">f(x)</code> is the unknown function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntree, n.trees</code></td>
+<td>
+
+<p>The number of trees in the sum-of-trees formulation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndpost, n.samples</code></td>
+<td>
+
+<p>The number of posterior draws after burn in, <code>ndpost / keepevery</code> will actually be returned.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nskip, n.burn</code></td>
+<td>
+
+<p>Number of MCMC iterations to be treated as burn in.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>printevery, printEvery</code></td>
+<td>
+
+<p>As the MCMC runs, a message is printed every <code>printevery</code> draws.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepevery, n.thin</code></td>
+<td>
+
+<p>Every <code>keepevery</code> draw is kept to be returned to the user. Useful for “thinning” samples.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keeptrainfits, keepTrainingFits</code></td>
+<td>
+
+<p>If <code>TRUE</code> the draws of <code class="reqn">f(x)</code> for <code class="reqn">x</code> corresponding to the rows of <code>x.train</code> are returned.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>usequants, useQuantiles</code></td>
+<td>
+
+<p>When <code>TRUE</code>, determine tree decision rules using estimated quantiles derived from the <code>x.train</code> variables. When <code>FALSE</code>, splits are determined using values equally spaced across the range of a variable. See details for more information.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numcut, n.cuts</code></td>
+<td>
+
+<p>The maximum number of possible values used in decision rules (see <code>usequants</code>, details). If a single number, it is recycled for all variables; otherwise must be a vector of length equal to <code>ncol(x.train)</code>. Fewer rules may be used if a covariate lacks enough unique values.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>printcutoffs, printCutoffs</code></td>
+<td>
+
+<p>The number of cutoff rules to printed to screen before the MCMC is run. Given a single integer, the same value will be used for all variables. If 0, nothing is printed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>Logical; if <code>FALSE</code> supress printing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nchain, n.chains</code></td>
+<td>
+
+<p>Integer specifying how many independent tree sets and fits should be calculated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nthread, n.threads</code></td>
+<td>
+
+<p>Integer specifying how many threads to use. Depending on the CPU architecture, using more than the number of chains can degrade performance for small/medium data sets. As such some calculations may be executed single threaded regardless.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combinechains, combineChains</code></td>
+<td>
+
+<p>Logical; if <code>TRUE</code>, samples will be returned in arrays of dimensions equal to <code>nchain</code> <code class="reqn">\times</code> <code>ndpost</code> <code class="reqn">\times</code> number of observations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keeptrees, keepTrees</code></td>
+<td>
+
+<p>Logical; must be <code>TRUE</code> in order to use <code>predict</code> with the result of a <code>bart</code> fit. Note that for models with a large number of observations or a large number of trees, keeping the trees can be very memory intensive.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepcall, keepCall</code></td>
+<td>
+
+<p>Logical; if <code>FALSE</code>, returned object will have <code>call</code> set to <code>call("NULL")</code>, otherwise the call used to instantiate BART.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Optional integer specifying the desired pRNG seed. It should not be needed when running single-threaded - <code>set.seed</code> will suffice, and can be used to obtain reproducible results when multi-threaded. See Reproducibility section below.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proposalprobs, proposal.probs</code></td>
+<td>
+
+<p>Named numeric vector or <code>NULL</code>, optionally specifying the proposal rules and their probabilities. Elements should be <code>"birth_death"</code>, <code>"change"</code>, and <code>"swap"</code> to control tree change proposals, and <code>"birth"</code> to give the relative frequency of birth/death in the <code>"birth_death"</code> step. Defaults are 0.5, 0.1, 0.4, and 0.5 respectively.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepsampler, keepSampler</code></td>
+<td>
+
+<p>Logical that can be used to save the underlying <code>dbartsSampler-class</code> object even if <code>keepTrees</code> is false.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>The same as <code>x.train</code>, the name reflecting that a formula object can be used instead.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>The same as <code>y.train</code>, the name reflecting that a data frame can be specified when a formula is given instead.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+
+<p>The same as <code>x.train</code>. Can be missing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>A vector of logicals or indicies used to subset of the data. Can be missing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+
+<p>The same as <code>binaryOffset</code>. Can be missing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset.test</code></td>
+<td>
+
+<p>A vector of offsets to be used with test data, in case it is different than the training offset. If <code>offest</code> is missing, defaults to <code>NULL</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>An object of class <code>bart</code>, returned from either the function <code>bart</code> or <code>bart2</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+
+<p>Test data for prediction. Obeys all the same rules as <code>x.train</code> but cannot be missing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sampleronly, samplerOnly</code></td>
+<td>
+
+<p>Builds the sampler from its arguments and returns it without running it. Useful to use the <code>bart2</code> interface in more complicated models.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Object of class <code>bart</code>, returned by function <code>bart</code>, which contains the information to be plotted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plquants</code></td>
+<td>
+
+<p>In the plots, beliefs about <code class="reqn">f(x)</code> are indicated by plotting the posterior median and a lower and upper quantile. <code>plquants</code> is a double vector of length two giving the lower and upper quantiles.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+
+<p>Vector of two colors. First color is used to plot the median of <code class="reqn">f(x)</code> and the second color is used to plot the lower and upper quantiles.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>The quantity to be returned by generic functions. Options are <code>"ev"</code> - samples from the posterior of the individual level expected value, <code>"bart"</code> - the sum of trees component; same as <code>"ev"</code> for linear models but on the probit scale for binary ones, <code>"ppd"</code> - samples from the posterior predictive distribution, and <code>"trees"</code> - a data frame with tree information for when model was fit with <code>keepTrees</code> equal to <code>TRUE</code>. To synergize with <code>predict.glm</code>, <code>"response"</code> can be used as a synonym for <code>"ev"</code> and <code>"link"</code> can be used as a synonym for <code>"bart"</code>. For information on extracting trees, see the subsection below.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample</code></td>
+<td>
+
+<p>Either <code>"train"</code> or <code>"test"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional arguments passed on to <code>plot</code>, <code>dbartsControl</code>, or <code>extract</code> when <code>type</code> is <code>"trees"</code>. Not used in <code>predict</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>BART is an Bayesian MCMC method. At each MCMC interation, we produce a draw from the joint posterior <code class="reqn">(f, \sigma) \mid (x, y)</code> in the numeric <code class="reqn">y</code> case and just <code class="reqn">f</code> in the binary <code class="reqn">y</code> case.
+</p>
+<p>Thus, unlike a lot of other modeling methods in R, <code>bart</code> does not produce a single model object from which fits and summaries may be extracted. The output consists of values <code class="reqn">f^*(x)</code> (and <code class="reqn">\sigma^*</code> in the numeric case) where * denotes a particular draw. The <code class="reqn">x</code> is either a row from the training data (<code>x.train</code>) or the test data (<code>x.test</code>).
+</p>
+
+
+<h4>Decision Rules</h4>
+
+<p>Decision rules for any tree are of the form <code class="reqn">x \le c</code>  vs. <code class="reqn">x &gt; c</code> for each ‘<code class="reqn">x</code>’ corresponding to a column of <code>x.train</code>. <code>usequants</code> determines the means by which the set of possible <code class="reqn">c</code> is determined. If <code>usequants</code> is <code>TRUE</code>, then the <code class="reqn">c</code> are a subset of the values interpolated half-way between the unique, sorted values obtained from the corresponding column of <code>x.train</code>. If <code>usequants</code> is <code>FALSE</code>, the cutoffs are equally spaced across the range of values taken on by the corresponding column of <code>x.train</code>.
+</p>
+<p>The number of possible values of <code class="reqn">c</code> is determined by <code>numcut</code>. If <code>usequants</code> is <code>FALSE</code>, <code>numcut</code> equally spaced cutoffs are used covering the range of values in the corresponding column of <code>x.train</code>. If <code>usequants</code> is <code>TRUE</code>, then for a variable the minimum of <code>numcut</code> and one less than the number of unique elements for that variable are used.
+</p>
+
+
+
+<h4>End-node prior parameter <code>k</code>
+</h4>
+
+<p>The amount of shrinkage of the node parameters is controlled by <code>k</code>. <code>k</code> can be given as either a fixed, positive number, or as any value that can be used to build a supported hyperprior. At present, only <code class="reqn">\chi_\nu s</code> priors are supported, where <code class="reqn">\nu</code> is a degrees of freedom and <code class="reqn">s</code> is a scale. Both values must be positive, however the scale can be infinite which yields an improper prior, which is interpretted as just the polynomial part of the distribution. If <code class="reqn">nu</code> is 1 and <code class="reqn">s</code> is <code class="reqn">\infty</code>, the prior is “flat”.
+</p>
+<p>For BART on binary outcomes, the degree of overfitting can be highly sensitive to <code>k</code> so it is encouraged to consider a number of values. The default hyperprior for binary BART, <code>chi(1.25, Inf)</code>, has been shown to work well in a large number of datasets, however crossvalidation may be helpful. Running for a short time with a flat prior may be helpful to see the range of values of <code>k</code> that are consistent with the data.
+</p>
+
+
+
+<h4>Generics</h4>
+
+<p><code>bart</code> and <code>rbart_vi</code> support <code>fitted</code> to return the posterior mean of a predicted quantity, as well as <code>predict</code> to return a set of posterior samples for a different sample. In addition, the <code>extract</code> generic can be used to obtain the posterior samples for the training data or test data supplied during the initial fit.
+</p>
+<p>Using <code>predict</code> with a <code>bart</code> object requires that it be fitted with the option <code>keeptrees</code>/<code>keepTrees</code> as <code>TRUE</code>. Keeping the trees for a fit can require a sizeable amount of memory and is off by default.
+</p>
+<p>All generics return values on the scale of expected value of the response by default. This means that <code>predict</code>, <code>extract</code>, and <code>fitted</code> for binary outcomes return probabilities unless specifically the sum-of-trees component is requested (<code>type = "bart"</code>). This is in contrast to <code>yhat.train</code>/<code>yhat.test</code> that are returned with the fitted model.
+</p>
+
+
+
+<h4>Saving</h4>
+
+<p><code>save</code>ing and <code>load</code>ing fitted BART objects for use with <code>predict</code> requires that R's serialization mechanism be able to access the underlying trees, in addition to being fit with <code>keeptrees</code>/<code>keepTrees</code> as <code>TRUE</code>. For memory purposes, the trees are not stored as R objects unless specifically requested. To do this, one must “touch” the sampler's state object before saving, e.g. for a fitted object <code>bartFit</code>, execute <code>invisible(bartFit$fit$state)</code>.
+</p>
+
+
+
+<h4>Reproducibility</h4>
+
+<p>Behavior differs when running multi- and single-threaded, as the pseudo random number generators (pRNG) used by R are not thread safe. When single-threaded, R's built-in generator is used; if set at the start, the global <code>.Random.seed</code> will be used and its value updated as samples are drawn. When multi-threaded, the default behavior is to draw new random seeds for each thread using the clock and use thread-specific pRNGs.
+</p>
+<p>This behavior can be modified by setting <code>seed</code>, or by using <code>...</code> to pass arguments to <code>dbartsControl</code>. For the single-threaded case, a new pRNG is built using that seed that is separate from R's native generator. As such, the global state will not be modified by subsequent calls to the generator. For multi-threaded, the seeds for threads are drawn sequentially using the supplied seed, and will again be separate from R's native generator.
+</p>
+<p>Consequently, the <code>seed</code> argument is not needed when running single-threaded - <code>set.seed</code> will suffice. However, when multi-threaded the <code>seed</code> argument can be used to obtain reproducible results.
+</p>
+
+
+
+<h4>Extracting Trees</h4>
+
+<p>When a model is fit with <code>keeptrees</code> (<code>bart</code>) or <code>keepTrees</code> (<code>bart2</code>) equal to <code>TRUE</code>, the generic <code>extract</code> can be used to retrieve a data frame containing the tree fit information. In this case, <code>extract</code> will accept the additional, optional arguments: <code>chainNums</code>, <code>sampleNums</code>, and <code>treeNums</code>. Each should be an integer vector detailing the desired trees to be returned.
+</p>
+<p>The result of <code>extract</code> will be a data frame with columns:
+</p>
+
+<ul>
+<li> <p><code>sample</code>, <code>chain</code>, <code>tree</code> - index variables
+</p>
+</li>
+<li> <p><code>n</code> - number of observations in node
+</p>
+</li>
+<li> <p><code>var</code> - either the index of the variable used for splitting or -1 if the node is a leaf
+</p>
+</li>
+<li> <p><code>value</code> - either the value such that observations less than or equal to it are sent down the left path of the tree or the predicted value for a leaf node
+</p>
+</li>
+</ul>
+<p>The order of nodes in the result corresponds to a depth-first traversal, going down the left-side first. The names of variables used in splitting can be recovered by examining the column names of the <code>fit$data@x</code> element of a fitted <code>bart</code> or <code>bart2</code> model. See the package vignette “Working with dbarts Saved Trees”.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p><code>bart</code> and <code>bart2</code> return lists assigned the class <code>bart</code>. For applicable quantities, <code>ndpost / keepevery</code> samples are returned. In the numeric <code class="reqn">y</code> case, the list has components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>yhat.train</code></td>
+<td>
+
+<p>A array/matrix of posterior samples. The <code class="reqn">(i, j, k)</code> value is the <code class="reqn">j</code>th draw of the posterior of <code class="reqn">f</code> evaluated at the <code class="reqn">k</code>th row of <code>x.train</code> (i.e. <code class="reqn">f^*(x_k)</code>) corresponding to chain <code class="reqn">i</code>. When <code>nchain</code> is one or <code>combinechains</code> is <code>TRUE</code>, the result is a collapsed down to a matrix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yhat.test</code></td>
+<td>
+
+<p>Same as <code>yhat.train</code> but now the <code class="reqn">x</code>s are the rows of the test data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yhat.train.mean</code></td>
+<td>
+
+<p>Vector of means of <code>yhat.train</code> across columns and chains, with length equal to the number of training observations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yhat.test.mean</code></td>
+<td>
+
+<p>Vector of means of <code>yhat.test</code> across columns and chains.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+
+<p>Matrix of posterior samples of <code>sigma</code>, the residual/error standard deviation. Dimensions are equal to the number of chains times the numbers of samples unless <code>nchain</code> is one or <code>combinechains</code> is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first.sigma</code></td>
+<td>
+
+<p>Burn-in draws of <code>sigma</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varcount</code></td>
+<td>
+
+<p>A matrix with number of rows equal to the number of kept draws and each column corresponding to a training variable. Contains the total count of the number of times that variable is used in a tree decision rule (over all trees).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigest</code></td>
+<td>
+
+<p>The rough error standard deviation (<code class="reqn">\sigma</code>) used in the prior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>The input dependent vector of values for the dependent variable. This is used in <code>plot.bart</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+
+<p>Optional sampler object which stores the values of the tree splits. Required for using <code>predict</code> and only stored if <code>keeptrees</code> or <code>keepsampler</code> is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.chains</code></td>
+<td>
+
+<p>Information that can be lost if <code>combinechains</code> is <code>TRUE</code> is tracked here.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>Optional matrix of posterior samples of <code>k</code>. Only present when <code>k</code> is modeled, i.e. there is a hyperprior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first.k</code></td>
+<td>
+
+<p>Burn-in draws of <code>k</code>, if modeled.
+</p>
+</td>
+</tr>
+</table>
+<p>In the binary <code class="reqn">y</code> case, the returned list has the components <code>yhat.train</code>, <code>yhat.test</code>, and <code>varcount</code> as above.  In addition the list has a <code>binaryOffset</code> component giving the value used.
+</p>
+<p>Note that in the binary <code class="reqn">y</code>, case <code>yhat.train</code> and <code>yhat.test</code> are <code class="reqn">f(x) + \mathrm{binaryOffset}</code>. For draws of the probability <code class="reqn">P(Y = 1 | x)</code>, apply the normal cdf (<code>pnorm</code>) to these values.
+</p>
+<p>The <code>plot</code> method sets <code>mfrow</code> to <code>c(1, 2)</code> and makes two plots. The first plot is the sequence of kept draws of <code class="reqn">\sigma</code> including the burn-in draws. Initially these draws will decline as BART finds a good fit and then level off when the MCMC has burnt in. The second plot has <code class="reqn">y</code> on the horizontal axis and posterior intervals for the corresponding <code class="reqn">f(x)</code> on the vertical axis.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Hugh Chipman: <a href="mailto:hugh.chipman@gmail.com">hugh.chipman@gmail.com</a>,
+Robert McCulloch: <a href="mailto:robert.mcculloch1@gmail.com">robert.mcculloch1@gmail.com</a>,
+Vincent Dorie: <a href="mailto:vdorie@gmail.com">vdorie@gmail.com</a>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Chipman, H., George, E., and McCulloch, R. (2009)
+BART: Bayesian Additive Regression Trees.
+</p>
+<p>Chipman, H., George, E., and McCulloch R. (2006)
+Bayesian Ensemble Learning. 
+Advances in Neural Information Processing Systems 19,
+Scholkopf, Platt and Hoffman, Eds., MIT Press, Cambridge, MA, 265-272.
+</p>
+<p>both of the above at:
+<a href="https://www.rob-mcculloch.org">https://www.rob-mcculloch.org</a>
+</p>
+<p>Friedman, J.H. (1991)
+Multivariate adaptive regression splines.
+<em>The Annals of Statistics</em>, <b>19</b>, 1–67.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pdbart</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## simulate data (example from Friedman MARS paper)
+## y = f(x) + epsilon , epsilon ~ N(0, sigma)
+## x consists of 10 variables, only first 5 matter
+
+f &lt;- function(x) {
+    10 * sin(pi * x[,1] * x[,2]) + 20 * (x[,3] - 0.5)^2 +
+        10 * x[,4] + 5 * x[,5]
+}
+
+set.seed(99)
+sigma &lt;- 1.0
+n     &lt;- 100
+
+x  &lt;- matrix(runif(n * 10), n, 10)
+Ey &lt;- f(x)
+y  &lt;- rnorm(n, Ey, sigma)
+
+## run BART
+set.seed(99)
+bartFit &lt;- bart(x, y)
+
+plot(bartFit)
+
+## compare BART fit to linear matter and truth = Ey
+lmFit &lt;- lm(y ~ ., data.frame(x, y))
+
+fitmat &lt;- cbind(y, Ey, lmFit$fitted, bartFit$yhat.train.mean)
+colnames(fitmat) &lt;- c('y', 'Ey', 'lm', 'bart')
+print(cor(fitmat))
+</code></pre>
+
+
+</div>

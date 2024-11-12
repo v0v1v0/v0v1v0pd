@@ -1,0 +1,109 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbSimulate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate a DNA database</h2>
+
+<h3>Description</h3>
+
+<p>Simulates a DNA database given a set of allele probabilities and theta
+value. It is possible to have close relatives in the database simulated in
+pairs, such that within each pair the profiles are higher correlated due to
+close familial relationship, but between pairs of profiles the correlation
+is only modelled by theta.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbSimulate(probs, theta = 0, n = 1000, relatives = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>List of allele probabilities, where each element in the list is
+a vector of allele probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>The coancestry coefficient</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>The number of profiles in the database</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relatives</code></td>
+<td>
+<p>A vector of length 4. Determining the number of PAIRS of
+profiles in the database: (FULL-SIBLINGS, FIRST-COUSINS, PARENT-CHILD,
+AVUNCULAR). They should obey that 2*sum(relatives)&lt;=n.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Simulates a DNA database with a given number of DNA profiles (and possibly
+relatives) with a correlation between profiles governed by theta.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame where each row represents a DNA profile. The first
+column is a profile identifier (id) and the next 2*L columns contains the
+simulated genotype for each of the L loci. L is determined by the length of
+the list 'probs' with allele probabilities
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>James Curran and Torben Tvedebrink
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+  ## Not run: 
+  ## Simulate some allele frequencies:
+                                                                                
+  freq &lt;-  replicate(10, { g = rgamma(n=10,scale=4,shape=3); g/sum(g)},
+             simplify=FALSE)
+  ## Simulate a single database with 5000 DNA profiles:
+  simdb &lt;- dbSimulate(freq,theta=0,n=5000)
+  ## Simulate a number of databases, say N=50. For each database compute
+  ## the summary statistic using dbCompare:
+  N &lt;- 50
+  Msummary &lt;- matrix(0,N,(length(freq)+1)*(length(freq)+2)/2)
+  for(i in 1:N)
+    Msummary[i,] &lt;- dbCompare(dbSimulate(freq,theta=0,n=1000),
+                      vector=TRUE,trace=FALSE)$m
+  ## Give the columns  representative names:
+  dimnames(Msummary)[[2]] &lt;- DNAtools:::dbCats(length(freq),vector=TRUE)
+  ## Plot the simulations using a boxplot
+  boxplot(log10(Msummary))
+  ## There might come some warnings due to taking log10 to zero-values (no counts)
+  ## Add the expected number to the plot:
+  points(1:ncol(Msummary),log10(dbExpect(freq,theta=0,n=1000,vector=TRUE)),
+         col=2,pch=16)
+  
+## End(Not run)
+
+</code></pre>
+
+
+</div>

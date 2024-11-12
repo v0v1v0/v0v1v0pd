@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>recoverable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>List the most upstream <em>recoverable</em> outdated targets.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Only shows the most upstream updated targets.
+Whether downstream targets are recoverable depends on
+the eventual values of the upstream targets in the next <code>make()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">recoverable(..., make_imports = TRUE, do_prework = TRUE, config = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to <code>make()</code>, such as <code>plan</code> and <code>targets</code> and <code>envir</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>make_imports</code></td>
+<td>
+<p>Logical, whether to make the imports first.
+Set to <code>FALSE</code> to save some time and risk obsolete output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do_prework</code></td>
+<td>
+<p>Whether to do the <code>prework</code>
+normally supplied to <code>make()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>config</code></td>
+<td>
+<p>Deprecated (2019-12-21).
+A configured workflow from <code>drake_config()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Character vector of the names of recoverable targets.
+</p>
+
+
+<h3>Recovery</h3>
+
+<p><code>make(recover = TRUE, recoverable = TRUE)</code>
+powers automated data recovery.
+The default of <code>recover</code> is <code>FALSE</code> because
+targets recovered from the distant past may have been generated
+with earlier versions of R and earlier package environments
+that no longer exist.
+</p>
+<p>How it works: if <code>recover</code> is <code>TRUE</code>,
+<code>drake</code> tries to salvage old target values from the cache
+instead of running commands from the plan.
+A target is recoverable if
+</p>
+
+<ol>
+<li>
+<p> There is an old value somewhere in the cache that
+shares the command, dependencies, etc.
+of the target about to be built.
+</p>
+</li>
+<li>
+<p> The old value was generated with <code>make(recoverable = TRUE)</code>.
+</p>
+</li>
+</ol>
+<p>If both conditions are met, <code>drake</code> will
+</p>
+
+<ol>
+<li>
+<p> Assign the most recently-generated admissible data to the target, and
+</p>
+</li>
+<li>
+<p> skip the target's command.
+</p>
+</li>
+</ol>
+<h3>See Also</h3>
+
+<p><code>r_recoverable()</code>, <code>r_outdated()</code>, <code>drake_config()</code>, <code>missed()</code>,
+<code>drake_plan()</code>, <code>make()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("Quarantine side effects.", {
+if (suppressWarnings(require("knitr"))) {
+load_mtcars_example() # Get the code with drake_example("mtcars").
+make(my_plan)
+clean()
+outdated(my_plan) # Which targets are outdated?
+recoverable(my_plan) # Which of these are recoverable and upstream?
+# The report still builds because clean() removes report.md,
+# but make() recovers the rest.
+make(my_plan, recover = TRUE)
+outdated(my_plan)
+# When was the *recovered* small data actually built (first stored)?
+# (Was I using a different version of R back then?)
+diagnose(small)$date
+# If you set the same seed as before, you can even
+# rename targets without having to build them again.
+# For an example, see
+# the "Reproducible data recovery and renaming" section of
+# https://github.com/ropensci/drake/blob/main/README.md.
+}
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

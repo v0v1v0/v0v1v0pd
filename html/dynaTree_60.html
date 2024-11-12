@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>retire.dynaTree</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Retire (i.e. remove) data from the a dynaTree model
+</h2>
+
+<h3>Description</h3>
+
+<p>Allows the removal (or “retireing”
+of <code>X</code>-<code>y</code> pairs from a
+<code>"dynaTree"</code>-class object to facilitate online
+learning; “retireed” pairs ar absorbed into
+the leaf prior(s)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynaTree'
+retire(object, indices, lambda = 1, verb = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>a <code>"dynaTree"</code>-class object built by <code>dynaTree</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indices</code></td>
+<td>
+
+<p>a vector of positive integers in <code>1:nrow(object$X)</code> indicating
+which <code>X</code>-<code>y</code> pairs to “retire”; must
+have <code>length(indices) &lt;= nrow(object$X)</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>a scalar proportion (forgetting factor) used to downweight the previous prior
+summary statistics
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>a nonzero scalar causes info about the “retireed” indices,
+i.e., their <code>X</code>-<code>y</code> values, to be printed to the
+screen as they are “retireed”
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Primarily for use in online learning contexts.  After
+“retireing” the predictive distribution remains unchanged,
+because the sufficient statistics of the removed pairs enters
+the prior in the leaves of the tree of each particle.  Further
+<code>update.dynaTree</code> calls (adding data) may cause
+changes to the posterior predictive as grow moves cannot keep
+the “retires”; see a forthcoming paper for more
+details.  In many ways, <code>retire.dynaTree</code> is the
+opposite of <code>update.dynaTree</code> except that the loss of
+information upon “retireing” is not complete.
+</p>
+<p>Drifting regression or classification relationships may be modeled
+with a forgetting factor <code>lambda &lt; 1</code>
+</p>
+<p>The <code>alcX.dynaTree</code> provides a good, and computationally
+efficient, heuristic for choosing which points to “retire” for 
+regression models, and likewise <code>link{entropyX.dynaTree}</code> for 
+classification models.
+</p>
+<p>Note that classification models (<code>model = "class"</code>) are
+not supported, and implicit intercepts (<code>icept = "implicit"</code>)
+with linear models (<code>model = "linear"</code>) are not supported
+at this time
+</p>
+
+
+<h3>Value</h3>
+
+<p>returns a <code>"dynaTree"</code>-class object with updated attributes
+</p>
+
+
+<h3>Note</h3>
+
+<p> In order to use <code>model = "linear"</code> with
+<code>dynaTree</code> and retirement one must also specify
+<code>icept = "augmented"</code> which automatically augments an
+extra column of ones onto the input <code>X</code> design matrix/matrices.
+The <code>retire</code> function only supports this <code>icept</code> case
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robert B. Gramacy <a href="mailto:rbg@vt.edu">rbg@vt.edu</a>, <br>
+Matt Taddy and Christoforos Anagnostopoulos</p>
+
+
+<h3>References</h3>
+
+<p>Anagnostopoulos, C., Gramacy, R.B. (2013) “Information-Theoretic 
+Data Discarding for Dynamic Trees on Data Streams.” Entropy, 15(12), 
+5510-5535; arXiv:1201.5568
+</p>
+<p><a href="https://bobby.gramacy.com/r_packages/dynaTree/">https://bobby.gramacy.com/r_packages/dynaTree/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dynaTree</code>, <code>alcX.dynaTree</code>, 
+<code>entropyX.dynaTree</code>, <code>update.dynaTree</code>,
+<code>rejuvenate.dynaTree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n &lt;- 100
+Xp &lt;- runif(n,-3,3)
+XX &lt;- seq(-3,3, length=200)
+Yp &lt;- Xp + Xp^2 + rnorm(n, 0, .2)
+rect &lt;- c(-3,3)
+out &lt;- dynaTree(Xp, Yp, model="linear", icept="augmented")
+
+## predict and plot
+out &lt;- predict(out, XX)
+plot(out, main="parabola data", lwd=2)
+
+## randomly remove half of the data points
+out &lt;- retire(out, sample(1:n, n/2, replace=FALSE))
+
+## predict and add to plot -- shouldn't change anything
+out &lt;- predict(out, XX)
+plot(out, add=TRUE, col=3)
+points(out$X[,-1], out$y, col=3)
+
+## now illustrating rejuvenation, which should result
+## in a change to the predictive surface
+out &lt;- rejuvenate(out)
+out &lt;- predict(out, XX)
+plot(out, add=TRUE, col=4)
+legend("top", c("original", "retired", "rejuvenated"),
+       col=2:4, lty=1)
+
+## clean up
+deletecloud(out)
+
+## see demo("online") for an online learning example
+## where ALC is used for retirement
+</code></pre>
+
+
+</div>

@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extricate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extricate a signal: an EEMD algorithm</h2>
+
+<h3>Description</h3>
+
+<p>Performes EEMD
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extricate(
+  xy,
+  dt,
+  nimf,
+  ini = NULL,
+  repl = 1,
+  comb = 100,
+  mirror_noise = TRUE,
+  factor_noise = 3,
+  unit_noise = "1stdiff",
+  sifting = 1,
+  output_sifting = FALSE,
+  remove = "lin.trend",
+  bind = FALSE,
+  speak = FALSE,
+  plot_process = FALSE,
+  pdf = TRUE,
+  name = "extricate",
+  ext = ".pdf",
+  dir = tempdir(),
+  width = 10,
+  height = 20,
+  track = TRUE,
+  openfile = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>signal, maybe linearly interpolated to have regular sampling
+interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>depth/time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nimf</code></td>
+<td>
+<p>number of modes/components/intrinsic mode functions to decompose
+the signal into</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ini</code></td>
+<td>
+<p>an optional vector of length n of the eventual initial Intrinsic
+Mode Function xy would be a demodulation of, if it is a demodulation. In that
+case the mode indexes will start at 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repl</code></td>
+<td>
+<p>the amount of decompositions to output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>comb</code></td>
+<td>
+<p>the amount of decompositions each output decomposition will be a
+combination of. Has to be a multiple of 2 (even and odd extension stacks
+have to be combined in any case)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mirror_noise</code></td>
+<td>
+<p>whether to generate a mirrored noise signal (for even and
+odd extension) that will cancel perfectly when combining the decompositions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor_noise</code></td>
+<td>
+<p>a factor for the amplitude of white noise (finite
+amplitude obtained via <code>runif</code>). By default it will be
+multiplied with the mean of the lagged-one difference to define the noise
+amplitude</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit_noise</code></td>
+<td>
+<p>whether to multiply factor_noise by the mean of the
+lagged-one difference (unit_noise = "1stdiff") or not (unit_noise =
+"native")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sifting</code></td>
+<td>
+<p>amount of iterations of the sifting process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_sifting</code></td>
+<td>
+<p>whether to output each sifting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>remove</code></td>
+<td>
+<p>whether to remove the linear trend (remove = "lin.trend") or
+the mean (remove = "mean") prior to decomposition. The removed part will be
+added back after the decomposition. If remove is anything else, nothing will
+be removed, which can be problematic for the even and odd extension scheme
+used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bind</code></td>
+<td>
+<p>whether to bind the removed linear trend or mean to the last
+component (T), or to add it as another component (F)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speak</code></td>
+<td>
+<p>whether to print a sentence at each sifting: it gives the stack
+(even or odd), the mode number and sifting number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_process</code></td>
+<td>
+<p>whether to have a plot of the entire sifting process.
+This slows down the algorithm, use with low 'repl' and 'comb' values for
+visualisation purposes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pdf</code></td>
+<td>
+<p>whether the plot be directly set as a pdf file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name, ext, dir, width, height, track, openfile</code></td>
+<td>
+<p>arguments to provide to
+pdfDisplay if plot_process and pdf are TRUE</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list made of $xy (original signal), $dt (depth/time), $m (a matrix
+of the decomposition), $repl (the replicate id of each point) and
+$mode (the mode id of each point). If output_sifting is TRUE, additional
+$even_sifting and $odd_sifting data.tables are provided, giving the
+condensed siftings for the even and odd extensions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+  rnorm(n, sd = 0.5) + t * 0.01
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+
+dec &lt;- extricate(xy, dt, nimf = 7, repl = 1, comb = 40, factor_noise = 10,
+                 sifting = 10, speak = TRUE, output_sifting = TRUE)
+
+integrity(xy, dec)
+
+parsimony(dec)
+
+plot_emd(dec, select = c(4, 6), pdf = FALSE)
+## Not run: 
+plot_emd(dec, li = list(v = 0), dir = tempdir())
+## End(Not run)
+
+</code></pre>
+
+
+</div>

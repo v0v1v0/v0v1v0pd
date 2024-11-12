@@ -1,0 +1,336 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DTSg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DTSg class</h2>
+
+<h3>Description</h3>
+
+<p>The <code>DTSg</code> class is the working horse of the package. It is an
+<code>R6::R6Class</code> and offers an S3 interface in addition to its native R6
+interface. In the usage sections of the documentation, unfortunately, only
+the usage of the S3 methods are displayed, however, the examples always show
+both ways of calling the respective method. Generally, they are very similar
+anyway. While the R6 interface always has the object first and the method is
+then selected with the help of the <code>$</code> operator, for instance, <code>x$cols()</code>,
+the S3 interface always has the method first and then the object as its first
+argument, for instance, <code>cols(x)</code>. An exception is the <code>new</code> method. It is
+not an S3 method, but an abused S4 constructor with the character string
+<code>"DTSg"</code> as its first argument. Regarding the R6 interface, the <code>DTSg</code> class
+generator has to be used to access the <code>new</code> method with the help of the <code>$</code>
+operator.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">new(Class, values, ID = "", parameter = "", unit = "", variant = "",
+  aggregated = FALSE, fast = getOption("DTSgFast"), swallow = FALSE,
+  na.status = getOption("DTSgNA.status"), funbyApproach =
+  getOption("DTSgFunbyApproach"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Class</code></td>
+<td>
+<p>A character string. Must be <code>"DTSg"</code> in order to create a <code>DTSg</code>
+object. Otherwise a different object may or may not be created (S4
+constructor only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p>A <code>data.frame</code> or object inherited from class <code>data.frame</code>,
+e.g. <code>data.table::data.table</code>. Its first column must be of class
+<code>POSIXct</code> or coercible to it. It serves as the object's time index and is
+renamed to <em>.dateTime.</em></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ID</code></td>
+<td>
+<p>A character string specifying the ID (name) of the time series data
+object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameter</code></td>
+<td>
+<p>A character string specifying the parameter name of the time
+series data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+<p>A character string specifying the unit of the time series data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variant</code></td>
+<td>
+<p>A character string specifying further metadata of the time
+series, for instance, <code>"min"</code> to point out that it is a time series of
+lower bound measurements.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregated</code></td>
+<td>
+<p>A logical specifying how the timestamps of the series have
+to be interpreted: as snap-shots (<code>FALSE</code>) or as periods between subsequent
+timestamps (<code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast</code></td>
+<td>
+<p>A logical specifying if all rows (<code>FALSE</code>) or only the first 1000
+rows (<code>TRUE</code>) shall be used to check the object's integrity and for the
+automatic detection of the time series' periodicity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>swallow</code></td>
+<td>
+<p>A logical specifying if the object provided through the
+<code>values</code> argument shall be “swallowed” by the <code>DTSg</code> object, i.e. no
+copy of the data shall be made. This is generally more resource efficient,
+but only works when the provided object is a <code>data.table::data.table</code>. Be
+warned, however, that when the creation of the <code>DTSg</code> object fails for some
+reason, the first column of the provided <code>data.table::data.table</code> might
+have been coerced to <code>POSIXct</code> and keyed (see <code>data.table::setkey</code> for
+further information). Furthermore, all references to the “swallowed”
+<code>data.table::data.table</code> in the global (and only the global) environment
+are removed upon the successful creation of the <code>DTSg</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.status</code></td>
+<td>
+<p>A character string. Either <code>"explicit"</code>, which makes missing
+timestamps explicit according to the recognised periodicity, or
+<code>"implicit"</code>, which removes timestamps with missing values on all value
+columns, or <code>"undecided"</code> for no such action. Please note that <code>DTSg</code>
+objects work best with explicitly missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyApproach</code></td>
+<td>
+<p>A character string specifying the default flavour of
+<code>TALFs</code> used with the created <code>DTSg</code> object. Either <code>"base"</code>, which
+utilises <code>as.POSIXct</code>, or <code>"fasttime"</code>, which utilises
+<code>fasttime::fastPOSIXct</code>, or <code>"RcppCCTZ"</code>, which utilises
+<code>RcppCCTZ::parseDatetime</code> as the main function for transforming
+timestamps. Custom approaches for user defined temporal aggregation level
+functions are also possible.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a <code>DTSg</code> object.
+</p>
+
+
+<h3>Methods</h3>
+
+<p>A <code>DTSg</code> object has the following methods:
+</p>
+
+<ul>
+<li> <p><code>aggregate</code>: See <code>aggregate</code> for further information.
+</p>
+</li>
+<li> <p><code>alter</code>: See <code>alter</code> for further information.
+</p>
+</li>
+<li> <p><code>clone</code>: See <code>clone</code> for further information.
+</p>
+</li>
+<li> <p><code>colapply</code>: See <code>colapply</code> for further information.
+</p>
+</li>
+<li> <p><code>cols</code>: See <code>cols</code> for further information.
+</p>
+</li>
+<li> <p><code>getCol</code>: See <code>getCol</code> for further information.
+</p>
+</li>
+<li> <p><code>merge</code>: See <code>merge</code> for further information.
+</p>
+</li>
+<li> <p><code>nas</code>: See <code>nas</code> for further information.
+</p>
+</li>
+<li> <p><code>plot</code>: See <code>plot</code> for further information.
+</p>
+</li>
+<li> <p><code>print</code>: See <code>print</code> for further information.
+</p>
+</li>
+<li> <p><code>refresh</code>: See <code>refresh</code> for further information.
+</p>
+</li>
+<li> <p><code>rollapply</code>: See <code>rollapply</code> for further information.
+</p>
+</li>
+<li> <p><code>rowaggregate</code>: See <code>rowaggregate</code> for further information.
+</p>
+</li>
+<li> <p><code>rowbind</code>: See <code>rowbind</code> for further information.
+</p>
+</li>
+<li> <p><code>setColNames</code>: See <code>setColNames</code> for further information.
+</p>
+</li>
+<li> <p><code>setCols</code>: See <code>setCols</code> for further information.
+</p>
+</li>
+<li> <p><code>subset</code>: See <code>subset</code> for further information.
+</p>
+</li>
+<li> <p><code>summary</code>: See <code>summary</code> for further information.
+</p>
+</li>
+<li> <p><code>values</code>: See <code>values</code> for further information.
+</p>
+</li>
+</ul>
+<h3>Fields</h3>
+
+<p>A <code>DTSg</code> object has the following fields or properties as they are often
+called. They are implemented through so called active bindings, which means
+that they can be accessed and actively set with the help of the <code>$</code> operator,
+for instance, <code>x$ID</code> gets the value of the <code>ID</code> field and
+<code>x$ID &lt;- "River Flow"</code> sets its value. Please note that fields are always
+modified in place, i.e. no deep clone (copy) of the object is made
+beforehand. See <code>clone</code> for further information. Some of the fields are
+read-only though:
+</p>
+
+<ul>
+<li> <p><code>aggregated</code>: Same as the <code>aggregated</code> argument.
+</p>
+</li>
+<li> <p><code>fast</code>: Same as the <code>fast</code> argument.
+</p>
+</li>
+<li> <p><code>funbyApproach</code>: Same as the <code>funbyApproach</code> argument.
+</p>
+</li>
+<li> <p><code>ID</code>: Same as the <code>ID</code> argument. It is used as the title of plots.
+</p>
+</li>
+<li> <p><code>na.status</code>: Same as the <code>na.status</code> argument. When set, the missing values
+of the object are expanded or collapsed accordingly.
+</p>
+</li>
+<li> <p><code>parameter</code>: Same as the <code>parameter</code> argument. It is used as the label of
+the primary axis of plots.
+</p>
+</li>
+<li> <p><code>periodicity</code>: A <code>difftime</code> object for a regular and a character string
+for an irregular <code>DTSg</code> object describing its periodicity or containing
+<code>"unrecognised"</code> in case it could not be detected. When set, the periodicity
+of the time series is changed as specified. See the <code>by</code> argument of
+<code>alter</code> for further information.
+</p>
+</li>
+<li> <p><code>regular</code>: A logical signalling if all lags in seconds between subsequent
+timestamps are the same (<code>TRUE</code>) or if some are different (<code>FALSE</code>). A, for
+instance, monthly time series is considered irregular in this sense
+(read-only).
+</p>
+</li>
+<li> <p><code>timestamps</code>: An integer showing the total number of timestamps of the time
+series (read-only).
+</p>
+</li>
+<li> <p><code>timezone</code>: A character string showing the time zone of the time series.
+When set, the series is converted to the specified time zone. Only names from
+<code>OlsonNames</code> are accepted.
+</p>
+</li>
+<li> <p><code>unit</code>: Same as the <code>unit</code> argument. It is added to the label of the
+primary axis of plots when the <code>parameter</code> field is set.
+</p>
+</li>
+<li> <p><code>variant</code>: Same as the <code>variant</code> argument. It is added to the label of the
+primary axis of plots when the <code>parameter</code> field is set.
+</p>
+</li>
+</ul>
+<p>The <code>parameter</code>, <code>unit</code> and <code>variant</code> fields are especially useful for time
+series of a single variable. For time series of multiple variables with
+differing units the functionality of the <span class="pkg">units</span> package may pose a
+viable alternative.
+</p>
+
+
+<h3>Options</h3>
+
+<p>The behaviour of <code>DTSg</code> objects can be customised with the help of the
+following option. See <code>options</code> for further information:
+</p>
+
+<ul>
+<li> <p><em>DTSgClone:</em> A logical specifying if <code>DTSg</code> objects are, by default,
+modified in place (<code>FALSE</code>) or if a deep clone (copy) shall be made
+beforehand (<code>TRUE</code>).
+</p>
+</li>
+<li> <p><em>DTSgDeprecatedWarnings:</em> A logical specifying if warnings are displayed
+when calling deprecated features.
+</p>
+</li>
+<li> <p><em>DTSgFast:</em> Default value for the <code>fast</code> argument.
+</p>
+</li>
+<li> <p><em>DTSgFunbyApproach:</em> Default value for the <code>funbyApproach</code> argument.
+</p>
+</li>
+<li> <p><em>DTSgNA.status:</em> Default value for the <code>na.status</code> argument.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>Due to the <code>POSIXct</code> nature of the <em>.dateTime</em> column, the same sub-second
+accuracy, issues and limitations apply to <code>DTSg</code> objects. In order to prevent
+at least some of the possible precision issues, the lags between subsequent
+timestamps are rounded to microseconds during integrity checks. This
+corresponds to the maximum value allowed for
+<code>options("digits.secs")</code>. As a consequence, time series with a
+sub-second accuracy higher than a microsecond will never work.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># new DTSg object
+## R6 constructor
+DTSg$new(
+  values = flow,
+  ID = "River Flow"
+)
+
+## abused S4 constructor
+new(
+  Class = "DTSg",
+  values = flow,
+  ID = "River Flow"
+)
+
+</code></pre>
+
+
+</div>

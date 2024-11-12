@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>omit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Omission of taxa that have a poor occurrence record</h2>
+
+<h3>Description</h3>
+
+<p>Function to quickly omit single-collection and single-reference taxa.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">omit(
+  x,
+  om = "ref",
+  tax = "genus",
+  bin = "bin",
+  coll = NULL,
+  ref = NULL,
+  filterNA = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>(data.frame)</code> Occurrence dataset, with <code>bin</code>, <code>tax</code> and <code>coll</code> as column names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>om</code></td>
+<td>
+<p><code>(character)</code> The type of omission. <code>"coll"</code> omits occurrences of taxa that occurr only in one collection. <code>"ref"</code> omits occurrences of taxa that were described only in one reference. <code>"binref"</code> will omit the set of single reference taxa that were described by more than one references, but appear in only one reference in a time bin.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tax</code></td>
+<td>
+<p><code>(character)</code> The name of the taxon variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin</code></td>
+<td>
+<p><code>(character)</code> The name of the bin variable (has to be <code>numeric</code> for the function to run). For time series, this is the time slice variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coll</code></td>
+<td>
+<p><code>(character)</code> The variable name of the collection identifiers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p><code>(character)</code> The variable name of the reference identifiers (optional).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filterNA</code></td>
+<td>
+<p><code>(logical)</code> Additional entries can be added to influence the dataset that might not have reference or collection information (<code>NA</code> entries). These occurrences are treated as single-collection or single-reference taxa if the <code>na.rm</code> argument is set to <code>FALSE</code> (default). Setting this argument to <code>TRUE</code> will keep these entries. (see example)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function returns a <code>logical</code> vector, with a value for each row. <code>TRUE</code> values indicate rows to be omitted, <code>FALSE</code> values indicate rows to be kept. The function is embedded in the <code>divDyn</code> function, but can be called independently.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A logical vector.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># omit single-reference taxa
+  data(corals)
+  data(stages)
+  toOmit &lt;- omit(corals, bin="stg", tax="genus", om="ref", ref="reference_no")
+  x &lt;- corals[!toOmit,]
+
+# within divDyn
+  # plotting
+  tsplot(stages, shading="series", boxes="sys", xlim=c(260,0), 
+    ylab="range-through diversity (genera)", ylim=c(0,230))
+  # multiple ref/slice required
+  ddNoSing &lt;- divDyn(corals, tax="genus", bin="stg", om="binref", ref="reference_no")
+  lines(stages$mid, ddNoSing$divRT, lwd=2, col="red")
+
+  # with the recent included (NA reference value)
+  ddNoSingRec &lt;- divDyn(corals, tax="genus", bin="stg",
+    om="binref", filterNA=TRUE,ref="reference_no")
+  lines(stages$mid, ddNoSingRec$divRT, lwd=2, col="blue")
+  
+  # legend
+  legend("topleft", legend=c("no single-ref. taxa", 
+    "no single-ref. taxa,\n with recent"), 
+    col=c("red", "blue"), lwd=c(2,2))
+</code></pre>
+
+
+</div>

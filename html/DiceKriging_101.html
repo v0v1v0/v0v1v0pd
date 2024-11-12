@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>scalingFun1d</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Scaling 1-dimensional function
+</h2>
+
+<h3>Description</h3>
+
+<p>Parametric transformation of the input space variable. The transformation is obtained coordinatewise by integrating piecewise affine marginal "density" parametrized by a vector of knots and a matrix of density values at the knots. See references for more detail.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">scalingFun1d(x, knots, eta)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p> an n matrix standing for a design of n experiments </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p> a list of knots parametrizing the transformation. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p> a list of coefficients parametrizing the marginal transformation. Each element stands for a set of marginal density values at the knots defined above.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The image of x by a scaling transformation of parameters knots and eta
+</p>
+
+
+<h3>References</h3>
+
+<p>Y. Xiong, W. Chen, D. Apley, and X. Ding (2007), <em>Int. J. Numer. Meth. Engng</em>, A non-stationary covariance-based Kriging method for metamodelling in engineering design.
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>scalingFun</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## 1D Transform of Xiong et al.
+knots &lt;- c(0, 0.3, 0.8, 1); eta &lt;- c(2, 0.4, 1.4, 1.1)
+nk &lt;- length(knots)
+t &lt;- seq(from = 0, to = 1, length = 200)
+f &lt;- scalingFun1d(x = matrix(t), knots = knots, eta = eta)
+
+## for text positions only
+itext &lt;- round(length(t) * 0.7)
+xtext &lt;- t[itext]; ftext &lt;- f[itext] / 2; etamax &lt;- max(eta)
+
+## plot the transform function
+opar &lt;- par(mfrow = c(2, 1))
+par(mar = c(0, 4, 5, 4))
+plot(x = t, y = f, type = "l", lwd = 2, col = "orangered",
+     main = "scaling transform f(x) and density g(x)",
+     xlab = "", ylab = "", xaxt = "n", yaxt = "n")
+axis(side = 4)
+abline(v = knots, lty = "dotted"); abline(h = 0)
+text(x = xtext, y = ftext, cex = 1.4,
+     labels = expression(f(x) == integral(g(t)*dt, 0, x)))
+
+## plot the density function, which is piecewise linear
+scalingDens1d &lt;- approxfun(x = knots, y = eta)
+g &lt;- scalingDens1d(t)
+gtext &lt;- 0.5 * g[itext] + 0.6 * etamax
+par(mar = c(5, 4, 0, 4))
+plot(t, g, type = "l", lwd = 2, ylim = c(0, etamax * 1.2),
+     col = "SpringGreen4", xlab = expression(x), ylab ="")
+abline(v = knots, lty = "dotted")
+lines(x = knots, y = eta, lty = 1, lwd = 2, type = "h", col = "SpringGreen4")
+abline(h = 0)
+text(x = 0.7, y = gtext, cex = 1.4, labels = expression(g(x)))
+
+## show knots with math symbols eta, zeta
+for (i in 1:nk) {
+  text(x = knots[i], y = eta[i] + 0.12 * etamax, cex = 1.4,
+       labels = substitute(eta[i], list(i = i)))
+  mtext(side = 1, cex = 1.4, at = knots[i], line = 2.4,
+        text = substitute(zeta[i], list(i = i)))
+}
+polygon(x = c(knots, knots[nk], knots[1]),  y = c(eta, 0, 0),
+        density = 15, angle = 45, col = "SpringGreen", border = NA)
+par(opar)
+</code></pre>
+
+
+</div>

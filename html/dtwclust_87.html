@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tsclustFamily-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Class definition for <code>tsclustFamily</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>Formal S4 class with a family of functions used in <code>tsclust()</code>.
+</p>
+
+
+<h3>Details</h3>
+
+<p>The custom implementations also handle parallelization.
+</p>
+<p>Since the distance function makes use of <span class="pkg">proxy</span>, it also supports any extra <code>proxy::dist()</code>
+parameters in <code>...</code>.
+</p>
+<p>The prototype includes the <code>cluster</code> function for partitional methods, as well as a pass-through
+<code>preproc</code> function. The initializer expects a control from tsclust-controls. See more below.
+</p>
+
+
+<h3>Slots</h3>
+
+
+<dl>
+<dt><code>dist</code></dt>
+<dd>
+<p>The function to calculate the distance matrices.</p>
+</dd>
+<dt><code>allcent</code></dt>
+<dd>
+<p>The function to calculate centroids on each iteration.</p>
+</dd>
+<dt><code>cluster</code></dt>
+<dd>
+<p>The function used to assign a series to a cluster.</p>
+</dd>
+<dt><code>preproc</code></dt>
+<dd>
+<p>The function used to preprocess the data (relevant for <code>stats::predict()</code>).</p>
+</dd>
+</dl>
+<h3>Distance function</h3>
+
+<p>The family's dist() function works like <code>proxy::dist()</code> but supports parallelization and
+optimized symmetric calculations. If you like, you can use the function more or less directly,
+but provide a control argument when creating the family (see examples). However, bear in mind
+the following considerations.
+</p>
+
+<ul>
+<li>
+<p> The second argument is called <code>centroids</code> (inconsistent with <code>proxy::dist()</code>).
+</p>
+</li>
+<li>
+<p> If <code>control$distmat</code> is <em>not</em> <code>NULL</code>, the function will try to subset it.
+</p>
+</li>
+<li>
+<p> If <code>control$symmetric</code> is <code>TRUE</code>, <code>centroids</code> is <code>NULL</code>, <em>and</em> there is no argument
+<code>pairwise</code> that is <code>TRUE</code>, only half the distance matrix will be computed.
+</p>
+</li>
+</ul>
+<p>Note that all distances implemented as part of <span class="pkg">dtwclust</span> have custom proxy loops that use
+multi-threading independently of <span class="pkg">foreach</span>, so see their respective documentation to see
+what optimizations apply to each one.
+</p>
+<p>For distances <em>not</em> included in <span class="pkg">dtwclust</span>, the computation can be in parallel using
+multi-processing with <code>foreach::foreach()</code>. If you install and load or attach (see
+<code>base::library()</code> or <code>base::loadNamespace()</code>) the <span class="pkg">bigmemory</span> package, the function will
+take advantage of said package when all of the following conditions are met, reducing the
+overhead of data copying across processes:
+</p>
+
+<ul>
+<li> <p><code>control$symmetric</code> is <code>TRUE</code>
+</p>
+</li>
+<li> <p><code>centroids</code> is <code>NULL</code>
+</p>
+</li>
+<li> <p><code>pairwise</code> is <code>FALSE</code> or <code>NULL</code>
+</p>
+</li>
+<li>
+<p> The distance was registered in proxy::pr_DB with <code>loop = TRUE</code>
+</p>
+</li>
+<li>
+<p> A parallel backend with more than 1 worker has been registered with <span class="pkg">foreach</span>
+</p>
+</li>
+</ul>
+<p>This symmetric, parallel case makes chunks for parallel workers, but they are not perfectly
+balanced, so some workers might finish before the others.
+</p>
+
+
+<h3>Centroid function</h3>
+
+<p>The default partitional allcent() function is a closure with the implementations of the
+included centroids. The ones for <code>DBA()</code>, <code>shape_extraction()</code> and <code>sdtw_cent()</code> can use
+multi-process parallelization with <code>foreach::foreach()</code>. Its formal arguments are described in
+the Centroid Calculation section from <code>tsclust()</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>This class is meant to group together the relevant functions, but they are <strong>not</strong> linked with
+each other automatically. In other words, neither <code>dist</code> nor <code>allcent</code> apply <code>preproc</code>. They
+essentially don't know of each other's existence.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dtw_basic()</code>, <code>dtw_lb()</code>, <code>gak()</code>, <code>lb_improved()</code>, <code>lb_keogh()</code>, <code>sbd()</code>, <code>sdtw()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+data(uciCT)
+# See "GAK" documentation
+fam &lt;- new("tsclustFamily", dist = "gak")
+
+# This is done with symmetric optimizations, regardless of control$symmetric
+crossdist &lt;- fam@dist(CharTraj, window.size = 18L)
+
+# This is done without symmetric optimizations, regardless of control$symmetric
+crossdist &lt;- fam@dist(CharTraj, CharTraj, window.size = 18L)
+
+# For non-dtwclust distances, symmetric optimizations only apply
+# with an appropriate control AND a single data argument:
+fam &lt;- new("tsclustFamily", dist = "dtw",
+           control = partitional_control(symmetric = TRUE))
+fam@dist(CharTraj[1L:5L])
+
+# If you want the fuzzy family, use fuzzy = TRUE
+ffam &lt;- new("tsclustFamily", control = fuzzy_control(), fuzzy = TRUE)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

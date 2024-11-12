@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mutate_edge_attrs_ws</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mutate edge attribute values for a selection of edges</h2>
+
+<h3>Description</h3>
+
+<p>Within a graph's internal edge data frame (edf), mutate edge attribute values
+only for edges in a selection by using one or more expressions.
+</p>
+<p>This function makes use of an active selection of edges (and the function
+ending with <code style="white-space: pre;">⁠_ws⁠</code> hints at this).
+</p>
+<p>Selections of edges can be performed using the following selection
+(<code style="white-space: pre;">⁠select_*()⁠</code>) functions: <code>select_edges()</code>, <code>select_last_edges_created()</code>,
+<code>select_edges_by_edge_id()</code>, or <code>select_edges_by_node_id()</code>.
+</p>
+<p>Selections of edges can also be performed using the following traversal
+(<code style="white-space: pre;">⁠trav_*()⁠</code>) functions: <code>trav_out_edge()</code>, <code>trav_in_edge()</code>,
+<code>trav_both_edge()</code>, or <code>trav_reverse_edge()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mutate_edge_attrs_ws(graph, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>A graph object of class <code>dgr_graph</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Expressions used for the mutation of edge attributes. LHS of each
+expression is either an existing or new edge attribute name. The RHS can
+consist of any valid R code that uses edge attributes as variables.
+Expressions are evaluated in the order provided, so, edge attributes
+created or modified are ready to use in subsequent expressions.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A graph object of class <code>dgr_graph</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other edge creation and removal: 
+<code>add_edge()</code>,
+<code>add_edge_clone()</code>,
+<code>add_edge_df()</code>,
+<code>add_edges_from_table()</code>,
+<code>add_edges_w_string()</code>,
+<code>add_forward_edges_ws()</code>,
+<code>add_reverse_edges_ws()</code>,
+<code>copy_edge_attrs()</code>,
+<code>create_edge_df()</code>,
+<code>delete_edge()</code>,
+<code>delete_edges_ws()</code>,
+<code>delete_loop_edges_ws()</code>,
+<code>drop_edge_attrs()</code>,
+<code>edge_data()</code>,
+<code>join_edge_attrs()</code>,
+<code>mutate_edge_attrs()</code>,
+<code>recode_edge_attrs()</code>,
+<code>rename_edge_attrs()</code>,
+<code>rescale_edge_attrs()</code>,
+<code>rev_edge_dir()</code>,
+<code>rev_edge_dir_ws()</code>,
+<code>set_edge_attr_to_display()</code>,
+<code>set_edge_attrs()</code>,
+<code>set_edge_attrs_ws()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a graph with 3 edges
+# and then select edge `1`
+graph &lt;-
+  create_graph() %&gt;%
+  add_path(n = 4) %&gt;%
+  set_edge_attrs(
+    edge_attr = width,
+    values = c(3.4, 2.3, 7.2)) %&gt;%
+  select_edges(edges = 1)
+
+# Get the graph's internal edf
+# to show which edge attributes
+# are available
+graph %&gt;% get_edge_df()
+
+# Mutate the `width` edge
+# attribute for the edges
+# only in the active selection
+# of edges (edge `1`); here,
+# we divide each value in the
+# selection by 2
+graph &lt;-
+  graph %&gt;%
+  mutate_edge_attrs_ws(
+    width = width / 2)
+
+# Get the graph's internal
+# edf to show that the edge
+# attribute `width` had its
+# values changed
+graph %&gt;% get_edge_df()
+
+# Create a new edge attribute,
+# called `length`, that is the
+# log of values in `width` plus
+# 2 (and, also, round all values
+# to 2 decimal places)
+graph &lt;-
+  graph %&gt;%
+  clear_selection() %&gt;%
+  select_edges(edges = 2:3) %&gt;%
+  mutate_edge_attrs_ws(
+    length = (log(width) + 2) %&gt;%
+               round(2))
+
+# Get the graph's internal edf
+# to show that the edge attribute
+# values had been mutated only
+# for edges `2` and `3` (since
+# edge `1` is excluded, an NA
+# value is applied)
+graph %&gt;% get_edge_df()
+
+# Create a new edge attribute
+# called `area`, which is the
+# product of the `width` and
+# `length` attributes
+graph &lt;-
+  graph %&gt;%
+  mutate_edge_attrs_ws(
+    area = width * length)
+
+# Get the graph's internal edf
+# to show that the edge attribute
+# values had been multiplied
+# together (with new attr `area`)
+# for nodes `2` and `3`
+graph %&gt;% get_edge_df()
+
+# We can invert the selection
+# and mutate edge `1` several
+# times to get an `area` value
+# for that edge
+graph &lt;-
+  graph %&gt;%
+  invert_selection() %&gt;%
+  mutate_edge_attrs_ws(
+    length = (log(width) + 5) %&gt;%
+               round(2),
+    area = width * length)
+
+# Get the graph's internal edf
+# to show that the 2 mutations
+# occurred for edge `1`, yielding
+# non-NA values for its edge
+# attributes without changing
+# those of the other edges
+graph %&gt;% get_edge_df()
+
+</code></pre>
+
+
+</div>

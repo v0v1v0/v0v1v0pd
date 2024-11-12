@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prep.initial</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recipe function for preparing the initial conditions for the model.</h2>
+
+<h3>Description</h3>
+
+<p>Recipe function for preparing the initial conditions for the model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prep.initial(values.inistate, params.inistate, values.inicov, params.inicov,
+  values.regimep = 1, params.regimep = 0, covariates, deviation = FALSE,
+  refRow)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>values.inistate</code></td>
+<td>
+<p>a vector or list of vectors of the starting or fixed values of the initial state vector in one or more regimes.  May also be a matrix or list of matrices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params.inistate</code></td>
+<td>
+<p>a vector or list of vectors of the parameter names that appear in the initial state vector in one or more regimes. If an element is 0 or "fixed", the corresponding element is fixed at the value specified in the values vector; Otherwise, the corresponding element is to be estimated with the starting value specified in the values vector.  May also be a matrix or list of matrices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values.inicov</code></td>
+<td>
+<p>a positive definite matrix or a list of positive definite matrices of the starting or fixed values of the initial error covariance structure(s) in one or more regimes. If only one matrix is specified for a regime-switching dynamic model, the initial error covariance structure stays the same across regimes. To ensure the matrix is positive definite in estimation, we apply LDL transformation to the matrix. Values are hence automatically adjusted for this purpose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params.inicov</code></td>
+<td>
+<p>a matrix or list of matrices of the parameter names that appear in the initial error covariance(s) in one or more regimes. If an element is 0 or "fixed", the corresponding element is fixed at the value specified in the values matrix; Otherwise, the corresponding element is to be estimated with the starting value specified in the values matrix. If only one matrix is specified for a regime-switching dynamic model, the process noise structure stays the same across regimes. If a list is specified, any two sets of the parameter names as in two matrices should be either the same or totally different to ensure proper parameter estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values.regimep</code></td>
+<td>
+<p>a vector/matrix of the starting or fixed values of the initial probabilities of being in each regime. By default, the initial probability of being in the first regime is fixed at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params.regimep</code></td>
+<td>
+<p>a vector/matrix of the parameter indices of the initial probabilities of 
+being in each regime. If an element is 0 or "fixed", the corresponding element is fixed at the value 
+specified in the "values" vector/matrix; Otherwise, the corresponding element is to be estimated 
+with the starting value specified in the values vector/matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>character vector of the names of the (person-level) covariates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deviation</code></td>
+<td>
+<p>logical. Whether to use the deviation form or not.  See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refRow</code></td>
+<td>
+<p>numeric. Which row is treated at the reference.  See Details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The initial condition model includes specifications for the intial state vector, 
+initial error covariance matrix, initial probabilities of 
+being in each regime and all associated parameter specifications.
+The initial probabilities are specified in multinomial logistic regression form.  When there are no covariates, this implies multinomial logistic regression with intercepts only.  In particular, the initial probabilities not not specified on a 0 to 1 probability scale, but rather a negative infinity to positive infinity log odds scale.  Fixing an initial regime probability to zero does not mean zero probability.  It translates to a comparison log odds scale against which other regimes will be judged.
+</p>
+<p>The structure of the initial state vector and the initial probability vector depends on the presence of covariates.  When there are no covariates these should be vectors, or equivalently single-column matrices.  When there are covariates they should have <code class="reqn">c+1</code> columns for <code class="reqn">c</code> covariates.  For <code>values.regimep</code> and <code>params.regimep</code> the number of rows should be the number of regimes.  For <code>inistate</code> and <code>inicov</code> the number of rows should be the number of latent states.  Of course, <code>inicov</code> is a square and symmetric so its number of rows should be the same as its number of columns.
+</p>
+<p>When <code>deviation=FALSE</code>, the non-deviation form of the multinomial logistic regression is used. This form has a separate intercept term for each entry of the initial probability vector. When <code>deviation=TRUE</code>, the deviation form of the multinomial logistic regression is used. This form has an intercept term that is common to all rows of the initial probability vector. The rows are then distinguished by their own individual deviations from the common intercept. The deviation form requires the same reference row constraint as the non-deviation form (described below). By default the reference row is taken to be the row with all zero covariate effects.  Of course, if there are no covariates and the deviation form is desired, then the user must provide the reference row.
+</p>
+<p>The <code>refRow</code> argument determines which row is used as the intercept row. It is only
+used in the deviation form (i.e. <code>deviation=TRUE</code>). In the deviation form, one row of <code>values.regimep</code> and <code>params.regimep</code> contains the intercepts, other rows contain deviations from these intercepts. The <code>refRow</code> argument says which row contains the intercept terms. The default behavior for <code>refRow</code> is to detect the reference row automatically based on which parameters are <code>fixed</code>.  If we have problems detecting which is the reference row, then we provide error messages that are as helpful as we can make them.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class 'dynrInitial'
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Methods that can be used include: <code>print</code>, <code>printex</code>, <code>show</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#### No-covariates
+# Single regime, no covariates
+# latent states are position and velocity
+# initial position is free and called 'inipos'
+# initial slope is fixed at 1
+# initial covariance is fixed to a diagonal matrix of 1s
+initialNoC &lt;- prep.initial(
+	values.inistate=c(0, 1),
+	params.inistate=c('inipos', 'fixed'),
+	values.inicov=diag(1, 2),
+	params.inicov=diag('fixed', 2))
+
+#### One covariate
+# Single regime, one covariate on the inital mean
+# latent states are position and velocity
+# initial covariance is fixed to a diagonal matrix of 1s
+# initial latent means have
+#   nrow = numLatentState, ncol = numCovariates + 1
+# initial position has free intercept and free u1 effect
+# initial slope is fixed at 1
+initialOneC &lt;- prep.initial(
+	values.inistate=matrix(
+		c(0, .5,
+		  1,  0), byrow=TRUE,
+		nrow=2, ncol=2),
+	params.inistate=matrix(
+		c('iniPosInt', 'iniPosSlopeU1',
+		'fixed', 'fixed'), byrow=TRUE,
+		nrow=2, ncol=2),
+	values.inicov=diag(1, 2),
+	params.inicov=diag('fixed', 2),
+	covariates='u1')
+
+#### Regime-switching, one covariate
+# latent states are position and velocity
+# initial covariance is fixed to a diagonal matrix of 1s
+# initial latent means have
+#   nrow = numLatentState, ncol = numCovariates + 1
+# initial position has free intercept and free u1 effect
+# initial slope is fixed at 1
+# There are 3 regimes but the mean and covariance
+#   are not regime-switching.
+initialRSOneC &lt;- prep.initial(
+	values.regimep=matrix(
+		c(1, 1,
+		  0, 1,
+		  0, 0), byrow=TRUE,
+		nrow=3, ncol=2),
+	params.regimep=matrix(
+		c('r1int', 'r1slopeU1',
+		  'r2int', 'r2slopeU2',
+		  'fixed', 'fixed'), byrow=TRUE,
+		nrow=3, ncol=2),
+	values.inistate=matrix(
+		c(0, .5,
+		  1,  0), byrow=TRUE,
+		nrow=2, ncol=2),
+	params.inistate=matrix(
+		c('iniPosInt', 'iniPosSlopeU1',
+		'fixed', 'fixed'), byrow=TRUE,
+		nrow=2, ncol=2),
+	values.inicov=diag(1, 2),
+	params.inicov=diag('fixed', 2),
+	covariates='u1')
+
+</code></pre>
+
+
+</div>

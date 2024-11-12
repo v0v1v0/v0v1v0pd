@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>anova.dcca</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Community- and Species-Level Permutation Test in Double Constrained 
+Correspondence Analysis (dc-CA)</h2>
+
+<h3>Description</h3>
+
+<p><code>anova.dcca</code> performs the community- and species-level permutation tests
+of dc-CA and combines these with the 'max test', which takes the maximum of
+the <em>P</em>-values. The function arguments are similar to (but more 
+restrictive than) those of <code>anova.cca</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dcca'
+anova(object, ..., permutations = 999, by = c("omnibus", "axis"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object from <code>dc_CA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>unused.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permutations</code></td>
+<td>
+<p>a list of control values for the permutations for 
+species and sites (species first, sites second, for traits and environment) 
+as returned by the function <code>how</code>, or the number of 
+permutations required (default 999, or a two-vector with the number for the
+species-level test first and that for the sites-level second), or
+a list of two permutation matrices (again, species first, sites second)
+where each row gives the permuted indices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>character <code>"axis"</code> which performs a series of tests, one for
+each axis, with the eigenvalue of the axis as test statistic. 
+Default: <code>NULL</code> which sets the test statistic to the inertia
+(sum of all double constrained eigenvalues; named <code>constraintsTE</code> in 
+the inertia element of <code>dc_CA</code>. 
+</p>
+<p>The interpretation of this inertia is, at the species-level, the 
+environmentally constrained inertia explained by the traits (without trait
+covariates) and, at the community-level, the trait-constrained inertia
+explained by the environmental predictors (without covariates). The 
+default (<code>NULL</code>) is computationally quicker as it avoids computation 
+of an svd of permuted data sets.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In the general case of varying site abundance totals 
+(<code>divideBySiteTotals = FALSE</code>) both the community-level test and the
+species-level test use residualized predictor permutation (ter Braak 2022), 
+so as to ensure that <code>anova.dcca</code> is robust against differences
+in species and site total abundance in the <code>response</code> (ter Braak &amp; te 
+Beest, 2022). The community-level test uses <code>anova_sites</code>. For 
+the species-level test, <code>anova_species</code> is used.
+</p>
+<p>With equal site weights, obtained with <code>divide.by.site.total = TRUE</code>,
+the community-level test is obtained by applying <code>anova</code> to 
+<code>object$RDAonEnv</code> using <code>anova.cca</code>.
+This performs residualized response permutation which performs about equal
+to residualized predictor permutation in the equi-weight case.
+The function <code>anova.cca</code> is implemented in C and therefore
+a factor of 20 or so quicker than the native R-code used in 
+<code>anova_sites</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of 3 of structures as from <code>anova.cca</code>. The 
+elements are <code>c("species", "sites", "max")</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>ter Braak, C.J.F. &amp; te Beest, D.E. 2022. Testing environmental effects
+on taxonomic composition with canonical correspondence analysis:
+alternative permutation tests are not equal.
+Environmental and Ecological Statistics. 29 (4), 849-868.
+<a href="https://doi.org/10.1007/s10651-022-00545-4">doi:10.1007/s10651-022-00545-4</a>
+</p>
+<p>ter Braak, C.J.F. (2022) Predictor versus response permutation
+for significance testing in weighted regression and redundancy analysis.
+Journal of statistical computation and simulation, 92, 2041-2059.
+<a href="https://doi.org/10.1080/00949655.2021.2019256">doi:10.1080/00949655.2021.2019256</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("dune_trait_env")
+
+# rownames are carried forward in results
+rownames(dune_trait_env$comm) &lt;- dune_trait_env$comm$Sites
+
+mod &lt;- dc_CA(formulaEnv = ~ A1 + Moist + Mag + Use + Manure,
+             formulaTraits = ~ SLA + Height + LDMC + Seedmass + Lifespan,
+             response = dune_trait_env$comm[, -1],  # must delete "Sites"
+             dataEnv = dune_trait_env$envir,
+             dataTraits = dune_trait_env$traits,
+             verbose = TRUE)
+anova(mod)
+
+a_species &lt;- anova_species(mod)
+a_species
+# anova_species can be used for manual forward selection of
+# trait variables, as done for environmental variables in the demo 
+# dune_FS_dcCA.r, based on the first eigenvalue and its significance
+# and adding the first axis of the constrained species scores from mod to 
+# the Condition of a new mod.
+(eig1_and_pval &lt;- c(eig = a_species$eig[1], pval = a_species$table$`Pr(&gt;F)`[1]))
+a_species$eig
+anova_sites(mod)
+</code></pre>
+
+
+</div>

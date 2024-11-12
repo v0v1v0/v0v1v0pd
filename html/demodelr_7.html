@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mcmc_estimate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Markov Chain parameter estimates</h2>
+
+<h3>Description</h3>
+
+<p><code>mcmc_estimate</code> Computes and Markov Chain Monte Carlo parameter estimate for a given model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mcmc_estimate(
+  model,
+  data,
+  parameters,
+  iterations = 1,
+  knob_flag = FALSE,
+  mode = "emp",
+  initial_condition = NULL,
+  deltaT = NULL,
+  n_steps = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>the model equations that we use to compute the result.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>the data used to assess the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>a data frame that lists the names of the parameters along with upper and lower bounds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>the number of iterations we wish to run the MCMC for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knob_flag</code></td>
+<td>
+<p>determines if we tune the range that can be search (annealing)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>two choices: emp –&gt; empirical (default) or de –&gt; differential equations. The estimator works differently depending on which is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial_condition</code></td>
+<td>
+<p>The initial condition for the differential equation (DE mode only)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaT</code></td>
+<td>
+<p>The length between timesteps (DE mode only)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_steps</code></td>
+<td>
+<p>The number of time steps we run the model (DE mode only)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dataframe: the first column is the accept flag  of the mcmc run (TRUE/FALSE), the log likelihood, and the parameter values
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mcmc_analyze</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+## Example with an empirical model:
+## Step 1: Define the model and parameters
+phos_model &lt;- daphnia ~ c * algae^(1 / theta)
+
+phos_param &lt;- tibble::tibble( name = c("c", "theta"),
+lower_bound = c(0, 1),
+upper_bound = c(2, 20))
+
+## Step 2: Determine MCMC settings
+# Define the number of iterations
+phos_iter &lt;- 1000
+
+## Step 3: Compute MCMC estimate
+phos_mcmc &lt;- mcmc_estimate(model = phos_model,
+data = phosphorous,
+parameters = phos_param,
+iterations = phos_iter)
+
+## Example with a differential equation:
+## Step 1: Define the model, parameters, and data
+## Define the tourism model
+tourism_model &lt;- c(dRdt ~ resources * (1 - resources) - a * visitors,
+dVdt ~ b * visitors * (resources - visitors))
+
+# Define the parameters that you will use with their bounds
+tourism_param &lt;- tibble::tibble( name = c("a", "b"),
+lower_bound = c(10, 0),
+upper_bound = c(30, 5))
+
+## Step 2: Determine MCMC settings
+# Define the initial conditions
+tourism_init &lt;- c(resources = 0.995, visitors = 0.00167)
+deltaT &lt;- .1 # timestep length
+n_steps &lt;- 15 # must be a number greater than 1
+# Define the number of iterations
+tourism_iter &lt;- 1000
+
+## Step 3: Compute MCMC estimate
+tourism_out &lt;- mcmc_estimate(
+ model = tourism_model,
+ data = parks,
+  parameters = tourism_param,
+ mode = "de",
+  initial_condition = tourism_init, deltaT = deltaT,
+ n_steps = n_steps,
+  iterations = tourism_iter)
+
+
+
+</code></pre>
+
+
+</div>

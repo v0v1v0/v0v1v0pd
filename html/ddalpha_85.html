@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dknn.classify</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Depth-Based kNN
+</h2>
+
+<h3>Description</h3>
+
+<p>The implementation of the affine-invariant depth-based kNN of Paindaveine and Van Bever (2015). 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dknn.classify(objects, data, k, depth = "halfspace", seed = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>objects</code></td>
+<td>
+
+<p>Matrix containing objects to be classified; each row is one <code class="reqn">d</code>-dimensional object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Matrix containing training sample where each of <code class="reqn">n</code> rows is one object of the training sample where first <code class="reqn">d</code> entries are inputs and the last entry is output (class label).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>the number of neighbours
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depth</code></td>
+<td>
+
+<p>Character string determining which depth notion to use; the default value is <code>"halfspace"</code>. 
+Currently the method supports the following depths: "halfspace", "Mahalanobis", "simplicial".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>the random seed. The default value <code>seed=0</code> makes no changes.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List containing class labels, or character string "Ignored" for the outsiders if "Ignore" was specified as the outsider treating method.
+</p>
+
+
+<h3>References</h3>
+
+<p>Paindaveine, D. and Van Bever, G. (2015). Nonparametrically consistent depth-based classifiers. <em>Bernoulli</em> <b>21</b> 62–82.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dknn.train</code> to train the Dknn-classifier.
+</p>
+<p><code>dknn.classify.trained</code> to classify with the Dknn-classifier.
+</p>
+<p><code>ddalpha.train</code> to train the DD<code class="reqn">\alpha</code>-classifier.
+</p>
+<p><code>ddalpha.getErrorRateCV</code> and <code>ddalpha.getErrorRatePart</code> to get error rate of the Dknn-classifier on particular data (set <code>separator = "Dknn"</code>).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Generate a bivariate normal location-shift classification task
+# containing 200 training objects and 200 to test with
+class1 &lt;- mvrnorm(200, c(0,0), 
+                  matrix(c(1,1,1,4), nrow = 2, ncol = 2, byrow = TRUE))
+class2 &lt;- mvrnorm(200, c(2,2), 
+                  matrix(c(1,1,1,4), nrow = 2, ncol = 2, byrow = TRUE))
+trainIndices &lt;- c(1:100)
+testIndices &lt;- c(101:200)
+propertyVars &lt;- c(1:2)
+classVar &lt;- 3
+trainData &lt;- rbind(cbind(class1[trainIndices,], rep(1, 100)), 
+                   cbind(class2[trainIndices,], rep(2, 100)))
+testData &lt;- rbind(cbind(class1[testIndices,], rep(1, 100)), 
+                  cbind(class2[testIndices,], rep(2, 100)))
+data &lt;- list(train = trainData, test = testData)
+
+# Train the classifier
+# and get the classification error rate
+cls &lt;- dknn.train(data$train, kMax = 20, depth = "Mahalanobis")
+cls$k
+classes1 &lt;- dknn.classify.trained(data$test[,propertyVars], cls)
+cat("Classification error rate: ", 
+    sum(unlist(classes1) != data$test[,classVar])/200)
+
+# Classify the new data based on the old ones in one step
+classes2 &lt;- dknn.classify(data$test[,propertyVars], data$train, k = cls$k, depth = "Mahalanobis")
+cat("Classification error rate: ", 
+    sum(unlist(classes2) != data$test[,classVar])/200)
+
+</code></pre>
+
+
+</div>

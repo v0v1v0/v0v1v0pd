@@ -1,0 +1,499 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>multifor</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct a multi forest prediction rule and calculate multi-class and discriminatory variable importance scores as described in Hornung &amp; Hapfelmeier (2024).</h2>
+
+<h3>Description</h3>
+
+<p>Implements multi forests, a random forest variant tailored for multi-class 
+outcomes (Hornung &amp; Hapfelmeier, 2024). Multi forests feature the multi-class 
+variable importance measure (VIM) and the discriminatory VIM.<br> 
+The <em>multi-class VIM</em> measures the degree to which the variables are 
+specifically associated with one or more classes. In contrast, conventional VIMs, 
+such as the permutation VIM or the Gini importance, measure the overall influence 
+of variables regardless of their class-association. Therefore, these measures 
+rank not only class-associated variables high, but also variables that only 
+discriminate well between groups of classes. This is problematic, if only 
+class-associated variables are to be identified.<br>
+Similar to conventional VIMs, the <em>discriminatory VIM</em> measures the general 
+influence of the variables.<br><br>
+NOTE: To learn about the shapes of the influences of the variables with the largest 
+multi-class VIM values on the multi-class outcome, it is crucial to apply the 
+<code>plot.multifor</code> function to the <code>multifor</code> object. Two further 
+plot functions are <code>plotMcl</code> and <code>plotVar</code>.<br><br>
+NOTE also: The purpose of the multi forest algorithm is mainly to calculate 
+the multi-class VIM values. A large-scale real data comparison study in 
+Hornung &amp; Hapfelmeier (2024) revealed that multi forests often have a slightly 
+lower predictive performance than conventional random forests. This was 
+especially true with respect to calibration and for data sets with many outcome classes. 
+Therefore, if it is important to maximize the predictive performance or for 
+data sets with many classes, for prediction other classifiers than multi 
+forests (e.g. conventional random forests) should be explored.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">multifor(
+  formula = NULL,
+  data = NULL,
+  num.trees = ifelse(nrow(data) &lt;= 5000, 5000, 1000),
+  importance = "both",
+  write.forest = TRUE,
+  probability = TRUE,
+  min.node.size = NULL,
+  max.depth = NULL,
+  replace = FALSE,
+  sample.fraction = ifelse(replace, 1, 0.7),
+  case.weights = NULL,
+  keep.inbag = FALSE,
+  inbag = NULL,
+  holdout = FALSE,
+  oob.error = TRUE,
+  num.threads = NULL,
+  verbose = TRUE,
+  seed = NULL,
+  dependent.variable.name = NULL,
+  mtry = NULL,
+  npervar = 5
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Object of class <code>formula</code> or <code>character</code> describing the model to fit. Interaction terms supported only for numerical variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Training data of class <code>data.frame</code>, or <code>matrix</code>, <code>dgCMatrix</code> (Matrix).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.trees</code></td>
+<td>
+<p>Number of trees. Default is 5000 for datasets with a maximum of 5000 observations and 1000 for datasets with more than 5000 observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>importance</code></td>
+<td>
+<p>Variable importance mode, one of the following: "both" (the default), "multiclass", "discriminatory", "none". If "multiclass", multi-class VIM values are computed, if "discriminatory", discriminatory VIM values are computed, and if "both", both multi-class and discriminatory VIM values are computed. See the 'Details' section below for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>write.forest</code></td>
+<td>
+<p>Save <code>multifor.forest</code> object, required for prediction. Set to <code>FALSE</code> to reduce memory usage if no prediction intended.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probability</code></td>
+<td>
+<p>Grow a probability forest as in Malley et al. (2012). Using this option (default is <code>TRUE</code>), class probability predictions are obtained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.node.size</code></td>
+<td>
+<p>Minimal node size. Default 5 for probability and 1 for classification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.depth</code></td>
+<td>
+<p>Maximal tree depth. A value of NULL or 0 (the default) corresponds to unlimited depth, 1 to tree stumps (1 split per tree).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>Sample with replacement. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample.fraction</code></td>
+<td>
+<p>Fraction of observations to sample. Default is 1 for sampling with replacement and 0.7 for sampling without replacement. This can be a vector of class-specific values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case.weights</code></td>
+<td>
+<p>Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.inbag</code></td>
+<td>
+<p>Save how often observations are in-bag in each tree.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inbag</code></td>
+<td>
+<p>Manually set observations per tree. List of size num.trees, containing inbag counts for each observation. Can be used for stratified sampling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>holdout</code></td>
+<td>
+<p>Hold-out mode. Hold-out all samples with case weight 0 and use these for variable importance and prediction error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oob.error</code></td>
+<td>
+<p>Compute OOB prediction error. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.threads</code></td>
+<td>
+<p>Number of threads. Default is number of CPUs available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Show computation status and estimated runtime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Random seed. Default is <code>NULL</code>, which generates the seed from <code>R</code>. Set to <code>0</code> to ignore the <code>R</code> seed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dependent.variable.name</code></td>
+<td>
+<p>Name of outcome variable, needed if no formula given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mtry</code></td>
+<td>
+<p>Number of candidate variables to sample for each split. Default is the (rounded down) square root of the number variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npervar</code></td>
+<td>
+<p>Number of splits to sample per candidate variable. Default is 5.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The multi-class VIM is only calculated for variables that feature at least as
+many unique values as there are outcome classes.<br>
+Before learning the multi forest,
+the categories of unordered categorical variables are ordered using an approach
+by Coppersmith et al. (1999), which ensures that close categories feature similar 
+outcome class distributions. This approach is also used in the <code>ranger</code> R package,
+when using the option <code>respect.unordered.factors="order"</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class <code>multifor</code> with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>predictions</code></td>
+<td>
+<p>Predicted classes (for <code>probability=FALSE</code>) or class probabilities (for <code>probability=TRUE</code>), based on out-of-bag samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.trees</code></td>
+<td>
+<p>Number of trees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.independent.variables</code></td>
+<td>
+<p>Number of independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.node.size</code></td>
+<td>
+<p>Value of minimal node size used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mtry</code></td>
+<td>
+<p>Number of candidate variables sampled for each split.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.imp.multiclass</code></td>
+<td>
+<p>Multi-class VIM values. Only computed for independent variables that feature at least as many unique values as the outcome variable has classes. For other variables, the entries in the vector <code>var.imp.multiclass</code> will be <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.imp.discr</code></td>
+<td>
+<p>Discriminatory VIM values for all independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prediction.error</code></td>
+<td>
+<p>Overall out-of-bag prediction error. For classification this is the fraction of missclassified samples and for probability estimation the Brier score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confusion.matrix</code></td>
+<td>
+<p>Contingency table for classes and predictions based on out-of-bag samples (classification only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forest</code></td>
+<td>
+<p>Saved forest (If write.forest set to TRUE). Note that the variable IDs in the <code>split.varIDs</code> object do not necessarily represent the column number in R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treetype</code></td>
+<td>
+<p>Type of forest/tree. Classification or probability.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>Function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>importance.mode</code></td>
+<td>
+<p>Importance mode used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.samples</code></td>
+<td>
+<p>Number of samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>Sample with replacement.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plotres</code></td>
+<td>
+<p>List ob objects needed by the plot functions: <code>data</code> contains the data; <code>yvarname</code> is the name of the outcome variable.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Roman Hornung, Marvin N. Wright
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Hornung, R., Hapfelmeier, A. (2024). Multi forests: Variable importance for multi-class outcomes. arXiv:2409.08925, &lt;<a href="https://doi.org/10.48550/arXiv.2409.08925">doi:10.48550/arXiv.2409.08925</a>&gt;.
+</p>
+</li>
+<li>
+<p> Hornung, R. (2022). Diversity forests: Using split sampling to enable innovative complex split procedures in random forests. SN Computer Science 3(2):1, &lt;<a href="https://doi.org/10.1007/s42979-021-00920-1">doi:10.1007/s42979-021-00920-1</a>&gt;.
+</p>
+</li>
+<li>
+<p> Wright, M. N., Ziegler, A. (2017). ranger: A fast implementation of random forests for high dimensional data in C++ and R. Journal of Statistical Software 77:1-17, &lt;<a href="https://doi.org/10.18637/jss.v077.i01">doi:10.18637/jss.v077.i01</a>&gt;.
+</p>
+</li>
+<li>
+<p> Breiman, L. (2001). Random forests. Machine Learning 45:5-32, &lt;<a href="https://doi.org/10.1023/A%3A1010933404324">doi:10.1023/A:1010933404324</a>&gt;.
+</p>
+</li>
+<li>
+<p> Malley, J. D., Kruppa, J., Dasgupta, A., Malley, K. G., &amp; Ziegler, A. (2012). Probability machines: consistent probability estimation using nonparametric learning machines. Methods of Information in Medicine 51:74-81, &lt;<a href="https://doi.org/10.3414/ME00-01-0052">doi:10.3414/ME00-01-0052</a>&gt;.
+</p>
+</li>
+<li>
+<p> Coppersmith, D., Hong, S. J., Hosking, J. R. (1999). Partitioning nominal attributes in decision trees. Data Mining and Knowledge Discovery 3:197-217, &lt;<a href="https://doi.org/10.1023/A%3A1009869804967">doi:10.1023/A:1009869804967</a>&gt;.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>predict.multifor</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+## Load package:
+
+library("diversityForest")
+
+
+
+## Set seed to make results reproducible:
+
+set.seed(1234)
+
+
+
+## Load the "ctg" data set:
+
+data(ctg)
+
+
+
+## Construct a multi forest:
+
+model &lt;- multifor(dependent.variable.name = "CLASS", data = ctg, 
+                  num.trees = 20)
+
+# NOTE: num.trees = 20 (in the above) would be much too small for practical 
+# purposes. This small number of trees was simply used to keep the
+# runtime of the example short.
+# The default number of trees is num.trees = 5000 for datasets with a maximum of
+# 5000 observations and num.trees = 1000 for datasets larger than that.
+
+
+
+## The out-of-bag estimated Brier score (note that by default
+## 'probability = TRUE' is used in 'multifor'):
+
+model$prediction.error
+
+
+
+## Inspect the multi-class and the discriminatory VIM values:
+
+model$var.imp.multiclass
+
+# --&gt; Note that there are no multi-class VIM values for some of the variables.
+# These are those for which there are fewer unique values than outcome classes.
+# See the "Details" section above.
+
+model$var.imp.discr
+
+
+## Inspect the 5 variables with the largest multi-class VIM values and the
+## 5 variables with the largest discriminatory VIM values:
+
+sort(model$var.imp.multiclass, decreasing = TRUE)[1:5]
+
+sort(model$var.imp.discr, decreasing = TRUE)[1:5]
+
+
+
+## Instead of passing the name of the outcome variable through the 
+## 'dependent.variable.name' argument as above, the formula interface can also 
+## be used. Below, we fit a multi forest with only the first five variables 
+## from the 'ctg' data set:
+
+model &lt;- multifor(CLASS ~ b + e + LBE + LB + AC, data=ctg, num.trees = 20)
+
+
+## As expected, the out-of-bag estimated prediction error is much larger
+## for this model:
+
+model$prediction.error
+
+
+
+## NOTE: Visual exploration of the results of the multi-class VIM analysis
+## is crucial.
+## Therefore, in practice the next step would be to apply the
+## 'plot.multifor' function to the object 'model'.
+
+# plot(model)
+
+
+
+
+
+## Prediction:
+
+
+# Separate 'ctg' data set randomly in training
+# and test data:
+
+data(ctg)
+train.idx &lt;- sample(nrow(ctg), 2/3 * nrow(ctg))
+ctg.train &lt;- ctg[train.idx, ]
+ctg.test &lt;- ctg[-train.idx, ]
+
+# Construct multi forest on training data:
+# NOTE again: num.trees = 20 is specified too small for practical purposes.
+model_train &lt;- multifor(dependent.variable.name = "CLASS", data = ctg.train, 
+                        importance = "none", probability = FALSE, 
+                        num.trees = 20)
+# NOTE: Because we are only interested in prediction here, we do not
+# calculate VIM values (by setting importance = "none"), because this
+# speeds up calculations.
+# NOTE also: Because we are interested in class label prediction here
+# rather than class probability prediction we specified 'probability = FALSE'
+# above.
+
+# Predict class values of the test data:
+pred.ctg &lt;- predict(model_train, data = ctg.test)
+
+# Compare predicted and true class values of the test data:
+table(ctg.test$CLASS, pred.ctg$predictions)
+
+
+
+## Repeat the analysis for class probability prediction
+## (default 'probability = TRUE'):
+
+model_train &lt;- multifor(dependent.variable.name = "CLASS", data = ctg.train, 
+                        importance = "none", num.trees = 20)
+
+# Predict class probabilities in the test data:
+pred.ctg &lt;- predict(model_train, data = ctg.test)
+
+# The predictions are now a matrix of class probabilities:
+head(pred.ctg$predictions)
+
+# Obtain class predictions by choosing the classes with the maximum predicted
+# probabilities (the function 'which.is.max' chooses one class randomly if
+# there are several classes with maximum probability):
+library("nnet")
+classes &lt;- levels(ctg.train$CLASS)
+pred_classes &lt;- factor(classes[apply(pred.ctg$predictions, 1, which.is.max)], 
+                       levels=classes)
+
+# Compare predicted and true class values of the test data:
+table(ctg.test$CLASS, pred_classes)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

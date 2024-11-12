@@ -1,0 +1,516 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>difGenLogistic</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generalized logistic regression DIF method</h2>
+
+<h3>Description</h3>
+
+<p>Performs DIF detection among multiple groups using generalized 
+logistic regression method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">difGenLogistic(Data, group, focal.names, anchor = NULL, match = "score", 
+ 	type = "both", criterion = "LRT", alpha = 0.05, purify = FALSE, nrIter = 10,
+ 	p.adjust.method = NULL, save.output = FALSE, output = c("out", "default"))
+## S3 method for class 'genLogistic'
+print(x, ...)
+## S3 method for class 'genLogistic'
+plot(x, plot = "lrStat", item = 1, itemFit = "best",pch = 8, number = TRUE,
+  	col = "red", colIC = rep("black", length(x$focal.names)+1),
+  	ltyIC = 1:(length(x$focal.names)+1), title = NULL, save.plot = FALSE, 
+  	save.options = c("plot", "default", "pdf"), ref.name = NULL, ...)
+ </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>numeric: either the data matrix only, or the data matrix plus the vector of group membership. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>numeric or character: either the vector of group membership or the column indicator (within <code>data</code>) of group membership. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focal.names</code></td>
+<td>
+<p>numeric or character vector indicating the levels of <code>group</code> which correspond to the focal groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor</code></td>
+<td>
+<p>either <code>NULL</code> (default) or a vector of item names (or identifiers) to specify the anchor items. Ignored if <code>match</code> is not <code>"score"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>specifies the type of matching criterion. Can be either <code>"score"</code> (default) to compute the test score, or any continuous or discrete variable with the same length as the number of rows of <code>Data</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>a character string specifying which DIF effects must be tested. Possible values are <code>"both"</code> (default), <code>"udif"</code> and <code>"nudif"</code>.
+See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>character: the type of test statistic used to detect DIF items. Possible values are <code>"LRT"</code> (default) and <code>"Wald"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric: significance level (default is 0.05).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purify</code></td>
+<td>
+<p>logical: should the method be used iteratively to purify the set of anchor items? (default is FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrIter</code></td>
+<td>
+<p>numeric: the maximal number of iterations in the item purification process (default is 10).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.adjust.method</code></td>
+<td>
+<p>either <code>NULL</code> (default) or the acronym of the method for p-value adjustment for multiple comparisons. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.output</code></td>
+<td>
+<p>logical: should the output be saved into a text file? (Default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>character: a vector of two components. The first component is the name of the output file, the second component is either the file path or
+<code>"default"</code> (default value). See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the result from a <code>Logistik</code> class object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>character: the type of plot, either <code>"lrStat"</code> or <code>"itemCurve"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>item</code></td>
+<td>
+<p>numeric or character: either the number or the name of the item for which logistic curves are plotted. Use only when <code>plot="itemCurve"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itemFit</code></td>
+<td>
+<p>character: the model to be selected for drawing the item curves. Possible values are <code>"best"</code> (default) for drawing from the best of the two
+models, and <code>"null"</code> for using fitted parameters of the null model <code class="reqn">M_0</code>. Not used if <code>"plot"</code> is <code>"lrStat"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pch, col</code></td>
+<td>
+<p>type of usual <code>pch</code> and <code>col</code> graphical options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>number</code></td>
+<td>
+<p>logical: should the item number identification be printed (default is <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colIC, ltyIC</code></td>
+<td>
+<p>vectors of elements of the usual <code>col</code> and <code>lty</code> arguments for logistic curves. Used only when <code>plot="itemCurve"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>either a character string with the title of the plot, or <code>NULL</code> (default), for which a specific title is automatically displayed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.plot</code></td>
+<td>
+<p>logical: should the plot be saved into a separate file? (default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.options</code></td>
+<td>
+<p>character: a vector of three components. The first component is the name of the output file, the second component is either the file path or
+<code>"default"</code> (default value), and the third component is the file extension, either <code>"pdf"</code> (default) or <code>"jpeg"</code>. See
+<b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.name</code></td>
+<td>
+<p>either <code>NULL</code>(default) or a character string for the name of the reference group (to be used instead of "Reference" in the legend). Ignored 
+if <code>plot</code> is <code>"lrStat"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other generic parameters for the <code>plot</code> or the <code>print</code> functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The generalized logistic regression method (Magis, Raiche, Beland and Gerard, 2011) allows for detecting both uniform and non-uniform differential item
+functioning among multiple groups without requiring an item response model approach. It consists in fitting a logistic model with the matching criterion,
+the group membership and an interaction between both as covariates. The statistical significance of the parameters
+related to group membership and the group-score interaction is then evaluated by means of the usual likelihood-ratio
+test. The argument <code>type</code> permits to test either both uniform and nonuniform effects simultaneously (<code>type="both"</code>), only uniform
+DIF effect (<code>type="udif"</code>) or only nonuniform DIF effect (<code>type="nudif"</code>). The identification of DIF items can be performed with
+either the Wald test or the likelihood  ratio test, by setting the <code>criterion</code> argument to <code>"Wald"</code> or <code>"LRT"</code> respectively.
+See <code>genLogistik</code> for further details.
+</p>
+<p>The matching criterion can be either the test score or any other continuous or discrete variable to be passed in the <code>genLogistik</code> function. This is specified by the <code>match</code> argument. By default, it takes the value <code>"score"</code> and the test score (i.e. raw score) is computed. The second option is to assign to <code>match</code> a vector of continuous or discrete numeric values, which acts as the matching criterion. Note that for consistency this vector should not belong to the <code>Data</code> matrix.
+</p>
+<p>The <code>Data</code> is a matrix whose rows correspond to the subjects and columns to the items. In addition, <code>Data</code> can hold the vector of group membership.
+If so, <code>group</code> indicates the column of <code>Data</code> which corresponds to the group membership, either by specifying its name or by giving the column number.
+Otherwise, <code>group</code> must be a vector of same length as <code>nrow(Data)</code>.
+</p>
+<p>Missing values are allowed for item responses (not for group membership) but must be coded as <code>NA</code> values. They are discarded from the fitting of the
+logistic models (see <code>glm</code> for further details).
+</p>
+<p>The vector of group membership must hold at least three values, either as numeric or character. The focal groups are defined by the values of the 
+argument <code>focal.names</code>. If there is a unique focal group, then <code>difGenLogistic</code> returns the output of <code>difLogistic</code>.
+</p>
+<p>The threshold (or cut-score) for classifying items as DIF is computed as the quantile of the chi-squared distribution with lower-tail
+probability of one minus <code>alpha</code> and with <em>J</em> (if <code>type="udif"</code> or <code>type="nudif"</code>) or <em>2J</em> (if <code>type="both"</code>) degrees of
+freedom (<em>J</em> is the number of focal groups).
+</p>
+<p>Item purification can be performed by setting <code>purify</code> to <code>TRUE</code>. Purification works as follows: if at least one item is detected as functioning 
+differently at the first step of the process, then the data set of the next step consists in all items that are currently anchor (DIF free) items, plus the 
+tested item (if necessary). The process stops when either two successive applications of the method yield the same classifications of the items
+(Clauser and Mazor, 1998), or when <code>nrIter</code> iterations are run without obtaining two successive identical classifications. In the latter case a warning message is printed. 
+</p>
+<p>Adjustment for multiple comparisons is possible with the argument <code>p.adjust.method</code>. The latter must be an acronym of one of the available adjustment methods of the <code>p.adjust</code> function. According to Kim and Oshima (2013), Holm and Benjamini-Hochberg adjustments (set respectively by <code>"Holm"</code> and <code>"BH"</code>) perform best for DIF purposes. See <code>p.adjust</code> function for further details. Note that item purification is performed on original statistics and p-values; in case of adjustment for multiple comparisons this is performed <em>after</em> item purification.
+</p>
+<p>A pre-specified set of anchor items can be provided through the <code>anchor</code> argument. It must be a vector of either item names (which must match exactly the column names of <code>Data</code> argument) or integer values (specifying the column numbers for item identification). In case anchor items are provided, they are used to compute the test score (matching criterion), including also the tested item. None of the anchor items are tested for DIF: the output separates anchor items and tested items and DIF results are returned only for the latter. By default it is <code>NULL</code> so that no anchor item is specified. Note also that item purification is not activated when anchor items are provided (even if <code>purify</code> is set to <code>TRUE</code>). Moreover, if the <code>match</code> argument is not set to <code>"score"</code>, anchor items will not be taken into account even if <code>anchor</code> is not <code>NULL</code>. 
+</p>
+<p>The measures of effect size are provided by the difference <code class="reqn">\Delta R^2</code> between the <code class="reqn">R^2</code> coefficients of the two nested models (Nagelkerke, 1991; Gomez-Benito, Dolores Hidalgo and Padilla, 2009). The effect sizes are classified as "negligible", "moderate" or "large". Two scales are available, one from Zumbo and Thomas (1997) and one from Jodoin and Gierl (2001). The output displays the <code class="reqn">\Delta R^2</code> measures, together with the two classifications.
+</p>
+<p>The output of the <code>difGenLogistic</code>, as displayed by the <code>print.genLogistic</code> function, can be stored in a text file provided that <code>save.output</code> is set
+to <code>TRUE</code> (the default value <code>FALSE</code> does not execute the storage). In this case, the name of the text file must be given as a character string into the
+first component of the <code>output</code> argument (default name is <code>"out"</code>), and the path for saving the text file can be given through the second component of
+<code>output</code>. The default value is <code>"default"</code>, meaning that the file will be saved in the current working directory. Any other path can be specified as a
+character string: see the <b>Examples</b> section for an illustration.
+</p>
+<p>Two types of plots are available. The first one is obtained by setting <code>plot="lrStat"</code> and it is the default option. The likelihood ratio statistics are
+displayed on the Y axis, for each item. The detection threshold is displayed by a horizontal line, and items flagged as DIF are printed with the color defined by
+argument <code>col</code>. By default, items are spotted with their number identification (<code>number=TRUE</code>); otherwise they are simply drawn as dots whose form is
+given by the option <code>pch</code>.
+</p>
+<p>The other type of plot is obtained by setting <code>plot="itemCurve"</code>. In this case, the fitted logistic curves are displayed for one specific item set by the
+argument <code>item</code>. The latter argument can hold either the name of the item or its number identification. If the argument <code>itemFit</code> takes the value
+<code>"best"</code>, the curves are drawn according to the output of the best model among <code class="reqn">M_0</code> and <code class="reqn">M_1</code>. That is, two curves are drawn if the item is flagged
+as DIF, and only one if the item is flagged as non-DIF. If <code>itemFit</code> takes the value <code>"null"</code>, then the two curves are drawn from the fitted parameters
+of the null model <code class="reqn">M_0</code>. See <code>genLogistik</code> for further details on the models. The colors and types of traits for these curves are defined by means
+of the arguments <code>colIC</code> and <code>ltyIC</code> respectively. These are set as vectors of length <code class="reqn">J+1</code>, the first element for the reference group and the others
+for the focal groups. Finally, the <code>ref.name</code> argument permits to display the name if the reference group (instead of "Reference") in the legend.
+</p>
+<p>Both types of plots can be stored in a figure file, either in PDF or JPEG format. Fixing <code>save.plot</code> to <code>TRUE</code> allows this process. The figure is defined
+through the components of <code>save.options</code>. The first two components perform similarly as those of the <code>output</code> argument. The third component is the figure
+format, with allowed values <code>"pdf"</code> (default) for PDF file and <code>"jpeg"</code> for JPEG file.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class "genLogistic" with the following arguments:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>genLogistik</code></td>
+<td>
+<p>the values of the generalized logistic regression statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the vector of p-values for the generalized logistic regression statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logitPar</code></td>
+<td>
+<p>a matrix with one row per item and <code class="reqn">2+J*2</code> columns, holding the fitted parameters of the best model (among the two tested models) for each
+item.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parM0</code></td>
+<td>
+<p>the matrix of fitted parameters of the null model <code class="reqn">M_0</code>, as returned by the <code>Logistik</code> command.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covMat</code></td>
+<td>
+<p>a 3-dimensional matrix of size <em>p</em> x <em>p</em> x <em>K</em>, where <em>p</em> is the number of estimated parameters and <em>K</em> is the number of
+items, holding the <em>p</em> x <em>p</em> covariance matrices of the estimated parameters (one matrix for each tested item).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaR2</code></td>
+<td>
+<p>the differences in Nagelkerke's <code class="reqn">R^2</code> coefficients. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the value of <code>alpha</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thr</code></td>
+<td>
+<p>the threshold (cut-score) for DIF detection.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DIFitems</code></td>
+<td>
+<p>either the column indicators for the items which were detected as DIF items, or "No DIF item detected".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>the value of <code>type</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.adjust.method</code></td>
+<td>
+<p>the value of the <code>p.adjust.method</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjusted.p</code></td>
+<td>
+<p>either <code>NULL</code> or the vector of adjusted p-values for multiple comparisons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purification</code></td>
+<td>
+<p>the value of <code>purify</code> option.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrPur</code></td>
+<td>
+<p>the number of iterations in the item purification process. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>difPur</code></td>
+<td>
+<p>a binary matrix with one row per iteration in the item purification process and one column per item. Zeros and ones in the <em>i</em>-th 
+row refer to items which were classified respectively as non-DIF and DIF items at the (<em>i</em>-1)-th step. The first row corresponds to the initial
+classification of the items. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>logical indicating whether the iterative item purification process stopped before the maximal number of <code>nrItem</code> allowed iterations. 
+Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>the names of the items.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor.names</code></td>
+<td>
+<p>the value of the <code>anchor</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focal.names</code></td>
+<td>
+<p>the value of <code>focal.names</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>the value of the <code>criterion</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.output</code></td>
+<td>
+<p>the value of the <code>save.output</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>the value of the <code>output</code> argument.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Sebastien Beland <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:sebastien.beland.1@hotmail.com">sebastien.beland.1@hotmail.com</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br>
+David Magis <br>
+Department of Psychology, University of Liege <br>
+Research Group of Quantitative Psychology and Individual Differences, KU Leuven <br><a href="mailto:David.Magis@uliege.be">David.Magis@uliege.be</a>, <a href="http://ppw.kuleuven.be/okp/home/">http://ppw.kuleuven.be/okp/home/</a> <br>
+Gilles Raiche <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:raiche.gilles@uqam.ca">raiche.gilles@uqam.ca</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Clauser, B.E. and Mazor, K.M. (1998). Using statistical procedures to identify differential item functioning test items. <em>Educational Measurement: Issues
+and Practice, 17</em>, 31-44. 
+</p>
+<p>Gomez-Benito, J., Dolores Hidalgo, M. and Padilla, J.-L. (2009). Efficacy of effect size measures in logistic regression: an application for detecting DIF. 
+<em>Methodology, 5</em>, 18-25. doi: <a href="https://doi.org/10.1027/1614-2241.5.1.18">10.1027/1614-2241.5.1.18</a>
+</p>
+<p>Hidalgo, M. D. and Lopez-Pina, J.A. (2004). Differential item functioning detection and effect size: a comparison between logistic regression and Mantel-Haenszel
+procedures. <em>Educational and Psychological Measurement, 64</em>, 903-915.  doi: <a href="https://doi.org/10.1177/0013164403261769">10.1177/0013164403261769</a>
+</p>
+<p>Jodoin, M. G. and Gierl, M. J. (2001). Evaluating Type I error and power rates using an effect size measure with logistic regression procedure for DIF detection. <em>Applied Measurement in Education, 14</em>, 329-349. doi: <a href="https://doi.org/10.1207/S15324818AME1404_2">10.1207/S15324818AME1404_2</a>
+</p>
+<p>Kim, J., and Oshima, T. C. (2013). Effect of multiple testing adjustment in differential item functioning detection. <em>Educational and Psychological Measurement, 73</em>, 458–470. doi: <a href="https://doi.org/10.1177/0013164412467033">10.1177/0013164412467033</a>
+</p>
+<p>Magis, D., Beland, S., Tuerlinckx, F. and De Boeck, P. (2010). A general framework and an R package for the detection
+of dichotomous differential item functioning. <em>Behavior Research Methods, 42</em>, 847-862. doi: <a href="https://doi.org/10.3758/BRM.42.3.847">10.3758/BRM.42.3.847</a>
+</p>
+<p>Magis, D., Raiche, G., Beland, S. and Gerard, P. (2011). A logistic regression procedure to detect differential item functioning among multiple groups. <em>International Journal of Testing, 11</em>, 365–386. doi: <a href="https://doi.org/10.1080/15305058.2011.602810">10.1080/15305058.2011.602810</a>
+</p>
+<p>Nagelkerke, N. J. D. (1991). A note on a general definition of the coefficient of determination. <em>Biometrika, 78</em>, 691-692. doi: <a href="https://doi.org/10.1093/biomet/78.3.691">10.1093/biomet/78.3.691</a>
+</p>
+<p>Zumbo, B. D. and Thomas, D. R. (1997). <em>A measure of effect size for a model-based approach for studying DIF</em>. Prince George, Canada: University of Northern British
+Columbia, Edgeworth Laboratory for Quantitative Behavioral Science.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>genLogistik</code>, <code>genDichoDif</code>, <code>subtestLogistic</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+ # Loading of the verbal data
+ data(verbal)
+ attach(verbal)
+
+ # Creating four groups according to gender ("Man" or "Woman") and
+ # trait anger score ("Low" or "High")
+ group &lt;- rep("WomanLow", nrow(verbal))
+ group[Anger&gt;20 &amp; Gender==0] &lt;- "WomanHigh"
+ group[Anger&lt;=20 &amp; Gender==1] &lt;- "ManLow"
+ group[Anger&gt;20 &amp; Gender==1] &lt;- "ManHigh"
+
+ # New data set
+ Verbal &lt;- cbind(verbal[,1:24], group)
+
+ # Reference group: "WomanLow"
+ names &lt;- c("WomanHigh", "ManLow", "ManHigh")
+
+ # Testing both types of DIF effects
+ # Three equivalent settings of the data matrix and the group membership
+ r &lt;- difGenLogistic(Verbal, group = 25, focal.names = names)
+ difGenLogistic(Verbal, group = "group", focal.name = names)
+ difGenLogistic(Verbal[,1:24], group = Verbal[,25], focal.names = names)
+
+ # Using the Wald test
+ difGenLogistic(Verbal, group = 25, focal.names = names, criterion = "Wald")
+
+ # Multiple comparisons adjustment using Benjamini-Hochberg method
+difGenLogistic(Verbal, group = 25, focal.names = names, p.adjust.method = "BH")
+
+ # With item purification
+ difGenLogistic(Verbal, group = 25, focal.names = names, purify = TRUE)
+ difGenLogistic(Verbal, group = 25, focal.names = names, purify = TRUE,
+   nrIter = 5)
+
+ # With items 1 to 5 set as anchor items
+ difGenLogistic(Verbal, group = 25, focal.name = names, anchor = 1:5)
+
+ # Testing for nonuniform DIF effect
+ difGenLogistic(Verbal, group = 25, focal.names = names, type = "nudif")
+
+ # Testing for uniform DIF effect
+ difGenLogistic(Verbal, group = 25, focal.names = names, type = "udif")
+
+ # User anger trait score as matching criterion
+ anger &lt;- verbal[,25]
+ difGenLogistic(Verbal, group = 25, focal.names = names, match = anger)
+
+ # Saving the output into the "GLresults.txt" file (and default path)
+ r &lt;- difGenLogistic(Verbal, group = 25, focal.name = names, 
+                save.output = TRUE, output = c("GLresults","default"))
+
+ # Graphical devices
+ plot(r)
+ plot(r, plot = "itemCurve", item = 1)
+ plot(r, plot = "itemCurve", item = 1, itemFit = "best")
+ plot(r, plot = "itemCurve", item = 6)
+ plot(r, plot = "itemCurve", item = 6, itemFit = "best")
+
+ # Plotting results and saving it in a PDF figure
+ plot(r, save.plot = TRUE, save.options = c("plot", "default", "pdf"))
+
+ # Changing the path, JPEG figure
+ path &lt;- "c:/Program Files/"
+ plot(r, save.plot = TRUE, save.options = c("plot", path, "jpeg"))
+
+## End(Not run)
+ </code></pre>
+
+
+</div>

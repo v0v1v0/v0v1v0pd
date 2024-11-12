@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>metropdir.adapt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Directional Metropolis Hastings with Adaptation.</h2>
+
+<h3>Description</h3>
+
+<p>Implements adaptive version of directional Metropolis Hastings.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">metropdir.adapt(obj, dobj, initial, lchain, sd.prop = 1, steplen = 0,
+  s = 0.95, batchlen = 100, targetacc = 0.234, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>an R function that evaluates the log unnormalized probability
+density of the desired equilibrium distribution of the Markov chain.
+First argument is the state vector of the Markov chain.  Other arguments
+arbitrary and taken from the <code>...</code> arguments of this function.
+Should return <code>- Inf</code> for points of the state space having
+probability zero under the desired equilibrium distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dobj</code></td>
+<td>
+<p>an R function that evaluates the derivative of the log unnormalized probability density at the current state of the markov chain.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial</code></td>
+<td>
+<p>Initial state of the markov chain. <code>obj(state)</code> must not return #' <code>-Inf</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lchain</code></td>
+<td>
+<p>length of the chain</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd.prop</code></td>
+<td>
+<p>scale to use for the proposal</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steplen</code></td>
+<td>
+<p>tuning parameter in mean of proposal</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>tuning parameter in the covariance of proposal</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batchlen</code></td>
+<td>
+<p>length of batch used for update. Default is 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>targetacc</code></td>
+<td>
+<p>Target acceptance ratio</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>any arguments to be passed to obj and dobj.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is for automatically select a scaling factor for the directional Metropolis Hastings algorithm. This function uses batch wise update of the scale parameter to produce a adaptive chain. The user is required to supply a target acceptance ratio. The adaptive scheme modifies the scale parameter to achieve the target acceptance ratio. It is recommended that to check the output of the adaptation history as returned by the function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Abhirup Mallik, <a href="mailto:malli066@umn.edu">malli066@umn.edu</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>metropdir</code> for DMH, <code>iact</code> for integrated auto correlation times, <code>mcmcdiag</code>, <code>msjd</code> for mean squared jump distance.
+for summary of diagnostic measures of a chain, <code>multiESS</code> for Multivariate effective sample size.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+Sigma &lt;- matrix(c(1,0.2,0.2,1),2,2)
+mu &lt;- c(1,1)
+Sig.Inv &lt;- solve(Sigma)
+Sig.det.sqrt &lt;- sqrt(det(Sigma))
+logf &lt;- function(x,mu,Sig.Inv){
+  x.center &lt;- as.numeric((x-mu))
+  out &lt;- crossprod(x.center,Sig.Inv)
+  out &lt;- sum(out*x.center)
+  -out/2
+  }
+
+gr.logf &lt;- function(x,mu,Sig.Inv){
+  x.center &lt;- as.numeric((x-mu))
+  out &lt;- crossprod(x.center,Sig.Inv)
+  -as.numeric(out)
+}
+set.seed(1234)
+system.time(out &lt;- metropdir.adapt(obj = logf, dobj = gr.logf, initial = c(1,1),
+                         lchain = 1e4,sd.prop=1,steplen=0,s=1, mu = mu,
+                         Sig.Inv = Sig.Inv,targetacc=0.44))
+#acceptance rate
+out$accept
+#density plot
+plot(density(out$batch[,1]))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

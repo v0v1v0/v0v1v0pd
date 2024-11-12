@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>generate.pvalues</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generation of P-Values and Their Supports After Data Transformations</h2>
+
+<h3>Description</h3>
+
+<p>Simple wrapper for generating p-values of discrete tests and their supports
+after pre-processing the input data. The user only has to provide 1.) a
+function that generates p-values and supports and 2.) an optional function
+that pre-processes (i.e. transforms) the input data (if necessary) before it
+can be used for p-value calculations. The respective arguments are provided
+by named lists.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">generate.pvalues(
+  dat,
+  test.fun,
+  test.args = NULL,
+  preprocess.fun = NULL,
+  preprocess.args = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>input data; must be suitable for the first parameter of the provided <code>preprocess.fun</code> function or, if <code>preprocess.fun</code> is <code>NULL</code>, for the first parameter of the <code>test.fun</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test.fun</code></td>
+<td>
+<p>function <strong>from package <code>DiscreteTests</code></strong>, i.e. one whose name ends with <code style="white-space: pre;">⁠*.test.pv⁠</code> and which performs hypothesis tests and provides an object with p-values and their support sets; can be specified by a single character string (which is automatically checked for being a suitable function <strong>from that package</strong> and may be abbreviated) or a single function object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test.args</code></td>
+<td>
+<p>optional named list with arguments for <code>test.fun</code>; the names of the list fields must match the test function's parameter names. The first parameter of the test function MUST NOT be included!</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preprocess.fun</code></td>
+<td>
+<p>optional function for pre-processing the input <code>data</code>; its result must be suitable for the first parameter of the <code>test.fun</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preprocess.args</code></td>
+<td>
+<p>optional named list with arguments for <code>preprocess.fun</code>; the names of the list fields must match the pre-processing function's parameter names. The first parameter of the test function MUST NOT be included!</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A DiscreteTestResults R6 class object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X1 &lt;- c(4, 2, 2, 14, 6, 9, 4, 0, 1)
+X2 &lt;- c(0, 0, 1, 3, 2, 1, 2, 2, 2)
+N1 &lt;- rep(148, 9)
+N2 &lt;- rep(132, 9)
+Y1 &lt;- N1 - X1
+Y2 &lt;- N2 - X2
+df &lt;- data.frame(X1, Y1, X2, Y2)
+df
+
+# Compute p-values and their supports of Fisher's exact test
+test.result &lt;- generate.pvalues(df, "fisher")
+raw.pvalues &lt;- test.result$get_pvalues()
+pCDFlist &lt;- test.result$get_pvalue_supports()
+
+# Compute p-values and their supports of Fisher's exact test with pre-processing
+df2 &lt;- data.frame(X1, N1, X2, N2)
+generate.pvalues(
+  dat = df2,
+  test.fun = "fisher.test.pv",
+  preprocess.fun = function(tab) {
+    for(col in c(2, 4)) tab[, col] &lt;- tab[, col] - tab[, col - 1]
+    return(tab)
+  }
+)
+
+# Compute p-values and their supports of a binomial test with pre-processing
+generate.pvalues(
+  dat = rbind(c(5, 2, 7), c(3, 4, 0)), 
+  test.fun = "binom.test.pv",
+  test.args = list(n = c(9, 8, 11), p = 0.6, alternative = "two.sided"),
+  preprocess.fun = colSums
+)
+
+</code></pre>
+
+
+</div>

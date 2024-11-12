@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>timetostratratebin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Transform Patterns from Time into Stratigraphic Height (Binned)
+</h2>
+
+<h3>Description</h3>
+
+<p>This function transforms a given binned temporal pattern into the corresponding stratigraphic pattern. The transformation is based on the age model derived from the given deposition rate. Essentially a wrapper of <code>patterntransform(...,direction='time to height',depositionmodel='binned deposition rate',patternmode='binned')</code> kept for backwards compatibility of the package. It is recommended to use <code>patterntransform</code> instead of this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">timetostratratebin(binborder, depoval, signalval, pos = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>binborder</code></td>
+<td>
+
+<p>Vector of strictly increasing numerical values. Defines the borders of the bins in time
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depoval</code></td>
+<td>
+
+<p>Strictly positive vector of length <code>length(binborder)-1</code>. Defines the deposition rate in the bins, i.e. <code>depoval[i]</code> is the deposition rate in the time interval between <code>binborder[i]</code> and  <code>binborder[i+1]</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signalval</code></td>
+<td>
+
+<p>Positive vector of length <code>length(binborder)-1</code>. Defines the temporal pattern in the bins, i.e. <code>signalval[i]</code> is the value of the temporal pattern between the times <code>binborder[i]</code> and  <code>binborder[i+1]</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos</code></td>
+<td>
+
+<p>OPTIONAL. Vector of points in time that will be transformed into stratigraphic height, and where the stratigraphic pattern will evaluated. Default setting is a vector spanning the interval of interest with evenly spaced points (no. is chosen by the code)
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing the following entries:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>height </code></td>
+<td>
+<p>vector containing stratigraphic heights</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>val </code></td>
+<td>
+<p>vector containing the values of the stratigraphic pattern at the height given by <code>height</code></p>
+</td>
+</tr>
+</table>
+<p>NA is returned if the values coincide with a hiatus or when the deposition rate/temporal pattern are undefined.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Niklas Hohmann
+</p>
+
+
+<h3>References</h3>
+
+<p>Hohmann, Niklas. 2018. Quantifying the Effects of Changing Deposition Rates and Hiatii on the Stratigraphic Distribution of Fossils. &lt;doi:10.13140/RG.2.2.23372.51841&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>patterntransform</code> for the more general function underlying this wrapper
+</p>
+<p>For an overview of the functions in the DAIME package, see its vignette (available via <code>vignette("DAIME")</code> )
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Define deposition rate
+binborder=1:6 #temporal bins for the deposition rate
+depoval=c(5,4,3,1,2) #deposition rate in the bins
+#plot deposition rate
+depositionrate=approxfun(binborder,c(depoval,tail(depoval,1)),method="constant",yleft=NA,yright=NA)
+plot(depositionrate(seq(from=min(binborder),to=max(binborder),length.out=100)),xlab='time',
+  ylab='deposition rate', main='Deposition rate')
+## Define temporal pattern
+signalval=c(1,0,5,2,1)
+#plot temporal pattern
+temporalpat=approxfun(binborder,c(signalval,tail(signalval,1)),method="constant",
+  yleft=NA,yright=NA)
+plot(temporalpat(seq(from=min(binborder),to=max(binborder),length.out=100)),xlab='time',
+  ylab='Intensity', main='Temporal Pattern')
+
+## Transform temporal pattern into stratigraphic pattern
+reslist=timetostratratebin(binborder,depoval,signalval)
+#plot resulting stratigraphic pattern
+plot(reslist$height,reslist$val,xlab='Stratigraphic Height',ylab='Intensity',
+  main='Stratigraphic Pattern')
+## With removal of sediment (hiatus)
+depoval=c(5,4,-3,1,2) #erosion rate is 3 in the middle time bin
+reslist=timetostratratebin(binborder,depoval,signalval)
+#plot resulting stratigraphic pattern
+plot(reslist$height,reslist$val,xlab='Stratigraphic Height',ylab='Intensity',
+  main='Stratigraphic Pattern')
+</code></pre>
+
+
+</div>

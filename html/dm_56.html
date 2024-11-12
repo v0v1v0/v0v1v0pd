@@ -1,0 +1,212 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>examine_cardinality</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Check table relations</h2>
+
+<h3>Description</h3>
+
+<p>All <code>check_cardinality_...()</code> functions test the following conditions:
+</p>
+
+<ol>
+<li>
+<p> Are all rows in <code>x</code> unique?
+</p>
+</li>
+<li>
+<p> Are the rows in <code>y</code> a subset of the rows in <code>x</code>?
+</p>
+</li>
+<li>
+<p> Does the relation between <code>x</code> and <code>y</code> meet the cardinality requirements?
+One row from <code>x</code> must correspond to the requested number of rows in <code>y</code>,
+e.g. <code style="white-space: pre;">⁠_0_1⁠</code> means that there must be zero or one rows in <code>y</code> for each
+row in <code>x</code>.
+</p>
+</li>
+</ol>
+<p><code>examine_cardinality()</code> also checks the first two points and subsequently determines the type of cardinality.
+</p>
+<p>For convenience, the <code>x_select</code> and <code>y_select</code> arguments allow restricting the check
+to a set of key columns without affecting the return value.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">check_cardinality_0_n(
+  x,
+  y,
+  ...,
+  x_select = NULL,
+  y_select = NULL,
+  by_position = NULL
+)
+
+check_cardinality_1_n(
+  x,
+  y,
+  ...,
+  x_select = NULL,
+  y_select = NULL,
+  by_position = NULL
+)
+
+check_cardinality_1_1(
+  x,
+  y,
+  ...,
+  x_select = NULL,
+  y_select = NULL,
+  by_position = NULL
+)
+
+check_cardinality_0_1(
+  x,
+  y,
+  ...,
+  x_select = NULL,
+  y_select = NULL,
+  by_position = NULL
+)
+
+examine_cardinality(
+  x,
+  y,
+  ...,
+  x_select = NULL,
+  y_select = NULL,
+  by_position = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Parent table, data frame or lazy table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Child table, data frame or lazy table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>These dots are for future extensions and must be empty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_select, y_select</code></td>
+<td>
+<p>Key columns to restrict the check, processed with
+<code>dplyr::select()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by_position</code></td>
+<td>
+<p>Set to <code>TRUE</code> to ignore column names and match
+by position instead.
+The default means matching by name, use <code>x_select</code> and/or <code>y_select</code>
+to align the names.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>All cardinality functions accept a parent and a child table (<code>x</code> and <code>y</code>).
+All rows in <code>x</code> must be unique, and all rows in <code>y</code> must be a subset of the
+rows in <code>x</code>.
+The <code>x_select</code> and <code>y_select</code> arguments allow restricting the check
+to a set of key columns without affecting the return value.
+If given, both arguments must refer to the same number of key columns.
+</p>
+<p>The cardinality specifications "0_n", "1_n", "0_1", "1_1" refer to the expected relation that the child table has with the parent table.
+"0", "1" and "n" refer to the occurrences of value combinations
+in <code>y</code> that correspond to each combination in the
+columns of the parent table.
+"n" means "more than one" in this context, with no upper limit.
+</p>
+<p><strong>"0_n"</strong>: no restrictions, each row in <code>x</code> has at least 0 and at most
+n corresponding occurrences in <code>y</code>.
+</p>
+<p><strong>"1_n"</strong>: each row in <code>x</code> has at least 1 and at most
+n corresponding occurrences in <code>y</code>.
+This means that there is a "surjective" mapping from the child table
+to the parent table, i.e. each parent table row exists at least once in the
+child table.
+</p>
+<p><strong>"0_1"</strong>: each row in <code>x</code> has at least 0 and at most
+1 corresponding occurrence in <code>y</code>.
+This means that there is a "injective" mapping from the child table
+to the parent table, i.e. no combination of values in the
+parent table columns is addressed multiple times.
+But not all parent table rows have to be referred to.
+</p>
+<p><strong>"1_1"</strong>: each row in <code>x</code> occurs exactly once in <code>y</code>.
+This means that there is a "bijective" ("injective" AND "surjective") mapping
+between the child table and the parent table, i.e. the
+sets of rows are identical.
+</p>
+<p>Finally, <code>examine_cardinality()</code> tests for and returns the nature of the relationship
+(injective, surjective, bijective, or none of these)
+between the two given sets of columns.
+If either <code>x</code> is not unique or there are rows in <code>y</code> that are missing from <code>x</code>,
+the requirements for a cardinality test is not fulfilled.
+No error will be thrown, but
+the result will contain the information which prerequisite was violated.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>check_cardinality_...()</code> return <code>x</code>, invisibly,
+if the check is passed, to support pipes.
+Otherwise an error is thrown and the reason for it is explained.
+</p>
+<p><code>examine_cardinality()</code> returns a character variable specifying the type of relationship between the two columns.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other cardinality functions: 
+<code>dm_examine_cardinalities()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">d1 &lt;- tibble::tibble(a = 1:5)
+d2 &lt;- tibble::tibble(a = c(1:4, 4L))
+d3 &lt;- tibble::tibble(c = c(1:5, 5L), d = 0)
+# This does not pass, `a` is not unique key of d2:
+try(check_cardinality_0_n(d2, d1))
+
+# Columns are matched by name by default:
+try(check_cardinality_0_n(d1, d3))
+
+# This passes, multiple values in d3$c are allowed:
+check_cardinality_0_n(d1, d2)
+
+# This does not pass, injectivity is violated:
+try(check_cardinality_1_1(d1, d3, y_select = c(a = c)))
+try(check_cardinality_0_1(d1, d3, x_select = c(c = a)))
+
+# What kind of cardinality is it?
+examine_cardinality(d1, d3, x_select = c(c = a))
+examine_cardinality(d1, d2)
+</code></pre>
+
+
+</div>

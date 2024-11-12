@@ -1,0 +1,113 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dedupe_wide</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dedupe across multiple columns</h2>
+
+<h3>Description</h3>
+
+<p>Collapse many rows connected by duplicated data (which can exist in different
+rows and columns) into one, based on data in chosen columns, optionally putting
+non-consistent data into newly created additional columns.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dedupe_wide(
+  x,
+  cols_dedupe,
+  cols_expand = NULL,
+  max_new_cols = NULL,
+  enable_drop = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A data.frame without column named '....idx' and any column which ends by four dots and number (e.g. 'column....2').</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols_dedupe</code></td>
+<td>
+<p>A character vector of length min. 2 of columns' names in <code>x</code> used to dedupe. Deduplicated data from these columns will be saved into new columns, number of which is control by <code>max_new_cols</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols_expand</code></td>
+<td>
+<p>A character vector of columns' names in <code>x</code> or <code>NULL</code> (means: none except those used to dedupe) indicating columns with data to keep in case of non-consistent data, i.e. unique data from these columns will be saved into new columns, number of which is control by <code>max_new_cols</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_new_cols</code></td>
+<td>
+<p>A numeric vector length 1 or <code>NULL</code> (means: without limit) indicating how many new columns can be created to store unique data from columns passed to <code>cols_dedupe</code> and each column passed to <code>cols_expand</code>. Cannot be lower than 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enable_drop</code></td>
+<td>
+<p>A logical vector length 1: should given column be dropped if (after deduplication) contains only missing data (<code>NA</code>)? Applicable only to columns used to dedupe.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Columns passed to <code>cols_dedupe</code> must be atomic.
+</p>
+<p>Row names will always be removed. If you want to preserve row names, simply put in into separate column. Note that if this column won't be passed to <code>cols_expand</code> argument, only the one row name for duplicated rows will be preserved (row name closest to the top of the table).
+</p>
+<p>Although <code>duplicated</code> or <code>unique</code> treats missing data (<code>NA</code>) as duplicated data, this function do not do this (see second example below).
+</p>
+<p>Type of columns passed to <code>cols_dedupe</code> will be coerced to the most general type.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If duplicated data found - data.frame with changed columns' names and optionally additional columns (in some cases less columns, depends on <code>enable_drop</code> argument). Otherwise data.frame without changes (except row names removed).
+</p>
+
+
+<h3>Note</h3>
+
+<p>Internally, function is mainly based on <code>data.table</code> functions and thus enabling parallel computation
+is possible. To do this, just call <code>setDTthreads</code> before calling <code>dedupe_wide</code> function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- data.frame(tel_1 = c(111, 222, 444, 555),
+                tel_2 = c(222, 666, 666, 555),
+                name = paste0("name", 1:4))
+# rows 1, 2, 3 share the same phone numbers
+
+dedupe_wide(x,
+           cols_dedupe = c("tel_1", "tel_2"),
+           cols_expand = "name")
+# first three collapsed into one, for name4 kept only one phone number (555)
+# 'name1', 'name2', 'name3' kept in new columns
+
+y &lt;- data.frame(tel_1 = c(777, 888, NA, NA),
+                tel_2 = c(888, 777, NA, NA),
+                name = paste0("name", 5:8))
+# rows 3 and 4 has only missing data
+
+dedupe_wide(y,
+           cols_dedupe = c("tel_1", "tel_2"),
+           cols_expand = "name")
+# first two rows collapsed into one, nothing change for the rest of rows
+</code></pre>
+
+
+</div>

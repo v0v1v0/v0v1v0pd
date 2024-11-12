@@ -1,0 +1,97 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>overall_comparison</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare champion with challengers globally</h2>
+
+<h3>Description</h3>
+
+<p>The function creates objects that present global model performance using various measures. Those date can be easily
+plotted with <code>plot</code> function. It uses <code>auditor</code> package to create <code>model_performance</code> of all passed
+explainers. Keep in mind that type of task has to be specified.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">overall_comparison(champion, challengers, type)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>champion</code></td>
+<td>
+<p>- explainer of champion model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>challengers</code></td>
+<td>
+<p>- explainer of challenger model or list of explainers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>- type of the task. Either classification or regression</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class overall_comparison
+</p>
+<p>It is a named list containing following fields:
+</p>
+
+<ul>
+<li> <p><code>radar</code> list of <code>model_performance</code> objects and other parameters that will be passed to generic <code>plot</code> function
+</p>
+</li>
+<li> <p><code>accordance</code> data.frame object of champion responses and challenger's corresponding to them. Used to plot accordance.
+</p>
+</li>
+<li> <p><code>models_info</code> data.frame containing information about models used in analysis
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library("DALEXtra")
+library("mlr")
+task &lt;- mlr::makeRegrTask(
+  id = "R",
+  data = apartments,
+  target = "m2.price"
+)
+learner_lm &lt;- mlr::makeLearner(
+  "regr.lm"
+)
+model_lm &lt;- mlr::train(learner_lm, task)
+explainer_lm &lt;- explain_mlr(model_lm, apartmentsTest, apartmentsTest$m2.price, label = "LM")
+
+learner_rf &lt;- mlr::makeLearner(
+  "regr.ranger"
+)
+model_rf &lt;- mlr::train(learner_rf, task)
+explainer_rf &lt;- explain_mlr(model_rf, apartmentsTest, apartmentsTest$m2.price, label = "RF")
+
+learner_gbm &lt;- mlr::makeLearner(
+  "regr.gbm"
+)
+model_gbm &lt;- mlr::train(learner_gbm, task)
+explainer_gbm &lt;- explain_mlr(model_gbm, apartmentsTest, apartmentsTest$m2.price, label = "gbm")
+
+data &lt;- overall_comparison(explainer_lm, list(explainer_gbm, explainer_rf), type = "regression")
+plot(data)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trigger</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Customize the decision rules for rebuilding targets
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Use this function inside a target's command
+in your <code>drake_plan()</code> or the <code>trigger</code> argument to
+<code>make()</code> or <code>drake_config()</code>.
+For details, see the chapter on triggers
+in the user manual:
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/triggers.html⁠</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trigger(
+  command = TRUE,
+  depend = TRUE,
+  file = TRUE,
+  seed = TRUE,
+  format = TRUE,
+  condition = FALSE,
+  change = NULL,
+  mode = c("whitelist", "blacklist", "condition")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>command</code></td>
+<td>
+<p>Logical, whether to rebuild the target if the
+<code>drake_plan()</code> command changes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depend</code></td>
+<td>
+<p>Logical, whether to rebuild if a
+non-file dependency changes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>Logical, whether to rebuild the target
+if a <code>file_in()</code>/<code>file_out()</code>/<code>knitr_in()</code> file changes.
+Also applies to external data tracked with
+<code>target(format = "file")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Logical, whether to rebuild the target
+if the seed changes. Only makes a difference if you set
+a custom <code>seed</code> column in your <code>drake_plan()</code> at some point
+in your workflow.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>Logical, whether to rebuild the target if the
+choice of specialized data format changes: for example,
+if you use <code>target(format = "qs")</code> one instance and
+<code>target(format = "fst")</code> the next. See
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#special-data-formats-for-targets⁠</code> # nolint
+for details on formats.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition</code></td>
+<td>
+<p>R code (expression or language object)
+that returns a logical. The target will rebuild
+if the code evaluates to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>change</code></td>
+<td>
+<p>R code (expression or language object)
+that returns any value. The target will rebuild
+if that value is different from last time
+or not already cached.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>A character scalar equal to <code>"whitelist"</code> (default) or
+<code>"blacklist"</code> or <code>"condition"</code>. With the <code>mode</code> argument, you can choose
+how the <code>condition</code> trigger factors into the decision to build
+or skip the target. Here are the options.
+</p>
+
+<ul>
+<li> <p><code>"whitelist"</code> (default): we <em>rebuild</em> the target whenever <code>condition</code>
+evaluates to <code>TRUE</code>. Otherwise, we defer to the other triggers.
+This behavior is the same as the decision rule described in the
+"Details" section of this help file.
+</p>
+</li>
+<li> <p><code>"blacklist"</code>: we <em>skip</em> the target whenever <code>condition</code> evaluates
+to <code>FALSE</code>. Otherwise, we defer to the other triggers.
+</p>
+</li>
+<li> <p><code>"condition"</code>: here, the <code>condition</code> trigger is the only decider,
+and we ignore all the other triggers. We <em>rebuild</em> target whenever
+<code>condition</code> evaluates to <code>TRUE</code> and <em>skip</em> it whenever <code>condition</code>
+evaluates to <code>FALSE</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A target always builds if it has not been built before.
+Triggers allow you to customize the conditions
+under which a pre-existing target <em>re</em>builds.
+By default, the target will rebuild if and only if:
+</p>
+
+<ul>
+<li>
+<p> Any of <code>command</code>, <code>depend</code>, or <code>file</code> is <code>TRUE</code>, or
+</p>
+</li>
+<li> <p><code>condition</code> evaluates to <code>TRUE</code>, or
+</p>
+</li>
+<li> <p><code>change</code> evaluates to a value different from last time.
+The above steps correspond to the "whitelist" decision rule.
+You can select other decision rules with the <code>mode</code> argument
+described in this help file.
+On another note, there may be a slight efficiency loss
+if you set complex triggers
+for <code>change</code> and/or <code>condition</code> because
+<code>drake</code> needs to load any required dependencies
+into memory before evaluating these triggers.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A list of trigger specification details that
+<code>drake</code> processes internally when it comes time to decide
+whether to build the target.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>drake_plan()</code>, <code>make()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A trigger is just a set of decision rules
+# to decide whether to build a target.
+trigger()
+# This trigger will build a target on Tuesdays
+# and when the value of an online dataset changes.
+trigger(condition = today() == "Tuesday", change = get_online_dataset())
+## Not run: 
+isolate_example("Quarantine side effects.", {
+if (suppressWarnings(require("knitr"))) {
+load_mtcars_example() # Get the code with drake_example("mtcars").
+# You can use a global trigger argument:
+# for example, to always run everything.
+make(my_plan, trigger = trigger(condition = TRUE))
+make(my_plan, trigger = trigger(condition = TRUE))
+# You can also define specific triggers for each target.
+plan &lt;- drake_plan(
+  x = sample.int(15),
+  y = target(
+    command = x + 1,
+    trigger = trigger(depend = FALSE)
+  )
+)
+# Now, when x changes, y will not.
+make(plan)
+make(plan)
+plan$command[1] &lt;- "sample.int(16)" # change x
+make(plan)
+}
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

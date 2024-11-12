@@ -1,0 +1,264 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>chooseM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Adaptive Choice of the Bootstrap Resample Size M</h2>
+
+<h3>Description</h3>
+
+<p>Implementation of a double-bootstrap algorithm for choosing the bootstrap 
+resample size <code class="reqn">m</code> in a data-adaptive manner. The function returns the 
+resample size to be used to apply the m-out-of-n bootstrap with DTRreg.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">chooseM(
+  outcome,
+  blip.mod,
+  treat.mod,
+  tf.mod,
+  data = NULL,
+  method = c("gest", "dwols", "qlearn"),
+  treat.type = c("bin", "multi", "cont"),
+  treat.fam = gaussian(link = "identity"),
+  weight = c("abs", "ipw", "cipw", "qpom", "wo", "none", "manual"),
+  n.bins = 3L,
+  treat.wgt.man = NULL,
+  treat.range = NULL,
+  missing = c("drop", "ipw"),
+  missing.mod = NULL,
+  B1 = 500,
+  B2 = 500
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+<p>The outcome variable. Missing data will result in a stopping
+error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blip.mod</code></td>
+<td>
+<p>A list of formula objects specifying covariates of the
+blip function for each stage in order. No dependent variable should be 
+specified. Note that this input should include the treatment variable 
+ONLY if the blip model is quadratic in treatment. See Details for further 
+clarification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.mod</code></td>
+<td>
+<p>A list of formula objects specifying the treatment model for
+each stage in order. Treatment variable should be included as the dependent
+variable. If treatment is binary <code>glm(family = binomial)</code>
+will be 
+used to obtain parameter estimates; if treatment is multi-nomial, 
+<code>multinom()</code> will be used to obtain parameter estimates; and if 
+treatment is continuous, <code>lm()</code> will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf.mod</code></td>
+<td>
+<p>A list of formula objects specifying covariates of the
+treatment-free model for each stage in order. No dependent variable should 
+be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame containing all necessary covariates and treatments
+contained in the models. Missing data should be coded as <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The DTR method to be used, choose "dwols" for dynamic WOLS, 
+"gest" for G-estimation, or "qlearn" for Q-learning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.type</code></td>
+<td>
+<p>A character object. Must be one of {"bin", "multi", "cont"}
+indicating that the treatments at each stage are binary, multinomial,
+or continuous, respectively. Each stage must have the same treatment type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.fam</code></td>
+<td>
+<p>A character or family object. 
+The description of the dose distribution along with the link 
+function to be used in the treatment model for computing weights; should be 
+specified in a similar format as that used in <code>glm()</code>. 
+If character object, must be one of {"gaussian", "Gamma"}, for which
+<code>gaussian(link = "identity")</code> or 
+<code>Gamma(link = "log")</code> 
+will be used,
+respectively. Input is ignored for <code>treat.type = "bin"</code> and 
+<code>treat.type = "multi"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>The form of the treatment weight. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.bins</code></td>
+<td>
+<p>An integer object. The number of bins (levels) to be used for 
+categorizing continuous doses. This input is required only when
+<code>treat.type = "cont"</code> and <code>weight = "wo"</code> or <code>weight = "qpom"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.wgt.man</code></td>
+<td>
+<p>NULL or a list of vectors of known treatment weights can be 
+specified to be used instead of hard-coded treatment weight options.
+The <code class="reqn">i^{th}</code> element of the list contains the multiplicative weights 
+for the <code class="reqn">i^{th}</code> stage. Each vector must be of length <code class="reqn">n</code>, 
+the number of participants. Used only for <code>method = "dwols"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.range</code></td>
+<td>
+<p>For continuous treatments. Specify the maximum/minimum 
+value that treatments can be take. If unspecified then the minimum/maximum 
+value of observed treatments is used. If you wish to have unrestricted 
+treatments set this option to <code>c(-Inf, +Inf)</code>. If each stage has its own
+range, provide as a list, the ith element providing the min and max
+for the ith stage treatment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing</code></td>
+<td>
+<p>A character object. Must be one of {"drop", "ipw"}.
+If set to "ipw" and covariate or treatment data are missing then inverse 
+probability 
+weights are used. The complete case probability is estimated 
+via logistic regression. If set to "drop" and data are missing, participants
+with missing data are dropped for all stage analyses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing.mod</code></td>
+<td>
+<p>An optional list of formula objects specifying the model
+for the inverse probability of weights for each stage in order.
+No dependent variable should be specified. If <code>missing = "ipw"</code> and 
+<code>missing.mod = NULL</code>, then the models are assumed to be linear comprising
+the full covariate history derived from all of the previous stage models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B1</code></td>
+<td>
+<p>Number of first-level bootstrap resamples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B2</code></td>
+<td>
+<p>Number of second-level bootstrap resamples.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The m-out-of-n bootstrap is an adequate tool for constructing valid 
+confidence intervals for the first stage parameters in DTRreg. The 
+resample size <code class="reqn">m</code> is: 
+<code class="reqn">m = n^{\frac{1 + \alpha(1-\hat{p})}{1+\alpha}}</code>. The estimated non-regularity level is 
+computed by DTRreg. The double-bootstrap algorithm is a cross-validation 
+tool for choosing the tuning parameter <code class="reqn">\alpha</code> in a data-driven way.
+</p>
+<p>The current implementation is valid for a two-stage DTR. Moreover, the 
+current implementation may be unstable when there are many missing data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with a single element 
+</p>
+<table><tr style="vertical-align: top;">
+<td><code>m </code></td>
+<td>
+<p>Resample size for using in the m-out-of-n bootstrap.</p>
+</td>
+</tr></table>
+<h3>Author(s)</h3>
+
+<p>Gabrielle Simoneau
+</p>
+
+
+<h3>References</h3>
+
+<p>Chakraborty, B., Moodie, E. E. M. (2013) <em>Statistical Methods for 
+Dynamic Treatment Regimes</em>. New York: Springer.
+</p>
+<p>Efron B., Tibshirani R. J. (1994) An Introduction to the Bootstrap. 
+<em>CRC press</em>.
+</p>
+<p>Wallace, M. P., Moodie, E. M. (2015) Doubly-Robust Dynamic Treatment 
+Regimen Estimation Via Weighted Least Squares. <em>Biometrics</em> 
+<b>71</b>(3), 636–644 (doi:10.1111/biom.12306.)
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(twoStageCont)
+
+# models to be passed to DTRreg
+# blip model
+blip.mod &lt;- list(~ X1, ~ X2)
+# treatment model (correctly specified)
+treat.mod &lt;- list(A1 ~ X1, A2 ~ 1)
+# treatment-free model (incorrectly specified)
+tf.mod &lt;- list(~ X1, ~ X2)
+
+# perform dWOLS without calculating confidence intervals
+mod1 &lt;- DTRreg(twoStageCont$Y, blip.mod, treat.mod, tf.mod, 
+               data = twoStageCont, method = "dwols")
+  
+# choose m adaptively for that model
+## Not run: 
+  m &lt;- chooseM(twoStageCont$Y, blip.mod, treat.mod, tf.mod, 
+               data = twoStageCont, method = "dwols",
+               B1 = 200, B2 = 200)$m
+
+## End(Not run)
+m &lt;- 94
+  
+# dWOLS with confidence intervals from the m-out-of-n bootstrap
+mod2 &lt;- DTRreg(twoStageCont$Y, blip.mod, treat.mod, tf.mod, 
+               data = twoStageCont, method = "dwols",
+               var.estim = "bootstrap", 
+               bootstrap.controls = list(M = m))
+</code></pre>
+
+
+</div>

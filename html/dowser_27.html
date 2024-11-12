@@ -1,0 +1,320 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>formatClones</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate an ordered list of airrClone objects for lineage construction</h2>
+
+<h3>Description</h3>
+
+<p><code>formatClones</code> takes a <code>data.frame</code> or <code>tibble</code> with AIRR or 
+Change-O style columns as input and masks gap positions, masks ragged ends, 
+removes duplicates sequences, and merges annotations associated with duplicate
+sequences. If specified, it will un-merge duplicate sequences with different 
+values specified in the <code>traits</code> option. It returns a list of <code>airrClone</code>
+objects ordered by number of sequences which serve as input for lineage reconstruction.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">formatClones(
+  data,
+  seq = "sequence_alignment",
+  clone = "clone_id",
+  subgroup = "clone_subgroup",
+  id = "sequence_id",
+  germ = "germline_alignment_d_mask",
+  v_call = "v_call",
+  j_call = "j_call",
+  junc_len = "junction_length",
+  mask_char = "N",
+  max_mask = 0,
+  pad_end = TRUE,
+  text_fields = NULL,
+  num_fields = NULL,
+  seq_fields = NULL,
+  add_count = TRUE,
+  verbose = FALSE,
+  collapse = TRUE,
+  cell = "cell_id",
+  locus = "locus",
+  traits = NULL,
+  mod3 = TRUE,
+  randomize = TRUE,
+  use_regions = TRUE,
+  dup_singles = FALSE,
+  nproc = 1,
+  chain = "H",
+  heavy = "IGH",
+  filterstop = FALSE,
+  minseq = 2,
+  split_light = FALSE,
+  light_traits = FALSE,
+  majoronly = FALSE,
+  columns = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame containing the AIRR or Change-O data for a clone.
+See makeAirrClone for required columns and their defaults</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seq</code></td>
+<td>
+<p>name of the column containing observed DNA sequences. All 
+sequences in this column must be multiple aligned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clone</code></td>
+<td>
+<p>name of the column containing the identifier for the clone. All 
+entries in this column should be identical.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subgroup</code></td>
+<td>
+<p>name of the column containing the identifier for the subgroup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>name of the column containing sequence identifiers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>germ</code></td>
+<td>
+<p>name of the column containing germline DNA sequences. All entries 
+in this column should be identical for any given clone, and they
+must be multiple aligned with the data in the <code>seq</code> column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v_call</code></td>
+<td>
+<p>name of the column containing V-segment allele assignments. All 
+entries in this column should be identical to the gene level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>j_call</code></td>
+<td>
+<p>name of the column containing J-segment allele assignments. All 
+entries in this column should be identical to the gene level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>junc_len</code></td>
+<td>
+<p>name of the column containing the length of the junction as a 
+numeric value. All entries in this column should be identical 
+for any given clone.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mask_char</code></td>
+<td>
+<p>character to use for masking and padding.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_mask</code></td>
+<td>
+<p>maximum number of characters to mask at the leading and trailing
+sequence ends. If <code>NULL</code> then the upper masking bound will 
+be automatically determined from the maximum number of observed 
+leading or trailing Ns amongst all sequences. If set to <code>0</code> 
+(default) then masking will not be performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pad_end</code></td>
+<td>
+<p>if <code>TRUE</code> pad the end of each sequence with <code>mask_char</code>
+to make every sequence the same length.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>text_fields</code></td>
+<td>
+<p>text annotation columns to retain and merge during duplicate removal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_fields</code></td>
+<td>
+<p>numeric annotation columns to retain and sum during duplicate removal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seq_fields</code></td>
+<td>
+<p>sequence annotation columns to retain and collapse during duplicate 
+removal. Note, this is distinct from the <code>seq</code> and <code>germ</code> 
+arguments, which contain the primary sequence data for the clone
+and should not be repeated in this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_count</code></td>
+<td>
+<p>if <code>TRUE</code> add an additional annotation column called 
+<code>COLLAPSE_COUNT</code> during duplicate removal that indicates the 
+number of sequences that were collapsed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>passed on to <code>collapseDuplicates</code>. If <code>TRUE</code>, report the 
+numbers of input, discarded and output sequences; otherwise, process
+sequences silently.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>collapse</code></td>
+<td>
+<p>collapse identical sequences?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cell</code></td>
+<td>
+<p>name of the column containing cell assignment information</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>locus</code></td>
+<td>
+<p>name of the column containing locus information</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>traits</code></td>
+<td>
+<p>column ids to keep distinct during sequence collapse</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod3</code></td>
+<td>
+<p>pad sequences to length mutliple three?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomize</code></td>
+<td>
+<p>randomize sequence order? Important if using PHYLIP</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_regions</code></td>
+<td>
+<p>assign CDR/FWR regions?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dup_singles</code></td>
+<td>
+<p>Duplicate sequences in singleton clones to include them as trees?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nproc</code></td>
+<td>
+<p>number of cores to parallelize formating over.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chain</code></td>
+<td>
+<p>if HL, include light chain information if available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>heavy</code></td>
+<td>
+<p>name of heavy chain locus (default = "IGH")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filterstop</code></td>
+<td>
+<p>only use sequences that do not contain an in-frame stop codon</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minseq</code></td>
+<td>
+<p>minimum number of sequences per clone</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split_light</code></td>
+<td>
+<p>split or lump subgroups? See <code>resolveLightChains</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>light_traits</code></td>
+<td>
+<p>Include the traits from the light chain when concatenating and collapsing trees?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>majoronly</code></td>
+<td>
+<p>only return largest subgroup and sequences without light chains</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>columns</code></td>
+<td>
+<p>additional data columns to include in output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is a wrapper for makeAirrClone. Also removes whitespace,
+;, :, and = from ids
+</p>
+
+
+<h3>Value</h3>
+
+<p>A tibble of airrClone objects containing modified clones.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Executes in order makeAirrClone. Returns a tibble of 
+airrClone objects 
+which serve as input to getTrees and findSwitches.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ExampleAirr)
+# Select two clones, for demonstration purpose
+sel &lt;- c("3170", "3184")
+clones &lt;- formatClones(ExampleAirr[ExampleAirr$clone_id %in% sel,],traits="sample_id")
+</code></pre>
+
+
+</div>

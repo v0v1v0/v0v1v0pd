@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compare_diagnoses</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare Diagnoses</h2>
+
+<h3>Description</h3>
+
+<p>Diagnose and compare designs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compare_diagnoses(
+  design1,
+  design2,
+  sims = 500,
+  bootstrap_sims = 100,
+  merge_by_estimator = TRUE,
+  alpha = 0.05
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design1</code></td>
+<td>
+<p>A design or a diagnosis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design2</code></td>
+<td>
+<p>A design or a diagnosis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sims</code></td>
+<td>
+<p>The number of simulations, defaulting to 1000. <code>sims</code> may also be a vector indicating the number of simulations for each step in a design, as described for <code>simulate_design</code>. Used for both designs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap_sims</code></td>
+<td>
+<p>Number of bootstrap replicates for the diagnosands to obtain the standard errors of the diagnosands, defaulting to <code>1000</code>. Set to <code>FALSE</code> to turn off bootstrapping. Used for both designs. Must be greater or equal to 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>merge_by_estimator</code></td>
+<td>
+<p>A logical. Whether to include <code>estimator</code> in the set of columns used for merging. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The significance level, 0.05 by default.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>compare_diagnoses</code> runs a many-to-many merge matching by <code>inquiry</code> and <code>term</code> (if present). If  <code>merge_by_estimator</code> equals <code>TRUE</code>, <code>estimator</code> is also included in the merging condition. Any diagnosand that is not included in both designs will be dropped from the merge.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with a <code>data.frame</code> of compared diagnoses and both diagnoses.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">design_a &lt;- 
+  declare_model(N  = 100, 
+                U = rnorm(N),
+                Y_Z_0 = U,
+                Y_Z_1 = U + rnorm(N, mean = 2, sd = 2)) +
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) +
+  declare_assignment(Z = complete_ra(N, prob = 0.5)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) +
+  declare_estimator(Y ~ Z, inquiry = "ATE")
+
+design_b &lt;- replace_step(
+  design_a, step = "assignment", 
+  declare_assignment(Z = complete_ra(N, prob = 0.3)) )
+
+comparison &lt;- compare_diagnoses(design_a, design_b, sims = 40)
+
+</code></pre>
+
+
+</div>

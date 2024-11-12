@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dhbin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Hexmaps of New Zealand Adminstrative Units
+</h2>
+
+<h3>Description</h3>
+
+<p>The 20 District Health Boards are the main administrative and funding units of the NZ national health system. The Regions are the second-level government divisions . These functions draw stylised maps of the DHBs and regions, along the lines of "statebins" for the US states. The hexagon for each location can be coloured and sized to show numeric data, and it can also be split into six triangles to show proportion or composition data. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dhbin(radius = NULL, hex_colours = "lightskyblue", DHB_names=NULL, text_colour = "black",
+ legend_opts = NULL, border = NULL, short = FALSE,cex=0.8)
+dhtri(radius = NULL, tri_colours, DHB_names=NULL, text_colour = "black",
+ legend_opts = NULL, short=FALSE,cex=0.8)
+regionbin(radius = NULL, hex_colours = "lightskyblue", region_names=NULL,
+ text_colour = "black", legend_opts = NULL, border = NULL, short = FALSE, tasman=TRUE,
+ cex=0.7)
+regiontri(radius = NULL, tri_colours, region_names=NULL, text_colour = "black",
+ legend_opts = NULL,short=FALSE, tasman=TRUE, cex=0.7)
+ 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>radius</code></td>
+<td>
+
+<p>Vector of radius measurements for the coloured part of each hexagon, with 1 as a full hexagon. If any are greater than 1, the vector is scaled to have maximum value 0.95, which is also the default value for all hexagons.  If it has names, they are matched to the DHB names or common alternative names.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hex_colours</code></td>
+<td>
+
+<p>Vector of colours as names or hashtag colours.  If it has names, they are matched to the DHB names or common alternative names.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tri_colours</code></td>
+<td>
+
+<p>6-column matrix of colours for the six triangles in each hexagon.  If it has row names, they are matched to the DHB names or common alternative names.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DHB_names,region_names</code></td>
+<td>
+<p>Vector of DHB names or region names. If <code>NULL</code>, the function will look for this as the names of <code>radius</code> then as the names of <code>hex_colours</code> or the rownames of <code>tri_colours</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>text_colour</code></td>
+<td>
+
+<p>Colour for the label on all the hexagons.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend_opts</code></td>
+<td>
+
+<p>a list with arguments to <code>graphics::legend</code>, not including <code>x</code> and <code>y</code>, which are supplied, and <code>bty</code>, which is forced to <code>"n"</code>.  If not <code>NULL</code> a legend is drawn. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>border</code></td>
+<td>
+
+<p><code>NULL</code> or a colour name to draw a border around each hex.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>short</code></td>
+<td>
+
+<p>If <code>TRUE</code>, label each hexagon with a 1-3 character short abbreviation rather than the full name. Especially useful for faceting.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tasman</code></td>
+<td>
+<p>The Tasman District and Nelson City are considered as separate regions in most contexts, but as forming the Nelson Region in some contexts. Use <code>tasman=FALSE</code> when they are combined</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cex</code></td>
+<td>
+
+<p>character expansion factor
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Called for its side-effect
+</p>
+
+
+<h3>References</h3>
+
+<p>Lumley T (2019) Stylised Choropleth Maps for New Zealand Regions and District Health Boards. arXiv:1912.04435
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>tri_alloc</code> for the Sainte-Laguë method to allocate triangles based on counts
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(dhb_cars)
+tris&lt;-tri_alloc(dhb_cars[,-1], c("green","gold","orange","goldenrod"), names=dhb_cars$dhb )
+
+dhtri(tri_colours=tris,
+  legend=list(fill=c("green","gold","orange","goldenrod"),
+         border=NA,
+         legend=c("0","1","2","3+"),
+         title="Cars/Household")
+)
+
+
+households&lt;-rowSums(dhb_cars[,-1])
+names(households)&lt;-dhb_cars$dhb
+dhbin(radius=sqrt(households))
+title(main="Number of households in private dwellings")
+
+
+opar&lt;-par(mfrow=c(2,3),mar=c(1,1,1,1))
+z&lt;-rnorm(20)
+for(i in 1:6){
+  z&lt;-(rnorm(20)+z)/sqrt(2)
+  z1&lt;- (z+4)/8
+  col_z&lt;-rgb(colorRamp(c("blue", "white","red"))(z1),max=255)
+  dhbin(hex_colours=col_z,border="grey",short=TRUE,
+        legend_opts=list(fill=c("red","white","blue"),
+                         legend=c("High","Medium","Low"),
+                         title=paste("Thing",i))
+  ) 
+}
+par(opar)
+
+
+data(region_ethnicity)
+cols&lt;-tri_alloc(as.matrix(region_ethnicity[,-1]),
+	colours=hcl.colors(5,"Set2"),names=region_ethnicity$Area)
+
+regiontri(tri_colours=cols,text_colour="white",
+	legend_opts=list(fill=hcl.colors(5,"Set2"),
+			 title="Ethnicity",
+			 legend=names(region_ethnicity)[2:6]))
+title(main="New Zealand regions")
+
+
+</code></pre>
+
+
+</div>

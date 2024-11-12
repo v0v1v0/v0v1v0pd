@@ -1,0 +1,290 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>driftBursts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Drift Bursts
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the Test-Statistic for the Drift Burst Hypothesis.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">driftBursts(timestamps = NULL, logPrices, testTimes = seq(34260, 57600, 60),
+                        preAverage = 5, ACLag = -1L, 
+                        meanBandwidth = 300L, varianceBandwidth = 900L, 
+                        sessionStart = 34200, sessionEnd = 57600,
+                        parallelize = FALSE, nCores = NA, warnings = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>timestamps</code></td>
+<td>
+
+<p>Either:
+A <code>numeric</code> of <code>timestamps</code> for the trades in seconds after midnight.
+Or: <code>NULL</code>, when the time argument is <code>NULL</code>, the <code>logprices</code> argument must be an <code>xts</code> object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logPrices</code></td>
+<td>
+
+<p>A <code>numeric</code> or <code>xts</code> object containing the log-prices.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testTimes</code></td>
+<td>
+
+<p>A <code>numeric</code> containing the times at which to calculate the tests. The standard of <code>seq(34260, 57600, 60)</code> denotes calculating the test      -statistic once per minute, i.e. 390 times for a typical 6.5 hour trading day from 9:31:00 to 16:00:00.
+See details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preAverage</code></td>
+<td>
+
+<p>An <code>integer</code> denoting the length of pre-averaging estimates of the log-prices.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ACLag</code></td>
+<td>
+
+<p>A positive <code>integer</code> greater than 1 denoting how many lags are to be used for the HAC estimator of the variance - the standard of <code>-1</code> denotes using an automatic lag selection algorithm for each iteration.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meanBandwidth</code></td>
+<td>
+
+<p>An <code>integer</code> denoting the bandwidth for the left-sided exponential kernel for the mean.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varianceBandwidth</code></td>
+<td>
+
+<p>An <code>integer</code> denoting the bandwidth for the left-sided exponential kernel for the variance.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sessionStart</code></td>
+<td>
+
+<p>A <code>double</code> to denote the start of the trading session in seconds after midnight.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sessionEnd</code></td>
+<td>
+
+<p>A <code>double</code> to denote the end of the trading session in seconds after midnight.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallelize</code></td>
+<td>
+
+<p>A <code>Boolean</code> to determine whether to parallelize the underlying C++ code. (Using OpenMP)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nCores</code></td>
+<td>
+
+<p>An <code>integer</code> denoting the number of cores to use for calculating the code when paralellized.
+If this argument is not provided, sequential evaluation will be used even though <code>bParallelize</code> is TRUE
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warnings</code></td>
+<td>
+
+<p>A <code>logical</code> denoting whether warnings should be shown.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the <code>testTimes</code> vector contains instructions to test before the first trade, or more than 15 minutes after the last trade, these entries will be deleted, as not doing so may cause crashes.
+</p>
+<p>The test statistic is unstable before <code>max(meanBandwidth , varianceBandwidth)</code> seconds has passed.
+</p>
+<p>If <code>timestamps</code> is provided and <code>logPrices</code> is an <code>xts</code> object, the indices of logPrices will be used regardless.
+</p>
+<p>Note that using an <code>xts</code> logPrices argument is slower than using a <code>numeric</code> due to the creation of the timestamps from the index of the input. When using <code>xts</code> objects, be careful to use the correct time zones. For example, if I as a dane use the <code>"America/New_York"</code> time zone for my <code>xts</code> objects, I have to add 14400 to my testing times. Same correction will have to be made to the <code>startTime</code> and <code>endTime</code> arguments in the plotting methods.
+</p>
+<p>The lags from the Newey-West algorithm is increased by <code>2 * (preAveage-1)</code> due to the pre-averaging we know atleast this many lags should be corrected for. The maximum of 20 lags is also increased by this same factor for the same reason.
+</p>
+<p>The methods <code>getMu(DBH)</code> and <code>getSigma(DBH)</code> have ad-hoc adjustments made to the output that are based on simulations. These adjustments give a slight down-ward bias in the value of the drift and sigma if the <code>preAverage</code> argument is VERY high, i.e. 10 or 20 for a noise-less price series of e.g. 23400 trades. If you find any better adjustments, please contact me.
+</p>
+<p>To get the unadjusted series, use <code>DBH$mu</code> or <code>DBH$sigma</code> for the drift, and volatility respectively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>DBH</code> and <code>list</code> containing the series of the drift burst hypothesis test-statistic as well as the estimated spot drift and variance series. The list also contains some information such as the variance and mean bandwidths along with the pre-averaging setting and the amount of observations. Additionally, the list will contain information on whether testing happened for all <code>testTimes</code> entries.
+</p>
+
+
+<h3>warning</h3>
+
+<p>When using <code>getMu(DBH)</code>, beware that the series may be padded with zeros (a warning will be shown when running the <code>driftBursts</code> in this case). This will for example happen when using <code>testTimes</code> for an entire trading day but the data is from a half trading day. Therefore, methods for calculating the mean and variance of the series that take this into account are provided and documented here.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Emil Sjoerup
+</p>
+
+
+<h3>References</h3>
+
+<p>Christensen, Oomen and Reno (2018) &lt;DOI:10.2139/ssrn.2842535&gt;.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>The DBH methods for the DBH class are documented here.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Simulate a price series containing both a flash crash and a flash-rally
+flashCrashSim = function(iT, dSigma, dPhi, dMu){
+  vSim = numeric(iT)
+  vEps = rnorm(iT , sd =dSigma)
+  vEpsy = rnorm(iT)
+  vEps[30001:32000] = rnorm(2000 ,sd =seq(from = dSigma , 
+                                          to = 2*dSigma , length.out = 2000)) 
+  vEps[32001:34000] = rnorm(2000 ,sd =seq(from = 2*dSigma , 
+                                          to = dSigma , length.out = 2000))
+  vEpsy[30001:32000] = -rnorm(2000 ,mean =seq(from = 0,
+                                              to = 0.3 , length.out = 2000)) 
+  vEpsy[32001:34000] = -rnorm(2000 ,mean =seq(from = 0.3,
+                                              to = 0 , length.out = 2000))
+  
+  
+  vEps[60001:63000] = rnorm(3000,sd = seq(from = dSigma , 
+                                          to = 2*dSigma , length.out = 3000))
+  vEps[63001:66000] = rnorm(3000,  sd = seq(from = 2*dSigma , 
+                                            to =  dSigma, length.out = 3000))
+  
+  vEpsy[60001:63000] = rnorm(3000 ,mean =seq(from = 0,
+                                             to = 0.2 , length.out = 3000))
+  vEpsy[63001:66000] = rnorm(3000 ,mean =seq(from = 0.2,
+                                             to = 0 , length.out = 3000))
+  vSim[1] = dMu + dPhi *rnorm(1 , mean = dMu , sd = dSigma /sqrt(1-dPhi^2))
+  for (i in 2:iT) {
+    vSim[i] = dMu + dPhi * (vSim[(i-1)] - dMu) + vEps[i]
+  }
+  vY = exp(vSim/2) * vEpsy
+  return(vY)
+}
+#Set parameter values of the simulation
+iT = 66500; dSigma = 0.3; dPhi = 0.98; dMu = -10;
+#set seed for reproducibility
+set.seed(123)
+#Simulate the series
+y = 500+cumsum(flashCrashSim(iT, dSigma, dPhi, dMu))
+
+#insert an outlier to illustrate robustness.
+y[50000] = 500
+
+#Here, the observations are equidistant, but the code can handle unevenly spaced observations.
+timestamps = seq(34200 , 57600 , length.out = iT)
+testTimes = seq(34260, 57600, 60)
+logPrices = log(y)
+
+library("DriftBurstHypothesis")
+
+#calculating drift burst test statistic
+
+DBH = driftBursts(timestamps,  logPrices,
+                        testTimes, preAverage = 5, ACLag = -1L,
+                        meanBandwidth = 300L, varianceBandwidth = 900L,
+                        parallelize = FALSE)
+
+
+#plot test statistic
+plot(DBH)
+#plot both test statistic and price
+plot(DBH, price = y, timestamps = timestamps)
+#Plot the mu series
+plot(DBH, which = "Mu")
+#plot the sigma series
+plot(DBH, which = "Sigma")
+#plot both
+plot(DBH, which = c("Mu", "Sigma"))
+
+
+#Means of the tstat, sigma, and mu series.
+mean(getDB(DBH))
+mean(getSigma(DBH))
+mean(getMu(DBH))
+
+
+
+## Not run: 
+################## same example with xts object:
+library("xts")
+#Set parameter values of the simulation
+iT = 66500; dSigma = 0.3; dPhi = 0.98; dMu = -10;
+#set seed for reproducibility
+set.seed(123)
+#Simulate the series
+y = 500+cumsum(flashCrashSim(iT, dSigma, dPhi, dMu))
+
+#insert an outlier to illustrate robustness.
+y[50000] = 500
+
+#Here, the observations are equidistant, but the code can handle unevenly spaced observations.
+timestamps = seq(34200 , 57600 , length.out = iT)
+startTime = strptime("1970-01-01 00:00:00.0000", "%Y-%m-%d %H:%M:%OS", tz = "GMT")
+testTimes = seq(34260, 57600, 60)
+
+
+price = xts(vY, startTime + timestamps)
+
+
+DBHxts = driftBursts(timestamps = NULL,  log(price), 
+                   testTimes, preAverage = 5, ACLag = -1L,
+                   meanBandwidth = 300L, varianceBandwidth = 900L, 
+                   parallelize = FALSE)
+
+#check for equality
+all.equal(as.numeric(getDB(DBH)), as.numeric(getDB(DBHxts)))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

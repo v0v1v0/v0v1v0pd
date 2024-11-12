@@ -1,0 +1,105 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Rank</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fast Sample Ranks</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>base::rank</code> has various weaknesses. Apart from the fact that it is not very fast, the option to calculate dense ranks is not implemented. Then, an argument for specifying the ranking direction is missing (assuming that this can be done with the ranking of the negative variables) and finally, multiple columns cannot be used in the case of ties for further ranking.
+<br> The function <code>data.table::frankv</code> provides a more elaborated interface and convinces by very performant calculations and is <em>much faster</em> than the original. 
+It further accepts vectors, lists, <code>data.frame</code>s or <code>data.table</code>s as input. In addition to the <code>ties.method</code> possibilities provided by <code>base::rank</code>, it also provides <code>ties.method="dense"</code>. <br> The present function <code>Rank</code> is merely a somewhat customized parameterization of the <code>data.table</code> function. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Rank(..., decreasing = FALSE, na.last = TRUE,
+     ties.method = c("average", "first", "last", "random",
+                     "max", "min", "dense"))
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> A vector, or list with all its elements identical in length or <code>data.frame</code> or <code>data.table</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>decreasing</code></td>
+<td>
+<p> An <code>logical</code> vector corresponding to ascending and descending order. <code>decreasing</code> is recycled to <code>length(...)</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.last</code></td>
+<td>
+<p> Control treatment of <code>NA</code>s. If <code>TRUE</code>, missing values in the data are put last; if <code>FALSE</code>, they are put first; if <code>NA</code>, they are removed; if <code>"keep"</code> they are kept with rank <code>NA</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ties.method</code></td>
+<td>
+<p> A character string specifying how ties are treated, see <code>Details</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To be consistent with other <code>data.table</code> operations, <code>NA</code>s are considered identical to other <code>NA</code>s (and <code>NaN</code>s to other <code>NaN</code>s), unlike <code>base::rank</code>. Therefore, for <code>na.last=TRUE</code> and <code>na.last=FALSE</code>, <code>NA</code>s (and <code>NaN</code>s) are given identical ranks, unlike <code>rank</code>.
+</p>
+<p><code>Rank</code> is not limited to vectors. It accepts <code>data.table</code>s (and <code>list</code>s and <code>data.frame</code>s) as well. It accepts unquoted column names (with names preceded with a <code>-</code> sign for descending order, even on character vectors), for e.g., <code>Rank(DT, a, -b, c, ties.method="first")</code> where <code>a,b,c</code> are columns in <code>DT</code>. 
+</p>
+<p>In addition to the <code>ties.method</code> values possible using base's <code>rank</code>, it also provides another additional argument <code>"dense"</code>.
+Dense ranks are consecutive integers beginning with 1. No ranks are skipped if there are ranks with multiple items. So the largest rank value is the number of unique values of x. See examples.
+</p>
+<p>Like <code>forder</code>, sorting is done in "C-locale"; in particular, this may affect how capital/lowercase letters are ranked. See Details on <code>forder</code> for more.
+</p>
+<p><code>bit64::integer64</code> type is also supported.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of length equal to <code>NROW(x)</code> (unless <code>na.last = NA</code>, when missing values are removed). The vector is of integer type unless <code>ties.method = "average"</code> when it is of double type (irrespective of ties).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>frankv</code>, <code>data.table</code>, <code>setkey</code>, <code>setorder</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># on vectors
+x &lt;- c(4, 1, 4, NA, 1, NA, 4)
+# NAs are considered identical (unlike base R)
+# default is average
+Rank(x) # na.last=TRUE
+Rank(x, na.last=FALSE)
+
+# ties.method = min
+Rank(x, ties.method="min")
+# ties.method = dense
+Rank(x, ties.method="dense")
+
+# on data.frame, using both columns
+d.set &lt;- data.frame(x, y=c(1, 1, 1, 0, NA, 0, 2))
+Rank(d.set, na.last="keep")
+Rank(d.set, ties.method="dense", na.last=NA)
+
+# decreasing argument
+Rank(d.set, decreasing=c(FALSE, TRUE), ties.method="first")
+</code></pre>
+
+
+</div>

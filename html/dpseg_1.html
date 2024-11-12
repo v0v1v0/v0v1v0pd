@@ -1,0 +1,280 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dpseg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>dpseg : linear segmentation by dynamic programming</h2>
+
+<h3>Description</h3>
+
+<p><code>dpseg</code> splits a curve (x,y data) into linear segments by a
+straight forward dynamic programming recursion: </p>
+<p style="text-align: center;"><code class="reqn">S_j =
+max(S_{i-jumps} + score(i,j) -P)</code>
+</p>
+<p> where score is a measure of the
+goodnes of the fit of a linear regression (equiv. to
+<code>lm(y~x)</code>) between data points <code class="reqn">i&lt;j</code>. The default scoring
+function is simply the negative variance of residuals of the linear
+regression (see arguments <code>type</code> and <code>scoref</code>). <code>P</code>
+is a break-point penality that implicitly regulates the number of
+segments (higher P: longer segments), and <code>jumps==1</code> allows
+for disjoint segments.  The arguments <code>minl</code> and <code>maxl</code>
+specify minimal (<code class="reqn">i\le j-minl</code>) and maximal (<code class="reqn">i\ge j-maxl</code>)
+segment lengths, which allows to significantly decrease memory
+usage when expected segment lengths are known.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dpseg(x, y, maxl, jumps = FALSE, P = 0, minl = 3, S0 = 1,
+  type = "var", scoref, verb = 1, move, store.values = TRUE,
+  store.matrix = FALSE, add.lm = FALSE, recursion, backtrace, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>x-values, not used if <code>y</code> is a scoring function
+matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>y-values, or a pre-calculated scoring function matrix
+<code class="reqn">SCR_{i,j}</code> (eg. from a previous run of <code>dpseg</code>). See
+section "Value" below for details on the structure <code class="reqn">SCR_{i,j}</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxl</code></td>
+<td>
+<p>maximal segment length, <code class="reqn">i\ge j-maxl</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jumps</code></td>
+<td>
+<p>allow for jumps between segments, if <code>TRUE</code>
+segment ends are 1 index left of the segment starts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>break-point penalty, increase to get longer segments with
+lower scores (eg. higher residual variance)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minl</code></td>
+<td>
+<p>minimal segment length, <code class="reqn">i\le j-minl</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S0</code></td>
+<td>
+<p>initialization of <code class="reqn">S_0</code>, choose high enough to avoid
+length 1 cutoffs at start</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>type of scoring function: available are "var" for
+"variance of residuals", "cor" for Pearson correlation, or "r2"
+for r-squared; see the package <code>vignette("dpseg")</code> for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scoref</code></td>
+<td>
+<p>alternative scoring function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>print progress messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>move</code></td>
+<td>
+<p>logical indicating whether move is required in
+backtracing, required for the alternative recursion <code class="reqn">S_i +
+score(i+1,j)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>store.values</code></td>
+<td>
+<p>store scoring values (linear regression
+results)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>store.matrix</code></td>
+<td>
+<p>store the fitscore matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.lm</code></td>
+<td>
+<p>add a linear fit using R base <code>lm</code> for final
+segments; may save memory/speed if <code>store.values==FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recursion</code></td>
+<td>
+<p>internal recursion function to be used for
+segmentation; used for debugging, benchmarking and development,
+and required for putative novel scoring functions <code>scoref</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>backtrace</code></td>
+<td>
+<p>internal function to be used for back-tracing;
+used for debugging, benchmarking and development, and may be
+required to test novel scoring functions <code>scoref</code> and/or
+<code>recursion</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments to <code>recursion</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See the <code>vignette("dpseg")</code> for the theory and details on the
+choice of scoring functions and selection of the penalty parameter
+P.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list object of class <code>dpseg</code> (with
+<code>print.dpseg</code> <code>plot.dpseg</code> and <code>predict.dpseg</code>
+methods). The main result of the algorithm is a table
+(<code>data.frame</code>) of predicted segments in list object
+<code>segments</code>. The original data, run parameters and
+(optionally) additional data calculated and used by the
+algorithm are also returned.
+</p>
+
+<dl>
+<dt>segments:</dt>
+<dd>
+<p>main result table: a <code>data.frame</code> that lists
+the start and end x-values of the segments, the start and end
+indices (i,j) in the data vectors, the linear regression
+coefficients and goodness-of-fit measures for the segments
+(intercept, slope, r-squared, variance of residuals). If
+<code>dpseg</code> was called with a pre-calculated scoring matrix,
+the table only contains start and end indices i,j. If option
+<code>add.lm=TRUE</code> or the result object was sent through
+function <code>addLm</code> the table additionally contains
+results from R's <code>lm</code>, indicated by an ".lm" suffix.</p>
+</dd>
+<dt>S:</dt>
+<dd>
+<p>results of the recursion, ie. <code class="reqn">S_j</code> in above
+equation.</p>
+</dd>
+<dt>imax:</dt>
+<dd>
+<p>vector <code class="reqn">j=1,\dots,n</code>, storing the <code class="reqn">i_{max}</code>
+that yielded <code class="reqn">S_j</code>, ie., the sole input for the backtracing
+function.</p>
+</dd>
+<dt>values:</dt>
+<dd>
+<p>linear regression coefficients and measures for the
+segment ending at <code class="reqn">j</code> and starting at
+<code class="reqn">i_{max}(j)</code>. Only present if <code>store.valus=TRUE</code>.</p>
+</dd>
+<dt>SCR:</dt>
+<dd>
+<p>scoring function matrix <code class="reqn">SCR_{i,j} = score(i,j)</code>
+where positions j are the columns and i the rows; a banded
+matrix with non-NA values between <code class="reqn">i\le j-minl</code> and
+<code class="reqn">i\ge j-maxl</code>. Note, that this matrix can be re-used in
+subsequent calls as <code>dpseg(y=previous$SCR)</code> which runs
+much faster and allows to efficiently scan for alternative
+parameters. Only present if <code>store.matrix=TRUE</code>.</p>
+</dd>
+<dt>fits:</dt>
+<dd>
+<p>result objects from <code>lm</code>. Only present if
+<code>add.lm=TRUE</code>.</p>
+</dd>
+<dt>traceback:</dt>
+<dd>
+<p>result of the call to the backtracing function:
+ends of the segments.</p>
+</dd>
+<dt>xy:</dt>
+<dd>
+<p>original x/y data (xy.coords).</p>
+</dd>
+<dt>removed:</dt>
+<dd>
+<p>index of NA/Inf values that were removed before
+running the alorithm.</p>
+</dd>
+<dt>parameters:</dt>
+<dd>
+<p>used parameters <code>P</code>, <code>jumps</code>,
+<code>maxl</code> and <code>minl</code>.</p>
+</dd>
+</dl>
+<h3>Dependencies</h3>
+
+<p>The package strictly depends only on <code>RcppEigen</code>.
+All other dependencies are usually present in a
+basic installation (<code>stats</code>, <code>graphics</code>, <code>grDevices</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rainer Machne <a href="mailto:machne@hhu.de">machne@hhu.de</a>, Peter F. Stadler <a href="mailto:studla@bioinf.uni-leipzig.de">studla@bioinf.uni-leipzig.de</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## calculate linear segments in semi-log bacterial growth data
+## NOTE: library loads bacterial growth curve data as data.frame oddata
+segs &lt;- dpseg(x=oddata$Time, y=log(oddata$A3), minl=5, P=0.0001, verb=1)
+
+## inspect resulting segments
+print(segs)
+
+## plot results (also see the movie method)
+plot(segs, delog=TRUE, log="y")
+
+## predict method
+plot(predict(segs), type="l")
+
+</code></pre>
+
+
+</div>

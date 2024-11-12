@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dirmult</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parameter estimation in Dirichlet-multinomial distribution</h2>
+
+<h3>Description</h3>
+
+<p>Consider allele frequencies from different
+subpopulations. The allele counts, <code class="reqn">X</code>, (or equivalently
+allele frequencies) are expected to vary between subpopulation. This
+variability are sometimes refered to as identity-by-decent, but may be
+modelled as overdispersion due to intra-class correlation
+<code class="reqn">\theta</code>. The allele counts within each subpopulation is 
+assumed to follow a multinomial distribution conditioned on the allele
+probabilities, <code class="reqn">\pi_1,\dots,\pi_{k-1}</code>. When
+<code class="reqn">\pi</code> follows a Dirichlet distribution the marginal
+distribution of <code class="reqn">X</code> is Dirichlet-multinomial with parameters
+<code class="reqn">\pi</code> and <code class="reqn">\theta</code> with density:
+</p>
+<p style="text-align: center;"><code class="reqn">%
+    P(X=x) = {n \choose x}
+    \frac{\prod_{j=1}^k\prod_{r=1}^{x_j}\{\pi_j(1-\theta) + (r-1)\theta\}}%
+    {\prod_{r=1}^{n}\{1-\theta + (r-1)\theta\}}.</code>
+</p>
+
+<p>Using an alternative parameterization the density may be written as:
+</p>
+<p style="text-align: center;"><code class="reqn">%
+    P(X=x) =
+    {n \choose x}
+    \frac{\Gamma(\gamma_+)}{\Gamma(n+\gamma_+)}
+    \prod_{j=1}^k \frac{\Gamma\left(x_j + \gamma_j\right)}%
+    {\Gamma\left(\gamma_j\right)},</code>
+</p>
+
+<p>where <code class="reqn">\gamma_+=(1-\theta)/\theta</code> and
+<code class="reqn">\gamma_j=\pi_j\theta</code>.
+</p>
+<p>This formulation second parameterization is used in the iterations
+since it converges much faster than the original parameterization.   
+The function <code>dirmult</code> estimates the parameters 
+<code class="reqn">\gamma</code> in the Dirichlet-multinomial distribution and
+transform these into
+<code class="reqn">\pi_1,\dots,\pi_{k-1}</code> and 
+<code class="reqn">\theta</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dirmult(data, init, initscalar, epsilon=10^(-4), trace=TRUE, mode)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A matrix or table with counts. Rows represent subpopulations
+and columns the different categories of the data. Zero rows or columns
+are automaticly removed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+<p>Initial values for the <code class="reqn">\gamma</code>-vector. Default
+is empty implying the column-proportions are used as initial values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initscalar</code></td>
+<td>
+<p>Initial value for
+<code class="reqn">(1-\theta)/\theta</code>. Default value 
+is (1-MoM)/MoM where MoM a the method of moment estimate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>Convergence tolerance. On termination the difference
+between to succeeding log-likelihoods must be smaller than
+epsilon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Logical. If TRUE the parameter estimates and log-likelihood
+value is printed to the screen after each iteration, otherwise no
+out-put is produces while iterating.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>Takes values "obs" (default) or "exp" determining whether
+the observed or expected FIM should be used in the Fisher Scoring. All
+other arguments produces an error message, but the observed FIM is
+used in the iterations.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>The final log-likelihood value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ite</code></td>
+<td>
+<p>Number of iterations used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>A vector of <code class="reqn">\gamma</code> estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>A vector of <code class="reqn">\pi</code> estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>Estimated <code class="reqn">\theta</code>-value.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>dirmult.summary</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(us)
+fit &lt;- dirmult(us[[1]],epsilon=10^(-4),trace=FALSE)
+dirmult.summary(us[[1]],fit)
+</code></pre>
+
+
+</div>

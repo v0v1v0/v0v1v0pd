@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>b_chi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute <code class="reqn">E[\chi_\nu] / \sqrt{\nu}</code>
+useful for t- and chi-Distributions</h2>
+
+<h3>Description</h3>
+
+<p style="text-align: center;"><code class="reqn">b_\chi(\nu) := E[\chi(\nu)] / \sqrt{\nu} = \frac{\sqrt{2/\nu}\Gamma((\nu+1)/2)}{\Gamma(\nu/2)},</code>
+</p>
+
+<p>where <code class="reqn">\chi(\nu)</code> denotes a chi-distributed random variable, i.e.,
+the square of a chi-squared variable, and <code class="reqn">\Gamma(z)</code> is
+the Gamma function, <code>gamma()</code> in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
+</p>
+<p>This is a relatively important auxiliary function when computing with
+non-central t distribution functions and approximations, specifically see
+Johnson et al.(1994), p.520, after (31.26a), e.g., our <code>pntJW39()</code>.
+</p>
+<p>Its logarithm,
+</p>
+<p style="text-align: center;"><code class="reqn">lb_\chi(\nu) := log\bigl(\frac{\sqrt{2/\nu}\Gamma((\nu+1)/2)}{\Gamma(\nu/2)}\bigr),</code>
+</p>
+
+<p>is even easier to compute via <code>lgamma</code> and <code>log</code>,
+and I have used Maple to derive an asymptotic expansion in
+<code class="reqn">\frac{1}{\nu}</code> as well.
+</p>
+<p>Note that <code class="reqn">lb_\chi(\nu)</code> also appears in the formula
+for the t-density (<code>dt</code>) and distribution (tail) functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">b_chi     (nu, one.minus = FALSE, c1 = 341, c2 = 1000)
+b_chiAsymp(nu, order = 2, one.minus = FALSE)
+#lb_chi    (nu, ......) # not yet
+lb_chiAsymp(nu, order)
+
+c_dt(nu)       # warning("FIXME: current c_dt() is poor -- base it on lb_chi(nu) !")
+c_dtAsymp(nu)  # deprecated in favour of lb_chi(nu)
+c_pt(nu)       # warning("use better c_dt()") %---&gt; FIXME deprecate even stronger ?
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nu</code></td>
+<td>
+<p>non-negative numeric vector of degrees of freedom.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>one.minus</code></td>
+<td>
+<p>logical indicating if <code class="reqn">1 - b()</code> should be
+returned instead of <code class="reqn">b()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c1, c2</code></td>
+<td>
+<p>boundaries for different approximation intervals used:
+<br> for <code>0  &lt; nu &lt;= c1</code>, internal <code>b1()</code> is used,
+<br> for <code>c1 &lt; nu &lt;= c2</code>, internal <code>b2()</code> is used, and
+<br> for <code>c2 &lt; nu</code>, the <code>b_chiAsymp()</code> function is used,
+(and you can use that explicitly, also for smaller <code>nu</code>).
+</p>
+<p>FIXME: <code>c1</code> and <code>c2</code> were defined when the only asymptotic
+expansion known to me was the <code>order = 2</code> one.
+A future version of <code>b_chi</code> will <em>very likely</em> use
+<code>b_chiAsymp(*, order)</code> for higher orders, and the c1 and c2
+arguments will change, possibly be abolished.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>the polynomial order in <code class="reqn">\frac{1}{\nu}</code> of the
+asymptotic expansion of <code class="reqn">b_\chi(\nu)</code> for <code class="reqn">\nu\to\infty</code>.
+</p>
+<p>The default, <code>order = 2</code> corresponds to the order you can get
+out of the Abramowitz and Stegun (6.1.47) formula.
+Higher order expansions were derived using <code>Maple</code> by Martin Maechler
+in 2002, see below, but implemented in <code>b_chiAsymp()</code> only in 2018.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>One can see that <code>b_chi()</code> has the properties of a CDF of a
+continuous positive random variable:  It grows monotonely from
+<code class="reqn">b_\chi(0) = 0</code> to (asymptotically) one.  Specifically,
+for large <code>nu</code>, <code>b_chi(nu) = b_chiAsymp(nu)</code> and
+</p>
+<p style="text-align: center;"><code class="reqn">1 - b_\chi(\nu) \sim \frac{1}{4\nu}.</code>
+</p>
+
+<p>More accurately, derived from Abramowitz and Stegun, 6.1.47 (p.257)
+for a= 1/2, b=0,
+</p>
+<p style="text-align: center;"><code class="reqn">\Gamma(z + 1/2) / \Gamma(z) \sim \sqrt(z)*(1 - 1/(8z) + 1/(128 z^2) + O(1/z^3)),</code>
+</p>
+
+<p>and applied for <code class="reqn">b_\chi(\nu)</code> with <code class="reqn">z = \nu/2</code>, we get
+</p>
+<p style="text-align: center;"><code class="reqn">b_\chi(\nu) \sim 1 - (1/(4\nu) * (1 - 1/(8\nu)) + O(\nu^{-3})),</code>
+</p>
+
+<p>which has been implemented in <code>b_chiAsymp(*, order=2)</code> in 1999.
+</p>
+<p>Even more accurately, Martin Maechler, used Maple to derive an
+asymptotic expansion up to order 15, here reported up to order 5,
+namely with <code class="reqn">r := \frac{1}{4\nu}</code>,
+</p>
+<p style="text-align: center;"><code class="reqn">b_\chi(\nu) = c_\chi(r) = 1 - r + \frac{1}{2}r^2 +
+    \frac{5}{2}r^3 - \frac{21}{8}r^4 - \frac{399}{8}r^5 + O(r^6).</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>a numeric vector of the same length as <code>nu</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Johnson, Kotz,  Balakrishnan (1995)
+<em>Continuous Univariate Distributions</em>,
+Vol 2, 2nd Edition; Wiley;  
+Formula on page 520, after (31.26a)
+</p>
+<p>Abramowitz, M. and Stegun, I. A. (1972)
+<em>Handbook of Mathematical Functions</em>. New York: Dover.
+<a href="https://en.wikipedia.org/wiki/Abramowitz_and_Stegun">https://en.wikipedia.org/wiki/Abramowitz_and_Stegun</a> provides
+links to the full text which is in public domain.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>The t-distribution (base <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>) page <code>pt</code>;
+our <code>pntJW39()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">curve(b_chi, 0, 20); abline(h=0:1, v=0, lty=3)
+r &lt;- curve(b_chi, 1e-10, 1e5, log="x")
+with(r, lines(x, b_chi(x, one.minus=TRUE), col = 2))
+
+## Zoom in to c1-region
+rc1 &lt;- curve(b_chi, 340.5, 341.5, n=1001)# nothing to see
+e &lt;- 1e-3; curve(b_chi, 341-e, 341+e, n=1001) # nothing
+e &lt;- 1e-5; curve(b_chi, 341-e, 341+e, n=1001) # see noise, but no jump
+e &lt;- 1e-7; curve(b_chi, 341-e, 341+e, n=1001) # see float "granularity"+"jump"
+
+## Zoom in to c2-region
+rc2 &lt;- curve(b_chi, 999.5, 1001.5, n=1001) # nothing visible
+e &lt;- 1e-3; curve(b_chi, 1000-e, 1000+e, n=1001) # clear small jump
+c2 &lt;- 1500
+e &lt;- 1e-3; curve(b_chi(x,c2=c2), c2-e, c2+e, n=1001)# still
+## - - - -
+c2 &lt;- 3000
+e &lt;- 1e-3; curve(b_chi(x,c2=c2), c2-e, c2+e, n=1001)# ok asymp clearly better!!
+curve(b_chiAsymp, add=TRUE, col=adjustcolor("red", 1/3), lwd=3)
+if(requireNamespace("Rmpfr")) {
+ xm &lt;- Rmpfr::seqMpfr(c2-e, c2+e, length.out=1000)
+
+}
+## - - - -
+c2 &lt;- 4000
+e &lt;- 1e-3; curve(b_chi(x,c2=c2), c2-e, c2+e, n=1001)# ok asymp clearly better!!
+curve(b_chiAsymp, add=TRUE, col=adjustcolor("red", 1/3), lwd=3)
+
+grCol &lt;- adjustcolor("forest green", 1/2)
+curve(b_chi,                    1/2, 1e11, log="x")
+curve(b_chiAsymp, add = TRUE, col = grCol, lwd = 3)
+## 1-b(nu) ~= 1/(4 nu) a power function &lt;==&gt; linear in log-log scale:
+curve(b_chi(x, one.minus=TRUE), 1/2, 1e11, log="xy")
+curve(b_chiAsymp(x, one.minus=TRUE), add = TRUE, col = grCol, lwd = 3)
+
+
+</code></pre>
+
+
+</div>

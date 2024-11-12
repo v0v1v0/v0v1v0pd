@@ -1,0 +1,515 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>HDDM_W</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>KSWIN (Kolmogorov-Smirnov WINdowing) for Change Detection</h2>
+
+<h3>Description</h3>
+
+<p>Implements the Kolmogorov-Smirnov test for detecting distribution changes within
+a window of streaming data. KSWIN is a non-parametric method for change detection that compares
+two samples to determine if they come from the same distribution.
+</p>
+
+
+<h3>Details</h3>
+
+<p>KSWIN is effective for detecting changes in the underlying distribution of data streams.
+It is particularly useful in scenarios where data properties may evolve over time, allowing for
+early detection of changes that might affect subsequent data processing.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>drift_confidence</code></dt>
+<dd>
+<p>Confidence level for detecting a drift (default: 0.001).</p>
+</dd>
+<dt><code>warning_confidence</code></dt>
+<dd>
+<p>Confidence level for warning detection (default: 0.005).</p>
+</dd>
+<dt><code>lambda_option</code></dt>
+<dd>
+<p>Decay rate for the EWMA statistic, smaller values give less weight to recent data (default: 0.050).</p>
+</dd>
+<dt><code>two_side_option</code></dt>
+<dd>
+<p>Boolean flag for one-sided or two-sided error monitoring (default: TRUE).</p>
+</dd>
+<dt><code>total</code></dt>
+<dd>
+<p>Container for the EWMA estimator and its bounded conditional sum.</p>
+</dd>
+<dt><code>sample1_decr_monitor</code></dt>
+<dd>
+<p>First sample monitor for detecting decrements.</p>
+</dd>
+<dt><code>sample1_incr_monitor</code></dt>
+<dd>
+<p>First sample monitor for detecting increments.</p>
+</dd>
+<dt><code>sample2_decr_monitor</code></dt>
+<dd>
+<p>Second sample monitor for detecting decrements.</p>
+</dd>
+<dt><code>sample2_incr_monitor</code></dt>
+<dd>
+<p>Second sample monitor for detecting increments.</p>
+</dd>
+<dt><code>incr_cutpoint</code></dt>
+<dd>
+<p>Cutpoint for deciding increments.</p>
+</dd>
+<dt><code>decr_cutpoint</code></dt>
+<dd>
+<p>Cutpoint for deciding decrements.</p>
+</dd>
+<dt><code>width</code></dt>
+<dd>
+<p>Current width of the window.</p>
+</dd>
+<dt><code>delay</code></dt>
+<dd>
+<p>Delay count since last reset.</p>
+</dd>
+<dt><code>change_detected</code></dt>
+<dd>
+<p>Boolean indicating if a change was detected.</p>
+</dd>
+<dt><code>warning_detected</code></dt>
+<dd>
+<p>Boolean indicating if currently in a warning zone.</p>
+</dd>
+<dt><code>estimation</code></dt>
+<dd>
+<p>The current estimation of the stream's mean.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-HDDM_W-new"><code>HDDM_W$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-add_element"><code>HDDM_W$add_element()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-SampleInfo"><code>HDDM_W$SampleInfo()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-reset"><code>HDDM_W$reset()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-detect_mean_increment"><code>HDDM_W$detect_mean_increment()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-monitor_mean_incr"><code>HDDM_W$monitor_mean_incr()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-monitor_mean_decr"><code>HDDM_W$monitor_mean_decr()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-update_incr_statistics"><code>HDDM_W$update_incr_statistics()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-update_decr_statistics"><code>HDDM_W$update_decr_statistics()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_W-clone"><code>HDDM_W$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-HDDM_W-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Initializes the HDDM_W detector with specific parameters.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$new(
+  drift_confidence = 0.001,
+  warning_confidence = 0.005,
+  lambda_option = 0.05,
+  two_side_option = TRUE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>drift_confidence</code></dt>
+<dd>
+<p>Confidence level for drift detection.</p>
+</dd>
+<dt><code>warning_confidence</code></dt>
+<dd>
+<p>Confidence level for issuing warnings.</p>
+</dd>
+<dt><code>lambda_option</code></dt>
+<dd>
+<p>Decay rate for the EWMA statistic.</p>
+</dd>
+<dt><code>two_side_option</code></dt>
+<dd>
+<p>Whether to monitor both increases and decreases.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_W-add_element"></a>
+
+
+
+<h4>Method <code>add_element()</code>
+</h4>
+
+<p>Adds a new element to the data stream and updates the detection status.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$add_element(prediction)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>prediction</code></dt>
+<dd>
+<p>The new data value to add.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_W-SampleInfo"></a>
+
+
+
+<h4>Method <code>SampleInfo()</code>
+</h4>
+
+<p>Provides current information about the monitoring samples, typically used for debugging or monitoring.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$SampleInfo()</pre></div>
+
+
+<hr>
+<a id="method-HDDM_W-reset"></a>
+
+
+
+<h4>Method <code>reset()</code>
+</h4>
+
+<p>Resets the internal state to initial conditions.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$reset()</pre></div>
+
+
+<hr>
+<a id="method-HDDM_W-detect_mean_increment"></a>
+
+
+
+<h4>Method <code>detect_mean_increment()</code>
+</h4>
+
+<p>Detects an increment in the mean between two samples based on the provided confidence level.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$detect_mean_increment(sample1, sample2, confidence)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>sample1</code></dt>
+<dd>
+<p>First sample information, containing EWMA estimator and bounded conditional sum.</p>
+</dd>
+<dt><code>sample2</code></dt>
+<dd>
+<p>Second sample information, containing EWMA estimator and bounded conditional sum.</p>
+</dd>
+<dt><code>confidence</code></dt>
+<dd>
+<p>The confidence level used for calculating the bound.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Boolean indicating if an increment in mean was detected.
+</p>
+
+
+<hr>
+<a id="method-HDDM_W-monitor_mean_incr"></a>
+
+
+
+<h4>Method <code>monitor_mean_incr()</code>
+</h4>
+
+<p>Monitors the data stream for an increase in the mean based on the set confidence level.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$monitor_mean_incr(confidence)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>confidence</code></dt>
+<dd>
+<p>The confidence level used to detect changes in the mean.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Boolean indicating if an increase in the mean was detected.
+</p>
+
+
+<hr>
+<a id="method-HDDM_W-monitor_mean_decr"></a>
+
+
+
+<h4>Method <code>monitor_mean_decr()</code>
+</h4>
+
+<p>Monitors the data stream for a decrease in the mean based on the set confidence level.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$monitor_mean_decr(confidence)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>confidence</code></dt>
+<dd>
+<p>The confidence level used to detect changes in the mean.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Boolean indicating if a decrease in the mean was detected.
+</p>
+
+
+<hr>
+<a id="method-HDDM_W-update_incr_statistics"></a>
+
+
+
+<h4>Method <code>update_incr_statistics()</code>
+</h4>
+
+<p>Updates increment statistics for drift monitoring based on new values and confidence.
+This method adjusts the cutpoint for increments and updates the monitoring samples.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$update_incr_statistics(value, confidence)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The new value to update statistics.</p>
+</dd>
+<dt><code>confidence</code></dt>
+<dd>
+<p>The confidence level for the update.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_W-update_decr_statistics"></a>
+
+
+
+<h4>Method <code>update_decr_statistics()</code>
+</h4>
+
+<p>Updates decrement statistics for drift monitoring based on new values and confidence.
+This method adjusts the cutpoint for decrements and updates the monitoring samples.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$update_decr_statistics(value, confidence)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>value</code></dt>
+<dd>
+<p>The new value to update statistics.</p>
+</dd>
+<dt><code>confidence</code></dt>
+<dd>
+<p>The confidence level for the update.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_W-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_W$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>References</h3>
+
+<p>Frías-Blanco I, del Campo-Ávila J, Ramos-Jimenez G, et al. Online and non-parametric drift detection methods based
+on Hoeffding’s bounds. IEEE Transactions on Knowledge and Data Engineering, 2014, 27(3): 810-823.
+</p>
+<p>Albert Bifet, Geoff Holmes, Richard Kirkby, Bernhard Pfahringer. MOA: Massive Online Analysis;
+Journal of Machine Learning Research 11: 1601-1604, 2010.
+Implementation: https://github.com/scikit-multiflow/scikit-multiflow/blob/a7e316d1cc79988a6df40da35312e00f6c4eabb2/src/skmultiflow/drift_detection/hddm_w.py
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(123)  # Setting a seed for reproducibility
+data_part1 &lt;- sample(c(0, 1), size = 100, replace = TRUE, prob = c(0.7, 0.3))
+
+# Introduce a change in data distribution
+data_part2 &lt;- sample(c(0, 1), size = 100, replace = TRUE, prob = c(0.3, 0.7))
+
+# Combine the two parts
+data_stream &lt;- c(data_part1, data_part2)
+
+# Initialize the HDDM_W object
+hddm_w_instance &lt;- HDDM_W$new()
+
+# Iterate through the data stream
+for(i in seq_along(data_stream)) {
+  hddm_w_instance$add_element(data_stream[i])
+  if(hddm_w_instance$warning_detected) {
+    message(paste("Warning detected at index:", i))
+  }
+  if(hddm_w_instance$change_detected) {
+    message(paste("Concept drift detected at index:", i))
+  }
+}
+</code></pre>
+
+
+</div>

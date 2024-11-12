@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_distance_matrix</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Diffusion Distance Matrix</h2>
+
+<h3>Description</h3>
+
+<p>Returns a matrix where each entry encodes the diffusion distance
+between two nodes of a network.
+</p>
+<p>The diffusion distance at time <code class="reqn">\tau</code> between nodes <code class="reqn">i, j \in G</code>
+is defined as
+</p>
+<p style="text-align: center;"><code class="reqn">D_{\tau}(i, j) = \vert \mathbf{p}(t|i) - \mathbf{p}(t|j) \vert_2</code>
+</p>
+
+<p>with <code class="reqn">\mathbf{p}(t|i) = (e^{- \tau L})_{i\cdot} = \mathbf{e}_i e^{- \tau L}</code>
+indicating the i-th row of the stochastic matrix <code class="reqn">e^{- \tau L}</code> and
+representing the probability (row) vector of a random walk dynamics
+corresponding to the initial condition <code class="reqn">\mathbf{e}_i</code>, i.e. the random
+walker is in node <code class="reqn">i</code> at time <code class="reqn">\tau = 0</code> with probability 1.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_distance_matrix(
+  g,
+  tau,
+  type = "Normalized Laplacian",
+  weights = NULL,
+  as_dist = FALSE,
+  verbose = TRUE
+)
+
+getDistanceMatrix(g, tau, type = "Normalized Laplacian", weights = NULL,
+                         verbose = TRUE)
+
+get_DDM(
+  g,
+  tau,
+  type = "Normalized Laplacian",
+  weights = NULL,
+  as_dist = FALSE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>g</code></td>
+<td>
+<p>a (single-layer) network</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>diffusion time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>default "Normalized Laplacian". The type of Laplacian (i.e. of
+dynamics) to consider. Other types available are:
+</p>
+
+<dl>
+<dt>Laplacian</dt>
+<dd>
+<p>for the classical combinatorial Laplacian matrix;
+it governs the diffusion dynamics on the network</p>
+</dd>
+<dt>Normalized Laplacian</dt>
+<dd>
+<p>for the Laplacian matrix normalized by degree
+matrix, the so-called classical random walk normalized Laplacian;
+it governs stochastic walks on the network</p>
+</dd>
+<dt>Quantum Laplacian</dt>
+<dd>
+<p>for the Laplacian matrix normalized to be
+symmetric; it governs quantum walks on the network</p>
+</dd>
+<dt>MERW normalized Laplacian</dt>
+<dd>
+<p>the maximal-entropy random walk (RW)
+normalized Laplacian; it governs stochastic walks on the network,
+in which the random walker moves according to a maximal-entropy RW [1].</p>
+</dd>
+</dl>
+<p>Note that you can type abbreviations, e.g. "L", "N", "Q", "M" for the
+respective types (case is ignored). The argument match is done through
+<code>match_arg</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>edge weights, representing the strength/intensity (not the cost!)
+of each link. If weights is NULL (the default) and g has an edge attribute
+called weight, then it will be used automatically.
+If this is NA then no weights are used (even if the graph has a weight attribute).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_dist</code></td>
+<td>
+<p>If the function should return a matrix or an object of class "dist" as
+returned from [stats::as.dist]. Default is FALSE if the number of nodes is smaller
+than 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>default TRUE</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The diffusion distance matrix <code class="reqn">D_t</code>, a square numeric matrix
+of the <code class="reqn">L^2</code>-norm distances between posterior probability vectors, i.e.
+Euclidean distances between the rows of the stochastic matrix
+<code class="reqn">P(t) = e^{-\tau L}</code>, where <code class="reqn">-L = -(I - T)</code> is the generator of the
+continuous-time random walk (Markov chain) of given <code>type</code> over network
+<code>g</code>.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul><li> <p><code>getDistanceMatrix()</code>: Old deprecated function
+</p>
+</li></ul>
+<h3>References</h3>
+
+<p>De Domenico, M. (2017). Diffusion Geometry Unravels the Emergence of
+Functional Clusters in Collective Phenomena. Physical Review Letters.
+<a href="https://doi.org/10.1103/PhysRevLett.118.168301">doi:10.1103/PhysRevLett.118.168301</a>
+</p>
+<p>Bertagnolli, G., &amp; De Domenico, M. (2021). Diffusion geometry of multiplex and
+interdependent systems. Physical Review E, 103(4), 042301.
+<a href="https://doi.org/10.1103/PhysRevE.103.042301">doi:10.1103/PhysRevE.103.042301</a>
+<a href="https://arxiv.org/abs/2006.13032">arXiv: 2006.13032</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>get_diffusion_probability_matrix</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">g &lt;- igraph::sample_pa(10, directed = FALSE)
+dm_crw &lt;- get_distance_matrix(g, tau = 1)
+dm_merw &lt;- get_distance_matrix(g, tau = 1, type = "MERW")
+</code></pre>
+
+
+</div>

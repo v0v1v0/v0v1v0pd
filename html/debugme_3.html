@@ -1,0 +1,141 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>debugme</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Debug R Packages</h2>
+
+<h3>Description</h3>
+
+<p>Specify debug messages as special string constants, and control
+debugging of packages via environment variables.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">debugme(env = topenv(parent.frame()), pkg = environmentName(env))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>Environment to instument debugging in. Defaults to the
+package environment of the calling package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pkg</code></td>
+<td>
+<p>Name of the calling package. The default should be fine
+for almost all cases.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To add debugging to your package, you need to
+</p>
+
+<ol>
+<li>
+<p> Import the <code>debugme</code> package.
+</p>
+</li>
+<li>
+<p> Define an <code>.onLoad</code> function in your package, that calls <code>debugme</code>.
+An example:
+</p>
+<div class="sourceCode r"><pre>.onLoad &lt;- function(libname, pkgname) { debugme::debugme() }
+</pre></div>
+</li>
+</ol>
+<p>By default debugging is off. To turn on debugging, set the <code>DEBUGME</code>
+environment variable to the names of the packages you want to debug.
+Package names can be separated by commas.
+</p>
+<p>This environment variable is read when the package is loaded,
+and with every call to <code>debugme()</code>.
+</p>
+<p>Example <code>debugme</code> entries:
+</p>
+<div class="sourceCode"><pre>"!DEBUG Start Shiny app"
+</pre></div>
+
+
+<h3>Dynamic debug messsages</h3>
+
+<p>It is often desired that the debug messages contain values of R
+expressions evaluated at runtime. For example, when starting a Shiny
+app, it is useful to also print out the path to the app. Similarly,
+when debugging an HTTP response, it is desired to log the HTTP status
+code.
+</p>
+<p><code>debugme</code> allows embedding R code into the debug messages, within
+backticks. The code will be evaluated at runtime. Here are some
+examples:
+</p>
+<div class="sourceCode"><pre>"!DEBUG Start Shiny app at `path`"
+"!DEBUG Got HTTP response `httr::status_code(reponse)`"
+</pre></div>
+<p>Note that parsing the debug strings for code is not very sophisticated
+currently, and you cannot embed backticks into the code itself.
+</p>
+
+
+<h3>Log levels</h3>
+
+<p><code>debugme</code> has two ways to organize log messages into log levels:
+a quick informal way, and a more formal one.
+</p>
+<p>For the informal way, you can start the <code>!DEBUG</code> token with multiple
+<code>!</code> characters. You can then select the desired level of logging via
+<code>!</code> characters before the package name in the <code>DEBUGME</code> environment
+variable. E.g. <code>DEBUGME=!!mypackage</code> means that only debug messages
+with two or less <code>!</code> marks will be printed.
+</p>
+<p>A more formal way is to use log level names: <code>"FATAL"</code>, <code>"ERROR"</code>,
+<code>"WARNING"</code>, <code>"INFO"</code>, <code>"DEBUG"</code>, and <code>"VERBOSE"</code>. To specify the log
+level of the message, append the log level to <code>"!DEBUG"</code>, with a dash.
+E.g.:
+</p>
+<div class="sourceCode"><pre>"!DEBUG-INFO Just letting you know that..."
+</pre></div>
+<p>To select the log level of a package, you can specify the level either
+with the number of <code>!</code> characters, as above, or adding the log level
+as a suffix to the package name, separated by a dash. E.g.:
+</p>
+<div class="sourceCode"><pre>Sys.setenv(DEBUGME = "mypackage-INFO")
+</pre></div>
+<p>(Use either methods to set the log level, but do not mix them.)
+</p>
+
+
+<h3>Debug stack</h3>
+
+<p>By default <code>debugme</code> prints the <em>debug stack</em> at the beginning of
+the debug messages. The debug stack contains the functions in the call
+stack that have (and emit) debug messages. To suppress printing the call
+stack set the <code>DEBUGME_SHOW_STACK</code> environment variable to <code>no</code>.
+</p>
+
+
+<h3>Redirecting the output</h3>
+
+<p>If the <code>DEBUGME_OUTPUT_FILE</code> environment variable is set to
+a filename, then the output is written there instead of the standard
+output stream of the R process.
+</p>
+<p>If <code>DEBUGME_OUTPUT_FILE</code> is not set, but <code>DEBUGME_OUTPUT_DIR</code> is, then
+a log file is created there, and the name of the file will contain
+the process id. This is is useful for logging from several parallel R
+processes.
+</p>
+
+
+</div>

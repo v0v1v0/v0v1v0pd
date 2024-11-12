@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dmbc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimation of a DMBC model.</h2>
+
+<h3>Description</h3>
+
+<p><code>dmbc()</code>, the main function of the package, estimates a DMBC model
+for a given set of <em>S</em> dissimilarity matrices.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dmbc(
+  data,
+  p = 2,
+  G = 3,
+  control = dmbc_control(),
+  prior = NULL,
+  cl = NULL,
+  post_all = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An object of class <code>dmbc_data</code> containing the data
+to analyze.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>A length-one numeric vector indicating the number of dimensions of the
+latent space.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>A length-one numeric vector indicating the number of cluster to
+partition the <em>S</em> subjects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters that affect the sampling
+but do not affect the posterior distribution. See
+<code>dmbc_control()</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>A list containing the prior hyperparameters. See
+<code>dmbc_prior()</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>An optional <span class="pkg">parallel</span> or
+<span class="pkg"><a href="https://CRAN.R-project.org/package=snow">snow</a></span>
+cluster for use if <code>parallel = "snow"</code>. If not supplied, a cluster
+on the local machine is created for the duration of the <code>dmbc()</code> call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post_all</code></td>
+<td>
+<p>A length-one logical vector, which if TRUE applies a further
+post-processing to the simulated chains (in case these are more than one).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>dmbc_fit_list</code> object.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sergio Venturini <a href="mailto:sergio.venturini@unicatt.it">sergio.venturini@unicatt.it</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Venturini, S., Piccarreta, R. (2021), "A Bayesian Approach for Model-Based
+Clustering of Several Binary Dissimilarity Matrices: the <span class="pkg">dmbc</span>
+Package in <code>R</code>", Journal of Statistical Software, 100, 16, 1–35, &lt;10.18637/jss.v100.i16&gt;.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>bmds</code> for Bayesian (metric) multidimensional scaling.
+</p>
+<p><code>dmbc_data</code> for a description of the data format.
+</p>
+<p><code>dmbc_fit_list</code> for a description of the elements
+included in the returned object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+data(simdiss, package = "dmbc")
+
+G &lt;- 3
+p &lt;- 2
+prm.prop &lt;- list(z = 1.5, alpha = .75)
+burnin &lt;- 20000
+nsim &lt;- 10000
+seed &lt;- 2301
+
+set.seed(seed)
+
+control &lt;- list(burnin = burnin, nsim = nsim, z.prop = prm.prop[["z"]],
+  alpha.prop = prm.prop[["alpha"]], random.start = TRUE, verbose = TRUE,
+  nchains = 2, thin = 10, store.burnin = TRUE, threads = 2,
+  parallel = "snow")
+sim.dmbc &lt;- dmbc(simdiss, p, G, control)
+
+summary(sim.dmbc, include.burnin = FALSE)
+
+library(bayesplot)
+library(ggplot2)
+color_scheme_set("teal")
+plot(sim.dmbc, what = "trace", regex_pars = "eta")
+
+z &lt;- dmbc_get_configuration(sim.dmbc, chain = 1, est = "mean",
+  labels = 1:16)
+summary(z)
+color_scheme_set("mix-pink-blue")
+graph &lt;- plot(z, size = 2, size_lbl = 3)
+graph + panel_bg(fill = "gray90", color = NA)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lfo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Approximate Leave-Future-Out (LFO) Cross-validation</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the leave-future-out (LFO) information criterion for <code>dynamite</code>
+models using Pareto smoothed importance sampling.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lfo(x, ...)
+
+## S3 method for class 'dynamitefit'
+lfo(x, L, verbose = TRUE, k_threshold = 0.7, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>[<code>dynamitefit</code>]<br> The model fit object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>rstan::sampling()</code> or
+<code>cmdstanr::sample()</code>, such as <code>chains</code> and <code>cores</code> (<code>parallel_chains</code> in
+<code>cmdstanr</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> Positive integer defining how many time points
+should be used for the initial fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code> (default), print the progress of
+the LFO computations to the console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k_threshold</code></td>
+<td>
+<p>[<code>numeric(1)</code>]<br> Threshold for the Pareto k estimate
+triggering refit. Default is 0.7.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For multichannel models, the log-likelihoods of all channels are combined.
+For models with groups, expected log predictive densities (ELPDs) are
+computed independently for each group, but the re-estimation of the model
+is triggered if pareto k values of any group exceeds the threshold.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>lfo</code> object which is a <code>list</code> with the following components:
+</p>
+
+<ul>
+<li> <p><code>ELPD</code><br> Expected log predictive density estimate.
+</p>
+</li>
+<li> <p><code>ELPD_SE</code><br> Standard error of ELPD. This is a crude approximation which
+does not take into account potential serial correlations.
+</p>
+</li>
+<li> <p><code>pareto_k</code><br> Pareto k values.
+</p>
+</li>
+<li> <p><code>refits</code><br> Time points where model was re-estimated.
+</p>
+</li>
+<li> <p><code>L</code><br> L value used in the LFO estimation.
+</p>
+</li>
+<li> <p><code>k_threshold</code><br> Threshold used in the LFO estimation.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Paul-Christian Bürkner, Jonah Gabry, and Aki Vehtari (2020).
+Approximate leave-future-out cross-validation for Bayesian time series
+models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Model diagnostics
+<code>hmc_diagnostics()</code>,
+<code>loo.dynamitefit()</code>,
+<code>mcmc_diagnostics()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data.table::setDTthreads(1) # For CRAN
+
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  # this gives warnings due to the small number of iterations
+  out &lt;- suppressWarnings(
+    lfo(gaussian_example_fit, L = 20, chains = 1, cores = 1)
+  )
+  out$ELPD
+  out$ELPD_SE
+  plot(out)
+}
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,71 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drake-package</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>drake: A pipeline toolkit for reproducible computation at scale.</h2>
+
+<h3>Description</h3>
+
+<p>drake is a pipeline toolkit
+(<code style="white-space: pre;">⁠https://github.com/pditommaso/awesome-pipeline⁠</code>)
+and a scalable, R-focused solution for reproducibility
+and high-performance computing.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>William Michael Landau <a href="mailto:will.landau@gmail.com">will.landau@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p><code style="white-space: pre;">⁠https://github.com/ropensci/drake⁠</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("Quarantine side effects.", {
+if (suppressWarnings(require("knitr"))) {
+library(drake)
+load_mtcars_example() # Get the code with drake_example("mtcars").
+make(my_plan) # Build everything.
+plot(my_plan) # fast call to vis_drake_graph()
+make(my_plan) # Nothing is done because everything is already up to date.
+reg2 = function(d) { # Change one of your functions.
+  d$x3 = d$x^3
+  lm(y ~ x3, data = d)
+}
+make(my_plan) # Only the pieces depending on reg2() get rebuilt.
+# Write a flat text log file this time.
+make(my_plan, cache_log_file = TRUE)
+# Read/load from the cache.
+readd(small)
+loadd(large)
+head(large)
+}
+# Dynamic branching
+# Get the mean mpg for each cyl in the mtcars dataset.
+plan &lt;- drake_plan(
+  raw = mtcars,
+  group_index = raw$cyl,
+  munged = target(raw[, c("mpg", "cyl")], dynamic = map(raw)),
+  mean_mpg_by_cyl = target(
+    data.frame(mpg = mean(munged$mpg), cyl = munged$cyl[1]),
+    dynamic = group(munged, .by = group_index)
+  )
+)
+make(plan)
+readd(mean_mpg_by_cyl)
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

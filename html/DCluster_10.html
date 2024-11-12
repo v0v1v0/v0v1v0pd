@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bn.iscluster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Clustering Function for Besag and Newell's Method</h2>
+
+<h3>Description</h3>
+
+<p>This function is used to calculate the significance of the agregation
+of cases around the current area when scanning the whole
+area by means of function <em>opgam</em>.
+</p>
+<p>When data sampling distribution is  <em>multinomial</em> or <em>poisson</em> 
+the exact p-value is computed. In the other cases (i.e.,
+permutation and negative binomial) it is aproximated by bootstrap.
+</p>
+<p>This function must be passed to function <em>opgam</em> as argument
+<em>iscluster</em>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bn.iscluster(data, idx, idxorder, alpha, k, model="poisson", R=999, mle)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe with the data as explained in <em>DCluster</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idx</code></td>
+<td>
+<p>A boolean vector to know the areas in the current circle.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idxorder</code></td>
+<td>
+<p>A permutation of the rows of data to order the regions
+according to their distance to the current centre.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Test significance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Size of the cluster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Thge model used to generate random observations. It can be
+'permutation', 'multinomial', 'poisson' or 'negbin'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>Number of bootstrap replicates made to compute pvalue if
+the local test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mle</code></td>
+<td>
+<p>Parameters needed to compute the Negative Binomial distribution (if used). See <em>negbin.sim</em> manual page for details.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A vector of four elements, as described in <em>iscluster</em> manual page.
+</p>
+
+
+<h3>References</h3>
+
+<p>Besag, J. and Newell, J.(1991). The detection of clusters in rare diseases.
+Journal of the Royal Statistical Society A  154, 143-155.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>DCluster, besagnewell, besagnewell.boot, besagnewell.pboot
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(boot)
+library(spdep)
+
+data(nc.sids)
+
+sids&lt;-data.frame(Observed=nc.sids$SID74)
+sids&lt;-cbind(sids, Expected=nc.sids$BIR74*sum(nc.sids$SID74)/sum(nc.sids$BIR74))
+sids&lt;-cbind(sids, x=nc.sids$x, y=nc.sids$y)
+
+#B&amp;N's method
+bnresults&lt;-opgam(data=sids, thegrid=sids[,c("x","y")], alpha=.05, 
+	iscluster=bn.iscluster, k=20, R=100, model="poisson", 
+	mle=calculate.mle(sids))
+
+#Plot all centroids and significant ones in red
+plot(sids$x, sids$y, main="Besag &amp; Newell's method")
+points(bnresults$x, bnresults$y, col="red", pch=19)
+</code></pre>
+
+
+</div>

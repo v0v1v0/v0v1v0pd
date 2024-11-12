@@ -1,0 +1,129 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot.model_performance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot Dataset Level Model Performance Explanations</h2>
+
+<h3>Description</h3>
+
+<p>Plot Dataset Level Model Performance Explanations
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'model_performance'
+plot(
+  x,
+  ...,
+  geom = "ecdf",
+  show_outliers = 0,
+  ptlabel = "name",
+  lossFunction = loss_function,
+  loss_function = function(x) sqrt(mean(x^2))
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a model to be explained, preprocessed by the <code>explain</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geom</code></td>
+<td>
+<p>either <code>"prc"</code>, <code>"roc"</code>, <code>"ecdf"</code>, <code>"boxplot"</code>, <code>"gain"</code>, <code>"lift"</code> or <code>"histogram"</code> determines how residuals shall be summarized</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_outliers</code></td>
+<td>
+<p>number of largest residuals to be presented (only when geom = boxplot).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ptlabel</code></td>
+<td>
+<p>either <code>"name"</code> or <code>"index"</code> determines the naming convention of the outliers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lossFunction</code></td>
+<td>
+<p>alias for <code>loss_function</code> held for backwards compatibility.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss_function</code></td>
+<td>
+<p>function that calculates the loss for a model based on model residuals. By default it's the root mean square. NOTE that this argument was called <code>lossFunction</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class <code>model_performance</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> 
+library("ranger")
+titanic_ranger_model &lt;- ranger(survived~., data = titanic_imputed, num.trees = 50,
+                               probability = TRUE)
+explainer_ranger  &lt;- explain(titanic_ranger_model, data = titanic_imputed[,-8],
+                             y = titanic_imputed$survived)
+mp_ranger &lt;- model_performance(explainer_ranger)
+plot(mp_ranger)
+plot(mp_ranger, geom = "boxplot", show_outliers = 1)
+
+titanic_ranger_model2 &lt;- ranger(survived~gender + fare, data = titanic_imputed,
+                                num.trees = 50, probability = TRUE)
+explainer_ranger2  &lt;- explain(titanic_ranger_model2, data = titanic_imputed[,-8],
+                              y = titanic_imputed$survived,
+                              label = "ranger2")
+mp_ranger2 &lt;- model_performance(explainer_ranger2)
+plot(mp_ranger, mp_ranger2, geom = "prc")
+plot(mp_ranger, mp_ranger2, geom = "roc")
+plot(mp_ranger, mp_ranger2, geom = "lift")
+plot(mp_ranger, mp_ranger2, geom = "gain")
+plot(mp_ranger, mp_ranger2, geom = "boxplot")
+plot(mp_ranger, mp_ranger2, geom = "histogram")
+plot(mp_ranger, mp_ranger2, geom = "ecdf")
+
+titanic_glm_model &lt;- glm(survived~., data = titanic_imputed, family = "binomial")
+explainer_glm &lt;- explain(titanic_glm_model, data = titanic_imputed[,-8],
+                         y = titanic_imputed$survived, label = "glm",
+                    predict_function = function(m,x) predict.glm(m,x,type = "response"))
+mp_glm &lt;- model_performance(explainer_glm)
+plot(mp_glm)
+
+titanic_lm_model &lt;- lm(survived~., data = titanic_imputed)
+explainer_lm &lt;- explain(titanic_lm_model, data = titanic_imputed[,-8],
+                        y = titanic_imputed$survived, label = "lm")
+mp_lm &lt;- model_performance(explainer_lm)
+plot(mp_lm)
+
+plot(mp_ranger, mp_glm, mp_lm)
+plot(mp_ranger, mp_glm, mp_lm, geom = "boxplot")
+plot(mp_ranger, mp_glm, mp_lm, geom = "boxplot", show_outliers = 1)
+
+
+</code></pre>
+
+
+</div>

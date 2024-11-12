@@ -1,0 +1,277 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bd_ML</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximization of the loglikelihood under the diversity-independent, possibly
+time-dependent diversification model</h2>
+
+<h3>Description</h3>
+
+<p>This function computes the maximum likelihood estimates of the parameters of
+a diversity-independent diversification model for a given set of
+phylogenetic branching times.  It also outputs the corresponding
+loglikelihood that can be used in model comparisons.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bd_ML(
+  brts,
+  initparsopt = c(0.1, 0.05 * (tdmodel &lt;= 1) + 10 * (length(brts) + missnumspec) *
+    (tdmodel &gt; 1)),
+  idparsopt = c(1, 2 + (tdmodel &gt; 1)),
+  idparsfix = (1:4)[-idparsopt],
+  parsfix = rep(0, 4)[idparsfix],
+  missnumspec = 0,
+  tdmodel = 0,
+  cond = 1,
+  btorph = 1,
+  soc = 2,
+  tol = c(0.001, 1e-04, 1e-06),
+  maxiter = 1000 * round((1.25)^length(idparsopt)),
+  changeloglikifnoconv = FALSE,
+  optimmethod = "subplex",
+  num_cycles = 1,
+  methode = "odeint::runge_kutta_cash_karp54",
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>brts</code></td>
+<td>
+<p>A set of branching times of a phylogeny, all positive</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initparsopt</code></td>
+<td>
+<p>The initial values of the parameters that must be
+optimized</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idparsopt</code></td>
+<td>
+<p>The ids of the parameters that must be optimized, e.g. 1:3
+for intrinsic speciation rate, extinction rate and carrying capacity.  The
+ids are defined as follows: <br> id == 1 corresponds to lambda0 (speciation
+rate) <br> id == 2 corresponds to mu0 (extinction rate) <br> id == 3
+corresponds to lamda1 (parameter controlling decline in speciation rate with
+time) <br> id == 4 corresponds to mu1 (parameter controlling decline in
+extinction rate with time)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idparsfix</code></td>
+<td>
+<p>The ids of the parameters that should not be optimized,
+e.g. c(1,3) if lambda0 and lambda1 should not be optimized, but only mu0 and
+mu1. In that case idparsopt must be c(2,4). The default is to fix all
+parameters not specified in idparsopt.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parsfix</code></td>
+<td>
+<p>The values of the parameters that should not be optimized</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missnumspec</code></td>
+<td>
+<p>The number of species that are in the clade but missing
+in the phylogeny</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdmodel</code></td>
+<td>
+<p>Sets the model of time-dependence: <br>
+tdmodel == 0 : constant speciation and extinction rates <br>
+tdmodel == 1 : speciation and/or extinction rate is exponentially declining
+with time <br>
+tdmodel == 2 : stepwise decline in speciation rate as in diversity-dependence
+without extinction <br>
+tdmodel == 3 : decline in speciation rate following deterministic logistic
+equation for ddmodel = 1 <br>
+tdmodel == 4 : decline in speciation rate such that the expected number of species matches with
+that of ddmodel = 1 with the same mu</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cond</code></td>
+<td>
+<p>Conditioning: <br>
+cond == 0 : conditioning on stem or crown age <br>
+cond == 1 : conditioning on stem or crown age and non-extinction of the
+phylogeny <br>
+cond == 2 : conditioning on stem or crown age and on the total
+number of extant taxa (including missing species) <br>
+cond == 3 : conditioning on the total number of extant taxa (including missing species)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>btorph</code></td>
+<td>
+<p>Sets whether the likelihood is for the branching times (0) or
+the phylogeny (1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>soc</code></td>
+<td>
+<p>Sets whether stem or crown age should be used (1 or 2)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>Sets the tolerances in the optimization. Consists of: <br>
+reltolx = relative tolerance of parameter values in optimization <br>
+reltolf = relative tolerance of function value in optimization <br>
+abstolx = absolute tolerance of parameter values in optimization</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxiter</code></td>
+<td>
+<p>Sets the maximum number of iterations in the optimization</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>changeloglikifnoconv</code></td>
+<td>
+<p>if TRUE the loglik will be set to -Inf if ML
+does not converge</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimmethod</code></td>
+<td>
+<p>Method used in optimization of the likelihood. Current
+default is 'subplex'. Alternative is 'simplex' (default of previous
+versions)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_cycles</code></td>
+<td>
+<p>the number of cycles of opimization. If set at Inf, it will
+do as many cycles as needed to meet the tolerance set for the target function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>methode</code></td>
+<td>
+<p>The method used to solve the master equation under tdmodel =
+4, default is 'odeint::runge_kutta_cash_karp54'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Show the parameters and loglikelihood for every call to the
+loglik function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The output is a dataframe containing estimated parameters and maximum
+loglikelihood. The computed loglikelihood contains the factor q! m! / (q +
+m)! where q is the number of species in the phylogeny and m is the number of
+missing species, as explained in the supplementary material to Etienne et
+al. 2012.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dataframe with the following elements:<br></p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda0</code></td>
+<td>
+<p> gives the maximum likelihood estimate of lambda0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu0</code></td>
+<td>
+<p> gives the maximum likelihood estimate of mu0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda1</code></td>
+<td>
+<p>gives the maximum likelihood estimate of lambda1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu1</code></td>
+<td>
+<p> gives the
+maximum likelihood estimate of mu1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p> gives the maximum
+loglikelihood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p> gives the number of estimated parameters, i.e.
+degrees of feedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conv</code></td>
+<td>
+<p> gives a message on convergence of optimization; conv = 0 means
+convergence</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Rampal S. Etienne &amp; Bart Haegeman
+</p>
+
+
+<h3>References</h3>
+
+<p>- Etienne, R.S. et al. 2012, Proc. Roy. Soc. B 279: 1300-1309,
+doi: 10.1098/rspb.2011.1439 <br> - Etienne, R.S. &amp; B. Haegeman 2012. Am. Nat.
+180: E75-E89, doi: 10.1086/667574
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>bd_loglik</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+cat("Estimating parameters for a set of branching times brts with the default settings:")
+brts = 1:20
+bd_ML(brts = brts, cond = 1)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,199 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>GeneratePswarmVisualization</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Generates the Umatrix for Pswarm algorithm
+</h2>
+
+<h3>Description</h3>
+
+<p>DBS is a flexible and robust clustering framework that consists
+of three independent modules. The first module is the parameter-free
+projection method Pswarm <code>Pswarm</code>, which exploits the concepts of self-organization
+and emergence, game theory, swarm intelligence and symmetry considerations. 
+The second module is a parameter-free high-dimensional data visualization technique, 
+which generates projected points on a topographic map with hypsometric colors <code>GeneratePswarmVisualization</code>, 
+called the generalized U-matrix. The third module is a clustering method with no 
+sensitive parameters <code>DBSclustering</code>. The clustering can be verified by the visualization and vice versa. 
+The term DBS refers to the method as a whole. 
+</p>
+<p>The <code>GeneratePswarmVisualization</code> function generates the special case (please see [Thrun, 2018]) of the generalized Umatrix with the help of an unsupervised neural network (simplified emergent self-organizing map  published in [Thrun/Ultsch, 2020]). From the generalized Umatrix a topographic map with hypsometric tints can be visualized. To see this visualization use <code>plotTopographicMap</code> of the package <span class="pkg">GeneralizedUmatrix</span>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">GeneratePswarmVisualization(Data, ProjectedPoints, LC, PlotIt=FALSE,
+ComputeInR=FALSE, Parallel=TRUE, Tiled = FALSE, DataPerEpoch = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>[1:n,1:d] array of data: n cases in rows, d variables in columns</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ProjectedPoints</code></td>
+<td>
+<p>matrix, ProjectedPoints[1:n,1:2]  n by 2 matrix containing coordinates of the Projection: A matrix of the fitted configuration. see output of <code>Pswarm</code> for further details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LC</code></td>
+<td>
+<p>size of the grid c(Lines,Columns), number of Lines and Columns automatic calculated by <code>setGridSize</code> in <code>Pswarm</code>
+</p>
+<p>Sometimes is better to choose a different grid size, e.g. to to reduce computional effort
+contrary to SOM, here the grid size defined only the resolution of the visualizations
+The real grid size is predfined by Pswarm, but you may choose a factor x*res$LC if you so desire.
+Therefore, The resulting grid size is given back in the Output.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PlotIt</code></td>
+<td>
+<p>Optional, default(FALSE), If TRUE than uses <code>plotTopographicMap</code> of the package GeneralizedUmatrix is plotted as a topview in the tiled option, see details for explanation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ComputeInR</code></td>
+<td>
+<p>Optional, =TRUE: Rcode, =FALSE C++ implementation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Parallel</code></td>
+<td>
+<p>Optional, =TRUE: Parallel C++ implementation, =FALSE Sequential C++ implementation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tiled</code></td>
+<td>
+<p>Optional, =TRUE: arrangement of four grids for better understanding of edge behaviour, =FALSE: single grid.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DataPerEpoch</code></td>
+<td>
+<p>Optional: Number between 0 and 1 stating the ratio of data per epoch for training of the generalized u-matrix approach.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Tiled: The topographic map is visualized 4 times because the projection is toroidal. The reason is that there are no border in the visualizations and clusters (if they exist) are not disrupted by borders of the plot.
+</p>
+<p>If you used <code>Pswarm</code> with distance matrix instead of a data matrix (in the sense that you do not have any data matrix available), you may transform your distances into data by using <code>MDS</code> of the <span class="pkg">ProjectionBasedClustering</span> package in order to use the <code>GeneratePswarmVisualization</code> function. The correct dimension can be found through the Sheppard diagram or kruskals stress.
+</p>
+
+
+<h3>Value</h3>
+
+<p>list of
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Bestmatches</code></td>
+<td>
+<p>matrix [1:n,1:2], BestMatches of the Umatrix, contrary to ESOM they are always fixed, because predefined by GridPoints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Umatrix</code></td>
+<td>
+<p>matrix [1:Lines,1:Columns],</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>WeightsOfNeurons</code></td>
+<td>
+<p>array [1:Lines,1:Columns,1:d], d is the dimension of the weights, the same as in the ESOM algorithm</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GridPoints</code></td>
+<td>
+<p>matrix [1:n,1:2],quantized projected points: projected points now lie on a predefined grid.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LC</code></td>
+<td>
+<p>c(Lines,Columns), normally equal to grid size of Pswarm, sometimes it a better or a lower resolution for the visualization is better.
+Therefore here the grid size of the neurons is given back.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PlotlyHandle</code></td>
+<td>
+<p>If PlotIt=FALSE: NULL, otherwise plotly object for ploting topview of topographic map
+</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>If you used pswarm with distance matrix instead of a data matrix you can mds transform your distances into data (see the <code>MDS</code> function of the ProjectionBasedClustering package.). The correct dimension can be found through the Sheppard diagram or kruskals stress.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The extraction of an island out of the generalized Umatrix can be performed using the <code>interactiveGeneralizedUmatrixIsland</code> function in the package <span class="pkg">ProjectionBasedClustering</span>.
+</p>
+<p>The main code of both functions <code>GeneralizedUmatrix</code> and
+<code>GeneratePswarmVisualization</code> is the same C++ function
+<code>sESOM4BMUs</code> which is described in [Thrun/Ultsch, 2020].
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Thrun
+</p>
+
+
+<h3>References</h3>
+
+<p>[Thrun, 2018]  Thrun, M. C.: Projection Based Clustering through Self-Organization and Swarm Intelligence, doctoral dissertation 2017, Springer, Heidelberg, ISBN: 978-3-658-20539-3, <a href="https://doi.org/10.1007/978-3-658-20540-9">doi:10.1007/978-3-658-20540-9</a>, 2018. 
+</p>
+<p>[Thrun/Ultsch, 2020]  Thrun, M. C., &amp; Ultsch, A.: Uncovering High-Dimensional Structures of Projections from Dimensionality Reduction Methods, MethodsX, Vol. 7, pp. 101093, <a href="https://doi.org/10.1016/j.mex.2020.101093">doi:10.1016/j.mex.2020.101093</a>, 2020. 
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Pswarm</code> and
+<code>plotTopographicMap</code> and <code>GeneralizedUmatrix</code> of the package <span class="pkg">GeneralizedUmatrix</span>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("Lsun3D")
+Data=Lsun3D$Data
+Cls=Lsun3D$Cls
+InputDistances=as.matrix(dist(Data))
+
+projList=Pswarm(InputDistances)
+genUmatrixList=GeneratePswarmVisualization(Data,projList$ProjectedPoints,projList$LC)
+library(GeneralizedUmatrix)
+plotTopographicMap(genUmatrixList$Umatrix,genUmatrixList$Bestmatches,Cls)
+
+
+
+</code></pre>
+
+
+</div>

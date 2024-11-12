@@ -1,0 +1,300 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stirlerr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Stirling's Error Function - Auxiliary for Gamma, Beta, etc</h2>
+
+<h3>Description</h3>
+
+
+<p>Stirling's approximation (to the factorial or <code class="reqn">\Gamma</code> function)
+error in <code class="reqn">\log</code> scale is the difference of the left and right hand
+side of Stirling's approximation to <code class="reqn">n!</code>,
+<code class="reqn">n! \approx \bigl(\frac{n}{e}\bigr)^n \sqrt{2\pi n},</code> i.e., <code>stirlerr(n) :=</code> <code class="reqn">\delta(n)</code>,
+where </p>
+<p style="text-align: center;"><code class="reqn">\delta(n) =  \log\Gamma(n + 1) - n\log(n) + n - \log(2 \pi n)/2.</code>
+</p>
+
+<p>Partly, pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> transcriptions of the C code utility functions for
+<code>dgamma()</code>, <code>dbinom()</code>, <code>dpois()</code>, <code>dt()</code>,
+and similar “base” density functions by Catherine Loader.
+</p>
+<p>These <span class="pkg">DPQ</span> versions typically have extra arguments with defaults
+that correspond to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s Mathlib C code hardwired cutoffs and tolerances.
+</p>
+<p><code>lgammacor(x)</code> is “the same” as <code>stirlerr(x)</code>, both
+computing <code class="reqn">delta(x)</code> accurately, however is only defined for <code class="reqn">x
+    \ge 10</code>, and has been crucially used for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own <code>lgamma()</code>
+and <code>lbeta()</code> computations.
+</p>
+<p>Note that the example below suggests that R's hardwired default of
+<code>nalgm = 5</code> is unnecessarily losing more than one digit accuracy,
+<code>nalgm = 6</code> seems much better.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+stirlerr(n, scheme = c("R3", "R4.4_0"),
+         cutoffs = switch(scheme
+                        , R3     = c(15, 35, 80, 500)
+                        , R4.4_0 = c(5.25, rep(6.5, 4), 7.1, 7.6, 8.25, 8.8, 9.5, 11,
+                                     14, 19,   25, 36, 81, 200, 3700, 17.4e6)
+                        
+                        
+                        
+                        
+                          ),
+         use.halves = missing(cutoffs),
+         direct.ver = c("R3", "lgamma1p", "MM2", "n0"),
+         order = NA,
+         verbose = FALSE)
+
+stirlerrC(n, version = c("R3", "R4..1", "R4.4_0"))
+
+stirlerr_simpl(n, version = c("R3", "lgamma1p", "MM2", "n0"), minPrec = 128L)
+
+lgammacor(x, nalgm = 5, xbig = 2^26.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, n</code></td>
+<td>
+<p><code>numeric</code> (or number-alike such as "mpfr").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical indicating if some information about the
+computations are to be printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version</code></td>
+<td>
+<p>a <code>character</code> string specifying the version of
+<code>stirlerr_simpl()</code> or <code>stirlerrC()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scheme</code></td>
+<td>
+<p>a <code>character</code> string specifying the
+<code>cutoffs</code> scheme for <code>stirlerr()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoffs</code></td>
+<td>
+<p>an increasing numeric vector, required to start with
+with <code>cutoffs[1] &lt;= 15</code> specifying the cutoffs to switch from 2 to 3 to ...,
+up to 10 term approximations for non-small <code>n</code>, where the direct
+formula loses precision.  When missing (as by default), <code>scheme</code>
+is used, where <code>scheme = "R3"</code> chooses (15, 35, 80, 500), the
+cutoffs in use in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> versions up to (and including) 4.3.z.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.halves</code></td>
+<td>
+<p><code>logical</code> indicating if the full-accuracy
+prestored values should be use when
+<code class="reqn">2n \in \{0,1,\dots,30\}</code>, i.e.,
+<code class="reqn">n \le 15</code> and n is integer or integer +
+<code class="reqn">\frac{1}{2}</code>.
+Turn this off to judge the underlying approximation accuracy by
+comparison with MPFR.   However, keep the default <code>TRUE</code> for
+back-compatibility.</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>direct.ver</code></td>
+<td>
+<p>a <code>character</code> string specifying the version of
+<code>stirlerr_simpl()</code> to be used for the “direct” case in
+<code>stirlerr(n)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>approximation order, <code>1 &lt;= order &lt;= 20</code> or <code>NA</code>
+for <code>stirlerr()</code>.  If not <code>NA</code>, it specifies the number of
+terms to be used in the Stirling series which will be used for all
+<code>n</code>, i.e., <code>scheme</code>, <code>cutoffs</code>, <code>use.halves</code>, and
+<code>direct.ver</code> are irrelevant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minPrec</code></td>
+<td>
+<p>a positive integer; for <code>stirlerr_simpl</code> the minimal
+accuracy or precision in bits when <code>mpfr</code> numbers
+are used.</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>nalgm</code></td>
+<td>
+<p>number of terms to use for Chebyshev polynomial approximation
+in <code>lgammacor()</code>.  The default, 5, is the value hard wired in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s
+C Mathlib.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xbig</code></td>
+<td>
+<p>a large positive number; if <code>x &gt;= xbig</code>, the simple
+asymptotic approximation <code>lgammacor(x) := 1/(12*x)</code> is used.  The
+default, <code class="reqn">2^{26.5} = 94906265.6</code>, is the value hard wired in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s C
+Mathlib.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<dl>
+<dt>
+<code>stirlerr()</code>:</dt>
+<dd>
+<p>Stirling's error, <code>stirlerr(n):=</code>
+<code class="reqn">\delta(n)</code> has asymptotic (<code class="reqn">n \to\infty</code>) expansion
+</p>
+<p style="text-align: center;"><code class="reqn">\delta(n) = \frac 1{12 n} - \frac 1{360 n^3} + \frac 1{1260 n^5} \pm O(n^{-7}),</code>
+</p>
+
+<p>and this expansion is used up to remainder <code class="reqn">O(n^{-35})</code> 
+in current (package <span class="pkg">DPQ</span>) <code>stirlerr(n)</code>;
+different numbers of terms between different cutoffs for <code class="reqn">n</code>, and
+using the direct formula for <code class="reqn">n &lt;= c_1</code>, where <code class="reqn">c_1</code> is the first
+cutoff, <code>cutoff[1]</code>.
+</p>
+<p>Note that (new in 2024-01) <code>stirlerr(n, order = k)</code> will
+<em>not</em> use <code>cutoffs</code> nor the direct formula (with its
+<code>direct.ver</code>), nor halves (<code>use.halves=TRUE</code>),
+and allows <code class="reqn">k \le 20</code>.
+Tests seem to indicate that for current double precision arithmetic,
+only <code class="reqn">k \le 17</code> seem to make sense. 
+</p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>a numeric vector “like” <code>x</code>; in some cases may also be an
+(high accuracy) "mpfr"-number vector, using CRAN package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>.
+</p>
+<p><code>lgammacor(x)</code> originally returned <code>NaN</code> for all <code class="reqn">|x| &lt; 10</code>,
+as its Chebyshev polynomial approximation has been constructed for
+<code class="reqn">x \in [10, xbig]</code>,
+specifically for <code class="reqn">u \in [-1,1]</code> where
+<code class="reqn">t := 10/x \in [1/x_B, 1]</code>  and
+<code class="reqn">u := 2t^2 -1 \in [-1 + \epsilon_B, 1]</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>C. Loader (2000), see <code>dbinom</code>'s documentation.
+
+</p>
+<p>Our package vignette <em>log1pmx, bd0, stirlerr - Probability Computations in R</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dgamma</code>, 
+<code>dpois</code>.
+High precision versions <code>stirlerrM(n)</code> and 
+<code>stirlerrSer(n,k)</code> in package <a href="https://CRAN.R-project.org/package=DPQmpfr"><span class="pkg">DPQmpfr</span></a> (via the
+<a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a> and <a href="https://CRAN.R-project.org/package=gmp"><span class="pkg">gmp</span></a> packages).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n &lt;- seq(1, 50, by=1/4)
+st.n &lt;- stirlerr(n) # now vectorized
+stopifnot(identical(st.n, sapply(n, stirlerr)))
+st3. &lt;- stirlerr(n, "R3", direct.ver = "R3") # previous default
+st3  &lt;- stirlerr(n, "R3", direct.ver = "lgamma1p") # new? default
+## for these n, there is *NO* difference:
+stopifnot(st3 == st3.)
+plot(n, st.n, type = "b", log="xy", ylab = "stirlerr(n)")
+st4 &lt;- stirlerr(n, "R4.4_0", verbose = TRUE) # verbose: give info on cases
+## order = k = 1:20  terms in series approx:
+k &lt;- 1:20
+stirlOrd &lt;- sapply(k, function(k) stirlerr(n, order = k))
+matlines(n, stirlOrd)
+matplot(n, stirlOrd - st.n, type = "b", cex=1/2, ylim = c(-1,1)/10, log = "x",
+        main = substitute(list(stirlerr(n, order=k) ~~"error", k == 1:mK),  list(mK = max(k))))
+
+matplot(n, abs(stirlOrd - st.n), type = "b", cex=1/2, log = "xy",
+        main = "| stirlerr(n, order=k) error |")
+mtext(paste("k =", deparse(k))) ; abline(h = 2^-(53:51), lty=3, lwd=1/2)
+colnames(stirlOrd) &lt;- paste0("k=", k)
+
+stCn &lt;- stirlerrC(n)
+all.equal(st.n, stCn, tolerance = 0)  # see 6.7447e-14
+stopifnot(all.equal(st.n, stCn, tolerance = 1e-12))
+stC2 &lt;- stirlerrC(n, version = "R4..1")
+stC4 &lt;- stirlerrC(n, version = "R4.4_0")
+
+
+## lgammacor(n) : only defined for n &gt;= 10
+lgcor &lt;- lgammacor(n)
+lgcor6 &lt;- lgammacor(n, nalgm = 6) # more accurate?
+
+all.equal(lgcor[n &gt;= 10], st.n[n &gt;= 10], tolerance=0)# .. rel.diff.: 4.687e-14
+stopifnot(identical(is.na(lgcor), n &lt; 10),
+          all.equal(lgcor[n &gt;= 10],
+                    st.n [n &gt;= 10], tolerance = 1e-12))
+
+## look at *relative* errors -- need "Rmpfr" for "truth" % Rmpfr / DPQmpfr in 'Suggests'
+if(requireNamespace("Rmpfr") &amp;&amp; requireNamespace("DPQmpfr")) {
+    ## stirlerr(n) uses DPQmpfr::stirlerrM()  automagically when n is &lt;mpfr&gt;
+    relErrV &lt;- sfsmisc::relErrV; eaxis &lt;- sfsmisc::eaxis
+    mpfr &lt;- Rmpfr::mpfr;     asNumeric &lt;- Rmpfr::asNumeric
+    stM &lt;- stirlerr(mpfr(n, 512))
+    relE &lt;- asNumeric(relErrV(stM, cbind(st3, st4, stCn, stC4,
+                                         lgcor, lgcor6, stirlOrd)))
+
+    matplot(n, pmax(abs(relE),1e-20), type="o", cex=1/2, log="xy", ylim =c(8e-17, 0.1),
+            xaxt="n", yaxt="n", main = quote(abs(relErr(stirlerr(n)))))
+    ## mark "lgcor*" -- lgammacor() particularly !
+    col.lgc &lt;- adjustcolor(c(2,4), 2/3)
+    matlines(n, abs(relE[,c("lgcor","lgcor6")]), col=col.lgc, lwd=3)
+    lines(n, abs(relE[,"lgcor6"]), col=adjustcolor(4, 2/3), lwd=3)
+    eaxis(1, sub10=2); eaxis(2); abline(h = 2^-(53:51), lty=3, col=adjustcolor(1, 1/2))
+    axis(1, at=15, col=NA, line=-1); abline(v=c(10,15), lty=2, col=adjustcolor(1, 1/4))
+    legend("topright", legend=colnames(relE), cex = 3/4,
+           col=1:6, lty=1:5, pch= c(1L:9L, 0L, letters)[seq_len(ncol(relE))])
+    legend("topright", legend=colnames(relE)[1:6], cex = 3/4, lty=1:5, lwd=3,
+           col=c(rep(NA,4), col.lgc), bty="n")
+    ## Note that lgammacor(x) {default, n=5} is clearly inferior,
+    ## but lgammacor(x, 6) is really good {in [10, 50] at least}
+}# end if( &lt;Rmpfr&gt; )
+</code></pre>
+
+
+</div>

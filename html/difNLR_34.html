@@ -1,0 +1,346 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>NLR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DIF statistics based on non-linear regression model.</h2>
+
+<h3>Description</h3>
+
+<p>Calculates either DIF likelihood ratio statistics or F statistics for dichotomous
+data based on non-linear regression model (generalized logistic regression model).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">NLR(Data, group, model, constraints = NULL, type = "all", method = "nls",
+    match = "zscore", anchor = 1:ncol(Data), start, p.adjust.method = "none", test = "LR",
+    alpha = 0.05, initboot = TRUE, nrBo = 20, sandwich = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>data.frame or matrix: dataset which rows represent scored examinee answers (<code>"1"</code>
+correct, <code>"0"</code> incorrect) and columns correspond to the items.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>numeric: binary vector of group membership. <code>"0"</code> for reference group, <code>"1"</code> for
+focal group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character: generalized logistic regression model to be fitted. See <strong>Details</strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>character: which parameters should be the same for both groups. Possible values
+are any combinations of parameters <code>"a"</code>, <code>"b"</code>, <code>"c"</code>, and <code>"d"</code>. Default value
+is <code>NULL</code>. See <strong>Details</strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character: type of DIF to be tested. Possible values are <code>"all"</code> for detecting
+difference in any parameter (default), <code>"udif"</code> for uniform DIF only (i.e., difference in
+difficulty parameter <code>"b"</code>), <code>"nudif"</code> for non-uniform DIF only (i.e., difference in
+discrimination parameter <code>"a"</code>), <code>"both"</code> for uniform and non-uniform DIF (i.e.,
+difference in parameters <code>"a"</code> and <code>"b"</code>), or combination of parameters <code>"a"</code>,
+<code>"b"</code>, <code>"c"</code>, and <code>"d"</code>. Can be specified as a single value (for all items) or as
+an item-specific vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character: method used to estimate parameters. The options are <code>"nls"</code> for
+non-linear least squares (default), <code>"likelihood"</code> for maximum likelihood method with
+<code>"L-BFGS-B"</code> algorithm, or <code>"irls"</code> for maximum likelihood method with iteratively
+reweighted least squares (available only for <code>model = "2PL"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>character or numeric: matching criterion to be used as estimate of trait. Can be
+either <code>"zscore"</code> (default, standardized total score), <code>"score"</code> (total test score),
+or numeric vector of the same length as number of observations in <code>Data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor</code></td>
+<td>
+<p>character or numeric: specification of DIF free items. A vector of item identifiers
+(integers specifying the column  number) specifying which items are currently considered as anchor
+(DIF free) items. Argument is ignored if <code>match</code> is not <code>"zscore"</code> or <code>"score"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>numeric: initial values for estimation of parameters. If not specified, starting
+values are calculated with <code>startNLR</code> function. Otherwise, list with as many
+elements as number of items. Each element is a named numeric vector of length 8 representing initial
+values for parameter estimation. Specifically, parameters <code>"a"</code>, <code>"b"</code>, <code>"c"</code>, and
+<code>"d"</code> are initial values for discrimination, difficulty, guessing, and inattention for reference
+group. Parameters <code>"aDif"</code>, <code>"bDif"</code>, <code>"cDif"</code>, and <code>"dDif"</code> are then differences
+in these parameters between reference and focal group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.adjust.method</code></td>
+<td>
+<p>character: method for multiple comparison correction. Possible values are
+<code>"holm"</code>, <code>"hochberg"</code>, <code>"hommel"</code>, <code>"bonferroni"</code>, <code>"BH"</code>, <code>"BY"</code>,
+<code>"fdr"</code>, and <code>"none"</code> (default). For more details see <code>p.adjust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p>character: test to be performed for DIF detection. Can be either <code>"LR"</code> for
+likelihood ratio test of a submodel (default), <code>"W"</code> for Wald test, or <code>"F"</code> for F-test
+of a submodel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric: significance level (default is 0.05).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initboot</code></td>
+<td>
+<p>logical: in case of convergence issues, should be starting values re-calculated based on
+bootstraped samples? (default is <code>TRUE</code>; newly calculated initial values are applied only to
+items/models with convergence issues).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrBo</code></td>
+<td>
+<p>numeric: the maximal number of iterations for calculation of starting values using
+bootstraped samples (default is 20).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sandwich</code></td>
+<td>
+<p>logical: should be sandwich estimator used for covariance matrix of parameters when using
+<code>method = "nls"</code>? Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Calculation of the test statistics using DIF detection procedure based on non-linear regression
+(extension of logistic regression procedure; Swaminathan and Rogers, 1990; Drabinova and Martinkova, 2017).
+</p>
+<p>The unconstrained form of 4PL generalized logistic regression model for probability of correct
+answer (i.e., <code class="reqn">y = 1</code>) is
+</p>
+<p style="text-align: center;"><code class="reqn">P(y = 1) = (c + cDif * g) + (d + dDif * g - c - cDif * g) / (1 + exp(-(a + aDif * g) * (x - b - bDif * g))), </code>
+</p>
+
+<p>where <code class="reqn">x</code> is by default standardized total score (also called Z-score) and <code class="reqn">g</code> is a group membership.
+Parameters <code class="reqn">a</code>, <code class="reqn">b</code>, <code class="reqn">c</code>, and <code class="reqn">d</code> are discrimination, difficulty, guessing, and inattention.
+Terms <code class="reqn">aDif</code>, <code class="reqn">bDif</code>, <code class="reqn">cDif</code>, and <code class="reqn">dDif</code> then represent differences between two groups
+(reference and focal) in relevant parameters.
+</p>
+<p>This 4PL model can be further constrained by <code>model</code> and <code>constraints</code> arguments.
+The arguments <code>model</code> and <code>constraints</code> can be also combined. Both arguments can
+be specified as a single value (for all items) or as an item-specific vector (where each
+element correspond to one item).
+</p>
+<p>The <code>model</code> argument offers several predefined models. The options are as follows:
+<code>Rasch</code> for 1PL model with discrimination parameter fixed on value 1 for both groups,
+<code>1PL</code> for 1PL model with discrimination parameter fixed for both groups,
+<code>2PL</code> for logistic regression model,
+<code>3PLcg</code> for 3PL model with fixed guessing for both groups,
+<code>3PLdg</code> for 3PL model with fixed inattention for both groups,
+<code>3PLc</code> (alternatively also <code>3PL</code>) for 3PL regression model with guessing parameter,
+<code>3PLd</code> for 3PL model with inattention parameter,
+<code>4PLcgdg</code> for 4PL model with fixed guessing and inattention parameter for both groups,
+<code>4PLcgd</code> (alternatively also <code>4PLd</code>) for 4PL model with fixed guessing for both groups,
+<code>4PLcdg</code> (alternatively also <code>4PLc</code>) for 4PL model with fixed inattention for both groups,
+or <code>4PL</code> for 4PL model.
+</p>
+<p>The <code>model</code> can be specified in more detail with <code>constraints</code> argument which specifies what
+parameters should be fixed for both groups. For example, choice <code>"ad"</code> means that discrimination
+(parameter <code>"a"</code>) and inattention (parameter <code>"d"</code>) are fixed for both groups and other parameters
+(<code>"b"</code> and <code>"c"</code>) are not. The <code>NA</code> value for <code>constraints</code> means no constraints.
+</p>
+<p>In case that the model considers a difference in guessing or inattention parameter, different parameterization is
+used and parameters with standard errors are re-calculated by delta method.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following arguments:
+</p>
+
+<dl>
+<dt><code>Sval</code></dt>
+<dd>
+<p>the values of <code>test</code> statistics.</p>
+</dd>
+<dt><code>pval</code></dt>
+<dd>
+<p>the p-values by <code>test</code>.</p>
+</dd>
+<dt><code>adjusted.pval</code></dt>
+<dd>
+<p>adjusted p-values by <code>p.adjust.method</code>.</p>
+</dd>
+<dt><code>df</code></dt>
+<dd>
+<p>the degrees of freedom of <code>test</code>.</p>
+</dd>
+<dt><code>test</code></dt>
+<dd>
+<p>used test.</p>
+</dd>
+<dt><code>par.m0</code></dt>
+<dd>
+<p>the matrix of estimated item parameters for null model.</p>
+</dd>
+<dt><code>se.m0</code></dt>
+<dd>
+<p>the matrix of standard errors of item parameters for null model.</p>
+</dd>
+<dt><code>cov.m0</code></dt>
+<dd>
+<p>list of covariance matrices of item parameters for null model.</p>
+</dd>
+<dt><code>par.m1</code></dt>
+<dd>
+<p>the matrix of estimated item parameters for alternative model.</p>
+</dd>
+<dt><code>se.m1</code></dt>
+<dd>
+<p>the matrix of standard errors of item parameters for alternative model.</p>
+</dd>
+<dt><code>cov.m1</code></dt>
+<dd>
+<p>list of covariance matrices of item parameters for alternative model.</p>
+</dd>
+<dt><code>conv.fail</code></dt>
+<dd>
+<p>numeric: number of convergence issues.</p>
+</dd>
+<dt><code>conv.fail.which</code></dt>
+<dd>
+<p>the indicators of the items which did not converge.</p>
+</dd>
+<dt><code>ll.m0</code></dt>
+<dd>
+<p>log-likelihood of null model.</p>
+</dd>
+<dt><code>ll.m1</code></dt>
+<dd>
+<p>log-likelihood of alternative model.</p>
+</dd>
+<dt><code>startBo0</code></dt>
+<dd>
+<p>the binary matrix. Columns represents iterations of initial values
+re-calculations, rows represents items. The value of 0 means no convergence issue in null model,
+1 means convergence issue in null model.</p>
+</dd>
+<dt><code>startBo1</code></dt>
+<dd>
+<p>the binary matrix. Columns represents iterations of initial values
+re-calculations, rows represents items. The value of 0 means no convergence issue in alternative model,
+1 means convergence issue in alternative model.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Adela Hladka (nee Drabinova) <br>
+Institute of Computer Science of the Czech Academy of Sciences <br>
+Faculty of Mathematics and Physics, Charles University <br><a href="mailto:hladka@cs.cas.cz">hladka@cs.cas.cz</a> <br></p>
+<p>Patricia Martinkova <br>
+Institute of Computer Science of the Czech Academy of Sciences <br><a href="mailto:martinkova@cs.cas.cz">martinkova@cs.cas.cz</a> <br></p>
+<p>Karel Zvara <br>
+Faculty of Mathematics and Physics, Charles University <br></p>
+
+
+<h3>References</h3>
+
+<p>Drabinova, A. &amp; Martinkova, P. (2017). Detection of differential item functioning with nonlinear regression:
+A non-IRT approach accounting for guessing. Journal of Educational Measurement, 54(4), 498–517,
+<a href="https://doi.org/10.1111/jedm.12158">doi:10.1111/jedm.12158</a>.
+</p>
+<p>Hladka, A. (2021). Statistical models for detection of differential item functioning. Dissertation thesis.
+Faculty of Mathematics and Physics, Charles University.
+</p>
+<p>Hladka, A. &amp; Martinkova, P. (2020). difNLR: Generalized logistic regression models for DIF and DDF detection.
+The R Journal, 12(1), 300–323, <a href="https://doi.org/10.32614/RJ-2020-014">doi:10.32614/RJ-2020-014</a>.
+</p>
+<p>Swaminathan, H. &amp; Rogers, H. J. (1990). Detecting differential item functioning using logistic regression procedures.
+Journal of Educational Measurement, 27(4), 361–370, <a href="https://doi.org/10.1111/j.1745-3984.1990.tb00754.x">doi:10.1111/j.1745-3984.1990.tb00754.x</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>p.adjust</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# loading data
+data(GMAT)
+Data &lt;- GMAT[, 1:20] # items
+group &lt;- GMAT[, "group"] # group membership variable
+
+# testing both DIF effects using LR test (default)
+# and model with fixed guessing for both groups
+NLR(Data, group, model = "3PLcg")
+
+# using F test
+NLR(Data, group, model = "3PLcg", test = "F")
+
+# testing both DIF effects with Benjamini-Hochberg correction
+NLR(Data, group, model = "3PLcg", p.adjust.method = "BH")
+
+# 4PL model with the same guessing and inattention
+# to test uniform DIF
+NLR(Data, group, model = "4PLcgdg", type = "udif")
+
+# 2PL model to test non-uniform DIF
+NLR(Data, group, model = "2PL", type = "nudif")
+
+# 4PL model with fixed a and c parameter
+# to test difference in b
+NLR(Data, group, model = "4PL", constraints = "ac", type = "b")
+
+# using maximum likelihood estimation method with L-BFGS-B algorithm
+NLR(Data, group, model = "3PLcg", method = "likelihood")
+
+# using maximum likelihood estimation method with iteratively reweighted least squares algorithm
+NLR(Data, group, model = "2PL", method = "irls")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

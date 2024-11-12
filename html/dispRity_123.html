@@ -1,0 +1,212 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>test.metric</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test disparity metric</h2>
+
+<h3>Description</h3>
+
+<p>Test whether a metric captures changes trait space size, density and position.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">test.metric(
+  data,
+  metric,
+  ...,
+  shifts,
+  shift.options,
+  model,
+  replicates = 3,
+  steps = 10,
+  dimensions,
+  verbose = FALSE,
+  save.steps = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A matrix or a <code>dispRity</code> object (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>A vector containing one to three functions. At least of must be a dimension-level 1 or 2 function (see details). If <code>data</code> is a <code>dispRity</code> object with disparity already calculated, this argument can be left empty (and the one from <code>data</code> is recycled)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional arguments to be passed to the metric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shifts</code></td>
+<td>
+<p>The types of shits to test, can be <code>"random"</code>, <code>"size"</code>, <code>"density"</code>, <code>"evenness"</code> and <code>"position"</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shift.options</code></td>
+<td>
+<p>Optional, a <code>list</code> of named arguments to be passed to <code>reduce.space</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Optional, which model to fit for testing the metric. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replicates</code></td>
+<td>
+<p>A <code>numeric</code> number of replicates to increase variance. By default <code>replicates = 3</code>. If <code>replicates = 1</code>, the <code>model</code> is not run.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steps</code></td>
+<td>
+<p>The number of steps in the space reduction to output between 10% and 100%. By default <code>steps = 10</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dimensions</code></td>
+<td>
+<p>Optional, a <code>numeric</code> value or proportion of the dimensions to keep.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A <code>logical</code> value indicating whether to be verbose (<code>TRUE</code>) or not (<code>FALSE</code>; default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.steps</code></td>
+<td>
+<p>A <code>logical</code> value indicating whether to save the data for visualising the the shift steps if plotting the results (<code>TRUE</code>) or not (<code>FALSE</code>; default).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For the three non-random shifts: <code>"size"</code>, <code>"density"</code>, <code>"evenness"</code> and <code>"position"</code>, the function returns both of shifts as:
+</p>
+
+<ul>
+<li> <p><code>"size.inner"</code> and <code>"size.outer"</code> removing data from the edges or the centre respectively (contracting the size and "hollowing" it respectively).
+</p>
+</li>
+<li> <p><code>"density.higher"</code> and <code>"density.lower"</code> removing data to increase or decrease density respectively (increasing/decreasing nearest neighbour distance).
+</p>
+</li>
+<li> <p><code>"evenness.flattened"</code> and <code>"evenness.compacted"</code> removing data to from the centre of the distribution or from the edges to resepectively "flatten" or "condense" the distribution.
+</p>
+</li>
+<li> <p><code>"position.top"</code> and <code>"position.bottom"</code> removing data from one side or the other of the space (the sides are selected from the point with lowest/highest scores on each dimensions respectively).
+</p>
+</li>
+</ul>
+<p>See figure 2 in Guillerme et al. 2020 for more details.
+</p>
+<p>The default <code>model</code> is a linear model using the following function:
+<code>model = function(data) lm(disparity ~ reduction, data)</code>
+You can provide your own as long as it is a single function with <code>data</code> as a single argument. The two terms from data should be called <code>reduction</code> for the variable on the x axis and <code>disparity</code> for the variable on the y axis. For example:
+<code>model = function(data) nls(disparity ~ a*reduction/(b+reduction), data)</code>
+Note that models (like this example) should be specific to the dataset. Any type of model can be fitted but only the ones with an associated <code>summary</code> function will be correctly displayed by <code>summary.dispRity</code>.
+To not run any model, use <code>model = NULL</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function outputs a <code>dispRity</code> object containing a list of simulated reductions in trait space. The results can be accessed through the usual S3 methods (<code>print</code>, <code>summary</code>, <code>plot</code>) or accessed directly through <code>x$&lt;name_of_the_shift&gt;</code> (e.g. <code>x$random</code> for the random shift results).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>References</h3>
+
+<p>Guillerme T, Puttick MN, Marcy AE, Weisbecker V. <b>2020</b> Shifting spaces: Which disparity or dissimilarity measurement best summarize occupancy in multidimensional spaces?. Ecol Evol. 2020;00:1-16. (doi:10.1002/ece3.6452)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>reduce.space</code> <code>dispRity</code> <code>plot.dispRity</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Creating a 2D uniform space
+space &lt;- space.maker(300, 2, runif)
+
+## A simple test with only 1 replicate for two shifts (random and size):
+simple_test &lt;- test.metric(space, metric = c(prod, ranges),
+                           replicates = 1, shifts = c("random", "size")) 
+
+## Summarising the tests
+summary(simple_test)
+
+## Visualising the test
+plot(simple_test)
+
+## Applying the test directly on a disparity object
+data(disparity)
+median_centroid_test &lt;- test.metric(disparity, shifts = "size")
+
+## Summarising the tests
+summary(median_centroid_test)
+
+## Visualising the test
+plot(median_centroid_test)
+
+## Not run: 
+## Note that the tests can take several minutes to run.
+
+## Testing the sum of variance on all shifts 
+sum_var_test &lt;- test.metric(space, metric = c(sum, variances),
+                            shifts = c("random", "size", "density", "position"))
+
+## Summarising the tests
+summary(sum_var_test)
+
+## Visualising the test
+plot(sum_var_test)
+
+## Creating a 2D uniform space
+space &lt;- space.maker(300, 2, runif)
+
+## Re-running the test on two shifts with data saving for visualisation
+median_centroid_test &lt;- test.metric(space,
+                                    metric = c(median, centroids),
+                                    shifts = c("random", "size"),
+                                    save.steps = TRUE)
+
+## Visualising the tests results and display the shifts visualisation
+plot(median_centroid_test)
+
+## End(Not run)
+ 
+</code></pre>
+
+
+</div>

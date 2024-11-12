@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ppoisson</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Direct Computation of 'ppois()' Poisson Distribution Probabilities</h2>
+
+<h3>Description</h3>
+
+<p>Direct computation and errors of <code>ppois</code> Poisson distribution
+probabilities.
+
+
+
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+ppoisD(q, lambda, all.from.0 = TRUE, verbose = 0L)
+ppoisErr (lambda, ppFUN = ppoisD, iP = 1e-15,
+          xM = qpois(iP, lambda=lambda, lower.tail=FALSE),
+          verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>numeric vector of non-negative integer values,
+“quantiles” at which to evaluate <code>ppois(q, la)</code> and
+<code>ppFUN(q, la)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>positive parameter of the Poisson distribution,
+<code>lambda</code><code class="reqn">= \lambda = E[X] = Var[X]</code> where
+<code class="reqn">X \sim Pois(\lambda)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all.from.0</code></td>
+<td>
+<p><code>logical</code> indicating if <code>q</code> is
+positive integer, and the probabilities should computed for all
+quantile values of <code>0:q</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ppFUN</code></td>
+<td>
+<p>alternative <code>ppois</code> evaluation, by default the
+<b>d</b>irect summation of <code>dpois(k, lambda)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iP</code></td>
+<td>
+<p>small number, <code>iP &lt;&lt; 1</code>, used to construct the abscissa values
+<code>x</code> at which to evaluate and compare <code>ppois()</code> and
+<code>ppFUN()</code>, see <code>xM</code>:</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xM</code></td>
+<td>
+<p>(specified instead of <code>iP</code>: ) the maximal x-value to be
+used, i.e., the values used will be <code>x &lt;- 0:iM</code>.  The default,
+<code>qpois(1-iP, lambda = lambda)</code> is the upper tail
+<code>iP</code>-quantile of <code>Poi(lambda)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>integer</code> (<code class="reqn">\ge 0</code>) or
+<code>logical</code> indicating if extra information should be printed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>ppoisD()</code> contains the poisson probabilities along <code>q</code>, i.e.,
+is a numeric vector of length <code>length(q)</code>.
+</p>
+<p><code>re &lt;- ppoisErr()</code> returns the relative “error” of
+<code>ppois(x0, lambda)</code> where <code>ppFUN(x0, lambda)</code> is
+assumed to be the truth and <code>x0</code> the “worst case”, i.e., the
+value (among <code>x</code>) with the largest such difference.
+</p>
+<p>Additionally, <code>attr(re, "x0")</code> contains that value <code>x0</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler, March 2004; 2019 ff</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ppois</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">(lams &lt;- outer(c(1,2,5), 10^(0:3)))# 10^4 is already slow!
+system.time(e1 &lt;- sapply(lams, ppoisErr))
+e1 / .Machine$double.eps
+
+## Try another 'ppFUN' :---------------------------------
+## this relies on the fact that it's *only* used on an 'x' of the form  0:M :
+ppD0 &lt;- function(x, lambda, all.from.0=TRUE)
+            cumsum(dpois(if(all.from.0) 0:x else x, lambda=lambda))
+## and test it:
+p0 &lt;- ppD0 (  1000, lambda=10)
+p1 &lt;- ppois(0:1000, lambda=10)
+stopifnot(all.equal(p0,p1, tol=8*.Machine$double.eps))
+
+system.time(p0.slow &lt;- ppoisD(0:1000, lambda=10, all.from.0=FALSE))# not very slow, here
+p0.1 &lt;- ppoisD(1000, lambda=10)
+if(requireNamespace("Rmpfr")) {
+ ppoisMpfr &lt;- function(x, lambda) cumsum(Rmpfr::dpois(x, lambda=lambda))
+ p0.best &lt;- ppoisMpfr(0:1000, lambda = Rmpfr::mpfr(10, precBits = 256))
+ AllEq. &lt;- Rmpfr::all.equal
+ AllEq &lt;- function(target, current, ...)
+    AllEq.(target, current, ...,
+           formatFUN = function(x, ...) Rmpfr::format(x, digits = 9))
+ print(AllEq(p0.best, p0,      tol = 0)) # 2.06e-18
+ print(AllEq(p0.best, p0.slow, tol = 0)) # the "worst" (4.44e-17)
+ print(AllEq(p0.best, p0.1,    tol = 0)) # 1.08e-18
+}
+
+## Now (with 'all.from.0 = TRUE',  it is fast too):
+p15    &lt;- ppoisErr(2^13)
+p15.0. &lt;- ppoisErr(2^13, ppFUN = ppD0)
+c(p15, p15.0.) / .Machine$double.eps # on Lnx 64b, see (-10  2.5), then (-2 -2)
+
+## lapply(), so you see "x0" values :
+str(e0. &lt;- lapply(lams, ppoisErr, ppFUN = ppD0))
+
+## The first version [called 'err.lambd0()' for years] used simple  cumsum(dpois(..))
+## NOTE: It is *stil* much faster, as it relies on special  x == 0:M  relation
+## Author: Martin Maechler, Date:  1 Mar 2004, 17:40
+##
+e0 &lt;- sapply(lams, function(lamb) ppoisErr(lamb, ppFUN = ppD0))
+all.equal(e1, e0) # typically TRUE,  though small "random" differences:
+cbind(e1, e0) * 2^53 # on Lnx 64b, seeing integer values in {-24, .., 33}
+</code></pre>
+
+
+</div>

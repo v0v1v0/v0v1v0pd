@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_div</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Simulate trait divergence 
+</h2>
+
+<h3>Description</h3>
+
+<p>Simulate replicate sets of lineage pair trait divergence under one of ten evolutionary models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_div(model, pars, ages, me_prop=NULL, GRAD = NULL, cats=NULL, 
+  breakpoint = NULL, Nsets = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>Character string defining one of 11 models of trait divergence (options: "BM_null", "BM_linear", "OU_null", "OU_linear", "DA_null", "DA_linear", "DA_cat", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear", "DA_OU", "DA_OU_linear", "DA_OU_cat", "DA_BM", "DA_BM_linear", "DA_BM_cat", "OU_BM", "OU_BM_linear", "OU_BM_cat"). See model_select for model descriptions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+
+<p>Vector of model parameters to use in sumulation. Parameters must be in the correct order in the vector for each model. The parameter orders are <br>
+BM_null: sig2, <br>
+BM_linear: sig2_slope, sig2_int <br>
+OU_null: alpha, sig2 <br>
+OU_linear: alpha_int, alpha_slope, sig2 <br>
+DA_null: alpha, sig2, psi <br>
+DA_linear: alpha, sig2, psi_slope, psi_int <br>
+DA_cat: alpha, sig2, psi1, psi2, psi3(optional) <br>
+DA_wt: alpha, sig2, psi1, psi2, wt <br>
+DA_bp: alpha, sig2, psi1, psi2 <br>
+DA_wt_linear: alpha, sig2, psi1_slope, psi1_int, psi2_slope, psi2_int, wt <br>
+DA_bp_linear: alpha, sig2, psi1_slope, psi1_int, psi2_slope, psi2_int
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ages</code></td>
+<td>
+
+<p>Vector of 'ages' (i.e. times since divergence) of lineage pairs for which to simulate trait divergence.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>me_prop</code></td>
+<td>
+
+<p>Induced measurement error as a proportion of the expected variance. Can be a single value applied to all simulated species or a vector of values of length equal to length(ages). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GRAD</code></td>
+<td>
+
+<p>Vector containing the gradient position of each pair to be simulated. This is the value of a continuous variable such as latitude or body size across which parameters will vary. Required for all models with 'linear' suffix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cats</code></td>
+<td>
+
+<p>Vector containing the category code (0, 1, or 2) for each pair (see model_select help page for details).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breakpoint</code></td>
+<td>
+
+<p>Vector of breakpoint times (times after 0 at which a discrete shift occurs in psi) for each lineage pair to be simulated. Required for all "bp" models. Must align with "ages" vector such that ages[i] and breakpoint[i] correspond to the same lineage pair. When using bp models, datasets can and should be simulated with a mix of pairs that have and have not experienced a shift in psi (see model_select for details on bp models). Set bp=0 for pairs that experience no shift.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nsets</code></td>
+<td>
+
+<p>Number of datasets to simulate. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Simulates replicate sets of trait divegence under one of ten evolutionary models given a user-defined set of lineage pair ages. Since all evolutionary models are stochastic process models, replicate datasets simulated under the same model parameters are not identical. Users can simulate the addition of measurement error using the ms_prop argument, which denotes measurement error as a proportion of the expected variance (e.g. ms_prop = 0.1 corresponds to a measurement error in each species equal to 10 percent of the expected variance in the trait in that species, given the parameters). 
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a vector (if Nsets=1) representing divergences for one dataset or a list of vectors (if Nsets&gt;1) for replicate datasets of lineage-pair trait divergences.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sean A. S. Anderson
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Simulate datasets of trait divergence for 150 lineage pairs 
+# under different evolutionary models
+
+# Define vector of 150 lineage pair ages
+ages = rep(c(0.5, 1, 1.5, 2, 3, 8), 25)
+
+## simulate a dataset of trait divergence under a single-process Brownian Motion model
+sig2 = 0.2
+sis_div_BM = simulate_div(model="BM_null", ages=ages, pars=c(sig2))
+summary(sis_div_BM)
+sis_div_BM
+
+## simulate 1000 divergence datasets under the null model of divergent adaptation
+sig2 = 0.2
+alpha = 0.8
+psi = 0.8
+sis_div_DA = simulate_div(model="DA_null", ages=ages, pars=c(alpha, sig2, psi), N=1000)
+length(sis_div_DA)
+sis_div_DA[[1]]
+
+## Simulate 1000 divergence datasets under the breakpoint model
+# note: a breakpoint vector must be created
+# pairs that experience no epoch shift (no shift in the psi parameter) are assigned bp=0
+# for all two-epoch pairs, the breakpoint time must be lower than the age of the pair
+# here we make half the dataset into two-epoch pairs, half into one-epoch pairs
+# we set the breakpoint time equal to half the age of each two-epoch pair
+bp = c(ages[1:75]/2, rep(0, 75))
+
+# run the simulation
+sig2 = 0.2
+alpha = 0.8
+psi1 = 0.3
+psi2 = 0.9
+sis_div_bp = simulate_div(model="DA_bp", ages=ages, breakpoint=bp, 
+  pars=c(alpha, sig2, psi1, psi2), N=1000)
+length(sis_div_bp)
+sis_div_bp[[1]]
+</code></pre>
+
+
+</div>

@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>getSimulations</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get model simulations</h2>
+
+<h3>Description</h3>
+
+<p>Wrapper to simulate from a fitted model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">getSimulations(object, nsim = 1, type = c("normal", "refit"), ...)
+
+## Default S3 method:
+getSimulations(object, nsim = 1, type = c("normal",
+  "refit"), ...)
+
+## S3 method for class 'negbin'
+getSimulations(object, nsim = 1, type = c("normal",
+  "refit"), ...)
+
+## S3 method for class 'gam'
+getSimulations(object, nsim = 1, type = c("normal", "refit"),
+  mgcViz = TRUE, ...)
+
+## S3 method for class 'lmerMod'
+getSimulations(object, nsim = 1, type = c("normal",
+  "refit"), ...)
+
+## S3 method for class 'glmmTMB'
+getSimulations(object, nsim = 1, type = c("normal",
+  "refit"), ...)
+
+## S3 method for class 'HLfit'
+getSimulations(object, nsim = 1, type = c("normal",
+  "refit"), ...)
+
+## S3 method for class 'MixMod'
+getSimulations(object, nsim = 1, type = c("normal",
+  "refit"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a fitted model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>number of simulations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>if simulations should be prepared for getQuantile or for refit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters to be passed on, usually to the simulate function of the respective model class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mgcViz</code></td>
+<td>
+<p>whether simulations should be created with mgcViz (if mgcViz is available)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The purpose of this wrapper for for the simulate function is to return the simulations from a model in a standardized way
+</p>
+<p>The purpose of this function is to wrap or implement the simulate function of different model classes and thus return simulations from fitted models in a standardized way.
+</p>
+<p>Note: GLMM and other regression packages often differ in how simulations are produced, and which parameters can be used to modify this behavior.
+</p>
+<p>One important difference is how to modifiy which hierarchical levels are held constant, and which are re-simulated. In lme4, this is controlled by the re.form argument (see lme4::simulate.merMod). For other packages, please consort the help.
+</p>
+<p>If the model was fit with weights and the respective model class does not include the weights in the simulations, getSimulations will throw a warning. The background is if weights are used on the likelihood directly, then what is fitted is effectively a pseudo likelihood, and there is no way to directly simulate from the specified likelihood. Whether or not residuals can be used in this case depends very much on what is tested and how weights are used. I'm sorry to say that it is hard to give a general recommendation, you have to consult someone that understands how weights are processed in the respective model class.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a matrix with simulations
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Florian Hartig
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>getObservedResponse</code>, <code>getRefit</code>, <code>getFixedEffects</code>, <code>getFitted</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">testData = createData(sampleSize = 400, family = gaussian())
+
+fittedModel &lt;- lm(observedResponse ~ Environment1 , data = testData)
+
+# response that was used to fit the model
+getObservedResponse(fittedModel)
+
+# predictions of the model for these points
+getFitted(fittedModel)
+
+# extract simulations from the model as matrix
+getSimulations(fittedModel, nsim = 2)
+
+# extract simulations from the model for refit (often requires different structure)
+x = getSimulations(fittedModel, nsim = 2, type = "refit")
+
+getRefit(fittedModel, x[[1]])
+
+getRefit(fittedModel, getObservedResponse(fittedModel))
+</code></pre>
+
+
+</div>

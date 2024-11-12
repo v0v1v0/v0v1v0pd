@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>open_dataset</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Open a dataset from a variety of sources</h2>
+
+<h3>Description</h3>
+
+<p>This function opens a dataset from a variety of sources, including Parquet,
+CSV, etc, using either local file system paths, URLs, or S3 bucket URI
+notation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">open_dataset(
+  sources,
+  schema = NULL,
+  hive_style = TRUE,
+  unify_schemas = FALSE,
+  format = c("parquet", "csv", "tsv", "sf"),
+  conn = cached_connection(),
+  tblname = tmp_tbl_name(),
+  mode = "VIEW",
+  filename = FALSE,
+  recursive = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sources</code></td>
+<td>
+<p>A character vector of paths to the dataset files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>schema</code></td>
+<td>
+<p>The schema for the dataset. If NULL, the schema will be
+inferred from the dataset files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hive_style</code></td>
+<td>
+<p>A logical value indicating whether to the dataset uses
+Hive-style partitioning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unify_schemas</code></td>
+<td>
+<p>A logical value indicating whether to unify the schemas
+of the dataset files (union_by_name). If TRUE, will execute a UNION by
+column name across all files (NOTE: this can add considerably to
+the initial execution time)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>The format of the dataset files. One of <code>"parquet"</code>, <code>"csv"</code>,
+<code>"tsv"</code>, or <code>"sf"</code> (spatial vector files supported by the sf package / GDAL).
+if no argument is provided, the function will try to guess the type based
+on minimal heuristics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>A connection to a database.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tblname</code></td>
+<td>
+<p>The name of the table to create in the database.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>The mode to create the table in. One of <code>"VIEW"</code> or <code>"TABLE"</code>.
+Creating a <code>VIEW</code>, the default, will execute more quickly because it
+does not create a local copy of the dataset.  <code>TABLE</code> will create a local
+copy in duckdb's native format, downloading the full dataset if necessary.
+When using <code>TABLE</code> mode with large data, please be sure to use a <code>conn</code>
+connections with disk-based storage, e.g. by calling <code>cached_connection()</code>,
+e.g. <code>cached_connection("storage_path")</code>, otherwise the full data must fit
+into RAM.  Using <code>TABLE</code> assumes familiarity with R's DBI-based interface.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>A logical value indicating whether to include the filename in
+the table name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recursive</code></td>
+<td>
+<p>should we assume recursive path? default TRUE. Set to FALSE
+if trying to open a single, un-partitioned file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional additional arguments passed to <code>duckdb_s3_config()</code>.
+Note these apply after those set by the URI notation and thus may be used
+to override or provide settings not supported in that format.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A lazy <code>dplyr::tbl</code> object representing the opened dataset backed
+by a duckdb SQL connection.  Most <code>dplyr</code> (and some <code>tidyr</code>) verbs can be
+used directly on this object, as they can be translated into SQL commands
+automatically via <code>dbplyr</code>.  Generic R commands require using
+<code>dplyr::collect()</code> on the table, which forces evaluation and reading the
+resulting data into memory.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# A remote, hive-partitioned Parquet dataset
+base &lt;- paste0("https://github.com/duckdb/duckdb/raw/main/",
+             "data/parquet-testing/hive-partitioning/union_by_name/")
+f1 &lt;- paste0(base, "x=1/f1.parquet")
+f2 &lt;- paste0(base, "x=1/f2.parquet")
+f3 &lt;- paste0(base, "x=2/f2.parquet")
+
+open_dataset(c(f1,f2,f3), unify_schemas = TRUE)
+
+# Access an S3 database specifying an independently-hosted (MINIO) endpoint
+efi &lt;- open_dataset("s3://neon4cast-scores/parquet/aquatics",
+                    s3_access_key_id="",
+                    s3_endpoint="data.ecoforecast.org")
+
+</code></pre>
+
+
+</div>

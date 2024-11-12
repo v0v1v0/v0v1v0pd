@@ -1,0 +1,205 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>esticon</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Contrasts for lm, glm, lme, and geeglm objects</h2>
+
+<h3>Description</h3>
+
+<p>Computes linear functions (i.e. weighted sums) of the
+estimated regression parameters. Can also test the hypothesis,
+that such a function is equal to a specific value.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">esticon(obj, L, beta0, conf.int = TRUE, level = 0.95, joint.test = FALSE, ...)
+
+## S3 method for class 'esticon_class'
+coef(object, ...)
+
+## S3 method for class 'esticon_class'
+summary(object, ...)
+
+## S3 method for class 'esticon_class'
+confint(object, parm, level = 0.95, ...)
+
+## S3 method for class 'esticon_class'
+vcov(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>Regression object (of type lm, glm, lme, geeglm).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>Matrix (or vector) specifying linear functions of the regression
+parameters (one
+linear function per row).  The number of columns must match the number of
+fitted regression parameters in the model. See 'details' below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta0</code></td>
+<td>
+<p>A vector of numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.int</code></td>
+<td>
+<p>TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>The confidence level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>joint.test</code></td>
+<td>
+<p>Logical value. If TRUE a 'joint' Wald test for the
+hypothesis L beta = beta0 is made. Default is that the 'row-wise' tests are
+made, i.e. (L beta)i=beta0i.  If joint.test is TRUE, then no confidence
+interval etc. is calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments; currently not used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An <code>esticon_class</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parm</code></td>
+<td>
+<p>a specification of which parameters are to be given
+confidence intervals, either a vector of numbers or a vector
+of names.  If missing, all parameters are considered.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Let the estimated parameters of the model be
+</p>
+<p style="text-align: center;"><code class="reqn">\beta_1, \beta_2, \dots, \beta_p</code>
+</p>
+
+<p>A linear function of the estimates is of the form </p>
+<p style="text-align: center;"><code class="reqn">l=\lambda_1
+    \beta_1+\lambda_2 \beta_2+ \dots+\lambda_p \beta_p</code>
+</p>
+<p> where
+<code class="reqn">\lambda_1, \lambda_2, \dots,\lambda_p</code> is specified by the
+user.
+</p>
+<p>The esticon function calculates l, its standard error and by default also a
+95 pct confidence interval.  It is sometimes of interest to test the
+hypothesis <code class="reqn">H_0: l=\beta_0</code> for some value <code class="reqn">\beta_0</code>
+given by the user. A test is provided for the hypothesis <code class="reqn">H_0:
+l=0</code> but other values of <code class="reqn">\beta_0</code> can be specified.
+</p>
+<p>In general, one can specify r such linear functions at one time by
+specifying L to be an <code class="reqn">r\times p</code> matrix where each row consists
+of p numbers <code class="reqn">\lambda_1,\lambda_2,\dots, \lambda_p</code>. Default is
+then that <code class="reqn">\beta_0</code> is a p vector of 0s but other values can be
+given.
+</p>
+<p>It is possible to test simultaneously that all specified linear functions
+are equal to the corresponding values in <code class="reqn">\beta_0</code>.
+</p>
+<p>For computing contrasts among levels of a single factor, 'contrast.lm' may
+be more convenient.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a matrix with one row per linear function.  Columns contain
+estimated coefficients, standard errors, t values, degrees of freedom,
+two-sided p-values, and the lower and upper endpoints of the 1-alpha
+confidence intervals.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Søren Højsgaard, <a href="mailto:sorenh@math.aau.dk">sorenh@math.aau.dk</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(iris)
+lm1  &lt;- lm(Sepal.Length ~ Sepal.Width + Species + Sepal.Width : Species, data=iris)
+## Note that the setosa parameters are set to zero
+coef(lm1)
+
+## Estimate the intercept for versicolor
+lambda1 &lt;- c(1, 0, 1, 0, 0, 0)
+esticon(lm1, L=lambda1)
+
+## Estimate the difference between versicolor and virgica intercept
+## and test if the difference is 1
+lambda2 &lt;- c(0, 1, -1, 0, 0, 0)
+esticon(lm1, L=lambda2, beta0=1)
+
+## Do both estimates at one time
+esticon(lm1, L=rbind(lambda1, lambda2), beta0=c(0, 1))
+
+## Make a combined test for that the difference between versicolor and virgica intercept
+## and difference between versicolor and virginica slope is zero:
+lambda3 &lt;- c(0, 0, 0, 0, 1, -1)
+esticon(lm1, L=rbind(lambda2, lambda3), joint.test=TRUE)
+
+# Example using esticon on coxph objects (thanks to Alessandro A. Leidi).
+# Using dataset 'veteran' in the survival package
+# from the Veterans' Administration Lung Cancer study
+
+if (require(survival)){
+data(veteran)
+sapply(veteran, class)
+levels(veteran$celltype)
+attach(veteran)
+veteran.s &lt;- Surv(time, status)
+coxmod &lt;- coxph(veteran.s ~ age + celltype + trt, method='breslow')
+summary(coxmod)
+
+# compare a subject 50 years old with celltype 1
+# to a subject 70 years old with celltype 2
+# both subjects on the same treatment
+AvB &lt;- c(-20, -1, 0, 0, 0)
+
+# compare a subject 40 years old with celltype 2 on treat=0
+# to a subject 35 years old with celltype 3 on treat=1
+CvB &lt;- c(5, 1, -1, 0, -1)
+
+est &lt;- esticon(coxmod, L=rbind(AvB, CvB))
+est
+##exp(est[, c(2, 7, 8)])
+}
+</code></pre>
+
+
+</div>

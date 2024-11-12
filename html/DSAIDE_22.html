@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_idpatterns_ode</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulation of a compartmental infectious disease transmission model including seasonality</h2>
+
+<h3>Description</h3>
+
+<p>Simulation of a compartmental model with several different compartments:
+Susceptibles (S), Infected and Pre-symptomatic (P),
+Infected and Asymptomatic (A), Infected and Symptomatic (I),
+Recovered and Immune (R) and Dead (D).
+</p>
+<p>This model includes natural births and deaths and waning immunity.
+It also allows for seasonal variation in transmission.
+The model is assumed to run in units of months.
+This assumption is hard-coded into the sinusoidally varying
+transmission coefficient, which is assumed to have a period of a year.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_idpatterns_ode(
+  S = 1000,
+  P = 1,
+  bP = 0,
+  bA = 0,
+  bI = 0.002,
+  s = 0,
+  gP = 1,
+  gA = 1,
+  gI = 1,
+  f = 0,
+  d = 0,
+  w = 0,
+  n = 0,
+  m = 0,
+  timeunit = 1,
+  tmax = 300
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>: initial number of susceptible hosts : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>: initial number of infected, pre-symptomatic hosts : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bP</code></td>
+<td>
+<p>: level/rate of infectiousness for hosts in the P compartment : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bA</code></td>
+<td>
+<p>: level/rate of infectiousness for hosts in the A compartment : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bI</code></td>
+<td>
+<p>: level/rate of infectiousness for hosts in the I compartment : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>: strength of seasonal/annual sigmoidal variation of transmission rate : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gP</code></td>
+<td>
+<p>: rate at which a person leaves the P compartment : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gA</code></td>
+<td>
+<p>: rate at which a person leaves the A compartment : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gI</code></td>
+<td>
+<p>: rate at which a person leaves the I compartment : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>: fraction of pre-symptomatic individuals that have an asymptomatic infection : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>: fraction of symptomatic infected hosts that die due to disease : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>: rate at which recovered persons lose immunity and return to susceptible state : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>: the rate at which new individuals enter the model (are born) : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>: the rate of natural death (the inverse it the average lifespan) : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeunit</code></td>
+<td>
+<p>: units of time in which the model should run (1=day, 2=week, 3=month, 4=year) : numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tmax</code></td>
+<td>
+<p>: maximum simulation time : numeric</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A compartmental ID model with several states/compartments
+is simulated as a set of ordinary differential
+equations. The function returns the output from the odesolver as a matrix,
+with one column per compartment/variable. The first column is time.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function returns the simulation result as obtained from a call
+to the deSolve ode solver.
+</p>
+
+
+<h3>Warning</h3>
+
+<p>This function does not perform any error checking. So if you try to do
+something nonsensical (e.g. have I0 &gt; PopSize or any negative values or fractions &gt; 1),
+the code will likely abort with an error message.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Andreas Handel
+</p>
+
+
+<h3>References</h3>
+
+<p>See e.g. Keeling and Rohani 2008 for SIR models and the
+documentation for the deSolve package for details on ODE solvers
+</p>
+
+
+<h3>See Also</h3>
+
+<p>The UI of the app, which is part of this package, contains more details on the model.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # To run the simulation with default parameters just call the function:
+  result &lt;- simulate_idpatterns_ode()
+  # To choose parameter values other than the standard one, specify them like such:
+  result &lt;- simulate_idpatterns_ode(S = 2000, P = 10, tmax = 100, f = 0.1, d = 0.2, s = 0.1)
+  # You should then use the simulation result returned from the function, like this:
+  plot(result$ts[ , "time"],result$ts[ , "S"],xlab='Time',ylab='Number Susceptible',type='l')
+</code></pre>
+
+
+</div>

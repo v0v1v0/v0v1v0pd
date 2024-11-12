@@ -1,0 +1,362 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ordering Points to Identify the Clustering Structure (OPTICS)</h2>
+
+<h3>Description</h3>
+
+<p>Implementation of the OPTICS (Ordering points to identify the clustering
+structure) point ordering algorithm using a kd-tree.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optics(x, eps = NULL, minPts = 5, ...)
+
+## S3 method for class 'optics'
+print(x, ...)
+
+## S3 method for class 'optics'
+plot(x, cluster = TRUE, predecessor = FALSE, ...)
+
+## S3 method for class 'optics'
+as.reachability(object, ...)
+
+## S3 method for class 'optics'
+as.dendrogram(object, ...)
+
+extractDBSCAN(object, eps_cl)
+
+extractXi(object, xi, minimum = FALSE, correctPredecessors = TRUE)
+
+## S3 method for class 'optics'
+predict(object, newdata, data, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data matrix or a dist object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>upper limit of the size of the epsilon neighborhood. Limiting the
+neighborhood size improves performance and has no or very little impact on
+the ordering as long as it is not set too low. If not specified, the largest
+minPts-distance in the data set is used which gives the same result as
+infinity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minPts</code></td>
+<td>
+<p>the parameter is used to identify dense neighborhoods and the
+reachability distance is calculated as the distance to the minPts nearest
+neighbor. Controls the smoothness of the reachability distribution. Default
+is 5 points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments are passed on to fixed-radius nearest
+neighbor search algorithm. See <code>frNN()</code> for details on how to
+control the search strategy.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster, predecessor</code></td>
+<td>
+<p>plot clusters and predecessors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>clustering object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps_cl</code></td>
+<td>
+<p>Threshold to identify clusters (<code>eps_cl &lt;= eps</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>Steepness threshold to identify clusters hierarchically using the
+Xi method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimum</code></td>
+<td>
+<p>logical, representing whether or not to extract the minimal
+(non-overlapping) clusters in the Xi clustering algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correctPredecessors</code></td>
+<td>
+<p>logical, correct a common artifact by pruning
+the steep up area for points that have predecessors not in the
+cluster–found by the ELKI framework, see details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>new data points for which the cluster membership should be
+predicted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>the data set used to create the clustering object.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>The algorithm</strong>
+</p>
+<p>This implementation of OPTICS implements the original
+algorithm as described by Ankerst et al (1999). OPTICS is an ordering
+algorithm with methods to extract a clustering from the ordering.
+While using similar concepts as DBSCAN, for OPTICS <code>eps</code>
+is only an upper limit for the neighborhood size used to reduce
+computational complexity. Note that <code>minPts</code> in OPTICS has a different
+effect then in DBSCAN. It is used to define dense neighborhoods, but since
+<code>eps</code> is typically set rather high, this does not effect the ordering
+much. However, it is also used to calculate the reachability distance and
+larger values will make the reachability distance plot smoother.
+</p>
+<p>OPTICS linearly orders the data points such that points which are spatially
+closest become neighbors in the ordering. The closest analog to this
+ordering is dendrogram in single-link hierarchical clustering. The algorithm
+also calculates the reachability distance for each point.
+<code>plot()</code> (see reachability_plot)
+produces a reachability plot which shows each points reachability distance
+between two consecutive points
+where the points are sorted by OPTICS. Valleys represent clusters (the
+deeper the valley, the more dense the cluster) and high points indicate
+points between clusters.
+</p>
+<p><strong>Specifying the data</strong>
+</p>
+<p>If <code>x</code> is specified as a data matrix, then Euclidean distances and fast
+nearest neighbor lookup using a kd-tree are used. See <code>kNN()</code> for
+details on the parameters for the kd-tree.
+</p>
+<p><strong>Extracting a clustering</strong>
+</p>
+<p>Several methods to extract a clustering from the order returned by OPTICS are
+implemented:
+</p>
+
+<ul>
+<li> <p><code>extractDBSCAN()</code> extracts a clustering from an OPTICS ordering that is
+similar to what DBSCAN would produce with an eps set to <code>eps_cl</code> (see
+Ankerst et al, 1999). The only difference to a DBSCAN clustering is that
+OPTICS is not able to assign some border points and reports them instead as
+noise.
+</p>
+</li>
+<li> <p><code>extractXi()</code> extract clusters hierarchically specified in Ankerst et al
+(1999) based on the steepness of the reachability plot. One interpretation
+of the <code>xi</code> parameter is that it classifies clusters by change in
+relative cluster density. The used algorithm was originally contributed by
+the ELKI framework and is explained in Schubert et al (2018), but contains a
+set of fixes.
+</p>
+</li>
+</ul>
+<p><strong>Predict cluster memberships</strong>
+</p>
+<p><code>predict()</code> requires an extracted DBSCAN clustering with <code>extractDBSCAN()</code> and then
+uses predict for <code>dbscan()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>optics</code> with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>eps </code></td>
+<td>
+<p> value of <code>eps</code> parameter. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minPts </code></td>
+<td>
+<p> value of <code>minPts</code> parameter. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order </code></td>
+<td>
+<p> optics order for the data points in <code>x</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reachdist </code></td>
+<td>
+ <p>reachability distance for each data point in <code>x</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coredist </code></td>
+<td>
+<p> core distance for each data point in <code>x</code>. </p>
+</td>
+</tr>
+</table>
+<p>For <code>extractDBSCAN()</code>, in addition the following
+components are available:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>eps_cl </code></td>
+<td>
+<p> the value of the <code>eps_cl</code> parameter. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster </code></td>
+<td>
+<p> assigned cluster labels in the order of the data points in <code>x</code>. </p>
+</td>
+</tr>
+</table>
+<p>For <code>extractXi()</code>, in addition the following components
+are available:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p> Steepness threshold<code>x</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster </code></td>
+<td>
+<p> assigned cluster labels in the order of the data points in <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters_xi </code></td>
+<td>
+<p> data.frame containing the start and end of each cluster
+found in the OPTICS ordering. </p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Michael Hahsler and Matthew Piekenbrock
+</p>
+
+
+<h3>References</h3>
+
+<p>Mihael Ankerst, Markus M. Breunig, Hans-Peter Kriegel, Joerg
+Sander (1999). OPTICS: Ordering Points To Identify the Clustering Structure.
+<em>ACM SIGMOD international conference on Management of data.</em> ACM Press. pp.
+<a href="https://doi.org/10.1145/304181.304187">doi:10.1145/304181.304187</a>
+</p>
+<p>Hahsler M, Piekenbrock M, Doran D (2019). dbscan: Fast Density-Based
+Clustering with R.  <em>Journal of Statistical Software</em>, 91(1), 1-30.
+<a href="https://doi.org/10.18637/jss.v091.i01">doi:10.18637/jss.v091.i01</a>
+</p>
+<p>Erich Schubert, Michael Gertz (2018). Improving the Cluster Structure
+Extracted from OPTICS Plots. In <em>Lernen, Wissen, Daten, Analysen (LWDA 2018),</em>
+pp. 318-329.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Density reachability.
+</p>
+<p>Other clustering functions: 
+<code>dbscan()</code>,
+<code>extractFOSC()</code>,
+<code>hdbscan()</code>,
+<code>jpclust()</code>,
+<code>sNNclust()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(2)
+n &lt;- 400
+
+x &lt;- cbind(
+  x = runif(4, 0, 1) + rnorm(n, sd = 0.1),
+  y = runif(4, 0, 1) + rnorm(n, sd = 0.1)
+  )
+
+plot(x, col=rep(1:4, time = 100))
+
+### run OPTICS (Note: we use the default eps calculation)
+res &lt;- optics(x, minPts = 10)
+res
+
+### get order
+res$order
+
+### plot produces a reachability plot
+plot(res)
+
+### plot the order of points in the reachability plot
+plot(x, col = "grey")
+polygon(x[res$order, ])
+
+### extract a DBSCAN clustering by cutting the reachability plot at eps_cl
+res &lt;- extractDBSCAN(res, eps_cl = .065)
+res
+
+plot(res)  ## black is noise
+hullplot(x, res)
+
+### re-cut at a higher eps threshold
+res &lt;- extractDBSCAN(res, eps_cl = .07)
+res
+plot(res)
+hullplot(x, res)
+
+### extract hierarchical clustering of varying density using the Xi method
+res &lt;- extractXi(res, xi = 0.01)
+res
+
+plot(res)
+hullplot(x, res)
+
+# Xi cluster structure
+res$clusters_xi
+
+### use OPTICS on a precomputed distance matrix
+d &lt;- dist(x)
+res &lt;- optics(d, minPts = 10)
+plot(res)
+</code></pre>
+
+
+</div>

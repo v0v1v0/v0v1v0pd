@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbinom_raw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>R's C Mathlib (Rmath) dbinom_raw() Binomial Probability pure R Function</h2>
+
+<h3>Description</h3>
+
+<p>A pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> implementation of R's C API (‘Mathlib’ specifically)
+<code>dbinom_raw()</code> function which computes binomial probabilities
+<em>and</em> is continuous in <code>x</code>, i.e., also “works” for
+non-integer <code>x</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+dbinom_raw (x, n, p, q = 1-p, log = FALSE,
+            version = c("2008", "R4.4"),
+            verbose = getOption("verbose"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector with values typically in <code>0:n</code>,  but here allowed to
+non-integer values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>called <code>size</code> in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>dbinom()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>called <code>prob</code> in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>dbinom()</code>, the success
+probability, hence in <code class="reqn">[0, 1]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>mathemtically the same as <code class="reqn">1 - p</code>, but may be (much) more
+accurate, notably when small.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical indicating if the <code>log()</code> of the resulting
+probability should be returned; useful notably in case the probability
+itself would underflow to zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version</code></td>
+<td>
+<p>a <code>character</code> string; originally,
+<code>"2008"</code> was the only option.  Still the default currently,
+this <em>may change</em> in the future.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>integer indicating the amount of verbosity of
+diagnostic output, <code>0</code> means no output, <code>1</code> more, etc.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>numeric vector of the same length as <code>x</code> which may have to be
+thought of recycled along <code>n</code>, <code>p</code> and/or <code>q</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>R Core and Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p>Note that our CRAN package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a> provides
+<code>dbinom</code>, an mpfr-accurate function to be used
+used instead of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s or this pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version relying <code>bd0()</code> and
+<code>stirlerr()</code> where the latter currently only provides
+accurate double precision accuracy.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+for(n in c(3, 10, 27, 100, 500, 2000, 5000, 1e4, 1e7, 1e10)) {
+ x &lt;- if(n &lt;= 2000) 0:n else round(seq(0, n, length.out=2000))
+ p &lt;- 3/4
+ stopifnot(all.equal(dbinom_raw(x, n, p, q=1-p) -&gt; dbin,
+                     dbinom    (x, n, p), tolerance = 1e-13))# 1.636e-14 (Apple clang 14.0.3)
+ stopifnot(all.equal(dbin, dbinom_raw(x, n, p, q=1-p, version = "R4.4") -&gt; dbin44,
+                     tolerance = 1e-13))
+ cat("n = ", n, ": ", (aeq &lt;- all.equal(dbin44, dbin, tolerance = 0)), "\n")
+ if(n &lt; 3000) stopifnot(is.character(aeq)) # check that dbin44 is "better" ?!
+}
+
+n &lt;- 1024 ; x &lt;- 0:n
+plot(x, dbinom_raw(x, n, p, q=1-p) - dbinom(x, n, p), type="l", main = "|db_r(x) - db(x)|")
+plot(x, dbinom_raw(x, n, p, q=1-p) / dbinom(x, n, p) - 1, type="b", log="y",
+     main = "rel.err.  |db_r(x / db(x) - 1)|")
+</code></pre>
+
+
+</div>

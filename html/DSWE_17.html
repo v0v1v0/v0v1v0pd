@@ -1,0 +1,207 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tempGP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>temporal Gaussian process</h2>
+
+<h3>Description</h3>
+
+<p>A Gaussian process based power curve model which explicitly models the temporal aspect of the power curve. The model consists of two parts: <code>f(x)</code> and <code>g(t)</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tempGP(
+  trainX,
+  trainY,
+  trainT = NULL,
+  fast_computation = TRUE,
+  limit_memory = 5000L,
+  max_thinning_number = 20L,
+  vecchia = TRUE,
+  optim_control = list(batch_size = 100L, learn_rate = 0.05, max_iter = 5000L, tol =
+    1e-06, beta1 = 0.9, beta2 = 0.999, epsilon = 1e-08, logfile = NULL)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>trainX</code></td>
+<td>
+<p>A matrix with each column corresponding to one input variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainY</code></td>
+<td>
+<p>A vector with each element corresponding to the output at the corresponding row of <code>trainX</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainT</code></td>
+<td>
+<p>A vector for time indices of the data points. By default, the function assigns natural numbers starting from 1 as the time indices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast_computation</code></td>
+<td>
+<p>A Boolean that specifies whether to do exact inference or fast approximation. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>limit_memory</code></td>
+<td>
+<p>An integer or <code>NULL</code>. The integer is used sample training points during prediction to limit the total memory requirement. Setting the value to <code>NULL</code> would result in no sampling, that is, full training data is used for prediction. Default value is <code>5000</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_thinning_number</code></td>
+<td>
+<p>An integer specifying the max lag to compute the thinning number. If the PACF does not become insignificant till <code>max_thinning_number</code>, then <code>max_thinning_number</code> is used for thinning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vecchia</code></td>
+<td>
+<p>A Boolean that specifies whether to do exact inference or vecchia approximation. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim_control</code></td>
+<td>
+<p>A list parameters passed to the Adam optimizer when <code>fast_computation</code> is set to <code>TRUE</code>. The default values have been tested rigorously and tend to strike a balance between accuracy and speed. </p>
+
+<ul>
+<li> <p><code>batch_size</code>: Number of training points sampled at each iteration of Adam.
+</p>
+</li>
+<li> <p><code>learn_rate</code>: The step size for the Adam optimizer.
+</p>
+</li>
+<li> <p><code>max_iter</code>: The maximum number of iterations to be performed by Adam.
+</p>
+</li>
+<li> <p><code>tol</code>: Gradient tolerance.
+</p>
+</li>
+<li> <p><code>beta1</code>: Decay rate for the first moment of the gradient.
+</p>
+</li>
+<li> <p><code>beta2</code>: Decay rate for the second moment of the gradient.
+</p>
+</li>
+<li> <p><code>epsilon</code>: A small number to avoid division by zero.
+</p>
+</li>
+<li> <p><code>logfile</code>: A string specifying a file name to store hyperparameters value for each iteration.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>tempGP</code> with the following attributes:
+</p>
+
+<ul>
+<li>
+<p> trainX - same as the input matrix <code>trainX</code>.
+</p>
+</li>
+<li>
+<p> trainY - same as the input vector <code>trainY</code>.
+</p>
+</li>
+<li>
+<p> thinningNumber - the thinning number computed by the algorithm.
+</p>
+</li>
+<li>
+<p> modelF - A list containing the details of the model for predicting function <code>f(x)</code>:
+</p>
+
+<ul>
+<li>
+<p> X - The input variable matrix for computing the cross-covariance for predictions, same as <code>trainX</code> unless the model is updated. See <code>updateData.tempGP</code> method for details on updating the model.
+</p>
+</li>
+<li>
+<p> y - The response vector, again same as <code>trainY</code> unless the model is updated.
+</p>
+</li>
+<li>
+<p> weightedY - The weighted response, that is, the response left multiplied by the inverse of the covariance matrix.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> modelG - A list containing the details of the model for predicting function <code>g(t)</code>:
+</p>
+
+<ul>
+<li>
+<p> residuals - The residuals after subtracting function <code>f(x)</code> from the response. Used to predict <code>g(t)</code>. See <code>updateData.tempGP</code> method for updating the residuals.
+</p>
+</li>
+<li>
+<p> time_index - The time indices of the residuals, same as <code>trainT</code>.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> estimatedParams - Estimated hyperparameters for function <code>f(x)</code>.
+</p>
+</li>
+<li>
+<p> llval - log-likelihood value of the hyperparameter optimization for <code>f(x)</code>.
+</p>
+</li>
+<li>
+<p> gradval - gradient vector at the optimal log-likelihood value.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Prakash, A., Tuo, R., &amp; Ding, Y. (2022). "The temporal overfitting problem with applications in wind power curve modeling." Technometrics. <a href="https://doi.org/10.1080/00401706.2022.2069158">doi:10.1080/00401706.2022.2069158</a>.
+</p>
+<p>Katzfuss, M., &amp; Guinness, J. (2021). "A General Framework for Vecchia Approximations of Gaussian Processes." Statistical Science. <a href="https://doi.org/10.1214/19-STS755">doi:10.1214/19-STS755</a>.
+</p>
+<p>Guinness, J. (2018). "Permutation and Grouping Methods for Sharpening Gaussian Process Approximations." Technometrics. <a href="https://doi.org/10.1080/00401706.2018.1437476">doi:10.1080/00401706.2018.1437476</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict.tempGP</code> for computing predictions and <code>updateData.tempGP</code> for updating data in a tempGP object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+    data = DSWE::data1
+    trainindex = 1:50 #using the first 50 data points to train the model
+    traindata = data[trainindex,]
+    xCol = 2 #input variable columns
+    yCol = 7 #response column
+    trainX = as.matrix(traindata[,xCol])
+    trainY = as.numeric(traindata[,yCol])
+    tempGPObject = tempGP(trainX, trainY)
+
+
+</code></pre>
+
+
+</div>

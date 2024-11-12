@@ -1,0 +1,290 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>scores.dcca</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract results of a double constrained correspondence analysis 
+(dc-CA)</h2>
+
+<h3>Description</h3>
+
+<p>This function works very much like the <code>vegan</code> 
+<code>scores</code> function, in particular 
+<code>scores.cca</code>, with the additional results such as 
+regression coefficients and linear combinations of traits 
+<code>('reg_traits', 'lc_traits')</code>. All scores from CA obey the so called
+transition formulas and so do the scores of CCA and dc-CA. The differences
+are, for CCA, that the linear combinations of environmental variables (the 
+<em>constrained</em> site scores) replace the usual (<em>unconstrained</em>) 
+site scores, and for dc-CA, that the linear combinations of traits (the 
+<em>constrained</em> species scores) also replace the usual 
+(<em>unconstrained</em>) species scores in the transition formulas.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dcca'
+scores(
+  x,
+  ...,
+  choices = 1:2,
+  display = "all",
+  scaling = "sym",
+  which_cor = "in model",
+  tidy = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object of class <code>"dcca"</code>, <em>i.e.</em> result of
+<code>dc_CA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments passed to the function (currently ignored).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choices</code></td>
+<td>
+<p>integer vector of which axes to obtain. Default: all dc-CA 
+axes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>display</code></td>
+<td>
+<p>a character vector, one or more of <code>c("all", "species",
+"sites", "sp", "wa", "lc", "bp", "cor", "ic", "reg", "tval", "cn", 
+"lc_traits", "reg_traits", "tval_traits", "cor_traits", "ic_traits", 
+"bp_traits", "cn_traits")</code>. The most items are as in 
+<code>scores.cca</code>, except <code>"cor"</code> and <code>"ic"</code>, for
+inter-set and intra-set correlations, respectively, and <code>"tval"</code> for
+the (over-optimistic) t-values of the regression coefficients. The remaining
+scores are analogous scores for species and traits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaling</code></td>
+<td>
+<p>numeric (1,2 or 3) or character <code>"sites", "species" or
+"symmetric"</code>. Default: "symmetric". Either site- (1) or species- (2) related
+scores are scaled by eigenvalues, and the other set of scores have
+unit weighted mean square or with 3 both are scaled symmetrically 
+to weighted mean squares equal to the square root of eigenvalues. Negative 
+values are treated as the corresponding positive ones by <code>abs(scaling)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which_cor</code></td>
+<td>
+<p>character or list of trait and environmental variables 
+names (in this order) in the data frames for which inter-set correlations 
+must calculated. Default: a character ("in_model") for all traits and 
+variables in the model, including collinear variables and levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tidy</code></td>
+<td>
+<p>Return scores that are compatible with <code>ggplot2</code>: all 
+scores are in a single data.frame, score type is identified by factor 
+variable <code>score</code>, the names by variable <code>label</code>, and species 
+weights (in <code>dc_CA</code> are in variable <code>weight</code>. See 
+<code>scores.cca</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function is modeled after <code>scores.cca</code>.
+</p>
+<p>The t-ratios are taken from a multiple regression of the unconstrained
+species (or site) scores on to the traits (or environmental variables).
+</p>
+<p>An example of <code>which_cor</code> is: <code>which_cor = list(traits = "SLA", 
+env = c("acidity", "humidity"))</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame if <code>tidy = TRUE</code>. Otherwise, a matrix if a single
+item is asked for and a named list of matrices if more than one item is 
+asked for. The following names can be included: 
+<code>c("sites", "constraints_sites", "centroids", "regression", "t_values",
+"correlation", "intra_set_correlation", "biplot", "species", 
+"constraints_species", "regression_traits", "t_values_traits", 
+"correlation_traits", "intra_set_correlation_traits", "biplot_traits", 
+"centroids_traits")</code>. Each matrix has an attribute <code>"meaning"</code> 
+explaining its meaning. With  <code>tidy = TRUE</code>, the resulting data frame 
+has attributes <code>"scaling"</code> and <code>"meaning"</code>; the latter has two 
+columns: (1) name of score type and (2) its meaning, usage and 
+interpretation.
+</p>
+<p>An example of the meaning of scores in scaling <code>"symmetric"</code> with 
+<code>display ="all"</code>:
+</p>
+
+<dl>
+<dt>sites</dt>
+<dd>
+<p> CMWs of the trait axes (constraints species) in scaling 
+'symmetric' optimal for biplots and, almost so, for inter-site distances.</p>
+</dd>
+<dt>constraints_sites</dt>
+<dd>
+<p>linear combination of the environmental predictors 
+and the covariates (making the ordination axes orthogonal to the 
+covariates) in scaling 'symmetric' optimal for biplots and, almost so, 
+for inter-site distances.</p>
+</dd>
+<dt>regression</dt>
+<dd>
+<p>mean, sd, VIF, standardized regression coefficients and 
+their optimistic t-ratio in scaling 'symmetric'.</p>
+</dd>
+<dt>t_values</dt>
+<dd>
+<p>t-values of the coefficients of the regression of the CWMs 
+of the trait composite on to the environmental variables</p>
+</dd>
+<dt>correlation</dt>
+<dd>
+<p>inter set correlation, correlation between environmental 
+variables and the sites scores (CWMs)</p>
+</dd>
+<dt>intra_set_correlation</dt>
+<dd>
+<p>intra set correlation, correlation between
+environmental variables and the dc-ca axis (constrained sites scores)</p>
+</dd>
+<dt>biplot</dt>
+<dd>
+<p>biplot scores of environmental variables for display with 
+biplot-traits for fourth-corner correlations in scaling 'symmetric'.</p>
+</dd>
+<dt>centroids</dt>
+<dd>
+<p>environmental category means of the site scores in scaling 
+'symmetric'  optimal for biplots and, almost so, for inter-environmental
+category distances.</p>
+</dd>
+<dt>species</dt>
+<dd>
+<p>SNC on the environmental axes (constraints sites) in scaling 
+'symmetric' optimal for biplots and, almost so, for inter-species 
+distances.</p>
+</dd>
+<dt>constraints_species</dt>
+<dd>
+<p>linear combination of the traits and the trait 
+covariates (making the ordination axes orthogonal to the covariates) in 
+scaling 'symmetric' optimal for biplots and, almost so, for inter-species 
+distances.</p>
+</dd>
+<dt>regression_traits</dt>
+<dd>
+<p>mean, sd, VIF, standardized regression 
+coefficients and their optimistic t-ratio in scaling 'symmetric'.</p>
+</dd>
+<dt>t_values_traits</dt>
+<dd>
+<p>t-values of the coefficients of the regression of the
+SNCs along a dc-CA axis on to the traits</p>
+</dd>
+<dt>correlation_traits</dt>
+<dd>
+<p>inter set correlation, correlation between 
+traits and the species scores (SNCs)</p>
+</dd>
+<dt>intra_set_correlation_traits</dt>
+<dd>
+<p>intra set correlation, correlation 
+between traits and the dc-ca axis (constrained species scores)</p>
+</dd>
+<dt>biplot_traits</dt>
+<dd>
+<p>biplot scores of traits for display with biplot scores
+for fourth-corner correlation in scaling 'symmetric'.</p>
+</dd>
+<dt>centroids_traits</dt>
+<dd>
+<p>trait category means of the species scores in 
+scaling 'symmetric' optimal for biplots and, almost so, for inter-trait 
+category distances.</p>
+</dd>
+</dl>
+<p>The statements on optimality for distance interpretations are based on the 
+<code>scaling</code> and the relative magnitude of the dc-CA eigenvalues of the 
+chosen axes.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("dune_trait_env")
+
+# rownames are carried forward in results
+rownames(dune_trait_env$comm) &lt;- dune_trait_env$comm$Sites
+
+mod &lt;- dc_CA(formulaEnv = ~A1 + Moist + Mag + Use + Manure,
+             formulaTraits = ~ SLA + Height + LDMC + Seedmass + Lifespan,
+             response = dune_trait_env$comm[, -1],  # must delete "Sites"
+             dataEnv = dune_trait_env$envir,
+             dataTraits = dune_trait_env$traits)
+
+anova(mod, by = "axis")
+# For more demo on testing, see demo dune_test.r
+
+mod_scores &lt;- scores(mod)
+# correlation of axes with a variable that is not in the model
+scores(mod, display = "cor", scaling = "sym", which_cor = list(NULL, "X_lot"))
+
+cat("head of unconstrained site scores, with meaning\n")
+print(head(mod_scores$sites))
+
+mod_scores_tidy &lt;- scores(mod, tidy = TRUE)
+print("names of the tidy scores")
+print(names(mod_scores_tidy))
+cat("\nThe levels of the tidy scores\n")
+print(levels(mod_scores_tidy$score))
+
+cat("\nFor illustration: a dc-CA model with a trait covariate\n")
+mod2 &lt;- dc_CA(formulaEnv = ~ A1 + Moist + Mag + Use + Manure,
+              formulaTraits = ~ SLA + Height + LDMC + Lifespan + Condition(Seedmass),
+              response = dune_trait_env$comm[, -1],  # must delete "Sites"
+              dataEnv = dune_trait_env$envir,
+              dataTraits = dune_trait_env$traits)
+
+cat("\nFor illustration: a dc-CA model with both environmental and trait covariates\n")
+mod3 &lt;- dc_CA(formulaEnv = ~A1 + Moist + Use + Manure + Condition(Mag),
+              formulaTraits = ~ SLA + Height + LDMC + Lifespan + Condition(Seedmass),
+              response = dune_trait_env$comm[, -1],  # must delete "Sites"
+              dataEnv = dune_trait_env$envir,
+              dataTraits = dune_trait_env$traits, verbose = FALSE)
+
+cat("\nFor illustration: same model but using dc_CA_object = mod2 for speed, ", 
+    "as the trait model and data did not change\n")
+mod3B &lt;- dc_CA(formulaEnv = ~A1 + Moist + Use + Manure + Condition(Mag),
+               dataEnv = dune_trait_env$envir,
+               dc_CA_object = mod2, verbose= FALSE)
+cat("\ncheck on equality of mod3 (from data) and mod3B (from a dc_CA_object)\n",
+    "the expected difference is in the component 'call'\n ")
+print(all.equal(mod3, mod3B)) #  only the component call differs
+
+
+</code></pre>
+
+
+</div>

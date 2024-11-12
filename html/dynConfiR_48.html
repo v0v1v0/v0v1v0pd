@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictRTConf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction of confidence rating and response time distribution for sequential sampling confidence models</h2>
+
+<h3>Description</h3>
+
+<p><code>predictConf</code> predicts the categorical response distribution of
+decision and confidence ratings, <code>predictRT</code> computes the predicted
+RT distribution (density) for the sequential sampling confidence model
+specified by the argument <code>model</code>, given specific parameter constellations.
+This function calls the respective functions for diffusion based
+models (dynWEV and 2DSD: <code>predictWEV</code>) and race models (IRM, PCRM,
+IRMt, and PCRMt: <code>predictRM</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictConf(paramDf, model = NULL, maxrt = 15, subdivisions = 100L,
+  simult_conf = FALSE, stop.on.error = FALSE, .progress = TRUE)
+
+predictRT(paramDf, model = NULL, maxrt = 9, subdivisions = 100L,
+  minrt = NULL, simult_conf = FALSE, scaled = FALSE, DistConf = NULL,
+  .progress = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>paramDf</code></td>
+<td>
+<p>a list or dataframe with one row. Column names should match the
+names of the respective model parameters. For different stimulus
+quality/mean drift rates, names should be <code>v1</code>, <code>v2</code>, <code>v3</code>,.... Different <code>s</code> parameters
+are possible with <code>s1</code>, <code>s2</code>, <code>s3</code>... with equally many steps as for drift rates (same
+for <code>sv</code> parameter in dynWEV and 2DSD).
+Additionally, the confidence thresholds should be given by names with
+<code>thetaUpper1</code>, <code>thetaUpper2</code>,..., <code>thetaLower1</code>,... or,
+for symmetric thresholds only by <code>theta1</code>, <code>theta2</code>,....</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character scalar. One of "2DSD", "dynWEV", "IRM", "PCRM", "IRMt", or "PCRMt".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxrt</code></td>
+<td>
+<p>numeric. The maximum RT for the
+integration/density computation. Default: 15 (for <code>predictConf</code> (integration)),
+9 (for <code>predictRT</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subdivisions</code></td>
+<td>
+<p><code>integer</code> (default: 100).
+For <code>predictConf</code> it is used as argument for the inner integral routine.
+For <code>predictRT</code> it is the number of points for which the density is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simult_conf</code></td>
+<td>
+<p>logical, only relevant for dynWEV and 2DSD. Whether in the experiment
+confidence was reported simultaneously with the decision, as then decision and confidence
+judgment are assumed to have happened subsequent before response and computations are
+different, when there is an observable interjudgment time (then <code>simult_conf</code> should be FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop.on.error</code></td>
+<td>
+<p>logical. Argument directly passed on to integrate. Default is FALSE,
+since the densities invoked may lead to slow convergence of the integrals (which are still
+quite accurate) which causes R to throw an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.progress</code></td>
+<td>
+<p>logical. If TRUE (default) a progress bar is drawn to the console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minrt</code></td>
+<td>
+<p>numeric or NULL(default). The minimum rt for the density computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaled</code></td>
+<td>
+<p>logical. For <code>predictRT</code>. Whether the computed density
+should be scaled to integrate to one (additional column <code>densscaled</code>). Otherwise the output
+contains only the defective density (i.e. its integral is equal to the probability of a
+response and not 1). If <code>TRUE</code>, the argument <code>DistConf</code> should be given, if available.
+Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DistConf</code></td>
+<td>
+<p><code>NULL</code> or <code>data.frame</code>. A <code>data.frame</code> or <code>matrix</code> with column
+names, giving the distribution of response and rating choices for
+different conditions and stimulus categories in the form of the output of
+<code>predictConf</code>. It is only necessary, if <code>scaled=TRUE</code>, because these
+probabilities are used for scaling. If <code>scaled=TRUE</code> and <code>DistConf=NULL</code>, it will be computed
+with the function <code>predictRM_Conf</code>, which takes some time and the function will
+throw a message. Default: <code>NULL</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>predictConf</code> consists merely of an integration of
+the reaction time density of the given model, <code>{d*model*}</code>, over the response
+time in a reasonable interval (0 to <code>maxrt</code>). The function <code>predictRT</code> wraps
+these density functions to a parameter set input and a data.frame output.
+For the argument <code>paramDf</code>, the output of the fitting function <code>fitRTConf</code>
+with the respective model may be used.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>predictConf</code> returns a <code>data.frame</code>/<code>tibble</code> with columns: <code>condition</code>, <code>stimulus</code>,
+<code>response</code>, <code>rating</code>, <code>correct</code>, <code>p</code>, <code>info</code>, <code>err</code>. <code>p</code> is the predicted probability of a response
+and <code>rating</code>, given the stimulus category and condition. <code>info</code> and <code>err</code> refer to the
+respective outputs of the integration routine used for the computation.
+<code>predictRT</code> returns a <code>data.frame</code>/<code>tibble</code> with columns: <code>condition</code>, <code>stimulus</code>,
+<code>response</code>, <code>rating</code>, <code>correct</code>, <code>rt</code> and <code>dens</code> (and <code>densscaled</code>, if <code>scaled=TRUE</code>).
+</p>
+
+
+<h3>Note</h3>
+
+<p>Different parameters for different conditions are only allowed for drift rate,
+<code>v</code>, drift rate variability, <code>sv</code> (in dynWEV and 2DSD), and process variability
+<code>s</code>. All other parameters are used for all conditions.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastian Hellmann.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Examples for "dynWEV" model (equivalent applicable for
+# all other models (with different parameters!))
+
+# 1. Define some parameter set in a data.frame
+paramDf &lt;- data.frame(a=1.5,v1=0.2, v2=1, t0=0.1,z=0.52,
+                      sz=0.3,sv=0.4, st0=0,  tau=3, w=0.5,
+                      theta1=1, svis=0.5, sigvis=0.8)
+
+# 2. Predict discrete Choice x Confidence distribution:
+preds_Conf &lt;- predictConf(paramDf, "dynWEV", maxrt = 25, simult_conf=TRUE)
+head(preds_Conf)
+
+
+# 3. Compute RT density
+preds_RT &lt;- predictRT(paramDf, "dynWEV") #(scaled=FALSE)
+# same output with default rt-grid and without scaled density column:
+preds_RT &lt;- predictRT(paramDf, "dynWEV", maxrt=5, subdivisions=200,
+                      minrt=paramDf$tau+paramDf$t0, simult_conf = TRUE,
+                      scaled=TRUE, DistConf = preds_Conf)
+head(preds_RT)
+
+  # produces a warning, if scaled=TRUE and DistConf missing
+  preds_RT &lt;- predictRT(paramDf, "dynWEV",
+                           scaled=TRUE)
+
+
+
+  # Example of visualization
+  library(ggplot2)
+  preds_Conf$rating &lt;- factor(preds_Conf$rating, labels=c("unsure", "sure"))
+  preds_RT$rating &lt;- factor(preds_RT$rating, labels=c("unsure", "sure"))
+  ggplot(preds_Conf, aes(x=interaction(rating, response), y=p))+
+    geom_bar(stat="identity")+
+    facet_grid(cols=vars(stimulus), rows=vars(condition), labeller = "label_both")
+  ggplot(preds_RT, aes(x=rt, color=interaction(rating, response), y=densscaled))+
+    geom_line(stat="identity")+
+    facet_grid(cols=vars(stimulus), rows=vars(condition), labeller = "label_both")+
+    theme(legend.position = "bottom")+ ggtitle("Scaled Densities")
+  ggplot(aggregate(dens~rt+correct+rating+condition, preds_RT, mean),
+         aes(x=rt, color=rating, y=dens))+
+    geom_line(stat="identity")+
+    facet_grid(cols=vars(condition), rows=vars(correct), labeller = "label_both")+
+    theme(legend.position = "bottom")+ ggtitle("Non-Scaled Densities")
+
+# Use PDFtoQuantiles to get predicted RT quantiles
+head(PDFtoQuantiles(preds_RT, scaled = FALSE))
+
+</code></pre>
+
+
+</div>

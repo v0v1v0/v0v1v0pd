@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DMR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Delete or Merge Regressors</h2>
+
+<h3>Description</h3>
+
+<p>Fits a path of linear (<code>family="gaussian"</code>) or logistic (<code>family="binomial"</code>) regression models, where the number of parameters changes from 1 to p (p is the number of columns in the model matrix). Models are subsets of continuous predictors and partitions of levels of factors in <code>X</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DMR(
+  X,
+  y,
+  family = "gaussian",
+  clust.method = "complete",
+  lam = 10^(-7),
+  lambda = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Input data frame; each row is an observation vector; each column can be numerical or integer for a continuous predictor or a factor for a categorical predictor; DMR works only if p&lt;n (n is the number of observations, p the number of columns in the model matrix), for p&gt;=n see <code>DMRnet</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Response variable; Numerical for <code>family="gaussian"</code> or a factor with two levels for <code>family="binomial"</code>. For <code>family="binomial"</code> the last level in alphabetical order is the target class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>Response type; one of: <code>"gaussian"</code>, <code>"binomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clust.method</code></td>
+<td>
+<p>Clustering method used for partitioning levels of factors; see function <a href="https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html">hclust</a> in package <span class="pkg">stats</span> for details. <code>clust.method="complete"</code> is the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lam</code></td>
+<td>
+<p>The amount of penalization in ridge regression (used for logistic regression in order to allow for parameter estimation in linearly separable setups) or the amount of matrix regularization in case of linear regression. Used only for numerical reasons. The default is 1e-7.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The net of lambda values. It is optional and serves only for consistency with <code>DMRnet</code>. It is not used in <code>DMR</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>DMR</code> algorithm is based on a traditional stepwise method.
+A nested family of models is built based on the values of squared Wald statistics:
+</p>
+<p>1. For each continuous variable the squared Wald statistic is calculated for a hypothesis that the variable is equal to zero (it should be deleted).
+</p>
+<p>2. For each factor a dissimilarity matrix is constructed using squared Wald statistics for hypotheses that two parameters are equal
+(the two levels of factor should be merged). Next, hierarchical clustering is preformed using the dissimilarity matrix. All cutting heights are recorded.
+</p>
+<p>3. Squared Wald statistics and cutting heights and values of  from steps 2 and 3 are concatenated and sorted, resulting in vector h.
+</p>
+<p>4. Nested family of models of size 1 to p is built by accepting hypotheses according to increasing values in vector h.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object with S3 class <code>"DMR"</code>, which  is  a  list  with  the  ingredients:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Matrix p times p of estimated parameters; each column corresponds to a model on the nested path having from p to 1 parameter (denoted as df).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Vector of degrees of freedom; from p to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rss/loglik</code></td>
+<td>
+<p>Measure of fit for the nested models: rss (residual sum of squares) is returned for <code>family="gaussian"</code> and loglik (loglikelihood) is returned for <code>family="binomial"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>levels.listed</code></td>
+<td>
+<p>Minimal set of levels of respective factors present in data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The net of lambda values used in the screening step, empty vector in case of <code>DMR</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arguments</code></td>
+<td>
+<p>List of the chosen arguments from the function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interc</code></td>
+<td>
+<p>If the intercept was fitted: for <code>DMR</code> always equal to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>print.DMR</code> for printing, <code>plot.DMR</code> for plotting, <code>coef.DMR</code> for extracting coefficients and <code>predict.DMR</code> for prediction.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## DMR for linear regression
+data(miete)
+ytr &lt;- miete[1:1500,1]
+Xtr &lt;- miete[1:1500,-1]
+Xte &lt;- miete[1501:2053,-1]
+m1 &lt;- DMR(Xtr, ytr)
+print(m1)
+plot(m1)
+g &lt;- gic.DMR(m1, c = 2.5)
+plot(g)
+coef(m1, df = g$df.min)
+ypr &lt;- predict(m1, newx = Xte, df = g$df.min)
+
+## DMR for logistic regression
+# notice that only part of dataset promoter was used: DMR works only if p&lt;n, for p&gt;=n use DMRnet
+data(promoter)
+ytr &lt;- factor(promoter[1:80,1])
+Xtr &lt;- promoter[1:80,2:11]
+Xte &lt;- promoter[81:106,2:11]
+m2 &lt;- DMR(Xtr, ytr, family = "binomial")
+print(m2)
+plot(m2)
+g &lt;- gic.DMR(m2, c = 2)
+plot(g)
+coef(m2, df = g$df.min)
+ypr &lt;- predict(m2, newx = Xte, df = g$df.min)
+
+</code></pre>
+
+
+</div>

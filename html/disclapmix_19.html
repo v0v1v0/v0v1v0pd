@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rank_contributor_pairs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Separate a 2 person mixture</h2>
+
+<h3>Description</h3>
+
+<p>Separate a 2 person mixture by ranking the possible contributor pairs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rank_contributor_pairs(contrib_pairs, fit, max_rank = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contrib_pairs</code></td>
+<td>
+<p>A <code>contrib_pairs</code> object obtained from
+<code>contributor_pairs</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>A <code>disclapmixfit</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_rank</code></td>
+<td>
+<p>Not used. Reserved for future use.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>ranked_contrib_pairs</code> object that is basically an order
+vector and the probabilities for each pair (in the same order as given in
+<code>contrib_pairs</code>), found by using <code>fit</code>. Note, that contributor
+order is disregarded so that each contributor pair is only present once (and
+not twice as would be the case if taking order into consideration).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contributor_pairs</code> <code>generate_mixture</code>
+<code>disclapmix-package</code> <code>disclapmix</code>
+<code>disclapmixfit</code> <code>clusterprob</code>
+<code>predict.disclapmixfit</code> <code>print.disclapmixfit</code>
+<code>summary.disclapmixfit</code> <code>simulate.disclapmixfit</code>
+
+<code>disclap</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(danes)
+db &lt;- as.matrix(danes[rep(1L:nrow(danes), danes$n), 1L:(ncol(danes) - 1L)])
+
+set.seed(1)
+true_contribs &lt;- sample(1L:nrow(db), 2L)
+h1 &lt;- db[true_contribs[1L], ]
+h2 &lt;- db[true_contribs[2L], ]
+db_ref &lt;- db[-true_contribs, ]
+
+h1h2 &lt;- c(paste(h1, collapse = ";"), paste(h2, collapse = ";"))
+tab_db &lt;- table(apply(db, 1, paste, collapse = ";"))
+tab_db_ref &lt;- table(apply(db_ref, 1, paste, collapse = ";"))
+tab_db[h1h2]
+tab_db_ref[h1h2]
+
+rm(db) # To avoid use by accident
+
+mixture &lt;- generate_mixture(list(h1, h2))
+
+possible_contributors &lt;- contributor_pairs(mixture)
+possible_contributors
+
+fits &lt;- lapply(1L:5L, function(clus) disclapmix(db_ref, clusters = clus))
+
+best_fit_BIC &lt;- fits[[which.min(sapply(fits, function(fit) fit$BIC_marginal))]]
+best_fit_BIC
+
+ranked_contributors_BIC &lt;- rank_contributor_pairs(possible_contributors, best_fit_BIC)
+ranked_contributors_BIC
+
+plot(ranked_contributors_BIC, top = 10L, type = "b")
+
+get_rank(ranked_contributors_BIC, h1)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,228 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>divDyn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Time series from metrics of diversity dynamics</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates various metrics from occurrence datasets in the form of time series.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">divDyn(
+  x,
+  tax,
+  bin = NULL,
+  age = NULL,
+  revtime = FALSE,
+  breaks = NULL,
+  coll = NULL,
+  ref = NULL,
+  om = NULL,
+  noNAStart = FALSE,
+  data.frame = TRUE,
+  filterNA = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>(data.frame)</code> Fossil occurrence table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tax</code></td>
+<td>
+<p><code>(character)</code> Variable name of the occurring taxa (variable type: <code>factor</code> or <code>character</code> - such as <code>"genus"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin</code></td>
+<td>
+<p><code>(character)</code> Variable name of the discrete bin numbers of the occurrences. This variable should be <code>numeric</code>. Time flows from lower to higher values by default. Use <code>revtime</code> to reverse this order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>age</code></td>
+<td>
+<p><code>(character)</code> Variable name of the ages of the occurrences that will be sliced with the <code>slice</code> function using the intervals provided in <code>breaks</code>. This variable should be <code>numeric</code>. Time flows from higher to lower values by default. Use <code>revtime</code> to reverse this order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>revtime</code></td>
+<td>
+<p><code>(logical)</code> Argument for reversing the default direction of time. Setting this argument to <code>TRUE</code> will make time flow from higher to lower values when <code>bin</code> is used, and from lower to higher values, when <code>age</code> is given. CAUTION: Failing to set this argument properly can make originations become extinctions and vice versa!</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p><code>(numeric)</code> If <code>NULL</code> (default) the used values in the <code>bin</code> variable will designate independent time slices that follow each other in succession. If a vector is provided, than the numeric entries in <code>bin</code> will be binned similarly to the <code>hist</code> or <code>cut</code> function. The order of elements in this vector is arbitrary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coll</code></td>
+<td>
+<p><code>(character)</code> The variable name of the collection identifiers. (optional, only for use with the internal <code>omit</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p><code>(character)</code> The variable name of the reference identifiers. (optional, only for use with the internal <code>omit</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>om</code></td>
+<td>
+<p><code>(character)</code> The <code>om</code> argument of the <code>omit()</code> function. If set to <code>NULL</code> (default), then no occurrences will be omitted before the execution of the function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>noNAStart</code></td>
+<td>
+<p>(logical) Useful when the entries in the <code>bin</code> variable do not start from bin no. 1, but positive integer bin numbers are provided. Then <code>noNAStart=TRUE</code> will cut the first part of the resulting table, so the first row will contain the estimates for the lowest bin number. In case of positive integer bin identifiers, and if <code>noNAStart=FALSE</code>, the index of the row will be the bin number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.frame</code></td>
+<td>
+<p><code>(logical)</code> Should the output be a <code>data.frame</code> or a <code>matrix</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filterNA</code></td>
+<td>
+<p><code>(logical)</code> The <code>filterNA</code> parameter of the <code>omit</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following variables are produced:
+</p>
+<p><code>bin</code>: Bin number, or the numeric identifier of the bin.
+</p>
+<p><code>tThrough</code>: Number of through-ranging taxa, taxa that have first occurrences before, and last occurrences after the focal bin.
+</p>
+<p><code>tOri</code>: Number of originating taxa, taxa that have first occurrences in the focal bin, and last occurrences after it.
+</p>
+<p><code>tExt</code>: Number of taxa getting extinct. These are taxa that have first occurrences before the focal bin, and last occurrences in it.
+</p>
+<p><code>tSing</code>: Number of stratigraphic singleton (single-interval) taxa, taxa that only occur in the focal bin.
+</p>
+<p><code>t2d</code>: Number of lower two timers (Alroy, 2008; 2014), taxa that are present in the <em>i</em>-1th and the ith bin (focal bin). 
+</p>
+<p><code>t2u</code>: Number of upper two timers (Alroy, 2008; 2014), taxa that are present in the <em>i</em>th (focal) and the <em>i</em>+1th bin. (Alroy, 2008; 2014)
+</p>
+<p><code>tGFu</code>: Number of upper gap-fillers (Alroy, 2014), taxa that occurr in bin <em>i</em>+2 and <em>i</em>-1, but were not found in <em>i</em>+1. (Alroy, 2014)
+</p>
+<p><code>tGFd</code>: Number of lower gap-fillers (Alroy, 2014), taxa that occurr in bin <em>i</em>-2 and <em>i</em>+1, but were not found in <em>i</em>-1. (Alroy, 2014)
+</p>
+<p><code>t3</code>: Number of three timer taxa (Alroy, 2008; 2014), present in bin <em>i</em>-1, <em>i</em>, and <em>i</em>+1. (Alroy, 2008; 2014)
+</p>
+<p><code>tPart</code>: Part timer taxa (Alroy, 2008; 2014), present in bin <em>i</em>-1,and <em>i</em>+1, but not in bin <em>i</em>. 
+</p>
+<p><code>extProp</code>: Proportional extinctions including single-interval taxa: <em>(tExt + tSing) / (tThrough + tOri + tExt + tSing)</em>.
+</p>
+<p><code>oriProp</code>: Proportional originations including single-interval taxa:  <em>(tOri + tSing) / (tThrough + tOri + tExt + tSing)</em>.
+</p>
+<p><code>extPC</code>: Per capita extinction rates of Foote (1999). <em>-log(tExt/(tExt + tThrough))</em>.  Values are not normalized with bin lengths. Similar equations were used by Alroy (1996) but without taking the logarithm.
+</p>
+<p><code>oriPC</code>: Per capita origination rates of Foote (1999). <em>-log(tOri/(tOri + tThrough))</em>. Values are not normalized with bin lengths. Similar equations were used by Alroy (1996) but without taking the logarithm.
+</p>
+<p><code>ext3t</code>: Three-timer extinction rates of Alroy (2008). <em>log(t2d/t3)</em>.
+</p>
+<p><code>ori3t</code>: Three-timer origination rates of Alroy (2008). <em>log(t2u/t3)</em>.
+</p>
+<p><code>extC3t</code>: Corrected three-timer extinction rates of Alroy (2008). <em>ext3t[i] + log(samp3t[i+1])</em>.
+</p>
+<p><code>oriC3t</code>: Corrected three-timer origination rates of Alroy (2008). <em>ori3t[i] + log(samp3t[i-1])</em>.
+</p>
+<p><code>divSIB</code>: Sampled-in-bin diversity (richness), the number of genera sampled in the focal bin.
+</p>
+<p><code>divCSIB</code>: Corrected sampled-in-bin diversity (richness). <em>divSIB/samp3t*totSamp3t</em>, where <em>totSamp3t</em> is total three-timer sampling completeness of the dataset (Alroy, 2008). 
+</p>
+<p><code>divBC</code>: Boundary-crosser diversity (richness), the number of taxa with ranges crossing the boundaries of the interval. <em>tExt + tOri + tThrough</em>.
+</p>
+<p><code>divRT</code>: Range-through diversity (richness), all taxa in the interval, based on the range-through assumption. <em>(tSing + tOri + tExt + tThrough)</em>.
+</p>
+<p><code>sampRange</code>: Range-based sampling probability, without observed range end-points (Foote), <em>(divSIB - tExt - tOri- t-Sing)/tThrough</em>
+</p>
+<p><code>samp3t</code>: Three-timer sampling completeness of Alroy (2008). <em>t3/(t3+tPart)</em>
+</p>
+<p><code>extGF</code>: Gap-filler extinction rates of Alroy(2014). <em>log((t2d + tPart)/(t3+tPart+tGFd))</em>
+</p>
+<p><code>oriGF</code>: Gap-filler origination rates of Alroy(2014). <em>log((t2u + tPart)/(t3+tPart+tGFd))</em>
+</p>
+<p><code>E2f3</code>: Second-for-third extinction propotions of Alroy (2015). As these metrics are based on an algorithmic approach, for the equations please refer to the Alroy (2015, p. 634, right column and Eq. 4)). See source code (<a href="https://github.com/divDyn/divDyn">https://github.com/divDyn/divDyn</a>) for the exact implementation, found in the <code>Metrics</code> function in the diversityDynamics.R file.
+</p>
+<p><code>O2f3</code>: Second-for-third origination propotions of Alroy (2015). Please see <code>E2f3</code>.
+</p>
+<p><code>ext2f3</code>: Second-for-third extinction rates (based on Alroy, 2015). Transformed to the usual rate form with <em>log(1/(1-E2f3))</em>.
+</p>
+<p><code>ori2f3</code>: Second-for-third origination rates (based on Alroy, 2015). Transformed to the usual rate form with <em>log(1/(1-O2f3))</em>.
+</p>
+<p><strong>References:</strong>
+</p>
+<p>Foote, M. (1999) Morphological Diversity In The Evolutionary Radiation Of Paleozoic and Post-Paleozoic Crinoids. Paleobiology 25, 1–115. doi:10.1017/S0094837300020236.
+</p>
+<p>Alroy, J. (2008) Dynamics of origination and extinction in the marine fossil record. Proceedings of the National Academy of Science 105, 11536-11542. doi: 10.1073/pnas.0802597105
+</p>
+<p>Alroy, J. (2014) Accurate and precise estimates of origination and extinction rates. Paleobiology 40, 374-397. doi: 10.1666/13036
+</p>
+<p>Alroy, J. (2015) A more precise speciation and extinction rate estimator. Paleobiology 41, 633-639. doi: 10.1017/pab.2015.26
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.frame object, with every row corresponding to a time bin.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># import data
+  data(corals)
+  data(stages)
+
+# calculate metrics of diversity dynamics
+   dd &lt;- divDyn(corals, tax="genus", bin="stg")
+
+# plotting
+  tsplot(stages, shading="series", boxes="sys", xlim=c(260,0), 
+    ylab="range-through diversity (genera)", ylim=c(0,230))
+  lines(stages$mid, dd$divRT, lwd=2)
+
+ # with omission of single reference taxa  
+   ddNoSing &lt;- divDyn(corals, tax="genus", bin="stg", om="ref", ref="reference_no")
+   lines(stages$mid, ddNoSing$divRT, lwd=2, col="red")
+
+ # using the estimated ages (less robust) - 10 million years
+   # mean ages
+   corals$me_ma &lt;- apply(corals[, c("max_ma", "min_ma")], 1, mean)
+   # ages reverse the direction of time! set ages to TRUE in this case
+   ddRadio10 &lt;- divDyn(corals, tax="genus", age="me_ma", 
+	breaks=seq(250,0,-10))
+   lines(ddRadio10$me_ma, ddRadio10$divRT, lwd=2, col="green")
+      
+ # legend
+   legend("topleft", legend=c("all", "no single-ref. taxa", "all, estimated ages"), 
+     col=c("black", "red", "green"), lwd=c(2,2,2), bg="white")
+   
+
+</code></pre>
+
+
+</div>

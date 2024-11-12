@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>informed_ds</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>David's Score method informed by prior information</h2>
+
+<h3>Description</h3>
+
+<p>Use David's Score method to infer a dominance hierarchy over multiple study periods.
+New contestants are added according to the convention specified by the user.
+Scores are calculated using Dij and are normalized.  
+Full description of the addition of new individuals is described
+in Strauss &amp; Holekamp (in revision). To run the original David's Score procedure,
+use convention flag 'none'.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">informed_ds(contestants, convention, initial.ranks = NULL, interactions)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contestants</code></td>
+<td>
+<p>A dataframe with the identities of the contestants for 
+each study period along with the relevant data for 
+adding them to the hierarchy. There should be one row per
+contestant per study period.
+Periods should appear in chronological order.
+The dataframe should contain the following columns: 
+</p>
+
+<dl>
+<dt>period</dt>
+<dd>
+<p>Study period.</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>Identity of contestant.</p>
+</dd>
+<dt>convention1</dt>
+<dd>
+<p>The primary convention by which new
+individuals are added to the hierarchy. Interpretation
+of this column varies depending on the value of the 
+<strong>convention</strong> argument. If <strong>convention</strong> = none, 
+this column is optional.</p>
+</dd>
+<dt>convention2</dt>
+<dd>
+<p>Optional. The secondary data for 
+resolving ties in convention1. Interpretation
+of this column varies depending on the value of the 
+<strong>convention</strong> argument.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convention</code></td>
+<td>
+<p>A flag determining how new individuals are added to the
+hierarchy. The value of this flag influences how the convention1
+and convention2 columns of the <strong>contestants</strong> argument are interpreted.
+Currently this function supports five options:
+</p>
+
+<dl>
+<dt>none</dt>
+<dd>
+<p>The standard David's Score procedure (using Dij) is run. 
+Individuals are not added according to prior information 
+and scores are calculated independently for each period.</p>
+</dd>
+<dt>mri</dt>
+<dd>
+<p>New contestants are added to the hierarchy
+according to maternal rank inheritance with youngest
+ascendancy. <strong>convention1</strong> should be a vector of 
+mother identities for each contestant. <strong>convention2</strong>
+should be an optional vector of intra-litter ranks (lower 
+numbers = higher rank) for resolving the order of 
+contestants from the same mother
+joining the hierarchy in the same study period.</p>
+</dd>
+<dt>tenure</dt>
+<dd>
+<p>New contestants are added to the hierarchy
+according their tenure in the group. <strong>convention1</strong> should be a vector of 
+dates on which each contestant joined the group. <strong>convention2</strong> should be an
+optional vector of numerical data for resolving ties
+in convention1 (e.g., body size). Higher values are 
+considered higher rank.</p>
+</dd>
+<dt>age</dt>
+<dd>
+<p>New contestants are added to the hierarchy
+according their age (older = higher rank).
+<strong>convention1</strong> should be a vector of birthdates or 
+numerical age classes. <strong>convention2</strong> should be an
+optional vector of numerical data for resolving ties
+in convention1 (e.g., body size). Higher values are 
+considered higher rank.</p>
+</dd>
+<dt>phys_attr</dt>
+<dd>
+<p>New contestants are added to the hierarchy
+according to some physical attribute (larger value = higher rank). 
+<strong>convention1</strong> should be a vector of numerical attribute
+measurements. <strong>convention2</strong> should be an
+optional vector of numerical data for resolving ties
+in convention1. Higher values are 
+considered higher rank.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial.ranks</code></td>
+<td>
+<p>The initial ordering of individuals for the first study
+period. Required if using maternal rank inheritance as the convention.
+For other conventions, if initial.ranks is not specified,
+the order determined by convention1 is used to create the initial order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interactions</code></td>
+<td>
+<p>A dataframe of interaction data with the following columns:
+</p>
+
+<dl>
+<dt>winner</dt>
+<dd>
+<p>Identities of winners.</p>
+</dd>
+<dt>loser</dt>
+<dd>
+<p>Identities of losers.</p>
+</dd>
+<dt>period</dt>
+<dd>
+<p>Study period in which interactions occurred.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Produces a dataframe with the following columns: 
+</p>
+
+<dl>
+<dt>period</dt>
+<dd>
+<p>Study period.</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>Identity of contestant.</p>
+</dd>
+<dt>score</dt>
+<dd>
+<p>David's Score of contestant.</p>
+</dd>
+<dt>rank</dt>
+<dd>
+<p>Ordinal rank of contestant in study period. Lower numbers
+equal higher rank.</p>
+</dd>
+<dt>stan.rank</dt>
+<dd>
+<p>Rank of contestant standardized for group size.
+Values range from 1 (highest rank) to -1 (lowest rank).</p>
+</dd>
+<dt>old.order</dt>
+<dd>
+<p>Identity of contestants arranged in the previous order (the order they
+were in before updating the order based on observations from the current
+study period).</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Strauss ED &amp; Holekamp KE (in revision). Journal of Animal Ecology.
+</p>
+<p>de Vries H, Stevens JMG, Vervaecke H (2006). Animal Behavior.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##Informed ds
+female.ranks &lt;- informed_ds(contestants = C.crocuta.female$contestants, convention = 'mri',
+initial.ranks = C.crocuta.female$initial.ranks,
+interactions = C.crocuta.female$interactions)
+
+##Standard ds
+female.ranks &lt;- informed_ds(contestants = C.crocuta.female$contestants, convention = 'none',
+interactions = C.crocuta.female$interactions)                          
+
+</code></pre>
+
+
+</div>

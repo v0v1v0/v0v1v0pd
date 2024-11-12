@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dca</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform Decision Curve Analysis</h2>
+
+<h3>Description</h3>
+
+<p>Diagnostic and prognostic models are typically evaluated with measures of
+accuracy that do not address clinical consequences.
+Decision-analytic techniques allow assessment of clinical outcomes but often
+require collection of additional information may be cumbersome to apply to
+models that yield a continuous result. Decision curve analysis is a method
+for evaluating and comparing prediction models that incorporates clinical
+consequences, requires only the data set on which the models are tested,
+and can be applied to models that have either continuous or dichotomous
+results.
+The dca function performs decision curve analysis for binary outcomes.
+Review the
+<a href="https://www.danieldsjoberg.com/dcurves/articles/dca.html">DCA Vignette</a>
+for a detailed walk-through of various applications.
+Also, see <a href="https://www.mskcc.org/departments/epidemiology-biostatistics/biostatistics/decision-curve-analysis">www.decisioncurveanalysis.org</a> for more information.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dca(
+  formula,
+  data,
+  thresholds = seq(0, 0.99, by = 0.01),
+  label = NULL,
+  harm = NULL,
+  as_probability = character(),
+  time = NULL,
+  prevalence = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a formula with the outcome on the LHS and a sum of
+markers/covariates to test on the RHS</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing the variables in <code style="white-space: pre;">⁠formula=⁠</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresholds</code></td>
+<td>
+<p>vector of threshold probabilities between 0 and 1.
+Default is <code>seq(0, 0.99, by = 0.01)</code>. Thresholds at zero are replaced
+with 10e-10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>named list of variable labels, e.g. <code>list(age = "Age, years")</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>harm</code></td>
+<td>
+<p>named list of harms associated with a test. Default is <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_probability</code></td>
+<td>
+<p>character vector including names of variables
+that will be converted to a probability. Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>if outcome is survival, <code style="white-space: pre;">⁠time=⁠</code> specifies the time the
+assessment is made</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prevalence</code></td>
+<td>
+<p>When <code>NULL</code>, the prevalence is estimated from <code style="white-space: pre;">⁠data=⁠</code>.
+If the data passed is a case-control set, the population prevalence
+may be set with this argument.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List including net benefit of each variable
+</p>
+
+
+<h3>as_probability argument</h3>
+
+<p>While the <code style="white-space: pre;">⁠as_probability=⁠</code> argument can be used to convert a marker to the
+probability scale, use the argument only when the consequences are fully
+understood. For example, when the outcome is binary, logistic regression
+is used to convert the marker to a probability. The logistic regression
+model assumes linearity on the log-odds scale and can induce
+miscalibration when this assumption is not true. Miscalibration in a
+model will adversely affect performance on decision curve
+analysis. Similarly, when the outcome is time-to-event, Cox Proportional
+Hazards regression is used to convert the marker to a probability.
+The Cox model also has a linearity assumption and additionally assumes
+proportional hazards over the follow-up period. When these assumptions
+are violated, important miscalibration may occur.
+</p>
+<p>Instead of using the <code style="white-space: pre;">⁠as_probability=⁠</code> argument, it is suggested to perform
+the regression modeling outside of the <code>dca()</code> function utilizing methods,
+such as non-linear modeling, as appropriate.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Daniel D Sjoberg
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>net_intervention_avoided()</code>, <code>standardized_net_benefit()</code>, <code>plot.dca()</code>,
+<code>as_tibble.dca()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># calculate DCA with binary endpoint
+dca(cancer ~ cancerpredmarker + marker,
+    data = df_binary,
+    as_probability = "marker",
+    label = list(cancerpredmarker = "Prediction Model", marker = "Biomarker")) %&gt;%
+  # plot DCA curves with ggplot
+  plot(smooth = TRUE) +
+  # add ggplot formatting
+  ggplot2::labs(x = "Treatment Threshold Probability")
+
+# calculate DCA with time to event endpoint
+dca(Surv(ttcancer, cancer) ~ cancerpredmarker, data = df_surv, time = 1)
+</code></pre>
+
+
+</div>

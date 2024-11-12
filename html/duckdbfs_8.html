@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatial_join</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>spatial_join</h2>
+
+<h3>Description</h3>
+
+<p>spatial_join
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatial_join(
+  x,
+  y,
+  by = c("st_intersects", "st_within", "st_dwithin", "st_touches", "st_contains",
+    "st_containsproperly", "st_covers", "st_overlaps", "st_crosses", "st_equals",
+    "st_disjoint"),
+  args = "",
+  join = "left",
+  tblname = tmp_tbl_name(),
+  conn = cached_connection()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a duckdb table with a spatial geometry column called "geom"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>a duckdb table with a spatial geometry column called "geom"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>A spatial join function, see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args</code></td>
+<td>
+<p>additional arguments to join function (e.g. distance for st_dwithin)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>join</code></td>
+<td>
+<p>JOIN type (left, right, inner, full)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tblname</code></td>
+<td>
+<p>name for the temporary view</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>the duckdb connection (imputed by duckdbfs by default,
+must be shared across both tables)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Possible <a href="https://postgis.net/workshops/postgis-intro/spatial_relationships.html">spatial joins</a> include:</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   Function </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_intersects </td>
+<td style="text-align: left;"> Geometry A intersects with geometry B </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_disjoint </td>
+<td style="text-align: left;"> The complement of intersects </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_within </td>
+<td style="text-align: left;"> Geometry A is within geometry B (complement of contains) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_dwithin </td>
+<td style="text-align: left;"> Geometries are within a specified distance, expressed in the same units as the coordinate reference system. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_touches </td>
+<td style="text-align: left;"> Two polygons touch if the that have at least one point in common, even if their interiors do not touch. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_contains </td>
+<td style="text-align: left;"> Geometry A entirely contains to geometry B. (complement of within) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_containsproperly </td>
+<td style="text-align: left;"> stricter version of <code>st_contains</code> (boundary counts as external) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_covers </td>
+<td style="text-align: left;"> geometry B is inside or on boundary of A. (A polygon covers a point on its boundary but does not contain it.) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_overlaps </td>
+<td style="text-align: left;"> geometry A intersects but does not completely contain geometry B </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_equals </td>
+<td style="text-align: left;"> geometry A is equal to geometry B </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   st_crosses </td>
+<td style="text-align: left;"> Lines or points in geometry A cross geometry B. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>All though SQL is not case sensitive, this function expects only
+lower case names for "by" functions.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a (lazy) view of the resulting table. Users can continue to operate
+on using dplyr operations and call to_st() to collect this as an sf object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# note we can read in remote data in a variety of vector formats:
+countries &lt;-
+paste0("/vsicurl/",
+       "https://github.com/cboettig/duckdbfs/",
+       "raw/spatial-read/inst/extdata/world.gpkg") |&gt;
+open_dataset(format = "sf")
+
+cities &lt;-
+ paste0("/vsicurl/https://github.com/cboettig/duckdbfs/raw/",
+        "spatial-read/inst/extdata/metro.fgb") |&gt;
+ open_dataset(format = "sf")
+
+countries |&gt;
+  dplyr::filter(iso_a3 == "AUS") |&gt;
+  spatial_join(cities)
+
+</code></pre>
+
+
+</div>

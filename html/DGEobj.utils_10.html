@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>runQvalue</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate and add q-value and lFDR to dataframe</h2>
+
+<h3>Description</h3>
+
+<p>Takes an list of contrasts (e.g. topTable output or other dataframes that contain
+a p-value column).  Adds a q-value and local FDR (lFDR) column to each dataframe.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">runQvalue(contrastList, pvalField = "P.Value", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contrastList</code></td>
+<td>
+<p>A list of dataframes with a p-value column (all tables
+must use the same colname for the p-value column.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalField</code></td>
+<td>
+<p>Define the colname of the p-value field in
+each dataframe. Not needed if using topTable output. (Optional. Default = "P.Value")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional arguments passed to the qvalue function (See ?qvalue)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The qvalue package from John Storey at Princeton takes a list of p-values and
+calculates a q-value and a Local FDR (lFDR). The q-value is essentially a less
+conservative FDR estimate compared to the default Benjamini-Hochberg FDR
+produced by topTable analysis (i.e. will give more differential genes at
+the same nominal cutoff). The q-value function also produces a Local FDR
+(lFDR) column which answers a slightly different and possibly more relevant
+question. The BH FDR (adj.P.Val in topTable data.frames) and q-value gives
+the false discovery rate is for a list of genes at a given threshold.
+The local FDR attempts to answer the question: what is the probability that
+this particular gene is a false discovery?
+See <a href="https://doi.org/10.1007/978-3-642-04898-2_248">doi:10.1007/978-3-642-04898-2_248</a> for a brief introduction
+to FDRs and q-values.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The input contrastList now containing q-value and lFDR columns
+in each dataframe.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+   # NOTE: Requires the qvalue package
+
+   dgeObj &lt;- readRDS(system.file("exampleObj.RDS", package = "DGEobj"))
+   contrastList &lt;- DGEobj::getType(dgeObj, type = "topTable")
+   contrastList &lt;- lapply(contrastList, dplyr::select,
+                          -Qvalue,
+                          -qvalue.lfdr)
+   colnames(contrastList[[1]])
+
+   contrastList &lt;- runQvalue(contrastList)
+
+   # note new columns added
+   colnames(contrastList[[1]])
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

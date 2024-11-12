@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>read_drake_seed</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read the pseudo-random number generator seed of the project.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>When a project is created with <code>make()</code>
+or <code>drake_config()</code>, the project's pseudo-random number generator
+seed is cached. Then, unless the cache is destroyed,
+the seeds of all the targets will deterministically depend on
+this one central seed. That way, reproducibility is protected,
+even under randomness.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">read_drake_seed(path = NULL, search = NULL, cache = NULL, verbose = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>Path to a <code>drake</code> cache
+(usually a hidden <code style="white-space: pre;">⁠.drake/⁠</code> folder) or <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>search</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache</code></td>
+<td>
+<p>drake cache. See <code>new_cache()</code>.
+If supplied, <code>path</code> is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Deprecated on 2019-09-11.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An integer vector.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("contain side effects", {
+cache &lt;- storr::storr_environment() # Just for the examples.
+my_plan &lt;- drake_plan(
+  target1 = sqrt(1234),
+  target2 = sample.int(n = 12, size = 1) + target1
+)
+tmp &lt;- sample.int(1) # Needed to get a .Random.seed, but not for drake.
+digest::digest(.Random.seed) # Fingerprint of the current R session's seed.
+make(my_plan, cache = cache) # Run the project, build the targets.
+digest::digest(.Random.seed) # Your session's seed did not change.
+# drake uses a hard-coded seed if you do not supply one.
+read_drake_seed(cache = cache)
+readd(target2, cache = cache) # Randomly-generated target data.
+clean(target2, cache = cache) # Oops, I removed the data!
+tmp &lt;- sample.int(1) # Maybe the R session's seed also changed.
+make(my_plan, cache = cache) # Rebuild target2.
+# Same as before:
+read_drake_seed(cache = cache)
+readd(target2, cache = cache)
+# You can also supply a seed.
+# If your project already exists, it must agree with the project's
+# preexisting seed (default: 0)
+clean(target2, cache = cache)
+make(my_plan, cache = cache, seed = 0)
+read_drake_seed(cache = cache)
+readd(target2, cache = cache)
+# If you want to supply a different seed than 0,
+# you need to destroy the cache and start over first.
+clean(destroy = TRUE, cache = cache)
+cache &lt;- storr::storr_environment() # Just for the examples.
+make(my_plan, cache = cache, seed = 1234)
+read_drake_seed(cache = cache)
+readd(target2, cache = cache)
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,91 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>testOutliers</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test for outliers</h2>
+
+<h3>Description</h3>
+
+<p>This function tests if the number of observations outside the simulatio envelope are larger or smaller than expected
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">testOutliers(simulationOutput, alternative = c("two.sided", "greater",
+  "less"), margin = c("both", "upper", "lower"), type = c("default",
+  "bootstrap", "binomial"), nBoot = 100, plot = T)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>an object of class DHARMa, either created via <code>simulateResiduals</code> for supported models or by <code>createDHARMa</code> for simulations created outside DHARMa, or a supported model. Providing a supported model directly is discouraged, because simulation settings cannot be changed in this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>a character string specifying whether the test should test if observations are "greater", "less" or "two.sided" (default) compared to the simulated null hypothesis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>margin</code></td>
+<td>
+<p>whether to test for outliers only at the lower, only at the upper, or both sides (default) of the simulated data distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>either default, bootstrap or binomial. See details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nBoot</code></td>
+<td>
+<p>number of boostrap replicates. Only used ot type = "bootstrap"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>if T, the function will create an additional plot</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>DHARMa residuals are created by simulating from the fitted model, and comparing the simulated values to the observed data. It can occur that all simulated values are higher or smaller than the observed data, in which case they get the residual value of 0 and 1, respectively. I refer to these values as simulation outliers, or simply outliers.
+</p>
+<p>Because no data was simulated in the range of the observed value, we don't know "how strongly" these values deviate from the model expectation, so the term "outlier" should be used with a grain of salt. It is not a judgment about the magnitude of the residual deviation, but simply a dichotomous sign that we are outside the simulated range. Moreover, the number of outliers will decrease as we increase the number of simulations.
+</p>
+<p>To test if the outliers are a concern, testOutliers implements 2 options (bootstrap, binomial), which can be chosen via the parameter "type". The third option (default) chooses bootstrap for integer-valued distribubtions with nObs &lt; 500, and else binomial.
+</p>
+<p>The binomial test considers that under the null hypothesis that the model is correct, and for continuous distributions (i.e. data and the model distribution are identical and continous), the probability that a given observation is higher than all simulations is 1/(nSim +1), and binomial distributed. The testOutlier function can test this null hypothesis via type = "binomial". In principle, it would be nice if we could extend this idea to integer-valued distributions, which are randomized via the PIT procedure (see <code>simulateResiduals</code>), the rate of "true" outliers is more difficult to calculate, and in general not 1/(nSim +1). The testOutlier function implements a small tweak that calculates the rate of residuals that are closer than 1/(nSim+1) to the 0/1 border, which roughly occur at a rate of nData /(nSim +1). This approximate value, however, is generally not exact, and may be particularly off non-bounded integer-valued distributions (such as Poisson or neg binom).
+</p>
+<p>For this reason, the testOutlier function implements an alternative procedure that uses the bootstrap to generate a simulation-based expectation for the outliers. It is recommended to use the bootstrap for integer-valued distributions (and integer-valued only, because it has no advantage for continuous distributions, ideally with reasonably high values of nSim and nBoot (I recommend at least 1000 for both). Because of the high runtime, however, this option is switched off for type = default when nObs &gt; 500.
+</p>
+<p>Both binomial or bootstrap generate a null expectation, and then test for an excess or lack of outliers. Per default, testOutliers() looks for both, so if you get a significant p-value, you have to check if you have to many or too few outliers. An excess of outliers is to be interpreted as too many values outside the simulation envelope. This could be caused by overdispersion, or by what we classically call outliers. A lack of outliers would be caused, for example, by underdispersion.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Florian Hartig
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>testResiduals</code>, <code>testUniformity</code>, <code>testOutliers</code>, <code>testDispersion</code>, <code>testZeroInflation</code>, <code>testGeneric</code>, <code>testTemporalAutocorrelation</code>, <code>testSpatialAutocorrelation</code>, <code>testQuantiles</code>, <code>testCategorical</code>
+</p>
+
+
+</div>

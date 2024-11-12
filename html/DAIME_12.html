@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>strattotimepointcont</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Transform Points and Isotope Ratios from Stratigraphic Height into Time (Continuos)
+</h2>
+
+<h3>Description</h3>
+
+<p>This function takes a continuous deposition rate and reconstructs at what time a given stratigraphic height was deposited. Essentially a wrapper of <code>pointtransform(...,direction='height to time',depositionmodel='piecewise linear deposition rate')</code> kept for backwards compatibility of the package. It is recommended to use <code>pointtransform</code> instead of this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">strattotimepointcont(x, xdep, ydep, hiatuslist = list(), unit = "sediment per time")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Vector containing the stratigraphic heights whose time of deposition are to be determined
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xdep</code></td>
+<td>
+
+<p>Vector of strictly increasing real numbers 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ydep</code></td>
+<td>
+
+<p>Vector of the same length of <code>xdep</code>, containing strictly positive real numbers. <code>xdep</code> and <code>ydep</code> define the deposition rate in the sense that <code>depositionrate=approxfun(xdep,ydep)</code>. The units of te deposition rate are by default <code>"sediment per time"</code> and can be changed using the optional input <code>unit</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hiatuslist</code></td>
+<td>
+
+<p>OPTIONAL, default is an empty list. A list of hiatuses to insert. Every entry in the list corresponds to a hiatus, which is given as a vector of length two. The first entry of the vector is the stratigraphic height of the hiatus, the second entry is the duration of the hiatus.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+
+<p>OPTIONAL, default is "sediment per time". Either "sediment per time" or "time per sediment". Determines the unit that is assumed for the deposition rate.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>age </code></td>
+<td>
+<p>vector containing times of deposition of the stratigraphic heights given by the input <code>x</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>height </code></td>
+<td>
+<p>vector containing the heights that were deposited at the times given by <code>age</code>. Essentially a duplicate of the input <code>x</code></p>
+</td>
+</tr>
+</table>
+<p>Output of <code>NA</code> in <code>age</code> indicates that some values coincide with a hiatus or are located at places where the deposition rate is undefined.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Niklas Hohmann
+</p>
+
+
+<h3>References</h3>
+
+<p>Hohmann, Niklas. 2018. Quantifying the Effects of Changing Deposition Rates and Hiatii on the Stratigraphic Distribution of Fossils. &lt;doi:10.13140/RG.2.2.23372.51841&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pointtransform</code> for the more general function underlying this wrapper
+</p>
+<p>For an overview of the functions in the DAIME package, see its vignette (available via <code>vignette("DAIME")</code> )
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##define deposition rate
+xdep=seq(0,12,length.out=100)
+ydep=splinefunH(x=c(0,2,4,6,8,10,12),y=c(1,5,6,1,0.5,1,6),m=c(0,1.5,-0.5,-0.5,0,0.5,0))(xdep)
+#unit of deposition rate is sediment per time unit (default setting)
+usedunit="sediment per time" #unit of deposition rate is sediment per time unit (default setting)
+#Plot deposition rate
+plot(xdep,ydep,type='l',main='Deposition Rate',xlab='Stratigraphic Height',ylab=usedunit) 
+
+##at what time was the point with tratigraphic height 9 deposited?
+strattotimepointcont(9,xdep,ydep) 
+
+##create an age model
+stratheight=seq(min(xdep),max(xdep),length.out=100)
+usedunit="sediment per time"
+reslist=strattotimepointcont(stratheight,xdep,ydep,unit=usedunit)
+#plot age model
+plot(reslist$age,reslist$height,xlab='Time',ylab='Stratigraphic Height',
+  main=paste('Age model with unit',usedunit))
+#create age model but with other units for sedimentn input
+usedunit='time per sediment'
+reslist=strattotimepointcont(stratheight,xdep,ydep,unit=usedunit)
+#plot age model (note the difference this setting makes)
+plot(reslist$age,reslist$height,xlab='Time',ylab='Stratigraphic Height',
+  main=paste('Age model with unit',usedunit))
+
+##create age model with a hiatus
+stratigraphicheight=5 #strat. height of the hiatus
+duration=2 #duration of the hiatus
+hiatuslist=list(c(stratigraphicheight,duration)) #required input format for hiatuses
+reslist=strattotimepointcont(stratheight,xdep,ydep,hiatuslist=hiatuslist)
+#!using default setting for units again!
+plot(reslist$age,reslist$height,xlab='Time',ylab='stratigraphic height')
+
+##Transform isotope ratios
+#create fake oxygen isotope curves
+samplelocation=sort(runif(20,min=min(xdep),max=max(xdep))) #where the samples are taken
+isotoperatio=sin(samplelocation)*rnorm(length(samplelocation)) #isotope ratios of the samples
+plot(samplelocation,isotoperatio,type='l',xlab='Stratigraphic Height',ylab='Isotope Ratio')
+#transform only (!) sample locations, NOT values
+reslist=strattotimepointcont(samplelocation,xdep,ydep)
+#Isotope ratios in time 
+plot(reslist$age,isotoperatio,type='l',xlab='Time',ylab='Isotope Ratio')
+</code></pre>
+
+
+</div>

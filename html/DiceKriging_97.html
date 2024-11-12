@@ -1,0 +1,299 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Predict values and confidence intervals at newdata for a km object </h2>
+
+<h3>Description</h3>
+
+<p>Predicted values and (marginal of joint) conditional variances based on a <code>km</code> model.  95 % confidence intervals are given, based on strong assumptions: Gaussian process assumption, specific prior distribution on the trend parameters, known covariance parameters. This might be abusive in particular in the case where estimated covariance parameters are plugged in.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S4 method for signature 'km'
+predict(object, newdata, type, se.compute = TRUE, 
+         cov.compute = FALSE, light.return = FALSE,
+         bias.correct = FALSE, checkNames = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p> an object of class <code>km</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p> a vector, matrix or data frame containing the points where to perform predictions. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p> a character string corresponding to the kriging family, to be chosen between simple kriging ("SK"), or universal kriging ("UK").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se.compute</code></td>
+<td>
+<p> an optional boolean. If <code>FALSE</code>, only the kriging mean is computed. If <code>TRUE</code>, the kriging variance (actually, the corresponding standard deviation) and confidence intervals are computed too.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.compute</code></td>
+<td>
+<p> an optional boolean. If <code>TRUE</code>, the conditional covariance matrix is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>light.return</code></td>
+<td>
+<p> an optional boolean. If <code>TRUE</code>, <code>c</code> and <code>Tinv.c</code> are not returned. This should be reserved to expert users who want to save memory and know that they will not miss these values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bias.correct</code></td>
+<td>
+<p> an optional boolean to correct bias in the UK variance and covariances. Default is <code>FALSE</code>. See Section Warning below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checkNames</code></td>
+<td>
+<p> an optional boolean. If <code>TRUE</code> (default), a consistency test is performed between the names of <code>newdata</code> and the names of the experimental design (contained in <code>object@X</code>), see Section Warning below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> no other argument for this method.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mean </code></td>
+<td>
+<p> kriging mean (including the trend) computed at <code>newdata</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd </code></td>
+<td>
+<p> kriging standard deviation computed at <code>newdata</code>. Not computed if 
+<code>se.compute=FALSE</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend </code></td>
+<td>
+<p> the trend computed at <code>newdata</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov </code></td>
+<td>
+<p> kriging conditional covariance matrix. Not computed if <code>cov.compute=FALSE</code> (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower95, </code></td>
+<td>
+ </td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper95 </code></td>
+<td>
+<p> bounds of the 95 % confidence interval computed at <code>newdata</code> (to be interpreted with special care when parameters are estimated, see description above). Not computed if <code>se.compute=FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c </code></td>
+<td>
+<p> an auxiliary matrix, containing all the covariances between newdata and the initial design points. Not returned if <code>light.return=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tinv.c </code></td>
+<td>
+<p> an auxiliary vector, equal to <code>inv(t(T))*c</code>. Not returned if <code>light.return=TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>1. Contrarily to DiceKriging&lt;=1.3.2, the estimated (UK) variance and covariances are NOT multiplied by <code>n/(n-p)</code> by default (<code>n</code> and <code>p</code> denoting the number of rows and columns of the design matrix F). Recall that this correction would contribute to limit bias: it would totally remove it if the correlation parameters were known (which is not the case here). However, this correction is often useless in the context of computer experiments, especially in adaptive strategies. It can be activated by turning <code>bias.correct</code> to <code>TRUE</code>, when <code>type="UK"</code>.
+</p>
+<p>2. The columns of <code>newdata</code> should correspond to the input variables, and only the input variables (nor the response is not admitted, neither external variables). If <code>newdata</code> contains variable names, and if <code>checkNames</code> is <code>TRUE</code> (default), then <code>checkNames</code> performs a complete consistency test with the names of the experimental design. Otherwise, it is assumed that its columns correspond to the same variables than the experimental design and in the same order.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> O. Roustant, D. Ginsbourger, Ecole des Mines de St-Etienne. </p>
+
+
+<h3>References</h3>
+
+<p>N.A.C. Cressie (1993), <em>Statistics for spatial data</em>, Wiley series in probability and mathematical statistics.
+</p>
+<p>A.G. Journel and C.J. Huijbregts (1978), <em>Mining Geostatistics</em>, Academic Press, London.
+</p>
+<p>D.G. Krige (1951), A statistical approach to some basic mine valuation problems on the witwatersrand, <em>J. of the Chem., Metal. and Mining Soc. of South Africa</em>, <b>52</b> no. 6, 119-139.
+</p>
+<p>J.D. Martin and T.W. Simpson (2005), Use of kriging models to approximate deterministic computer models, <em>AIAA Journal</em>, <b>43</b> no. 4, 853-863.
+</p>
+<p>G. Matheron (1963), Principles of geostatistics, <em>Economic Geology</em>, <b>58</b>,
+1246-1266.
+</p>
+<p>G. Matheron (1969), Le krigeage universel, <em>Les Cahiers du Centre de Morphologie Mathematique de Fontainebleau</em>, <b>1</b>.
+</p>
+<p>J.-S. Park and J. Baek (2001), Efficient computation of maximum likelihood estimators in a spatial linear model with power exponential covariogram, <em>Computer Geosciences</em>, <b>27</b> no. 1, 1-7.
+</p>
+<p>C.E. Rasmussen and C.K.I. Williams (2006), <em>Gaussian Processes for Machine Learning</em>, the MIT Press, <a href="http://www.gaussianprocess.org/gpml/">http://www.gaussianprocess.org/gpml/</a>
+</p>
+<p>J. Sacks, W.J. Welch, T.J. Mitchell, and H.P. Wynn (1989), Design and analysis of computer experiments, <em>Statistical Science</em>, <b>4</b>, 409-435.
+</p>
+
+
+<h3>See Also</h3>
+
+  <p><code>km</code>,  <code>plot,km-method</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># ------------
+# a 1D example
+# ------------
+
+x &lt;- c(0, 0.4, 0.6, 0.8, 1)
+y &lt;- c(-0.3, 0, 0, 0.5, 0.9)
+
+formula &lt;- y~x   # try also   y~1  and  y~x+I(x^2)
+
+model &lt;- km(formula=formula, design=data.frame(x=x), response=data.frame(y=y), 
+            covtype="matern5_2")
+
+tmin &lt;- -0.5; tmax &lt;- 2.5
+t &lt;- seq(from=tmin, to=tmax, by=0.005)
+color &lt;- list(SK="black", UK="blue")
+
+# Results with Universal Kriging formulae (mean and and 95% intervals)
+p.UK &lt;- predict(model, newdata=data.frame(x=t), type="UK")
+plot(t, p.UK$mean, type="l", ylim=c(min(p.UK$lower95),max(p.UK$upper95)), 
+                xlab="x", ylab="y")
+lines(t, p.UK$trend, col="violet", lty=2)
+lines(t, p.UK$lower95, col=color$UK, lty=2)
+lines(t, p.UK$upper95, col=color$UK, lty=2)
+points(x, y, col="red", pch=19)
+abline(h=0)
+
+# Results with Simple Kriging (SK) formula. The difference between the width of
+# SK and UK intervals are due to the estimation error of the trend parameters 
+# (but not to the range parameters, not taken into account in the UK formulae).
+p.SK &lt;- predict(model, newdata=data.frame(x=t), type="SK")
+lines(t, p.SK$mean, type="l", ylim=c(-7,7), xlab="x", ylab="y")
+lines(t, p.SK$lower95, col=color$SK, lty=2)
+lines(t, p.SK$upper95, col=color$SK, lty=2)
+points(x, y, col="red", pch=19)
+abline(h=0)
+
+legend.text &lt;- c("Universal Kriging (UK)", "Simple Kriging (SK)")
+legend(x=tmin, y=max(p.UK$upper), legend=legend.text, 
+       text.col=c(color$UK, color$SK), col=c(color$UK, color$SK), 
+       lty=3, bg="white")
+
+
+# ---------------------------------------------------------------------------------
+# a 1D example (following)- COMPARISON with the PREDICTION INTERVALS for REGRESSION
+# ---------------------------------------------------------------------------------
+# There are two interesting cases: 
+# *  When the range parameter is near 0 ; Then the intervals should be nearly 
+#    the same for universal kriging (when bias.correct=TRUE, see above) as for regression. 
+#    This is because the uncertainty around the range parameter is not taken into account 
+#    in the Universal Kriging formula.
+# *  Where the predicted sites are "far" (relatively to the spatial correlation) 
+#    from the design points ; in this case, the kriging intervals are not equal 
+#    but nearly proportional to the regression ones, since the variance estimate 
+#    for regression is not the same than for kriging (that depends on the 
+#    range estimate)
+
+x &lt;- c(0, 0.4, 0.6, 0.8, 1)
+y &lt;- c(-0.3, 0, 0, 0.5, 0.9)
+
+formula &lt;- y~x   # try also   y~1  and  y~x+I(x^2)
+upper &lt;- 0.05    # this is to get something near to the regression case. 
+                 # Try also upper=1 (or larger) to get usual results.
+
+model &lt;- km(formula=formula, design=data.frame(x=x), response=data.frame(y=y), 
+               covtype="matern5_2", upper=upper)
+
+tmin &lt;- -0.5; tmax &lt;- 2.5
+t &lt;- seq(from=tmin, to=tmax, by=0.005)
+color &lt;- list(SK="black", UK="blue", REG="red")
+
+# Results with Universal Kriging formulae (mean and and 95% intervals)
+p.UK &lt;- predict(model, newdata=data.frame(x=t), type="UK", bias.correct=TRUE)
+plot(t, p.UK$mean, type="l", ylim=c(min(p.UK$lower95),max(p.UK$upper95)), 
+                   xlab="x", ylab="y")
+lines(t, p.UK$trend, col="violet", lty=2)
+lines(t, p.UK$lower95, col=color$UK, lty=2)
+lines(t, p.UK$upper95, col=color$UK, lty=2)
+points(x, y, col="red", pch=19)
+abline(h=0)
+
+# Results with Simple Kriging (SK) formula. The difference between the width of
+# SK and UK intervals are due to the estimation error of the trend parameters 
+# (but not to the range parameters, not taken into account in the UK formulae).
+p.SK &lt;- predict(model, newdata=data.frame(x=t), type="SK")
+lines(t, p.SK$mean, type="l", ylim=c(-7,7), xlab="x", ylab="y")
+lines(t, p.SK$lower95, col=color$SK, lty=2)
+lines(t, p.SK$upper95, col=color$SK, lty=2)
+points(x, y, col="red", pch=19)
+abline(h=0)
+
+# results with regression given by lm (package stats)
+m.REG &lt;- lm(formula)
+p.REG &lt;- predict(m.REG, newdata=data.frame(x=t), interval="prediction")
+lines(t, p.REG[,1], col=color$REG)
+lines(t, p.REG[,2], col=color$REG, lty=2)
+lines(t, p.REG[,3], col=color$REG, lty=2)
+
+legend.text &lt;- c("UK with bias.correct=TRUE", "SK", "Regression")
+legend(x=tmin, y=max(p.UK$upper), legend=legend.text, 
+       text.col=c(color$UK, color$SK, color$REG), 
+       col=c(color$UK, color$SK, color$REG), lty=3, bg="white")
+
+
+# ----------------------------------
+# A 2D example - Branin-Hoo function
+# ----------------------------------
+
+# a 16-points factorial design, and the corresponding response
+d &lt;- 2; n &lt;- 16
+fact.design &lt;- expand.grid(x1=seq(0,1,length=4), x2=seq(0,1,length=4))
+branin.resp &lt;- apply(fact.design, 1, branin)
+
+# kriging model 1 : gaussian covariance structure, no trend, 
+#                   no nugget effect
+m1 &lt;- km(~1, design=fact.design, response=branin.resp, covtype="gauss")
+
+# predicting at testdata points
+testdata &lt;- expand.grid(x1=s &lt;- seq(0,1, length=15), x2=s)
+predicted.values.model1 &lt;- predict(m1, testdata, "UK")
+</code></pre>
+
+
+</div>

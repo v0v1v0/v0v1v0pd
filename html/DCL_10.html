@@ -1,0 +1,246 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dcl.predict.prior</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pointwise predictions (RBNS/IBNR split) adding prior knowledge</h2>
+
+<h3>Description</h3>
+
+<p>Pointwise predictions by calendar years and rows of the outstanding liabilities. The predictions are splitted between RBNS and IBNR claims.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dcl.predict.prior( Ntriangle , Xtriangle , inflat.i , inflat.j , Qi , 
+  Model = 2, adj = 2, Tail = FALSE, Tables = TRUE, 
+  summ.by = "diag", num.dec = 2 )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Ntriangle</code></td>
+<td>
+
+<p>Optional. The counts data triangle: incremental number of reported claims. It should be a matrix with the observed counts located in the upper triangle and the lower triangle  consisting in missing or zero values. It should has the same dimension as the <code>Xtriangle</code> (both in the same aggregation level (quarters, years,etc.)) used to derive <code>dcl.par</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xtriangle</code></td>
+<td>
+
+<p>The paid run-off triangle: incremental aggregated payments. It should be a matrix with incremental aggregated  payments located in the upper triangle and the lower triangle  consisting in missing or zero values.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflat.i </code></td>
+<td>
+<p>Optional. A vector with dimension m (the dimension of the input triangles) specifying the severity inflation in the underwriting direction. If not specified it will be estimated using <code>dcl.estimation</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflat.j </code></td>
+<td>
+<p>Optional. A vector with dimension m specifying the severity inflation in the development direction. If not specified it will be assumed to be 1 and then the severity mean not depending on the development period.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Qi </code></td>
+<td>
+<p>Optional. A vector with dimension m specifying the probability of zero-claims for each underwriting period. If not specified then it will be assumed no zero-payments.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Model </code></td>
+<td>
+<p>Possible values are 0, 1 or 2 (default).  See <code>dcl.estimation</code> for more in details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adj </code></td>
+<td>
+<p>Method to adjust the estimated delay parameters for the distributional model. It should be 1 (default value) or 2. See <code>dcl.estimation</code> for more in details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tail </code></td>
+<td>
+<p>Logical. If <code>TRUE</code> (default) the tail is provided.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tables </code></td>
+<td>
+<p>Logical. If <code>TRUE</code> (default) it is showed a table with the predicted outstanding liabilities in the future calendar periods (<code>summ.by="diag"</code>) or by underwriting period (<code>summ.by="row"</code>). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summ.by </code></td>
+<td>
+<p>A character value such as <code>"diag"</code>, <code>"row"</code> or <code>"cell"</code>. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.dec </code></td>
+<td>
+<p>Number of decimal places used to report numbers in the tables. Used only if <code>Tables=TRUE</code>
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The predictions are calculated under the first moment assumptions in the DCL model (see M1-M3) in Martinez-Miranda, M.D., Nielsen, J.P. and Verrall, R. (2012). In this case the severity mean is specified as 
+</p>
+<p><code> inflat.i * (1-Qi) * inflat.j * mu</code> 
+</p>
+<p>where <code>inflat.i</code>, <code>Qi</code>, <code>inflat.j</code> and <code>mu</code> are prior information specified by the user. With this specification, the prediction formula consists of the expectation (conditional expectation -if <code>Ntriangle</code> is given and <code>Model=0</code>) of the future (RBNS/IBNR) aggregated payments. See formulas (8)-(9) in the paper.
+</p>
+<p>If the prior information is not  provided the function will return the DCL predictions as <code>dcl.predict</code>. The information about <code>Qi</code>, <code>inflat.j</code> can be extracted through DCL using <code>extract.prior</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Xrbns </code></td>
+<td>
+<p>A matrix with dimension m by 2m-1 (m being the dimension of the input triangles in DCL) having the outstanding RBNS numbers as the entries.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Drbns </code></td>
+<td>
+<p>A vector with dimension 2m-1 with elements being the outstanding liabilities for RBNS claims in the future calendar periods (sums by diagonals). The last value is the RBNS reserve (overall sum).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rrbns </code></td>
+<td>
+<p>A vector with dimension m with elements being the outstanding liabilities for RBNS claims at each underwriting period (sums by rows). The last value is the RBNS reserve (overall sum).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xibnr </code></td>
+<td>
+<p>A matrix with dimension m by 2m-1 (m being the dimension of the input triangles in DCL) having the outstanding IBNR numbers as the entries.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dibnr </code></td>
+<td>
+<p>A vector with dimension 2m-1 with elements being the outstanding liabilities for IBNR claims in the future calendar periods (sums by diagonals). The last value is the IBNR reserve (overall sum).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ribnr </code></td>
+<td>
+<p>A vector with dimension m with elements being the outstanding liabilities for IBNR claims at each underwriting period (sums by rows). The last value is the RBNS reserve (overall sum).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xtotal </code></td>
+<td>
+<p>A matrix with dimension m by 2m-1 (m being the dimension of the input triangles in DCL) having the outstanding total (=RBNS+IBNR) numbers as the entries.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dtotal </code></td>
+<td>
+<p>A vector with dimension 2m-1 with elements being the outstanding liabilities for  all  claims in the future calendar periods (sums by diagonals). The last value is the  total (=RBNS+IBNR) reserve (overall sum).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Rtotal </code></td>
+<td>
+<p>A vector with dimension m with elements being the outstanding liabilities for all claims at each underwriting period (sums by rows). The last value is the total (=RBNS+IBNR)  reserve (overall sum).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>M.D. Martinez-Miranda, J.P. Nielsen and R. Verrall
+</p>
+
+
+<h3>References</h3>
+
+<p>Martinez-Miranda, M.D., Nielsen, J.P. and Verrall, R. (2012) Double Chain Ladder. <em>Astin Bulletin</em>, 42/1, 59-76.
+</p>
+<p>Martinez-Miranda, M.D., Nielsen, J.P., Verrall, R. and Wuthrich, M.V. (2013) Double Chain Ladder, Claims Development Inflation and Zero Claims. <em>Scandinavian Actuarial Journal</em>. In press.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dcl.estimation</code>, <code>bdcl.estimation</code>, <code>idcl.estimation</code>, <code>dcl.predict</code>,<code>extract.prior</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Data application by in Martinez-Miranda, Nielsen, Verrall and Wuthrich (2013)
+data(NtrianglePrior)
+data(NpaidPrior)
+data(XtrianglePrior)
+
+Ntriangle&lt;-NtrianglePrior
+Xtriangle&lt;-XtrianglePrior
+Npaid&lt;-NpaidPrior
+
+## Extract information about zero-claims and severity dev. inflation
+my.priors&lt;-extract.prior(Xtriangle,Npaid,Ntriangle)
+my.inflat.j&lt;-my.priors$inflat.j
+my.Qi&lt;-my.priors$Qi
+
+# Reproducing the poinwise predicions (tables 3,4,5) in the paper
+# Note: in the paper we did not use Ntriangle in the predictions 
+# when modelling the predictions are slightly different
+
+## Prior A: only using development year inflation
+m&lt;-nrow(Ntriangle)
+preds.prior.A.gen&lt;-dcl.predict.prior(Ntriangle,Xtriangle,
+          inflat.j=my.inflat.j,Qi=rep(0,m),Model=0,adj=1,
+          Tail=FALSE,Tables=TRUE,summ.by="diag",num.dec=2)
+
+preds.prior.A.mod&lt;-dcl.predict.prior(Ntriangle,Xtriangle,
+          inflat.j=my.inflat.j,Qi=rep(0,m),Model=2,adj=2,
+          Tail=FALSE,Tables=TRUE,summ.by="diag",num.dec=2)
+
+## Prior B: only using zero claims inflation
+preds.prior.B.gen&lt;-dcl.predict.prior(Ntriangle,Xtriangle,
+          inflat.j=rep(1,m),Qi=my.Qi,Model=0,adj=1,
+          Tail=FALSE,Tables=TRUE,summ.by="diag",num.dec=2)
+
+preds.prior.B.mod&lt;-dcl.predict.prior(Ntriangle,Xtriangle,
+          inflat.j=rep(1,m),Qi=my.Qi,Model=2,adj=2,
+          Tail=FALSE,Tables=TRUE,summ.by="diag",num.dec=2)
+
+## Prior C: only using development inflation and zero claims inflation
+preds.prior.C.gen&lt;-dcl.predict.prior(Ntriangle,Xtriangle,
+          inflat.j=my.inflat.j,Qi=my.Qi,Model=0,adj=1,
+          Tail=FALSE,Tables=TRUE,summ.by="diag",num.dec=2)
+
+preds.prior.C.mod&lt;-dcl.predict.prior(Ntriangle,Xtriangle,
+          inflat.j=my.inflat.j,Qi=my.Qi,Model=2,adj=2,
+          Tail=FALSE,Tables=TRUE,summ.by="diag",num.dec=2)
+</code></pre>
+
+
+</div>

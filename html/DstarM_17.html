@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotObserved</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot quantiles of data against model implied quantiles.</h2>
+
+<h3>Description</h3>
+
+<p>Plots histograms for each condition-response pair/ condition/ response
+with overlayed estimated densities.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotObserved(
+  resObserved,
+  data,
+  what = c("cr", "c", "r"),
+  layout = NULL,
+  main = NULL,
+  linesArgs = list(),
+  ggplot = FALSE,
+  prob = seq(0, 1, 0.01),
+  probType = 3,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resObserved</code></td>
+<td>
+<p>output of <code>estObserved</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The dataset used to estimate the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>what</code></td>
+<td>
+<p>What to plot. Can be 'cr' for 'condition-response pairs,
+'c' for condition, and 'r' for response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layout</code></td>
+<td>
+<p>An optional layout matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+<p>an optional vector containing names for each plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linesArgs</code></td>
+<td>
+<p>A list containing named arguments to be passed to <code>lines</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ggplot</code></td>
+<td>
+<p>Deprecated and ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>Should a qqplot of observed vs model implied quantiles be plotted?
+By default, it is <code>seq(0, 1, .01)</code>, the probabilities between 0 and 1 to compare the
+model implied quantiles to the observed quantiles. If this argument is NULL,
+then a histogram overlayed with model implied densities will be plotted.
+Internally, <code>estQdf</code> is used for generating quantiles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probType</code></td>
+<td>
+<p>A numeric value defining several plotting options. 0 does nothing, 1
+removes the 0% quantile, 2 removes the 100% quantile and 3 removes both the 0% and 100% quantile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to be passed to hist.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Keep in mind when using <code>what = 'c'</code> or <code>what = 'r'</code> pdfs are simply
+averaged, not weighted to the number of observed responses.
+</p>
+
+
+<h3>Value</h3>
+
+<p>if ggplot is FALSE <code>invisible()</code>, otherwise a list
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># simulate data with three stimuli of different difficulty.
+# this implies different drift rates across conditions.
+# define a time grid. A more reasonable stepsize is .01; this is just for speed.
+tt = seq(0, 5, .1)
+pars = c(.8, 2, .5, .5, .5, # condition 1
+        .8, 3, .5, .5, .5, # condition 2
+        .8, 4, .5, .5, .5) # condition 3
+pdfND = dbeta(tt, 10, 30)
+# simulate data
+lst = simData(n = 3e5, pars = pars, tt = tt, pdfND = pdfND, return.pdf = TRUE)
+dat = lst$dat
+# define restriction matrix
+restr = matrix(1:5, 5, 3)
+restr[2, 2:3] = 6:7 # allow drift rates to differ
+# fix variance parameters
+fixed = matrix(c('sz1', .5, 'sv1', .5), 2, 2)
+## Not run: 
+# Run D*M analysis
+resD = estDstarM(dat = dat, tt = tt, restr = restr, fixed = fixed)
+# Estimate nondecision density
+resND = estND(resD)
+# Estimate observed density
+resObs = estObserved(resD, resND)
+# plot histograms with overlayed
+# densities per condition-response pair
+plotObserved(resObserved = resObs, data = dat,
+            xlim = c(0, 1))
+# plot estimated and true densities
+plot(resObs, col = rep(1:3, each = 2), xlim = 0:1)
+matlines(tt, lst$pdfNormalized, col = rep(1:3, each = 2), lty = 2)
+# other uses of plotObserved
+plotObserved(resObserved = resObs, data = dat, what = 'cr', xlim = c(0, 1))
+plotObserved(resObserved = resObs, data = dat, what = 'c', xlim = c(0, 1))
+plotObserved(resObserved = resObs, data = dat, what = 'r', xlim = c(0, 1))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Target doses</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate dose estimates for a fitted dose-response model (via <code>fitMod</code> or <code>bFitMod</code>) or a
+<code>Mods</code> object</h2>
+
+<h3>Description</h3>
+
+<p>The TD (target dose) is defined as the dose that achieves a target effect of Delta over placebo (if
+there are multiple such doses, the smallest is chosen):
+</p>
+<p style="text-align: center;"><code class="reqn">TD_\Delta = \min \{x|f(x) &gt; f(0)+\Delta\}</code>
+</p>
+
+<p>If a decreasing trend is beneficial the definition of the TD is
+</p>
+<p style="text-align: center;"><code class="reqn">TD_\Delta = \min \{x|f(x) &lt; f(0)-\Delta\}</code>
+</p>
+
+<p>When <code class="reqn">\Delta</code> is the clinical relevance threshold, then the TD is similar to the usual definition of the
+minimum effective dose (MED).
+</p>
+<p>The ED (effective dose) is defined as the dose that achieves a certain percentage p of the full effect size (within
+the observed dose-range!) over placebo (if there are multiple such doses, the smallest is chosen).
+</p>
+<p style="text-align: center;"><code class="reqn">ED_p=\min\{x|f(x) &gt; f(0) + p(f(dmax)-f(0))</code>
+</p>
+
+<p>Note that this definition of the EDp is different from traditional definition based on the Emax model,
+where the EDp is defined relative to the <em>asymptotic</em> maximum effect (rather than the maximum effect in the observed dose-range).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">TD(
+  object,
+  Delta,
+  TDtype = c("continuous", "discrete"),
+  direction = c("increasing", "decreasing"),
+  doses
+)
+
+ED(object, p, EDtype = c("continuous", "discrete"), doses)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class c(Mods, fullMod), DRMod or bFitMod</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta, p</code></td>
+<td>
+<p>Delta: The target effect size use for the target dose (TD) (Delta should be &gt; 0).
+</p>
+<p>p: The percentage of the dose to use for the effective dose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TDtype, EDtype</code></td>
+<td>
+<p>character that determines, whether the dose should be treated as a continuous
+variable when calculating the TD/ED or whether the TD/ED should be calculated based on a grid of doses specified in ‘<span class="samp">⁠doses⁠</span>’</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direction</code></td>
+<td>
+<p>Direction to be used in defining the TD. This depends on whether an increasing
+or decreasing of the response variable is beneficial.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>Dose levels to be used, this needs to include placebo, ‘<span class="samp">⁠TDtype⁠</span>’ or ‘<span class="samp">⁠EDtype⁠</span>’ are
+equal to ‘<span class="samp">⁠"discrete"⁠</span>’.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns the dose estimate
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Mods</code>, <code>drmodels</code>,
+<code>fitMod</code>, <code>bFitMod</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example for creating a "full-model" candidate set placebo response
+## and maxEff already fixed in Mods call
+doses &lt;- c(0, 10, 25, 50, 100, 150)
+fmodels &lt;- Mods(linear = NULL, emax = 25,
+                logistic = c(50, 10.88111), exponential = 85,
+                betaMod = rbind(c(0.33, 2.31), c(1.39, 1.39)),
+                linInt = rbind(c(0, 1, 1, 1, 1),
+                               c(0, 0, 1, 1, 0.8)),
+                doses=doses, placEff = 0, maxEff = 0.4,
+                addArgs=list(scal=200))
+## calculate doses giving an improvement of 0.3 over placebo
+TD(fmodels, Delta=0.3)
+## discrete version
+TD(fmodels, Delta=0.3, TDtype = "discrete", doses=doses)
+## doses giving 50% of the maximum effect
+ED(fmodels, p=0.5)
+ED(fmodels, p=0.5, EDtype = "discrete", doses=doses)
+plot(fmodels, plotTD = TRUE, Delta = 0.3)
+</code></pre>
+
+
+</div>

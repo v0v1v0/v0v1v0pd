@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>phypers</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Four (4) Symmetric 'phyper()' Calls</h2>
+
+<h3>Description</h3>
+
+<p>Compute the four (4) symmetric <code>phyper()</code> calls which
+mathematically would be identical but in practice typically slightly
+differ numerically.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">phypers(m, n, k, q = .suppHyper(m, n, k), tol = sqrt(.Machine$double.eps))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>the number of white balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the number of black balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>the number of balls drawn from the urn, hence must be in
+<code class="reqn">0,1,\dots, m+n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>vector of quantiles representing the number of white balls
+drawn without replacement from an urn which contains both black and
+white balls.  By default all “non-trivial” abscissa values
+i.e., for which the mathematical value is strictly inside <code class="reqn">(0,1)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>a non-negative number, the <code>tolerance</code> for the
+<code>all.equal()</code> checks.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a <code>list</code> with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>Description of 'comp1'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phyp</code></td>
+<td>
+<p>a numeric <code>matrix</code> of 4 columns with the 4
+different calls to <code>phyper()</code> which are theoretically
+equivalent because of mathematical symmetry.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Johnson et al
+</p>
+
+
+<h3>See Also</h3>
+
+<p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s  <code>phyper</code>.  In package <a href="https://CRAN.R-project.org/package=DPQmpfr"><span class="pkg">DPQmpfr</span></a>,
+<code>phyperQ()</code> uses (package <a href="https://CRAN.R-project.org/package=gmp"><span class="pkg">gmp</span></a> based) exact
+rational arithmetic, summing up <code>dhyperQ()</code>, terms
+computed by <code>chooseZ()</code>, exact (long integer) arithmetic
+binomial coefficients.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## The function is defined as
+function(m,n,k, q = .suppHyper(m,n,k), tol = sqrt(.Machine$double.eps)) {
+    N &lt;- m+n
+    pm &lt;- cbind(ph = phyper(q,     m,  n , k), # 1 = orig.
+                p2 = phyper(q,     k, N-k, m), # swap m &lt;-&gt; k (keep N = m+n)
+                ## "lower.tail = FALSE"  &lt;==&gt;  1 - p..(..)
+                Ip2= phyper(m-1-q, N-k, k, m, lower.tail=FALSE),
+                Ip1= phyper(k-1-q, n,   m, k, lower.tail=FALSE))
+
+    ## check that all are (approximately) the same :
+    stopifnot(all.equal(pm[,1], pm[,2], tolerance=tol),
+              all.equal(pm[,2], pm[,3], tolerance=tol),
+              all.equal(pm[,3], pm[,4], tolerance=tol))
+    list(q = q, phyp = pm)
+}
+
+
+str(phs &lt;- phypers(20, 47, 31))
+with(phs, cbind(q, phyp))
+with(phs,
+     matplot(q, phyp, type = "b"), main = "phypers(20, 47, 31)")
+
+## differences:
+with(phs, phyp[,-1] - phyp[,1])
+## *relative*
+relE &lt;- with(phs, { phM &lt;- rowMeans(phyp); 1 - phyp/phM })
+print.table(cbind(q = phs$q, relE / .Machine$double.eps), zero.print = ".")
+</code></pre>
+
+
+</div>

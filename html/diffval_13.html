@@ -1,0 +1,241 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tdv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Total Differential Value of a phytosociological table</h2>
+
+<h3>Description</h3>
+
+<p>Given a phytosociological table and a partition of its columns, this function
+calculates the respective Total Differential Value (TDV).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tdv(m_bin, p, output_type = "normal")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m_bin</code></td>
+<td>
+<p>A matrix. A phytosociological table of 0s (absences) and 1s
+(presences), where rows correspond to taxa and columns correspond to
+relevés.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>A vector of integer numbers with the partition of the relevés (i.e.,
+a k-partition, consisting in a vector with values from 1 to k, with length
+equal to the number of columns of <code>m_bin</code>, ascribing each relevé to one of
+the k groups).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_type</code></td>
+<td>
+<p>A character determining the amount of information returned
+by the function and also the amount of pre-validations. Possible values are
+"normal" (the default), "fast" and "full".</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function accepts a phytosociological table (<code>m_bin</code>) and a
+k-partition of its columns (<code>p</code>), returning the corresponding TDV.
+TDV was proposed by Monteiro-Henriques and Bellu (2014).
+Monteiro-Henriques (2016) proposed TDV1, modifying TDV slightly with the
+objective of ensuring a value from 0 to 1. Yet, TDV is always within that
+range. In practice, both TDV and TDV1 have 0 as possible minimum value
+and 1 as possible maximum value, but TDV1 reduces further the contribution
+of differential taxa present in more than one group. TDV is then
+implemented here, for parsimony.
+</p>
+<p>TDV is calculated using the <code class="reqn">DiffVal</code> index for each (and all) of the
+taxa present in a tabulated phytosociological table <code class="reqn">M</code> (also called
+sorted table). <code class="reqn">DiffVal</code> index aims at characterizing how well a taxon
+works as a differential taxon in a such tabulated phytosociological table
+(for more information on differential taxa see Mueller-Dombois &amp; Ellenberg,
+1974).
+</p>
+<p>An archetypal differential taxon of a certain group <code class="reqn">g</code> of the
+partition <code class="reqn">p</code> (a partition on the columns of <code class="reqn">M</code>) is the one
+present in all relevés of group <code class="reqn">g</code>, and absent from all the other
+groups of that partition. Therefore, <code class="reqn">DiffVal</code> has two components, an
+inner one (<code class="reqn">\frac{a}{b}</code>), which measures the presence of the
+taxon inside each of the groups, and an outer one (<code class="reqn">\frac{c}{d}</code>),
+which measures the relevant absences of the taxon outside of each of the
+groups. Specifically, given a partition <code class="reqn">p</code> with <code class="reqn">k</code> groups,
+<code class="reqn">DiffVal</code> is calculated for each taxon <code class="reqn">s</code> as:
+</p>
+<p style="text-align: center;"><code class="reqn">DiffVal_{s,p} = \frac{1}{e}\sum_{g=1}^k{\frac{a}{b}\frac{c}{d}}</code>
+</p>
+
+<p>where:
+</p>
+
+<ul>
+<li> <p><code class="reqn">a</code>, is the total number of presences of taxon <code class="reqn">s</code> within group
+<code class="reqn">g</code>.
+</p>
+</li>
+<li> <p><code class="reqn">b</code>, is the total number of relevés of group <code class="reqn">g</code>.
+</p>
+</li>
+<li> <p><code class="reqn">c</code>, is the total number of differentiating absences of taxon
+<code class="reqn">s</code>, i.e., absences coming from the groups other than <code class="reqn">g</code> from
+which the taxon <code class="reqn">s</code> is completely absent.
+</p>
+</li>
+<li> <p><code class="reqn">d</code>, is the total number of relevés of all groups but <code class="reqn">g</code> (i.e.,
+the total number of relevés in the table - <code class="reqn">b</code>).
+</p>
+</li>
+<li> <p><code class="reqn">e</code>, is the total number of groups in which the taxon <code class="reqn">s</code> occurs
+at least once.
+</p>
+</li>
+</ul>
+<p>Therefore, for each taxon <code class="reqn">s</code> and for each group <code class="reqn">g</code>, the
+<code class="reqn">DiffVal</code> index evaluates:
+</p>
+
+<ul>
+<li> <p><code class="reqn">\frac{a}{b}</code>, i.e., the frequency of the presences of taxon
+<code class="reqn">s</code>, relative to the size of group <code class="reqn">g</code>; commonly called 'relative
+frequency.' <code class="reqn">\frac{a}{b}</code> is only 1 if and only if taxon <code class="reqn">s</code>
+occurs in all the relevés of group <code class="reqn">g</code>.
+</p>
+</li>
+<li> <p><code class="reqn">\frac{c}{d}</code>, i.e., the frequency of the differentiating
+absences of taxon <code class="reqn">s</code> outside group <code class="reqn">g</code>, relative to the sum of
+sizes of all groups but <code class="reqn">g</code>. <em>Nota bene</em>: absences in <code class="reqn">c</code> are
+counted outside the group <code class="reqn">g</code> but only in the groups from which taxon
+<code class="reqn">s</code> is completely absent (these are the relevant absences, which
+produce differentiation among groups); in practice <code class="reqn">c</code> corresponds to
+the sum of the sizes of all groups other than <code class="reqn">g</code> that are empty.
+<code class="reqn">\frac{c}{d}</code> is 1 if and only if the taxon <code class="reqn">s</code> is absent
+from all groups but <code class="reqn">g</code>.
+</p>
+</li>
+</ul>
+<p>Finally, <code class="reqn">\frac{1}{e}</code> ensures that <code class="reqn">DiffVal</code> is a value
+from 0 to 1.
+</p>
+<p>The Total Differential Value (TDV or <code class="reqn">TotDiffVal</code>) of a
+phytosociological table <code class="reqn">M</code> tabulated/sorted by the partition <code class="reqn">p</code>
+is:
+</p>
+<p style="text-align: center;"><code class="reqn">TDV_{M,p} = \frac{1}{n}\sum_{i=1}^n{Diffval_{i,p}}</code>
+</p>
+
+<p>where:
+</p>
+
+<ul><li> <p><code class="reqn">n</code>, is the number of taxa in table <code class="reqn">M</code>.
+</p>
+</li></ul>
+<p>The division by the number of taxa present in <code class="reqn">M</code> ensures that TDV
+remains in the [0,1] interval (as <code class="reqn">DiffVal</code> is also in the same
+interval).
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>output_type = "normal"</code> (the default) pre-validations are done
+and a list is returned, with the following components:
+</p>
+
+<dl>
+<dt>ifp</dt>
+<dd>
+<p>A matrix with the <code class="reqn">\frac{a}{b}</code> values for each taxon
+in each group, for short called the 'inner frequency of presences'.</p>
+</dd>
+<dt>ofda</dt>
+<dd>
+<p>A matrix with the <code class="reqn">\frac{c}{d}</code> values for each
+taxon in each group, for short called the 'outer frequency of
+differentiating absences'.</p>
+</dd>
+<dt>e</dt>
+<dd>
+<p>A vector with the <code class="reqn">e</code> values for each taxon, i.e., the
+number of groups containing that taxon.</p>
+</dd>
+<dt>diffval</dt>
+<dd>
+<p>A matrix with the <code class="reqn">DiffVal</code> for each taxon.</p>
+</dd>
+<dt>tdv</dt>
+<dd>
+<p>A numeric with the TDV of matrix <code style="white-space: pre;">⁠m_bin,⁠</code> given the partition
+<code>p</code>.</p>
+</dd>
+</dl>
+<p>If <code>output_type = "full"</code>, some extra components are added to the output:
+<code>afg</code>, <code>empty.size</code>, <code>gct</code> (= <code class="reqn">e</code>) and <code>i.mul</code>. These are intermediate
+matrices used in the computation of TDV.
+</p>
+<p>If <code>output_type = "fast"</code>, only TDV is returned and no pre-validations are
+done.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tiago Monteiro-Henriques. E-mail: <a href="mailto:tmh.dev@icloud.com">tmh.dev@icloud.com</a>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Monteiro-Henriques T. &amp; Bellu A. 2014. <em>An optimization approach to the</em>
+<em>production of differentiated tables based on new differentiability</em>
+<em>measures</em>. 23rd EVS European Vegetation Survey. Presented orally. Ljubljana,
+Slovenia.
+</p>
+<p>Monteiro-Henriques T. 2016. <em>A bunch of R functions to assist</em>
+<em>phytosociological tabulation</em>. 25th Meeting of European Vegetation Survey.
+Presented in poster. Rome. Italy.
+</p>
+<p>Mueller-Dombois D. &amp; Ellenberg H. 1974. <em>Aims and Methods of Vegetation</em>
+<em>Ecology</em>. New York: John Wiley &amp; Sons.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Getting the Taxus baccata forests data set
+data(taxus_bin)
+
+# Creating a group partition, as the one presented in the original article of
+# the data set
+groups &lt;- rep(c(1, 2, 3), c(3, 11, 19))
+
+# Removing taxa occurring in only one relevé, in order to reproduce exactly
+# the example in the original article of the data set
+taxus_bin_wmt &lt;- taxus_bin[rowSums(taxus_bin) &gt; 1, ]
+
+# Calculating TDV
+result &lt;- tdv(taxus_bin_wmt, groups)
+
+# This is the TDV
+result$tdv
+# This is TDV1, reproducing exactly the value from the original article
+sum(result$diffval / result$e) / nrow(taxus_bin_wmt)
+
+</code></pre>
+
+
+</div>

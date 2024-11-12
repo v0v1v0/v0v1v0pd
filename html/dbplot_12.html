@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>db_compute_raster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Aggregates intersections of two variables</h2>
+
+<h3>Description</h3>
+
+<p>To visualize two continuous variables, we typically resort to a Scatter plot. However,
+this may not be practical when visualizing millions or billions of dots representing the
+intersections of the two variables. A Raster plot may be a better option,
+because it concentrates the intersections into squares that are easier to parse visually.
+</p>
+<p>Uses very generic dplyr code to aggregate data.  Because of this approach,
+the calculations automatically run inside the database if 'data' has
+a database or sparklyr connection. The 'class()' of such tables
+in R are: tbl_sql, tbl_dbi, tbl_sql
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">db_compute_raster(data, x, y, fill = n(), resolution = 100, complete = FALSE)
+
+db_compute_raster2(data, x, y, fill = n(), resolution = 100, complete = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A table (tbl)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A continuous variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A continuous variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fill</code></td>
+<td>
+<p>The aggregation formula. Defaults to count (n)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>The number of bins created by variable. The highest the number, the more records
+can be potentially imported from the source</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>complete</code></td>
+<td>
+<p>Uses tidyr::complete to include empty bins. Inserts value of 0.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>There are two considerations when using a Raster plot with a database. Both considerations are related
+to the size of the results downloaded from the database:
+</p>
+<p>- The number of bins requested: The higher the bins value is, the more data is downloaded from the database.
+</p>
+<p>- How concentrated the data is: This refers to how many intersections return a value. The more
+intersections without a value, the less data is downloaded from the database.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Returns a 100x100 grid of record count of intersections of eruptions and waiting
+faithful %&gt;%
+  db_compute_raster(eruptions, waiting)
+
+# Returns a 50x50 grid of eruption averages of intersections of eruptions and waiting
+faithful %&gt;%
+  db_compute_raster(eruptions, waiting, fill = mean(eruptions), resolution = 50)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drake_history</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>History and provenance
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>See the history and provenance of your targets:
+what you ran, when you ran it, the function arguments
+you used, and how to get old data back.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drake_history(cache = NULL, history = NULL, analyze = TRUE, verbose = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cache</code></td>
+<td>
+<p>drake cache as created by <code>new_cache()</code>.
+See also <code>drake_cache()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history</code></td>
+<td>
+<p>Logical, whether to record the build history
+of your targets. You can also supply a
+<code>txtq</code>, which is
+how <code>drake</code> records history.
+Must be <code>TRUE</code> for <code>drake_history()</code> to work later.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>analyze</code></td>
+<td>
+<p>Logical, whether to analyze <code>drake_plan()</code>
+commands for arguments to function calls.
+Could be slow because this requires parsing and analyzing
+lots of R code.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Deprecated on 2019-09-11.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>drake_history()</code> returns a data frame with the following columns.
+</p>
+
+<ul>
+<li> <p><code>target</code>: the name of the target.
+</p>
+</li>
+<li> <p><code>current</code>: logical, whether the row describes the data
+actually assigned to the target name in the cache,
+e.g. what you get with <code>loadd(target)</code> and <code>readd(target)</code>.
+Does <strong>NOT</strong> tell you if the target is up to date.
+</p>
+</li>
+<li> <p><code>built</code>: when the target's value was stored in the cache.
+This is the true creation date of the target's value,
+not the recovery date from <code>make(recover = TRUE)</code>.
+</p>
+</li>
+<li> <p><code>exists</code>: logical, whether the target's historical value
+still exists in the cache. Garbage collection via
+(<code>clean(garbage_collection = TRUE)</code> and <code>drake_cache()$gc()</code>)
+remove these historical values, but <code>clean()</code> under the default
+settings does not.
+</p>
+</li>
+<li> <p><code>hash</code>: fingerprint of the target's historical value in the cache.
+If the value still exists, you can read it with
+<code>drake_cache()$get_value(hash)</code>.
+</p>
+</li>
+<li> <p><code>command</code>: the <code>drake_plan()</code> command executed to build the target.
+</p>
+</li>
+<li> <p><code>seed</code>: random number generator seed.
+</p>
+</li>
+<li> <p><code>runtime</code>: the time it took to execute the <code>drake_plan()</code> command.
+Does not include overhead due to <code>drake</code>'s processing.
+</p>
+</li>
+</ul>
+<p>If <code>analyze</code> is <code>TRUE</code>, various other columns are included to show
+the explicitly-named length-1 arguments to function calls in the commands.
+See the "Provenance" section for more details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame of target history.
+</p>
+
+
+<h3>Provenance</h3>
+
+<p>If <code>analyze</code> is <code>TRUE</code>, <code>drake</code>
+scans your <code>drake_plan()</code> commands
+for function arguments and mentions them in the history.
+A function argument shows up if and only if:
+1. It has length 1. <br>
+2. It is atomic, i.e. a base type: logical, integer,
+real, complex, character, or raw. <br>
+3. It is explicitly named in the function call,
+For example, <code>x</code> is detected as <code>1</code> in
+<code>fn(list(x = 1))</code> but not <code>f(list(1))</code>.
+The exceptions are <code>file_out()</code>, <code>file_in()</code>,
+and <code>knitr_in()</code>. For example, <code>filename</code> is detected
+as <code>"my_file.csv"</code> in
+<code>process_data(filename = file_in("my_file.csv"))</code>.
+NB: in <code>process_data(filename = file_in("a", "b"))</code>
+<code>filename</code> is not detected because the value must be atomic. <br></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("contain side-effects", {
+if (requireNamespace("knitr", quietly = TRUE)) {
+# First, let's iterate on a drake workflow.
+load_mtcars_example()
+make(my_plan, history = TRUE, verbose = 0L)
+# Naturally, we'll make updates to our targets along the way.
+reg2 &lt;- function(d) {
+  d$x2 &lt;- d$x ^ 3
+  lm(y ~ x2, data = d)
+}
+Sys.sleep(0.01)
+make(my_plan, history = TRUE, verbose = 0L)
+# The history is a data frame about all the recorded runs of your targets.
+out &lt;- drake_history(analyze = TRUE)
+print(out)
+# Let's use the history to recover the oldest version
+# of our regression2_small target.
+oldest_reg2_small &lt;- max(which(out$target == "regression2_small"))
+hash_oldest_reg2_small &lt;- out[oldest_reg2_small, ]$hash
+cache &lt;- drake_cache()
+cache$get_value(hash_oldest_reg2_small)
+# If you run clean(), drake can still find all the targets.
+clean(small)
+drake_history()
+# But if you run clean() with garbage collection,
+# older versions of your targets may be gone.
+clean(large, garbage_collection = TRUE)
+drake_history()
+invisible()
+}
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

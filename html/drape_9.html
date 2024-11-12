@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drape</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the doubly-robust average partial effect estimate of X on Y, in the presence of Z.</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the doubly-robust average partial effect estimate of X on Y, in the presence of Z.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drape(
+  y,
+  x,
+  z,
+  response_regression,
+  predictor_regression,
+  resmooth_bw = NULL,
+  spline_df = NULL,
+  nfolds = 5L,
+  foldid = NULL,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>vector of responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector of the predictor of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>matrix of additional predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_regression</code></td>
+<td>
+<p>function which takes input data of the form
+(X,y), where X=cbind(x,z), and returns a prediction function f:X -&gt; y and optionally a
+similar derivative estimation function (in this case no resmoothing is done).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor_regression</code></td>
+<td>
+<p>function which takes input data of the form
+(z,x), and returns a prediction function m:z -&gt; x.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resmooth_bw</code></td>
+<td>
+<p>optional numeric to be used as resmoothing bandwidth,
+otherwise chosen via cross-validation. Only used if
+response_regression doesn't predict derivatives.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spline_df</code></td>
+<td>
+<p>optional double, a smoothing parameter for the
+unconditional spline score estimator, corresponding to the effective degrees
+of freedom for a smoothing spline. If NULL, chosen via
+cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfolds</code></td>
+<td>
+<p>integer, number of sample-splits. If set to
+one, then all data is used for both training and evaluation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>foldid</code></td>
+<td>
+<p>optional vector with components in 1:nfolds indicating the folds in which
+each observation fell. Overwrites nfolds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>boolean controlling level of information outputted.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list containing the average partial effect estimate and the
+corresponding standard error estimate. If verbose=TRUE, additionally contains
+variables used in computations.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(0)
+data &lt;- simulate_data(200, "normal", "plm")
+response_regression &lt;- function(X,y){
+    df &lt;- data.frame(y,X)
+    colnames(df) &lt;- c("y", paste0("X", 1:10))
+    lm1 &lt;- stats::lm(y~X1+sin(X2), data=df)
+    fit &lt;- function(newX){
+        newdf &lt;- data.frame(newX)
+        colnames(newdf) &lt;- paste0("X", 1:10)
+        return(as.vector(stats::predict(lm1, newdata=newdf)))}
+    return(list("fit"=fit))
+}
+predictor_regression &lt;- function(z,x){
+    df &lt;- data.frame(x,z)
+    colnames(df) &lt;- c("x", paste0("Z", 1:9))
+    lm1 &lt;- stats::lm(x~Z1+Z2, data=df)
+    fit &lt;- function(newz){
+        newdf &lt;- data.frame(newz)
+        colnames(newdf) &lt;- paste0("Z", 1:9)
+        return(as.vector(stats::predict(lm1, newdata=newdf)))}
+    return(list("fit"=fit))
+}
+drape(data$y, data$x, data$z, response_regression, predictor_regression, nfolds=2)
+</code></pre>
+
+
+</div>

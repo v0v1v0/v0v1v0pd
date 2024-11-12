@@ -1,0 +1,538 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DataClient</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DataClient</h2>
+
+<h3>Description</h3>
+
+<p>An RC class for accessing Datastream content through Datastream Web services API
+</p>
+
+
+<h3>Value</h3>
+
+<p>DataClient object
+</p>
+
+
+<h3>Super class</h3>
+
+<p><code>DatastreamR::DSConnect</code> -&gt; <code>DataClient</code>
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>useNaNforNotANumber</code></dt>
+<dd>
+<p>: TRUE by default. NULLs are replaced to NaN (Not a Number)</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-DataClient-new"><code>DataClient$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-DataClient-getData"><code>DataClient$getData()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-DataClient-getDataframe"><code>DataClient$getDataframe()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-DataClient-formatDataRequest"><code>DataClient$formatDataRequest()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-DataClient-getDataBundle"><code>DataClient$getDataBundle()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-DataClient-toDataframe"><code>DataClient$toDataframe()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-DataClient-clone"><code>DataClient$clone()</code></a>
+</p>
+</li>
+</ul>
+<details open><summary>Inherited methods</summary><ul>
+<li><span class="pkg-link" data-pkg="DatastreamR" data-topic="DSConnect" data-id="CheckToken"><a href="../../DatastreamR/html/DSConnect.html#method-DSConnect-CheckToken"><code>DatastreamR::DSConnect$CheckToken()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="DatastreamR" data-topic="DSConnect" data-id="IsValid"><a href="../../DatastreamR/html/DSConnect.html#method-DSConnect-IsValid"><code>DatastreamR::DSConnect$IsValid()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="DatastreamR" data-topic="DSConnect" data-id="getJsonResponse"><a href="../../DatastreamR/html/DSConnect.html#method-DSConnect-getJsonResponse"><code>DatastreamR::DSConnect$getJsonResponse()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="DatastreamR" data-topic="DSConnect" data-id="getToken"><a href="../../DatastreamR/html/DSConnect.html#method-DSConnect-getToken"><code>DatastreamR::DSConnect$getToken()</code></a></span></li>
+</ul></details><hr>
+<a id="method-DataClient-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Initialize method to create Datastream Object
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$new(
+  config = NULL,
+  username = "",
+  password = "",
+  proxys = NULL,
+  sslCer = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>config</code></dt>
+<dd>
+<p>: Config path</p>
+</dd>
+<dt><code>username</code></dt>
+<dd>
+<p>: Your Id</p>
+</dd>
+<dt><code>password</code></dt>
+<dd>
+<p>: Your Password</p>
+</dd>
+<dt><code>proxys</code></dt>
+<dd>
+<p>: Proxy details (if any)</p>
+</dd>
+<dt><code>sslCer</code></dt>
+<dd>
+<p>: ssl Certificates path</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Details</h5>
+
+<p>Creates Datastream RC object for accessing Datastream content
+through Datastream Web Services API
+</p>
+
+
+
+<h5>Returns</h5>
+
+<p>DataClient object
+</p>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>\dontrun{
+ # ds = DataClient$new(NULL, "YourID", "YourPswd")
+
+ #  OR
+
+ # Login using config file
+ # Config file details provided in DSConnect.R
+ ds = DataClient("Config.ini")
+
+ # Timeseries requests
+
+ df = tryCatch (
+   {ds$getData(tickers="VOD", fields=list("PH","PL"),
+               start='2022-01-12', end='2022-07-13', kind=1)},
+   error = function(e) { stop (message(e))})
+   print(df)
+
+ # Snapshot requests
+
+ df = tryCatch (
+ { ds$getData(tickers="VOD", fields=list("PH", "PL"),
+              start='2022-01-12', kind=0)},
+ error = function(e) { stop (message(e))})
+ print(df)
+}
+
+
+</pre>
+</div>
+
+
+<hr>
+<a id="method-DataClient-getData"></a>
+
+
+
+<h4>Method <code>getData()</code>
+</h4>
+
+<p>getData posts the JSON formatted request and the JSON response is
+then converted to Dataframe, if dataToDF is TRUE.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$getData(
+  tickers,
+  fields = NULL,
+  start = "",
+  end = "",
+  freq = "D",
+  kind = 1,
+  properties = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>tickers</code></dt>
+<dd>
+<p>: Intruments Eg: "VOD,BARC"</p>
+</dd>
+<dt><code>fields</code></dt>
+<dd>
+<p>: Datatypes   Eg: list('PH, 'PL', 'PI')</p>
+</dd>
+<dt><code>start</code></dt>
+<dd>
+<p>: start date in "YYYY-mm-dd" format Eg: "2019-01-20"</p>
+</dd>
+<dt><code>end</code></dt>
+<dd>
+<p>: end date  in</p>
+</dd>
+<dt><code>freq</code></dt>
+<dd>
+<p>: Refer DSDateFrequencyNames in DSRequests.R</p>
+</dd>
+<dt><code>kind</code></dt>
+<dd>
+<p>: 1 - TimeSeries Request (default), 0 - Snapshot Request</p>
+</dd>
+<dt><code>properties</code></dt>
+<dd>
+<p>: properties</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Response Class
+</p>
+
+
+<hr>
+<a id="method-DataClient-getDataframe"></a>
+
+
+
+<h4>Method <code>getDataframe()</code>
+</h4>
+
+<p>getDataframe posts the JSON formatted request and the JSON response is
+then converted to Dataframe
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$getDataframe(
+  tickers,
+  fields = NULL,
+  start = "",
+  end = "",
+  freq = "D",
+  kind = 1,
+  properties = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>tickers</code></dt>
+<dd>
+<p>: Intruments Eg: "VOD,BARC"</p>
+</dd>
+<dt><code>fields</code></dt>
+<dd>
+<p>: Datatypes   Eg: list('PH, 'PL', 'PI')</p>
+</dd>
+<dt><code>start</code></dt>
+<dd>
+<p>: start date in "YYYY-mm-dd" format Eg: "2019-01-20"</p>
+</dd>
+<dt><code>end</code></dt>
+<dd>
+<p>: end date  in</p>
+</dd>
+<dt><code>freq</code></dt>
+<dd>
+<p>: Refer DSDateFrequencyNames in DSRequests.R</p>
+</dd>
+<dt><code>kind</code></dt>
+<dd>
+<p>: 1 - TimeSeries Request (default), 0 - Snapshot Request</p>
+</dd>
+<dt><code>properties</code></dt>
+<dd>
+<p>: properties</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Dataframe
+</p>
+
+
+<hr>
+<a id="method-DataClient-formatDataRequest"></a>
+
+
+
+<h4>Method <code>formatDataRequest()</code>
+</h4>
+
+<p>This method formats the request provided by client (in form of tickers and fields)
+to the JSON formatted request.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$formatDataRequest(
+  tickers,
+  fields = NULL,
+  start = "",
+  end = "",
+  freq = "D",
+  kind = 1
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>tickers</code></dt>
+<dd>
+<p>: Instruments</p>
+</dd>
+<dt><code>fields</code></dt>
+<dd>
+<p>: Datatypes</p>
+</dd>
+<dt><code>start</code></dt>
+<dd>
+<p>: start date</p>
+</dd>
+<dt><code>end</code></dt>
+<dd>
+<p>: end date</p>
+</dd>
+<dt><code>freq</code></dt>
+<dd>
+<p>: frequency</p>
+</dd>
+<dt><code>kind</code></dt>
+<dd>
+<p>: kind = 0 for Snapshot request and Kind = 1 for Timeseries request</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>JSON formatted data request
+</p>
+
+
+<hr>
+<a id="method-DataClient-getDataBundle"></a>
+
+
+
+<h4>Method <code>getDataBundle()</code>
+</h4>
+
+<p>getData posts the JSON formatted request and the JSON response is
+then converted to Dataframe, if dataToDF is TRUE.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$getDataBundle(dataRequests, properties = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>dataRequests</code></dt>
+<dd>
+<p>: dataRequests should be formed using formatDataRequest method</p>
+</dd>
+<dt><code>properties</code></dt>
+<dd>
+<p>: properties</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Response Class
+</p>
+
+
+<hr>
+<a id="method-DataClient-toDataframe"></a>
+
+
+
+<h4>Method <code>toDataframe()</code>
+</h4>
+
+<p>Converts the Class response into a Dataframe which can be further used to plot
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$toDataframe(dataResponse)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>dataResponse</code></dt>
+<dd>
+<p>: The raw data response that is ingested into Dataframe</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Dataframe
+</p>
+
+
+<hr>
+<a id="method-DataClient-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>DataClient$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `DataClient$new`
+## ------------------------------------------------
+
+## Not run: 
+ # ds = DataClient$new(NULL, "YourID", "YourPswd")
+
+ #  OR
+
+ # Login using config file
+ # Config file details provided in DSConnect.R
+ ds = DataClient("Config.ini")
+
+ # Timeseries requests
+
+ df = tryCatch (
+   {ds$getData(tickers="VOD", fields=list("PH","PL"),
+               start='2022-01-12', end='2022-07-13', kind=1)},
+   error = function(e) { stop (message(e))})
+   print(df)
+
+ # Snapshot requests
+
+ df = tryCatch (
+ { ds$getData(tickers="VOD", fields=list("PH", "PL"),
+              start='2022-01-12', kind=0)},
+ error = function(e) { stop (message(e))})
+ print(df)
+
+## End(Not run)
+
+
+</code></pre>
+
+
+</div>

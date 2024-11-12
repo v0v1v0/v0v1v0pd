@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kin2sex</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate kin counts in a two-sex framework</h2>
+
+<h3>Description</h3>
+
+<p>Implementation of two-sex matrix kinship model. This produces kin counts grouped by kin, age and sex of
+each relatives at each Focal´s age. For example, male cousins from aunts and uncles from different sibling's parents
+are grouped in one male count of cousins. Note that the output labels relative following female notation: the label <code>m</code>
+refers to either mothers or fathers, and column <code>sex_kin</code> determine the sex of the relative.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">kin2sex(
+  pf = NULL,
+  pm = NULL,
+  ff = NULL,
+  fm = NULL,
+  time_invariant = TRUE,
+  sex_focal = "f",
+  birth_female = 1/2.04,
+  pif = NULL,
+  pim = NULL,
+  nf = NULL,
+  nm = NULL,
+  output_cohort = NULL,
+  output_period = NULL,
+  output_kin = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pf</code></td>
+<td>
+<p>numeric. A vector (atomic) or  matrix with female probabilities (or survival ratios, or transition between age class in a more general perspective) with rows as ages (and columns as years in case of matrix, being the name of each col the year).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pm</code></td>
+<td>
+<p>numeric. A vector (atomic) or  matrix with male probabilities (or survival ratios, or transition between age class in a more general perspective) with rows as ages (and columns as years in case of matrix, being the name of each col the year).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ff</code></td>
+<td>
+<p>numeric. Same as <code>pf</code> but for fertility rates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fm</code></td>
+<td>
+<p>numeric. Same as <code>pm</code> but for fertility rates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_invariant</code></td>
+<td>
+<p>logical. Constant assumption for a given <code>year</code> rates. Default <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sex_focal</code></td>
+<td>
+<p>character. "f" for female or "m" for male.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>birth_female</code></td>
+<td>
+<p>numeric. Female portion at birth. This multiplies <code>f</code> argument. If <code>f</code> is already for female offspring, this needs to be set as 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pif</code></td>
+<td>
+<p>numeric. For using some specific age distribution of childbearing for mothers (same length as ages). Default <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pim</code></td>
+<td>
+<p>numeric. For using some specific age distribution of childbearing for fathers (same length as ages). Default <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nf</code></td>
+<td>
+<p>numeric. Only for <code>time_invariant = FALSE</code>. Same as <code>pf</code> but for population distribution (counts or <code style="white-space: pre;">⁠%⁠</code>). Optional.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nm</code></td>
+<td>
+<p>numeric. Only for <code>time_invariant = FALSE</code>. Same as <code>pm</code> but for population distribution (counts or <code style="white-space: pre;">⁠%⁠</code>). Optional.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_cohort</code></td>
+<td>
+<p>integer. Vector of year cohorts for returning results. Should be within input data years range.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_period</code></td>
+<td>
+<p>integer. Vector of period years for returning results. Should be within input data years range.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_kin</code></td>
+<td>
+<p>character. kin types to return: "m" for mother, "d" for daughter,...</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See Caswell (2022) for details on formulas.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with:
+</p>
+
+<ul>
+<li>
+<p>kin_full a data frame with year, cohort, Focal´s age, related ages and type of kin (for example <code>d</code> could be daughter or son depending <code>sex_kin</code>,
+<code>oa</code> is older aunts or uncles also depending <code>sex_kin</code> value, etc.), including living and dead kin at that age.
+</p>
+</li>
+<li>
+<p>kin_summary a data frame with Focal´s age, related ages, sex and type of kin, with indicators obtained processing <code>kin_full</code>, grouping by cohort or period (depending on the given arguments):
+</p>
+
+<ul>
+<li>
+<p><code>count_living</code>: count of living kin at actual age of Focal
+</p>
+</li>
+<li>
+<p><code>mean_age</code>: mean age of each type of living kin.
+</p>
+</li>
+<li>
+<p><code>sd_age</code>: standard deviation of age of each type of living kin.
+</p>
+</li>
+<li>
+<p><code>count_death</code>: count of dead kin at specific age of Focal.
+</p>
+</li>
+<li>
+<p><code>count_cum_death</code>: cumulated count of dead kin until specific age of Focal.
+</p>
+</li>
+<li>
+<p><code>mean_age_lost</code>: mean age where Focal lost her relative.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Kin expected count by relative sex for a French female based on 2012 rates.
+fra_fert_f &lt;- fra_asfr_sex[,"ff"]
+fra_fert_m &lt;- fra_asfr_sex[,"fm"]
+fra_surv_f &lt;- fra_surv_sex[,"pf"]
+fra_surv_m &lt;- fra_surv_sex[,"pm"]
+fra_2012 &lt;- kin2sex(fra_surv_f, fra_surv_m, fra_fert_f, fra_fert_m)
+head(fra_2012$kin_summary)
+
+</code></pre>
+
+
+</div>

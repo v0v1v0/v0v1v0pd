@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>makeDockerCluster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a docker cluster</h2>
+
+<h3>Description</h3>
+
+<p>Create a docker cluster. The user needs to provide a cloud provider and
+a worker container to make it work.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">makeDockerCluster(
+  cloudProvider = NULL,
+  workerContainer = NULL,
+  workerNumber = 1,
+  workerCpu = 1024,
+  workerMemory = 2048,
+  workerHardwareId = character(0),
+  serverCpu = 256,
+  serverMemory = 2048,
+  serverHardwareId = character(0),
+  jobQueueName = "DockerParallelQueue",
+  privateServerData = NULL,
+  serverContainer = getServerContainer(workerContainer),
+  stopClusterOnExit = TRUE,
+  verbose = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cloudProvider</code></td>
+<td>
+<p>A <code>CloudProvider</code> object, the cloud that the container will be
+deployed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>workerContainer</code></td>
+<td>
+<p>A <code>DockerContainer</code> object, the object that defines the worker container</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>workerNumber</code></td>
+<td>
+<p>Integer, the number of workers in the cluster</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>serverCpu, workerCpu</code></td>
+<td>
+<p>Integer, the CPU unit used by the server or each worker.
+1024 CPU unit corresponds to a physical CPU core.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>serverMemory, workerMemory</code></td>
+<td>
+<p>Integer, the memory used by the server or each worker in MB</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>serverHardwareId, workerHardwareId</code></td>
+<td>
+<p>Character, the ID of the hardware, this argument
+might be ignored by some cloud providers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jobQueueName</code></td>
+<td>
+<p>Character, the job queue name used by the cluster to send the job.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>privateServerData</code></td>
+<td>
+<p>A data object made from <code>CloudPrivateServer</code>. If this object
+is provided, the cluster server should be from another source and the cloud provider
+will not deploy the server container.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>serverContainer</code></td>
+<td>
+<p>A <code>DockerContainer</code> object, the object that defines the server container.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stopClusterOnExit</code></td>
+<td>
+<p>Logical, whether to stop the cluster when the cluster has been removed
+from the R session. The default value is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Integer, the verbose level</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is the core function of the <code>DockerParallel</code> package which defines the cluster object.
+To user the function, you need to at least provide the cloud provider and worker container.
+Currently we have <code>ECSFargateProvider</code> and <code>BiocFERContainer</code>, see example.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>DockerCluster</code> object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## Load the ECS fargate provider
+library(ECSFargateProvider)
+provider &lt;- ECSFargateProvider()
+
+## Load the bioconductor foreach redis container
+container &lt;- BiocFERWorkerContainer()
+
+## Define a cluster with 2 workers,
+## each worker use one fourth CPU core and 512 MB memory
+cluster &lt;- makeDockerCluster(cloudProvider = provider,
+                             workerContainer = container,
+                             workerNumber = 2,
+                             workerCpu = 256, workerMemory = 512)
+## Start the cluster
+cluster$startCluster()
+
+## rescale the worker number
+cluster$setWorkerNumber(4)
+
+## Use foreach to do the parallel computing
+library(foreach)
+getDoParWorkers()
+foreach(x= 1:4)%dopar%{
+    Sys.info()
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

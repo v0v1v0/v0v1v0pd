@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prediction_contributions_plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Visualise model term contributions to predicted response</h2>
+
+<h3>Description</h3>
+
+<p>The plotting function to visualise the predicted response from a
+regression model as a stacked bar-chart showing the contributions
+(predictor coefficient * predictor value) of each model term to the total
+predicted value (represented by the total height of the bar).
+Requires the output of the 'prediction_contributions_data' as an
+input in the 'data' parameter.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prediction_contributions_plot(
+  data,
+  colours = NULL,
+  se = FALSE,
+  bar_orientation = c("vertical", "horizontal"),
+  facet_var = NULL,
+  nrow = 0,
+  ncol = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data-frame which is the output of the
+'prediction_contributions_data' function, consisting of
+the predicted response split into the contributions by the
+different coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colours</code></td>
+<td>
+<p>A character vector specifying the colours for the
+contributions of the different coefficients.
+If not specified, a default colour-scheme would be chosen,
+however it could be uninformative and it is recommended to
+manually choose contrasting colours for each coefficient
+group to render a more informative plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>A logical value indicating whether to show prediction intervals
+for predictions in the plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bar_orientation</code></td>
+<td>
+<p>One of "vertical" or "horizontal" indicating the
+orientation of the bars. Defaults to a vertical
+orientation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>facet_var</code></td>
+<td>
+<p>A character string or numeric index identifying the column
+in the data to be used for faceting the plot into multiple
+panels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrow</code></td>
+<td>
+<p>Number of rows in which to arrange the final plot
+(when 'add_var' is specified).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncol</code></td>
+<td>
+<p>Number of columns in which to arrange the final plot
+(when 'add_var' is specified).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A ggmultiplot (ggplot if single plot is returned) class object or data-frame (if 'plot = FALSE')
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DImodels)
+library(dplyr)
+
+## Load data
+data(sim2)
+sim2$AV &lt;- DI_data_E_AV(data = sim2, prop = 3:6)$AV
+
+## Fit model
+mod &lt;- glm(response ~ 0 + (p1 + p2 + p3 + p4 + AV), data = sim2)
+
+## Create data for plotting
+plot_data &lt;- prediction_contributions_data(data = sim2[c(1,5,9,11,15,19,23), ],
+                                           model = mod)
+## Create plot
+prediction_contributions_plot(data = plot_data)
+
+## Choose distinct colours for groups of coefficients for better visibility
+ID_cols &lt;- get_colours(4, FG = c("G", "G", "H", "H"))
+int_cols &lt;- "#808080"
+cols &lt;- c(ID_cols, int_cols)
+## Specify colours using `cols`
+prediction_contributions_plot(data = plot_data, colours = cols)
+
+## Show prediction intervals
+prediction_contributions_plot(data = plot_data, colours = cols, se = TRUE)
+
+## Change orientation of bars using `bar_orientation`
+prediction_contributions_plot(data = plot_data, colours = cols,
+                              se = TRUE, bar_orientation = "horizontal")
+
+## Facet plot based on a variable in the data
+prediction_contributions_plot(data = plot_data, colours = cols,
+                              se = TRUE, bar_orientation = "horizontal",
+                              facet_var = "block")
+
+## If multiple plots are desired `add_var` can be specified during
+## data preparation and the plots can be arranged using nrow and ncol
+sim2$block &lt;- as.character(sim2$block)
+new_mod &lt;- update(mod, ~. + block, data = sim2)
+plot_data &lt;- prediction_contributions_data(data = sim2[c(1,5,9,11,15,19,23), c(3:6, 8)],
+                                           model = new_mod,
+                                           add_var = list("block" = c("1", "2")))
+## Arrange in two columns
+prediction_contributions_plot(data = plot_data, ncol = 2)
+</code></pre>
+
+
+</div>

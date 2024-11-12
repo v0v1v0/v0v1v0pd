@@ -1,0 +1,203 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>diffuse</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute diffusion map coordinates from pair-wise distances.</h2>
+
+<h3>Description</h3>
+
+<p>Uses the pair-wise distance matrix for a data set to compute the diffusion
+map coefficients.  Computes the Markov transition probability matrix, and
+its eigenvalues and left &amp; right eigenvectors.  Returns a 'dmap' object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">diffuse(D, eps.val = epsilonCompute(D), neigen = NULL, t = 0,
+  maxdim = 50, delta = 10^-5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>n-by-n pairwise distance matrix for a data set with n points, or
+alternatively output from the dist() function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps.val</code></td>
+<td>
+<p>epsilon parameter for the diffusion weight matrix,
+exp(-D$^2$/(eps.val)).  Default is to use the epsilon corresponding to the
+median distance to the 0.01*n nearest neighbor</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neigen</code></td>
+<td>
+<p>number of dimensions of final diffusion map representation.
+Default uses number of dimensions corresponding to a 95% drop-off in
+eigenvalue multiplier.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>optional time-scale parameter in the diffusion map.  The
+(recommended) default uses multiscale geometry.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxdim</code></td>
+<td>
+<p>the maximum number of diffusion map dimensions returned if
+95% drop-off is not attained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>sparsity cut-off for the symmetric graph Laplacian.  Default of
+10^-5 is used.  Higher value induces more sparsity in Laplacian (and faster
+computations)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Diffusion map is a powerful tool for data parametrization that exploits the
+natural geometry of a data set.  Diffusion map uses local interactions
+between data points, propogated to larger scales, to construct a global
+representation of the data.
+</p>
+<p>The parameter eps.val controls the degree of localness in the diffusion
+weight matrix.  For most statisitical inference problems using diffusion
+map, results should be optimized over eps.val.  Generally a good starting
+point is to pick eps.val as $2*$med.knn$^2$, where med.knn is the median
+distance to the kth nearest neighbor, and k is chosen 1-2% of n.  The
+default uses 1% of n.
+</p>
+<p>Computation of the diffusion map coordinates requires singular value
+decomposition of the normalized graph Laplacian.  This operation is
+optimized for speed by exploiting the sparseness of the graph Laplacian and
+by using ARPACK for fast matrix decomposition.  Increasing the sparseness
+parameter, delta, will speed up the algorithm.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The returned value is an object of 'class' 'diffuse'.
+</p>
+<p>The function 'plot' is used to plot the diffusion coordinates in 1, 2, or 3
+dimensions.  The function 'print' displays the computed eigen-multipliers
+and the value of epsilon used.
+</p>
+<p>An object of class 'dmap' is a list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>matrix of n diffusion map coordinates, entered column-wise (does
+not include the trivial coordinate)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi0</code></td>
+<td>
+<p> trivial left eigenvector
+of Markov matrix (stationary distribution of Markov random walk) in
+diffusion map construction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eigenvals</code></td>
+<td>
+<p>eigen-values of the svd of the
+symmetric graph Laplacian</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eigenmult</code></td>
+<td>
+<p>eigen-multipliers of the
+diffusion map</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>psi</code></td>
+<td>
+<p>right eigenvectors of the Markov matrix (first row
+is the trivial right eigenvector)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+<p>left eigenvectors of the
+Markov matrix (first row is the trivial left eigenvector)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neigen</code></td>
+<td>
+<p>number of diffusion map dimensions used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>the
+value of epsilon used</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Coifman, R. R., &amp; Lafon, S., (2006), Appl. Comput. Harmon.
+Anal., 21, 5
+</p>
+<p>Lafon, S., &amp; Lee, A., (2006), IEEE Trans. Pattern Anal. and Mach. Intel.,
+28, 1393
+</p>
+<p>Richards, J. W., Freeman, P. E., Lee, A. B., Schafer, C. M., (2009), ApJ,
+691, 32
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(stats)
+## example with noisy spiral
+n=2000
+t=runif(n)^.7*10
+al=.15;bet=.5;
+x1=bet*exp(al*t)*cos(t)+rnorm(n,0,.1)
+y1=bet*exp(al*t)*sin(t)+rnorm(n,0,.1)
+plot(x1,y1,pch=20,main="Noisy spiral")
+D = dist(cbind(x1,y1))
+dmap = diffuse(D,neigen=10) # compute diffusion map
+par(mfrow=c(2,1))
+plot(t,dmap$X[,1],pch=20,axes=FALSE,xlab="spiral parameter",ylab="1st diffusion coefficient")
+box()
+plot(1:10,dmap$eigenmult,typ='h',xlab="diffusion map dimension",ylab="eigen-multipliers")
+
+## example with annulus data set
+data(annulus)
+plot(annulus,main="Annulus Data",pch=20,cex=.7)
+D = dist(annulus) # use Euclidean distance
+dmap = diffuse(D,eps.val=.1) # compute diffusion map &amp; plot
+print(dmap)
+plot(dmap)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>util_parse_redcap_rule</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Interpret a <code>REDcap</code>-style rule and create an expression, that represents this rule</h2>
+
+<h3>Description</h3>
+
+<p>Interpret a <code>REDcap</code>-style rule and create an expression, that represents this rule
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">util_parse_redcap_rule(
+  rule,
+  debug = 0,
+  entry_pred = "REDcapPred",
+  must_eof = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>character <code>REDcap</code> style rule</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>integer debug level (0 = off, 1 = log, 2 = breakpoints)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>entry_pred</code></td>
+<td>
+<p>character for debugging reasons: The production
+rule used entry point for the parser</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>must_eof</code></td>
+<td>
+<p>logical if <code>TRUE</code>, expect the input to be <code>eof</code>, when the
+parser succeeded, fail, if not.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>expression the interpreted rule
+</p>
+<p><a href="https://help.redcap.ualberta.ca/help-and-faq/project-best-practices/data-quality/example-data-quality-rules"><code>REDcap</code> rules 1</a>
+<a href="https://www.ctsi.ufl.edu/files/2017/06/Calculated-Fields-%E2%80%93-REDCap-How.pdf"><code>REDcap</code> rules 2</a>
+<a href="https://www.iths.org/wp-content/uploads/REDCap-Branching-Logic-2017-202.pdf"><code>REDcap</code> rules 3</a>
+</p>
+<p>For resolving left-recursive rules,
+<a href="https://stackoverflow.com/a/9934631">StackOverflow</a>
+helps understanding the grammar below, just in case, theoretical computer
+science is not right in your mind currently.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other parser_functions: 
+<code>util_interpret_limits()</code>,
+<code>util_interpret_range()</code>,
+<code>util_parse_assignments()</code>,
+<code>util_parse_interval()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+#  rules:
+# pregnancies &lt;- 9999 ~ SEX == 'm' |  is.na(SEX)
+# pregnancies &lt;- 9998 ~ AGE &lt; 12 |  is.na(AGE)
+# pregnancies = 9999 ~ dist &gt; 2 |  speed == 0
+
+data.frame(target = "SEX_0",
+  rule = '[speed] &gt; 5 and [dist] &gt; 42 or 1 = "2"',
+  CODE = 99999, LABEL = "PREGNANCIES_NOT_ASSESSED FOR MALES",
+  class = "JUMP")
+ModifyiedStudyData &lt;- replace in SEX_0 where SEX_0 is empty, if rule fits
+ModifyedMetaData &lt;- add missing codes with labels and class here
+
+subset(study_data, eval(pregnancies[[3]]))
+
+rule &lt;-
+ paste0('[con_consentdt] &lt;&gt; "" and [sda_osd1dt] &lt;&gt; "" and',
+ ' datediff([con_consentdt],[sda_osd1dt],"d",true) &lt; 0')
+
+x &lt;- data.frame(con_consentdt = c(as.POSIXct("2020-01-01"),
+                as.POSIXct("2020-10-20")),
+                sda_osd1dt = c(as.POSIXct("2020-01-20"),
+                as.POSIXct("2020-10-01")))
+eval(util_parse_redcap_rule(paste0(
+  '[con_consentdt] &lt;&gt; "" and [sda_osd1dt] &lt;&gt; "" and ',
+  'datediff([con_consentdt],[sda_osd1dt],"d", "Y-M-D",true) &lt; 10')),
+  x, util_get_redcap_rule_env())
+
+util_parse_redcap_rule("[a] = 12 or [b] = 13")
+cars[eval(util_parse_redcap_rule(
+  rule = '[speed] &gt; 5 and [dist] &gt; 42 or 1 = "2"'), cars,
+  util_get_redcap_rule_env()), ]
+cars[eval(util_parse_redcap_rule(
+  rule = '[speed] &gt; 5 and [dist] &gt; 42 or 2 = "2"'), cars,
+  util_get_redcap_rule_env()), ]
+cars[eval(util_parse_redcap_rule(
+  rule = '[speed] &gt; 5 or [dist] &gt; 42 and 1 = "2"'), cars,
+  util_get_redcap_rule_env()), ]
+cars[eval(util_parse_redcap_rule(
+  rule = '[speed] &gt; 5 or [dist] &gt; 42 and 2 = "2"'), cars,
+  util_get_redcap_rule_env()), ]
+util_parse_redcap_rule(rule = '(1 = "2" or true) and (false)')
+eval(util_parse_redcap_rule(rule =
+  '[dist] &gt; sum(1, +(2, [dist] + 5), [speed]) + 3 + [dist]'),
+cars, util_get_redcap_rule_env())
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

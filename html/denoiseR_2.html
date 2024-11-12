@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adashrink</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Adaptive Shrinkage</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates a low-rank signal from Gaussian noisy data using the Adaptive Shrinker of the singular values. More precisely, the singular values are transformed using a function indexed by two parameters lambda and gamma as
+dl  = dl * max(1-(lambda/dl)^gamma,0). This estimator is very flexible and adapts to the data whatever the noise regime.  The parameters lambda and gamma are estimated by minimizing a Stein unbiased risk estimate (SURE) when the variance sigma^2 of the noise is known or a generalized SURE (GSURE) otherwise.
+A method using an universal threshold for lambda is also available. The estimator can be seen as a compromise between hard and soft thresholding.  Singular value soft thresholding is a particular case of the method when gamma is equal to 1. It is possible to enforce the method to use soft-thresholding by setting gamma to 1.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">adashrink(X, sigma = NA, method = c("GSURE", "QUT", "SURE"),
+  gamma.seq = seq(1, 5, by = 0.1), nbsim = 500, method.optim = "BFGS",
+  center = "TRUE", lambda0 = NA)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a data frame or a matrix with numeric entries</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>integer, standard deviation of the Gaussian noise. By default sigma is estimated using the estim_sigma function with the MAD option</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>to select the two tunning parameters lambda and gamma. By default by minimizing GSURE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma.seq</code></td>
+<td>
+<p>a vector for the sequence of gamma. (not used when method is QUT). The values must be greater than 1. If gamma.seq is set to 1 then soft singular values soft thresholding is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbsim</code></td>
+<td>
+<p>integer, number of replications used to calculate the universal threshold lambda when method is QUT</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method.optim</code></td>
+<td>
+<p>the method used in the optim function. By default BFGS</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>boolean, to center the data. By default "TRUE"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda0</code></td>
+<td>
+<p>integer, the initial value for lambda used to optimize SURE and GSURE. By default the median of the singular values (must be in log scale)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When sigma is known, lambda and gamma can be estimated by minimizing SURE. To do this, a grid for gamma is defined in gamma.seq (gammas must be greater than 1) and the SURE function is optimized on lambda using the optim function of the package stats (?optim) with the optimization method by default sets to "BFGS". The initial lambda can be modified in the argument lambda0. If gamma.seq is set to 1, then the SURE function is optimized in lambda only.
+A value for sigma has to be provided. When sigma is not known, it can be estimated using the function estim_sigma. An alternative which does not require to know or estimate sigma is estimate the two tuning parameters by minimizing GSURE.
+QUT consists in generating nbsim matrices of size n * p of Gaussian random variables with mean 0 and variance sigma^2 and computing the first singular value on each matrix. Then, the universal threshold lambda is calculated as the 1-alpha quantile of the null distribution (alpha is here sqrt(log(max(n,p)))). Then, gamma is estimated by minimizing a 1-dim SURE. This method is recommended when one is particularly interested in estimating the rank of the signal.        
+The estimated low rank matrix is given in the output mu.hat. adashrink automatically estimates the rank of the signal. Its value is given in the output nb.eigen corresponding to the number of non-zero eigenvalues.
+</p>
+
+
+<h3>Value</h3>
+
+<p>mu.hat the estimator of the signal
+</p>
+<p>nb.eigen the number of non-zero singular values
+</p>
+<p>gamma the optimal gamma selected by minimizing SURE or GSURE
+</p>
+<p>lambda the optimal lambda selected by minimizing SURE or GSURE
+</p>
+<p>singval the singular values of the estimator
+</p>
+<p>low.rank the results of the SVD of the estimator
+</p>
+
+
+<h3>References</h3>
+
+<p>Josse, J. &amp; Sardy, S. (2015). Adaptive shrinkage of singular values. Statistics and Computing.
+</p>
+<p>Candes, E. J., Sing-Long C. A. and Trzasko, J. D (2012). Unbiased risk estimates for singular value thresholding and spectral estimators. IEEE Transactions on Signal Processing 61(19), 4643-4657.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>estim_sigma</code>
+</p>
+<p><code>LRsim</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">Xsim &lt;- LRsim(200, 500, 100, 1)
+## Not run: ada.gsure &lt;- adashrink(Xsim$X, method = "GSURE")
+ada.gsure$nb.eigen
+ada.gsure$singval
+ada.gsure$lambda
+ada.gsure$gamma
+
+Xsim &lt;- LRsim(200, 500, 10, 4)
+sig &lt;- estim_sigma(Xsim$X)
+ada.sure &lt;- adashrink(Xsim$X, method = "SURE", sigma = sig)
+soft.sure &lt;- adashrink(Xsim$X, gamma.seq  = 1, method = "SURE", sigma = sig)
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deeptrafo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Deep Conditional Transformation Models</h2>
+
+<h3>Description</h3>
+
+<p>Deep Conditional Transformation Models
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deeptrafo(
+  formula,
+  data,
+  response_type = get_response_type(data[[all.vars(fml)[1]]]),
+  order = get_order(response_type, data[[all.vars(fml)[1]]]),
+  addconst_interaction = 0,
+  latent_distr = "logistic",
+  monitor_metrics = NULL,
+  trafo_options = trafo_control(order_bsp = order, response_type = response_type),
+  return_data = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Formula specifying the response, interaction, shift terms
+as <code>response | interacting ~ shifting</code>.
+auto-regressive transformation models (ATMs).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Named <code>list</code> or <code>data.frame</code> which may contain both
+structured and unstructured data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_type</code></td>
+<td>
+<p>Character; type of response. One of <code>"continuous"</code>,
+<code>"survival"</code>, <code>"count"</code>, or <code>"ordered"</code>. If not supplied
+manually it is determined by the first entry in <code>data[[response]]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>Integer; order of the response basis. Default 10 for Bernstein
+basis or number of levels minus one for ordinal responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addconst_interaction</code></td>
+<td>
+<p>Positive constant;
+a constant added to the additive predictor of the interaction term.
+If <code>NULL</code>, terms are left unchanged. If 0 and predictors have
+negative values in their design matrix, the minimum value of all predictors
+is added to ensure positivity. If &gt; 0, the minimum value plus the
+<code>addconst_interaction</code> is added to each predictor in the interaction
+term. This ensures a monotone non-decreasing transformation function in
+the response when using (tensor product) spline bases in the interacting
+term.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latent_distr</code></td>
+<td>
+<p>A <code>tfd_distribution</code> or character; the base distribution for
+transformation models. If character, can be <code>"normal"</code>, <code>"logistic"</code>,
+<code>"gumbel"</code> or <code>"gompertz"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>monitor_metrics</code></td>
+<td>
+<p>See <code>deepregression</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trafo_options</code></td>
+<td>
+<p>Options for transformation models such as the basis
+function used, see <code>trafo_control</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_data</code></td>
+<td>
+<p>Include full data in the returned object. Defaults to
+<code>FALSE</code>. Set to <code>TRUE</code> if inteded to use
+<code>simulate</code> afterwards.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>deepregression</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>deeptrafo</code> is the main function for setting up neural network
+transformation models and is called by all aliases for the more special
+cases (see e.g. <code>ColrNN</code>). The naming convention
+of the aliases follow the 'tram' package (see e.g. <code>Colr</code>)
+and add the suffix "NN" to the function name.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>c("deeptrafo", "deepregression")</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("wine", package = "ordinal")
+wine$z &lt;- rnorm(nrow(wine))
+wine$x &lt;- rnorm(nrow(wine))
+
+nn &lt;- \(x) x |&gt;
+    layer_dense(input_shape = 1L, units = 2L, activation = "relu") |&gt;
+    layer_dense(1L)
+
+fml &lt;- rating ~ 0 + temp + contact + s(z, df = 3) + nn(x)
+if (reticulate::py_module_available("tensorflow") &amp;
+    reticulate::py_module_available("keras") &amp;
+    reticulate::py_module_available("tensorflow_probability")) {
+m &lt;- deeptrafo(fml, wine, latent_distr = "logistic", monitor_metric = NULL,
+    return_data = TRUE, list_of_deep_models = list(nn = nn))
+
+print(m)
+
+    m %&gt;% fit(epochs = 10, batch_size = nrow(wine))
+    coef(m, which_param = "interacting")
+    coef(m, which_param = "shifting")
+    fitted(m)
+    predict(m, type = "pdf")
+    predict(m, type = "pdf", newdata = wine[, -2])
+    logLik(m)
+    logLik(m, newdata = wine[1:10, ])
+    plot(m)
+    mcv &lt;- cv(m, cv_folds = 3)
+    ens &lt;- ensemble(m, n_ensemble = 3)
+    coef(ens)
+}
+
+</code></pre>
+
+
+</div>

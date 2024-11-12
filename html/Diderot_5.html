@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_bibliography</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Function to create a bibliographic dataset
+</h2>
+
+<h3>Description</h3>
+
+<p>This function creates a bibliographic dataset based on two external corpus files, each representing the bibliography of a given domain.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_bibliography(corpora_files, labels, keywords, retrieve_pubdates = F, 
+                    clean_refs = F, encoding = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>corpora_files</code></td>
+<td>
+<p>Vector containing the pathes to two corpus files (e.g. Scopus exports). The CSV files should contain for each record at least Authors (comma separated), Publication Title, Publication Year, and References (semicolon separated). The inclusion of DOI (for date checking; see the retrieve_pubdates option) as well as Abstract, Author.Keywords, and Index.Keywords (for the in-depth identification of publications belonging to both corpora) are strongly recommended.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>Labels (i.e. names) given to the two corpora to be analyzed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keywords</code></td>
+<td>
+<p>Keywords identifying the two corpora</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>retrieve_pubdates</code></td>
+<td>
+<p>Flag indicating whether to confirm publication dates by retrieving them (see <code>get_date_from_doi</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clean_refs</code></td>
+<td>
+<p>Attempt to clean references and keep titles only. NOT RECOMMENDED, especially if <code>build_graph</code> should be used subsequently.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>Character encoding used in the input files.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a dataframe containing a bibliographic dataset usable by Diderot and including all references from both corpora.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Christian Vincenot (christian@vincenot.biz)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>build_graph</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+  # Two corpora on individual-based modelling (IBM) and agent-based modelling (ABM)
+  # were downloaded from Scopus. The structure of each corpus is as follows:
+  tt&lt;-read.csv("IBMmerged.csv", stringsAsFactors=FALSE)
+  str(tt,strict.width="cut")
+  ### 'data.frame':  3184 obs. of  9 variables:
+  ### $ Authors        : chr  "Chen J., Marathe A., Marathe M." "Van Dijk D., Sl"..
+  ### $ Title          : chr  "Coevolution of epidemics, social networks, and in"..
+  ### $ Year           : int  2010 2010 2010 2010 2010 2010 2010 2010 2010 2010 ...
+  ### $ DOI            : chr  "10.1007/978-3-642-12079-4_28" "10.1016/j.procs.20"..
+  ### $ Link           : chr  "http://www.scopus.com/inward/record.url?eid=2-s2."..
+  ### $ Abstract       : chr  "This research shows how a limited supply of antiv"..
+  ### $ Author.Keywords: chr  "Antiviral; Behavioral economics; Epidemic; Microe"..
+  ### $ Index.Keywords : chr  "Antiviral; Behavioral economics; Epidemic; Microe"..
+  ### $ References     : chr  "(2009) Centre Approves Restricted Retail Sale of "..
+  
+  # Define the name of corpora (labels) and specific keywords to identify relevant
+  # publications (keys).
+  labels&lt;-c("IBM","ABM")
+  keys&lt;-c("individual-based model|individual based model", 
+          "agent-based model|agent based model")
+  
+  # Build the IBM-ABM bibliographical dataset from Scopus exports
+  db&lt;-create_bibliography(corpora_files=c("IBMmerged.csv","ABMmerged.csv"), 
+                          labels=labels, keywords=keys)
+  ### [1] "File IBMmerged.csv contains 3184 records"
+  ### [1] "File ABMmerged.csv contains 9641 records"
+  
+  # Processed output. Note the field name changes (for standardization with ISI Web 
+  # of Knowledge format) and addition of the "Corpus" field (with identification of
+  # joint "IBM | ABM" publications based on keywords).
+  str(db, strict.width="cut")
+  ### 'data.frame':  12504 obs. of  10 variables:
+  ### $ Authors         : chr  "Chen J., Marathe A., Marathe M." "Van Dijk D., Sloot "..
+  ### $ Cite Me As      : chr  "Coevolution of epidemics, social networks, and indivi"..
+  ### $ Year            : int  2010 2010 2010 2010 2010 2010 2010 2010 2010 2010 ...
+  ### $ DOI             : chr  "10.1007/978-3-642-12079-4_28" "10.1016/j.procs.2010.0"..
+  ### $ Link            : chr  "http://www.scopus.com/inward/record.url?eid=2-s2.0-78"..
+  ### $ Abstract        : chr  "This research shows how a limited supply of antiviral"..
+  ### $ Author.Keywords : chr  "Antiviral; Behavioral economics; Epidemic; Microecono"..
+  ### $ Index.Keywords  : chr  "Antiviral; Behavioral economics; Epidemic; Microecono"..
+  ### $ Cited References: chr  "(2009) Centre Approves Restricted Retail Sale of Tami"..
+  ### $ Corpus          : chr  "IBM" "IBM | ABM" "IBM | ABM" "IBM" ...
+
+## End(Not run)
+</code></pre>
+
+
+</div>

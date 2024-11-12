@@ -1,0 +1,165 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_comparison</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare Posterior Fits</h2>
+
+<h3>Description</h3>
+
+<p>Compare Posterior Fits
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_comparison(..., doses, times, probs, data, n_smooth, width)
+
+## Default S3 method:
+plot_comparison(
+  ...,
+  doses = attr(list(...)[[1]], "doses"),
+  times = NULL,
+  probs = c(0.025, 0.975),
+  data = NULL,
+  n_smooth = 50,
+  width = bar_width(doses)
+)
+
+## S3 method for class 'dreamer_bma'
+plot_comparison(
+  ...,
+  doses = x$doses,
+  times = NULL,
+  probs = c(0.025, 0.975),
+  data = NULL,
+  n_smooth = 50,
+  width = bar_width(doses)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p><code>dreamer_mcmc</code> objects to be used for plotting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>a vector of doses at which to plot the dose response curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>the times at which to do the comparison.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>quantiles of the posterior to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a dataframe with column names of "dose" and "response" for
+individual patient data.  Optional columns "n" and "sample_var" can
+be specified if aggregate data is supplied, but it is recommended that
+patient-level data be supplied where possible for continuous models, as the
+posterior weights differ if aggregated data is used.
+For aggregated continuous
+data, "response" should be the average of "n" subjects with a sample
+variance of "sample_var".  For aggregated binary data, "response" should
+be the number of successes, "n" should be the total number of subjects
+(the "sample_var" column is irrelevant in binary cases and is ignored).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_smooth</code></td>
+<td>
+<p>the number of points to calculate the smooth dose response
+interpolation.  Must be sufficiently high to accurately depict the
+dose response curve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width</code></td>
+<td>
+<p>the width of the error bars.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If a Bayesian model averaging object is supplied first, all
+individual fits and the Bayesian model averaging fit will be plotted, with
+the model averaging fit in black (other model colors specified in the
+legend).  Otherwise,
+named arguments must be supplied for each model, and only the models
+provided will be plotted.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a ggplot object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e3,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+plot_comparison(output)
+
+# compare individual models
+plot_comparison(linear = output$mod_linear, quad = output$mod_quad)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>alcX.dynaTree</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Calculate the ALC or predictive entropy statistic at the X
+locations, or ALC at new XX predictive locations
+</h2>
+
+<h3>Description</h3>
+
+<p>Uses analytic integration (at the leaves) to calculate
+the (regression) ALC statistic, or calculates the predictive (class) entropy
+at the input (X) locations; or calculate ALC at new predictive
+locations either analytically or numerically
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynaTree'
+alcX(object, rect = NULL, categ = NULL,
+     approx = FALSE, verb = 0)
+## S3 method for class 'dynaTree'
+entropyX(object, verb = 0)
+## S3 method for class 'dynaTree'
+alc(object, XX, rect = NULL, categ = NULL,
+     approx = FALSE, Xref = NULL, probs = NULL, verb = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>a <code>"dynaTree"</code>-class object built by <code>dynaTree</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rect</code></td>
+<td>
+
+<p>for <code>alcX</code>, a <code>matrix</code> with two columns and
+<code>ncol(object$X)</code> rows
+describing the bounding rectangle for the ALC integration; the
+default that is used when <code>rect = NULL</code> is the bounding
+rectangle obtained by applying <code>range</code> to each
+column of <code>object$X</code> (taking care to remove the
+first/intercept column of <code>object$X</code> if <code>icept =
+      "augmented"</code>; only applies to regression models 
+(<code>object$model != "class"</code>); for <code>alc</code>, <code>rect</code>
+must be a scalar logical: see <code>Xref</code> below
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>categ</code></td>
+<td>
+
+<p>A vector of logicals of length <code>ncol(object$X)</code> indicating
+which, if any, dimensions of the input space should be treated
+as categorical; this input is used to help with the analytic
+integrals from a <code>rect</code>-based calculation, which means
+it should not specified along with <code>Xref</code>; the default <code>categ</code>
+argument is <code>NULL</code> meaning that the categorical inputs
+are derived from <code>object$X</code> in a sensible way
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>approx</code></td>
+<td>
+<p> a scalar logical that, when <code>TRUE</code>, causes
+the number of data points in a node/leaf to be used as a proxy for
+its area in the analytic calculations </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XX</code></td>
+<td>
+
+<p>a design <code>matrix</code> of predictive locations (where <code>ncol(XX) ==
+      ncol(X)</code>; only used by <code>alc</code> 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xref</code></td>
+<td>
+
+<p><code>Xref</code> input can be optionally used to
+specify a grid of reference locations for the numerical ALC
+calculation - a <code>matrix</code> with <code>ncol(X)</code> columns.  If
+<code>NULL</code>, the default, then the <code>XX</code> is taken as both
+candidate and reference locations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+
+<p>weights for the reference locations to be used in a Monte Carlo
+approximation; usually these weights are class probabilities for
+response surfaces under constraints
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>a positive scalar integer indicating how many predictive locations
+(iterations) after which a progress statement should be
+printed to the console; a (default) value of <code>verb = 0</code> is quiet
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is most useful for selecting <code>object$X</code>
+locations to remove from the analysis, perhaps in an online inference
+setting. See <code>retire.dynaTree</code> for more details.  The
+output is the same as using <code>predict.dynaTree</code>
+using <code>XX = object$X</code>, <code>alc = "rect"</code>, and <code>Xref =
+    rect</code>
+</p>
+<p><code>entropyX</code> only apples to classification models
+(<code>object$model != "class"</code>), and <code>alcX</code> applies (only)
+to the other, regression, models
+</p>
+<p>The <code>alc</code> function is more generic and allows ALC calculations
+at new, predictive, <code>XX</code> locations.  This functionality used
+to be part of the <code>predict.dynaTree</code> function, but were
+separated out for computational reasons.  The previous version was
+Monte Carlo-based (using <code>Xref</code>) whereas the new version
+also allows analytic calculation (now the default, via <code>rect</code>)
+</p>
+
+
+<h3>Value</h3>
+
+<p>The entire <code>object</code> is returned with a new entry called
+<code>alcX</code> containing a vector of length <code>nrow(X)</code> with
+the ALC values, or <code>entropyX</code> containing the entropy values,
+or <code>alc</code> if general ALC calculations at new <code>XX</code> locations
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robert B. Gramacy <a href="mailto:rbg@vt">rbg@vt</a>, <br>
+Matt Taddy, and Christoforos Anagnostopoulos</p>
+
+
+<h3>References</h3>
+
+<p>Taddy, M.A., Gramacy, R.B., and Polson, N. (2011).
+“Dynamic trees for learning and design”
+Journal of the American Statistical Association, 106(493), pp. 109-123;
+arXiv:0912.1586
+</p>
+<p>Anagnostopoulos, C., Gramacy, R.B. (2013) “Information-Theoretic 
+Data Discarding for Dynamic Trees on Data Streams.” Entropy, 15(12), 
+5510-5535; arXiv:1201.5568
+</p>
+<p><a href="https://bobby.gramacy.com/r_packages/dynaTree/">https://bobby.gramacy.com/r_packages/dynaTree/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dynaTree</code>, <code>predict.dynaTree</code>, and
+<code>retire.dynaTree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## fit the model to the parabola data
+n &lt;- 100
+Xp &lt;- runif(n,-3,3)
+Yp &lt;- Xp + Xp^2 + rnorm(n, 0, .2)
+rect &lt;- c(-3,3)
+out &lt;- dynaTree(Xp, Yp, model="linear", icept="augmented")
+
+## calculate the alcX
+out &lt;- alcX(out, rect=rect)
+
+## to compare to analytic 
+out &lt;- alc(out, XX=out$X[,-1], rect=rect)
+
+## plot comparison between alcX and predict-ALC
+plot(out$X[,-1], out$alcX)
+o &lt;- order(out$X[,2])
+lines(out$X[o,-1], out$alc[o], col=2, lty=2)
+
+## now compare to approximate analytic
+## (which writes over out$alc)
+out &lt;- alc(out, XX=out$X[,-1], rect=rect, approx=TRUE)
+lines(out$X[o,-1], out$alc[o], col=3, lty=3)
+
+## clean up
+deletecloud(out)
+
+## similarly with entropyX for classification models
+
+## see demo("design") for more iterations and
+## design under other active learning heuristics
+## like ALC, and EI for optimization; also see
+## demo("online") for an online learning example where
+## ALC is used for retirement
+</code></pre>
+
+
+</div>

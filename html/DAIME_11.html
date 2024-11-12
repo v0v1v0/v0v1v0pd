@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>strattotimepointbin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Transform Points and Isotope Ratios from Stratigraphic Height into Time (Binned)
+</h2>
+
+<h3>Description</h3>
+
+<p>This function takes a binned deposition rate and reconstructs at what time a given stratigraphic height was deposited. Essentially a wrapper of <code>pointtransform(...,direction='height to time',depositionmodel='binned deposition rate')</code> kept for backwards compatibility of the package. It is recommended to use <code>pointtransform</code> instead of this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">strattotimepointbin(x, binborder, depoval, hiatuslist = list(),
+  unit = "sediment per time")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Vector containing the stratigraphic heights whose time of deposition are to be determined
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>binborder</code></td>
+<td>
+
+<p>Vector of strictly increasing numerical values. Defines the borders of the bins in stratigraphic height
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depoval</code></td>
+<td>
+
+<p>Strictly positive vector of length <code>length(binborder)-1</code>. Defines the deposition rate in the bins, i.e. <code>depoval[i]</code> is the deposition rate between the stratigraphic heights <code>binborder[i]</code> and  <code>binborder[i+1]</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hiatuslist</code></td>
+<td>
+
+<p>OPTIONAL, default is an empty list. A list of hiatuses to insert. Every entry in the list corresponds to a hiatus, which is given as a vector of length two. The first entry of the vector is the stratigraphic height of the hiatus, the second entry is the duration of the hiatus.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+
+<p>OPTIONAL, default is "sediment per time". Either "sediment per time" or "time per sediment". Determines the unit that is assumed for the input given by <code>depoval</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>age </code></td>
+<td>
+<p>vector containing ages of deposition of the stratigraphic heights given by the input <code>x</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>height </code></td>
+<td>
+<p>vector containing the heights that were deposited at the times given by <code>age</code>. Essentially a duplicate of the input <code>x</code></p>
+</td>
+</tr>
+</table>
+<p>Output of <code>NA</code> in <code>age</code> indicates that some values coincide with a hiatus or are located at places where the deposition rate is undefined.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Niklas Hohmann
+</p>
+
+
+<h3>References</h3>
+
+<p>Hohmann, Niklas. 2018. Quantifying the Effects of Changing Deposition Rates and Hiatii on the Stratigraphic Distribution of Fossils. &lt;doi:10.13140/RG.2.2.23372.51841&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pointtransform</code> for the more general function underlying this wrapper
+</p>
+<p>For an overview of the functions in the DAIME package, see its vignette (available via <code>vignette("DAIME")</code> )
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##define deposition rate
+binborder=1:6 #bins in tratigraphic height
+depoval=c(1,4,5,2,2)
+usedunit="sediment per time" #unit of deposition rate is sediment per time unit (default setting)
+#Plot deposition rate
+plot(approx(binborder,c(depoval,tail(depoval,1)),method='constant',xout=seq(min(binborder),
+  max(binborder),length.out=100)),type='l',main='Deposition Rate',xlab='Stratigraphic Height',
+  ylab=usedunit,ylim=c(0,max(depoval)))
+  
+##at what time was the point with tratigraphic height 3.5 deposited?
+strattotimepointbin(3.5,binborder,depoval) 
+
+##create an age model
+stratheight=seq(min(binborder),max(binborder),length.out=100)
+reslist=strattotimepointbin(stratheight,binborder,depoval,unit=usedunit)
+#plot age model
+usedunit="sediment per time"
+plot(reslist$age,reslist$height,xlab='Time',ylab='Stratigraphic Height',
+  main=paste('Age model with unit',usedunit))
+#create age model but with other units for sedimentn input
+usedunit='time per sediment'
+reslist=strattotimepointbin(stratheight,binborder,depoval,unit=usedunit)
+#plot age model (note the difference this setting makes)
+plot(reslist$age,reslist$height,xlab='Time',ylab='Stratigraphic Height',
+  main=paste('Age model with unit',usedunit))
+
+##create age model with a hiatus
+stratigraphicheight=5 #strat. height of the hiatus
+duration=2 #duration of the hiatus
+hiatuslist=list(c(stratigraphicheight,duration)) #required input format for hiatuses
+reslist=strattotimepointbin(stratheight,binborder,depoval,hiatuslist=hiatuslist)
+#!using default setting for units again!
+plot(reslist$age,reslist$height,xlab='Time',ylab='stratigraphic height') 
+
+##Transform isotope ratios
+depoval=c(1,4,0.1,2,2) 
+#create fake oxygen isotope curves
+samplelocation=sort(runif(20,min=min(binborder),max=max(binborder))) #where the samples are taken
+isotoperatio=sin(samplelocation)*rnorm(length(samplelocation)) #isotope ratios of the samples
+plot(samplelocation,isotoperatio,type='l',xlab='Stratigraphic Height',ylab='Isotope Ratio')
+#transform only (!) sample locations, NOT values
+reslist=strattotimepointbin(samplelocation,binborder,depoval)
+#Isotope ratios in time 
+plot(reslist$age,isotoperatio,type='l',xlab='Time',ylab='Isotope Ratio')
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,351 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sbchoice</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parametric approach to analyze single-bounded dichotomous choice contingent valuation data</h2>
+
+<h3>Description</h3>
+
+<p>This function analyzes single-bounded dichotomous choice contingent valuation (CV) data 
+on the basis of the utility difference approach.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sbchoice(formula, data, subset, na.action = na.omit, 
+         dist = "log-logistic", ...)
+
+## S3 method for class 'sbchoice'
+print(x, digits = max(3, getOption("digits") - 1), ...)
+
+## S3 method for class 'sbchoice'
+vcov(object, ...)
+
+## S3 method for class 'sbchoice'
+logLik(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an S3 class object <code>"formula"</code> and specifies the model structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing the variables in the model formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen when the data contains <code>NA</code>s.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>a character string setting the error distribution in the model, which takes one 
+of <code>"logistic"</code>, <code>"normal"</code>, <code>"log-logistic"</code>, <code>"log-normal"</code> or 
+<code>"weibull"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class <code>"sbchoice"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>a number of digits to display.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of class <code>"dbchoice"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional arguments. Currently not in use.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>sbchoice()</code> implements an analysis of single-bounded dichotomous choice 
+contingent valuation (CV) data on the basis of the utility difference approach 
+(Hanemann, 1984).
+</p>
+<p>The extractor function <code>summary()</code> is available for a <code>"sbchoice"</code> class object. 
+See<br><code>summary.sbchoice</code> for details.
+</p>
+<p>There are two functions available for computing the confidence intervals for the estimates of WTPs. 
+<code>krCI</code> implements simulations to construct empirical distributions of the WTP while 
+<code>bootCI</code> carries out nonparametric bootstrapping. 
+</p>
+<p>Most of the details of <code>sbchoice()</code> is the same as those of <code>dbchoice()</code>, a double-bounded 
+analogue of <code>sbchoice</code>. See the section <strong>Details</strong> in <code>dbchoice</code>. Differences between 
+the two functions are as follows:
+</p>
+
+<ul>
+<li>
+<p> In the model formula, the first part contains only one response variable (e.g., <code>R1</code>) 
+and the third part contains only one bid variable (e.g., <code>BD1</code>) because respondents are 
+requested to answer a CV question in the single-bounded dichotomous choice CV. The following 
+is a typical structure of the formula:<br><code>R1 ~ (the names of the covariates) | BD1</code>
+</p>
+</li>
+<li>
+<p> The function <code>sbchoice()</code> analyzes the responses to single-bounded dichotomous choice CV 
+questions internally using the function <code>glm()</code> with the argument <br><code>family = binomial(link = "logit")</code><br> 
+or<br><code>family = binomial(link = "probit")</code>.<br>
+When <code>dist = "weibull"</code>, optimization is carried out using the <code>optim()</code> function 
+with a hard-coded log-likelihood function.
+</p>
+</li>
+<li>
+<p> Outputs from <code>sbchoice()</code> are slightly different from those from <code>dbchoice()</code> 
+because the analysis in <code>sbchoice()</code> internally depends on the function <code>glm()</code> 
+for the (log-) normal or (log-) logistic distributions. (see the <b>Value</b> section).
+</p>
+</li>
+</ul>
+<p>Nonparametric analysis of single-bounded dichotomous choice data can be done by <code>turnbull.sb</code> 
+or by <code>kristrom</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function returns an object of S3 class <code>"sbchoice"</code> that is a list with the following components.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>a named vector of estimated coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>the formula supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm.out</code></td>
+<td>
+<p>a list of components returned from <code>glm()</code> with the data set and the formula. In case 
+of the Weibull distribution, a list of components from the <code>optim()</code> is saved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm.null</code></td>
+<td>
+<p>a list of components returned from <code>glm()</code> with the data set and a formula 
+containing only constant (null model). In case of the Weibull distribution, a list of 
+components from the <code>optim()</code> is saved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distribution</code></td>
+<td>
+<p>a character string showing the error distribution used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nobs</code></td>
+<td>
+<p>a number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>a named matrix of the covariates used in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bid</code></td>
+<td>
+<p>a named matrix of the bids used in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yn</code></td>
+<td>
+<p>a named matrix of the responses to the CV question used in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+<p>the data matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms</code></td>
+<td>
+<p>terms</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>contrasts used for factors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlevels</code></td>
+<td>
+<p>levels used for factors</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Bateman IJ, Carson RT, Day B, Hanemann M, Hanley N, Hett T, Jones-Lee M, Loomes
+G, Mourato S, \"Ozdemiro\=glu E, Pearce DW, Sugden R, Swanson J (eds.) (2002).
+<em>Economic Valuation with Stated Preference Techniques: A Manual.</em> 
+Edward Elger, Cheltenham, UK.
+</p>
+<p>Boyle KJ, Welsh MP, Bishop RC (1988).
+“Validation of Empirical Measures of Welfare Change: Comment.”
+<em>Land Economics</em>, <b>64</b>(1), 94–98.
+</p>
+<p>Carson RT, Hanemann WM (2005).
+“Contingent Valuation.”
+in KG M\"aler, JR Vincent (eds.), <em>Handbook of Environmental Economics</em>. 
+Elsevier, New York.
+</p>
+<p>Croissant Y (2011).
+<em><span class="pkg">Ecdat</span>: Data Sets for Econometrics,</em> 
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> package version 0.1-6.1, 
+<a href="https://CRAN.R-project.org/package=Ecdat">https://CRAN.R-project.org/package=Ecdat</a>.
+</p>
+<p>Hanemann, WM (1984). 
+“Welfare Evaluations in Contingent Valuation Experiments with Discrete Responses”,
+<em>American Journal of Agricultural Economics</em>,
+<b>66</b>(2), 332–341.
+</p>
+<p>Hanemann M, Kanninen B (1999).
+“The Statistical Analysis of Discrete-Response CV Data.”, 
+in IJ Bateman, KG Willis (eds.), 
+<em>Valuing Environmental Preferences: Theory and Practice of the Contingent 
+Valuation Methods in the US, EU, and Developing Countries</em>, 
+302–441. 
+Oxford University Press, New York.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.sbchoice</code>, 
+<code>krCI</code>, <code>bootCI</code>, 
+<code>NaturalPark</code>, 
+<code>turnbull.sb</code>, <code>kristrom</code>
+<code>glm</code>, <code>formula</code>
+<code>dbchoice</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Examples for sbchoice() are also based on a data set NaturalPark 
+## in the package Ecdat (Croissant 2011): so see the section Examples 
+## in the dbchoice() for details.
+data(NaturalPark, package = "Ecdat")
+
+## The variable answers are converted into a format that is suitable for 
+## the function sbchoice() as follows:
+NaturalPark$R1 &lt;- ifelse(substr(NaturalPark$answers, 1, 1) == "y", 1, 0)
+NaturalPark$R2 &lt;- ifelse(substr(NaturalPark$answers, 2, 2) == "y", 1, 0)
+
+
+## We assume that the error distribution in the model is a log-logistic; 
+## therefore, the bid variables bid1 is converted into LBD1 as follows:
+NaturalPark$LBD1 &lt;- log(NaturalPark$bid1)
+
+## The utility difference function is assumed to contain covariates 
+## (sex, age, and income) as well as the bid variable (LBD1) as follows 
+## (R2 is not used because of single-bounded dichotomous choice CV format):
+fmsb &lt;- R1 ~ sex + age + income | LBD1
+
+## Not run: 
+## The formula may be alternatively defined as
+fmsb &lt;- R1 ~ sex + age + income | log(bid1)
+
+## End(Not run)
+
+## The function sbchoice() with the function fmsb and the data frame NP 
+## is executed as follows:
+NPsb &lt;- sbchoice(fmsb, data = NaturalPark)
+NPsb
+NPsbs &lt;- summary(NPsb)
+NPsbs
+
+## Not run: 
+## Generic functions such as summary() and coefficients() work for glm.out
+summary(NPsb$glm.out)
+coefficients(NPsb$glm.out)
+
+## The confidence intervals for these WTPs are calculated using the 
+## function krCI() or bootCI() as follows:
+krCI(NPsb)
+bootCI(NPsb)
+## The WTP of a female with age = 5 and income = 3 is calculated
+## using function krCI() or bootCI() as follows:
+krCI(NPsb, individual = data.frame(sex = "female", age = 5, income = 3))
+bootCI(NPsb, individual = data.frame(sex = "female", age = 5, income = 3))
+
+## End(Not run)
+
+## The variable age and income are deleted from the fitted model, 
+## and the updated model is fitted as follows:
+update(NPsb, .~. - age - income |.)
+
+## Respondents' utility and probability of choosing Yes under 
+## the fitted model and original data are predicted as follows: 
+head(predict(NPsb, type = "utility"))
+head(predict(NPsb, type = "probability"))
+## Utility and probability of choosing Yes for a female with age = 5 
+## and income = 3 under bid = 10 are predicted as follows:
+predict(NPsb, type = "utility",
+    newdata = data.frame(sex = "female", age = 5, income = 3, LBD1 = log(10)))
+predict(NPsb, type = "probability",
+    newdata = data.frame(sex = "female", age = 5, income = 3, LBD1 = log(10)))
+
+## Plot of probabilities of choosing yes is drawn as drawn as follows:
+plot(NPsb)
+## The range of bid can be limited (e.g., [log(10), log(20)]):
+plot(NPsb, bid = c(log(10), log(20)))
+</code></pre>
+
+
+</div>

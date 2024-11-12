@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DPMechExponential-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>An S4 class for the exponential mechanism of differential privacy.</h2>
+
+<h3>Description</h3>
+
+<p>A class that implements the exponential mechanism of differential privacy,
+for privatizing releases from sets (not necessarily numeric as
+required by <code>DPMechLaplace</code>). Currently limited to responses
+from a finite sets - the most widely used case - as these induce easily
+computed sampling distributions from a uniform base measure.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S4 method for signature 'DPMechExponential'
+show(object)
+
+## S4 method for signature 'DPMechExponential,DPParamsEps'
+releaseResponse(mechanism,
+  privacyParams, X)
+
+## S4 method for signature 'DPMechExponential'
+sensitivityNorm(mechanism, X1, X2)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an instance of class <code>DPMech</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mechanism</code></td>
+<td>
+<p>an object of class <code>DPMechExponential</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>privacyParams</code></td>
+<td>
+<p>an object of class <code>DPParamsEps</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a privacy-sensitive dataset, if using sensitivity sampler a: list,
+matrix, data frame, numeric/character vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X1</code></td>
+<td>
+<p>a privacy-sensitive dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X2</code></td>
+<td>
+<p>a privacy-sensitive dataset.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list with slots per argument, actual privacy parameter and response:
+mechanism response with length of target release:
+<code>privacyParams, sensitivity, responseSet, target, response</code>.
+</p>
+<p>scalar numeric norm of non-private <code>target</code> on datasets.
+</p>
+
+
+<h3>Methods (by generic)</h3>
+
+
+<ul>
+<li> <p><code>show</code>: automatically prints the object.
+</p>
+</li>
+<li> <p><code>releaseResponse</code>: releases exponential mechanism responses.
+</p>
+</li>
+<li> <p><code>sensitivityNorm</code>: measures <code>target</code> quality score sensitivity.
+</p>
+</li>
+</ul>
+<h3>Slots</h3>
+
+
+<dl>
+<dt><code>sensitivity</code></dt>
+<dd>
+<p>non-negative scalar numeric quality function sensitivity.
+Defaults to <code>Inf</code> for use with <code>sensitivitySampler()</code>.</p>
+</dd>
+<dt><code>target</code></dt>
+<dd>
+<p>the quality score function mapping dataset to a function on
+responses (elements of <code>responseSet</code>).</p>
+</dd>
+<dt><code>gammaSensitivity</code></dt>
+<dd>
+<p><code>NA_real_</code> if inactive, or scalar in [0,1)
+indicating that responses must be RDP with specific confidence.</p>
+</dd>
+<dt><code>responseSet</code></dt>
+<dd>
+<p>a list of possible responses of the mechanism.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Frank McSherry and Kunal Talwar. "Mechanism design via differential privacy."
+In the 48th Annual IEEE Symposium on Foundations of Computer Science
+(FOCS'07), pp. 94-103. IEEE, 2007.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Sensitive data are strings of length at most 5.
+## Task is to release most frequent character present, hence quality function
+## is a closure that counts character frequencies for given candidate char.
+## Global sensitivity is max string length.
+qualF &lt;- function(X) { function(r) sum(r == unlist(strsplit(X, ""))) }
+rs &lt;- as.list(letters)
+m &lt;- DPMechExponential(sensitivity = 5, target = qualF, responseSet = rs)
+X &lt;- strsplit("the quick brown fox jumps over the lazy dog"," ")[[1]]
+p &lt;- DPParamsEps(epsilon = 1)
+releaseResponse(m, p, X)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sdSumry</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate basic spatial coverage and diversity metrics</h2>
+
+<h3>Description</h3>
+
+<p>Summarise the geographic scope and position of occurrence data, and
+optionally estimate diversity and evenness
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sdSumry(
+  dat,
+  xy,
+  taxVar,
+  crs = "epsg:4326",
+  collections = NULL,
+  quotaQ = NULL,
+  quotaN = NULL,
+  omitDom = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>A <code>data.frame</code> or <code>matrix</code> containing taxon names,
+coordinates, and any associated variables; or a list of such structures.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>A vector of two elements, specifying the name or numeric position
+of columns in <code>dat</code> containing coordinates, e.g. longitude and latitude.
+Coordinates for any shared sampling sites should be identical, and where sites
+are raster cells, coordinates are usually expected to be cell centroids.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>taxVar</code></td>
+<td>
+<p>The name or numeric position of the column containing
+taxonomic identifications. <code>taxVar</code> must be of same class as <code>xy</code>, e.g. a
+numeric column position if <code>xy</code> is given as a vector of numeric positions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>Coordinate reference system as a GDAL text string, EPSG code,
+or object of class <code>crs</code>. Default is latitude-longitude (<code>EPSG:4326</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>collections</code></td>
+<td>
+<p>The name or numeric position of the column containing
+unique collection IDs, e.g. 'collection_no' in PBDB data downloads.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quotaQ</code></td>
+<td>
+<p>A numeric value for the coverage (quorum) level at which to
+perform coverage-based rarefaction (shareholder quorum subsampling).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quotaN</code></td>
+<td>
+<p>A numeric value for the quota of taxon occurrences to subsample
+in classical rarefaction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omitDom</code></td>
+<td>
+<p>If <code>omitDom = TRUE</code> and <code>quotaQ</code> or <code>quotaN</code>
+is supplied, remove the most common taxon prior to rarefaction. The <code>nTax</code>
+and <code>evenness</code> returned are unaffected.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>sdSumry()</code> compiles metadata about a sample or list of samples,
+before or after spatial subsampling. The function counts the number
+of collections (if requested), taxon presences (excluding repeat incidences
+of a taxon at a given site), and unique spatial sites;
+it also calculates site centroid coordinates, latitudinal range (degrees),
+great circle distance (km), mean pairwise distance (km), and summed
+minimum spanning tree length (km).
+Coordinates and their distances are computed with respect to the original
+coordinate reference system if supplied, except in calculation of latitudinal
+range, for which projected coordinates are transformed to geodetic ones.
+If <code>crs</code> is unspecified, by default points are assumed to be given in
+latitude-longitude and distances are calculated with spherical geometry.
+</p>
+<p>The first two diversity variables returned are the raw count of observed taxa
+and the Summed Common species/taxon Occurrence Rate (SCOR). SCOR reflects
+the degree to which taxa are common/widespread and is decoupled from
+richness or abundance (Hannisdal <em>et al.</em> 2012). SCOR is calculated as the
+sum across taxa of the log probability of incidence, <code class="reqn">\lambda</code>.
+For a given taxon, <code class="reqn">\lambda = -ln(1 - p)</code>,
+where <code class="reqn">p</code> is estimated as the fraction of occupied sites.
+Very widespread taxa make a large contribution to an assemblage SCOR,
+while rare taxa have relatively little influence.
+</p>
+<p>If <code>quotaQ</code> is supplied, <code>sdSumry()</code> rarefies richness at the
+given coverage value and returns the point estimate of richness (Hill number 0)
+and its 95% confidence interval, as well as estimates of evenness (Pielou's J)
+and frequency-distribution sample coverage (given by <code>iNEXT$DataInfo</code>).
+If <code>quotaN</code> is supplied, <code>sdSumry()</code> rarefies richness to the given
+number of occurrence counts and returns the point estimate of richness
+and its 95% confidence interval.
+Coverage-based and classical rarefaction are both calculated with
+<code>iNEXT::estimateD()</code> internally. For details, such as how diversity
+is extrapolated if sample coverage is insufficient to achieve a specified
+rarefaction level, consult Chao and Jost (2012) and Hsieh <em>et al.</em> (2016).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>matrix</code> of spatial and optional diversity metrics. If <code>dat</code> is a
+<code>list</code> of <code>data.frame</code> objects, output rows correspond to input elements.
+</p>
+
+
+<h3>References</h3>
+
+<p>Chao A, Jost L (2012).
+“Coverage-based rarefaction and extrapolation: standardizing samples by completeness rather than size.”
+<em>Ecology</em>, <b>93</b>(12), 2533–2547.
+<a href="https://doi.org/10.1890/11-1952.1">doi:10.1890/11-1952.1</a>.
+</p>
+<p>Hannisdal B, Henderiks J, Liow LH (2012).
+“Long-term evolutionary and ecological responses of calcifying phytoplankton to changes in atmospheric CO2.”
+<em>Global Change Biology</em>, <b>18</b>(12), 3504–3516.
+<a href="https://doi.org/10.1111/gcb.12007">doi:10.1111/gcb.12007</a>.
+</p>
+<p>Hsieh TC, Ma KH, Chao A (2016).
+“iNEXT: an R package for rarefaction and extrapolation of species diversity (Hill numbers).”
+<em>Methods in Ecology and Evolution</em>, <b>7</b>(12), 1451–1456.
+<a href="https://doi.org/10.1111/2041-210X.12613">doi:10.1111/2041-210X.12613</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>rangeSize()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># generate occurrences
+set.seed(9)
+x  &lt;- sample(rep(1:5, 10))
+y  &lt;- sample(rep(1:5, 10))
+# make some species 2x or 4x as common
+abund &lt;- c(rep(4, 5), rep(2, 5), rep(1, 10))
+sp &lt;- sample(letters[1:20], 50, replace = TRUE, prob = abund)
+obs &lt;- data.frame(x, y, sp)
+
+# minimum sample data returned
+sdSumry(obs, c('x','y'), 'sp')
+
+# also calculate evenness and coverage-based rarefaction diversity estimates
+sdSumry(obs, xy = c('x','y'), taxVar = 'sp', quotaQ = 0.7)
+
+</code></pre>
+
+
+</div>

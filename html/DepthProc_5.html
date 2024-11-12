@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>asymmetryCurve</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymmetry curve based on depths</h2>
+
+<h3>Description</h3>
+
+<p>Produces an asymmetry curve estimated from given data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">asymmetryCurve(
+  x,
+  y = NULL,
+  alpha = seq(0, 1, 0.01),
+  movingmedian = FALSE,
+  name = "X",
+  name_y = "Y",
+  depth_params = list(method = "Projection")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The data as a matrix or data frame. If it is a matrix or data frame, then each row is viewed as one multivariate observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Additional matrix of multivariate data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>An ordered vector containing indices of central regins used for asymmetry curve calculation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>movingmedian</code></td>
+<td>
+<p>Logical. For default FALSE only one depth median is used to compute asymmetry norm. If TRUE — for every central area, a new depth median will be used — this approach needs much more time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>Name of set X — used in plot legend</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name_y</code></td>
+<td>
+<p>Name of set Y — used in plot legend</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depth_params</code></td>
+<td>
+<p>list of parameters for function depth (method, threads, ndir, la, lb, pdim, mean, cov, exact).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Character string which determines the depth function used. The method can be "Projection" (the default), "Mahalanobis", "Euclidean", "Tukey" or "LP". For details see <code>depth</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For sample depth function <code class="reqn"> D({x}, {{{Z}} ^ {n}}) </code>, <code class="reqn"> {x} \in {{{R}} ^ {d}} </code>, <code class="reqn"> d \ge 2 </code>, <code class="reqn"> {Z} ^ {n} = \{{{{z}}_{1}}, ..., {{{z}}_{n}}\} \subset {{{R}} ^ {d}} </code>, <code class="reqn"> {{D}_{\alpha}}({{{Z}} ^ {n}}) </code> denoting <code class="reqn"> \alpha </code> — central region, we can define the asymmetry curve <code class="reqn"> AC(\alpha) = \left(\alpha, \left\| {{c} ^ {-1}}(\{{\bar{z}} - med|{{D}_{\alpha}}({{{Z}} ^ {n}})\}) \right\|\right) \subset {{{R}} ^ {2}} </code>, for <code class="reqn"> \alpha \in [0, 1] </code> being nonparametric scale and asymmetry functional correspondingly, where <code class="reqn"> c </code> — denotes constant, <code class="reqn"> {\bar{z}} </code> — denotes mean vector, denotes multivariate median induced by depth function and <code class="reqn"> vol </code> — denotes a volume.
+</p>
+<p>Asymmetry curve takes uses function convhulln from package geometry for computing a volume of convex hull containing central region.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Daniel Kosiorowski, Mateusz Bocian, Anna Wegrzynkiewicz and Zygmunt Zawadzki from Cracow University of Economics.
+</p>
+
+
+<h3>References</h3>
+
+<p>Serfling R. J. Multivariate Symmetry and Asymmetry, <em>Encyclopedia of Statistical Science</em>, S Kotz, C.B. Read, N. Balakrishnan, B. Vidakovic (eds), 2nd, ed., John Wiley.
+</p>
+<p>Liu, R.Y., Parelius, J.M. and Singh, K. (1999), Multivariate analysis by data depth: Descriptive statistics, graphics and inference (with discussion), <em>Ann. Statist.</em>, <b>27</b>, 783–858.
+</p>
+<p>Chaudhuri, P. (1996), On a Geometric Notion of Quantiles for Multivariate Data, <em>Journal of the American Statistical Association</em>, 862–872.
+</p>
+<p>Dyckerhoff, R. (2004), Data Depths Satisfying the Projection Property, <em>Allgemeines Statistisches Archiv.</em>, <b>88</b>, 163–190.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>scaleCurve</code>, <code>depth</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# EXAMPLE 1
+library(sn)
+xi &lt;- c(0, 0)
+alpha &lt;- c(2, -5)
+Omega &lt;- diag(2) * 5
+
+n &lt;- 500
+X &lt;- mvrnorm(n, xi, Omega) # normal distribution
+Y &lt;- rmst(n, xi, Omega, alpha, nu = 1)
+asymmetryCurve(X, Y, name = "NORM", name_y = "S_T(2, -5, 10)")
+
+# EXAMPLE 2
+data(under5.mort)
+data(inf.mort)
+data(maesles.imm)
+data1990 &lt;- cbind(under5.mort[, 1], inf.mort[, 1], maesles.imm[, 1])
+data2011 &lt;- cbind(under5.mort[, 22], inf.mort[, 22], maesles.imm[, 22])
+as1990 &lt;- asymmetryCurve(data1990, name = "scale curve 1990")
+as2011 &lt;- asymmetryCurve(data2011, name = "scale curve 2011")
+figure &lt;- getPlot(combineDepthCurves(as1990, as2011)) +
+  ggtitle("Scale curves")
+figure
+
+</code></pre>
+
+
+</div>

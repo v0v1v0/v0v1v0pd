@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>LogisticSetPointSDE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated time series data for a stochastic linear damped oscillator model with logistic time-varying setpoints</h2>
+
+<h3>Description</h3>
+
+<p>A dataset simulated using a continuous-time stochastic linear damped oscillator model.
+The variables are as follows:
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(LogisticSetPointSDE)
+</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 2410 rows and 6 variables</p>
+
+
+<h3>Details</h3>
+
+
+<ul>
+<li>
+<p> id. ID of the systems (1 to 10)
+</p>
+</li>
+<li>
+<p> times. Time index (241 time points for each system)
+</p>
+</li>
+<li>
+<p> x. Latent level variable
+</p>
+</li>
+<li>
+<p> y. Latent first derivative variable
+</p>
+</li>
+<li>
+<p> z. True values of time-varying setpoints
+</p>
+</li>
+<li>
+<p> obsy. Observed level
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The following was used to generate the data
+#---------------------------------------
+## Not run: 
+require(Sim.DiffProc)
+freq &lt;- -1
+damp &lt;- -.1
+mu &lt;- -2
+r &lt;- .5
+b &lt;- .1
+sigma1 &lt;- 0.1
+sigma2 &lt;- 0.1
+fx &lt;- expression(y, freq*(x-z) + damp*y, r*z*(1-b*z))
+gx &lt;- expression(0, sigma1, 0)
+r3dall &lt;- c()
+for (j in 1:10){
+  r3dtemp &lt;- c(-5,0,.1)
+  r3d &lt;- r3dtemp
+  for (i in seq(0.125, 30, by=0.125)){
+    mod3dtemp &lt;- snssde3d(drift=fx, diffusion=gx, M=1, t0=i-0.125,
+        x0=as.numeric(r3dtemp), T=i, N=500, type="str",
+        method="smilstein")
+    r3dtemp &lt;- rsde3d(mod3dtemp,at=i)
+    r3d &lt;-rbind(r3d,r3dtemp)
+  }
+  r3dall &lt;- rbind(r3dall, cbind(r3d, id=j))
+}
+
+r3dall$obsy &lt;- r3dall$x+rnorm(length(r3dall$x),0,1)
+write.table(r3dall, file="LogisticSetPointSDE.txt")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

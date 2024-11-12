@@ -1,0 +1,548 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>daily_response</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>daily_response</h2>
+
+<h3>Description</h3>
+
+<p>Function calculates all possible values of a selected statistical metric
+between one or more response variables and daily sequences of environmental
+data. Calculations are based on moving window which is defined with two
+arguments: window width and a location in a matrix of daily sequences of
+environmental data. Window width could be fixed (use fixed_width) or
+variable width (use lower_limit and upper_limit arguments). In this case,
+all window widths between lower and upper limit will be used. All calculated
+metrics are stored in a matrix. The location of stored calculated metric
+in the matrix is indicating a window width (row names) and a location in a
+matrix of daily sequences of environmental data (column names).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">daily_response(
+  response,
+  env_data,
+  method = "cor",
+  metric = "r.squared",
+  cor_method = "pearson",
+  lower_limit = 30,
+  upper_limit = 90,
+  fixed_width = 0,
+  previous_year = FALSE,
+  neurons = 1,
+  brnn_smooth = TRUE,
+  remove_insignificant = FALSE,
+  alpha = 0.05,
+  row_names_subset = FALSE,
+  aggregate_function = "mean",
+  temporal_stability_check = "sequential",
+  k = 2,
+  k_running_window = 30,
+  cross_validation_type = "blocked",
+  subset_years = NULL,
+  ylimits = NULL,
+  seed = NULL,
+  tidy_env_data = FALSE,
+  reference_window = "start",
+  boot = FALSE,
+  boot_n = 1000,
+  boot_ci_type = "norm",
+  boot_conf_int = 0.95,
+  day_interval = ifelse(c(previous_year == TRUE, previous_year == TRUE), c(-1, 366),
+    c(1, 366)),
+  dc_method = NULL,
+  cor_na_use = "everything",
+  skip_window_length = 1,
+  skip_window_position = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>a data frame with tree-ring proxy variables as columns and
+(optional) years as row names. Row.names should be matched with those from a
+env_data data frame. If not, set row_names_subset = TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env_data</code></td>
+<td>
+<p>a data frame of daily sequences of environmental data as
+columns and years as row names. Each row represents a year and
+each column represents a day of a year. Row.names should be matched with
+those from a response data frame. If not, set row_names_subset = TRUE.
+Alternatively, env_data could be a tidy data with three columns,
+i.e. Year, DOY and third column representing values of mean temperatures,
+sum of precipitation etc. If tidy data is passed to the function, set the argument
+tidy_env_data to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>a character string specifying which method to use. Current
+possibilities are "cor" (default), "lm" and "brnn".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>a character string specifying which metric to use. Current
+possibilities are "r.squared" and "adj.r.squared". If method = "cor",
+metric is not relevant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cor_method</code></td>
+<td>
+<p>a character string indicating which correlation
+coefficient is to be computed. One of "pearson" (default), "kendall", or
+"spearman".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower_limit</code></td>
+<td>
+<p>lower limit of window width</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper_limit</code></td>
+<td>
+<p>upper limit of window width</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed_width</code></td>
+<td>
+<p>fixed width used for calculation. If fixed_width is
+assigned a value, upper_limit and lower_limit will be ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>previous_year</code></td>
+<td>
+<p>if set to TRUE, env_data and response variables will be
+rearranged in a way, that also previous year will be used for calculations of
+selected statistical metric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neurons</code></td>
+<td>
+<p>positive integer that indicates the number of neurons used
+for brnn method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>brnn_smooth</code></td>
+<td>
+<p>if set to TRUE, a smoothing algorithm is applied that
+removes unrealistic calculations which are a result of neural net failure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>remove_insignificant</code></td>
+<td>
+<p>if set to TRUE, removes all correlations bellow
+the significant threshold level, based on a selected alpha. For "lm" and
+"brnn" method, squared correlation is used as a threshold</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level used to remove insignificant calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row_names_subset</code></td>
+<td>
+<p>if set to TRUE, row.names are used to subset
+env_data and response data frames. Only years from both data frames are
+kept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregate_function</code></td>
+<td>
+<p>character string specifying how the daily data
+should be aggregated. The default is 'mean', the other options are 'median',
+'sum', 'min' and 'max'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal_stability_check</code></td>
+<td>
+<p>character string, specifying, how temporal stability
+between the optimal selection and response variable(s) will be analysed. Current
+possibilities are "sequential", "progressive" and "running_window". Sequential check
+will split data into k splits and calculate selected metric for each split. Progressive
+check will split data into k splits, calculate metric for the first split and then
+progressively add 1 split at a time and calculate selected metric. For running window,
+select the length of running window with the k_running_window argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>integer, number of breaks (splits) for temporal stability and cross validation
+analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k_running_window</code></td>
+<td>
+<p>the length of running window for temporal stability check.
+Applicable only if temporal_stability argument is set to running window.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cross_validation_type</code></td>
+<td>
+<p>character string, specifying, how to perform cross validation
+between the optimal selection and response variables. If the argument is set to "blocked",
+years will not be shuffled. If the argument is set to "randomized", years will be shuffled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset_years</code></td>
+<td>
+<p>a subset of years to be analyzed. Should be given in the form of
+subset_years = c(1980, 2005)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylimits</code></td>
+<td>
+<p>limit of the y axes for plot_extreme. It should be given in
+the form of: ylimits = c(0,1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>optional seed argument for reproducible results</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tidy_env_data</code></td>
+<td>
+<p>if set to TRUE, env_data should be inserted as a data frame with three
+columns: "Year", "DOY", "Precipitation/Temperature/etc."</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_window</code></td>
+<td>
+<p>character string, the reference_window argument describes,
+how each calculation is referred. There are three different options: 'start'
+(default), 'end' and 'middle'. If the reference_window argument is set to 'start',
+then each calculation is related to the starting day of window. If the
+reference_window argument is set to 'middle', each calculation is related to the
+middle day of window calculation. If the reference_window argument is set to
+'end', then each calculation is related to the ending day of window calculation.
+For example, if we consider correlations with window from DOY 15 to DOY 35. If
+reference window is set to  'start', then this calculation will be related to the
+DOY 15. If the reference window is set to 'end', then this calculation will be
+related to the DOY 35. If the reference_window is set to 'middle', then this
+calculation is related to DOY 25.
+The optimal selection, which describes the optimal consecutive days that returns
+the highest calculated metric and is obtained by the $plot_extreme output, is the
+same for all three reference windows.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot</code></td>
+<td>
+<p>logical, if TRUE, bootstrap procedure will be used to calculate
+estimates correlation coefficients, R squared or adjusted R squared metrices</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot_n</code></td>
+<td>
+<p>The number of bootstrap replicates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot_ci_type</code></td>
+<td>
+<p>A character string representing the type of bootstrap intervals
+required. The value should be any subset of the values c("norm","basic", "stud",
+"perc", "bca").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot_conf_int</code></td>
+<td>
+<p>A scalar or vector containing the confidence level(s) of
+the required interval(s)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>day_interval</code></td>
+<td>
+<p>a vector of two values: lower and upper time interval of
+days that will be used to calculate statistical metrics. Negative values indicate
+previous growing season days. This argument overwrites the calculation
+limits defined by lower_limit and upper_limit arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dc_method</code></td>
+<td>
+<p>a character string to determine the method to detrend climate
+data.  Possible values are "none" (default) and "SLD" which refers to Simple
+Linear Detrending</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cor_na_use</code></td>
+<td>
+<p>an optional character string giving a method for computing
+covariances in the presence of missing values for correlation coefficients.
+This must be (an abbreviation of) one of the strings "everything" (default),
+"all.obs", "complete.obs", "na.or.complete", or "pairwise.complete.obs". See
+also the documentation for the base cor() function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_window_length</code></td>
+<td>
+<p>an integer specifying the frequency of window
+selection for the calculations of climate-growth relationships. The default
+value is 1, indicating that every window is included in the calculations.
+When set to a value greater than 1, the function selectively processes
+windows at regular intervals defined by this parameter. For instance, if
+skip_window_length = 2, the function processes every second window.
+Similarly, if skip_window_length = 3, every third window is processed,
+skipping two windows in between each selected one. This parameter allows for
+controlling the granularity of the analysis and can help in reducing
+computation time by focusing on a subset of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_window_position</code></td>
+<td>
+<p>an integer specifying the frequency of window
+positions used in the calculations of climate-growth relationships. The
+default value is 1, indicating that every window position is included in the
+calculations. When set to a value greater than 1, the function selectively
+processes window positions at regular intervals defined by this parameter.
+For instance, if skip_window_position = 2, the function processes every
+second window position. Similarly, if skip_window_position = 3, every third
+window position is processed, skipping two positions in between each selected
+one. This parameter allows for controlling the granularity of the analysis
+and can help in reducing computation time by focusing on a subset of the data.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list with 17 elements:
+</p>
+
+<ol>
+<li>
+<p> $calculations - a matrix with calculated metrics
+</p>
+</li>
+<li>
+<p> $method - the character string of a method
+</p>
+</li>
+<li>
+<p> $metric - the character string indicating the metric used for calculations
+</p>
+</li>
+<li>
+<p> $analysed_period - the character string specifying the analysed period based on the information from row names. If there are no row names, this argument is given as NA
+</p>
+</li>
+<li>
+<p> $optimized_return - data frame with two columns, response variable and aggregated (averaged) daily data that return the optimal results. This data.frame could be directly used to calibrate a model for climate reconstruction
+</p>
+</li>
+<li>
+<p> $optimized_return_all - a data frame with aggregated daily data, that returned the optimal result for the entire env_data (and not only subset of analysed years)
+</p>
+</li>
+<li>
+<p> $transfer_function - a ggplot object: scatter plot of optimized return and a transfer line of the selected method
+</p>
+</li>
+<li>
+<p> $temporal_stability -  a data frame with calculations of selected metric for different temporal subsets
+</p>
+</li>
+<li>
+<p> $cross_validation - a data frame with cross validation results
+</p>
+</li>
+<li>
+<p> $plot_heatmap - ggplot2 object: a heatmap of calculated metrics
+</p>
+</li>
+<li>
+<p> $plot_extreme - ggplot2 object: line plot of a row with the highest value in a matrix of calculated metrics
+</p>
+</li>
+<li>
+<p> $type - the character string describing type of analysis: daily or monthly
+</p>
+</li>
+<li>
+<p> $reference_window - character string, which reference window was used for calculations
+</p>
+</li>
+<li>
+<p> $boot_lower - matrix with lower limit of confidence intervals of bootstrap calculations
+</p>
+</li>
+<li>
+<p> $boot_upper - matrix with upper limit of confidence intervals of bootstrap calculations
+</p>
+</li>
+<li>
+<p> $aggregated_climate - matrix with all aggregated climate series
+</p>
+</li>
+</ol>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# The examples below are enclosed within donttest{} to minimize the execution
+# time during R package checks. Additionally, all examples include the
+# parameters `skip_window_length` and `skip_window_position`, which limit the
+# number of combinations evaluated in climate-growth correlation calculations.
+# To explore all possible combinations, users should set both parameters to 1.
+
+# Load the dendroTools R package
+library(dendroTools)
+
+# Load data
+data(data_MVA)
+data(data_TRW)
+data(data_TRW_1)
+data(example_proxies_individual)
+data(example_proxies_1)
+data(LJ_daily_temperatures)
+
+example_basic &lt;- daily_response(response = data_MVA,
+                          env_data = LJ_daily_temperatures,
+                          row_names_subset = TRUE,
+                          fixed_width = 25,
+                          lower_limit = 35, upper_limit = 45,
+                          remove_insignificant = FALSE,
+                          aggregate_function = 'median',
+                          alpha = 0.05, cor_method = "spearman",
+                          previous_year = FALSE, boot = TRUE,
+                          boot_n = 10,
+                          skip_window_length = 50,
+                          skip_window_position = 50,
+                          reference_window = "end", k = 5,
+                          dc_method = "SLD",
+                          day_interval = c(-100, 250))
+
+# 1 Example with fixed width. Lower and upper limits are ignored.
+example_daily_response &lt;- daily_response(response = data_MVA,
+    env_data = LJ_daily_temperatures,
+    method = "cor", fixed_width = 40, cor_method = "spearman",
+    row_names_subset = TRUE, previous_year = TRUE,
+    remove_insignificant = TRUE, boot = TRUE,
+    alpha = 0.005, aggregate_function = 'mean',
+    day_interval = c(-100, 250), skip_window_length = 100,
+    reference_window = "start", skip_window_position = 100)
+
+# summary(example_daily_response)
+# plot(example_daily_response, type = 1)
+# plot(example_daily_response, type = 2)
+
+# 2 Example for past and present. Use subset_years argument.
+example_MVA_early &lt;- daily_response(response = data_MVA,
+    env_data = LJ_daily_temperatures, cor_method = "kendall",
+    method = "lm", lower_limit = 21, upper_limit = 91,
+    row_names_subset = TRUE, previous_year = TRUE,
+    remove_insignificant = TRUE, alpha = 0.05,
+    subset_years = c(1940, 1980),
+    fixed_width = 45,
+    aggregate_function = 'sum',
+    skip_window_length = 50,
+    skip_window_position = 50)
+
+example_MVA_late &lt;- daily_response(response = data_MVA,
+    env_data = LJ_daily_temperatures,
+    method = "cor", lower_limit = 21, upper_limit = 60,
+    row_names_subset = TRUE, previous_year = TRUE,
+    remove_insignificant = TRUE, alpha = 0.05,
+    subset_years = c(1981, 2010),
+    skip_window_length = 50,
+    skip_window_position = 50)
+
+# plot(example_MVA_early, type = 1)
+# plot(example_MVA_late, type = 1)
+# plot(example_MVA_early, type = 2)
+# plot(example_MVA_late, type = 2)
+
+# 3 Example with negative correlations
+example_neg_cor &lt;- daily_response(response = data_TRW_1,
+    env_data = LJ_daily_temperatures, previous_year = TRUE,
+    method = "cor", lower_limit = 21, upper_limit = 90,
+    row_names_subset = TRUE, remove_insignificant = TRUE,
+    alpha = 0.05, skip_window_length = 50,
+    skip_window_position = 50)
+
+# summary(example_neg_cor)
+# plot(example_neg_cor, type = 1)
+# plot(example_neg_cor, type = 2)
+
+# 4 Example of multiproxy analysis
+# summary(example_proxies_1)
+# cor(example_proxies_1)
+
+example_multiproxy &lt;- daily_response(response = example_proxies_1,
+   env_data = LJ_daily_temperatures,
+   method = "lm", metric = "adj.r.squared",
+   lower_limit = 21, upper_limit = 180,
+   row_names_subset = TRUE, previous_year = FALSE,
+   remove_insignificant = TRUE, alpha = 0.05,
+   skip_window_length = 50,
+   skip_window_position = 50)
+
+# plot(example_multiproxy, type = 1)
+
+# 5 Example to test the temporal stability
+example_MVA_ts &lt;- daily_response(response = data_MVA,
+   env_data = LJ_daily_temperatures, method = "brnn",
+   lower_limit = 100, metric = "adj.r.squared", upper_limit = 180,
+   row_names_subset = TRUE, remove_insignificant = TRUE, alpha = 0.05,
+   temporal_stability_check = "running_window", k_running_window = 10,
+   skip_window_length = 50, skip_window_position = 50)
+
+# Check the results for temporal stability
+# example_MVA_ts$temporal_stability
+
+# 6 Example with nonlinear brnn estimation
+example_brnn &lt;- daily_response(response = data_MVA,
+   env_data = LJ_daily_temperatures, method = "brnn", boot = FALSE,
+   lower_limit = 100, metric = "adj.r.squared", upper_limit = 101,
+   row_names_subset = TRUE, remove_insignificant = TRUE, boot_n = 10,
+   skip_window_length = 50, skip_window_position = 50)
+
+# summary(example_brnn)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,589 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynaTrees</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fitting Dynamic Tree Models
+</h2>
+
+<h3>Description</h3>
+
+<p>A function to initialize and fit dynamic tree models
+to regression and classification data by the sequential
+Monte Carlo (SMC) method of particle learning (PL)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynaTree(X, y, N = 1000, model = c("constant", "linear", "class", "prior"),
+         nu0s20 = c(0,0), ab = c(0.95, 2), minp = NULL, sb = NULL, 
+	       nstart = minp, icept = c("implicit", "augmented", "none"), 
+         rprop = c("luvar", "luall", "reject"), verb = round(length(y)/10))
+dynaTrees(X, y, N = 1000,  R = 10, sub = length(y),
+          model = c("constant", "linear", "class", "prior"), nu0s20 = c(0,0),
+          ab=c(0.95, 2), minp = NULL, sb = NULL, nstart = minp,
+          icept =  c("implicit", "augmented", "none"),
+          rprop = c("luvar", "luall", "reject"), XX = NULL, yy = NULL,
+	  varstats = FALSE, lhs = NULL, plotit = FALSE, proj = 1,
+          rorder = TRUE, verb = round(sub/10), pverb=round(N/10), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>A design <code>matrix</code> of real-valued predictors
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>A vector of length <code>nrow(X)</code> containing real-valued
+responses (for regression) or positive
+integer-valued class labels (for classification)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+
+<p>a positive scalar integer indicating the number
+of particles to be used
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+
+<p>a scalar integer <code>&gt;= 2</code> indicating the number of
+“repeats” or passes through the data,
+as facilitated by <code>dynaTrees</code>; see details below
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sub</code></td>
+<td>
+
+<p>Optional argument allowing only a subset of the <code>length(y)</code>
+<code>X</code>-<code>y</code> pairs to be used in each repeat of 
+<code>dynaTrees</code>; each repeat will use a different random subset
+of size <code>sub</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>indicates the type of model to be used at the leaves of the tree;
+<code>"constant"</code> and <code>"linear"</code> apply to regression,
+and <code>"class"</code> to multinomial classification; finally <code>"prior"</code>
+was recently added to explore sampled without data
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nu0s20</code></td>
+<td>
+
+<p>a two-vector indicating Inverse Gamma prior parameters
+<code>c(nu0, sigma20)</code> for the variance in each leaf node,
+<code class="reqn">\sigma^2</code>.  A <code>c(0,0)</code> setting indicates 
+a default, scale-invariant, prior; does not apply to the
+<code>"class"</code> model 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ab</code></td>
+<td>
+
+<p>tree prior parameter <code>c(alpha, beta)</code>; see details below
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minp</code></td>
+<td>
+
+<p>a positive scalar integer describing the smallest allowable
+region in the treed partition; if <code>NULL</code> (default) a
+suitable minimum is calculated based on <code>dim(X)</code> and
+the type of <code>model</code> being fit
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sb</code></td>
+<td>
+
+<p>an optional two-vector of positive integers indicating
+<code>c(splitmin, basemax)</code> for the <code>"linear"</code> model.
+It gives the first column of
+<code>X</code> on which treed partitioning is allowed, and the last
+column of <code>X</code> to use as covariates in the linear model
+at the leaves, respectively
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstart</code></td>
+<td>
+
+<p>a positive scalar integer <code>&gt;= minp</code> indicating
+the time index at which treed partitioning is allowed to start
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>icept</code></td>
+<td>
+
+<p>indicates the type of intertcept term used (only applies to
+<code>model="linear"</code>).  The default, <code>"implicit"</code> 
+causes the inputs <code>X</code> to be centered so the intercept can be
+implied as an afterthought; <code>"augmented"</code> causes the inputs 
+<code>X</code> to automatically gain a leading column of ones in a way
+that is transparent to the user; and <code>"none"</code> assumes that
+no intercept is being used, or that the user has pre-treated
+<code>X</code> to have a column of ones.  The main advantage of
+<code>"implicit"</code> over <code>"augmented"</code> is that the former can
+default to a constant model fit if leaf design matrices become
+rank deficient.  The latter defaults to the zero-model in such
+cases
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XX</code></td>
+<td>
+
+<p>a design <code>matrix</code> of predictive locations (where <code>ncol(XX) ==
+      ncol(X)</code>) for <code>dynaTrees</code>; also see
+<code>predict.dynaTree</code> and some explanation in the
+details below
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yy</code></td>
+<td>
+
+<p>an optional vector of “true” responses at the <code>XX</code>
+predictive locations at which the log posterior probability are
+to be reported
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varstats</code></td>
+<td>
+
+<p>if <code>TRUE</code> causes the <code>varpropuse</code>,
+<code>varproptotal</code>, and <code>relevance.dynaTree</code>
+functions to be called on after each
+repetition to collect the usage proportions of each input variable
+(column of <code>X</code>); see those documentation files for more details
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lhs</code></td>
+<td>
+
+<p>an optional <code>lhs</code> argument to
+<code>sens.dynaTree</code> if a sensitivity analysis step is
+desired after each restart (<code>XX="sens"</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plotit</code></td>
+<td>
+
+<p>a scalar <code>logical</code> indicating if the fit should be plotted
+after each of the <code>R</code> repeats; only applies to 1-d data
+and <code>dynaTrees</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proj</code></td>
+<td>
+
+<p>when <code>ncol(x$X) &gt; 1</code> and <code>plotit = TRUE</code>
+this argument is passed to <code>plot.dynaTree</code> to make
+a 1-d projection using <code>x$X[,proj]</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rorder</code></td>
+<td>
+
+<p>a scalar <code>logical</code> indicating if
+the rows of <code>X</code> (and corresponding components of
+<code>y</code>) should be randomly re-ordered for repeats
+<code>2:R</code> in order to assess the how the time-ordering
+of the SMC effects the Monte Carlo
+error; only applies to <code>dynaTrees</code>.  Alternatively,
+one can specify an <code>nrow(X)</code>-by-<code>(R-1)</code> matrix
+of orderings (permutations of <code>1:nrow(X)</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rprop</code></td>
+<td>
+
+<p>indicates the scheme used to construct a grow proposal.
+The best setting, <code>"luall"</code> uses the lower (L) and upper (U)
+rectangle method based on <code>minp</code> (above) as described 
+in the seminal reference in which
+the growing location and dimension is sampled uniformly.  It can
+be computationally intensive for large input spaces.  A thriftier
+option (the default) in this case is <code>"luvar"</code> which uniformly chooses the
+splitting variable first and then uses the LU method marginally.
+Thriftier still is <code>"reject"</code> which just proposes uniformly
+in the bounding leaf rectangle and rejects subsequent grows that
+lead to partitions with too few data points; (see the <code>minp</code>
+argument)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>a positive scalar integer indicating how many time steps
+(iterations) should pass before a progress statement is
+printed to the console; a value of <code>verb = 0</code> is quiet
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pverb</code></td>
+<td>
+
+<p>a positive scalar integer indicating after many particles
+should be processed for prediction before a progress statement is
+printed to the console; a value of <code>pverb = 0</code> is quiet
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>extra arguments to <code>predict.dynaTree</code> passed
+from <code>dynaTrees</code>
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>dynaTree</code> function processes the <code>X</code> and <code>y</code>
+pairs serially via PL.  It builds up a particle cloud
+which is stored as an object in <code>C</code>.  A “pointer” to that
+object is the primary return value. The <code>dynaTrees</code> function
+fits several (<code>R</code>) different dynamic tree models on different
+time-orderings of the data indices and also
+obtains samples from the posterior predictive distribution at
+new <code>XX</code> locations.  These predictions can be averaged
+over each repeat, or used to assess the Monte Carlo predictive
+error.
+</p>
+<p>Three different leaf <code>model</code>s are supported: two for
+regression and one for classification.  If <code>model == "class"</code>
+then the <code>y</code> values must contain representatives from
+every class (<code>1:max(y)</code>).  For details of these models and
+the complete description of their use at the leaves of the dynamic
+trees, see the Taddy, et al., (2009) reference, below.
+</p>
+<p>The tree prior is specified by <code>ab=c(alpha, beta)</code>
+via the and <code>minp</code>.
+It was originally described by Chipman et al., (1998, 2002)
+</p>
+<p style="text-align: center;"><code class="reqn">p_{\mbox{\tiny split}}(\eta, \mathcal{T}) =
+       \alpha*(1+\eta)^\beta</code>
+</p>
+
+<p>and subsequently augmented to enforce a minimum number of points
+(<code>minp</code>) in each region.
+</p>
+<p>Once a <code>"dynaTree"</code>-class object has been built (by
+<code>dynaTree</code>), predictions and estimates of sequential design and
+optimization criteria can be obtained via
+<code>predict.dynaTree</code>, a generic prediction method.
+These values can be used to augment the design, and the
+<code>update.dynaTree</code> function can be used to quickly
+update the fit with the augmenting data
+</p>
+
+
+<h3>Value</h3>
+
+<p>Both functions return an object of class <code>"dynaTree"</code>,
+which is a list containing the following fields
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>m </code></td>
+<td>
+ <p><code>ncol(X)</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>T </code></td>
+<td>
+ <p><code>nrow(X)</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N </code></td>
+<td>
+<p> the number of particles used </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X </code></td>
+<td>
+<p> a copy of the design matrix <code>X</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y </code></td>
+<td>
+<p> a copy of the responses <code>y</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p> a copy of the specified leaf model </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p> a vector containing <code>c(nu0s20, alpha, beta, minp,
+      sb, icept, rprop)</code>, where the latter two are in integer form </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb </code></td>
+<td>
+<p> a copy of the verbosity argument </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lpred </code></td>
+<td>
+<p> a vector of <code>log</code> posterior probabilities
+for each observation, conditional on the ones previous,
+for all time <code>(2*minp):T</code>; see <code>getBF</code> for calculating
+Bayes factors from these</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>icept</code></td>
+<td>
+<p> a copy of the intercept argument </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time </code></td>
+<td>
+<p> the total computing time used to build the
+particle cloud</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num </code></td>
+<td>
+<p> a “pointer” to the <code>C</code>-side particle
+cloud; see the note below </p>
+</td>
+</tr>
+</table>
+<p>-<br> 
+The <code>dynaTrees</code> function can obtain predictive samples
+(via <code>predict.dynaTree</code>) at each of the <code>R</code>
+repeats.  Therefore, the <code>"dynaTree"</code> object returned contains
+extra fields collecting these predictive samples, primarily
+comprising of <code>R</code> columns of information for each of the fields
+returned by <code>predict.dynaTree</code>; see that function for
+more details.  Likewise, when <code>varstats = TRUE</code> the returned
+object also contains <code>vpu</code>, <code>vpt</code> and <code>parde[</code> fields
+whose columns contain the <code>varpropuse</code> and
+<code>varproptotal</code> outputs.
+</p>
+<p>Likewise, <code>dynaTrees</code>, can provide variable usage summaries
+if <code>varstats = TRUE</code>, in which case the output includes
+<code>vpu</code> and <code>vpt</code> fields; See <code>varpropuse</code>
+and <code>varproptotal</code> for more details
+</p>
+<p>The <code>dynaTrees</code> function does not return <code>num</code> since 
+it does not leave  any allocated particle clouds on the <code>C</code>-side
+</p>
+
+
+<h3>Note</h3>
+
+<p>As mentioned in the details section, above, the
+<code>dynaTree</code> function returns a pointer to a particle
+cloud allocated in <code>C</code>.  This pointer is used
+for prediction, via <code>predict.dynaTree</code> and for
+later updating/augmentation of data, via
+<code>update.dynaTree</code>.
+This information will not be “freed” unless
+the user specifically calls <code>deletecloud(num)</code>
+or <code>deleteclouds()</code>.  Failing to call one
+of these functions (when done with the corresponding
+object(s)) could result in a memory leak;
+see their documentation for more details.
+</p>
+<p>The <code>C</code>-side memory cannot be saved in the workspace,
+so they cannot persist across <code>R</code> sessions
+</p>
+<p>To copy a <code>"dynaTree"</code>-class object, use
+<code>copy.dynaTree</code>, which will also copy the <code>C</code>-side
+memory allocated to the object
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robert B. Gramacy <a href="mailto:rbg@vt.edu">rbg@vt.edu</a>, <br>
+Matt Taddy and Christoforos Anagnostopoulos 
+</p>
+
+
+<h3>References</h3>
+
+<p>Taddy, M.A., Gramacy, R.B., and Polson, N. (2011).
+“Dynamic trees for learning and design”
+Journal of the American Statistical Association, 106(493), pp. 109-123;
+arXiv:0912.1586
+</p>
+<p>Gramacy, R.B., Taddy, M.A., and S. Wild (2011).
+“Variable Selection and Sensitivity Analysis via
+Dynamic Trees with an Application to Computer Code Performance Tuning”
+arXiv:1108.4739
+</p>
+<p>Carvalho, C., Johannes, M., Lopes, H., and Polson, N. (2008).
+“Particle Learning and Smoothing”.
+Discussion Paper 2008-32, Duke University Dept. of Statistical
+Science.
+</p>
+<p>Chipman, H., George, E., &amp; McCulloch, R. (1998).
+<em>Bayesian CART model search (with discussion).</em>
+Journal of the American Statistical Association, <b>93</b>,
+935–960.
+</p>
+<p>Chipman, H., George, E., &amp; McCulloch, R. (2002).
+<em>Bayesian treed models.</em>
+Machine Learning, <b>48</b>, 303–324.
+</p>
+<p><a href="https://bobby.gramacy.com/r_packages/dynaTree/">https://bobby.gramacy.com/r_packages/dynaTree/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict.dynaTree</code>, <code>update.dynaTree</code>,
+<code>plot.dynaTree</code>, <code>deletecloud</code>,
+<code>copy.dynaTree</code>, <code>getBF</code>, 
+<code>varpropuse</code>, <code>varproptotal</code>,
+<code>sens.dynaTree</code>, <code>relevance.dynaTree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## simple parabolic data
+n &lt;- 100
+Xp &lt;- sort(runif(n,-3,3))
+Yp &lt;- Xp + Xp^2 + rnorm(n, 0, .2)
+
+## fit a piece-wise linear model
+parab.fit &lt;- dynaTree(Xp, Yp, model="linear")
+
+## obtain predictions at a new set of locations
+## and plot
+parab.fit &lt;- predict(parab.fit, XX=seq(-3, 3, length=100))
+plot(parab.fit)
+
+## try duplicating the object
+parab.fit.copy &lt;- copy(parab.fit)
+
+## must delete the cloud or memory may leak
+deletecloud(parab.fit); parab.fit$num &lt;- NULL
+## to delete all clouds, do:
+deleteclouds()
+
+## for more examples of dynaTree see update.dynaTree
+
+## Motorcycle accident data
+if(require("MASS")) {
+  data(mcycle)
+  Xm &lt;- mcycle[,1]
+  Ym &lt;- mcycle[,2]
+  XXm &lt;- seq(min(mcycle[,1]), max(mcycle[,1]), length=100)
+  
+  R &lt;- 2 ## use R &gt;= 10 for better results
+  ## small R is for faster CRAN checks
+  ## fit constant model with R=2 repeats and predictions
+  moto.fit &lt;- dynaTrees(Xm, Ym, XX=XXm, R=R, plotit=TRUE)
+  
+  ## plot the averages
+  plot(moto.fit, ptype="mean")
+  
+  ## clouds automatically deleted by dynaTrees
+}
+
+## Not run: 
+## 2-d/3-class classification data
+library(plgp)
+library(tgp)
+xx &lt;- seq(-2, 2, length=20)
+XX &lt;- expand.grid(xx, xx)
+X &lt;- dopt.gp(125, Xcand=XX)$XX
+C &lt;- exp2d.C(X)
+
+## fit a classification model with R=10 repeats, 
+class.fit &lt;- dynaTrees(X, C, XX=XX, model="class")
+
+## for plot the output (no generic plotting available)
+cols &lt;- c(gray(0.85), gray(0.625), gray(0.4))
+par(mfrow=c(1,2))
+library(interp)
+
+## plot R-averaged predicted class
+mclass &lt;- apply(class.fit$p, 1, which.max)
+image(interp(XX[,1], XX[,2], mclass), col=cols,
+      xlab="x1", ylab="x2", main="repeated class mean")
+points(X)
+## plot R-averaged entropy
+ment &lt;-  apply(class.fit$entropy, 1, mean)
+image(interp(XX[,1], XX[,2], ment),
+      xlab="x1", ylab="x2", main="repeated entropy mean")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

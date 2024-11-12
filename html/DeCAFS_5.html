@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DeCAFS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Main DeCAFS algorithm for detecting abrupt changes</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the DeCAFS algorithm to detect abrupt changes in mean of a univariate data stream in the presence of local fluctuations and auto-correlated noise. 
+It detects the changes under a penalised likelihood model where the data, <code class="reqn">y_1, ..., y_n</code>, is </p>
+<p style="text-align: center;"><code class="reqn">y_t = \mu_t + \epsilon_t</code>
+</p>
+
+<p>with <code class="reqn">\epsilon_t</code> an AR(1) process, and for <code class="reqn">t = 2, ..., N</code> 
+</p>
+<p style="text-align: center;"><code class="reqn">\mu_t = \mu_{t-1} + \eta_t + \delta_t</code>
+</p>
+
+<p>where at time <code class="reqn">t</code> if we do not have a change then <code class="reqn">\delta_t = 0</code> and <code class="reqn">\eta_t \sim N(0, \sigma_\eta^2)</code>; whereas if we have a change then <code class="reqn">\delta_t \neq 0</code> and <code class="reqn">\eta_t=0</code>.
+DeCAFS estimates the change by minimising a cost equal to twice the negative log-likelihood of this model, with a penalty <code class="reqn">\beta</code> for adding a change.
+Note that the default DeCAFS behavior will assume the RWAR model, but fit on edge cases is still possible. For instance, should the user wish for DeCAFS to fit an AR model only with a piecewise constant signal, or similarly a model that just assumes random fluctuations in the signal, this can be specified within the initial parameter estimation, by setting the argument: <code>modelParam = estimateParameters(y, model = "AR")</code>. Similarly, to allow for negative autocorrelation estimation, set <code>modelParam = estimateParameters(Y$y, phiLower = -1)</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DeCAFS(
+  data,
+  beta = 2 * log(length(data)),
+  modelParam = estimateParameters(data, warningMessage = warningMessage),
+  penalties = NULL,
+  warningMessage = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A vector of observations y</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>The l0 penalty. The default one is <code>2 * log(N)</code> where <code>N</code> is the length of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modelParam</code></td>
+<td>
+<p>A list of 3 initial model parameters: <code>sdEta</code>, the SD of the drift (random fluctuations) in the signal, <code>sdNu</code>, the SD of the AR(1) noise process, and <code>phi</code>, the autocorrelation parameter of the noise process (so the stationary variance of the AR(1) noise process is <code>sdnu^2</code> / (1 - <code>phi^2</code>). Defaulted to <code>estimateParameters(data, K = 15)</code>, to perform automatically estimation of the three. See <code>estimateParameters()</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalties</code></td>
+<td>
+<p>Can be used as an alternative to the model parameters, a list of 3 initial penalties: <code>lambda</code>, the l2-penalty penalising over the lag-1 of the signal, <code>gamma</code>, penalising over the lag-1 of the AR(1) noise process, <code>phi</code>, the autocorrelation parameter. These are related to the <code>modelParam</code> list by <code>list(lambda = 1 / sdEta ^ 2, gamma = 1 / sdNu ^ 2, phi = phi)</code>. Only one argument between <code>penalties</code> and <code>modelParam</code> should be specified. Defaulted to NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warningMessage</code></td>
+<td>
+<p>When <code>TRUE</code> prints a message to warn the user that the automatic parameter estimation is employed. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns an s3 object of class DeCAFSout where:
+</p>
+
+<dl>
+<dt><code>$changepoints</code></dt>
+<dd>
+<p>is the vector of change-point locations,</p>
+</dd>
+<dt><code>$signal</code></dt>
+<dd>
+<p>is the estimated signal without the auto-correlated noise,</p>
+</dd>
+<dt><code>$costFunction</code></dt>
+<dd>
+<p> is the optimal cost in form of piecewise quadratics at the end of the sequence,</p>
+</dd> 
+<dt><code>$estimatedParameters</code></dt>
+<dd>
+<p>is a list of parameters estimates (if estimated, otherwise simply the initial <code>modelParam</code> input),</p>
+</dd> 
+<dt><code>$data</code></dt>
+<dd>
+<p>is the sequence of observations.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Romano, G., Rigaill, G., Runge, V., Fearnhead, P. (2021). Detecting Abrupt Changes in the Presence of Local Fluctuations and Autocorrelated Noise. Journal of the American Statistical Association. <a href="https://doi.org/10.1080/01621459.2021.1909598">doi:10.1080/01621459.2021.1909598</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(ggplot2)
+set.seed(42)
+Y &lt;- dataRWAR(n = 1e3, phi = .5, sdEta = 1, sdNu = 3, jumpSize = 15, type = "updown", nbSeg = 5)
+y &lt;- Y$y
+res = DeCAFS(y)
+ggplot(data.frame(t = 1:length(y), y), aes(x = t, y = y)) +
+  geom_point() +
+  geom_vline(xintercept = res$changepoints, color = "red") +
+  geom_vline(xintercept = Y$changepoints, col = "blue",  lty = 3)
+</code></pre>
+
+
+</div>

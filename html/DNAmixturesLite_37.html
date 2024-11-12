@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>setCPT.O</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Set tables for auxiliary variables <code>O</code>.</h2>
+
+<h3>Description</h3>
+
+<p>Function for setting the tables on all nodes <code>O_r_a</code> for
+mixture <code>r</code> in the network corresponding to one marker, using
+peak heights and a set of parameters. The returned evidence can be
+used for conditioning on observed peak heights.
+</p>
+<p><em>IMPORTANT: This is the <span class="pkg">DNAmixturesLite</span> package, which is intended as a service to enable users to try <span class="pkg">DNAmixtures</span> without purchasing a commercial licence for Hugin. When at all possible, we strongly recommend the use of <span class="pkg">DNAmixtures</span> rather than this lite-version. See <a href="https://dnamixtures.r-forge.r-project.org/">https://dnamixtures.r-forge.r-project.org/</a> for details on both packages.</em>
+</p>
+<p><em>While the lite-version seeks to provide the full functionality of <span class="pkg">DNAmixtures</span>, note that computations are much less efficient and that there are some differences in available functionality. Be aware that the present documentation is copied from <span class="pkg">DNAmixtures</span> and thus may not accurately describe the implementation of this lite-version.</em>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">setCPT.O(
+  domain,
+  rho,
+  xi,
+  eta,
+  phi,
+  heights,
+  C,
+  n.unknown,
+  n_K,
+  O,
+  gets_stutter,
+  can_stutter,
+  stutter.from
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>domain</code></td>
+<td>
+<p>A <code>hugin.domain</code> modelling one marker</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>rho</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>xi</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>eta</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+<p>phi</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>heights</code></td>
+<td>
+<p>Peak heights</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>Detection threshold</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.unknown</code></td>
+<td>
+<p>Number of unknown contributors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_K</code></td>
+<td>
+<p>Allelecounts for known contributors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>O</code></td>
+<td>
+<p>Vector of names for binary nodes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gets_stutter</code></td>
+<td>
+<p>Does the allele receive stutter? A boolean vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>can_stutter</code></td>
+<td>
+<p>Can the allele stutter?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stutter.from</code></td>
+<td>
+<p>From which allele does the stutter come?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function sets probabilities in CPT according to
+whether a peak is observed or not. If a peak is seen at allele
+<code class="reqn">a</code>, the conditional distribution is defined using the
+p.d.f. <code class="reqn">g</code> for the gamma distribution presented in
+<code>DNAmixtures</code> as
+</p>
+<p style="text-align: center;"><code class="reqn">P(\texttt{O[a]} = \texttt{TRUE} | n_{ia}, n_{i,a+1}, i = 1,\ldots, k) = g(\texttt{heights[a]})/k_a
+</code>
+</p>
+
+<p>and likelihood-evidence <code class="reqn">(0, k_a)</code> for the states (<code>FALSE</code>, <code>TRUE</code>) is returned.
+If the allele is not seen, the CPT is set using the c.d.f. <code class="reqn">G</code> for the gamma distribution as
+</p>
+<p style="text-align: center;"><code class="reqn">P(\code{O[a]} = \code{FALSE} | n_{ia}, n_{i,a+1}, i = 1,\ldots, k) = G(\code{C}),
+</code>
+</p>
+
+<p>in which case likelihood-evidence (1,0) is returned for this allele.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix with each column containing the evidence to be set on <code>O[a]</code> when conditioning on the peak heights.
+</p>
+
+
+<h3>Technical comments</h3>
+
+<p>For the sake of speed and saving
+memory, only probabilities for the CPT of <code>O[a]</code> are
+calculated, and not the entire table.  The parent nodes are
+<code>n_i_a</code> and possibly <code>n_i_(a+1)</code> for all unknown
+contributors i; the <code class="reqn">n_{ia}</code> for known contributors are
+specified through the argument <code>n_K</code>.  The layout of the
+table relies in particular on the fact that all nodes have a
+statespace 0,1,2, which this is *not* checked anywhere. Thus, if
+other types of allele-count-nodes <code>n_i_a</code> are introduced
+(such as could be relevant for Amelogenin), the function should be
+changed accordingly.
+</p>
+<p>If invalid tables are set then any subsequent propagation will
+fail. No roll-back functionality has so far been implemented to
+fix this, and the easiest solution is to re-fit the mixture model.
+</p>
+<p>Note that the detection threshold and model parameters can be
+specified as vectors, and so it is in theory possible to use allele-specific
+values, if desired. This also holds for the functions
+<code>setCPT.D</code> and <code>setCPT.Q</code>.
+</p>
+
+
+</div>

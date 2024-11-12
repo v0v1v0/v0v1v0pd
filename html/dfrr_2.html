@@ -1,0 +1,68 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>basis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get the basis functions from a dfrr-object</h2>
+
+<h3>Description</h3>
+
+<p>Returns the basis functions employed in fitting a dfrr-object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">basis(object)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a fitted <code>dfrr</code>-object obtained from invoking the function <code>dfrr</code>.</p>
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p>a basis object used in fitting the functional parameters.
+The basis object is the one created by the functions <code>create.*.basis</code> of
+the 'fda' package.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(2000)
+N&lt;-50;M&lt;-24
+
+X&lt;-rnorm(N,mean=0)
+time&lt;-seq(0,1,length.out=M)
+Y&lt;-simulate_simple_dfrr(beta0=function(t){cos(pi*t+pi)},
+                        beta1=function(t){2*t},
+                        X=X,time=time)
+
+#The argument T_E indicates the number of EM algorithm.
+#T_E is set to 1 for the demonstration purpose only.
+#Remove this argument for the purpose of converging the EM algorithm.
+dfrr_fit&lt;-dfrr(Y~X,yind=time,T_E=1)
+coefs&lt;-coef(dfrr_fit,return.fourier.coefs=TRUE)
+
+basis&lt;-basis(dfrr_fit)
+evaluated_coefs&lt;-coefs%*%t(fda::eval.basis(time,basis))
+
+#Plotting the regression coefficients
+oldpar&lt;-par(mfrow=c(1,2))
+
+plot(time,evaluated_coefs[1,],'l',main="Intercept")
+plot(time,evaluated_coefs[2,],'l',main="X")
+
+par(oldpar)
+
+</code></pre>
+
+
+</div>

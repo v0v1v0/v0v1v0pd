@@ -1,0 +1,191 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>BS_fit_rolling</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit Black-Scholes Parameters Over Rolling Window</h2>
+
+<h3>Description</h3>
+
+<p>Function to estimate the volatility, <code class="reqn">\sigma</code>, and drift, <code class="reqn">\mu</code>. E.g.,
+the window can be over a given number of months. See
+<code>vignette("Distance-to-default", package = "DtD")</code> for details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">BS_fit_rolling(
+  S,
+  D,
+  T.,
+  r,
+  time,
+  dt,
+  vol_start,
+  method = c("iterative", "mle"),
+  tol = 1e-12,
+  eps = 1e-08,
+  grp,
+  width,
+  min_obs
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>numeric vector with observed stock prices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>numeric vector or scalar with debt due in <code>T.</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>T.</code></td>
+<td>
+<p>numeric vector or scalar with time to maturity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>numeric vector or scalar with risk free rates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>numeric vector with the observation times.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>numeric scalar with time increments between observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vol_start</code></td>
+<td>
+<p>numeric scalar with starting value for <code class="reqn">\sigma</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>string to specify which estimation method to use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>numeric scalar with tolerance to <code>get_underlying</code>.
+The difference is scaled  if the absolute of <code>S</code> is large than <code>tol</code>
+as in the <code>tolerance</code> argument to <code>all.equal.numeric</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>numeric scalar with convergence threshold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grp</code></td>
+<td>
+<p>integer vector with the group identifier (e.g., units of
+months).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width</code></td>
+<td>
+<p>integer scalar with the units of <code>grp</code> to include in the
+rolling window.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_obs</code></td>
+<td>
+<p>integer scalar for the minimum number of observation required
+in each window.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Matrix with the <code>grp</code>, number of observation in the window, parameter
+estimates, and <code>'n_iter'</code> as in <code>BS_fit</code>, and whether the
+estimation method was successful.
+</p>
+<p>An <code>error</code> attribute is added in case other code than
+<code>optim</code> fails. It is a list of lists with the <code>grp</code> index
+where the method failed and the output from <code>try</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>BS_fit</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulate data
+set.seed(55770945)
+n &lt;- 21L * 3L * 12L # 21 trading days for 3 years w/ 12 months
+sims &lt;- BS_sim(
+  vol = .1, mu = .05, dt = .1, V_0 = 100, T. = 1,
+  D = runif(n, 80, 90), r = runif(n, 0, .01))
+sims$month &lt;- (1:nrow(sims) - 1L) %/% 21L + 1L
+
+# throw out some months
+sims &lt;- subset(sims, !month %in% 15:24)
+
+# assign parameters
+grp &lt;- sims$month
+width &lt;- 12L        # window w/ 12 month width
+min_obs &lt;- 21L * 3L # require 3 months of data
+
+# estimate results with R loop which is slightly simpler then the
+# implementation
+grps &lt;- unique(grp)
+out &lt;- matrix(
+  NA_real_, nrow = length(grps), ncol = 6,
+  dimnames = list(NULL, c("mu", "vol", "n_iter", "success", "n_obs", "grp")))
+for(g in grps){
+  idx &lt;- which(grps == g)
+  keep &lt;- which(grp %in% (g - width + 1L):g)
+  out[idx, c("n_obs", "grp")] &lt;- c(length(keep), g)
+  if(length(keep) &lt; min_obs)
+    next
+  res &lt;- with(
+    sims[keep, ],
+    BS_fit(S = S, D = D, T. = T, r = r, time = time, method = "iterative",
+           vol_start = 1))
+  out[idx, c("mu", "vol", "n_iter", "success")] &lt;- rep(
+    do.call(c, res[c("ests", "n_iter", "success")]), each = length(idx))
+}
+
+# we get the same with the R function
+out_func &lt;- with(sims, BS_fit_rolling(
+  S = S, D = D, T. = T, r = r, time = time, method = "iterative",
+  grp = month, width = width, min_obs = min_obs))
+
+all.equal(out[, names(out) != "n_iter"],
+          out_func[, names(out_func) != "n_iter"])
+
+</code></pre>
+
+
+</div>

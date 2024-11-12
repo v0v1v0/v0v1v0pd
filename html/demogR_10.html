@@ -1,0 +1,197 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>eigen.analysis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> eigen.analysis </h2>
+
+<h3>Description</h3>
+
+<p>Calculates the asymptotic growth rate and related quantities from a
+demographic projection matrix.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">eigen.analysis(A)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p> demographic projection matrix </p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>Calculates the asymptotic growth rate (lambda) of a population
+described by demographic projection matrix A.  The asymptotic growth
+rate of the population is given by the dominant eigenvalue of the
+projection matrix.  By the Perron-Frobenius Theorem, this eigenvalue
+is guaranteed to be real, positive and strictly greater than all the
+other eigenvalues if the matrix A is non-negative, irreducible, and
+primitive (for details see Caswell (2001)).
+</p>
+<p>Also calculates the damping ratio (rho), eigenvalue sensitivities,
+eigenvalue elasticities, the stable age distribution (for the
+communicating parts of the life cycle), and  scaled reproductive
+values. 
+</p>
+<p>The damping ratio is the ratio of the dominant eigenvalue and the
+absolute value of the second eigenvalue.  rho is a measure of the
+rate of convergence to the stable age-distribution.  A population
+characterized by damping ratio rho will converge asymptotically to
+the stable age distribution exponentially with rate at least as fast
+as log(rho).  Clearly, a population already at or very near the
+stable age distribution will converge faster, but rho provides an
+upper bound.
+</p>
+<p>The eigenvalue sensitivities are the partial derivatives of lambda
+with respect to a perturbation in matrix element <code class="reqn">a_{ij}</code>.  The
+sensitivities measure the selection gradient on the life-cycle
+(Lande 1982).   The eigenvalue elasticities are scaled to be
+proportional sensitivities of lambda to a perturbation in <code class="reqn">a_{ij}</code>.
+Elasticities have a number of desirable properties including, their
+sum across all life-cycle transitions is unity and the sum of the
+elasticities of all  incoming arcs to a life-cycle stage must equal
+the sum of all outgoing arcs (van Groenendael et al 1994).
+</p>
+<p>The stable age distribution is normalized to represent the
+proportion in each of the communicating age classes.  If the
+population is characterized by post-reproductive survival (and
+hence age classes that do not communicate with the rest of the life
+cycle graph), then other methods should be used to calculate to
+stable distribution.  For example, from classic stable population
+theory, we know that the stable age distribution of the population
+c(x) is given by the relationship: 
+</p>
+<p>c(x) = b l(x) exp(-r*x)
+</p>
+<p>where b is the gross birth rate, l(x) is survivorship to age x and
+r is the rate of increase of the population (=log(lambda)).  See
+Coale (1972) or Preston et al. (2001) for details.
+</p>
+<p>The age-specific reproductive values are normalized so that the
+reproductive value of the first age class is unity.  Problems
+associated with post-reproductive survival are irrelevant for
+reproductive value since the reproductive value of
+post-reproductive individuals is, by definition, zero. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with six components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda1 </code></td>
+<td>
+<p> the asymptotic growth rate (dominant eigenvalue) of
+A </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho </code></td>
+<td>
+<p> damping ratio of A </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sensitivities</code></td>
+<td>
+<p> eigenvalue sensitivities of A </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elasticities</code></td>
+<td>
+<p> eigenvalue elasticities of A </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stable.age</code></td>
+<td>
+<p>  stable age distribution of A </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repro.value</code></td>
+<td>
+<p>  reproductive values of A </p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+ 
+<p>Caswell, H. 2001. Matrix population models: Construction, analysis,
+and interpretation. 2nd ed. Sunderland, MA: Sinauer. 
+</p>
+<p>Coale, A.J. 1972. The growth and structure of human populations: A
+mathematical investigation. Princeton: Princeton University Press. 
+</p>
+<p>Lande, R. A. 1982. A quantitative genetic theory of life history
+evolution. Ecology 63:607-615. 
+</p>
+<p>van Groenendael, J., H. De Kroon, S. Kalisz, and
+S. Tuljapurkar. 1994. Loop analysis: Evaluating life history pathways
+in population projection matrices. Ecology 75 (8):2410-2415. 
+</p>
+
+
+<h3>See Also</h3>
+
+  <p><code>leslie.matrix</code>, <code>secder</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(goodman)
+ven &lt;- with(goodman, life.table(x=age, nKx=ven.nKx, nDx=ven.nDx))
+ven.mx &lt;- with(goodman, ven.bx/ven.nKx)
+A &lt;- leslie.matrix(lx=ven$nLx,mx=ven.mx)
+
+usa &lt;- with(goodman, life.table(x=age, nKx=usa.nKx, nDx=usa.nDx))
+usa.mx &lt;- with(goodman, usa.bx/usa.nKx)
+B &lt;- leslie.matrix(lx=usa$nLx,mx=usa.mx)
+
+eav &lt;- eigen.analysis(A)
+eau &lt;- eigen.analysis(B)
+
+## compare rates of increase
+
+eav$lambda1
+eau$lambda1
+
+## compare stable age distributions for Venezuela and the USA
+op &lt;- par(no.readonly = TRUE)
+age &lt;- seq(0,50,by=5)
+par(mfrow=c(1,2))
+barplot(eav$stable.age, names.arg=age, 
+	     horiz=TRUE, 
+	     col="grey", 
+	     ylab="Age")
+barplot(eau$stable.age, names.arg=age[-11], 
+	     horiz=TRUE, 
+	     col="blue", 
+	     ylab="Age", 
+	     xlim=c(0,0.2))
+
+par(op)
+
+## Compare reproductive values for Venezuela and the USA
+
+plot(age, eav$repro.value, type="l", xlab="Age", ylab="Reproductive Value")
+lines(age[-11], eau$repro.value, lty=2)
+legend("topright", c("Venezuela (1965)", "USA (1967)"), lty=c(1,2))
+</code></pre>
+
+
+</div>

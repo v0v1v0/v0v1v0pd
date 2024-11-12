@@ -1,0 +1,349 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>d2DSD</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pleskac and Busemeyer's 2DSD Model for Decision Confidence</h2>
+
+<h3>Description</h3>
+
+<p>Likelihood function and random number generator for a generalization of the
+2DSD Model presented by Pleskac &amp; Busemeyer (2010). It includes following
+parameters:
+DDM parameters: <code>a</code> (threshold separation), <code>z</code>
+(starting point; relative), <code>v</code> (drift rate), <code>t0</code> (non-decision time/
+response time constant), <code>d</code> (differences in speed of response execution),
+<code>sv</code> (inter-trial-variability of drift), <code>st0</code> (inter-trial-variability
+of non-decisional components), <code>sz</code> (inter-trial-variability of relative
+starting point), <code>s</code> (diffusion constant).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">d2DSD(rt, response = "upper", th1, th2, a, v, t0 = 0, z = 0.5, d = 0,
+  sz = 0, sv = 0, st0 = 0, tau = 1, lambda = 0, s = 1,
+  simult_conf = FALSE, precision = 1e-05, z_absolute = FALSE,
+  stop_on_error = TRUE, stop_on_zero = FALSE)
+
+r2DSD(n, a, v, t0 = 0, z = 0.5, d = 0, sz = 0, sv = 0, st0 = 0,
+  tau = 1, lambda = 0, s = 1, delta = 0.01, maxrt = 15,
+  simult_conf = FALSE, z_absolute = FALSE, stop_on_error = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>rt</code></td>
+<td>
+<p>a vector of RTs. Or for convenience also a <code>data.frame</code> with columns
+<code>rt</code> and <code>response</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>character vector, indicating the decision, i.e. which boundary was
+met first. Possible values are <code>c("upper", "lower")</code> (possibly abbreviated) and
+<code>"upper"</code> being the default. Alternatively, a numeric vector with values 1=lower
+and 2=upper or -1=lower and 1=upper, respectively. For convenience, <code>response</code> is
+converted via <code>as.numeric</code> also
+allowing factors. Ignored if the first argument is a <code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>th1</code></td>
+<td>
+<p>together with <code>th2</code>: scalars or numerical vectors giving the lower and upper
+bound of the interval, in which the accumulator should end at the time of the
+confidence judgment (i.e. at time <code>rt</code>+<code>tau</code>). Only values with
+<code>th2</code>&gt;=<code>th1</code> are accepted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>th2</code></td>
+<td>
+<p>(see <code>th1</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>threshold separation. Amount of information that is considered for a decision.
+Large values indicate a conservative decisional style. Typical range: 0.5 &lt; <code>a</code> &lt; 2</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>drift rate. Average slope of the information accumulation process. The drift
+gives information about the speed and direction of the accumulation of information.
+Large (absolute) values of drift indicate a good performance. If received information
+supports the response linked to the upper threshold the sign will be positive and vice
+versa. Typical range: -5 &lt; <code>v</code> &lt; 5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t0</code></td>
+<td>
+<p>non-decision time or response time constant (in seconds). Lower bound for the
+duration of all non-decisional processes (encoding and response execution). Typical
+range: 0.1 &lt; <code>t0</code> &lt; 0.5. Default is 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>(by default relative) starting point. Indicator of an a priori bias in decision
+making. When the relative starting point <code>z</code> deviates from <code>0.5</code>, the amount
+of information necessary for a decision differs between response alternatives. Default
+is <code>0.5</code> (i.e., no bias).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>differences in speed of response execution (in seconds). Positive values
+indicate that response execution is faster for responses linked to the upper threshold
+than for responses linked to the lower threshold. Typical range: -0.1 &lt; <code>d</code> &lt; 0.1.
+Default is 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sz</code></td>
+<td>
+<p>inter-trial-variability of starting point. Range of a uniform distribution
+with mean <code>z</code> describing the distribution of actual starting points from specific
+trials. Values different from 0 can predict fast errors (but can slow computation
+considerably). Typical range: 0 &lt; <code>sz</code> &lt; 0.2. Default is 0. (Given in relative
+range i.e. bounded by 2*min(z, 1-z))</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sv</code></td>
+<td>
+<p>inter-trial-variability of drift rate. Standard deviation of a normal
+distribution with mean <code>v</code> describing the distribution of actual drift rates
+from specific trials. Values different from 0 can predict slow errors.
+Typical range: 0 &lt; <code>sv</code> &lt; 2. Default is 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>st0</code></td>
+<td>
+<p>inter-trial-variability of non-decisional components. Range of a uniform
+distribution with mean <code>t0 + st0/2</code> describing the distribution of actual
+<code>t0</code> values across trials. Accounts for response times below <code>t0</code>.
+Reduces skew of predicted RT distributions. Values different from 0 can slow computation
+considerably. Typical range: 0 &lt; <code>st0</code> &lt; 0.2. Default is 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>post-decisional accumulation time. The length of the time period after the
+decision was made until the confidence judgment is made. Range: <code>tau</code>&gt;0.
+Default: <code>tau</code>=1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>power for judgment time in the division of the confidence measure
+by the judgment time (Default: 0, i.e. no division which is the version of
+2DSD proposed by Pleskac and Busemeyer)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>diffusion constant. Standard deviation of the random noise of the diffusion
+process (i.e., within-trial variability), scales <code>a</code>, <code>v</code>, <code>sv</code>,
+and <code>th</code>'s. Needs to be fixed to a constant in most applications. Default is 1.
+Note that the default used by Ratcliff and in other applications is often 0.1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simult_conf</code></td>
+<td>
+<p>logical. Whether in the experiment confidence was reported
+simultaneously with the decision, as then decision and confidence judgment are
+assumed to have happened subsequent before response and computations are different,
+when there is an observable interjudgment time (then <code>simult_conf</code> should be <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precision</code></td>
+<td>
+<p><code>numerical</code> scalar value. Precision of calculation. Corresponds
+to the stepsize of integration w.r.t. <code>z</code> and <code>t0</code>. Default is 1e-5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z_absolute</code></td>
+<td>
+<p>logical. Determines whether <code>z</code> is treated as absolute start point
+(<code>TRUE</code>) or relative (<code>FALSE</code>; default) to <code>a</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop_on_error</code></td>
+<td>
+<p>Should the diffusion functions return 0 if the parameters values
+are outside the allowed range (= <code>FALSE</code>) or produce an error in this case
+(= <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop_on_zero</code></td>
+<td>
+<p>Should the computation of densities stop as soon as a density value of 0 occurs.
+This may save a lot of time if the function is used for a likelihood function. Default: FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of samples generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>numeric. Discretization step size for simulations in the stochastic process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxrt</code></td>
+<td>
+<p>numeric. Maximum decision time returned. If the simulation of the stochastic
+process exceeds a decision time of <code>maxrt</code>, the <code>response</code> will be set to 0 and the <code>maxrt</code>
+will be returned as <code>rt</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For confidence: <code>tau</code> (post-decisional accumulation time), <code>lambda</code>
+the exponent of judgment time for the division by judgment time in the confidence measure,
+<code>th1</code> and <code>th2</code> (lower and upper thresholds for confidence interval).
+</p>
+<p><strong>Note that the parameterization or defaults of non-decision time variability
+<code>st0</code> and diffusion constant <code>s</code> differ from what is often found in the
+literature.</strong>
+</p>
+<p>The drift diffusion model (DDM; Ratcliff
+and McKoon, 2008) is a mathematical model for two-choice discrimination tasks. It is
+based on the assumption that information is accumulated continuously until one of two
+decision thresholds is hit. For introduction see Ratcliff and McKoon (2008).
+</p>
+<p>The 2DSD is an extension of the DDM to explain confidence judgments based
+on the preceding decision. It assumes a post decisional period where the process
+continues the accumulation of information. At the end of the period a confidence
+judgment (i.e. a judgment of the probability that the decision was correct) is made
+based on the state of the process. Here, we use a given interval, given by <code>th1</code>
+and <code>th2</code>, assuming that the data is given with discrete judgments and
+pre-processed, s.t. these discrete ratings are translated to the respective intervals.
+The 2DSD Model was proposed by Pleskac and Busemeyer (2010).
+</p>
+<p>All functions are fully vectorized across all parameters
+as well as the response to match the length or <code>rt</code> (i.e., the output
+is always of length equal to <code>rt</code>).
+This allows for trial wise parameters for each model parameter.
+</p>
+<p>For convenience, the function allows that the first argument is a <code>data.frame</code>
+containing the information of the first and second argument in two columns (i.e.,
+<code>rt</code> and <code>response</code>). Other columns (as well as passing <code>response</code>
+separately argument) will be ignored.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>d2DSD</code> gives the density/likelihood/probability of the diffusion process
+producing a decision of <code>response</code> at time <code>rt</code> and a confidence
+judgment corresponding to the interval [ <code>th1</code>, <code>th2</code>].
+The value will be a numeric vector of the same length as <code>rt</code>.
+</p>
+<p><code>r2DSD</code> returns a <code>data.frame</code> with three columns and <code>n</code> rows. Column names are <code>rt</code> (response
+time), <code>response</code> (-1 (lower) or 1 (upper), indicating which bound was hit), and <code>conf</code> (the
+value of the confidence measure; not discretized!).
+</p>
+<p>The distribution parameters (as well as <code>response</code>, <code>tau</code>, <code>th1</code>
+and <code>th2</code>) are recycled to the length of the result. In other words, the functions
+are completely vectorized for all parameters and even the response boundary.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The parameterization of the non-decisional components, <code>t0</code> and <code>st0</code>,
+differs from the parameterization sometimes used in the literature.
+In the present case <code>t0</code> is the lower bound of the uniform distribution of length
+<code>st0</code>, but <em>not</em> its midpoint. The parameterization employed here is in line
+with the functions in the <code>rtdists</code> package.
+</p>
+<p>The default diffusion constant <code>s</code> is 1 and not 0.1 as in most applications of
+Roger Ratcliff and others. Usually <code>s</code> is not specified as the other parameters:
+<code>a</code>, <code>v</code>, and <code>sv</code>, may be scaled to produce the same distributions
+(as is done in the code).
+</p>
+<p>The function code is basically an extension of the <code>ddiffusion</code> function from the
+package <code>rtdists</code> for the Ratcliff diffusion model.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>For the original <code>rtdists</code> package: Underlying C code by Jochen Voss and Andreas Voss. Porting and R wrapping by Matthew Gretton, Andrew Heathcote, Scott Brown, and Henrik Singmann. <code>qdiffusion</code> by Henrik Singmann. For the <code>d2DSD</code> function the C code was extended by Sebastian Hellmann.
+</p>
+
+
+<h3>References</h3>
+
+<p>Pleskac, T. J., &amp; Busemeyer, J. R. (2010). Two-Stage Dynamic Signal Detection: A Theory of Choice, Decision Time, and Confidence, <em>Psychological Review</em>, 117(3), 864-901. doi:10.1037/a0019737
+</p>
+<p>Ratcliff, R., &amp; McKoon, G. (2008). The diffusion decision model: Theory and data for two-choice decision tasks. <em>Neural Computation</em>, 20(4), 873-922.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Plot rt distribution ignoring confidence
+curve(d2DSD(x, "upper", -Inf, Inf, tau=1, a=2, v=0.4, sz=0.2, sv=0.9), xlim=c(0, 2), lty=2)
+curve(d2DSD(x, "lower", -Inf, Inf, tau=1, a=2, v=0.4, sz=0.2, sv=0.9), col="red", lty=2, add=TRUE)
+curve(d2DSD(x, "upper", -Inf, Inf, tau=1, a=2, v=0.4),add=TRUE)
+curve(d2DSD(x, "lower", -Inf, Inf, tau=1, a=2, v=0.4), col="red", add=TRUE)
+# Generate a random sample
+dfu &lt;- r2DSD(5000, a=2,v=0.5,t0=0,z=0.5,d=0,sz=0,sv=0, st0=0,  tau=1, s=1)
+# Same RT distribution but upper and lower responses changed
+dfl &lt;- r2DSD(50, a=2,v=-0.5,t0=0,z=0.5,d=0,sz=0,sv=0, st0=0,  tau=1, s=1)
+head(dfu)
+
+d2DSD(dfu, th1=-Inf, th2=Inf, a=2, v=.5)[1:5]
+# Scaling diffusion parameters leads do same density values
+s &lt;- 2
+d2DSD(dfu, th1=-Inf, th2=Inf, a=2*s, v=.5*s, s=2)[1:5]
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  require(ggplot2)
+  ggplot(dfu, aes(x=rt, y=conf))+
+    stat_density_2d(aes(fill = after_stat(density)), geom = "raster", contour = FALSE) +
+    facet_wrap(~response)
+}
+boxplot(conf~response, data=dfu)
+
+# Restricting to specific confidence region
+dfu &lt;- dfu[dfu$conf &gt;0 &amp; dfu$conf &lt;1,]
+d2DSD(dfu, th1=0, th2=1, a=2, v=0.5)[1:5]
+
+# If lower confidence threshold is higher than the upper, the function throws an error,
+# except when stop_on_error is FALSE
+d2DSD(dfu[1:5,], th1=1, th2=0, a=2, v=0.5, stop_on_error = FALSE)
+
+</code></pre>
+
+
+</div>

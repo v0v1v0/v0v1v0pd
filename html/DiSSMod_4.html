@@ -1,0 +1,316 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DiSSMod</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting Sample Selection Models for Discrete Response Variables</h2>
+
+<h3>Description</h3>
+
+<p>Function <code>DiSSMod</code> fits sample selection models for discrete random
+variables, by suitably extending the formulation of the classical
+Heckman model to the case of a discrete response, but retaining the
+original conceptual framework. Maximum likelihood estimates are obtained
+by Newton-Raphson iteration combined with use of profile likelihood.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DiSSMod(response, selection, data, resp.dist, select.dist, alpha,
+  trunc.num, standard = FALSE, verbose = 1, eps = 1e-07,
+  itmax = 1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>a formula for the response equation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selection</code></td>
+<td>
+<p>a formula for the selection equation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame and data has to be included with the form of <code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp.dist</code></td>
+<td>
+<p>a character for the distribution choice of the response variable,
+<code>"bernoulli"</code> for Bernoulli distribution, <code>"poisson"</code> for Poisson distribution,
+and <code>"negbinomial"</code> for Negative binomial distribution. Also, the character strings
+can be abbreviated and can be upper or lower case as preferred.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select.dist</code></td>
+<td>
+<p>a character for the distribution choice of the selection variable,
+<code>"gumbel"</code> for Gumbel distribution, <code>"normal"</code> for Normal distribution,
+and <code>"logistic"</code> for Logistic distribution. Also, the character strings
+can be abbreviated and can be upper or lower case as preferred.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>a vector of <code class="reqn">alpha</code> values on which the profile log-likelihood function is evaluated;
+if the argument is missing, a set of values in the interval <code>(-10, 10)</code> is used for the initial search,
+followed by a second search on a revised interval which depends on the outcome from the first search.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trunc.num</code></td>
+<td>
+<p>an integer numeric constant used as the truncation point of an infine summation of probabilities
+involved when <code>resp.dist</code> equals <code>"Poisson"</code> or <code>"NegBinomial"</code>;
+if the argument is missing, a default choice is made, as described in the ‘Details’ section. Notice: this
+default choice of <code>trunc.num</code> may be subject to revision in some future version of the package,
+and the argument <code>trunc.num</code> itselt may possibly be replaced by some other ingredient.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standard</code></td>
+<td>
+<p>a logical value for the standardizing explanatory variables, if <code>TRUE</code> two types of values
+(standardized and not) will be returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>an integer value for the level of printed details (values: 0|1|2); the default value is 1
+which stands for shortly printed details. If the value is 2, more details are viewed such as
+values of the log likelihood functions and iteration numbers. If the value is 0, there is no printed
+detail.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>a numeric value for the estimating parameters, which is needed for the step of the optimization.
+If the sum of absolute differences between present step estimated parameters and former step
+estimated parameters is smaller than <code>eps</code>, we assume that estimated parameters are
+optimized.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itmax</code></td>
+<td>
+<p>an integer stands for maximum number for the iteration of optimizing the parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The specification of the two linear models regulating the response variable and
+the selection mechanism, as indicated in the ‘Background’ section,
+is accomplished by two arguments of <code>formula</code> type,
+denoted <code>response</code> and <code>selection</code>, respectively.
+Each <code>formula</code> is specified with the same syntax of similar arguments in
+standard functions such as <code>lm</code> and <code>glm</code>, with the restriction that
+the intercept term (which is automatically included) must not be removed.
+</p>
+<p>The distributional assumptions associated to the <code>response</code> and <code>selection</code> components
+are specified by the arguments <code>resp.dist</code> and <code>select.dist</code>, respectively.
+Argument <code>select.dist</code> refers to the unobservable continuous variable of which we
+observe only the dichotomous outcome Yes-No.
+</p>
+<p>In this respect, a remark is appropriate about the option <code>"Gumbel"</code> for <code>select.dist</code>.
+This choice is equivalent to the adoption of an Exponential distribution of the selection variables
+combined  an exponential transformation of the linear predictor of the
+<code>selection</code> argument, as it is presented in Section 3.2 of Azzalini et al. (2019).
+Also, it corresponds to work with the log-transformation of an Exponential variable,
+which is essentially a Gumbel type of variable, up to a linear transformation with
+respect to its more commonly employed parameterization.
+</p>
+<p>When <code>resp.dist</code> is <code>"Poisson"</code> or <code>"NegBinomial"</code> and <code>trunc.num</code> is missing,
+a default choice is made; this equals <code>1.5*m</code> or <code>2*m</code> in the two respective cases,
+where <code>m</code> denotes the maximum observed value of the response variable.
+</p>
+<p>Function <code>DiSSMOd</code> calls lower level functions, <code>nr.bin, nr.nbinom, nr.pois</code> and the others
+for the actual numerical maximization of the log-likelihood via a Newton-Raphson iteration.
+</p>
+<p>Notice that the automatic initialization of the <code>alpha</code> search interval, when this argument is
+missing, may change in future versions of the package.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>DiSSMod</code> returns an object of class <code>"DiSSMod"</code>,
+which is a list containing following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>a matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standard</code></td>
+<td>
+<p>a logical value, stands for standardization or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>st_loglik</code></td>
+<td>
+<p>a vector containing the differences between log likelihoods and maximized log likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_loglik</code></td>
+<td>
+<p>a maximized log likelihood value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mle_alpha</code></td>
+<td>
+<p>a maximized likelihood estimator of alpha.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>a vector containing grids of the alpha</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nalpha</code></td>
+<td>
+<p>a vector containing proper alpha, which does not have
+<code>NA</code> value for corresponding log likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_NA</code></td>
+<td>
+<p>a number of <code>NA</code> values of log likelihoods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_select</code></td>
+<td>
+<p>a number of selected response variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_all</code></td>
+<td>
+<p>a number of all response variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate_response</code></td>
+<td>
+<p>estimated values for the response model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std_error_response</code></td>
+<td>
+<p>estimated standard errors for the response model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate_selection</code></td>
+<td>
+<p>estimated values for the selection model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>std_error_selection</code></td>
+<td>
+<p>estimated standard errors for the selection model.</p>
+</td>
+</tr>
+</table>
+<h3>Background</h3>
+
+<p>Function <code>DiSSMod</code> fits sample selection models for discrete random variables,
+by suitably extending the formulation of the classical Heckman model to the case of a discrete response,
+but retaining the original conceptual framework.
+This logic involves the following key ingredients: (1) a linear model indicating which explanatory variables
+influence the response variable; (2) a linear model indicating  which (possibly different) explanatory variables,
+besides the response variable itself, influence  a ‘selection variable’, which is intrinsically continuous but
+we only observe a dichotomous outcome from it, of type Yes-No, which selects which are the observed response cases;
+(3) distributional assumptions on the response and the selection variable.
+</p>
+<p>The data fitting method is maximum likelihood estimation (MLE), which operates in two steps:
+(i) for each given value of parameter <code class="reqn">alpha</code> which regulates the level of selection,
+MLE is performed for all the remaining parameters, using a Newton-Raphson iteration;
+(ii) a scan of the <code class="reqn">alpha</code> axis builds the  profile log-likelihood function and
+its maximum point represents the overall MLE.
+</p>
+<p>A detailed account of the underlying theory and the operational methodology is provided by Azzalini et al. (2019).
+</p>
+
+
+<h3>References</h3>
+
+<p>Azzalini, A., Kim, H.-M. and Kim, H.-J. (2019) Sample selection
+models for discrete and other non-Gaussian response variables.
+<em>Statistical Methods &amp; Applications</em>, <strong>28</strong>, 27–56. First online 30 March 2018.
+<a href="https://doi.org/10.1007/s10260-018-0427-1">https://doi.org/10.1007/s10260-018-0427-1</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>The functions <code>summary.DiSSMod</code>, <code>coef.DiSSMod</code>,
+<code>confint.DiSSMod</code>, <code>plot.DiSSMod</code>
+are used to obtain and print a summary, coefficients, confidence interval and
+plot of the results.
+</p>
+<p>The generic function <code>logLik</code> is used to obtain maximum log likelihood of the
+result.
+</p>
+<p>See also <code>lm</code>, <code>glm</code> and
+<code>formula</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(45)
+data(DoctorRWM, package = "DiSSMod")
+n0 &lt;- 600
+set.n0 &lt;- sample(1:nrow(DoctorRWM), n0)
+reduce_DoctorRWM &lt;- DoctorRWM[set.n0,]
+result0 &lt;- DiSSMod(response = as.numeric(DOCVIS &gt; 0) ~ AGE + INCOME_SCALE + HHKIDS + EDUC + MARRIED,
+                   selection = PUBLIC ~ AGE + EDUC + FEMALE,
+                   data = reduce_DoctorRWM, resp.dist="bernoulli", select.dist = "normal",
+                   alpha = seq(-5.5, -0.5, length.out = 21), standard = TRUE)
+
+print(result0)
+
+data(CreditMDR, package = "DiSSMod")
+n1 &lt;- 600
+set.n1 &lt;- sample(1:nrow(CreditMDR), n1)
+reduce_CreditMDR &lt;- CreditMDR[set.n1,]
+result1 &lt;- DiSSMod(response = MAJORDRG ~ AGE + INCOME + EXP_INC,
+                   selection = CARDHLDR ~ AGE + INCOME + OWNRENT + ADEPCNT + SELFEMPL,
+                   data = reduce_CreditMDR, resp.dist="poi", select.dist = "logis",
+                   alpha = seq(-0.3, 0.3,length.out = 21), standard = FALSE, verbose = 1)
+
+print(result1)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_species_scores_bk</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Vertical ggplot2 line plot of ordination scores</h2>
+
+<h3>Description</h3>
+
+<p><code>plot_species_scores_bk</code> creates a vertical line plot of ordination 
+scores with selection criterion for which scores to plot with names.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_species_scores_bk(
+  species_scores,
+  ylab = "scores",
+  threshold = 7,
+  y_lab_interval = 0.5,
+  speciesname = NULL,
+  scoresname = "RDA1",
+  selectname = "Fratio1",
+  speciesgroup = NULL,
+  expand = 0.2,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>species_scores</code></td>
+<td>
+<p>a species-by-scores matrix, a data frame with 
+row names (species names) or a tibble with variable with name
+<code>speciesname</code> containing species names and a column or variable with 
+name <code>scoresname</code> containing the scores (default: <code>"RDA1"</code>), e.g.
+species scores from library <code>vegan</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylab</code></td>
+<td>
+<p>y-axis label. Default: $b_k$.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>species with criterion (specified by <code>selectname</code>) 
+higher than the <code>threshold</code> are displayed. Default: 7 (which is the 
+threshold F-ratio for testing a single regression coefficient at
+<code>p = 0.01</code> with <code>60</code> df for the error in a multiple regression
+of each single species onto the condition and the ordination axis). If 
+<code>selectname</code> is not in <code>species_scores</code>, the <code>threshold</code> is 
+divided by <code>14</code>, so that the default is 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_lab_interval</code></td>
+<td>
+<p>interval of the y-axis ticks. A tick at no effect (0) 
+is always included; default: 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speciesname</code></td>
+<td>
+<p>name of the variable containing the species names 
+(default <code>NULL</code> uses row names).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scoresname</code></td>
+<td>
+<p>name of the column or variable containing the species 
+scores to be plotted (default <code>"RDA1"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selectname</code></td>
+<td>
+<p>name of the column or variable containing the criterion 
+for the selection of species to be displayed. Default: <code>"Fratio1"</code>; 
+if <code>selectname</code> is not found in <code>species_scores</code>, set 
+to <code>scoresname</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speciesgroup</code></td>
+<td>
+<p>name of the factor, the levels of which
+receive different colors in the vertical plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand</code></td>
+<td>
+<p>amount of extension of the line plot (default 0.2).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical for printing the number of species with names out of
+the total number (default: <code>TRUE</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The absolute value of the criterion values is taken before selection, so 
+that also the species scores of the ordination can serve as a criterion
+(e.g. <code>selectname = "RDA1"</code>). The function has been copied from 
+the <code>PRC</code> package at <a href="https://github.com/CajoterBraak/PRC">https://github.com/CajoterBraak/PRC</a>.
+</p>
+<p>The function is used in <code>plot.dcca</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a ggplot object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("dune_trait_env")
+
+# rownames are carried forward in results
+rownames(dune_trait_env$comm) &lt;- dune_trait_env$comm$Sites
+
+mod &lt;- dc_CA(formulaEnv = ~A1 + Moist + Mag + Use + Manure,
+             formulaTraits = ~ SLA + Height + LDMC + Seedmass + Lifespan,
+             response = dune_trait_env$comm[, -1],  # must delete "Sites"
+             dataEnv = dune_trait_env$envir,
+             dataTraits = dune_trait_env$traits,
+             verbose = FALSE)
+
+env_scores &lt;- scores(mod, display = "tval")
+
+env_scores &lt;- data.frame(env_scores)
+env_scores$group &lt;- c("quantitative", "category")[c(1, 1, 2, 2, 2, 1, 1)]									
+plot_species_scores_bk(
+  species_scores = env_scores,
+  ylab = "optimistic t-values",  threshold = 0,  y_lab_interval = 1,
+  scoresname = "dcCA1", speciesgroup = "group", verbose = FALSE
+)
+</code></pre>
+
+
+</div>

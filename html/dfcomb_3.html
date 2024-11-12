@@ -1,0 +1,369 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>CombIncrease_sim</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combination design Simulator using Logistic model</h2>
+
+<h3>Description</h3>
+
+<p><code>CombIncrease_sim</code> is used to generate simulation replicates of phase I clinical trial for combination studies where the toxicity and efficacy of both agents is assumed to increase with the dose using the design proposed by Riviere et al. entitled "A Bayesian dose-finding design for drug combination clinical trials based on the logistic model".
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">CombIncrease_sim(ndose_a1, ndose_a2, p_tox, target, target_min, target_max,
+  prior_tox_a1, prior_tox_a2, n_cohort, cohort, tite=FALSE, time_full=0,
+  poisson_rate=0, nsim, c_e=0.85, c_d=0.45, c_stop=0.95, c_t=0.5, c_over=0.25,
+  cmin_overunder=2, cmin_mtd=3, cmin_recom=1, startup=1, alloc_rule=1,
+  early_stop=1, init_dose_1=1, init_dose_2=1, nburn=2000, niter=5000, seed=14061991)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ndose_a1</code></td>
+<td>
+<p>Number of dose levels for agent 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndose_a2</code></td>
+<td>
+<p>Number of dose levels for agent 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_tox</code></td>
+<td>
+<p>A matrix of the true toxicity probabilities associated with the combinations. True toxicity probabilities should be entered with agent 1 in row and agent 2 in column, with increasing toxicity probabilities with both row and column numbers (see examples).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>Toxicity (probability) target.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target_min</code></td>
+<td>
+<p>Minimum of the targeted toxicity interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target_max</code></td>
+<td>
+<p>Maximum of the targeted toxicity interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_tox_a1</code></td>
+<td>
+<p>A vector of initial guesses of toxicity probabilities associated with the doses of agent 1. Must be of length <code>ndose_a1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_tox_a2</code></td>
+<td>
+<p>A vector of initial guesses of toxicity probabilities associated with the doses of agent 2. Must be of length <code>ndose_a2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_cohort</code></td>
+<td>
+<p>Total number of cohorts to include in the trial.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cohort</code></td>
+<td>
+<p>Cohort size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tite</code></td>
+<td>
+<p>A boolean indicating if the toxicity is considered as a time-to-event outcome (TRUE), or as a binary outcome (default value FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_full</code></td>
+<td>
+<p>Full follow-up time window. This argument is used only if tite=TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>poisson_rate</code></td>
+<td>
+<p>A value indicating the rate for the Poisson process used to simulate patient arrival, i.e. expected number of arrivals per observation window. This argument is used only if tite=TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>Number of simulations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_e</code></td>
+<td>
+<p>Probability threshold for dose-escalation. The default value is set at 0.85.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_d</code></td>
+<td>
+<p>Probability threshold for dose-deescalation. The default value is set at 0.45.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_stop</code></td>
+<td>
+<p>Probability threshold for early trial termination due to over-toxicity or under-toxicity (see details). The default value is set at 0.95.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_t</code></td>
+<td>
+<p>Probability threshold for early trial termination for finding the MTD (see details). The default value is set at 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_over</code></td>
+<td>
+<p>Probability threshold to control over-dosing (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cmin_overunder</code></td>
+<td>
+<p>Minimum number of cohorts to be included at the lowest/highest combination before possible early trial termination for over-toxicity or under-toxicity (see details). The default value is set at 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cmin_mtd</code></td>
+<td>
+<p>Minimum number of cohorts to be included at the recommended combination before possible early trial termination for finding the MTD (see details). The default value is set at 3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cmin_recom</code></td>
+<td>
+<p>Minimum number of cohorts to be included at the recommended combination at the end of the trial. The default value is set at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startup</code></td>
+<td>
+<p>Interger (0, 1, 2, or 3) indicating which start-up phase is used (see details). The default value is set at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alloc_rule</code></td>
+<td>
+<p>Interger (1, 2, or 3) indicating which allocation rule is used (see details). The default value is set at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>early_stop</code></td>
+<td>
+<p>Interger (1, 2, or 3) indicating which early stopping rule is used (see details). The default value is set at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_dose_1</code></td>
+<td>
+<p>Initial dose for agent 1. The default is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_dose_2</code></td>
+<td>
+<p>Initial dose for agent 2. The default is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nburn</code></td>
+<td>
+<p>Number of burn-in for HMC. The default value is set at 2000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niter</code></td>
+<td>
+<p>Number of iterations for HMC. The default value is set at 5000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed of the random number generator. Default value is set at 14061991.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Start-up phase:
+</p>
+
+<ul>
+<li> <p><code>startup=0</code>: No startup phase: the first tested combination is forced to be the initial combination. The following ones use the normal allocation rule..
+</p>
+</li>
+<li> <p><code>startup=1</code> (Riviere et al 2014): Begin at the initial combination and increase both agent (+1, +1) until the first toxicity is observed or maximum combination is reached.
+</p>
+</li>
+<li> <p><code>startup=2</code>: Begin at the initial combination and increase agent 1 (+1, 0) until a toxicity is observed or maximum dose is reached. Then begin at (init_dose1,init_dose2+1) and increase agent 2 (0, +1) until a toxicity is observed or maximum dose is reached.
+</p>
+</li>
+<li> <p><code>startup=3</code>: Begin at the initial combination and increase alternatively each agent (+1, 0) then (0, +1) until the first toxicity is observed or maximum combination is reached.
+</p>
+</li>
+</ul>
+<p>Allocation rule:
+</p>
+
+<ul>
+<li> <p><code>alloc_rule=1</code> (Riviere et al 2014):
+If P(toxicity probability at combination (i,j) &lt; <code>target</code>) &gt; <code>c_e</code>: among combinations in the neighborhood (-1, +1), (0, +1), (+1, 0), (+1, -1), choose the combination with a higher estimated toxicity probability than the current combination and with the estimated toxicity probability closest to <code>target</code>.
+If P(toxicity probability at combination (i,j) &gt; <code>target</code>) &gt; 1-<code>c_d</code>: among neighborhood (-1, +1), (-1, 0), (0, -1), (+1, -1), choose the combination with a lower estimated toxicity probability than the current combination and with the estimated toxicity probability closest to <code>target</code>.
+Otherwise, remain on the same combination.
+</p>
+</li>
+<li> <p><code>alloc_rule=2</code>: Among combinations already tested and combinations in the neighborhood (-1, 0), (-1, +1), (0, +1), (+1, 0), (+1, -1), (0, -1), (-1, -1) of a combination tested, choose the combination with the highest posterior probability to be in the targeted interval [<code>target_min</code>, <code>target_max</code>] while controling overdosing i.e. P(toxicity probability at combination (i,j) &gt; <code>target_max</code>) &lt; <code>c_over</code>.
+</p>
+</li>
+<li> <p><code>alloc_rule=3</code>: Among combinations in the neighborhood (-1, 0), (-1, +1), (0, +1), (+1, 0), (+1, -1), (0, -1), (-1, -1) of the current combination, choose the combination with the highest posterior probability to be in the targeted interval [<code>target_min</code>, <code>target_max</code>] while controling overdosing i.e. P(toxicity probability at combination (i,j) &gt; <code>target_max</code>) &lt; <code>c_over</code>.
+</p>
+</li>
+</ul>
+<p>Early stopping for over-dosing:
+If the current combination is the lowest (1, 1) and at least <code>cmin_overunder</code> cohorts have been included at that combination and P(toxicity probability at combination (i,j) &gt; <code>target</code>) &gt;= <code>c_stop</code> then stop the trial and do not recommend any combination.
+</p>
+<p>Early stopping for under-dosing:
+If the current combination is the highest and at least <code>cmin_overunder</code> cohorts have been included at that combination and P(toxicity probability at combination (i,j) &lt; <code>target</code>) &gt;= <code>c_stop</code> then stop the trial and do not recommend any combination.
+</p>
+<p>Early stopping for identifying the MTD:
+</p>
+
+<ul>
+<li> <p><code>early_stop=1</code> (Riviere et al 2014):
+No stopping rule, include patients until maximum sample size is reached.
+</p>
+</li>
+<li> <p><code>early_stop=2</code>:
+If the next recommended combination has been tested on at least <code>cmin_mtd</code> cohorts and has a posterior probability to be in the targeted interval [<code>target_min</code>, <code>target_max</code>] that is &gt;= <code>c_t</code> and also control overdosing i.e. P(toxicity probability at current combination &gt; <code>target_max</code>) &lt; <code>c_over</code> then stop the trial and recommend this combination.
+</p>
+</li>
+<li> <p><code>early_stop=3</code>:
+If at least <code>cmin_mtd</code> cohorts have been included at the next recommended combination then stop the trial and recommend this combination.
+</p>
+</li>
+</ul>
+<p>Stopping at the maximum sample size:
+If the maximum sample size is reached and no stopping rule is met, then the recommended combination is the one that was tested on at least <code>cmin_recom</code> cohorts and with the highest posterior probability to be in the targeted interval [<code>target_min</code>, <code>target_max</code>].
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class "CombIncrease_sim" is returned, consisting of the operating characteristics of the design specified. Objects generated by <code>CombIncrease_sim</code> contain at least the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>rec_dose</code></td>
+<td>
+<p>Percentage of combination selection.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_pat_dose</code></td>
+<td>
+<p>Mean number of patients at each combination.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_tox_dose</code></td>
+<td>
+<p>Mean number of toxicities at each combination.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inconc</code></td>
+<td>
+<p>Percentage of inclusive trials.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>early_conc</code></td>
+<td>
+<p>Percentage of trials stopping with criterion for finding MTD.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>Number of simulations (if function stopped while executed, return the current number of simulations performed with associated other outputs).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pat_tot</code></td>
+<td>
+<p>Total mean number of patients accrued.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tab_pat</code></td>
+<td>
+<p>Vector with the number of patients included for each simulation.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Jacques-Henri Jourdan and Marie-Karelle Riviere-Jourdan <a href="mailto:eldamjh@gmail.com">eldamjh@gmail.com</a></p>
+
+
+<h3>References</h3>
+
+<p>Riviere, M-K., Yuan, Y., Dubois, F., and Zohar, S. (2014). A Bayesian dose-finding design for drug combination clinical trials based on the logistic model. Pharmaceutical Statistics.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>CombIncrease_next</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+p_tox_sc1 = matrix(c(0.05,0.10,0.15,0.30,0.45,
+                     0.10,0.15,0.30,0.45,0.55,
+                     0.15,0.30,0.45,0.50,0.60),nrow=5,ncol=3)
+prior_a1 = c(0.12, 0.2, 0.3, 0.4, 0.5)
+prior_a2 = c(0.2, 0.3, 0.4)
+
+sim1 = CombIncrease_sim(ndose_a1=5, ndose_a2=3, p_tox=p_tox_sc1, target=0.30,
+  target_min=0.20, target_max=0.40, prior_tox_a1=prior_a1,
+  prior_tox_a2=prior_a2, n_cohort=20, cohort=3, tite=FALSE, nsim=2000,
+  c_over=1, cmin_overunder=3, cmin_recom=1, startup=1, alloc_rule=1,
+  early_stop=1, seed=14061991)
+sim1
+
+
+# Dummy example, running quickly
+useless = CombIncrease_sim(ndose_a1=3, ndose_a2=2,
+  p_tox=matrix(c(0.05,0.15,0.30,0.15,0.30,0.45),nrow=3), target=0.30,
+  target_min=0.20, target_max=0.40, prior_tox_a1=c(0.2,0.3,0.4),
+  prior_tox_a2=c(0.2,0.3), n_cohort=2, cohort=2, nsim=1)
+</code></pre>
+
+
+</div>

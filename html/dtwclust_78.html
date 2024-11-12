@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>TADPole</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>TADPole clustering</h2>
+
+<h3>Description</h3>
+
+<p>Time-series Anytime Density Peaks Clustering as proposed by Begum et al. (2015).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">TADPole(
+  data,
+  k = 2L,
+  dc,
+  window.size,
+  error.check = TRUE,
+  lb = "lbk",
+  trace = FALSE
+)
+
+tadpole(
+  data,
+  k = 2L,
+  dc,
+  window.size,
+  error.check = TRUE,
+  lb = "lbk",
+  trace = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A matrix or data frame where each row is a time series, or a list where each element
+is a time series. Multivariate series are <strong>not</strong> supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>The number of desired clusters. Can be a vector with several values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dc</code></td>
+<td>
+<p>The cutoff distance(s). Can be a vector with several values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window.size</code></td>
+<td>
+<p>Window size constraint for DTW (Sakoe-Chiba). See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lb</code></td>
+<td>
+<p>Which lower bound to use, "lbk" for <code>lb_keogh()</code> or "lbi" for <code>lb_improved()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Logical flag. If <code>TRUE</code>, more output regarding the progress is printed to screen.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function can be called either directly or through <code>tsclust()</code>.
+</p>
+<p>TADPole clustering adopts a relatively new clustering framework and adapts it to time series
+clustering with DTW. See the cited article for the details of the algorithm.
+</p>
+<p>Because of the way the algorithm works, it can be considered a kind of Partitioning Around
+Medoids (PAM). This means that the cluster centroids are always elements of the data. However,
+this algorithm is deterministic, depending on the value of <code>dc</code>.
+</p>
+<p>The algorithm first uses the DTW's upper and lower bounds (Euclidean and LB_Keogh respectively)
+to find series with many close neighbors (in DTW space). Anything below the cutoff distance
+(<code>dc</code>) is considered a neighbor. Aided with this information, the algorithm then tries to prune
+as many DTW calculations as possible in order to accelerate the clustering procedure. The series
+that lie in dense areas (i.e. that have lots of neighbors) are taken as cluster centroids.
+</p>
+<p>The algorithm relies on the DTW bounds, which are only defined for univariate time series of
+equal length.
+</p>
+<p>Parallelization is supported in the following way:
+</p>
+
+<ul>
+<li>
+<p> For multiple <code>dc</code> values, multi-processing with <code>foreach::foreach()</code>.
+</p>
+</li>
+<li>
+<p> The internal distance calculations use multi-threading with RcppParallel::RcppParallel.
+</p>
+</li>
+</ul>
+<p>The windowing constraint uses a centered window.
+The calculations expect a value in <code>window.size</code> that represents the distance between the point considered and one of the edges of the window.
+Therefore, if, for example, <code>window.size = 10</code>, the warping for an observation <code class="reqn">x_i</code> considers the points between <code class="reqn">x_{i-10}</code> and <code class="reqn">x_{i+10}</code>,
+resulting in <code>10(2) + 1 = 21</code> observations falling within the window.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with:
+</p>
+
+<ul>
+<li> <p><code>cl</code>: Cluster indices.
+</p>
+</li>
+<li> <p><code>centroids</code>: Indices of the centroids.
+</p>
+</li>
+<li> <p><code>distCalcPercentage</code>: Percentage of distance calculations that were actually performed.
+</p>
+</li>
+</ul>
+<p>For multiple <code>k</code>/<code>dc</code> values, a list of lists is returned, each internal list having the
+aforementioned elements.
+</p>
+
+
+<h3>Parallel Computing</h3>
+
+<p>Please note that running tasks in parallel does <strong>not</strong> guarantee faster computations.
+The overhead introduced is sometimes too large, and it's better to run tasks sequentially.
+</p>
+<p>This function uses the RcppParallel package for parallelization.
+It uses all available threads by default (see <code>RcppParallel::defaultNumThreads()</code>),
+but this can be changed by the user with <code>RcppParallel::setThreadOptions()</code>.
+</p>
+<p>An exception to the above is when it is called within a <code>foreach</code> parallel loop <strong>made by dtwclust</strong>.
+If the parallel workers do not have the number of threads explicitly specified,
+this function will default to 1 thread per worker.
+See the parallelization vignette for more information - <code>browseVignettes("dtwclust")</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>Begum N, Ulanova L, Wang J and Keogh E (2015). “Accelerating Dynamic Time Warping Clustering
+with a Novel Admissible Pruning Strategy.” In <em>Conference on Knowledge Discovery and Data
+Mining</em>, series KDD '15. ISBN 978-1-4503-3664-2/15/08, <a href="https://doi.org/10.1145/2783258.2783286">doi:10.1145/2783258.2783286</a>.
+</p>
+
+
+</div>

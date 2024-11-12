@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynr.model</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a dynrModel object for parameter estimation (cooking dynr) using <code>dynr.cook</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>Create a dynrModel object for parameter estimation (cooking dynr) using <code>dynr.cook</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynr.model(dynamics, measurement, noise, initial, data, ...,
+  outfile = tempfile())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dynamics</code></td>
+<td>
+<p>a dynrDynamics object prepared with <code>prep.formulaDynamics</code> 
+or <code>prep.matrixDynamics</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measurement</code></td>
+<td>
+<p>a dynrMeasurement object prepared with <code>prep.loadings</code> 
+or <code>prep.measurement</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>noise</code></td>
+<td>
+<p>a dynrNoise object prepared with <code>prep.noise</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial</code></td>
+<td>
+<p>a dynrInitial object prepared with <code>prep.initial</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a dynrData object made with <code>dynr.data</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments specifying other dynrRecipe objects. Argument regimes is for 
+a dynrRegimes object prepared with <code>prep.regimes</code> and argument transform is for 
+a dynrTrans object prepared with <code>prep.tfun</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outfile</code></td>
+<td>
+<p>a character string of the name of the output C script of model functions to be compiled 
+for parameter estimation. The default is the name for a potential temporary file returned by tempfile().</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A <code>dynrModel</code> is a collection of recipes.  The recipes are constructed with the functions <code>prep.measurement</code>, <code>prep.noise</code>, <code>prep.formulaDynamics</code>, <code>prep.matrixDynamics</code>, <code>prep.initial</code>, and in the case of regime-switching models <code>prep.regimes</code>.  Additionally, data must be prepared with <code>dynr.data</code> and added to the model.
+</p>
+<p>Several <em>named</em> arguments can be passed into the <code>...</code> section of the function.  These include
+</p>
+
+<ul>
+<li>
+<p> Argument <code>regimes</code> is for a dynrRegimes object prepared with <code>prep.regimes</code>
+</p>
+</li>
+<li>
+<p> Argument <code>transform</code> is for a dynrTrans object prepared with <code>prep.tfun</code>.
+</p>
+</li>
+<li>
+<p> Argument <code>options</code> a list of options. Check the NLopt website <a href="https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#stopping-criteria">https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#stopping-criteria</a>
+for details. Available options for use with a dynrModel object 
+include xtol_rel, stopval, ftol_rel, ftol_abs, maxeval, and maxtime, 
+all of which control the termination conditions for parameter optimization. The examples below show a case where options were set.
+</p>
+</li>
+</ul>
+<p>There are several available methods for <code>dynrModel</code> objects.
+</p>
+
+<ul>
+<li>
+<p> The dollar sign ($) can be used to both get objects out of a model and to set pieces of the model.
+</p>
+</li>
+<li> <p><code>names</code> returns the names of the free parameters in a model.
+</p>
+</li>
+<li> <p><code>printex</code> prints LaTeX expressions for the equations that compose a model. The output can then be readily typeset for inclusion in presentations and papers.
+</p>
+</li>
+<li> <p><code>nobs</code> gives the total number of observations (e.g. all times across all people)
+</p>
+</li>
+<li> <p><code>coef</code> gives the free parameter starting values.  Free parameters can also be assigned with <code>coef(model) &lt;- aNamedVectorOfCoefficients</code>
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Object of class 'dynrModel'
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a minimal model called 'model'
+# without 'cooking' (i.e., estimating parameters)
+require(dynr)
+
+meas &lt;- prep.measurement(
+	values.load=matrix(c(1, 0), 1, 2),
+	params.load=matrix(c('fixed', 'fixed'), 1, 2),
+	state.names=c("Position","Velocity"),
+	obs.names=c("y1"))
+
+ecov &lt;- prep.noise(
+	values.latent=diag(c(0, 1), 2),
+	params.latent=diag(c('fixed', 'dnoise'), 2),
+	values.observed=diag(1.5, 1),
+	params.observed=diag('mnoise', 1))
+
+initial &lt;- prep.initial(
+	values.inistate=c(0, 1),
+	params.inistate=c('inipos', 'fixed'),
+	values.inicov=diag(1, 2),
+	params.inicov=diag('fixed', 2))
+
+dynamics &lt;- prep.matrixDynamics(
+	values.dyn=matrix(c(0, -0.1, 1, -0.2), 2, 2),
+	params.dyn=matrix(c('fixed', 'spring', 'fixed', 'friction'), 2, 2),
+	isContinuousTime=TRUE)
+
+data(Oscillator)
+data &lt;- dynr.data(Oscillator, id="id", time="times", observed="y1")
+
+# Now here's the model!
+model &lt;- dynr.model(dynamics=dynamics, measurement=meas,
+	noise=ecov, initial=initial, data=data)
+</code></pre>
+
+
+</div>

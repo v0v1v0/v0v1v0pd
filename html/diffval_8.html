@@ -1,0 +1,364 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optim_tdv_simul_anne</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Total Differential Value optimization using a Simulated Annealing (and GRASP)
+algorithm(s)</h2>
+
+<h3>Description</h3>
+
+<p>This function searches for <code>k</code>-partitions of the columns of a given matrix
+(i.e., a partition of the columns in <code>k</code> groups), optimizing the Total
+Differential Value (TDV) using a stochastic global optimization method
+called Simulated Annealing (SANN) algorithm. Optionally, a Greedy
+Randomized Adaptive Search Procedure (GRASP) can be used to find a initial
+partition (seed) to be passed to the SANN algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optim_tdv_simul_anne(
+  m_bin,
+  k,
+  p_initial = NULL,
+  n_runs = 10,
+  n_sol = 1,
+  t_inic = 0.3,
+  t_final = 1e-06,
+  alpha = 0.05,
+  n_iter = 1000,
+  use_grasp = TRUE,
+  thr = 0.95,
+  full_output = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m_bin</code></td>
+<td>
+<p>A matrix. A phytosociological table of 0s (absences) and
+1s (presences), where rows correspond to taxa and columns correspond to
+relevés.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>A numeric giving the number of desired groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_initial</code></td>
+<td>
+<p>A vector of integer numbers with the partition of the
+relevés (i.e., a <code>k</code>-partition, consisting in a vector with values from 1
+to <code>k</code>, with length equal to the number of columns of <code>m_bin</code>, ascribing
+each relevé to one of the <code>k</code> groups), to be used as initial partition in
+the Simulated Annealing. For a random partition use <code>p_initial = "random"</code>.
+This argument is ignored if <code>use_grasp = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_runs</code></td>
+<td>
+<p>A numeric giving the number of runs. Defaults to 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_sol</code></td>
+<td>
+<p>A numeric giving the number of best solutions to keep in the
+final output (only used if <code>full_output</code> is <code>FALSE</code>; if <code>full_output</code> is
+<code>TRUE</code> all runs will produce an output). Defaults to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t_inic</code></td>
+<td>
+<p>A numeric giving the initial temperature. Must be greater
+than 0 and maximum admitted value is 1. Defaults to 0.3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t_final</code></td>
+<td>
+<p>A numeric giving the final temperature. Must be bounded
+between 0 and 1. Usually very low values are needed to ensure convergence.
+Defaults to 0.000001.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>A numeric giving the fraction of temperature drop to be used
+in the temperature reduction scheme (see Details). Must be bounded between
+0 and 1. Defaults to 0.05.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_iter</code></td>
+<td>
+<p>A numeric giving the number of iterations. Defaults to 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_grasp</code></td>
+<td>
+<p>A logical. Defaults to <code>TRUE</code>. IF <code>TRUE</code>, a GRASP is used
+to obtain the initial partitions for the Simulated Annealing. If <code>FALSE</code>
+the user should provide an initial partition or use or use
+<code>p_initial = "random"</code> for a random one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thr</code></td>
+<td>
+<p>A numeric giving a threshold value (from 0 to 1 ) with the
+probability used to compute the sample quantile, in order to get the best
+<code>m_bin</code> columns from which to select one to be include in the GRASP
+solution (in each step of the procedure). Only needed if <code>use_grasp</code> is
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>full_output</code></td>
+<td>
+<p>A logical. Defaults to <code>FALSE</code>. If <code>TRUE</code> extra
+information is presented in the output. See Value.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Given a phytosociological table (<code>m_bin</code>, with rows corresponding to
+taxa and columns corresponding to relevés) this function searches for a
+<code>k</code>-partition (<code>k</code>, defined by the user) optimizing the TDV, i.e.,
+searches, using a SANN algorithm (optionally working upon GRASP solutions),
+for a global maximum of TDV (by rearranging the relevés into <code>k</code> groups).
+</p>
+<p>This function uses two main algorithms:
+</p>
+
+<ol>
+<li>
+<p> An optional GRASP, which is used to obtain initial solutions
+(partitions of <code>m_bin</code>) using function <code>partition_tdv_grasp()</code>.
+Such initial solutions are then submitted to the SANN algorithm.
+</p>
+</li>
+<li>
+<p> The (main) SANN algorithm, which is used to search for a global
+maximum of TDV. The initial partition for each run of SANN can be a
+partition obtained from GRASP (if <code>use_grasp = TRUE</code>) or, (if
+<code>use_grasp = FALSE</code>), a partition given by the user (using <code>p_initial</code>) or
+a random partition (using <code>p_initial = "random"</code>).
+</p>
+</li>
+</ol>
+<p>The SANN algorithm decreases the temperature multiplying the current
+temperature by <code>1 - alpha</code> according to a predefined schedule, which is
+automatically calculated from the given values for <code>t_inic</code>, <code>t_final</code>,
+<code>alpha</code> and <code>n_iter</code>.
+Specifically, the cooling schedule is obtained calculating the number of
+times that the temperature has to be decreased in order to approximate
+<code>t_final</code> starting from <code>t_inic</code>. The number of times that the temperature
+decreases, say <code>nt</code>, is calculated by the expression:
+</p>
+<p><code style="white-space: pre;">⁠floor(n_iter/((n_iter * log(1 - alpha)) / (log((1 - alpha) * t_final / ⁠</code>
+<code style="white-space: pre;">⁠t_inic))))⁠</code>.
+</p>
+<p>Finally, these decreasing stages are scattered through the desired
+iterations (<code>n_iter</code>) homogeneously, by calculating the indices of the
+iterations that will experience a decrease in temperature using
+<code>floor(n_iter / nt * (1:nt))</code>.
+</p>
+<p>SANN is often seen as an exploratory technique where the temperature
+settings are challenging and dependent on the problem. This function tries
+to restrict temperature values taking into account that TDV is always
+between 0 and 1. Even though, obtaining values of temperature that allow
+convergence can be challenging. <code>full_output = TRUE</code> allows the user to
+inspect the behaviour of <code>current.tdv</code> and check if convergence fails.
+Generally, convergence failure can be spotted when final SANN TDV values
+are similar to the initial <code>current.tdv</code>, specially when coming from random
+partitions. In such cases, as a rule of thumb, it is advisable to decrease
+<code>t_final</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>full_output = FALSE</code> (the default), a list with the following
+components (the GRASP component is only returned if <code>use_grasp = TRUE</code>):
+</p>
+
+<dl>
+<dt>GRASP</dt>
+<dd>
+<p>A list with at most <code>n_sol</code> components, each one
+containing also a list with two components:
+</p>
+
+<dl>
+<dt>par</dt>
+<dd>
+<p>A vector with the partition of highest TDV obtained by
+GRASP;</p>
+</dd>
+<dt>tdv</dt>
+<dd>
+<p>A numeric with the TDV of <code>par</code>.</p>
+</dd>
+</dl>
+</dd>
+<dt>SANN</dt>
+<dd>
+<p>A list with at most <code>n_sol</code> components, each one containing
+also a list with two components:
+</p>
+
+<dl>
+<dt>par</dt>
+<dd>
+<p>A vector with the partition of highest TDV obtained by the
+(GRASP +) SANN algorithm(s);</p>
+</dd>
+<dt>tdv</dt>
+<dd>
+<p>A numeric with the TDV of <code>par</code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>If <code>full_output = TRUE</code>, a list with the following components (the GRASP
+component is only returned if <code>use_grasp = TRUE</code>):
+</p>
+
+<dl>
+<dt>GRASP</dt>
+<dd>
+<p>A list with <code>n_runs</code> components, each one containing also a
+list with two components:
+</p>
+
+<dl>
+<dt>par</dt>
+<dd>
+<p>A vector with the partition of highest TDV obtained by
+GRASP.</p>
+</dd>
+<dt>tdv</dt>
+<dd>
+<p>A numeric with the TDV of <code>par</code>.</p>
+</dd>
+</dl>
+</dd>
+<dt>SANN</dt>
+<dd>
+<p>A list with <code>n_runs</code> components, each one containing also a
+list with six components:
+</p>
+
+<dl>
+<dt>current.tdv</dt>
+<dd>
+<p>A vector of length <code>n_iter</code> with the current TDV of
+each SANN iteration.</p>
+</dd>
+<dt>alternative.tdv</dt>
+<dd>
+<p>A vector of length <code>n_iter</code> with the alternative
+TDV used in each SANN iteration.</p>
+</dd>
+<dt>probability</dt>
+<dd>
+<p>A vector of length <code>n_iter</code> with the probability
+used in each SANN iteration.</p>
+</dd>
+<dt>temperature</dt>
+<dd>
+<p>A vector of length <code>n_iter</code> with the temperature of
+each SANN iteration.</p>
+</dd>
+<dt>par</dt>
+<dd>
+<p>A vector with the partition of highest TDV obtained by the
+(GRASP +) SANN algorithm(s).</p>
+</dd>
+<dt>tdv</dt>
+<dd>
+<p>A numeric with the TDV of <code>par</code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Jorge Orestes Cerdeira and Tiago Monteiro-Henriques.
+E-mail: <a href="mailto:tmh.dev@icloud.com">tmh.dev@icloud.com</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Getting the Taxus baccata forests data set
+data(taxus_bin)
+
+# Removing taxa occurring in only one relevé in order to
+# reproduce the example in the original article of the data set
+taxus_bin_wmt &lt;- taxus_bin[rowSums(taxus_bin) &gt; 1, ]
+
+# Obtaining a partition that maximizes TDV using the Simulated Annealing
+# algorithm
+result &lt;- optim_tdv_simul_anne(
+  m_bin = taxus_bin_wmt,
+  k = 3,
+  p_initial = "random",
+  n_runs = 5,
+  n_sol = 5,
+  use_grasp = FALSE,
+  full_output = TRUE
+)
+
+# Inspect the result
+# The TDV of each run
+sapply(result[["SANN"]], function(x) x$tdv)
+# The best partition that was found (i.e., with highest TDV)
+result[["SANN"]][[1]]$par
+
+# A TDV of 0.1958471 indicates you are probably reproducing the three
+# groups (Estrela, Gerês and Galicia) from the original article. A solution
+# with TDV = 0.2005789 might also occur, but note that one group has only two
+# elements. For now, a minimum group size is not implemented in function
+# optim_tdv_simul_anne() as it is in the function optim_tdv_hill_climb().
+
+# Inspect how the optimization progressed (should increase towards the right)
+plot(
+  result[["SANN"]][[1]]$current.tdv,
+  type = "l",
+  xlab = "Iteration number",
+  ylab = "TDV of the currently accepted solution"
+)
+for (run in 2:length(result[["SANN"]])) {
+  lines(result[["SANN"]][[run]]$current.tdv)
+}
+
+# Plot the sorted (or tabulated) phytosociological table, using the best
+# partition that was found
+tabul &lt;- tabulation(
+  m_bin = taxus_bin_wmt,
+  p = result[["SANN"]][[1]]$par,
+  taxa_names = rownames(taxus_bin_wmt),
+  plot_im = "normal"
+)
+
+</code></pre>
+
+
+</div>

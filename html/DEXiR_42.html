@@ -1,0 +1,162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>evaluate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>evaluate</h2>
+
+<h3>Description</h3>
+
+<p>Evaluates decision alternatives. Essentially, this is a bottom-up aggregation method:
+starting with basic attributes (or <code>prune</code>d aggregate attributes), values of each
+alternative are gradually aggregated towards the <code>root</code> attribute,
+according to <code>evaluation_order()</code>. The aggregation
+at each individual DexiAttribute is governed by the corresponding <code>DexiAttribute$funct</code>.
+When alternative values are sets or distributions (see DEXiR-package),
+then <code>evaluate()</code> tries all possible combinations of values of the descendant attributes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">evaluate(
+  model,
+  alternatives = model$alternatives,
+  root = model$root,
+  method = EnumEvalMethod,
+  bounding = FALSE,
+  prune = list(),
+  norm = NULL,
+  and = NULL,
+  or = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>DexiModel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternatives</code></td>
+<td>
+<p>A data frame containing data of one or more decision alternatives.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>root</code></td>
+<td>
+<p>DexiAttribute. Default: <code>model$root</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>One of: <code>"set"</code> (default), <code>"prob"</code>, <code>"fuzzy"</code> or <code>"fuzzynorm"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bounding</code></td>
+<td>
+<p><code>logical(1)</code>. When <code>TRUE</code>, evaluation results are additionally subjected to
+<code>bounded_scale_value()</code> to keep them in the bounds set up by the corresponding scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prune</code></td>
+<td>
+<p><code>character()</code>, containing IDs of aggregate attributes that should be treated as
+evaluation inputs (rather than basic attributes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm</code></td>
+<td>
+<p>Some normalization function of the form <code style="white-space: pre;">⁠function(num_vector)⁠</code>, or <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>and</code></td>
+<td>
+<p>Some conjunctive aggregation function of the form <code style="white-space: pre;">⁠function(num_vector)⁠</code>, or <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>or</code></td>
+<td>
+<p>Some disjunctive aggregation function of the form <code style="white-space: pre;">⁠function(num_vector)⁠</code>, or <code>NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>evaluate()</code> implements four aggregation methods:
+<code>"set"</code>, <code>"prob"</code>, <code>"fuzzy"</code> and <code>"fuzzynorm"</code>.
+</p>
+<p>The <code>"set"</code> method interprets DEXi values as sets. The output value assigned to some <code>attribute</code> is
+composed of the union of all <code>attribute$funct</code> evaluations for all possible combinations of values of
+<code>attribute$inputs</code>.
+</p>
+<p>The remaining three methods interpret DEXi values as value distributions. They follow the same algorithm,
+but use different functions (see <code>evaluation_parameters()</code>) in three algorithm steps:
+normalization, and conjunctive and disjunctive aggregation. All values distributions involved in
+calculations are normalized by the function <code>norm()</code>. All combinations of <code>attribute$input</code>
+values are individually evaluated by the corresponding tabular function <code>attribute$funct</code>.
+The value <code class="reqn">p</code> of each set of <code>attribute$funct</code> arguments is determined by the conjunctive
+aggregation function <code>and()</code> over <code class="reqn">p</code>'s of individual arguments.
+Finally, the <code class="reqn">p</code> of some output value <code>val</code> is determined by the
+disjunctive aggregation function <code>or()</code>, applied on the <code class="reqn">p</code>'s of all partial evaluations that
+map to <code>val</code>.
+</p>
+<p>For the mathematical background and more details about aggregation in DEX, please see
+(Trdin, Bohanec, 2018). For default normalization and aggregation functions,
+see <code>normalize_function()</code>, <code>and_function()</code> and <code>or_function()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame containing both input and output (evaluated) values of <code>alternatives</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>evaluation_parameters()</code>, <code>normalize_function()</code>,
+<code>norm_none()</code>, <code>norm_max()</code>, <code>norm_sum()</code>, <code>and_function()</code>, <code>or_function()</code>, <code>bounded_scale_value()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load "Car.dxi"
+CarDxi &lt;- system.file("extdata", "Car.dxi", package = "DEXiR")
+Car &lt;- read_dexi(CarDxi)
+
+alt &lt;- Car$alternative("MyCar_set",
+         BUY.PRICE="low", MAINT.PRICE=2, X.PERS="more", X.DOORS="4", LUGGAGE=2, SAFETY="medium")
+Car$evaluate(alt)
+
+# Try the set-based evaluation using the default "set" method
+alt &lt;- Car$alternative("MyCar2",
+       BUY.PRICE="low", MAINT.PRICE="*", X.PERS="more", X.DOORS="4", LUGGAGE=2, SAFETY=2)
+Car$evaluate(alt)
+
+# Use value distributions and try the methods "prob", "fuzzy" and "fuzzynorm"
+alt &lt;- Car$alternative("MyCar_distr",
+       BUY.PRICE="low", MAINT.PRICE=distribution(0.1, 0.6, 0.3),
+       X.PERS="more", X.DOORS="4", LUGGAGE=2, SAFETY=2)
+Car$evaluate(alt, method = "prob")
+Car$evaluate(alt, method = "fuzzy")
+Car$evaluate(alt, method = "fuzzynorm")
+
+</code></pre>
+
+
+</div>

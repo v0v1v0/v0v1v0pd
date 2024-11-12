@@ -1,0 +1,108 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sample.delta</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function to sample from the posterior of the variance parameter</h2>
+
+<h3>Description</h3>
+
+<p>This function samples from the log-posterior density of the variance parameter from the likelihood
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sample.delta(eta, ND, EV, Q, pars)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eta</code></td>
+<td>
+<p>samples of the smoothing parameter from the sample.eta function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ND</code></td>
+<td>
+<p>the rank of the precision matrix, the default value is n-3 for spatial data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EV</code></td>
+<td>
+<p>eigenvalues of the precision matrix spatial prior from the function make.M().</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>the data vector from the cross-product of observed data, Y, and eigenvalues from the M matrix, V.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p>a vector of the prior shape and rate parameters for the
+inverse-gamma prior distribution of delta.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>N samples drawn from the posterior of <code class="reqn">\pi(delta | eta, y)</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Use the Meuse River dataset from the package 'gstat'
+
+library(sp)
+library(gstat)
+data(meuse.all)
+coordinates(meuse.all) &lt;- ~ x + y
+X &lt;- scale(coordinates(meuse.all))
+tmp &lt;- make.M(X)
+
+M &lt;- tmp$M
+
+Y &lt;- scale(log(meuse.all$zinc))
+
+ND &lt;- nrow(X) - 3
+M.list &lt;- make.M(X) ##  Only Needs to return the eigenvalues and vectors
+M &lt;- M.list$M
+EV &lt;- M.list$M.eigen$values
+V &lt;- M.list$M.eigen$vectors
+Q &lt;- crossprod(Y, V)
+
+f &lt;- function(x) -x ## log-prior for exponential distribution for the smoothing parameter
+## Draw 100 samples from the posterior of eta given the data y.
+
+ETA &lt;- sample.eta(100, ND, EV, Q, f, UL = 1000)
+DELTA &lt;- sample.delta(ETA, ND, EV, Q, pars = c(0.001, 0.001))
+##  Old Slow Version of sample.nu()
+## sample.delta&lt;-function(eta,nd,ev,Q,pars)
+## {
+##   N&lt;-length(eta)
+##   f.beta&lt;-function(x)
+##   {
+##     lambda&lt;-1/(1+x*ev)
+##     b&lt;-tcrossprod(Q,diag(1-lambda))
+##     beta&lt;-0.5*tcrossprod(Q,b)+pars[2]
+##     return(beta)
+##   }
+##   alpha&lt;-pars[1]+nd*0.5
+##   beta&lt;-sapply(eta,f.beta)
+##   delta&lt;-1/rgamma(N,shape=alpha,rate=beta)
+##   return(delta)
+## }
+</code></pre>
+
+
+</div>

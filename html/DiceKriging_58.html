@@ -1,0 +1,564 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>km</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Fit and/or create kriging models </h2>
+
+<h3>Description</h3>
+
+<p><code>km</code> is used to fit kriging models when parameters are unknown, or to create <code>km</code> objects otherwise. In both cases, the result is a <code>km</code> object. If parameters are unknown, they are estimated by Maximum Likelihood. As a beta version, Penalized Maximum Likelihood Estimation is also possible if some penalty is given, or Leave-One-Out for noise-free observations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">km(formula=~1, design, response, covtype="matern5_2",
+   coef.trend = NULL, coef.cov = NULL, coef.var = NULL,
+   nugget = NULL, nugget.estim=FALSE, noise.var=NULL, estim.method="MLE",
+   penalty = NULL, optim.method = "BFGS", lower = NULL, upper = NULL, 
+   parinit = NULL, multistart = 1, control = NULL, gr = TRUE, 
+   iso=FALSE, scaling=FALSE, knots=NULL, kernel=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> an optional object of class "formula" specifying the linear trend of the kriging model (see <code>lm</code>). This formula should concern only the input variables, and not the output (response). If there is any, it is automatically dropped. In particular, no response transformation is available yet. The default is <code>~1</code>, which defines a constant trend.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> a data frame representing the design of experiments. The ith row contains the values of the d input variables corresponding to the ith evaluation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p> a vector (or 1-column matrix or data frame) containing the values of the 1-dimensional output given by the objective function at the <code>design</code> points. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covtype</code></td>
+<td>
+<p> an optional character string specifying the covariance structure to be used, to be chosen between <code>"gauss"</code>, <code>"matern5_2"</code>, <code>"matern3_2"</code>, <code>"exp"</code> or <code>"powexp"</code>. See a full description of available covariance kernels in <code>covTensorProduct-class</code>. Default is <code>"matern5_2"</code>. See also the argument <code>kernel</code> that allows the user to build its own covariance structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.trend,</code></td>
+<td>
+<p> (see below)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.cov,</code></td>
+<td>
+<p> (see below)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.var</code></td>
+<td>
+<p> optional vectors containing the values for the trend, covariance and variance parameters. For estimation, 4 cases are implemented: 1. (All unknown) If all are missing, all are estimated. 2. (All known) If all are provided, no estimation is performed; 3. (Known trend) If <code>coef.trend</code> is provided but at least one of <code>coef.cov</code> or <code>coef.var</code> is missing, then BOTH <code>coef.cov</code> and <code>coef.var</code> are estimated; 4. (Unknown trend) If <code>coef.cov</code> and <code>coef.var</code> are provided but <code>coef.trend</code> is missing, then <code>coef.trend</code> is estimated (GLS formula).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nugget</code></td>
+<td>
+<p> an optional variance value standing for the homogeneous nugget effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nugget.estim</code></td>
+<td>
+<p> an optional boolean indicating whether the nugget effect should be estimated. Note that this option does not concern the case of heterogeneous noisy observations (see <code>noise.var</code> below). If <code>nugget</code> is given, it is used as an initial value. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>noise.var</code></td>
+<td>
+<p> for noisy observations : an optional vector containing the noise variance at each observation. This is useful for stochastic simulators. Default is <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estim.method</code></td>
+<td>
+<p>  a character string specifying the method by which unknown parameters are estimated. Default is <code>"MLE"</code> (Maximum Likelihood). At this stage, a beta version of leave-One-Out estimation (<code>estim.method="LOO"</code>) is also implemented for noise-free observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+<p> (beta version) an optional list suitable for Penalized Maximum Likelihood Estimation. The list must contain the item <code>fun</code> indicating the penalty function, and the item <code>value</code> equal to the value of the penalty parameter. At this stage the only available <code>fun</code> is <code>"SCAD"</code>, and <code>covtype</code> must be <code>"gauss"</code>. Default is <code>NULL</code>, corresponding to (un-penalized) Maximum Likelihood Estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.method</code></td>
+<td>
+<p> an optional character string indicating which optimization method is chosen for the likelihood maximization. <code>"BFGS"</code> is the <code>optim</code> quasi-Newton procedure of package <code>stats</code>, with the method "L-BFGS-B". <code>"gen"</code> is the <code>genoud</code> genetic algorithm (using derivatives) from package <code>rgenoud</code> (&gt;= 5.3.3). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower, </code></td>
+<td>
+<p> (see below) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p> optional vectors containing the bounds of the correlation parameters for optimization. The default values are given by <code>covParametersBounds</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parinit</code></td>
+<td>
+<p> an optional vector containing the initial values for the variables to be optimized over. If no vector is given, an initial point is generated as follows. For method <code>"gen"</code>, the initial point is generated uniformly inside the hyper-rectangle domain defined by <code>lower</code> and <code>upper</code>. For method <code>"BFGS"</code>, some points (see <code>control</code> below) are generated uniformly in the domain. Then the best point with respect to the likelihood (or penalized likelihood, see <code>penalty</code>) criterion is chosen. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multistart</code></td>
+<td>
+<p> an optional integer indicating the number of initial points from which running the BFGS optimizer. These points will be selected as the best <code>multistart</code> one(s) among those evaluated (see above <code>parinit</code>). The multiple optimizations will be performed in parallel provided that a parallel backend is registered (see package <code>foreach</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p> an optional list of control parameters for optimization. See details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gr</code></td>
+<td>
+<p> an optional boolean indicating whether the analytical gradient should be used. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iso</code></td>
+<td>
+<p> an optional boolean that can be used to force a tensor-product covariance structure (see <code>covTensorProduct-class</code>) to have a range parameter common to all dimensions. Default is <code>FALSE</code>. Not used (at this stage) for the power-exponential type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaling</code></td>
+<td>
+<p> an optional boolean indicating whether a scaling on the covariance structure should be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knots</code></td>
+<td>
+<p> an optional list of knots for scaling. The j-th element is a vector containing the knots for dimension j. If <code>scaling=TRUE</code> and knots are not specified, than knots are fixed to 0 and 1 in each dimension (which corresponds to affine scaling for the domain [0,1]^d).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p> an optional function containing a new covariance structure. At this stage, the parameters must be provided as well, and are not estimated. See an example below.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The optimisers are tunable by the user by the argument <code>control</code>. 
+Most of the control parameters proposed by <code>BFGS</code> and <code>genoud</code> can be passed to <code>control</code> except the ones that must be forced [for the purpose of optimization setting], as indicated in the table below. See <code>optim</code> and  <code>genoud</code> to get more details about them.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+BFGS </td>
+<td style="text-align: left;"> <code>trace</code>, <code>parscale</code>, <code>ndeps</code>, <code>maxit</code>, <code>abstol</code>, <code>reltol</code>, <code>REPORT</code>, <code>lnm</code>, <code>factr</code>, <code>pgtol</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+genoud </td>
+<td style="text-align: left;"> all parameters EXCEPT: <code>fn, nvars, max, starting.values, Domains, gr, gradient.check, boundary.enforcement, hessian</code> and <code>optim.method</code>. </td>
+</tr>
+<tr>
+<td style="text-align: left;"> 
+</td>
+</tr>
+</table>
+<p>Notice that the right places to specify the optional starting values and boundaries are in <code>parinit</code> and <code>lower, upper</code>, as explained above. Some additional possibilities and initial values are indicated in the table below:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>trace</code> </td>
+<td style="text-align: left;"> Turn it to <code>FALSE</code> to avoid printing during optimization progress.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+
+<code>pop.size</code> </td>
+<td style="text-align: left;"> For method <code>"BFGS"</code>, it is the number of candidate initial points generated before optimization starts (see <code>parinit</code> above). Default is 20. For method <code>"gen"</code>, <code>"pop.size"</code> is the population size, set by default at min(20, 4+3*log(nb of variables) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>max.generations</code> </td>
+<td style="text-align: left;"> Default is 5 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>wait.generations</code> </td>
+<td style="text-align: left;"> Default is 2 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>BFGSburnin</code> </td>
+<td style="text-align: left;"> Default is 0 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>km</code> (see <code>km-class</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> O. Roustant, D. Ginsbourger, Ecole des Mines de St-Etienne. </p>
+
+
+<h3>References</h3>
+
+ 
+<p>N.A.C. Cressie (1993), <em>Statistics for spatial data</em>, Wiley series in probability and mathematical statistics.
+</p>
+<p>D. Ginsbourger (2009), <em>Multiples metamodeles pour l'approximation et l'optimisation
+de fonctions numeriques multivariables</em>, Ph.D. thesis, Ecole Nationale Superieure des
+Mines de Saint-Etienne, 2009.
+</p>
+<p>D. Ginsbourger, D. Dupuy, A. Badea, O. Roustant, and L. Carraro (2009), A note on the choice and the estimation of kriging models for the analysis of deterministic computer experiments, <em>Applied Stochastic Models for Business and Industry</em>, <b>25</b> no. 2, 115-131.
+</p>
+<p>A.G. Journel and M.E. Rossi (1989), When do we need a trend model in kriging ?, <em>Mathematical Geology</em>, <b>21</b> no. 7, 715-739.
+</p>
+<p>D.G. Krige (1951), A statistical approach to some basic mine valuation problems on the witwatersrand, <em>J. of the Chem., Metal. and Mining Soc. of South Africa</em>, <b>52</b> no. 6, 119-139.
+</p>
+<p>R. Li and A. Sudjianto (2005), Analysis of Computer Experiments Using Penalized Likelihood in Gaussian Kriging Models, <em>Technometrics</em>, <b>47</b> no. 2, 111-120.
+</p>
+<p>K.V. Mardia and R.J. Marshall (1984), Maximum likelihood estimation of models for residual covariance in spatial regression, <em>Biometrika</em>, <b>71</b>, 135-146.
+</p>
+<p>J.D. Martin and T.W. Simpson (2005), Use of kriging models to approximate deterministic computer models, <em>AIAA Journal</em>, <b>43</b> no. 4, 853-863.
+</p>
+<p>G. Matheron (1969), Le krigeage universel, <em>Les Cahiers du Centre de Morphologie Mathematique de Fontainebleau</em>, <b>1</b>.
+</p>
+<p>W.R. Jr. Mebane and J.S. Sekhon, in press (2009), Genetic optimization using derivatives: The rgenoud package for R, <em>Journal of Statistical Software</em>.
+</p>
+<p>J.-S. Park and J. Baek (2001), Efficient computation of maximum likelihood estimators in a spatial linear model with power exponential covariogram, <em>Computer Geosciences</em>, <b>27</b> no. 1, 1-7.
+</p>
+<p>C.E. Rasmussen and C.K.I. Williams (2006), <em>Gaussian Processes for Machine Learning</em>, the MIT Press, <a href="http://www.gaussianprocess.org/gpml/">http://www.gaussianprocess.org/gpml/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>kmData</code> for another interface with the data,
+<code>show,km-method</code>,
+<code>predict,km-method</code>,
+<code>plot,km-method</code>.
+Some programming details and initialization choices can be found in <code>kmEstimate</code>, <code>kmNoNugget.init</code>,
+<code>km1Nugget.init</code> and <code>kmNuggets.init</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# ----------------------------------
+# A 2D example - Branin-Hoo function
+# ----------------------------------
+
+# a 16-points factorial design, and the corresponding response
+d &lt;- 2; n &lt;- 16
+design.fact &lt;- expand.grid(x1=seq(0,1,length=4), x2=seq(0,1,length=4))
+y &lt;- apply(design.fact, 1, branin) 
+
+# kriging model 1 : matern5_2 covariance structure, no trend, no nugget effect
+m1 &lt;- km(design=design.fact, response=y)
+
+# kriging model 2 : matern5_2 covariance structure, 
+#                   linear trend + interactions, no nugget effect
+m2 &lt;- km(~.^2, design=design.fact, response=y)
+
+# graphics 
+n.grid &lt;- 50
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x1=x.grid, x2=y.grid)
+response.grid &lt;- apply(design.grid, 1, branin)
+predicted.values.model1 &lt;- predict(m1, design.grid, "UK")$mean
+predicted.values.model2 &lt;- predict(m2, design.grid, "UK")$mean
+par(mfrow=c(3,1))
+contour(x.grid, y.grid, matrix(response.grid, n.grid, n.grid), 50, main="Branin")
+points(design.fact[,1], design.fact[,2], pch=17, cex=1.5, col="blue")
+contour(x.grid, y.grid, matrix(predicted.values.model1, n.grid, n.grid), 50, 
+        main="Ordinary Kriging")
+points(design.fact[,1], design.fact[,2], pch=17, cex=1.5, col="blue")
+contour(x.grid, y.grid, matrix(predicted.values.model2, n.grid, n.grid), 50, 
+        main="Universal Kriging")
+points(design.fact[,1], design.fact[,2], pch=17, cex=1.5, col="blue")
+par(mfrow=c(1,1))
+
+
+# (same example) how to use the multistart argument
+# -------------------------------------------------
+require(foreach)
+
+# below an example for a computer with 2 cores, but also work with 1 core
+
+nCores &lt;- 2
+require(doParallel)
+cl &lt;-  makeCluster(nCores) 
+registerDoParallel(cl)
+
+# kriging model 1, with 4 starting points
+m1_4 &lt;- km(design=design.fact, response=y, multistart=4)
+
+stopCluster(cl)
+
+# -------------------------------
+# A 1D example with penalized MLE
+# -------------------------------
+
+# from Fang K.-T., Li R. and Sudjianto A. (2006), "Design and Modeling for 
+# Computer Experiments", Chapman &amp; Hall, pages 145-152
+
+n &lt;- 6; d &lt;- 1
+x &lt;- seq(from=0, to=10, length=n)
+y &lt;- sin(x)
+t &lt;- seq(0,10, length=100)
+
+# one should add a small nugget effect, to avoid numerical problems
+epsilon &lt;- 1e-3
+model &lt;- km(formula&lt;- ~1, design=data.frame(x=x), response=data.frame(y=y), 
+            covtype="gauss", penalty=list(fun="SCAD", value=3), nugget=epsilon)
+
+p &lt;- predict(model, data.frame(x=t), "UK")
+
+plot(t, p$mean, type="l", xlab="x", ylab="y", 
+                     main="Prediction via Penalized Kriging")
+points(x, y, col="red", pch=19)
+lines(t, sin(t), lty=2, col="blue")
+legend(0, -0.5, legend=c("Sine Curve", "Sample", "Fitted Curve"), 
+       pch=c(-1,19,-1), lty=c(2,-1,1), col=c("blue","red","black"))
+
+
+# ------------------------------------------------------------------------
+# A 1D example with known trend and known or unknown covariance parameters
+# ------------------------------------------------------------------------
+
+x &lt;- c(0, 0.4, 0.6, 0.8, 1);
+y &lt;- c(-0.3, 0, -0.8, 0.5, 0.9)
+
+theta &lt;- 0.01; sigma &lt;- 3; trend &lt;- c(-1,2)
+
+model &lt;- km(~x, design=data.frame(x=x), response=data.frame(y=y), 
+            covtype="matern5_2", coef.trend=trend, coef.cov=theta, 
+            coef.var=sigma^2)
+
+# below: if you want to specify trend only, and estimate both theta and sigma:
+# model &lt;- km(~x, design=data.frame(x=x), response=data.frame(y=y), 
+#             covtype="matern5_2", coef.trend=trend, lower=0.2)
+# Remark: a lower bound or penalty function is useful here,
+#         due to the very small number of design points...
+
+# kriging with gaussian covariance C(x,y)=sigma^2 * exp(-[(x-y)/theta]^2), 
+#         and linear trend t(x) = -1 + 2x
+
+t &lt;- seq(from=0, to=1, by=0.005)
+p &lt;- predict(model, newdata=data.frame(x=t), type="SK")
+# beware that type = "SK" for known parameters (default is "UK")
+
+plot(t, p$mean, type="l", ylim=c(-7,7), xlab="x", ylab="y")
+lines(t, p$lower95, col="black", lty=2)
+lines(t, p$upper95, col="black", lty=2)
+points(x, y, col="red", pch=19)
+abline(h=0)
+
+
+# --------------------------------------------------------------
+# Kriging with noisy observations (heterogeneous noise variance)
+# --------------------------------------------------------------
+
+fundet &lt;- function(x){
+return((sin(10*x)/(1+x)+2*cos(5*x)*x^3+0.841)/1.6)
+}
+
+level &lt;- 0.5; epsilon &lt;- 0.1
+theta &lt;- 1/sqrt(30); p &lt;- 2; n &lt;- 10
+x &lt;- seq(0,1, length=n)
+
+# Heteregeneous noise variances: number of Monte Carlo evaluation among 
+#                                a total budget of 1000 stochastic simulations
+MC_numbers &lt;- c(10,50,50,290,25,75,300,10,40,150)
+noise.var &lt;- 3/MC_numbers
+
+# Making noisy observations from 'fundet' function (defined above)
+y &lt;- fundet(x) + noise.var*rnorm(length(x))
+
+# kriging model definition (no estimation here)
+model &lt;- km(y~1, design=data.frame(x=x), response=data.frame(y=y), 
+            covtype="gauss", coef.trend=0, coef.cov=theta, coef.var=1, 
+            noise.var=noise.var)
+
+# prediction
+t &lt;- seq(0, 1, by=0.01)
+p &lt;- predict.km(model, newdata=data.frame(x=t), type="SK")
+lower &lt;- p$lower95; upper &lt;- p$upper95
+
+# graphics
+par(mfrow=c(1,1))
+plot(t, p$mean, type="l", ylim=c(1.1*min(c(lower,y)) , 1.1*max(c(upper,y))), 
+                xlab="x", ylab="y",col="blue", lwd=1.5)
+polygon(c(t,rev(t)), c(lower, rev(upper)), col=gray(0.9), border = gray(0.9))
+lines(t, p$mean, type="l", ylim=c(min(lower) ,max(upper)), xlab="x", ylab="y",
+                 col="blue", lwd=1)
+lines(t, lower, col="blue", lty=4, lwd=1.7)
+lines(t, upper, col="blue", lty=4, lwd=1.7)
+lines(t, fundet(t), col="black", lwd=2)
+points(x, y, pch=8,col="blue")
+text(x, y, labels=MC_numbers, pos=3)
+
+
+# -----------------------------
+# Checking parameter estimation 
+# -----------------------------
+
+d &lt;- 3       	# problem dimension
+n &lt;- 40			# size of the experimental design
+design &lt;- matrix(runif(n*d), n, d)
+
+covtype &lt;- "matern5_2"		
+theta &lt;- c(0.3, 0.5, 1)		# the parameters to be found by estimation
+sigma &lt;- 2
+nugget &lt;- NULL  # choose a numeric value if you want to estimate nugget 
+nugget.estim &lt;- FALSE # choose TRUE if you want to estimate it
+
+n.simu &lt;- 30		# number of simulations
+sigma2.estimate &lt;- nugget.estimate &lt;- mu.estimate &lt;- matrix(0, n.simu, 1)
+coef.estimate &lt;- matrix(0, n.simu, length(theta))
+
+model &lt;- km(~1, design=data.frame(design), response=rep(0,n), covtype=covtype, 
+            coef.trend=0, coef.cov=theta, coef.var=sigma^2, nugget=nugget)
+y &lt;- simulate(model, nsim=n.simu)
+
+for (i in 1:n.simu) {
+	# parameter estimation: tune the optimizer by changing optim.method, control
+	model.estimate &lt;- km(~1, design=data.frame(design), response=data.frame(y=y[i,]), 
+	covtype=covtype, optim.method="BFGS", control=list(pop.size=50, trace=FALSE), 
+        nugget.estim=nugget.estim) 
+	
+	# store results
+	coef.estimate[i,] &lt;- covparam2vect(model.estimate@covariance)
+	sigma2.estimate[i] &lt;- model.estimate@covariance@sd2
+	mu.estimate[i] &lt;- model.estimate@trend.coef
+	if (nugget.estim) nugget.estimate[i] &lt;- model.estimate@covariance@nugget
+}
+
+# comparison true values / estimation
+cat("\nResults with ", n, "design points, 
+    obtained with ", n.simu, "simulations\n\n",
+    "Median of covar. coef. estimates: ", apply(coef.estimate, 2, median), "\n",
+    "Median of trend  coef. estimates: ", median(mu.estimate), "\n", 
+    "Mean of the var. coef. estimates: ", mean(sigma2.estimate))
+if (nugget.estim) cat("\nMean of the nugget effect estimates: ", 
+                      mean(nugget.estimate))
+
+# one figure for this specific example - to be adapted
+split.screen(c(2,1))        # split display into two screens
+split.screen(c(1,2), screen = 2) # now split the bottom half into 3
+
+screen(1)
+boxplot(coef.estimate[,1], coef.estimate[,2], coef.estimate[,3], 
+        names=c("theta1", "theta2", "theta3"))
+abline(h=theta, col="red")
+fig.title &lt;- paste("Empirical law of the parameter estimates 
+                    (n=", n , ", n.simu=", n.simu, ")", sep="")
+title(fig.title)
+
+screen(3)
+boxplot(mu.estimate, xlab="mu")
+abline(h=0, col="red")
+
+screen(4)
+boxplot(sigma2.estimate, xlab="sigma2")
+abline(h=sigma^2, col="red")
+
+close.screen(all = TRUE)  
+
+# ----------------------------------------------------------
+# Kriging with non-linear scaling on Xiong et al.'s function
+# ----------------------------------------------------------
+
+f11_xiong &lt;- function(x){ 
+return( sin(30 * (x - 0.9)^4) * cos(2 * (x - 0.9)) + (x - 0.9) / 2)
+}
+
+t &lt;- seq(0, 1, , 300)
+f &lt;- f11_xiong(t)
+
+plot(t, f, type = "l", ylim = c(-1,0.6), lwd = 2)
+
+doe &lt;- data.frame(x = seq(0, 1, , 20))
+resp &lt;- f11_xiong(doe)
+
+knots &lt;- list(x = c(0, 0.5, 1)) 
+eta &lt;- list(c(15, 2, 0.5))
+m &lt;- km(design = doe, response = resp, scaling = TRUE, gr = TRUE, 
+knots = knots, covtype = "matern5_2",  coef.var = 1, coef.trend = 0)
+
+p &lt;- predict(m, data.frame(x = t), "UK")
+
+plot(t, f, type = "l", ylim = c(-1, 0.6), lwd = 2)
+
+lines(t, p$mean, col = "blue", lty = 2, lwd = 2)
+lines(t, p$mean + 2 * p$sd, col = "blue")
+lines(t, p$mean - 2 * p$sd, col = "blue")
+
+abline(v = knots[[1]], lty = 2, col = "green")
+
+
+# -----------------------------------------------------
+# Kriging with a symmetric kernel: example with covUser
+# -----------------------------------------------------
+
+x &lt;- c(0, 0.15, 0.3, 0.4, 0.5)
+y &lt;- c(0.3, -0.2, 0, 0.5, 0.2)
+
+k &lt;- function(x,y) {
+  theta &lt;- 0.15
+  0.5*exp(-((x-y)/theta)^2) + 0.5*exp(-((1-x-y)/theta)^2)    
+}
+
+muser &lt;- km(design=data.frame(x=x), response=data.frame(y=y), 
+            coef.trend=0, kernel=k)
+
+u &lt;- seq(from=0, to=1, by=0.01)
+puser &lt;- predict(muser, newdata=data.frame(x=u), type="SK")
+
+set.seed(0)
+nsim &lt;- 5
+zuser &lt;- simulate(muser, nsim=nsim, newdata=data.frame(x=u), cond=TRUE, nugget.sim=1e-8)
+par(mfrow=c(1,1))
+matplot(u, t(zuser), type="l", lty=rep("solid", nsim), col=1:5, lwd=1)
+polygon(c(u, rev(u)), c(puser$upper, rev(puser$lower)), col="lightgrey", border=NA)
+lines(u, puser$mean, lwd=5, col="blue", lty="dotted")
+matlines(u, t(zuser), type="l", lty=rep("solid", nsim), col=1:5, lwd=1)
+points(x, y, pch=19, cex=1.5)
+
+</code></pre>
+
+
+</div>

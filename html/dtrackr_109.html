@@ -1,0 +1,86 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tagged</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Retrieve tagged data in the history graph</h2>
+
+<h3>Description</h3>
+
+<p>Any counts at the individual stages that was stored with a <code>.tag</code> option in a pipeline step can be recovered here. The idea here is to provide a quick way to access a single value
+for the counts or other details tagged in a pipeline into a format that can be reported in text of a document. (e.g. for a results section). For more examples the consort statement vignette
+has some examples of use.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tagged(.data, .tag = NULL, .strata = NULL, .glue = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>the tracked dataframe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.tag</code></td>
+<td>
+<p>(optional) the tag to retrieve.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.strata</code></td>
+<td>
+<p>(optional) filter the tagged data by the strata. set to "" to filter just the top level ungrouped data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.glue</code></td>
+<td>
+<p>(optional) a glue specification which will be applied to the tagged content to generate a <code>.label</code> for the tagged content.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>(optional) any other named parameters will be passed to <code>glue::glue</code> and can be used to generate a label.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>various things depending on what is requested.
+</p>
+<p>By default a tibble with a <code>.tag</code> column and all associated summary values in a nested <code>.content</code> column.
+</p>
+<p>If a <code>.strata</code> column is specified the results are filtered to just those that match a given <code>.strata</code> grouping (i.e. this will be the grouping label on the flowchart). Ungrouped content will have an empty "" as <code>.strata</code>
+</p>
+<p>If <code>.tag</code> is specified the result will be for a single tag and <code>.content</code> will be automatically un-nested to give a single un-nested dataframe of the content captured at the <code>.tag</code> tagged step.
+This could be single or multiple rows depending on whether the original data was grouped at the point of tagging.
+</p>
+<p>If both the <code>.tag</code> and <code>.glue</code> is specified a <code>.label</code> column will be computed from <code>.glue</code> and the tagged content. If the result of this is a single row then just the string value of <code>.label</code> is returned.
+</p>
+<p>If just the <code>.glue</code> is specified, an un-nested dataframe with <code>.tag</code>,<code>.strata</code> and <code>.label</code> columns with a label for each tag in each strata.
+</p>
+<p>If this seems complex then the best thing is to experiment until you get the output you want, leaving any <code>.glue</code> options until you think you know what you are doing. It made sense at the time.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(dtrackr)
+tmp = iris %&gt;% track() %&gt;% comment(.tag = "step1")
+tmp = tmp %&gt;% filter(Species!="versicolor") %&gt;% group_by(Species)
+tmp %&gt;% comment(.tag="step2") %&gt;% tagged(.glue = "{.count}/{.total}")
+</code></pre>
+
+
+</div>

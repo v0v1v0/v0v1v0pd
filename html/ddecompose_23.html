@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot.ob_decompose</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot decomposition terms for quantiles</h2>
+
+<h3>Description</h3>
+
+<p>The function plots decomposition terms for quantiles estimtated
+with <code>ob_decompose</code> over the  unit interval.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'ob_decompose'
+plot(
+  x,
+  ...,
+  detailed_effects = TRUE,
+  aggregate_factors = TRUE,
+  custom_aggregation = NULL,
+  confidence_bands = FALSE,
+  confidence_level = 0.95
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class "ob_decompose", usually, a result of a call to [ob_decompose()] with [statistics = "quantiles"].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters to be passed through to plot function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>detailed_effects</code></td>
+<td>
+<p>If 'TRUE' (default), then the detailed effects are plotted. Otherwise only the total (aggregate) effects are plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregate_factors</code></td>
+<td>
+<p>boolean, if 'TRUE' (default) terms associated with detailed factor
+levels are aggregated to a single term for every factor variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_aggregation</code></td>
+<td>
+<p>list specifying the aggregation of detailed decomposition
+terms. The parameter 'custom_aggregation' overrides the parameter 'aggregate_factors'.
+If 'NULL' (default), then either all detailed terms or all terms associated with
+a single variable are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confidence_bands</code></td>
+<td>
+<p>If 'TRUE' and if standard errors have been bootstrapped, confidence bands are plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confidence_level</code></td>
+<td>
+<p>numeric value between 0 and 1 (default = 0.95) that defines the confidence interval
+plotted as a ribbon and defined as <code>qnorm((1-confidence_level)/2)</code> * standard error.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a ggplot illustrating the decomposition terms for quantiles.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("nlys00")
+
+mod1 &lt;- log(wage) ~ age + central_city + msa + region + black +
+  hispanic + education + afqt + family_responsibility + years_worked_civilian +
+  years_worked_military + part_time + industry
+
+# plotting RIF regression decomposition of deciles
+
+decompose_rifreg_deciles &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  reweighting = TRUE,
+  rifreg_statistic = "quantiles",
+  bootstrap = TRUE,
+  bootstrap_iterations = 50,
+  reference_0 = FALSE
+)
+
+plot(decompose_rifreg_deciles)
+
+plot(decompose_rifreg_deciles,
+  confidence_bands = TRUE
+)
+
+
+# plotting Oaxaca-Blinder decomposition
+
+decompose_ob_mean &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  reweighting = TRUE,
+  bootstrap = FALSE,
+  reference_0 = FALSE
+)
+
+plot(decompose_ob_mean)
+plot(decompose_ob_mean, detailed_effects = FALSE)
+
+
+# With custom aggregation
+
+custom_aggregation &lt;- list(
+  `Age, race, region, etc.` = c(
+    "age",
+    "blackyes",
+    "hispanicyes",
+    "regionNorth-central",
+    "regionSouth",
+    "regionWest",
+    "central_cityyes",
+    "msayes"
+  ),
+  `Education` = c(
+    "education&lt;10 yrs",
+    "educationHS grad (diploma)",
+    "educationHS grad (GED)",
+    "educationSome college",
+    "educationBA or equiv. degree",
+    "educationMA or equiv. degree",
+    "educationPh.D or prof. degree"
+  ),
+  `AFTQ` = "afqt",
+  `L.T. withdrawal due to family` = "family_responsibility",
+  `Life-time work experience` = c(
+    "years_worked_civilian",
+    "years_worked_military",
+    "part_time"
+  ),
+  `Industrial sectors` = c(
+    "industryManufacturing",
+    "industryEducation, Health, Public Admin.",
+    "industryOther services"
+  )
+)
+
+plot(decompose_ob_mean, custom_aggregation = custom_aggregation)
+
+</code></pre>
+
+
+</div>

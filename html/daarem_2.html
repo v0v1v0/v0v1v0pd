@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fpiter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fixed-Point Iteration Scheme</h2>
+
+<h3>Description</h3>
+
+<p>A function to implement the fixed-point iteration algorithm.  This includes monotone, contraction mappings including EM and MM algorithms</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  fpiter(par, fixptfn, objfn=NULL, control=list( ), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>A vector of parameters denoting the initial guess for the
+fixed-point iteration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixptfn</code></td>
+<td>
+<p>A vector function, <code class="reqn">F</code> that denotes the fixed-point
+mapping. This function is the most essential input in the package.  It
+should accept a parameter vector as input and should return a parameter
+vector of same length. This function defines the fixed-point iteration:
+<code class="reqn">x_{k+1} = F(x_k)</code>.
+In the case of EM algorithm, <code class="reqn">F</code> defines a single E and M step.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>objfn</code></td>
+<td>
+<p>This is a scalar function, $L$, that denotes a ”merit”
+function which attains its local minimum at the fixed-point of $F$.
+This function should accept a parameter vector as input and should
+return a scalar value. In the EM algorithm, the merit function <code class="reqn">L</code>
+is the log-likelihood. In some problems, a natural merit function may
+not exist, in which case the algorithm works with only <code>fixptfn</code>.
+The merit function function <code>objfn</code> does not have to be specified,
+even when a natural merit function is available, especially when its
+computation is expensive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p> A list of control parameters to pass on to the algorithm.  Full names of control list elements must be specified, otherwise, user-specifications are ignored.  See *Details* below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed to <code>fixptfn</code> and <code>objfn</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>control</code> is list of control parameters for the algorithm.
+</p>
+
+<p><code>control = list(tol = 1.e-07, maxiter = 1500, trace = FALSE)</code>
+</p>
+<p><code>tol</code>  A small, positive scalar that determines when iterations
+should be terminated.  Iteration is terminated when
+<code class="reqn">||x_k - F(x_k)|| \leq tol</code>.
+Default is <code>1.e-07</code>.
+</p>
+<p><code>maxiter</code>  An integer denoting the maximum limit on the number of
+evaluations of  <code>fixptfn</code>, <code class="reqn">F</code>.  Default is <code>1500</code>.
+</p>
+<p><code>trace</code>  A logical variable denoting whether some of the intermediate
+results of iterations should be displayed to the user.
+Default is <code>FALSE</code>.
+
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>Parameter,<code class="reqn">x*</code> that are the fixed-point of <code class="reqn">F</code> such
+that <code class="reqn">x* = F(x*)</code>, if convergence is successful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value.objfn</code></td>
+<td>
+<p>The value of the objective function <code class="reqn">L</code> at termination.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fpevals</code></td>
+<td>
+<p>Number of times the fixed-point function <code>fixptfn</code> was evaluated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>objfevals</code></td>
+<td>
+<p>Number of times the objective function <code>objfn</code> was evaluated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>An integer code indicating type of convergence.
+<code>0</code> indicates successful convergence,
+whereas <code>1</code> denotes failure to converge.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>daarem</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+### Generate outcomes from a probit regression model
+n &lt;- 1000
+npars &lt;- 5
+true.beta &lt;- .5*rt(npars, df=2) + 1
+XX &lt;- matrix(rnorm(n*npars), nrow=n, ncol=npars)
+yy &lt;- ProbitSimulate(true.beta, XX)
+max.iter &lt;- 1000
+beta.init &lt;- rep(0.0, npars)
+
+### EM algorithm for estimating parameters from probit regression
+
+em.probit &lt;- fpiter(par=beta.init, fixptfn = ProbitUpdate, X=XX, y=yy,
+                    control=list(maxiter=max.iter))
+</code></pre>
+
+
+</div>

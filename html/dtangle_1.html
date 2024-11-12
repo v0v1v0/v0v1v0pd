@@ -1,0 +1,89 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>baseline_exprs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the offset terms.</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the offset terms.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">baseline_exprs(Y, pure_samples, markers, summary_fn = mean)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>Expression matrix.
+</p>
+<p>(Required) Two-dimensional numeric. Must implement <code>as.matrix</code>.
+</p>
+<p>Each row contains expression measurements for a particular sample. Each columm contains the measurements of the same gene over all individuals. Can either contain just the mixture samples to be deconvolved or both the mixture samples and the reference samples. See <code>pure_samples</code> and <code>references</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pure_samples</code></td>
+<td>
+<p>The pure sample indicies.
+</p>
+<p>(Optional) List of one-dimensional integer. Must implement <code>as.list</code>.
+</p>
+<p>The i-th element of the top-level list is a vector of indicies (rows of <code>Y</code> or <code>references</code>) that are pure samples of type i. If <code>references</code> is not specified then this argument identifies which rows of <code>Y</code> correspond to pure reference samples of which cell-types. If <code>references</code> is specified then this makes same idenficiation but for the <code>references</code> matrix instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>markers</code></td>
+<td>
+<p>Marker gene indices.
+</p>
+<p>(Optional) List of one-dimensional integer.
+</p>
+<p>Top-level list should be same length as <code>pure_samples</code>, i.e. one element for each cell type. Each element of the top-level list is a vector of indicies (columns of <code>Y</code>) that will be considered markers of that particular type. If not supplied then <code>dtangle</code> finds markers internally using <code>find_markers</code>. Alternatively, one can supply the output of <code>find_markers</code> to the markers argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary_fn</code></td>
+<td>
+<p>What summary statistic to use when aggregating expression measurements.
+</p>
+<p>(Optional) Function that takes a one-dimensional vector of numeric and returns a single numeric.
+</p>
+<p>Defaults to the mean. Other good options include the median.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List of vectors. Each vector is estimated estimated basline in pure samples of markers for each group, resp.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">truth = shen_orr_ex$annotation$mixture
+pure_samples &lt;- lapply(1:3, function(i) {
+   which(truth[, i] == 1)
+})
+Y &lt;- shen_orr_ex$data$log
+markers = find_markers(Y=Y,
+pure_samples = pure_samples,data_type='microarray-gene',marker_method='ratio')$L
+K = length(pure_samples)
+n_markers = rep(20,K)
+mrkrs &lt;- lapply(1:K, function(i) {
+       markers[[i]][1:n_markers[i]]
+})
+dtangle:::baseline_exprs(Y, pure_samples, mrkrs)
+</code></pre>
+
+
+</div>

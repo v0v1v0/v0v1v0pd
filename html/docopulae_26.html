@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nint_integrateNFunc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Integrate N Function</h2>
+
+<h3>Description</h3>
+
+<p>Inferface to the integration over function dimensions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nint_integrateNFunc(f, funcs, x0, i0, ...)
+
+nint_integrateNFunc_recursive(integrate1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>integrate1</code></td>
+<td>
+<p><code>function(f, lowerLimit, upperLimit, ...)</code> which performs one dimensional integration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>the scalar-valued wrapper function to be integrated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funcs</code></td>
+<td>
+<p>the list of function dimensions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x0</code></td>
+<td>
+<p>the partially realized point in the space.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i0</code></td>
+<td>
+<p>the vector of indices of function dimensions in the space.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments passed to <code>f</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>nint_integrate</code> uses <code>nint_integrateNFunc</code> to handle function dimensions.
+See examples below on how to deploy different solutions.
+</p>
+<p>The function built by <code>nint_integrateNFunc_recursive</code> directly sums over discrete dimensions and uses <code>integrate1</code> otherwise.
+In conjunction with <code>integrateA</code> this is the default.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>nint_integrateNFunc</code> returns a single numeric.
+</p>
+<p><code>nint_integrateNFunc_recursive</code> returns a recursive implementation for <code>nint_integrateNFunc</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nint_integrate</code>
+</p>
+<p><code>integrateA</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dfltNFunc = nint_integrateNFunc
+
+## area of circle
+s = nint_space(
+    nint_intvDim(-1, 1),
+    nint_funcDim(function(x) nint_intvDim(c(-1, 1) * sin(acos(x[1])) ))
+)
+nint_integrate(function(x) 1, s) # pi
+## see nint_integrate's examples for more sophisticated integrals
+
+
+## prepare for custom recursive implementation
+using = TRUE
+nfunc = nint_integrateNFunc_recursive(
+    function(f, lowerLimit, upperLimit, ...) {
+        if (using) { # this function is called many times
+            using &lt;&lt;- FALSE
+            cat('using integrateA\n')
+        }
+        integrateA(f, lowerLimit, upperLimit, ..., subdivisions=1)$value
+    }
+)
+unlockBinding('nint_integrateNFunc', environment(nint_integrate))
+assign('nint_integrateNFunc', nfunc, envir=environment(nint_integrate))
+
+## integrate with custom recursive implementation
+nint_integrate(function(x) 1, s) # pi
+
+
+## prepare for custom solution
+f = function(f, funcs, x0, i0, ...) {
+    # add sophisticated code here
+    print(list(f=f, funcs=funcs, x0=x0, i0=i0, ...))
+    stop('do something')
+}
+unlockBinding('nint_integrateNFunc', environment(nint_integrate))
+assign('nint_integrateNFunc', f, envir=environment(nint_integrate))
+
+## integrate with custom solution
+try(nint_integrate(function(x) 1, s))
+
+
+assign('nint_integrateNFunc', dfltNFunc, envir=environment(nint_integrate))
+</code></pre>
+
+
+</div>

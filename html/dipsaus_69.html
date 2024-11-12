@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_credential</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate a random password</h2>
+
+<h3>Description</h3>
+
+<p>Please note that this function is not meant to be used in
+production. It is not meant to be used for highly secured
+cryptographic purposes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_credential(
+  master_password,
+  method = c("get_or_create", "replace", "query"),
+  service = NULL,
+  special_chr = "~`! @#$%^&amp;*()_-+={[}]|:;'&lt;,&gt;.?/",
+  tokenfile = NULL,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>master_password</code></td>
+<td>
+<p>a master password that only you know, should have
+at least 8 characters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>whether to query token map, or to create the password,
+choices are <code>'get_or_create'</code> (default), <code>'replace'</code>,
+<code>'query'</code>; see 'Details'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>service</code></td>
+<td>
+<p>service name, must only contains letters, digits, equal sign,
+underscore, comma, dot, dash</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>special_chr</code></td>
+<td>
+<p>special characters allowed in the password</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tokenfile</code></td>
+<td>
+<p>a file containing all the tokens. Warning: if you lose the
+token book, it is hard (not impossible, but impractical) to restore
+the passwords</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>whether to print out service names; default is false</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Please note that this function is not meant to be used in
+production or anything that requires high security level. This is most
+likely for my personal use since I am tired of
+storing the passwords on the cloud or having to buy the services.
+</p>
+<p>The encryption adopts <code>'sha256'</code> algorithm provided by
+<code>digest</code> function. To restore a password,
+you will need twp components: <code>master_password</code>, a token book (
+<code>tokenfile</code>). If any of them is missing, then the password is lost.
+Please store the token book properly (for example, in 'Dropbox' vault).
+</p>
+<p>The token book could be shared. Anyone who do not have master password will
+be unlikely to restore the service password. Do not share the master password
+with anyone other than yourself.
+</p>
+<p>By default, <code>method='get_or_create'</code> will try to retrieve existing
+tokens to generate password. If the token is missing, then a new token
+will be generated. The <code>method='replace'</code> will ignore existing tokens
+and directly create a new one.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If method is <code>'query'</code>, returns token map; otherwise returns
+the password itself
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>digest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+tokenfile &lt;- tempfile()
+
+# ---------- Create a password and store the tokens to token book ------
+pass1 &lt;- get_credential(
+  master_password = "my password",
+  service = "google.com:my_username",
+  special_chr = "@#$%^&amp;*",
+  tokenfile = tokenfile
+)
+print(pass1)
+
+# ---------- Query existing tokens ------
+token_params &lt;- get_credential(
+  method = "query",
+  tokenfile = tokenfile,
+  verbose = TRUE
+)
+
+print(token_params)
+
+# ---------- retrieve stored password ----------
+pass2 &lt;- get_credential(
+  master_password = "my password",
+  service = "google.com",
+  tokenfile = tokenfile
+)
+identical(pass1, pass2)
+
+# Using wrong master password
+pass3 &lt;- get_credential(
+  master_password = "wrong password",
+  service = "google.com",
+  tokenfile = tokenfile
+)
+identical(pass1, pass3)
+
+# ---------- Replace token ----------
+# Existing token will be replaced with a new token
+pass4 &lt;- get_credential(
+  master_password = "my password",
+  method = "replace",
+  service = "google.com",
+  special_chr = "@#$%^&amp;*",
+  tokenfile = tokenfile
+)
+print(pass4)
+identical(pass1, pass4)
+
+</code></pre>
+
+
+</div>

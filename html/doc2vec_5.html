@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.paragraph2vec</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict functionalities for a paragraph2vec model</h2>
+
+<h3>Description</h3>
+
+<p>Use the paragraph2vec model to 
+</p>
+
+<ul>
+<li>
+<p>get the embedding of documents, sentences or words
+</p>
+</li>
+<li>
+<p>find the nearest documents/words which are similar to either a set of documents, words or a set of sentences containing words
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'paragraph2vec'
+predict(
+  object,
+  newdata,
+  type = c("embedding", "nearest"),
+  which = c("docs", "words", "doc2doc", "word2doc", "word2word", "sent2doc"),
+  top_n = 10L,
+  encoding = "UTF-8",
+  normalize = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a paragraph2vec model as returned by <code>paragraph2vec</code> or <code>read.paragraph2vec</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>either a character vector of words, a character vector of doc_id's or a list of sentences
+where the list elements are words part of the model dictionary. What needs to be provided depends on the argument you provide in <code>which</code>. 
+See the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>either 'embedding' or 'nearest' to get the embeddings or to find the closest text items. 
+Defaults to 'nearest'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which</code></td>
+<td>
+<p>either one of 'docs', 'words', 'doc2doc', 'word2doc', 'word2word' or 'sent2doc' where
+</p>
+
+<ul>
+<li>
+<p>'docs' or 'words' can be chosen if <code>type</code> is set to 'embedding' to indicate that <code>newdata</code> contains either doc_id's or words
+</p>
+</li>
+<li>
+<p>'doc2doc', 'word2doc', 'word2word', 'sent2doc' can be chosen if <code>type</code> is set to 'nearest' indicating to extract respectively
+the closest document to a document (doc2doc), the closest document to a word (word2doc), the closest word to a word (word2word) or the closest document to sentences (sent2doc).
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>top_n</code></td>
+<td>
+<p>show only the top n nearest neighbours. Defaults to 10, with a maximum value of 100. Only used for <code>type</code> 'nearest'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>set the encoding of the text elements to the specified encoding. Defaults to 'UTF-8'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p>logical indicating to normalize the embeddings. Defaults to <code>TRUE</code>. Only used for <code>type</code> 'embedding'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>not used</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>depending on the type, you get a different output:
+</p>
+
+<ul>
+<li>
+<p>for type nearest: returns a list of data.frames with columns term1, term2, similarity and rank indicating the elements which are closest to the provided <code>newdata</code>
+</p>
+</li>
+<li>
+<p>for type embedding: a matrix of embeddings of the words/documents or sentences provided in <code>newdata</code>, 
+rownames are either taken from the words/documents or list names of the sentences. The matrix has always the
+same number of rows as the length of <code>newdata</code>, possibly with NA values if the word/doc_id is not part of the dictionary
+</p>
+</li>
+</ul>
+<p>See the examples.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>paragraph2vec</code>, <code>read.paragraph2vec</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(tokenizers.bpe)
+data(belgium_parliament, package = "tokenizers.bpe")
+x &lt;- belgium_parliament
+x &lt;- subset(x, language %in% "dutch")
+x &lt;- subset(x, nchar(text) &gt; 0 &amp; txt_count_words(text) &lt; 1000)
+x$doc_id &lt;- sprintf("doc_%s", 1:nrow(x))
+x$text   &lt;- tolower(x$text)
+x$text   &lt;- gsub("[^[:alpha:]]", " ", x$text)
+x$text   &lt;- gsub("[[:space:]]+", " ", x$text)
+x$text   &lt;- trimws(x$text)
+
+## Build model
+model &lt;- paragraph2vec(x = x, type = "PV-DM",   dim = 15,  iter = 5)
+
+model &lt;- paragraph2vec(x = x, type = "PV-DBOW", dim = 100, iter = 20)
+
+
+sentences &lt;- list(
+  example = c("geld", "diabetes"),
+  hi = c("geld", "diabetes", "koning"),
+  test = c("geld"),
+  nothing = character(), 
+  repr = c("geld", "diabetes", "koning"))
+  
+## Get embeddings (type =  'embedding')
+predict(model, newdata = c("geld", "koning", "unknownword", NA, "&lt;/s&gt;", ""), 
+               type = "embedding", which = "words")
+predict(model, newdata = c("doc_1", "doc_10", "unknowndoc", NA, "&lt;/s&gt;"), 
+               type = "embedding", which = "docs")
+predict(model, sentences, type = "embedding")
+
+## Get most similar items (type =  'nearest')
+predict(model, newdata = c("doc_1", "doc_10"), type = "nearest", which = "doc2doc")
+predict(model, newdata = c("geld", "koning"), type = "nearest", which = "word2doc")
+predict(model, newdata = c("geld", "koning"), type = "nearest", which = "word2word")
+predict(model, newdata = sentences, type = "nearest", which = "sent2doc", top_n = 7)
+
+## Similar way on extracting similarities
+emb &lt;- predict(model, sentences, type = "embedding")
+emb_docs &lt;- as.matrix(model, type = "docs")
+paragraph2vec_similarity(emb, emb_docs, top_n = 3)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,397 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mtaBin_next</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Optimal dose determination for MTA with binary outcomes</h2>
+
+<h3>Description</h3>
+
+<p><code>mtaBin_next</code> is used to determine the next optimal dose to administer in a Phase I/II clinical trial for Molecularly Targeted Agent using the design proposed by Riviere et al. entitled "Phase I/II Dose-Finding Design for Molecularly Targeted Agent: Plateau Determination using Adaptive Randomization".
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mtaBin_next(ngroups=1, group_cur=1, ndose, prior_tox, prior_eff, tox_max,
+eff_min, cohort_start, cohort, final=FALSE, method="MTA-RA",
+s_1=function(n_cur){0.2}, s_2=0.07,  group_pat, id_dose, toxicity, tite=TRUE,
+efficacy, time_follow, time_eff, time_full, cycle, c_tox=0.90, c_eff=0.40,
+seed = 8)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ngroups</code></td>
+<td>
+<p>Number of groups for the dose-finding process leading to the recommendation of different dose levels. Several groups of efficacy (e.g. based on biomarker) sharing the same toxicity can be considered. The default value is set at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_cur</code></td>
+<td>
+<p>Group number for which the estimation and the optimal dose determination is required by the function. The default value is set at 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndose</code></td>
+<td>
+<p>Number of dose levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_tox</code></td>
+<td>
+<p>A vector of initial guesses of toxicity probabilities associated with the doses. Must be of same length as <code>ndose</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_eff</code></td>
+<td>
+<p>A vector of initial guesses of efficacy probabilities associated with the doses for <code>group_cur</code>. Must be of same length as <code>ndose</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_max</code></td>
+<td>
+<p>Toxicity upper bound, i.e. maximum acceptable toxicity probability.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff_min</code></td>
+<td>
+<p>Efficacy lower bound, i.e. minimum acceptable efficacy probability.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cohort_start</code></td>
+<td>
+<p>Cohort size for the start-up phase.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cohort</code></td>
+<td>
+<p>Cohort size for the model phase.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>final</code></td>
+<td>
+<p>A boolean with value TRUE if the trial is finished and the recommended dose for further phases should be given, or FALSE (default value) if the dose determination is performed for the next cohort of patients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string to specify the method for dose allocation (&lt;=&gt; plateau determination). The default method "MTA-RA" use adaptive randomization on posterior probabilities for the plateau location. Method based on difference in efficacy probabilities is specified by "MTA-PM".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s_1</code></td>
+<td>
+<p>A function depending on the number of patients included used for adaptive randomization in plateau determination, only used if the estimation method chosen is "MTA-RA". The default function is <code>function(n_cur,n){0.2}</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s_2</code></td>
+<td>
+<p>Cutoff value for plateau determination, only used if the estimation method chosen is "MTA-PM". Can be seen as the minimal efficacy difference of practical importance. The default value is 0.07.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_pat</code></td>
+<td>
+<p>A vector indicating the group number associated with each patient included in the trial.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_dose</code></td>
+<td>
+<p>A vector indicating the dose levels administered to each patient included in the trial. Must be of same length as <code>group_pat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>toxicity</code></td>
+<td>
+<p>A vector of observed toxicities (DLTs) for each patient included in the trial. Must be of same length as <code>group_pat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tite</code></td>
+<td>
+<p>A boolean indicating if the efficacy is considered as a time-to-event (default value TRUE), or if it is a binary outcome (FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>efficacy</code></td>
+<td>
+<p>A vector of observed efficacies for each patient included in the trial. Must be of same length as <code>group_pat</code>. This argument is used/required only if tite=FALSE. The observed efficacies of patients belonging to other groups than <code>group_cur</code> should also be filled (although not used) in the same order as <code>group_pat</code> (NA can be put).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_follow</code></td>
+<td>
+<p>A vector of follow-up times for each patient included in the trial. Must be of same length as <code>group_pat</code>. This argument is used/required only if tite=TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_eff</code></td>
+<td>
+<p>A vector of times-to-efficacy for each patient included in the trial. If no efficacy was observed for a patient, must be filled with +Inf. Must be of same length as <code>group_pat</code>. This argument is used/required only if tite=TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_full</code></td>
+<td>
+<p>Full follow-up time window. This argument is used only if tite=TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cycle</code></td>
+<td>
+<p>Minimum waiting time between two dose cohorts (usually a toxicity cycle). This argument is used only if tite=TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_tox</code></td>
+<td>
+<p>Tocixity threshold for decision rules. The default value is set at 0.90.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_eff</code></td>
+<td>
+<p>Efficacy threshold for decision rules. The default value is set at 0.40.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed of the random number generator. Default value is set at 8.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class "mtaBin_next" is returned, consisting of determination of the next optimal dose level to administer and estimations. Objects generated by <code>mtaBin_next</code> contain at least the following components: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>prior_tox</code></td>
+<td>
+<p>Prior toxicities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_eff</code></td>
+<td>
+<p>Prior efficacies.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pat_incl_group</code></td>
+<td>
+<p>Number of patients included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_tox_tot</code></td>
+<td>
+<p>Number of observed toxicities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>Estimated toxicity probabilities (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ptox_inf</code></td>
+<td>
+<p>Estimated probabilities that the toxicity probability is inferior to <code>tox_max</code> (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_eff</code></td>
+<td>
+<p>Number of observed efficacies.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p>Estimated efficacy probabilities (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>1-qeff_inf</code></td>
+<td>
+<p>Estimated probabilities that the efficacy probability is superior to <code>eff_min</code> (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proba_tau</code></td>
+<td>
+<p>Posterior probabilities for the plateau location.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_cur</code></td>
+<td>
+<p>Current Group for dose determination.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in_startup</code></td>
+<td>
+<p>Start-up phase is ended or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cdose</code></td>
+<td>
+<p>NEXT RECOMMENDED DOSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ngroups</code></td>
+<td>
+<p>Number of groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>final</code></td>
+<td>
+<p>Maximim sample size reached.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Allocation method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tox_max</code></td>
+<td>
+<p>Toxicity upper bound (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eff_min</code></td>
+<td>
+<p>Efficacy lower bound (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_tox</code></td>
+<td>
+<p>Toxicity threshold (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_eff</code></td>
+<td>
+<p>Efficacy threshold (if the start-up ended).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tite</code></td>
+<td>
+<p>Type of outcome for efficacy (time-to-event or binary).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_full</code></td>
+<td>
+<p>If efficacy is a time-to-event, full follow-up time is also reminded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cycle</code></td>
+<td>
+<p>If efficacy is a time-to-event, minimum waiting time between two dose cohorts (cycle) is also reminded.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>The "MTA-PM" method is not implemented for non-binary efficacy, as "MTA-RA" is recommended for general use.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Jacques-Henri Jourdan and Marie-Karelle Riviere-Jourdan <a href="mailto:eldamjh@gmail.com">eldamjh@gmail.com</a></p>
+
+
+<h3>References</h3>
+
+<p>Riviere, M-K., Yuan, Y., Jourdan, J-H., Dubois, F., and Zohar, S. Phase I/II Dose-Finding Design for Molecularly Targeted Agent: Plateau Determination using Adaptive Randomization.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mtaBin_sim</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">prior_tox = c(0.02, 0.06, 0.12, 0.20, 0.30, 0.40)
+prior_eff = c(0.12, 0.20, 0.30, 0.40, 0.50, 0.59)
+group_pat_1 = rep(1,33)
+id_dose_1 = c(1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,4,4,4,5,5,5,6,6,6,3,3,3,4,4,4,3,3,3)
+tox_1 = c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0)
+time_follow_1 = c(rep(7,30),6.8,5,3.5)
+time_eff_1 = c(rep(+Inf,8),4,+Inf,+Inf,+Inf,3,6,+Inf,+Inf,2,+Inf,+Inf,4.5,+Inf,
++Inf,3.2,+Inf,+Inf,2.4,6.1,+Inf,5.8,+Inf,+Inf,2.1,3.6)
+eff_2 = c(0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0,1,0,0,1,0,0,1,0,0,1,1,0,1,0,0,1,1)
+group_pat_3 = c(1,2,3,2,1,2,3,1,2,3,3,2,2,1,3,1,2,3,1,2,3,3,3,2,1,1,2,1,2,2)
+id_dose_3 = c(1,1,1,1,1,1,1,1,2,1,2,2,2,2,2,2,3,2,2,3,3,3,3,3,1,1,2,1,2,2)
+toxicity_3 = c(0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0)
+efficacy_3 = c(NA,0,NA,0,NA,1,NA,NA,0,NA,NA,1,0,NA,NA,NA,0,NA,NA,1,NA,NA,NA,
+0,NA,NA,0,NA,1,1)
+s_1=function(n_cur){0.2*(1-n_cur/60)}
+
+
+# One group, time-to-event
+mta1 = mtaBin_next(ngroups=1, group_cur=1, ndose=6, prior_tox=prior_tox,
+       prior_eff=prior_eff, tox_max=0.35, eff_min=0.20, cohort_start=3,
+       cohort=3, method="MTA-PM", group_pat=group_pat_1, id_dose=id_dose_1,
+       toxicity=tox_1, tite=TRUE, time_follow=time_follow_1,
+       time_eff=time_eff_1, time_full=7, cycle=3, c_tox=0.90, c_eff=0.40)
+mta1
+
+# One group, binary
+mta2 = mtaBin_next(ngroups=1, group_cur=1, ndose=6, prior_tox=prior_tox,
+       prior_eff=prior_eff, tox_max=0.35, eff_min=0.20, cohort_start=3,
+       cohort=3, final = TRUE, method="MTA-RA", group_pat=group_pat_1,
+       id_dose=id_dose_1, toxicity=tox_1, tite=FALSE, efficacy=eff_2,
+       seed = 190714)
+mta2
+
+# Three groups, binary
+mta3 = mtaBin_next(ngroups=3, group_cur=2, ndose=6, prior_tox=prior_tox,
+       prior_eff=prior_eff, tox_max=0.35, eff_min=0.20, cohort_start=3,
+       cohort=3, final = FALSE, s_1=s_1, group_pat=group_pat_3,
+       id_dose=id_dose_3, toxicity=toxicity_3, tite=FALSE, efficacy=efficacy_3)
+mta3
+
+
+# Dummy example, running quickly
+useless = mtaBin_next(ngroups=1, group_cur=1, ndose=4,
+          prior_tox=c(0.12,0.20,0.30,0.40), prior_eff=c(0.20,0.30,0.40,0.50),
+          tox_max=0.35, eff_min=0.20, cohort_start=3, cohort=3,
+          group_pat=rep(1,9), id_dose=c(1,1,1,2,2,2,2,2,2),
+          toxicity=c(0,0,0,1,0,0,0,0,0), efficacy=c(0,0,0,0,0,1,0,1,0), tite=FALSE)
+</code></pre>
+
+
+</div>

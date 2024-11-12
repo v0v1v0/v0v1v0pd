@@ -1,0 +1,90 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>d_overall</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Determine overall desirability</h2>
+
+<h3>Description</h3>
+
+<p>Once desirability columns have been created, determine the overall
+desirability using a mean (geometric by default).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">d_overall(..., geometric = TRUE, tolerance = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more unquoted expressions separated by commas. To choose
+multiple columns using selectors, <code>dplyr::across()</code> can be used (see the
+example below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geometric</code></td>
+<td>
+<p>A logical for whether the geometric or arithmetic mean
+should be used to summarize the columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+<p>A numeric value where values strictly less than this value
+are capped at the value. For example, if users wish to use the geometric mean
+without completely excluding settings, a value greater than zero can be used.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A numeric vector.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>d_max()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(dplyr)
+
+# Choose model tuning parameters that minimize the number of predictors used
+# while maximizing the area under the ROC curve.
+
+classification_results %&gt;%
+  mutate(
+    d_feat = d_min(num_features, 1, 200),
+    d_roc  = d_max(roc_auc, 0.5, 0.9),
+    d_all  = d_overall(across(starts_with("d_")))
+  ) %&gt;%
+  arrange(desc(d_all))
+
+# Bias the ranking toward minimizing features by using a larger scale.
+
+classification_results %&gt;%
+  mutate(
+    d_feat = d_min(num_features, 1, 200, scale = 3),
+    d_roc  = d_max(roc_auc, 0.5, 0.9),
+    d_all  = d_overall(across(starts_with("d_")))
+  ) %&gt;%
+  arrange(desc(d_all))
+
+</code></pre>
+
+
+</div>

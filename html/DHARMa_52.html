@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>recalculateResiduals</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recalculate residuals with grouping</h2>
+
+<h3>Description</h3>
+
+<p>The purpose of this function is to recalculate scaled residuals per group, based on the simulations done by <code>simulateResiduals</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">recalculateResiduals(simulationOutput, group = NULL, aggregateBy = sum,
+  sel = NULL, seed = 123, method = c("PIT", "traditional"),
+  rotation = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>an object with simulated residuals created by <code>simulateResiduals</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>group of each data point</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregateBy</code></td>
+<td>
+<p>function for the aggregation. Default is sum. This should only be changed if you know what you are doing. Note in particular that the expected residual distribution might not be flat any more if you choose general functions, such as sd etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sel</code></td>
+<td>
+<p>an optional vector for selecting the data to be aggregated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>the random seed to be used within DHARMa. The default setting, recommended for most users, is keep the random seed on a fixed value 123. This means that you will always get the same randomization and thus teh same result when running the same code. NULL = no new seed is set, but previous random state will be restored after simulation. FALSE = no seed is set, and random state will not be restored. The latter two options are only recommended for simulation experiments. See vignette for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the quantile randomization method used. The two options implemented at the moment are probability integral transform (PIT-) residuals (current default), and the "traditional" randomization procedure, that was used in DHARMa until version 0.3.0. For details, see <code>getQuantile</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotation</code></td>
+<td>
+<p>optional rotation of the residual space to remove residual autocorrelation. See details in simulateResiduals, section <em>residual auto-correlation</em> for an extended explanation, and getQuantile for syntax.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class DHARMa, similar to what is returned by <code>simulateResiduals</code>, but with additional outputs for the new grouped calculations. Note that the relevant outputs are 2x in the object, the first is the grouped calculations (which is returned by $name access), and later another time, under identical name, the original output. Moreover, there is a function 'aggregateByGroup', which can be used to aggregate predictor variables in the same way as the variables calculated here
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(lme4)
+
+testData = createData(sampleSize = 100, overdispersion = 0.5, family = poisson())
+fittedModel &lt;- glmer(observedResponse ~ Environment1 + (1|group), 
+                     family = "poisson", data = testData)
+
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+
+# standard plot 
+plot(simulationOutput)
+
+# one of the possible test, for other options see ?testResiduals / vignette
+testDispersion(simulationOutput)
+
+# the calculated residuals can be accessed via 
+residuals(simulationOutput)
+
+# transform residuals to other pdf, see ?residuals.DHARMa for details
+residuals(simulationOutput, quantileFunction = qnorm, outlierValues = c(-7,7))
+
+# get residuals that are outside the simulation envelope
+outliers(simulationOutput)
+
+# calculating aggregated residuals per group
+simulationOutput2 = recalculateResiduals(simulationOutput, group = testData$group)
+plot(simulationOutput2, quantreg = FALSE)
+
+# calculating residuals only for subset of the data
+simulationOutput3 = recalculateResiduals(simulationOutput, sel = testData$group == 1 )
+plot(simulationOutput3, quantreg = FALSE)
+</code></pre>
+
+
+</div>

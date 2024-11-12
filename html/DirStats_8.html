@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bw_dir_pi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plug-in bandwidth selectors for directional data</h2>
+
+<h3>Description</h3>
+
+<p>Plug-in bandwidth selectors for kernel density estimation
+with directional data, including Rule-Of-Thumb (ROT),
+Asymptotic MIxtures (AMI), and Exact MIxtures (EMI).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bw_dir_rot(data)
+
+bw_dir_ami(data, fit_mix = NULL, L = NULL)
+
+R_Psi_mixvmf(q, mu, kappa, p)
+
+bw_dir_emi(data, fit_mix = NULL, optim = TRUE,
+  h_grid = exp(seq(log(0.05), log(1.5), l = 100)), plot_it = TRUE,
+  optim_par = 0.25, optim_lower = 0.06, optim_upper = 10)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>directional data, a matrix of size <code>c(n, q + 1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit_mix</code></td>
+<td>
+<p>output from <code>bic_vmf_mix</code>. Computed internally
+if <code>NULL</code> (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>kernel function. Set internally to <code>function(x) exp(-x)</code>
+(von Mises–Fisher kernel) if <code>NULL</code> (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>dimension of <code class="reqn">S^q</code>, <code class="reqn">q\ge 1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu, kappa, p</code></td>
+<td>
+<p>mixture parameters. <code>mu</code> is the mean matrix of size
+<code>c(length(p), q + 1)</code>, <code>kappa</code> is vector of <code>length(p)</code>
+concentration parameters, and <code>p</code> is the vector of mixture proportions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim</code></td>
+<td>
+<p>run an optimization? Defaults to <code>TRUE</code>. Otherwise,
+a grid search on <code>h</code> is done. Only effective if <code>L = NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h_grid</code></td>
+<td>
+<p>vector of bandwidths for performing a grid search. Defaults
+to<br><code>exp(seq(log(0.05), log(1.5), l = 100))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_it</code></td>
+<td>
+<p>display an informative plot on the optimization's grid search?
+Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim_par, optim_lower, optim_upper</code></td>
+<td>
+<p>parameters passed to <code>par</code>,
+<code>lower</code>, and <code>upper</code> in <code>optim</code> when using
+the <code>"L-BFGS-B"</code> method. Default to <code>0.25</code>, <code>0.06</code>
+(to avoid numerical instabilities), and <code>10</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See Algorithms 1 (AMI) and 2 (EMI) in García-Portugués (2013). The ROT
+selector is implemented according to Proposition 2, <b>but</b> without
+the paper's typo in equation (6), case <code class="reqn">q = 2</code>, where an incorrect
+extra <code class="reqn">\hat\kappa</code> appears premultiplying
+<code class="reqn">(1 + 4 \hat\kappa^2) \sinh(2 \hat\kappa)</code> in the denominator.
+</p>
+<p><code>bw_dir_ami</code> uses <code>R_Psi_mixvmf</code> for computing the curvature
+term of a mixture of von Mises–Fisher densities.
+</p>
+<p><code>bw_dir_emi</code> employs Monte Carlo integration for <code class="reqn">q &gt; 2</code>, which
+results in a random output. Use <code>set.seed</code> before to avoid it.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Selected bandwidth for <code>bw_dir_rot</code> and <code>bw_dir_ami</code>.
+<code>bw_dir_emi</code> returns a list with entries:
+</p>
+
+<ul>
+<li>
+<p><code>h_opt</code>: selected bandwidth.
+</p>
+</li>
+<li>
+<p><code>h_grid</code>: <code>h_grid</code>, if used (otherwise <code>NULL</code>).
+</p>
+</li>
+<li>
+<p><code>MISE_opt</code>: minimum of the MISE loss.
+</p>
+</li>
+<li>
+<p><code>MISE_grid</code>: value of the MISE function at <code>h_grid</code>, if
+used (otherwise <code>NULL</code>).
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>García-Portugués, E. (2013). Exact risk improvement of bandwidth selectors
+for kernel density estimation with directional data. <em>Electronic
+Journal of Statistics</em>, 7:1655–1685.
+<a href="https://doi.org/10.1214/13-ejs821">doi:10.1214/13-ejs821</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Sample
+n &lt;- 25
+q &lt;- 2
+set.seed(42)
+samp &lt;- rotasym::r_vMF(n = n, mu = c(1, rep(0, q)), kappa = 2)
+
+# Mixture fit
+fit_mix &lt;- bic_vmf_mix(data = samp, plot_it = TRUE)
+
+# ROT
+bw_dir_rot(samp)
+
+# AMI
+bw_dir_ami(samp)
+bw_dir_ami(samp, fit_mix = fit_mix)
+bw_dir_ami(samp, fit_mix = fit_mix, L = function(x) exp(-x))
+
+# EMI
+bw_dir_emi(samp)
+bw_dir_emi(samp, fit_mix = fit_mix, optim = FALSE, plot_it = TRUE)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,344 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drmodels</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Built-in dose-response models in DoseFinding</h2>
+
+<h3>Description</h3>
+
+<p>Dose-response model functions and gradients.
+</p>
+<p>Below are the definitions of the model functions:
+</p>
+<p><b>Emax model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+E_{max}\frac{d}{ED_{50}+d}</code>
+</p>
+
+<p><b>Sigmoid Emax Model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+E_{max}\frac{d^h}{ED^h_{50}+d^h}</code>
+</p>
+
+<p><b>Exponential Model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+E_1(\exp(d/\delta)-1)</code>
+</p>
+
+<p><b>Beta model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+E_{max}B(\delta_1,\delta_2)(d/scal)^{\delta_1}(1-d/scal)^{\delta_2}
+</code>
+</p>
+
+<p> here
+</p>
+<p style="text-align: center;"><code class="reqn">B(\delta_1,\delta_2)=(\delta_1+\delta_2)^{\delta_1+\delta_2}/(\delta_1^{\delta_1}
+</code>
+</p>
+<p style="text-align: center;"><code class="reqn">
+\delta_2^{\delta_2})</code>
+</p>
+<p> and <code class="reqn">scal</code> is a fixed dose scaling parameter.
+</p>
+<p><b>Linear Model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+\delta d</code>
+</p>
+
+<p><b>Linear in log Model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+\delta \log(d + off)</code>
+</p>
+
+<p>here <code class="reqn">off</code> is a fixed offset parameter.
+</p>
+<p><b>Logistic Model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d, \theta) = E_0 + E_{\max}/\left\{1 + \exp\left[ \left(ED_{50} - d
+\right)/\delta \right] \right\}</code>
+</p>
+
+<p><b>Quadratic Model</b> </p>
+<p style="text-align: center;"><code class="reqn">
+f(d,\theta)=E_0+\beta_1d+\beta_2d^2</code>
+</p>
+<p> The
+standardized model equation for the quadratic model is <code class="reqn">d+\delta
+d^2</code>, with <code class="reqn">\delta=\beta_2/\beta_1</code>.
+</p>
+<p><b>Linear Interpolation model</b><br> The linInt model provides linear
+interpolation at the values defined by the nodes vector. In virtually all
+situations the nodes vector is equal to the doses used in the analysis. For
+example the <code>Mods</code> and the <code>fitMod</code> function
+automatically use the doses that are used in the context of the function
+call as nodes. The guesstimates specified in the <code>Mods</code> function
+need to be the treatment effects at the active doses standardized to the
+interval [0,1] (see the examples in the <code>Mods</code> function).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">emax(dose, e0, eMax, ed50)
+emaxGrad(dose, eMax, ed50, ...)
+
+sigEmax(dose, e0, eMax, ed50, h)
+sigEmaxGrad(dose, eMax, ed50, h, ...)
+
+exponential(dose, e0, e1, delta)
+exponentialGrad(dose, e1, delta, ...)
+
+quadratic(dose, e0, b1, b2)
+quadraticGrad(dose, ...)
+
+betaMod(dose, e0, eMax, delta1, delta2, scal)
+betaModGrad(dose, eMax, delta1, delta2, scal, ...)
+
+linear(dose, e0, delta)
+linearGrad(dose, ...)
+
+linlog(dose, e0, delta, off = 1)
+linlogGrad(dose, off, ...)
+
+logistic(dose, e0, eMax, ed50, delta)
+logisticGrad(dose, eMax, ed50, delta, ...)
+
+linInt(dose, resp, nodes)
+linIntGrad(dose, resp, nodes, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p>Dose variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e0</code></td>
+<td>
+<p>For most models placebo effect. For logistic model left-asymptote
+parameter, corresponding to a basal effect level (not the placebo effect)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eMax</code></td>
+<td>
+<p>Beta Model: Maximum effect within dose-range<br> Emax, sigmoid
+Emax, logistic Model: Asymptotic maximum effect</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ed50</code></td>
+<td>
+<p>Dose giving half of the asymptotic maximum effect</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Just included for convenience in the gradient functions, so that
+for example <code>quadratic(dose, e0=0, b1=1, b2=3)</code> will not throw an error
+(although the gradient of the quadratic model is independent of e0, b1 and
+b2).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>Hill parameter, determining the steepness of the model at the ED50</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e1</code></td>
+<td>
+<p>Slope parameter for exponential model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>Exponential model: Parameter, controlling the convexity of the
+model.<br> Linear and linlog model: Slope parameter<br> Logistic model:
+Parameter controlling determining the steepness of the curve</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b1</code></td>
+<td>
+<p>first parameter of quadratic model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b2</code></td>
+<td>
+<p>second parameter of quadratic model (controls, whether model is
+convex or concave)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta1</code></td>
+<td>
+<p>delta1 parameter for beta model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta2</code></td>
+<td>
+<p>delta2 parameter for beta model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scal</code></td>
+<td>
+<p>Scale parameter (treated as a fixed value, not estimated)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>off</code></td>
+<td>
+<p>Offset value to avoid problems with dose=0 (treated as a fixed
+value, not estimated)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p>Response values at the nodes for the linInt model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nodes</code></td>
+<td>
+<p>Interpolation nodes for the linear interpolation for the linInt
+model (treated as a fixed value, not estimated)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <b>Emax model</b> is used to represent monotone, concave dose-response
+shapes.  To distinguish it from the more general sigmoid emax model it is
+sometimes also called hyperbolic emax model.
+</p>
+<p>The <b>sigmoid Emax</b> model is an extension of the (hyperbolic) Emax model
+by introducing an additional parameter h, that determines the steepness of
+the curve at the ed50 value. The sigmoid Emax model describes monotonic,
+sigmoid dose-response relationships. In the toxicology literature this model
+is also called four-parameter log-logistic (4pLL) model.
+</p>
+<p>The <b>quadratic</b> model is intended to capture a possible non-monotonic
+dose-response relationship.
+</p>
+<p>The <b>exponential model</b> is intended to capture a possible sub-linear or
+a convex dose-response relationship.
+</p>
+<p>The <b>beta model</b> is intended to capture non-monotone dose-response
+relationships and is more flexible than the quadratic model.  The kernel of
+the beta model function consists of the kernel of the density function of a
+beta distribution on the interval [0,scal]. The parameter scal is not
+estimated but needs to be set to a value larger than the maximum dose. It
+can be set in most functions (‘<span class="samp">⁠fitMod⁠</span>’, ‘<span class="samp">⁠Mods⁠</span>’) via the
+‘<span class="samp">⁠addArgs⁠</span>’ argument, when omitted a value of ‘<span class="samp">⁠1.2*(maximum dose)⁠</span>’
+is used as default, where the maximum dose is inferred from other input to
+the respective function.
+</p>
+<p>The <b>linear in log-dose</b> model is intended to capture concave shapes.
+The parameter <code>off</code> is not estimated in the code but set to a
+pre-specified value. It can be set in most functions (‘<span class="samp">⁠fitMod⁠</span>’,
+‘<span class="samp">⁠Mods⁠</span>’) via the ‘<span class="samp">⁠addArgs⁠</span>’ argument, when omitted a value of
+‘<span class="samp">⁠0.01*(maximum dose)⁠</span>’ is used as default, where the maximum dose is
+inferred from other input to the respective function.
+</p>
+<p>The <b>logistic model</b> is intended to capture general monotone, sigmoid
+dose-response relationships. The logistic model and the sigmoid Emax model
+are closely related: The sigmoid Emax model is a logistic model in
+log(dose).
+</p>
+<p>The <b>linInt model</b> provids linear interpolation of the means at the
+doses. This can be used as a "nonparametric" estimate of the dose-response
+curve, but is probably most interesting for specifying a "nonparametric"
+truth during planning and assess how well parametric models work under a
+nonparametric truth. For the function ‘<span class="samp">⁠Mods⁠</span>’ and ‘<span class="samp">⁠fitMod⁠</span>’ the
+interpolation ‘<span class="samp">⁠nodes⁠</span>’ are selected equal to the dose-levels specified.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Response value for model functions or matrix containing the gradient
+evaluations.
+</p>
+
+
+<h3>References</h3>
+
+<p>MacDougall, J. (2006). Analysis of dose-response studies - Emax
+model,<em>in</em> N. Ting (ed.), <em>Dose Finding in Drug Development</em>,
+Springer, New York, pp. 127–145
+</p>
+<p>Pinheiro, J. C., Bretz, F. and Branson, M. (2006). Analysis of dose-response
+studies - modeling approaches, <em>in</em> N. Ting (ed.). <em>Dose Finding
+in Drug Development</em>, Springer, New York, pp. 146–171
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fitMod</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## some quadratic example shapes
+quadModList &lt;- Mods(quadratic = c(-0.5, -0.75, -0.85, -1), doses = c(0,1))
+plotMods(quadModList)
+
+## some emax example shapes
+emaxModList &lt;- Mods(emax = c(0.02,0.1,0.5,1), doses = c(0,1))
+plotMods(emaxModList)
+## example for gradient
+emaxGrad(dose = (0:4)/4, eMax = 1, ed50 = 0.5)
+
+## some sigmoid emax example shapes
+sigEmaxModList &lt;- Mods(sigEmax = rbind(c(0.05,1), c(0.15,3), c(0.4,8),
+                       c(0.7,8)), doses = c(0,1))
+plotMods(sigEmaxModList)
+sigEmaxGrad(dose = (0:4)/4, eMax = 1, ed50 = 0.5, h = 8)
+
+## some exponential example shapes
+expoModList &lt;- Mods(exponential = c(0.1,0.25,0.5,2), doses=c(0,1))
+plotMods(expoModList)
+exponentialGrad(dose = (0:4)/4, e1 = 1, delta = 2)
+
+## some beta model example shapes
+betaModList &lt;- Mods(betaMod = rbind(c(1,1), c(1.5,0.75), c(0.8,2.5),
+                    c(0.4,0.9)), doses=c(0,1), addArgs=list(scal = 1.2))
+plotMods(betaModList)
+betaModGrad(dose = (0:4)/4, eMax = 1, delta1 = 1, delta2 = 1, scal = 5)
+
+## some logistic model example shapes
+logistModList &lt;- Mods(logistic = rbind(c(0.5,0.05), c(0.5,0.15),
+                      c(0.2,0.05), c(0.2,0.15)), doses=c(0,1))
+plotMods(logistModList)
+logisticGrad(dose = (0:4)/4, eMax = 1, ed50 = 0.5, delta = 0.05)
+
+## some linInt shapes
+genModList &lt;- Mods(linInt = rbind(c(0.5,1,1),
+                      c(0,1,1), c(0,0,1)), doses=c(0,0.5,1,1.5))
+plotMods(genModList)
+linIntGrad(dose = (0:4)/4, resp=c(0,0.5,1,1,1), nodes=(0:4)/4)
+
+
+</code></pre>
+
+
+</div>

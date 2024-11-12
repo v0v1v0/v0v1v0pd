@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fld2dt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>transform a field into an array of spectral energies</h2>
+
+<h3>Description</h3>
+
+<p>Handles the transformation itself, boundary conditions and bias correction and returns the unbiased local wavelet spectrum at each grid-point.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fld2dt(fld, Nx = NULL, Ny = NULL, J = NULL, correct = TRUE,
+  rsm = 0, verbose = FALSE, boundaries = "pad",
+  fb1 = near_sym_b_bp, fb2 = qshift_b_bp)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fld</code></td>
+<td>
+<p>a real matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nx</code></td>
+<td>
+<p>size to which the field is padded in x-direction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ny</code></td>
+<td>
+<p>size to which the field is padded in y-direction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>J</code></td>
+<td>
+<p>number of levels for the decomposition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct</code></td>
+<td>
+<p>logical, whether or not to apply the bias correction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rsm</code></td>
+<td>
+<p>number of pixels to be linearly smoothed along each edge before applying the boundary conditions (see <code>smooth_borders</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>whether or not you want the transform to talk to you</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boundaries</code></td>
+<td>
+<p>how to handle the boundary conditions, either "pad", "mirror" or "periodic"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fb1</code></td>
+<td>
+<p>filter bank for level 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fb2</code></td>
+<td>
+<p>filter bank for all further levels</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The input is blown up to <code>Nx x Ny</code> and transformed by <code>dtcwt(..., dec=FALSE)</code>. Then the original domain is cut out, the coefficients are squared and the bias is corrected (for details on the bias, see <code>A</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>an array of size <code>J x nx x ny x 6</code> where <code>dim(fld)=c(nx,ny)</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>Nelson, J. D. B., A. J. Gibberd, C. Nafornita, and N. Kingsbury (2018) &lt;doi:10.1007/s11222-017-9784-0&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>A</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">oldpar &lt;- par( no.readonly=TRUE )
+dt &lt;- fld2dt( blossom )
+par( mfrow=c(2,2), mar=rep(2,4) )
+for( j in 1:4 ){
+    image( blossom, col=gray.colors(128, 0,1), xaxt="n", yaxt="n" )
+    for(d in  1:6) contour( dt[j,,,d], levels=quantile(dt[,,,], .995), 
+                            col=d+1, add=TRUE, lwd=2, drawlabels=FALSE )
+    title( main=paste0("j=",j) )
+} 
+x0  &lt;- seq( .1,.5,,6 )
+y0  &lt;- rep( 0.01,6 )
+a   &lt;- .075
+phi &lt;- seq( 15,,30,6 )*pi/180
+x1  &lt;- x0 + a*cos( phi )
+y1  &lt;- y0 + a*sin( phi )
+rect( min(x0,x1)-.05, min(y0,y1)-.05, 
+      max(x0,x1)+.05, max(y0,y1), col="black", border=NA )
+arrows( x0, y0, x1, y1, length=.05, col=2:7, lwd=2, code=3 )
+par( oldpar )
+</code></pre>
+
+
+</div>

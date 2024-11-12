@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>combdist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combined distributions</h2>
+
+<h3>Description</h3>
+
+<p>Density, distribution function, quantile function, raw moments and random generation for combined (empirical, single, composite and finite mixture) truncated or complete distributions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dcombdist(
+  x,
+  dist,
+  prior = c(1),
+  coeff,
+  log = FALSE,
+  compress = TRUE,
+  lowertrunc = 0,
+  uppertrunc = Inf
+)
+
+pcombdist(
+  q,
+  dist,
+  prior = 1,
+  coeff,
+  log.p = FALSE,
+  lower.tail = TRUE,
+  compress = TRUE,
+  lowertrunc = NULL,
+  uppertrunc = NULL
+)
+
+qcombdist(p, dist, prior, coeff, log.p = FALSE, lower.tail = TRUE)
+
+mcombdist(
+  r,
+  truncation = NULL,
+  dist,
+  prior = 1,
+  coeff,
+  lower.tail = TRUE,
+  compress = TRUE,
+  uppertrunc = 0,
+  lowertrunc = Inf
+)
+
+rcombdist(n, dist, prior, coeff, uppertrunc = NULL, lowertrunc = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, q</code></td>
+<td>
+<p>vector of quantiles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>character vector denoting the distribution(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>Numeric vector of prior coefficients, defaults to single vector with value one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coeff</code></td>
+<td>
+<p>list of parameters for the distribution(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log, log.p</code></td>
+<td>
+<p>logical; if TRUE, probabilities p are given as log(p).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compress</code></td>
+<td>
+<p>Logical indicating whether return values from individual densities of finite mixtures should be gathered or not, defaults to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowertrunc, uppertrunc</code></td>
+<td>
+<p>lowertrunc- and uppertrunc truncation points, defaults to 0 and Inf respectively</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if TRUE (default), probabilities (moments) are <code class="reqn">P[X \leq x]</code> <code class="reqn">(E[x^r|X \leq y])</code>, otherwise, <code class="reqn">P[X &gt; x]</code> <code class="reqn">(E[x^r|X &gt; y])</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>vector of probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>rth raw moment of the Pareto distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncation</code></td>
+<td>
+<p>lower truncation parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of observations</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>dcombdist gives the density, pcombdist gives the distribution function, qcombdist gives the quantile function, mcombdist gives the rth moment of the distribution and rcombdist generates random deviates.
+</p>
+<p>The length of the result is determined by n for rcombdist, and is the maximum of the lengths of the numerical arguments for the other functions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Load necessary tools
+data("fit_US_cities")
+library(tidyverse)
+x &lt;- rcombdist(
+  n = 25359, dist = "lnorm",
+  prior = subset(fit_US_cities, (dist == "lnorm" &amp; components == 5))$prior[[1]],
+  coeff = subset(fit_US_cities, (dist == "lnorm" &amp; components == 5))$coefficients[[1]]
+) # Generate data from one of the fitted functions
+
+# Evaluate functioning of dcomdist by calculating log likelihood for all distributions
+loglike &lt;- fit_US_cities %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(loglike = sum(dcombdist(dist = .[["dist"]], x = sort(x), prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]], log = TRUE))) %&gt;%
+  unnest(cols = loglike) %&gt;%
+  mutate(NLL = -loglike, AIC = 2 * np - 2 * (loglike), BIC = log(n) * np - 2 * (loglike)) %&gt;%
+  arrange(NLL)
+
+# Evaluate functioning of mcombdist and pcombdist by calculating NMAD
+#(equivalent to the Kolmogorov-Smirnov test statistic for the zeroth moment
+#of the distribution) for all distributions
+nmad &lt;- fit_US_cities %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(
+    KS = max(abs(pempirical(q = sort(x), data = x) - pcombdist(dist = .[["dist"]],
+    q = sort(x), prior = .[["prior"]][[1]], coeff = .[["coefficients"]][[1]]))),
+    nmad_0 = nmad_test(r = 0, dist = .[["dist"]], x = sort(x), prior = .[["prior"]][[1]],
+    coeff = .[["coefficients"]][[1]], stat = "max"),
+    nmad_1 = nmad_test(r = 1, dist = .[["dist"]], x = sort(x), prior = .[["prior"]][[1]],
+    coeff = .[["coefficients"]][[1]], stat = "max")
+  ) %&gt;%
+  unnest(cols = c(KS, nmad_0, nmad_1)) %&gt;%
+  arrange(nmad_0)
+
+# Evaluate functioning of qcombdist pcombdist by calculating NMAD (equivalent to the Kolmogorov-
+#Smirnov test statistic for the zeroth moment of the distribution) for all distributions
+test &lt;- fit_US_cities %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(out = qcombdist(pcombdist(2, dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]], log.p = TRUE),
+    dist = .[["dist"]], prior = .[["prior"]][[1]], coeff = .[["coefficients"]][[1]],
+    log.p = TRUE
+  )) %&gt;%
+  unnest(cols = c(out))
+
+
+</code></pre>
+
+
+</div>

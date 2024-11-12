@@ -1,0 +1,204 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>desla</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Desparsified lasso</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the desparsified lasso as originally introduced in van de Geer et al. (2014), and provides inference suitable for high-dimensional time series, based on the long run covariance estimator in Adamek et al. (2021).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">desla(
+  X,
+  y,
+  H,
+  alphas = 0.05,
+  penalize_H = TRUE,
+  R = NULL,
+  q = NULL,
+  demean = TRUE,
+  scale = TRUE,
+  progress_bar = TRUE,
+  parallel = TRUE,
+  threads = NULL,
+  PI_constant = NULL,
+  LRV_bandwidth = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p><code>T_</code> x <code>N</code> regressor matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p><code>T_</code> x 1 dependent variable vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>indexes of relevant regressors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alphas</code></td>
+<td>
+<p>(optional) vector of significance levels (0.05 by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalize_H</code></td>
+<td>
+<p>(optional) boolean, true if you want the variables in H to be penalized (<code>TRUE</code> by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>(optional) matrix with number of columns the dimension of <code>H</code>, used to test the null hypothesis <code>R</code>*beta=<code>q</code> (identity matrix as default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>(optional) vector of size same as the rows of <code>H</code>, used to test the null hypothesis <code>R</code>*beta=<code>q</code> (zeroes by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>demean</code></td>
+<td>
+<p>(optional) boolean, true if <code>X</code> and <code>y</code> should be demeaned before the desparsified lasso is calculated. This is recommended, due to the assumptions for the method (true by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>(optional) boolean, true if <code>X</code> and <code>y</code> should be scaled by the column-wise standard deviations. Recommended for lasso based methods in general, since the penalty is scale-sensitive (true by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress_bar</code></td>
+<td>
+<p>(optional) boolean, displays a progress bar while running if true, tracking the progress of estimating the nodewise regressions (TRUE by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>boolean, whether parallel computing should be used (TRUE by default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threads</code></td>
+<td>
+<p>(optional) integer, how many threads should be used for parallel computing if <code>parallel=TRUE</code> (default is to use all but two)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PI_constant</code></td>
+<td>
+<p>(optional) constant, used in the plug-in selection method (0.8 by default). For details see Adamek et al. (2021)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LRV_bandwidth</code></td>
+<td>
+<p>(optional) vector of parameters controlling the bandwidth <code>Q_T</code> used in the long run covariance matrix, <code>Q_T</code>=ceil(<code>LRV_bandwidth[1]</code>*<code>T_</code>^<code>LRV_bandwidth[2]</code>). When <code>LRV_bandwidth=NULL</code>, the bandwidth is selected according to Andrews (1991) (default)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list with the following elements: <br></p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>bhat</code></td>
+<td>
+<p>desparsified lasso estimates for the parameters indexed by <code>H</code>, unscaled to be in the original scale of <code>y</code> and <code>X</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standard_errors</code></td>
+<td>
+<p>standard errors of the estimates for variables indexed by <code>H</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervals</code></td>
+<td>
+<p>matrix containing the confidence intervals for parameters indexed in <code>H</code>, unscaled to be in the original scale of <code>y</code> and <code>X</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>betahat</code></td>
+<td>
+<p>lasso estimates from the initial regression of <code>y</code> on <code>X</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DSL_matrices</code></td>
+<td>
+<p>list containing the matrices <code>Gammahat</code>, <code>Upsilonhat_inv</code> and <code>Thetahat</code> used for calculating the desparsified lasso, as well as <code>Omegahat</code>, the long run covariance matrix for the variables indexed by <code>H</code>. For details see Adamek et al. (2021)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>list containing the vector of residuals from the initial lasso regression (<code>init</code>) and the matrix of residuals from the nodewise regressions (<code>nw</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdas</code></td>
+<td>
+<p>values of lambda selected in the initial lasso regression (<code>init</code>) and the nodewise lasso regressions (<code>nw</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selected_vars</code></td>
+<td>
+<p>vector of indexes of the nonzero parameters in the initial lasso (<code>init</code>) and each nodewise regression (<code>nw</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wald_test</code></td>
+<td>
+<p>list containing elements for inference on <code>R</code> beta=<code>q</code>. <code>joint_test</code> contains the test statistic for the overall null hypothesis <code>R</code> beta=<code>q</code> along with the p-value. At default values of <code>R</code> and <code>q</code>, this tests the joint significance of all variables indexed by <code>H</code>. <code>row_tests</code> contains the vector of z-statistics and confidence intervals associated with each row of <code>R</code> beta - <code>q</code>, unscaled to be in the original scale of <code>y</code> and <code>X</code>. This output is only given when either <code>R</code> or <code>q</code> are supplied</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Adamek R, Smeekes S, Wilms I (2021).
+“LASSO inference for high-dimensional time series.”
+<em>arXiv preprint arXiv:2007.10952</em>.<br><br> Andrews DW (1991).
+“Heteroskedasticity and autocorrelation consistent covariance matrix estimation.”
+<em>Econometrica</em>, <b>59</b>(3), 817–858.<br><br> van de Geer S, Buhlmann P, Ritov Y, Dezeure R (2014).
+“On asymptotically optimal confidence regions and tests for high-dimensional models.”
+<em>Annals of Statistics</em>, <b>42</b>(3), 1166–1202.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X&lt;-matrix(rnorm(50*50), nrow=50)
+y&lt;-X[,1:4] %*% c(1, 2, 3, 4) + rnorm(50)
+H&lt;-c(1, 2, 3, 4)
+d&lt;-desla(X, y, H)
+</code></pre>
+
+
+</div>

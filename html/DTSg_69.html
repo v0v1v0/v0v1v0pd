@@ -1,0 +1,286 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>subset.DTSg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Subset time series data</h2>
+
+<h3>Description</h3>
+
+<p>Filters rows and/or selects columns of a <code>DTSg</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DTSg'
+subset(
+  x,
+  i,
+  cols = self$cols(),
+  funby = NULL,
+  ignoreDST = FALSE,
+  na.status = "implicit",
+  clone = getOption("DTSgClone"),
+  multiplier = 1L,
+  funbyHelpers = NULL,
+  funbyApproach = self$funbyApproach,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>DTSg</code> object (S3 method only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>An integerish vector indexing rows (positive numbers pick and
+negative numbers omit rows) or a filter expression accepted by the <code>i</code>
+argument of <code>data.table::data.table</code>. Filter expressions can contain the
+special symbol <code>.N</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+<p>A character vector specifying the columns to select. Another
+possibility is a character string containing either comma separated column
+names, for example, <code>"x,y,z"</code>, or the start and end column separated by a
+colon, for example, <code>"x:z"</code>. The <em>.dateTime</em> column is always selected and
+cannot be part of it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funby</code></td>
+<td>
+<p>One of the temporal aggregation level functions described in
+<code>TALFs</code> or a user defined temporal aggregation level function. Can be
+used to, for instance, select the last two observations of a certain
+temporal level. See corresponding section and examples for further
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreDST</code></td>
+<td>
+<p>A logical specifying if day saving time shall be ignored
+by <code>funby</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.status</code></td>
+<td>
+<p>A character string. Either <code>"explicit"</code>, which makes missing
+timestamps explicit according to the recognised periodicity, or
+<code>"implicit"</code>, which removes timestamps with missing values on all value
+columns. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clone</code></td>
+<td>
+<p>A logical specifying if the object shall be modified in place or
+if a deep clone (copy) shall be made beforehand.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multiplier</code></td>
+<td>
+<p>A positive integerish value “multiplying” the
+temporal aggregation level of certain <code>TALFs</code>. See corresponding section
+for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyHelpers</code></td>
+<td>
+<p>An optional <code>list</code> with helper data passed on to
+<code>funby</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyApproach</code></td>
+<td>
+<p>A character string specifying the flavour of the applied
+temporal aggregation level function. Either <code>"base"</code>, which utilises
+<code>as.POSIXct</code>, or <code>"fasttime"</code>, which utilises <code>fasttime::fastPOSIXct</code>,
+or <code>"RcppCCTZ"</code>, which utilises <code>RcppCCTZ::parseDatetime</code> as the main
+function for transforming timestamps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to <code>fun</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a <code>DTSg</code> object.
+</p>
+
+
+<h3>Status of missing values</h3>
+
+<p>Please note that filtering rows and having or making missing timestamps
+explicit equals to setting the values of all other timestamps to missing. The
+default value of <code>na.status</code> is therefore <code>"implicit"</code>. To simply filter for
+a consecutive range of a <code>DTSg</code> object while leaving the <code>na.status</code>
+untouched, <code>alter</code> is probably the better choice.
+</p>
+
+
+<h3>User defined TALFs, TALFs helper data and multiplier</h3>
+
+<p>User defined temporal aggregation level functions have to return a
+<code>POSIXct</code> vector of the same length as the time series and accept two
+arguments: a <code>POSIXct</code> vector as its first and a <code>list</code> with helper data
+as its second. The default elements of this <code>list</code> are as follows:
+</p>
+
+<ul>
+<li> <p><em>timezone:</em> Same as the <code>timezone</code> field.
+</p>
+</li>
+<li> <p><em>ignoreDST:</em> Same as the <code>ignoreDST</code> argument.
+</p>
+</li>
+<li> <p><em>periodicity:</em> Same as the <code>periodicity</code> field.
+</p>
+</li>
+<li> <p><em>na.status:</em> Same as the <code>na.status</code> field.
+</p>
+</li>
+<li> <p><em>multiplier:</em> Same as the <code>multiplier</code> argument.
+</p>
+</li>
+<li> <p><em>funbyApproach:</em> Same as the <code>funbyApproach</code> argument.
+</p>
+</li>
+</ul>
+<p>Any additional element specified in the <code>funbyHelpers</code> argument is appended
+to the end of the helper data <code>list</code>. In case <code>funbyHelpers</code> contains an
+<em>ignoreDST, multiplier</em> or <em>funbyApproach</em> element, it takes precedence over
+the respective method argument. <em>timezone, periodicity</em> and <em>na.status</em>
+elements are rejected, as they are always taken directly from the object.
+</p>
+<p>The temporal aggregation level of certain <code>TALFs</code> can be adjusted with the
+help of the <code>multiplier</code> argument. A <code>multiplier</code> of <code>10</code>, for example, makes
+<code>byY_____</code> aggregate to decades instead of years. Another example
+is a <code>multiplier</code> of <code>6</code> provided to <code>by_m____</code>. The function
+then aggregates all months of all first and all months of all second half
+years instead of all months of all years separately. This feature is
+supported by the following <code>TALFs</code> of the package:
+</p>
+
+<ul>
+<li> <p><code>byY_____</code>
+</p>
+</li>
+<li> <p><code>byYm____</code>
+</p>
+</li>
+<li> <p><code>byYmdH__</code> (UTC and equivalent as well as all Etc/GMT time zones only)
+</p>
+</li>
+<li> <p><code>byYmdHM_</code>
+</p>
+</li>
+<li> <p><code>byYmdHMS</code>
+</p>
+</li>
+<li> <p><code>by_m____</code>
+</p>
+</li>
+<li> <p><code>by___H__</code> (UTC and equivalent as well as all Etc/GMT time zones only)
+</p>
+</li>
+<li> <p><code>by____M_</code>
+</p>
+</li>
+<li> <p><code>by_____S</code>
+</p>
+</li>
+</ul>
+<h3>Ignore day saving time</h3>
+
+<p><code>ignoreDST</code> tells a temporal aggregation level function if it is supposed to
+ignore day saving time while transforming the timestamps. This can be a
+desired feature for time series strictly following the position of the sun
+such as hydrological time series. Doing so ensures that diurnal variations
+are preserved by all means and all intervals are of the “correct”
+length, however, a possible limitation might be that the day saving time
+shift is invariably assumed to be one hour long. This feature requires that
+the periodicity of the time series was recognised and is supported by the
+following <code>TALFs</code> of the package:
+</p>
+
+<ul>
+<li> <p><code>byY_____</code>
+</p>
+</li>
+<li> <p><code>byYQ____</code>
+</p>
+</li>
+<li> <p><code>byYm____</code>
+</p>
+</li>
+<li> <p><code>byYmd___</code>
+</p>
+</li>
+<li> <p><code>by_Q____</code>
+</p>
+</li>
+<li> <p><code>by_m____</code>
+</p>
+</li>
+<li> <p><code>by___H__</code>
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>cols</code>, <code>getOption</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># new DTSg object
+x &lt;- DTSg$new(values = flow)
+
+# filter for the first six observations
+## R6 method
+x$subset(i = 1:6)$print()
+
+## S3 method
+print(subset(x = x, i = 1:6))
+
+# filter for the last two observations per year
+## R6 method
+x$subset(
+  i = (.N - 1):.N,
+  funby = function(x, ...) {data.table::year(x)}
+)$print()
+
+## S3 method
+print(subset(
+  x = x,
+  i = (.N - 1):.N,
+  funby = function(x, ...) {data.table::year(x)}
+))
+
+</code></pre>
+
+
+</div>

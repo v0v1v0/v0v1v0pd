@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbFetchArrow</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fetch records from a previously executed query as an Arrow object</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+</p>
+<p>Fetch the result set and return it as an Arrow object.
+Use <code>dbFetchArrowChunk()</code> to fetch results in chunks.
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbFetchArrow(res, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p>An object inheriting from DBIResultArrow, created by
+<code>dbSendQueryArrow()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments passed on to methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>dbFetchArrow()</code> always returns an object coercible to a data.frame with
+as many rows as records were fetched and as many
+columns as fields in the result set,
+even if the result is a single value
+or has one
+or zero rows.
+</p>
+
+
+<h3>The data retrieval flow for Arrow streams</h3>
+
+<p>This section gives a complete overview over the flow
+for the execution of queries that return tabular data as an Arrow stream.
+</p>
+<p>Most of this flow, except repeated calling of <code>dbBindArrow()</code> or <code>dbBind()</code>,
+is implemented by <code>dbGetQueryArrow()</code>,
+which should be sufficient
+unless you have a parameterized query that you want to reuse.
+This flow requires an active connection established by <code>dbConnect()</code>.
+See also <code>vignette("dbi-advanced")</code> for a walkthrough.
+</p>
+
+<ol>
+<li>
+<p> Use <code>dbSendQueryArrow()</code> to create a result set object of class
+DBIResultArrow.
+</p>
+</li>
+<li>
+<p> Optionally, bind query parameters with <code>dbBindArrow()</code> or <code>dbBind()</code>.
+This is required only if the query contains placeholders
+such as <code style="white-space: pre;">⁠?⁠</code> or <code style="white-space: pre;">⁠$1⁠</code>, depending on the database backend.
+</p>
+</li>
+<li>
+<p> Use <code>dbFetchArrow()</code> to get a data stream.
+</p>
+</li>
+<li>
+<p> Repeat the last two steps as necessary.
+</p>
+</li>
+<li>
+<p> Use <code>dbClearResult()</code> to clean up the result set object.
+This step is mandatory even if no rows have been fetched
+or if an error has occurred during the processing.
+It is good practice to use <code>on.exit()</code> or <code>withr::defer()</code>
+to ensure that this step is always executed.
+</p>
+</li>
+</ol>
+<h3>Failure modes</h3>
+
+<p>An attempt to fetch from a closed result set raises an error.
+</p>
+
+
+<h3>Specification</h3>
+
+<p>Fetching multi-row queries with one
+or more columns by default returns the entire result.
+The object returned by <code>dbFetchArrow()</code> can also be passed to
+<code>nanoarrow::as_nanoarrow_array_stream()</code> to create a nanoarrow
+array stream object that can be used to read the result set
+in batches.
+The chunk size is implementation-specific.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Close the result set with <code>dbClearResult()</code> as soon as you
+finish retrieving the records you want.
+</p>
+<p>Other DBIResultArrow generics: 
+<code>DBIResultArrow-class</code>,
+<code>dbBind()</code>,
+<code>dbClearResult()</code>,
+<code>dbFetchArrowChunk()</code>,
+<code>dbHasCompleted()</code>,
+<code>dbIsValid()</code>
+</p>
+<p>Other data retrieval generics: 
+<code>dbBind()</code>,
+<code>dbClearResult()</code>,
+<code>dbFetch()</code>,
+<code>dbFetchArrowChunk()</code>,
+<code>dbGetQuery()</code>,
+<code>dbGetQueryArrow()</code>,
+<code>dbHasCompleted()</code>,
+<code>dbSendQuery()</code>,
+<code>dbSendQueryArrow()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+con &lt;- dbConnect(RSQLite::SQLite(), ":memory:")
+
+dbWriteTable(con, "mtcars", mtcars)
+
+# Fetch all results
+rs &lt;- dbSendQueryArrow(con, "SELECT * FROM mtcars WHERE cyl = 4")
+as.data.frame(dbFetchArrow(rs))
+dbClearResult(rs)
+
+dbDisconnect(con)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,293 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rbart</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bayesian Additive Regression Trees with Random Effects</h2>
+
+<h3>Description</h3>
+
+<p>Fits a varying intercept/random effect BART model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">rbart_vi(
+    formula, data, test, subset, weights, offset, offset.test = offset,
+    group.by, group.by.test, prior = cauchy,
+    sigest = NA_real_, sigdf = 3.0, sigquant = 0.90,
+    k = 2.0,
+    power = 2.0, base = 0.95,
+    n.trees = 75L,
+    n.samples = 1500L, n.burn = 1500L,
+    n.chains = 4L, n.threads = min(dbarts::guessNumCores(), n.chains),
+    combineChains = FALSE,
+    n.cuts = 100L, useQuantiles = FALSE,
+    n.thin = 5L, keepTrainingFits = TRUE,
+    printEvery = 100L, printCutoffs = 0L,
+    verbose = TRUE,
+    keepTrees = TRUE, keepCall = TRUE,
+    seed = NA_integer_,
+    keepSampler = keepTrees,
+    keepTestFits = TRUE,
+    callback = NULL,
+    ...)
+
+## S3 method for class 'rbart'
+plot(
+    x, plquants = c(0.05, 0.95), cols = c('blue', 'black'), ...)
+
+## S3 method for class 'rbart'
+fitted(
+    object,
+    type = c("ev", "ppd", "bart", "ranef"),
+    sample = c("train", "test"),
+    ...)
+
+## S3 method for class 'rbart'
+extract(
+    object,
+    type = c("ev", "ppd", "bart", "ranef", "trees"),
+    sample = c("train", "test"),
+    combineChains = TRUE,
+    ...)
+
+## S3 method for class 'rbart'
+predict(
+    object, newdata, group.by, offset,
+    type = c("ev", "ppd", "bart", "ranef"),
+    combineChains = TRUE,
+    ...)
+
+## S3 method for class 'rbart'
+residuals(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>group.by</code></td>
+<td>
+
+<p>Grouping factor. Can be an integer vector/factor, or a reference to such in <code>data</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.by.test</code></td>
+<td>
+
+<p>Grouping factor for test data, of the same type as <code>group.by</code>. Can be missing.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+
+<p>A function or symbolic reference to built-in priors. Determines the prior over the standard deviation of the random effects. Supplied functions take two arguments, <code>x</code> - the standard deviation, and <code>rel.scale</code> - the standard deviation of the response variable before random effects are fit. Built in priors are <code>cauchy</code> with a scale of 2.5 times the relative scale and <code>gamma</code> with a shape of 2.5 and scale of 2.5 times the relative scale.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.thin</code></td>
+<td>
+
+<p>The number of tree jumps taken for every stored sample, but also the number of samples from the posterior of the standard deviation of the random effects before one is kept.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepTestFits</code></td>
+<td>
+
+<p>Logical where, if false, test fits are obtained while running but not returned. Useful with <code>callback</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>callback</code></td>
+<td>
+
+<p>Optional function of <code>trainFits</code>, <code>testFits</code>, <code>ranef</code>, <code>sigma</code>, and <code>tau</code>. Called after every post-burn-in iteration and the results of which are collected and stored in the final object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula, data, test, subset, weights, offset, offset.test, sigest, sigdf, sigquant, k, power, base, n.trees, n.samples, n.burn, n.chains, n.threads, combineChains, n.cuts, useQuantiles, keepTrainingFits, printEvery, printCutoffs, verbose, keepTrees, keepCall, seed, keepSampler, ...</code></td>
+<td>
+
+<p>Same as in <code>bart2</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>A fitted <code>rbart</code> model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+
+<p>Same as <code>test</code>, but named to match <code>predict</code> generic.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>One of <code>"ev"</code>, <code>"ppd"</code>, <code>"bart"</code>, <code>"ranef"</code>, or <code>"trees"</code> for the posterior of the expected value, posterior predictive distribution, non-parametric/BART component, random effect, or saved trees respectively. The expected value is the sum of the BART component and the random effects, while the posterior predictive distribution is a response sampled with that mean. To synergize with <code>predict.glm</code>, <code>"response"</code> can be used as a synonym for <code>"value"</code> and <code>"link"</code> can be used as a synonym for <code>"bart"</code>. For additional details on tree extraction, see the corresponding subsection in <code>bart</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample</code></td>
+<td>
+
+<p>One of <code>"train"</code> or <code>"test"</code>, referring to the training or tests samples respectively.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, plquants, cols</code></td>
+<td>
+
+<p>Same as in <code>plot.bart</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Fits a BART model with additive random intercepts, one for each factor level of <code>group.by</code>. For continuous responses:
+</p>
+
+<ul>
+<li> <p><code class="reqn">y_i \sim N(f(x_i) + \alpha_{g[i]}, \sigma^2)</code>
+</p>
+</li>
+<li> <p><code class="reqn">\alpha_j \sim N(0, \tau^2)</code>.
+</p>
+</li>
+</ul>
+<p>For binary outcomes the response model is changed to <code class="reqn">P(Y_i = 1) = \Phi(f(x_i) + \alpha_{g[i]})</code>. <code class="reqn">i</code> indexes observations, <code class="reqn">g[i]</code> is the group index of observation <code class="reqn">i</code>, <code class="reqn">f(x)</code> and <code class="reqn">\sigma_y</code> come from a BART model, and <code class="reqn">\alpha_j</code> are the independent and identically distributed random intercepts. Draws from the posterior of <code class="reqn">tau</code> are made using a slice sampler, with a width dynamically determined by assessing the curvature of the posterior distribution at its mode.
+</p>
+
+
+<h4>Out Of Sample Groups</h4>
+
+<p>Predicting random effects for groups not in the training sample is supported by sampling from their posterior predictive distribution, that is a draw is taken from <code class="reqn">p(\alpha \mid y) = \int p(\alpha \mid \tau)p(\tau \mid y)d\alpha</code>. For out-of-sample groups in the test data, these random effect draws can be kept with the saved object. For those supplied to <code>predict</code>, they cannot and may change for subsequent calls.
+</p>
+
+
+
+<h4>Generics</h4>
+
+<p>See the generics section of <code>bart</code>.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>rbart</code>. Contains all of the same elements of an object of class <code>bart</code>, as well as the elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ranef</code></td>
+<td>
+
+<p>Samples from the posterior of the random effects. A array/matrix of posterior samples. The <code class="reqn">(k, l, j)</code> value is the <code class="reqn">l</code>th draw of the posterior of the random effect for group <code class="reqn">j</code> (i.e. <code class="reqn">\alpha^*_j</code>) corresponding to chain <code class="reqn">k</code>. When <code>n.chains</code> is one or <code>combineChains</code> is <code>TRUE</code>, the result is a collapsed down to a matrix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ranef.mean</code></td>
+<td>
+
+<p>Posterior mean of random effects, derived by taking mean across group index of samples.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+
+<p>Matrix of posterior samples of <code>tau</code>, the standard deviation of the random effects. Dimensions are equal to the number of chains times the numbers of samples unless <code>n.chains</code> is one or <code>combineChains</code> is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first.tau</code></td>
+<td>
+
+<p>Burn-in draws of <code>tau</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>callback</code></td>
+<td>
+
+<p>Optional results of <code>callback</code> function.
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Vincent Dorie: <a href="mailto:vdorie@gmail.com">vdorie@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>bart</code>, <code>dbarts</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">f &lt;- function(x) {
+    10 * sin(pi * x[,1] * x[,2]) + 20 * (x[,3] - 0.5)^2 +
+        10 * x[,4] + 5 * x[,5]
+}
+
+set.seed(99)
+sigma &lt;- 1.0
+n     &lt;- 100
+
+x  &lt;- matrix(runif(n * 10), n, 10)
+Ey &lt;- f(x)
+y  &lt;- rnorm(n, Ey, sigma)
+
+n.g &lt;- 10
+g &lt;- sample(n.g, length(y), replace = TRUE)
+sigma.b &lt;- 1.5
+b &lt;- rnorm(n.g, 0, sigma.b)
+
+y &lt;- y + b[g]
+
+df &lt;- as.data.frame(x)
+colnames(df) &lt;- paste0("x_", seq_len(ncol(x)))
+df$y &lt;- y
+df$g &lt;- g
+
+## low numbers to reduce run time
+rbartFit &lt;- rbart_vi(y ~ . - g, df, group.by = g,
+                     n.samples = 40L, n.burn = 10L, n.thin = 2L,
+                     n.chains = 1L,
+                     n.trees = 25L, n.threads = 1L)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fr_ld_exp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Base-2 Representation and Multiplication of Numbers</h2>
+
+<h3>Description</h3>
+
+<p>Both are <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> versions of C99 (and POSIX) standard C (and C++) mathlib
+functions of the same name.
+</p>
+<p><code>frexp(x)</code> computes base-2 exponent <code>e</code> and “mantissa”,
+or <em>fraction</em> <code>r</code>, such that <code class="reqn">x = r * 2^e</code>, where <code class="reqn">r \in
+    [0.5, 1)</code> (unless when <code>x</code> is in <code>c(0, -Inf, Inf, NaN)</code>
+where <code>r == x</code> and <code>e</code> is 0),
+and <code class="reqn">e</code> is integer valued.
+</p>
+<p><code>ldexp(f, E)</code> is the <em>inverse</em> of <code>frexp()</code>: Given
+fraction or mantissa <code>f</code> and integer exponent <code>E</code>, it returns
+<code class="reqn">x = f * 2^E</code>.
+Viewed differently, it's the fastest way to multiply or divide (double
+precision) numbers with <code class="reqn">2^E</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">frexp(x)
+ldexp(f, E)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric (coerced to <code>double</code>) vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>numeric fraction (vector), in <code class="reqn">[0.5, 1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>integer valued, exponent of <code>2</code>, i.e., typically in
+<code>(-1024-50):1024</code>, otherwise the result will underflow to 0 or
+overflow to <code>+/- Inf</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>frexp</code> returns a <code>list</code> with named components <code>r</code>
+(of type <code>double</code>) and <code>e</code> (of type <code>integer</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>On unix-alikes, typically <code>man frexp</code> and <code>man ldexp</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Vaguely relatedly, <code>log1mexp()</code>, <code>lsum</code>, <code>logspace.add</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(47)
+x &lt;- c(0, 2^(-3:3), (-1:1)/0,
+       rlnorm(2^12, 10, 20) * sample(c(-1,1), 512, replace=TRUE))
+head(x, 12)
+which(!(iF &lt;- is.finite(x))) # 9 10 11
+rF &lt;- frexp(x)
+sapply(rF, summary) # (nice only when x had no NA's ..)
+data.frame(x=x[!iF], lapply(rF, `[`, !iF))
+##  by C.99/POSIX  'r' should be the same as 'x'  for these,
+##      x    r e
+## 1 -Inf -Inf 0
+## 2  NaN  NaN 0
+## 3  Inf  Inf 0
+## but on Windows, we've seen  3 NA's :
+ar &lt;- abs(rF$r)
+ldx &lt;- with(rF, ldexp(r, e))
+stopifnot(exprs = {
+  0.5 &lt;= ar[iF &amp; x != 0]
+  ar[iF] &lt; 1
+  is.integer(rF$e)
+  all.equal(x[iF], ldx[iF], tol= 4*.Machine$double.eps)
+  ## but actually, they should even be identical, well at least when finite
+  identical(x[iF], ldx[iF])
+})
+</code></pre>
+
+
+</div>

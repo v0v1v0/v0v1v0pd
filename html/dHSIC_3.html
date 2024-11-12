@@ -1,0 +1,193 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dhsic</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>d-variable Hilbert Schmidt independence criterion - dHSIC</h2>
+
+<h3>Description</h3>
+
+<p>The d-variable Hilbert Schmidt independence criterion (dHSIC) is
+a non-parametric measure of dependence between an arbitrary number of
+variables. In the large sample limit the value of dHSIC is 0 if the
+variables are jointly independent and positive if there is a
+dependence. It is therefore able to detect any type of dependence
+given a sufficient amount of data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dhsic(X, Y, K, kernel = "gaussian", bandwidth = 1, matrix.input = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>either a list of at least two numeric matrices or a single numeric
+matrix. The rows of a matrix correspond to the observations of a
+variable. It is always required that there are an equal number of
+observations for all variables (i.e. all matrices have to have the
+same number of rows). If <code>X</code> is a single numeric matrix than
+one has to specify the second variable as <code>Y</code> or set
+<code>matrix.input</code> to "TRUE". See below for more details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+<p>a numeric matrix if <code>X</code> is also a numeric
+matrix and omitted if <code>X</code> is a list.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+
+<p>a list of the gram matrices corresponding to each variable. If
+<code>K</code> specified the other inputs will have no effect on the
+computations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+
+<p>a vector of character strings specifying the kernels for each
+variable. There exist two pre-defined kernels: "gaussian" (Gaussian kernel
+with median heuristic as bandwidth) and "discrete" (discrete
+kernel). User defined kernels can also be used by passing the
+function name as a string, which will then be matched using
+<code>match.fun</code>. If the length of <code>kernel</code> is
+smaller than the number of variables the kernel specified in
+<code>kernel[1]</code> will be used for all variables.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandwidth</code></td>
+<td>
+
+<p>a numeric value specifying the size of the bandwidth used for the
+Gaussian kernel. Only used if kernel="gaussian.fixed".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>matrix.input</code></td>
+<td>
+
+<p>a boolean. If <code>matrix.input</code> is "TRUE" the input <code>X</code> is
+assumed to be a matrix in which the columns correspond to the variables.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The d-variable Hilbert Schmidt independence criterion is a direct
+extension of the standard Hilbert Schmidt independence criterion
+(HSIC) from two variables to an arbitrary number of
+variables. It is 0 if and only if all the variables are jointly
+independent. This function computes an estimator of dHSIC, which
+converges to the actual dHSIC in the large sample limit. It is
+therefore possible to detect any type of dependence in the large
+sample limit.
+</p>
+<p>If <code>X</code> is a list with d matrices, the function computes dHSIC for
+the corresponding d random vectors. If <code>X</code> is a
+matrix and <code>matrix.input</code> is "TRUE" the functions dHSIC for the
+columns of <code>X</code>. If <code>X</code> is a matrix and <code>matrix.input</code>
+is "FALSE" then <code>Y</code> needs to be a matrix, too; in this case, the
+function computes the dHSIC (HSIC) for the corresponding two random vectors.
+</p>
+<p>For more details see the references.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>dHSIC</code></td>
+<td>
+<p>the value of the empirical estimator of dHSIC</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>numeric vector containing computation times. <code>time[1]</code>
+is time to compute Gram matrix and <code>time[2]</code> is time to compute
+dHSIC.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandwidth</code></td>
+<td>
+<p>bandwidth used during computations. Only relevant if
+Gaussian kernel was used.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Niklas Pfister and Jonas Peters
+</p>
+
+
+<h3>References</h3>
+
+<p>Gretton, A., K. Fukumizu, C. H. Teo, L. Song, B. Sch\"olkopf and
+A. J. Smola (2007). A kernel statistical test of independence. In
+Advances in Neural Information Processing Systems (pp. 585-592).
+</p>
+<p>Pfister, N., P. B\"uhlmann, B. Sch\"olkopf and J. Peters (2017).
+Kernel-based Tests for Joint Independence. To appear in the
+Journal of the Royal Statistical Society, Series B.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>In order to perform hypothesis tests based on dHSIC use the function <code>dhsic.test</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### Three different input methods
+set.seed(0)
+x &lt;- matrix(rnorm(200),ncol=2)
+y &lt;- matrix(rbinom(100,30,0.1),ncol=1)
+# compute dHSIC of x and y (x is taken as a single variable)
+dhsic(list(x,y),kernel=c("gaussian","discrete"))$dHSIC
+dhsic(x,y,kernel=c("gaussian","discrete"))$dHSIC
+# compute dHSIC of x[,1], x[,2] and y
+dhsic(cbind(x,y),kernel=c("gaussian","discrete"), matrix.input=TRUE)$dHSIC
+
+### Using a user-defined kernel (here: sigmoid kernel)
+set.seed(0)
+x &lt;- matrix(rnorm(500),ncol=1)
+y &lt;- x^2+0.02*matrix(rnorm(500),ncol=1)
+sigmoid &lt;- function(x_1,x_2){
+  return(tanh(sum(x_1*x_2)))
+}
+dhsic(x,y,kernel="sigmoid")$dHSIC
+
+</code></pre>
+
+
+</div>

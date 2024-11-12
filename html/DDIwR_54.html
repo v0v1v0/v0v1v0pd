@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>recodeMissings</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Consistent recoding of (extended) missing values</h2>
+
+<h3>Description</h3>
+
+<p>A function to recode all missing values to either SPSS or Stata types,
+uniformly (re)using the same codes across all variables.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">recodeMissings(
+  dataset,
+  to = c("SPSS", "Stata", "SAS"),
+  dictionary = NULL,
+  start = -91,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataset</code></td>
+<td>
+<p>A data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>Software to recode missing values for</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dictionary</code></td>
+<td>
+<p>A named vector, with corresponding Stata missing codes to SPSS missing values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>A named vector, with corresponding Stata missing codes to SPSS missing values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other internal arguments</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When a dictionary is not provided, it is automatically constructed from the
+available data and metadata, using negative numbers starting from -91 and up
+to 27 letters starting with "a".
+</p>
+<p>If the dataset contains mixed variables with SPSS and Stata style missing
+values, unless otherwise specified in a dictionary it uses other codes than
+the existing ones.
+</p>
+<p>For the SPSS type of missing values, the resulting variables are coerced to a
+declared labelled format.
+</p>
+<p>Unlike SPSS, Stata does not allow labels for character values. Both cannot be
+transported from SPSS to Stata, it is either one or another. If labels are
+more important to preserve than original values (especially the information
+about the missing values), the argument <code>chartonum</code> replaces all character
+values with suitable, non-overlapping numbers and adjusts the labels
+accordingly.
+</p>
+<p>If no labels are found in the metadata, the original values are preserved.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with all missing values recoded consistently.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Adrian Dusa
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- data.frame(
+    A = declared(
+        c(1:5, -92),
+        labels = c(Good = 1, Bad = 5, NR = -92),
+        na_values = -92
+    ),
+    B = labelled(
+        c(1:5, haven::tagged_na('a')),
+        labels = c(DK = haven::tagged_na('a'))
+    ),
+    C = declared(
+        c(1, -91, 3:5, -92),
+        labels = c(DK = -91, NR = -92),
+        na_values = c(-91, -92)
+    )
+)
+
+xrec &lt;- recodeMissings(x, to = "Stata")
+
+attr(xrec, "dictionary")
+
+dictionary &lt;- data.frame(
+    old = c(-91, -92, "a"),
+    new = c("c", "d", "c")
+)
+recodeMissings(x, to = "Stata", dictionary = dictionary)
+
+recodeMissings(x, to = "SPSS")
+
+dictionary$new &lt;- c(-97, -98, -97)
+
+recodeMissings(x, to = "SPSS", dictionary = dictionary)
+
+recodeMissings(x, to = "SPSS", start = 991)
+
+recodeMissings(x, to = "SPSS", start = -8)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dpsifn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Psi Gamma Functions Workhorse from R's API</h2>
+
+<h3>Description</h3>
+
+<p>Log Gamma derivatives, Psi Gamma functions.  <code>dpsifn()</code> is an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
+interface to the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> API function <code>R_dpsifn()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dpsifn(x, m, deriv1 = 0L, k2 = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>number of derivatives to return, an integer &gt;= 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv1</code></td>
+<td>
+<p>“start” derivative ....</p>
+</td>
+</tr>
+</table>
+<table><tr style="vertical-align: top;">
+<td><code>k2</code></td>
+<td>
+<p>a <code>logical</code> specifying if <code>kode = 2</code> should be
+applied.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p><code>dpsifn()</code> is the underlying “workhorse” of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own
+<code>digamma</code>, <code>trigamma</code> and (generalized)
+<code>psigamma</code> functions.
+</p>
+<p>It is useful, e.g., when several derivatives of
+<code class="reqn">\log\Gamma=</code><code>lgamma</code> are desired.  It
+computes and returns length-<var>m</var> sequence
+<code class="reqn">(-1)^{k+1} / \Gamma(k+1) \cdot \psi^{(k)}(x)</code>
+for
+<code class="reqn">k = n, n+1,\ldots, n+m-1</code>, where
+<code class="reqn">n=</code><code>deriv1</code>, and <code class="reqn">\psi^{(k)}(x)</code> is the k-th
+derivative of <code class="reqn">\psi(x)</code>, i.e., <code>psigamma(x,k)</code>.  For
+more details, see the comments in ‘<span class="file">src/nmath/polygamma.c</span>’.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric <code class="reqn">l_x \times m</code> <code>matrix</code> (where
+<code class="reqn">l_x=</code><code>length(x)</code>) of scaled <code class="reqn">\psi^{(k)}(x)</code>
+values.  The matrix has <code>attributes</code>
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>underflow</code></td>
+<td>
+<p>of <code class="reqn">l_x</code> integer counts of the number of under- and
+over-flows, in computing the corresponding i-th matrix column for <code>x[i]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ierr</code></td>
+<td>
+<p>length-<code class="reqn">l_x</code> integer vector of error codes, where
+<code>0</code> is normal/successful.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Martin Maechler (R interface); R Core et al., see
+<code>digamma</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>See those in <code>psigamma</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>digamma</code>, <code>trigamma</code>, <code>psigamma</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- seq(-3.5, 6, by=1/4)
+dpx &lt;- dpsifn(x, m = if(getRversion() &gt;= "4.2") 7 else 5)
+dpx # in R &lt;= 4.2.1, see that sometimes the 'nz' (under-over-flow count) was uninitialized !!
+j &lt;- -1L+seq_len(nrow(dpx)); (fj &lt;- (-1)^(j+1)*gamma(j+1))
+## mdpsi &lt;- cbind(di =   digamma(x),      -dpx[1,],
+## 	       tri=  trigamma(x),       dpx[2,],
+## 	       tetra=psigamma(x,2),  -2*dpx[3,],
+## 	       penta=psigamma(x,3),   6*dpx[4,],
+## 	       hexa =psigamma(x,4), -24*dpx[5,],
+## 	       hepta=psigamma(x,5), 120*dpx[6,],
+## 	       octa =psigamma(x,6),-720*dpx[7,])
+## cbind(x, ie=attr(dpx,"errorCode"), round(mdpsi, 4))
+str(psig &lt;- outer(x, j, psigamma))
+dpsi &lt;- t(fj * (`attributes&lt;-`(dpx, list(dim=dim(dpx)))))
+if(getRversion() &gt;= "4.2") {
+      print( all.equal(psig, dpsi, tol=0) )# -&gt; see 1.185e-16
+  stopifnot( all.equal(psig, dpsi, tol=1e-15) )
+} else { # R &lt;= 4.1.x; dpsifn(x, ..) *not* ok for x &lt; 0
+  i &lt;- x &gt;= 0
+      print( all.equal(psig[i,], dpsi[i,], tol=0) )# -&gt; see 1.95e-16
+  stopifnot( all.equal(psig[i,], dpsi[i,], tol=1e-15) )
+}
+</code></pre>
+
+
+</div>

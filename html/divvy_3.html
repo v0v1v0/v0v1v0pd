@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>classRast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert point environment data to a raster of majority-environment classes</h2>
+
+<h3>Description</h3>
+
+<p>Given point occurrences of environmental categories, <code>classRast</code> generates
+a raster grid with cell values specifying the majority environment therein.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">classRast(grid, dat = NULL, xy, env, cutoff)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>A <code>SpatRaster</code> to use as a template for the
+resolution, extent, and coordinate reference system of the returned object.
+Values can be empty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>Either a <code>data.frame</code> or <code>matrix</code> for which <code>xy</code> and <code>env</code> are
+column names, or an empty argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>A vector specifying the name or numeric position of columns
+in <code>dat</code> containing coordinates, if <code>dat</code> is supplied, or a 2-column
+<code>data.frame</code> or <code>matrix</code> of coordinate values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p>The name or numeric position of the column in <code>dat</code> containing a
+categorical environmental variable, if <code>dat</code> is supplied, or a vector of
+environmental values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff</code></td>
+<td>
+<p>The (decimal) proportion of incidences of an environmental
+category above which a cell will be assigned as that category.
+<code>cutoff</code> must be greater than 0.5.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>cutoff</code> threshold is an inclusive bound: environmental incidence
+proportions greater than or equal to the <code>cutoff</code> will assign cell values
+to the majority environmental class. For instance, if category A represents
+65% of occurrences in a cell and <code>cutoff = 0.65</code>, the returned value for the
+cell will be A. If no single category in a cell meets or exceeds the
+representation necessary to reach the given <code>cutoff</code>, the value returned
+for the cell is <code>indet.</code>, indeterminate.
+Cells lacking environmental occurrences altogether return <code>NA</code> values.
+</p>
+<p>The <code>env</code> object can contain more than two classes, but in many cases it will
+be less likely for any individual class to attain an absolute majority the
+more finely divided classes are. For example, if there are three classes,
+A, B, and C, with relative proportions of 20%, 31%, and 49%, the cell value
+will be returned as <code>indet.</code> because no single class can attain a <code>cutoff</code>
+above 50%, despite class C having the largest relative representation.
+</p>
+<p>Missing environment values in the point data should be coded as <code>NA</code>,
+not e.g. <code>'unknown'</code>. <code>classRast()</code> ignores <code>NA</code> occurrences when tallying
+environmental occurrences against the <code>cutoff</code>. However, <code>NA</code> occurrences
+still count when determining <code>NA</code> status of cells in the raster: a cell
+containing occurrences of only <code>NA</code> value is classified as <code>indet.</code>, not <code>NA</code>.
+That is, any grid cell encompassing original point data is non-<code>NA</code>.
+</p>
+<p>Antell and others (2020) set a <code>cutoff</code> of 0.8, based on the same threshold
+Nürnberg and Aberhan (2013) used to classify environmental preferences for taxa.
+</p>
+<p>The coordinates associated with points should be given with respect to the
+same coordinate reference system (CRS) of the target raster grid, e.g. both
+given in latitude-longitude, Equal Earth projected coordinates, or other CRS.
+The CRS of a <code>SpatRaster</code> object can be retrieved with <code>terra::crs()</code>
+(with the optional but helpful argument <code>describe = TRUE</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A raster of class <code>SpatRaster</code> defined by the <code>terra</code> package
+</p>
+
+
+<h3>References</h3>
+
+<p>Antell GT, Kiessling W, Aberhan M, Saupe EE (2020).
+“Marine biodiversity and geographic distributions are independent on large scales.”
+<em>Current Biology</em>, <b>30</b>(1), 115-121.
+<a href="https://doi.org/10.1016/j.cub.2019.10.065">doi:10.1016/j.cub.2019.10.065</a>.
+</p>
+<p>Nürnberg S, Aberhan M (2013).
+“Habitat breadth and geographic range predict diversity dynamics in marine Mesozoic bivalves.”
+<em>Paleobiology</em>, <b>39</b>(3), 360-372.
+<a href="https://doi.org/10.1666/12047">doi:10.1666/12047</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(terra)
+# work in Equal Earth projected coordinates
+prj &lt;- 'EPSG:8857'
+# generate point occurrences in a small area of Northern Africa
+n &lt;- 100
+set.seed(5)
+x &lt;- runif(n,  0, 30)
+y &lt;- runif(n, 10, 30)
+# generate an environmental variable with a latitudinal gradient
+# more habitat type 0 (e.g. rock) near equator, more 1 (e.g. grassland) to north
+env &lt;- rbinom(n, 1, prob = (y-10)/20)
+env[env == 0] &lt;- 'rock'
+env[env == 1] &lt;- 'grass'
+# units for Equal Earth are meters, so if we consider x and y as given in km,
+x &lt;- x * 1000
+y &lt;- y * 1000
+ptsDf &lt;- data.frame(x, y, env)
+# raster for study area at 5-km resolution
+r &lt;- rast(resolution = 5*1000, crs = prj,
+          xmin = 0, xmax = 30000, ymin = 10000, ymax = 30000)
+
+binRast &lt;- classRast(grid = r, dat = ptsDf, xy = c('x', 'y'),
+                     env = 'env', cutoff = 0.6)
+binRast
+
+# plot environment classification vs. original points
+plot(binRast, col = c('lightgreen', 'grey60', 'white'))
+points(ptsDf[env=='rock', ], pch = 16, cex = 1.2) # occurrences of given habitat
+points(ptsDf[env=='grass',], pch =  1, cex = 1.2)
+
+# classRast can also accept more than 2 environmental classes:
+
+# add a 3rd environmental class with maximum occurrence in bottom-left grid cell
+newEnv &lt;- data.frame('x' = rep(0,       10),
+                     'y' = rep(10000,   10),
+                     'env' = rep('new', 10))
+ptsDf &lt;- rbind(ptsDf, newEnv)
+binRast &lt;- classRast(grid = r, dat = ptsDf, xy = c('x', 'y'),
+                     env = 'env', cutoff = 0.6)
+plot(binRast, col = c('lightgreen', 'grey60', 'purple', 'white'))
+
+</code></pre>
+
+
+</div>

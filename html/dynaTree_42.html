@@ -1,0 +1,260 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.dynaTree</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Prediction for Dynamic Tree Models
+</h2>
+
+<h3>Description</h3>
+
+<p>Predicting and calculating sequential design and optimization
+statistics at new design points (i.e., active learning heuristics)
+for dynamic tree models
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynaTree'
+predict(object, XX, yy = NULL, quants = TRUE,
+                 ei = FALSE, verb = 0, ...)
+## S3 method for class 'dynaTree'
+coef(object, XX, verb = 0, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>a <code>"dynaTree"</code>-class object built by <code>dynaTree</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>XX</code></td>
+<td>
+
+<p>a design <code>matrix</code> of predictive locations (where <code>ncol(XX) ==
+      ncol(X)</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yy</code></td>
+<td>
+
+<p>an optional vector of “true” responses at the <code>XX</code>
+predictive locations at which the log posterior probability are
+to be reported
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quants</code></td>
+<td>
+
+<p>a scalar <code>logical</code> indicating if predictive quantiles
+are desired (useful for visualization, but less so for active
+learning); calculating predictive quantiles is expensive and should
+be turned off if prediction is not being used for visualization,
+e.g., if used for active learning
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ei</code></td>
+<td>
+
+<p>a scalar <code>logical</code> indicating if the expected improvement
+statistic (for optimization) should be calculated and returned
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>a positive scalar integer indicating how many predictive locations
+(iterations) after which a progress statement should be
+printed to the console; a (default) value of <code>verb = 0</code> is quiet
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>to comply with the generic <code>predict</code> method –
+currently unused
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>predict</code> returns predictive summary statistics by averaging over the
+samples from the posterior predictive distribution obtained
+from each of the particles in the cloud pointed to by the
+object (<code>object</code>)
+</p>
+<p><cite>coef</cite> returns a matrix of regression coefficients used in linear
+model leaves (<code>model = "linear"</code>) leaves, averaged over all particles,
+for each <code>XX</code> location. For other models it prints a warning and 
+defaults to <code>predict</code>.
+</p>
+<p>The value(s) calculated are appended to <code>object</code>; the new
+fields are described below
+</p>
+<p>Note that ALC calculations have been moved to the <code>alc.dynaTree</code>
+function(s)
+</p>
+
+
+<h3>Value</h3>
+
+<p>The object returned is of class <code>"dynaTree"</code>, which includes a
+copy of the list elements from the <code>object</code> passed in, 
+with the following (predictive)
+additions depending on whether <code>object$model</code> is for
+regression (<code>"constant"</code> or <code>"linear"</code>) or classification
+(<code>"class"</code>).
+</p>
+<p>For regression:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mean </code></td>
+<td>
+<p> a vector containing an estimate of the predictive mean
+at the <code>XX</code> locations </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vmean </code></td>
+<td>
+<p> a vector containing an estimate of the variance of predictive mean
+at the <code>XX</code> locations </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var </code></td>
+<td>
+<p> a vector containing an estimate of the predictive
+variance (average variance plus variance of mean) at the <code>XX</code> locations </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df </code></td>
+<td>
+<p> a vector containing  the average degrees of freedom at the <code>XX</code> locations </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q1 </code></td>
+<td>
+<p> a vector containing an estimate of the 5% quantile of
+the predictive distribution at the <code>XX</code> locations,
+unless <code>quants = FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q2 </code></td>
+<td>
+<p> a vector containing an estimate of the 95% quantile of
+the predictive distribution at the <code>XX</code> locations, unless
+<code>quants = FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yypred </code></td>
+<td>
+<p> if <code>yy != NULL</code> then this contains the
+predictive probability of the true <code>yy</code> values at the
+<code>XX</code> locations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ei </code></td>
+<td>
+<p> a vector containing an estimate of the EI statistic,
+unless <code>ei = FALSE</code></p>
+</td>
+</tr>
+</table>
+<p>;
+</p>
+<p>For classification:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>p </code></td>
+<td>
+<p> a <code>nrow(XX)</code>-by-<code>max(object$y)</code> <code>matrix</code> of
+mean class probabilities for each of <code>max(object$y)</code> classes
+at the predictive data locations </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>entropy </code></td>
+<td>
+<p> a <code>nrow(XX)</code> vector of predictive entropys
+at the predictive data locations</p>
+</td>
+</tr>
+</table>
+<p>;
+</p>
+<p>For <code>coef</code> a new <code>XXc</code> field is created so as not to trample
+on <code>XX</code>s that may have been used in a previous <code>predict</code>,
+plus
+</p>
+<table><tr style="vertical-align: top;">
+<td><code>coef </code></td>
+<td>
+<p> a <code>nrow(XX)</code>-by-<code>m+icept</code></p>
+</td>
+</tr></table>
+<p> matrix of particle-
+averaged regression coefficients.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robert B. Gramacy <a href="mailto:rbg@vt.edu">rbg@vt.edu</a>, <br>
+Matt Taddy and Christoforos Anagnostopoulos</p>
+
+
+<h3>References</h3>
+
+<p>Taddy, M.A., Gramacy, R.B., and Polson, N. (2011).
+“Dynamic trees for learning and design”
+Journal of the American Statistical Association, 106(493), pp. 109-123;
+arXiv:0912.1586
+</p>
+<p><a href="https://bobby.gramacy.com/r_packages/dynaTree/">https://bobby.gramacy.com/r_packages/dynaTree/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dynaTree</code>, <code>update.dynaTree</code>,
+<code>plot.dynaTree</code>, <code>alc.dynaTree</code>, 
+<code>entropyX.dynaTree</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## see the example(s) section(s) of dynaTree and
+## update.dynaTree and the demos (demo(package=dynaTree))
+</code></pre>
+
+
+</div>

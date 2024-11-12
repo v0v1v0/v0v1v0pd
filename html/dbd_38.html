@@ -1,0 +1,188 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mleBb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Maximum likelihood estimation of the parameters of a beta binomial
+distribution.
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculates maximum likelihood estimates of the <code>m</code> and
+<code>s</code> parameters of a beta binomial distribution.  Calls upon
+<code>optim()</code> with the <code>"L-BFGS-B"</code> method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">    mleBb(x, size, par0, maxit=1000, covmat=TRUE, useGinv=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Integer vector of counts to which a beta binomial distribution
+is to be fitted.  Missing values are allowed.  (These are discarded
+before the data are analysed.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+
+<p>Integer scalar specifying the upper limit of the “support”
+of the beta binomial distribution under consideration.  The support
+is the set of integers <code>{0, 1, ..., size}</code>. (The values
+of <code>x</code> may sometimes be considered to be the number of
+“successes” in <code>size</code> trials.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par0</code></td>
+<td>
+
+<p>Optional starting values for the iterative estimation procedure.
+A vector with entries <code>m</code> and <code>s</code>.  Ideally this vector
+should be named; if not it is <em>assumed</em> that the entries
+are in the order <code>m</code>, <code>s</code>.  If not supplied starting
+values are calculated using <code>meBb()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Integer scalar.  The maximum number of iterations to be undertaken
+by <code>optim()</code>.  What happens if this number is exceeded
+depends on the value of <code>options()[["maxitErrorOrWarning"]]</code>.
+This may be <code>"error"</code> (in which case an error is thrown if
+<code>maxit</code> is exceeded) or <code>"warning"</code> (in which case a
+warning is issued).  The values is set equal to <code>"error"</code> at
+startup.  It may be switched, from on possibility to the other,
+by means of the function <code>set.eow()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covmat</code></td>
+<td>
+
+<p>Logical scalar.  Should the covariance matrix of the parameter
+estimates be calculated?  In simulation studies, in which the
+covariance matrix is not of interest, calculations might be
+speeded up a bit by setting <code>covmat=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useGinv</code></td>
+<td>
+
+<p>Logical scalar.  Should the <code>ginv()</code> (generalised inverse)
+function from the <code>MASS</code> package be used to calculate a
+surrogate covariance matrix if the hessian is numerically singular?
+This is probably not advisable; the possibility of using the
+generalised inverse is provided for the sake of completeness.
+<em>Caveat utilitor</em>.  This argument is ignored if <code>covmat</code>
+is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is provided so as to give a convenient means of
+comparing the fit of a beta binomial distribution with that of
+the discretised Beta (db) distribution which is the focus of
+this package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"mleBb"</code> which is a vector of length two.
+Its first entry <code>m</code> is the estimate of the (so-called) success
+probability <code>m</code>; its second entry <code>s</code> is the estimate of the
+overdispersion parameter <code>s</code>.  It has a number of attributes:
+</p>
+
+<ul>
+<li> <p><code>"size"</code> The value of the <code>size</code> argument.
+</p>
+</li>
+<li> <p><code>"log.like"</code> The (maximised) value of the log likelihood
+of the data.
+</p>
+</li>
+<li> <p><code>"covMat"</code> An estimate of the (<code class="reqn">2 \times 2</code>)
+covariance matrix of the parameter estimates.  This is formed
+as the inverse of the hessian (of the negative log likelihood)
+calculated by <code>aHess()</code>.
+</p>
+</li>
+<li> <p><code>ndata</code> The number of <em>non-missing</em> values
+in the data set for which the likelihood was maximised,
+i.e. <code>sum(!is.na(x))</code>.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Bruce Swihart and Jim Lindsey (2020). rmutil: Utilities for Nonlinear
+Regression and Repeated Measurements Models. R package version 1.1.4.
+https://CRAN.R-project.org/package=rmutil
+</p>
+<p>Wikipedia, <a href="https://en.wikipedia.org/wiki/Beta-binomial_distribution">https://en.wikipedia.org/wiki/Beta-binomial_distribution</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mleDb()</code>
+<code>optim()</code>
+<code>aHess()</code>
+<code>vcov.mleBb()</code>
+<code>hrsRcePred</code>
+<code>visRecog</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(require(hmm.discnp)) {
+   X &lt;- hmm.discnp::Downloads
+   f &lt;- mleBb(X,15)
+}
+set.seed(42)
+X &lt;- c(rbinom(20,10,0.3),rbinom(20,10,0.7))
+f &lt;- mleBb(X,10)
+g &lt;- mleDb(X,10,TRUE)
+print(attr(f,"log.like"))
+print(attr(g,"log.like")) # Not much difference.
+dbfit5  &lt;- with(visRecog,mleDb(tot5,20,TRUE))
+print(vcov(dbfit5))
+# See the help for data sets "hrsRcePred" and "visRecog" for
+# other examples.
+</code></pre>
+
+
+</div>

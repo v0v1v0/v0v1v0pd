@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>LogLikRM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Log-Likelihood functions for the independent and partially anti-correlated race models of confidence</h2>
+
+<h3>Description</h3>
+
+<p>Computes the Log-likelihood for given data and parameters in the IRM and PCRM with or without time-scaled
+confidence measure. It is a wrapped version of the respective densities <code>dIRM</code> and <code>dPCRM</code>,
+where one can find more information about the parameters. It restricts the rates of accumulation to be the negative
+of each other, though (a common assumption in perceptual decision tasks).
+The function is mainly used inside <code>fitRTConf</code> for race models but exported
+for individual usage in other contexts.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">LogLikRM(data, paramDf, model = "IRM", time_scaled = FALSE,
+  data_names = list(), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a dataframe where each row is one trial. Containing following variables:
+</p>
+
+<ul>
+<li>
+<p> condition    (not necessary; convertible to integer (e.g. factor); for different levels of stimulus quality),
+</p>
+</li>
+<li>
+<p> rating            (convertible to integer (e.g. factor); discrete confidence judgments),
+</p>
+</li>
+<li>
+<p> rt                    (numeric; giving reaction times for decision task),
+</p>
+</li>
+<li>
+<p> stimulus     (values at least convertible to c(1,2), i.e. integer or factor; stimulus category (index of accumulator with higher drift))
+</p>
+</li>
+<li>
+<p> response     (values at least convertible to c(1,2); direction of decision; (index of accumulator reaching the boundary first))
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paramDf</code></td>
+<td>
+<p>a list or data frame with one row. Column names should match the names of
+RaceModels parameter names (only <code>mu1</code> and <code>mu2</code> are not used in this context but
+replaced by the parameter <code>v</code>). For different stimulus quality/mean
+drift rates, names should be <code>v1</code>, <code>v2</code>, <code>v3</code>,....
+Different <code>s</code> parameters are possible with <code>s1</code>, <code>s2</code>, <code>s3</code>,... with equally many steps as for drift rates. Additionally, the confidence
+thresholds should be given by names with <code>thetaUpper1</code>, <code>thetaUpper2</code>,..., <code>thetaLower1</code>,... or,
+for symmetric thresholds only by <code>theta1</code>, <code>theta2</code>,.... (see Details for the correspondence to the data)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character scalar. One of "IRM" or "PCRM". ("IRMt" and "PCRMt" will also be accepted. In that case,
+time_scaled is set to TRUE.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_scaled</code></td>
+<td>
+<p>logical. Whether the confidence measure should be scaled by 1/sqrt(rt). Default: TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_names</code></td>
+<td>
+<p>list. Possibility of giving alternative column names for the variables in the data. By default column names are identical to the
+ones given in the data argument description.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Another possibility of giving alternative variable names in data frame (in the form <code>condition = "SOA"</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note, that the requirements on the format of the columns for the likelihood functions are much stricter, than in <code>fitRTConf</code>.
+This is because the function is very frequently called in the optimization routines of the fitting process and the preprocessing steps are
+therefore included in the other function.
+</p>
+<p><strong>rating, condition</strong>. If integer, values should range from 1
+to number of possible ratings/conditions. If factor,
+the number of levels should be equal to number of possible
+ratings/conditions. This should be consistent with the
+parameter vector. The confidence thresholds should be named as
+<code>thetaUpper1</code>, <code>thetaLower1</code>,.... (or <code>theta1</code>,... for symmetric
+thresholds), with the number of ratings -1 and the mean drift rates
+(and possibly the standard deviation in drift rates)
+should be denoted as <code>v1</code>, <code>v2</code>,...
+(and <code>s1</code>, <code>s2</code>,...) with the number equal to the number of conditions.
+If only one condition is used <code>v</code> will be accepted as well as <code>v1</code>.
+</p>
+<p><strong>stimulus, response</strong>. stimulus and response should always
+be given in numerical format with values 1 and 2.
+Stimulus determines which of two accumulators has positive drift.
+The other has negative drift with the same absolute
+value. Response gives the index of the accumulator that reaches the
+boundary first.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Numeric scalar. The summed Log-likelihood of the data given the parameters in the respective model. If one or more row-wise probabilities is &lt;=0,
+the function returns -1e+12.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastian Hellmann.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># 1. Generate data from an artificial participants
+# Get random index for accumulator with positive
+# drift (i.e. stimulus category) and
+# stimulus discriminability (two steps: hard, easy)
+stimulus &lt;- sample(c(1, 2), 200, replace=TRUE)
+discriminability &lt;- sample(c(1, 2), 200, replace=TRUE)
+# generate data for participant 1
+data &lt;- rPCRM(200, mu1=ifelse(stimulus==1, 1, -1)*discriminability*0.5,
+              mu2=ifelse(stimulus==1, -1, 1)*discriminability*0.5,
+             a=2, b=1.8, t0=0.2, st0=0, wx=0.7, wint=0.3, wrt=0)
+# discretize confidence ratings (only 2 steps: unsure vs. sure)
+data$rating &lt;- as.numeric(cut(data$conf, breaks = c(0, 3, Inf), include.lowest = TRUE))
+data$participant = 1
+data$stimulus &lt;- stimulus
+data$discriminability &lt;- discriminability
+data &lt;- data[data$response!=0, ] # drop not finished decision processes
+data &lt;- data[,-c(3,4)] # drop xl and conf measure (unobservable variable)
+head(data)
+
+# 2. Define some parameter set in a data.frame
+paramDf &lt;- data.frame(a=2,b=2, v1=0.5, v2=1, t0=0.1,st0=0,
+                      wx=0.6, wint=0.2, wrt=0.2,
+                      theta1=4)
+
+# 3. Compute log likelihood for parameter and data
+LogLikRM(data, paramDf, model="PCRMt", condition="discriminability")
+# same result
+LogLikRM(data, paramDf, model="PCRM", time_scaled=TRUE,condition="discriminability")
+# different
+LogLikRM(data, paramDf, model="PCRM", condition="discriminability")
+
+# same parameters used for IRM model
+LogLikRM(data, paramDf, model="IRMt", condition="discriminability")
+
+</code></pre>
+
+
+</div>

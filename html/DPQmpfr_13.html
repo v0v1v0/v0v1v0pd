@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pbeta_ser</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Beta Distribution Function – ‘BPSER’ Series Expansion from TOMS 708</h2>
+
+<h3>Description</h3>
+
+<p>Compute a version of the Beta cumulative distribution function
+(<code>pbeta()</code> in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>), namely using the series expansion, named
+<code>BPSER()</code>, from “TOMS 708”, i.e., Didonato and Morris (1992).
+</p>
+<p>This “pure R” function exists for didactical or documentational reasons on one hand,
+as <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own <code>pbeta()</code> uses this expansion when appropriate and
+other algorithms otherwise.
+On the other hand, using high precision <code>q</code> and MPFR arithmetic (via
+package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>) may allow to get highly accurate <code>pbeta()</code>
+values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pbeta_ser(q, shape1, shape2, log.p = FALSE, eps = 1e-15, errPb = 0, verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>q, shape1, shape2</code></td>
+<td>
+<p>quantiles and shape parameters of the Beta
+distribution, <code>q</code> typically in <code class="reqn">[0,1]</code>, see <code>pbeta</code>.
+Here, <code>q</code> <em>must be scalar</em>, i.e., of length one, and may inherit from
+<code>class</code> <code>"mpfr"</code>, in order to be more accurate (than with the
+double precision computations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.p</code></td>
+<td>
+<p>if TRUE, probabilities <code>p</code> are given as <code>log(p)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>non-negative number; <code>tol &lt;- eps/shape1</code> will be used for
+convergence checks in the series computations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>errPb</code></td>
+<td>
+<p>an integer code, typically in <code>-2, -1, 0</code> to determine how
+warnings on convergence failures are handled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical indicating if console output about intermediate
+results should be printed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>pbeta_ser()</code> crucially needs three auxiliary functions which we
+“mpfr-ized” as well: <code>gam1M()</code>,
+<code>lgamma1pM()</code>, and <code>algdivM</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An approximation to the Beta probability  <code class="reqn">P[X \le q]</code>
+for <code class="reqn"> X \sim B(a,b),</code> (where <code class="reqn">a=</code><code>shape1</code>, and <code class="reqn">b=</code><code>shape2</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Didonato and Morris and R Core team;
+separate packaging by Martin Maechler.
+</p>
+
+
+<h3>References</h3>
+
+<p>Didonato, A. and Morris, A., Jr, (1992)
+Algorithm 708: Significant digit computation of the incomplete beta
+function ratios,
+<em>ACM Transactions on Mathematical Software</em> <b>18</b>, 360–373; 
+<a href="https://doi.org/10.1145/131766.131776">doi:10.1145/131766.131776</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pbeta</code>, <span class="pkg">DPQmpfr</span>'s own <code>pbetaD94</code>;
+even more <code>pbeta()</code> approximations in package <a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a>, e.g.,
+<code>pnbetaAS310</code>, or <code>pbetaRv1</code>.
+</p>
+<p>In addition, for integer shape parameters, the potentially “fully accurate”
+finite sum base <code>pbetaI()</code> in package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>.
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">(p. &lt;- pbeta_ser(1/2, shape1 = 2, shape2 = 3, verbose=TRUE))
+(lp &lt;- pbeta_ser(1/2, shape1 = 2, shape2 = 3, log.p = TRUE))
+          all.equal(lp, log(p.), tolerance=0) # 1.48e-16
+stopifnot(all.equal(lp, log(p.), tolerance = 1e-13))
+
+## Using  Vectorize() in order to allow vector 'q' e.g. for curve():
+str(pbetaSer &lt;- Vectorize(pbeta_ser, "q"))
+curve(pbetaSer(x, 1.5, 4.5)); abline(h=0:1, v=0:1, lty=2, col="gray")
+curve(pbeta   (x, 1.5, 4.5), add=TRUE, col = adjustcolor(2, 1/4), lwd=3)
+
+## now using mpfr-numbers:
+half &lt;- 1/Rmpfr::mpfr(2, 256)
+(p2 &lt;- pbeta_ser(half, shape1 = 1, shape2 = 123))
+
+</code></pre>
+
+
+</div>

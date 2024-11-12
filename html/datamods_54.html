@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>update-variables</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Select, rename and convert variables</h2>
+
+<h3>Description</h3>
+
+<p>Select, rename and convert variables
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">update_variables_ui(id, title = TRUE)
+
+update_variables_server(
+  id,
+  data,
+  height = NULL,
+  return_data_on_init = FALSE,
+  try_silent = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module's ID</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>Module's title, if <code>TRUE</code> use the default title,
+use <code>NULL</code> for no title or a <code>shiny.tag</code> for a custom one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a <code>data.frame</code> or a <code>reactive</code> function returning a <code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>height</code></td>
+<td>
+<p>Height for the table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_data_on_init</code></td>
+<td>
+<p>Return initial data when module is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try_silent</code></td>
+<td>
+<p>logical: should the report of error messages be suppressed?</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>shiny::reactive()</code> function returning the updated data.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(shiny)
+library(datamods)
+
+testdata &lt;- data.frame(
+  date_as_char = as.character(Sys.Date() + 0:9),
+  date_as_num = as.numeric(Sys.Date() + 0:9),
+  datetime_as_char = as.character(Sys.time() + 0:9 * 3600*24),
+  datetime_as_num = as.numeric(Sys.time() + 0:9 * 3600*24),
+  num_as_char = as.character(1:10),
+  char = month.name[1:10],
+  char_na = c("A", "A", "B", NA, "B", "A", NA, "B", "A", "B"),
+  stringsAsFactors = FALSE
+)
+
+ui &lt;- fluidPage(
+  theme = bslib::bs_theme(version = 5L, preset = "bootstrap"),
+  tags$h3("Select, rename and convert variables"),
+  fluidRow(
+    column(
+      width = 6,
+      # radioButtons()
+      update_variables_ui("vars")
+    ),
+    column(
+      width = 6,
+      tags$b("original data:"),
+      verbatimTextOutput("original"),
+      verbatimTextOutput("original_str"),
+      tags$b("Modified data:"),
+      verbatimTextOutput("modified"),
+      verbatimTextOutput("modified_str")
+    )
+  )
+)
+
+server &lt;- function(input, output, session) {
+
+  updated_data &lt;- update_variables_server(
+    id = "vars",
+    data = reactive(testdata),
+    return_data_on_init = FALSE
+  )
+
+  output$original &lt;- renderPrint({
+    testdata
+  })
+  output$original_str &lt;- renderPrint({
+    str(testdata)
+  })
+
+  output$modified &lt;- renderPrint({
+    updated_data()
+  })
+  output$modified_str &lt;- renderPrint({
+    str(updated_data())
+  })
+}
+
+if (interactive())
+  shinyApp(ui, server)
+</code></pre>
+
+
+</div>

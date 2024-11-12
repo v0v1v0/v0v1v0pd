@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>min_quantile</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Minimization of the Kriging quantile.</h2>
+
+<h3>Description</h3>
+
+<p>Minimization, based on the package rgenoud of the kriging quantile.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">min_quantile(
+  model,
+  beta = 0.1,
+  type = "UK",
+  lower,
+  upper,
+  parinit = NULL,
+  control = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a Kriging model of "km" class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Quantile level (default value is 0.1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Kriging type: "SK" or "UK"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector containing the lower bounds of the variables to be
+optimized over</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector containing the upper bounds of the variables to be
+optimized over</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parinit</code></td>
+<td>
+<p>optional vector containing the initial values for the
+variables to be optimized over</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optional list of control parameters for optimization.  One
+can control <code>"pop.size"</code> (default : [N=3*2^dim for dim&lt;6 and N=32*dim
+otherwise]), <code>"max.generations"</code> (12), <code>"wait.generations"</code> (2)
+and <code>"BFGSburnin"</code> (2) of function <code>"genoud"</code> (see
+<code>genoud</code>).  Numbers into brackets are the default
+values</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with components: </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>the best set of parameters
+found.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>the value of the krigign quantile at par.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Victor Picheny 
+</p>
+<p>David Ginsbourger
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+##########################################################################
+###    KRIGING QUANTILE SURFACE AND OPTIMIZATION PERFORMED BY GENOUD  ####
+###    FOR AN ORDINARY KRIGING MODEL                                  ####
+### OF THE BRANIN FUNCTION KNOWN AT A 12-POINT LATIN HYPERCUBE DESIGN ####
+##########################################################################
+set.seed(10)
+
+# Set test problem parameters
+doe.size &lt;- 10
+dim &lt;- 2
+test.function &lt;- get("branin2")
+lower &lt;- rep(0,1,dim)
+upper &lt;- rep(1,1,dim)
+noise.var &lt;- 0.2
+
+# Generate DOE and response
+doe &lt;- as.data.frame(matrix(runif(doe.size*dim),doe.size))
+y.tilde &lt;- rep(0, 1, doe.size)
+for (i in 1:doe.size)  {y.tilde[i] &lt;- test.function(doe[i,]) 
++ sqrt(noise.var)*rnorm(n=1)}
+y.tilde &lt;- as.numeric(y.tilde)
+
+# Create kriging model
+model &lt;- km(y~1, design=doe, response=data.frame(y=y.tilde),
+     covtype="gauss", noise.var=rep(noise.var,1,doe.size), 
+     lower=rep(.1,dim), upper=rep(1,dim), control=list(trace=FALSE))
+
+# Optimisation using max_kriging.quantile
+res &lt;- min_quantile(model, beta=0.1, type = "UK", lower=c(0,0), upper=c(1,1)) 
+X.genoud &lt;- res$par
+
+# Compute actual function and criterion on a grid
+n.grid &lt;- 12 # Change to 21 for a nicer picture
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+names(design.grid) &lt;- c("V1","V2")
+nt &lt;- nrow(design.grid)
+crit.grid &lt;- apply(design.grid, 1, kriging.quantile, model=model, beta=.1)
+
+# # 2D plots
+z.grid &lt;- matrix(crit.grid, n.grid, n.grid)
+tit &lt;- "Green: best point found by optimizer"
+filled.contour(x.grid,y.grid, z.grid, nlevels=50, color = topo.colors,
+plot.axes = {title(tit);points(model@X[,1],model@X[,2],pch=17,col="blue"); 
+points(X.genoud[1],X.genoud[2],pch=17,col="green");
+axis(1); axis(2)})
+
+</code></pre>
+
+
+</div>

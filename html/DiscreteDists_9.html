@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DGEII</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The DGEII distribution</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>DGEII()</code> defines the Discrete generalized exponential distribution,
+Second type, a two parameter
+distribution, for a <code>gamlss.family</code> object to be used in GAMLSS fitting
+using the function <code>gamlss()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DGEII(mu.link = "logit", sigma.link = "log")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mu.link</code></td>
+<td>
+<p>defines the mu.link, with "logit" link as the default for the mu parameter. Other links are "probit" and "cloglog"'(complementary log-log).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma.link</code></td>
+<td>
+<p>defines the sigma.link, with "log" link as the default for the sigma.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The DGEII distribution with parameters <code class="reqn">\mu</code> and <code class="reqn">\sigma</code>
+has a support 0, 1, 2, ... and mass function given by
+</p>
+<p><code class="reqn">f(x | \mu, \sigma) = (1-\mu^{x+1})^{\sigma}-(1-\mu^x)^{\sigma}</code>
+</p>
+<p>with <code class="reqn">0 &lt; \mu &lt; 1</code> and <code class="reqn">\sigma &gt; 0</code>. If <code class="reqn">\sigma=1</code>, the DGEII distribution
+reduces to the geometric distribution with success probability <code class="reqn">1-\mu</code>.
+</p>
+<p>Note: in this implementation we changed the original parameters
+<code class="reqn">p</code> to <code class="reqn">\mu</code> and <code class="reqn">\alpha</code> to <code class="reqn">\sigma</code>,
+we did it to implement this distribution within gamlss framework.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a <code>gamlss.family</code> object which can be used
+to fit a DGEII distribution
+in the <code>gamlss()</code> function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Valentina Hurtado Sepúlveda, <a href="mailto:vhurtados@unal.edu.co">vhurtados@unal.edu.co</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Nekoukhou V, Alamatsaz MH, Bidram H (2013).
+“Discrete generalized exponential distribution of a second type.”
+<em>Statistics</em>, <b>47</b>(4), 876-887.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dDGEII.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1
+# Generating some random values with
+# known mu and sigma
+set.seed(189)
+y &lt;- rDGEII(n=100, mu=0.75, sigma=0.5)
+
+# Fitting the model
+library(gamlss)
+mod1 &lt;- gamlss(y~1, family=DGEII,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+# Extracting the fitted values for mu and sigma
+# using the inverse link function
+inv_logit &lt;- function(x) 1/(1 + exp(-x))
+
+inv_logit(coef(mod1, what="mu"))
+exp(coef(mod1, what="sigma"))
+
+# Example 2
+# Generating random values under some model
+
+# A function to simulate a data set with Y ~ GGEO
+gendat &lt;- function(n) {
+  x1 &lt;- runif(n)
+  x2 &lt;- runif(n)
+  mu    &lt;- inv_logit(1.7 - 2.8*x1)
+  sigma &lt;- exp(0.73 + 1*x2)
+  y &lt;- rDGEII(n=n, mu=mu, sigma=sigma)
+  data.frame(y=y, x1=x1, x2=x2)
+}
+
+set.seed(1234)
+datos &lt;- gendat(n=100)
+
+mod2 &lt;- gamlss(y~x1, sigma.fo=~x2, family=DGEII, data=datos,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+summary(mod2)
+
+# Example 3
+# Number of accidents to 647 women working on H. E. Shells
+# for 5 weeks. Taken from
+# Nekoukhou V, Alamatsaz MH, Bidram H (2013) page 886.
+
+y &lt;- rep(x=0:5, times=c(447, 132, 42, 21, 3, 2))
+
+mod3 &lt;- gamlss(y~1, family=DGEII,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+# Extracting the fitted values for mu and sigma
+# using the inverse link function
+inv_logit &lt;- function(x) 1/(1 + exp(-x))
+inv_logit(coef(mod3, what="mu"))
+exp(coef(mod3, what="sigma"))
+
+</code></pre>
+
+
+</div>

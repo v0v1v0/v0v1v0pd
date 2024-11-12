@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nearPDToeplitz</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Computes the nearest positive definite Toeplitz matrix</h2>
+
+<h3>Description</h3>
+
+<p>Computes the nearest positive definite Toeplitz matrix to an initial approximation, 
+typically a covariance (correlation) matrix of a stationary process. This function 
+implements an <em>alternating projection algorithm</em> that combines <cite>Grigoriadis et al. (1994)</cite> 
+and <cite>Higham (2002)</cite>. For further details see Section 5 of <cite>Tecuapetla-Gómez and Munk (2017)</cite>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nearPDToeplitz(
+  matrix,
+  type = c("covariance", "correlation"),
+  toleranceEigen = 1e-06,
+  toleranceConvergence = 1e-06,
+  tolerancePosDef = 1e-06,
+  maxIterations = 100,
+  doEigen = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>matrix</code></td>
+<td>
+<p>a symmetric matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>string indicating whether the elements of the main 
+diagonal must be all equal to 1 (<code>"correlation"</code>) 
+or not (<code>"covariance"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>toleranceEigen</code></td>
+<td>
+<p>defines relative positiveness of eigenvalues 
+compared to largest one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>toleranceConvergence</code></td>
+<td>
+<p>numeric indicating convergence tolerance for 
+alternating projection algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerancePosDef</code></td>
+<td>
+<p>tolerance for forcing positive definiteness (in the 
+final step) of alternating projection algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIterations</code></td>
+<td>
+<p>integer giving maximum number of iterations 
+allowed in alternating projection algorithm; when
+this number is exceeded without convergence                              
+a warning is displayed and matrix computed in step
+<code>maxIterations</code> of algorithm is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doEigen</code></td>
+<td>
+<p>logical indicating whether finding the closest positive
+definite matrix -through a eigen step- should be applied 
+to the result of the alternating projection algorithm.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is based on an alternating projection algorithm which 
+involves projecting sequentially and iteratively the initial matrix into the 
+set of symmetric positive definite and into the space of Toeplitz matrices, 
+respectively. The iteration process will stop because either a criterion
+of convergence is met or <code>maxIterations</code> has been exceeded (without convergence).
+Criterion of convergence: if the Frobenius norm of the difference of the
+projection matrices computed in the last two iterations of the algorithm
+is smaller than <code>toleranceConvergence</code>, then the algorithm stops returning
+the projection matrix computed in the last iteration. 
+</p>
+<p>When projecting onto the set of symmetric positive definite matrices, <code>toleranceEigen</code>
+controls the relative magnitude of any eigenvalue <code class="reqn">\lambda_k</code> with
+respect to the largest one <code class="reqn">\lambda_1</code> and all eigenvalues <code class="reqn">\lambda_k</code>
+are treated as zero if 
+<code class="reqn">\lambda_k / \lambda_1 \leq \code{toleranceEigen}</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>projection</code></td>
+<td>
+<p>a matrix, the computed symmetric positive definite Toeplitz matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normF</code></td>
+<td>
+<p>Frobenius norm of the difference between original and projection 
+matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>number of iterations used for alternating projection algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relativeTolerance</code></td>
+<td>
+<p>numeric giving relative error (in Frobenius norm) of 
+final approximation with respect to original matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converged</code></td>
+<td>
+<p>logical indicating if alternating projection algorithm converged.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Grigoriadis, K.M., Frazho, A., Skelton, R. (1994). 
+<em>Application of alternating convex projection methods for computation 
+of positive Toeplitz matrices</em>, IEEE Transactions on signal processing 
+<b>42(7)</b>, 1873–1875.
+</p>
+<p>N. Higham (2002). <em>Computing the nearest correlation matrix - a
+problem from finance</em>, Journal of Numerical Analysis <b>22</b>, 329–343.
+</p>
+<p>Tecuapetla-Gómez, I and Munk, A. (2017). <em>Autocovariance
+estimation in regression with a discontinuous signal and <code class="reqn">m</code>-dependent errors: A 
+difference-based approach</em>. Scandinavian Journal of Statistics, <b>44(2)</b>, 346–368.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nearPD</code>, <code>projectToeplitz</code>, 
+<code>symBandedToeplitz</code>, <code>posdefify</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Higham (2002), p. 334
+(mat &lt;- matrix(c(1, 1, 0, 1, 1, 1, 0, 1, 1), byrow = TRUE, ncol = 3))
+matProj &lt;- matrix(c(1, 0.7607, 0.1573, 0.7607, 1, 0.7607, 0.1573, 0.7607, 1), 
+                  byrow = TRUE, ncol = 3)
+nrPDT.mat &lt;- nearPDToeplitz(mat, type = "correlation")
+stopifnot( identical(unname(matProj), unname(round(as.matrix(nrPDT.mat$projection), 
+                     digits=4) ) ))
+eigen(nrPDT.mat$projection)$values
+
+# Toeplitz banded matrix near to the covariance matrix of 100 realizations
+# of an MA(5) with following parameters:
+
+n &lt;- 1e2
+alphas &lt;- c(-2, 0.5, -4, 0, 0.75)
+(true.acf &lt;- ARMAacf(ma = alphas))
+alphasMat &lt;- symBandedToeplitz(true.acf, n = n)
+stopifnot( min(eigen(alphasMat)$values) &gt; 0 ) # alphasMat is a positive definite matrix
+
+(l &lt;- length(true.acf))
+(acf.modified &lt;- c(true.acf[-c(l - 1, l)], 0.25)) # modifying original acf
+x &lt;- acf.modified
+acfMat &lt;- symBandedToeplitz(x, n = n)
+
+# no. of non positive eigenvalues of acfMat (6)
+length( eigen(acfMat)$values[eigen(acfMat)$values &lt; 0 ] )
+# acfMat is a 100 x 100 symmetric banded Toeplitz matrix
+acfMat[1:15, 1:30]
+
+system.time(nrPDT.acfMat &lt;- nearPDToeplitz(acfMat, type = "correlation"))
+y &lt;- eigen(nrPDT.acfMat$projection)$values
+# no. of non positive eigenvalues of nrPDT.acfMat
+length( y[ y &lt; 0 ] ) # none!
+
+</code></pre>
+
+
+</div>

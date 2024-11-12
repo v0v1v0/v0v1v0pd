@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>imputess</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Impute values from solution space</h2>
+
+<h3>Description</h3>
+
+<p>Given a record <code class="reqn">x</code> with observerd <code class="reqn">x_{obs}</code> and missing values <code class="reqn">x_{miss}</code> under
+linear equality constraints <code class="reqn">Ax=b</code>. The function <code>solSpace</code> returns
+the solution space which can be written as <code class="reqn">x_{miss} = x_0 + Cz</code>, where <code class="reqn">x_0</code> is
+are a constant vector (of dimension d=<code>length</code><code class="reqn">(x_{miss})</code>) and <code class="reqn">C</code> a constant
+matrix of dimension <code class="reqn">d\times d</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">imputess(x, x0, C, z = NULL, tol = sqrt(.Machine$double.eps))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>(named) numerical vector to be imputed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x0</code></td>
+<td>
+<p><code>x0</code> outcome of <code>solSpace</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p><code>C</code> outcome of <code>solSpace</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>real vector of dimension <code>ncol(C)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>tolerance used to check which rows of <code>C</code> equal zero.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code class="reqn">C</code> has rows equal to zero, then those missing values may be imputed deductively.
+For the other missing values, some <code class="reqn">z</code> must be chosen or another imputation method
+used.
+</p>
+<p>The function <code>imputess</code> imputes missing values in a vector <code class="reqn">x</code>, based on the
+solution space and some chosen vector <code class="reqn">z</code>. If no <code class="reqn">z</code> is passed as argument, only
+deductive imputations are performend (i.e. some missings may be left).
+</p>
+<p>If <code class="reqn">C</code> is a named matrix (as returned by <code>solSpace</code>), rows of <code class="reqn">x0</code> and <code class="reqn">C</code>
+are matched by name to <code class="reqn">x</code>. Otherwise it is assumed that the missings in <code class="reqn">x</code> occur in the order
+of the rows in <code class="reqn">C</code> (which is also the case when x0 and C are computed by <code>solSpace</code>).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#############################################
+# IMPUTATION OF NUMERIC DATA
+#############################################
+
+# These examples are taken from De Waal et al (2011) (Examples 9.1-9.2)
+E &lt;- editmatrix(c(
+    "x1 + x2      == x3",
+    "x2           == x4",
+    "x5 + x6 + x7 == x8",
+    "x3 + x8      == x9",
+    "x9 - x10     == x11",
+    "x6 &gt;= 0",
+    "x7 &gt;= 0"
+))
+
+
+dat &lt;- data.frame(
+    x1=c(145,145),
+    x2=c(NA,NA),
+    x3=c(155,155),
+    x4=c(NA,NA),
+    x5=c(NA, 86),
+    x6=c(NA,NA),
+    x7=c(NA,NA),
+    x8=c(86,86),
+    x9=c(NA,NA),
+    x10=c(217,217),
+    x11=c(NA,NA)
+)
+
+dat
+
+d &lt;- deduImpute(E,dat)
+d$corrected
+d$status
+d$corrections
+
+
+
+
+#############################################
+# IMPUTATION OF CATEGORICAL DATA
+#############################################
+
+
+# Here's an example from Katrika (2001) [but see De Waal et al (2011), ex. 9.3)]
+E &lt;- editarray(c(
+    "x1 \%in\% letters[1:4]",
+    "x2 \%in\% letters[1:3]",
+    "x3 \%in\% letters[1:3]",
+    "x4 \%in\% letters[1:2]",
+    "if (x2 == 'c'  &amp; x3 != 'c' &amp; x4 == 'a' ) FALSE",
+    "if (x2 != 'a'  &amp; x4 == 'b') FALSE",
+    "if (x1 != 'c'  &amp; x2 != 'b' &amp; x3 != 'a') FALSE",
+    "if (x1 == 'c'  &amp; x3 != 'a' &amp; x4 == 'a' ) FALSE"
+))
+
+
+dat &lt;- data.frame(
+    x1 = c('c', NA ),
+    x2 = c('b', NA ),
+    x3 = c(NA , NA ),
+    x4 = c(NA , 'b'),
+    stringsAsFactors=FALSE)
+
+
+s &lt;- deduImpute(E,dat)
+s$corrected
+s$status
+s$corrections
+
+
+E &lt;- editset(expression(
+    x + y == z,
+    x &gt;= 0,
+    A %in% c('a','b'),
+    B %in% c('c','d'),
+    if ( A == 'a' ) B == 'b',
+    if ( B == 'b' ) x &gt; 0
+))
+
+x &lt;- data.frame(
+    x = NA,
+    y = 1,
+    z = 1,
+    A = 'a',
+    B = NA
+)
+# deduImpute will impute x=0 and B='b',which violates the 
+# last edit. Hence, imputation will be reverted.
+deduImpute(E,x) 
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hurricanes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Hurricanes</h2>
+
+<h3>Description</h3>
+
+<p>A data set on hurricane strength and fatalities in the US between 1950 and 2012. The data originates from the study by Jung et al., PNAS, 2014, who claim that the masculinity / femininity of a hurricane name has a causal effect on fatalities, presumably through a different perception of danger caused by the names.
+</p>
+
+
+<h3>Format</h3>
+
+<p>A 'data.frame': 93 obs. of  14 variables
+</p>
+
+<dl>
+<dt>Year</dt>
+<dd>
+<p>Year of the hurricane (1950-2012)</p>
+</dd>
+<dt>Name</dt>
+<dd>
+<p>Name of the hurricane</p>
+</dd>
+<dt>MasFem</dt>
+<dd>
+<p>Masculinity-femininity rating of the hurricane's name in the range 1 = very masculine, 11 = very feminine</p>
+</dd>
+<dt>MinPressure_before</dt>
+<dd>
+<p>Minimum air pressure (909-1002)</p>
+</dd>
+<dt>Minpressure_Updated_2014</dt>
+<dd>
+<p>Updated minimum air pressure (909-1003)</p>
+</dd>
+<dt>Gender_MF</dt>
+<dd>
+<p>Binary gender (male/female) based on MasFem (male = 0, female = 1)</p>
+</dd>
+<dt>Category</dt>
+<dd>
+<p>Strength of the hurricane in categories (1:7). (1 = not at all, 7 = very intense)</p>
+</dd>
+<dt>alldeaths</dt>
+<dd>
+<p>Deaths occured (1:256)</p>
+</dd>
+<dt>NDAM</dt>
+<dd>
+<p>normalized damage in millions (1:75.000). The raw (dollar) amounts of property damage caused by hurricanes were obtained, and the unadjusted dollar amounts were normalized to 2013 monetary values by adjusting them to inflation, wealth and population density</p>
+</dd>
+<dt>Elapsed_Yrs</dt>
+<dd>
+<p>elapsed since the occurrence of hurricanes (1:63)</p>
+</dd>
+<dt>Source</dt>
+<dd>
+<p>MWR/wikipedia ()</p>
+</dd>
+<dt>ZMasFem</dt>
+<dd>
+<p>scaled (MasFem)</p>
+</dd>
+<dt>ZMinPressure_A</dt>
+<dd>
+<p>scaled (Minpressure_Updated_2014)</p>
+</dd>
+<dt>ZNDAM</dt>
+<dd>
+<p>scaled (NDAM)</p>
+</dd>
+</dl>
+<p>...
+
+</p>
+
+
+<h3>References</h3>
+
+<p>Jung, K., Shavitt, S., Viswanathan, M., &amp; Hilbe, J. M. (2014). Female hurricanes are deadlier than male hurricanes. Proceedings of the National Academy of Sciences, 111(24), 8782-8787.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Loading hurricanes dataset
+
+library(DHARMa)
+
+data(hurricanes)
+str(hurricanes)
+
+# this is the model fit by Jung et al.
+library(glmmTMB)
+originalModelGAM = glmmTMB(alldeaths ~ scale(MasFem) *
+                             (scale(Minpressure_Updated_2014) + scale(NDAM)),
+                           data = hurricanes, family = nbinom2)
+
+# no significant deviation in the general DHARMa plot
+res &lt;- simulateResiduals(originalModelGAM)
+plot(res)
+
+# but residuals ~ NDAM looks funny, which was pointed 
+# out by Bob O'Hara in a blog post after publication of the paper
+plotResiduals(res, hurricanes$NDAM)
+
+# we also find temporal autocorrelation
+res2 = recalculateResiduals(res, group = hurricanes$Year)
+testTemporalAutocorrelation(res2, time = unique(hurricanes$Year))
+
+# task: try to address these issues - in many instances, this will 
+# make the MasFem predictor n.s.
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,271 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>transformations</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Transformations in <code>drake_plan()</code>. <a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>In <code>drake_plan()</code>, you can define whole batches
+of targets with transformations such as
+<code>map()</code>, <code>split()</code>, <code>cross()</code>, and <code>combine()</code>.
+</p>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Grouping variables. New grouping variables must be
+supplied with their names and values, existing grouping variables
+can be given as symbols without any values assigned.
+For dynamic branching, the entries in <code>...</code> must be unnamed symbols
+with no values supplied, and they must be the names of targets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A data frame of new grouping variables with
+grouping variable names as column names and values as elements.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.names</code></td>
+<td>
+<p>Literal character vector of names for the targets.
+Must be the same length as the targets generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.id</code></td>
+<td>
+<p>Symbol or vector of symbols naming grouping variables
+to incorporate into target names. Useful for creating short target
+names. Set <code>.id = FALSE</code> to use integer indices as target name suffixes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.tag_in</code></td>
+<td>
+<p>A symbol or vector of symbols. Tags assign targets
+to grouping variables. Use <code>.tag_in</code> to assign <em>untransformed</em>
+targets to grouping variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.tag_out</code></td>
+<td>
+<p>Just like <code>.tag_in</code>, except that <code>.tag_out</code>
+assigns <em>transformed</em> targets to grouping variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slice</code></td>
+<td>
+<p>Number of slices into which <code>split()</code> partitions the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>margin</code></td>
+<td>
+<p>Which margin to take the slices in <code>split()</code>. Same meaning
+as the <code>MARGIN</code> argument of <code>apply()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>Logical, whether to drop a dimension if its length is 1.
+Same meaning as <code>mtcars[, 1L, drop = TRUE]</code> versus
+<code>mtcars[, 1L, drop = TRUE]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.by</code></td>
+<td>
+<p>Symbol or vector of symbols of grouping variables.
+<code>combine()</code> aggregates/groups targets by the grouping variables in <code>.by</code>.
+For dynamic branching, <code>.by</code> can only take one variable at a time,
+and that variable must be a vector. Ideally, it should take
+little space in memory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.trace</code></td>
+<td>
+<p>Symbol or vector of symbols for the dynamic trace.
+The dynamic trace allows you to keep track of the values of
+dynamic dependencies are associated with individual sub-targets.
+For <code>combine()</code>, <code>.trace</code> must either be empty or the same as the
+variable given for <code>.by</code>.
+See <code>get_trace()</code> and <code>read_trace()</code> for examples and other details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For details, see
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#large-plans⁠</code>.
+</p>
+
+
+<h3>Transformations</h3>
+
+<p><code>drake</code> has special syntax for generating large plans.
+Your code will look something like
+<code style="white-space: pre;">⁠drake_plan(y = target(f(x), transform = map(x = c(1, 2, 3)))⁠</code>
+You can read about this interface at
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#large-plans⁠</code>. # nolint
+</p>
+
+
+<h3>Static branching</h3>
+
+<p>In static branching, you define batches of targets
+based on information you know in advance.
+Overall usage looks like
+<code style="white-space: pre;">⁠drake_plan(&lt;x&gt; = target(&lt;...&gt;, transform = &lt;call&gt;)⁠</code>,
+where
+</p>
+
+<ul>
+<li> <p><code style="white-space: pre;">⁠&lt;x&gt;⁠</code> is the name of the target or group of targets.
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠&lt;...&gt;⁠</code> is optional arguments to <code>target()</code>.
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠&lt;call&gt;⁠</code> is a call to one of the transformation functions.
+</p>
+</li>
+</ul>
+<p>Transformation function usage:
+</p>
+
+<ul>
+<li> <p><code>map(..., .data, .names, .id, .tag_in, .tag_out)</code>
+</p>
+</li>
+<li> <p><code>split(..., slices, margin = 1L, drop = FALSE, .names, .tag_in, .tag_out)</code> # nolint
+</p>
+</li>
+<li> <p><code>cross(..., .data, .names, .id, .tag_in, .tag_out)</code>
+</p>
+</li>
+<li> <p><code>combine(..., .by, .names, .id, .tag_in, .tag_out)</code>
+</p>
+</li>
+</ul>
+<h3>Dynamic branching</h3>
+
+
+<ul>
+<li> <p><code>map(..., .trace)</code>
+</p>
+</li>
+<li> <p><code>cross(..., .trace)</code>
+</p>
+</li>
+<li> <p><code>group(..., .by, .trace)</code>
+</p>
+</li>
+</ul>
+<p><code>map()</code> and <code>cross()</code> create dynamic sub-targets from the variables
+supplied to the dots. As with static branching, the variables
+supplied to <code>map()</code> must all have equal length.
+<code>group(f(data), .by = x)</code> makes new dynamic
+sub-targets from <code>data</code>. Here, <code>data</code> can be either static or dynamic.
+If <code>data</code> is dynamic, <code>group()</code> aggregates existing sub-targets.
+If <code>data</code> is static, <code>group()</code> splits <code>data</code> into multiple
+subsets based on the groupings from <code>.by</code>.
+</p>
+<p>Differences from static branching:
+</p>
+
+<ul>
+<li> <p><code>...</code> must contain <em>unnamed</em> symbols with no values supplied,
+and they must be the names of targets.
+</p>
+</li>
+<li>
+<p> Arguments <code>.id</code>, <code>.tag_in</code>, and <code>.tag_out</code> no longer apply.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Static branching
+models &lt;- c("glm", "hierarchical")
+plan &lt;- drake_plan(
+  data = target(
+    get_data(x),
+    transform = map(x = c("simulated", "survey"))
+  ),
+  analysis = target(
+    analyze_data(data, model),
+    transform = cross(data, model = !!models, .id = c(x, model))
+  ),
+  summary = target(
+    summarize_analysis(analysis),
+    transform = map(analysis, .id = c(x, model))
+  ),
+  results = target(
+    bind_rows(summary),
+    transform = combine(summary, .by = data)
+  )
+)
+plan
+if (requireNamespace("styler")) {
+  print(drake_plan_source(plan))
+}
+# Static splitting
+plan &lt;- drake_plan(
+  analysis = target(
+    analyze(data),
+    transform = split(data, slices = 3L, margin = 1L, drop = FALSE)
+  )
+)
+print(plan)
+if (requireNamespace("styler", quietly = TRUE)) {
+  print(drake_plan_source(plan))
+}
+# Static tags:
+drake_plan(
+  x = target(
+    command,
+    transform = map(y = c(1, 2), .tag_in = from, .tag_out = c(to, out))
+  ),
+  trace = TRUE
+)
+plan &lt;- drake_plan(
+  survey = target(
+    survey_data(x),
+    transform = map(x = c(1, 2), .tag_in = source, .tag_out = dataset)
+  ),
+  download = target(
+    download_data(),
+    transform = map(y = c(5, 6), .tag_in = source, .tag_out = dataset)
+  ),
+  analysis = target(
+    analyze(dataset),
+    transform = map(dataset)
+  ),
+  results = target(
+    bind_rows(analysis),
+    transform = combine(analysis, .by = source)
+  )
+)
+plan
+if (requireNamespace("styler", quietly = TRUE)) {
+  print(drake_plan_source(plan))
+}
+</code></pre>
+
+
+</div>

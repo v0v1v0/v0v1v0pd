@@ -1,0 +1,365 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mshewhart</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Multivariate Shewhart-type control charts
+</h2>
+
+<h3>Description</h3>
+
+<p><code>mshewhart</code> computes, and, optionally,  plots, 
+several Shewhart-type Phase I control charts for detecting
+location and scale changes in multivariate subgrouped data.
+</p>
+<p><code>mshewhart.normal.limits</code> pre-computes
+the corresponding control limits when the in-control distribution is
+multivariate normal.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mshewhart(x, subset, stat = c("T2Var", "T2", "Var", "Depth Ranks"), score = c("Identity",
+  "Signed Ranks",  "Spatial Signs", "Spatial Ranks", "Marginal Ranks"),
+  loc.scatter = c("Classic", "Robust"), plot = TRUE, FAP = 0.05,
+  seed = 11642257, L = 1000, limits = NA)
+
+mshewhart.normal.limits(p, n, m, stat = c("T2Var", "T2", "Var", "Depth Ranks"),
+  score = c("Identity", "Signed Ranks",  "Spatial Signs", "Spatial Ranks",
+  "Marginal Ranks"), loc.scatter = c("Classic", "Robust"),
+  FAP = 0.05, seed = 11642257, L = 100000) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>a pxnxm data numeric array
+(n observations gathered at m time points on p variables).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+
+<p>integer: number of monitored variables.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>integer: size of each subgroup (number of observations gathered at
+each time point).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>integer: number of subgroups (time points).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>an optional vector specifying a subset of subgroups/time points to be used
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+
+<p>character: control statistic[s] to use; see Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>score</code></td>
+<td>
+
+<p>character: transformation to use; unused when
+<code>stat=Depth Ranks</code>; see Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loc.scatter</code></td>
+<td>
+
+<p>character: estimates of the multivariate location and scatter
+to use when no preliminary rank transformation is applied.
+Unused when <code>stat</code> is equal to <code>Depth Ranks</code> or <code>score</code> is 
+<code>Marginal Ranks</code>. See Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+
+<p>logical; if <code>TRUE</code>, control statistic[s] is[are] displayed. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FAP</code></td>
+<td>
+
+<p>numeric (between 0 and 1): desired false alarm probability.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>positive integer; if not <code>NA</code>, the RNG's state is resetted
+using <code>seed</code>. The current <code>.Random.seed</code> will be
+preserved.     Unused by <code>mshewhart</code> when <code>limits</code> is not <code>NA</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+
+<p>positive integer: number of Monte Carlo replications used to
+compute the control limits.  Unused by <code>mshewhart</code> when <code>limits</code> is not <code>NA</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>limits</code></td>
+<td>
+
+<p>numeric: pre-computed vector of control limits.
+This vector should contain <code class="reqn">(A,B)</code>
+when <code>stat=T2Var</code>, <code class="reqn">(A)</code> when <code>stat=T2</code>,
+<code class="reqn">(B)</code> when <code>stat=Var</code> and
+<code class="reqn">(C)</code> when <code>stat=Depth Ranks</code>.
+See Details for the definition of the critical values
+<code class="reqn">A</code>, <code class="reqn">B</code> and <code class="reqn">C</code>. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The implemented control statistics are
+</p>
+
+<ul>
+<li>
+<p><code>T2Var</code>: combination of the <code>T2</code> and
+<code>Var</code> statistics described below.
+</p>
+</li>
+<li>
+<p><code>T2</code>: Hotelling's <code class="reqn">T^2</code> control statistics
+(see Montgomery, 2009, equation 11.19, or Qiu, 2013, equation
+7.7) with control limit equal to <code class="reqn">A</code>.
+</p>
+</li>
+<li>
+<p><code>Var</code>: normal likelihood ratio control statistics
+for detecting changes in the multivariate dispersion
+(see Montgomery, 2009, equation 11.34), with control limit
+equal to <code class="reqn">B</code>.
+</p>
+</li>
+<li>
+<p><code>Depth Ranks</code>:
+control statistics based on the rank of the Mahalanobis
+depths, proposed by Bell <em>et. al.</em>. As suggested Bell <em>et
+al.</em>, the Mahalanobis depths are computed using the BACON estimates
+of the multivariate mean vector and the mean of the subgroups sample
+covariance matrices.
+An alarm is signalled if any of the statistics is greater
+than a positive control limit <code class="reqn">C</code>.
+</p>
+</li>
+</ul>
+<p>The <code>T2</code> and <code>Var</code> control statistics are computed
+</p>
+
+<ul>
+<li>
+<p><code>score=Identical:</code>
+from the original data standardized
+using either the classical pooled estimates of the mean vector
+and dispersion matrix (Montgomery, 2009, equations 11.14–11.18;
+Qiu, 2013, equations at page 269)   or the highly robust minimum covariance determinant (MCD)
+estimate when argument <code>loc.scatter</code> is equal to
+<code>Classic</code> or <code>Robust</code>, respectively.
+</p>
+</li>
+<li>
+<p><code>score=Signed Ranks, Spatial Signs, Spatial Ranks,
+  Marginal Ranks</code>: from a “rank” transformation of the original 
+data. In particular, see   Hallin and Paindaveine (2005) for the
+definition of the multivariate signed ranks and Oja (2010) for those of the
+spatial signs, spatial ranks, and marginal ranks. Multivariate signed
+ranks, spatial signs and
+ranks are “inner” standardized while marginal ranks are
+“outer” standardized (see Oja (2010) for the definition of
+“inner” and “outer” standardization).
+When <code>loc.scatter</code> is equal to <code>Classic</code>, 
+inner standardization takes into account the subgroup structure of the
+data imposing that the average of the <strong>within-group</strong> covariances of the
+transformed data is proportional to the identity matrix.
+Otherwise, i.e., when
+<code>loc.scatter</code> is equal to <code>Robust</code>,  it is based on  
+a standard Hettmansperger-Randles-like scatter estimate.
+Note that the <code class="reqn">T^2</code> control statistics based on the spatial
+signs corresponds to the control charts suggested by
+Cheng and Shiau (2015) when <code>loc.scatter</code> is equal to
+<code>Robust</code>.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p><code>mshewhart</code> returns an invisible list with elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td>
+<code>T2</code> </td>
+<td>
+<p><code class="reqn">T^2</code> control statistic; this element is present only if
+<code>stat</code> is <code>T2Var</code> or <code>T2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>Var</code> </td>
+<td>
+<p><code class="reqn">Var</code> control statistic; this element is present only if
+<code>stat</code> is <code>T2Var</code> or <code>Var</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>DepthRanks</code> </td>
+<td>
+<p>control statistic based on the rank of
+the Mahalanobis depths; this element is present only if
+<code>stat</code> is <code>Depth Ranks</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>center</code>, <code>scatter</code> </td>
+<td>
+<p>estimates of the
+multivariate location and scatter used to standardized the observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>limits</code> </td>
+<td>
+<p>control limits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>stat</code>, <code>score</code>, <code>loc.scatter</code>, <code>FAP</code>,
+<code>L</code>, <code>seed</code> </td>
+<td>
+<p> input arguments.</p>
+</td>
+</tr>
+</table>
+<p><code>mshewhart.normal.limits</code> returns a numeric vector
+containing the control limits.
+</p>
+
+
+<h3>Note</h3>
+
+
+<ol>
+<li>
+<p>When <code>limits</code> is <code>NA</code>, <code>mshewhart</code>
+computes the control limits by permutation.
+Then, the resulting control chart is distribution-free.
+</p>
+</li>
+<li>
+<p>Pre-computed limits, such as  those computed by
+using <code>mshewhart.normal.limits</code>,  are not recommended.
+Indeed, the resulting control
+chart will not be distribution-free.
+</p>
+</li>
+<li>
+<p>However, when <code>score</code> is <code>Signed Ranks</code>, <code>Spatial
+      Signs</code>, <code>Spatial Ranks</code> or <code>stat</code> is <code>Depth Ranks</code>,
+the computed control limits are distribution-free in the class
+of all multivariate elliptical distributions.
+</p>
+</li>
+</ol>
+<h3>Author(s)</h3>
+
+<p>Giovanna Capizzi and Guido Masarotto.
+</p>
+
+
+<h3>References</h3>
+
+<p>R. C. Bell, L. A. Jones-Farmer, N. Billor (2014) 
+“A distribution-free multivariate Phase I location control
+chart for subgrouped data from elliptical distributions”. 
+<em>Technometrics</em>, <b>56</b>, pp. 528–538,
+<a href="https://doi.org/10.1080/00401706.2013.879264">doi:10.1080/00401706.2013.879264</a>.
+</p>
+<p>C. R. Cheng, J. J. H. Shiau JJH (2015)
+“A distribution-free multivariate control chart for Phase I applications”.
+<em>Quality and Reliability Engineering International</em>, <b>31</b>,
+pp. 97–111, 
+<a href="https://doi.org/10.1002/qre.1751">doi:10.1002/qre.1751</a>.
+</p>
+<p>M. Hallin and D. Paindaveine (2005) “Affine-Invariant Aligned
+Rank Tests for the Multivariate General Linear Model with VARMA
+Errors”. <em>Journal of Multivariate Analysis</em>, <b>93</b>, 
+pp. 122–163, <a href="https://doi.org/10.1016/j.jmva.2004.01.005">doi:10.1016/j.jmva.2004.01.005</a>.
+</p>
+<p>D. C. Montgomery (2009) <em>Introduction to Statistical Quality
+Control</em>, 6th edn. Wiley.
+</p>
+<p>H. Oja (2010) <em>Multivariate Nonparametric Methods with R. An Approach Based on Spatial Signs
+and Ranks</em>. Springer.
+</p>
+<p>P. Qiu (2013) <em>Introduction to Statistical Process Control</em>. Chapman &amp; Hall/CRC Press.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ryan)
+mshewhart(ryan)
+mshewhart(ryan,subset=-10)
+mshewhart(ryan,subset=-c(10,20))
+mshewhart(ryan,score="Signed Ranks")
+mshewhart(ryan,subset=-10,score="Signed Ranks")
+mshewhart(ryan,subset=-c(10,20),score="Signed Ranks")
+</code></pre>
+
+
+</div>

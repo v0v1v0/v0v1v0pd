@@ -1,0 +1,80 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>explain</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Explain details of a tbl</h2>
+
+<h3>Description</h3>
+
+<p>This is a generic function which gives more details about an object than
+<code>print()</code>, and is more focused on human readable output than
+<code>str()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">explain(x, ...)
+
+show_query(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object to explain</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other parameters possibly used by generic</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The first argument, invisibly.
+</p>
+
+
+<h3>Databases</h3>
+
+<p>Explaining a <code>tbl_sql</code> will run the SQL <code>EXPLAIN</code> command which
+will describe the query plan. This requires a little bit of knowledge about
+how <code>EXPLAIN</code> works for your database, but is very useful for
+diagnosing performance problems.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+lahman_s &lt;- dbplyr::lahman_sqlite()
+batting &lt;- tbl(lahman_s, "Batting")
+batting %&gt;% show_query()
+batting %&gt;% explain()
+
+# The batting database has indices on all ID variables:
+# SQLite automatically picks the most restrictive index
+batting %&gt;% filter(lgID == "NL" &amp; yearID == 2000L) %&gt;% explain()
+
+# OR's will use multiple indexes
+batting %&gt;% filter(lgID == "NL" | yearID == 2000) %&gt;% explain()
+
+# Joins will use indexes in both tables
+teams &lt;- tbl(lahman_s, "Teams")
+batting %&gt;% left_join(teams, c("yearID", "teamID")) %&gt;% explain()
+
+
+</code></pre>
+
+
+</div>

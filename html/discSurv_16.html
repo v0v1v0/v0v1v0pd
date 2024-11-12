@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataLongTimeDep</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data Long Time Dependent Covariates</h2>
+
+<h3>Description</h3>
+
+<p>Transforms short data format to long format for discrete survival modelling
+of single event analysis with right censoring. Covariates may vary over
+time.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataLongTimeDep(
+  dataSemiLong,
+  timeColumn,
+  eventColumn,
+  idColumn,
+  timeAsFactor = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataSemiLong</code></td>
+<td>
+<p>Original data in semi-long format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character giving the column name of the observed times ("character vector"). 
+It is required that the observed times are discrete ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumn</code></td>
+<td>
+<p>Column name of the event indicator ("character vector").
+It is required that this is a binary variable with 1=="event" and
+0=="censored".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idColumn</code></td>
+<td>
+<p>Name of column of identification number of persons ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeAsFactor</code></td>
+<td>
+<p>Should the time intervals be coded as factor ("logical vector")? Default is
+FALSE. In case of default settings the discrete time intervals are treated as quantitative ("numeric vector").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>There may be some intervals, where no additional information on the
+covariates is observed (e. g. observed values in interval one and three but
+two is missing). In this case it is assumed, that the values from the last
+observation stay constant over time until a new measurement was done.
+</p>
+<p>In contrast to continuous survival (see e. g. <code>Surv</code>) 
+the start and stop time notation is not used here. In discrete time survival analysis the only relevant
+information is to use the stop time. Start time does not matter, because all discrete intervals need to be  
+included in the long data set format to ensure consistent estimation. It is assumed that the supplied 
+data set "dataSemiLong" contains all repeated measurements of each cluster in semi-long format (e. g. persons). 
+For further information see example <em>Start-stop notation</em>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Original data in long format with three additional columns: </p>
+ <ul>
+<li>
+<p>obj Index of persons as integer vector </p>
+</li>
+<li> <p>timeInt Index of time
+intervals (factor) </p>
+</li>
+<li> <p>y Response in long format as binary vector.
+1=="event happens in period timeInt" and zero otherwise </p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Fahrmeir L (2005).
+“Discrete Survival-Time Models.”
+In <em>Encyclopedia of Biostatistics</em>, chapter Survival Analysis.
+John Wiley \&amp; Sons. <br><br>
+Thompson Jr. WA (1977).
+“On the Treatment of Grouped Observations in Life Studies.”
+<em>Biometrics</em>, <b>33</b>, 463-470.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contToDisc</code>, <code>dataLong</code>,
+<code>dataLongCompRisks</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example Primary Biliary Cirrhosis data
+library(survival)
+dataSet1 &lt;- pbcseq
+
+# Only event death is of interest
+dataSet1$status [dataSet1$status == 1] &lt;- 0
+dataSet1$status [dataSet1$status == 2] &lt;- 1
+table(dataSet1$status)
+
+# Convert to months
+dataSet1$day &lt;- ceiling(dataSet1$day/30) + 1
+names(dataSet1) [7] &lt;- "month"
+
+# Convert to long format for time varying effects
+pbcseqLong &lt;- dataLongTimeDep (dataSemiLong = dataSet1, timeColumn = "month", 
+eventColumn = "status", idColumn = "id")
+pbcseqLong [pbcseqLong$obj == 1, ]
+
+#####################
+# Start-stop notation
+
+library(survival)
+?survival::heart
+
+# Assume that time was measured on a discrete scale.
+# Discrete interval lengths are assumed to vary.
+intervalLimits &lt;- quantile(heart$stop, probs = seq(0.1, 1, by=0.1))
+intervalLimits[length(intervalLimits)] &lt;- intervalLimits[length(intervalLimits)] + 1
+heart_disc &lt;- contToDisc(dataShort = heart, timeColumn = "stop", 
+intervalLimits = intervalLimits, equi = FALSE)
+table(heart_disc$timeDisc)
+
+# Conversion to long format
+heart_disc_long &lt;- dataLongTimeDep(dataSemiLong = heart_disc, timeColumn = "timeDisc", 
+eventColumn = "event", idColumn = "id")
+head(heart_disc_long)
+
+</code></pre>
+
+
+</div>

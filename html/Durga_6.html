@@ -1,0 +1,578 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DurgaDiff</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate group mean differences</h2>
+
+<h3>Description</h3>
+
+<p>Estimates differences between groups in preparation for plotting by
+<code>DurgaPlot</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DurgaDiff(x, ...)
+
+## Default S3 method:
+DurgaDiff(
+  x,
+  data.col,
+  group.col,
+  id.col,
+  groups,
+  contrasts = "*",
+  effect.type = "mean",
+  R = 1000,
+  boot.params = list(),
+  ci.conf = 0.95,
+  boot.ci.params = list(),
+  na.rm = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A data frame (or similar) containing values to be compared, or a
+formula (see <code>DurgaDiff.formula</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.col</code></td>
+<td>
+<p>Name (character) or index (numeric) of the column within
+<code>x</code> containing the measurement data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.col</code></td>
+<td>
+<p>Name or index of the column within <code>x</code> containing
+the values to group by. May be a vector of column names/indices, in
+which case values from each column are concatenated to define groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id.col</code></td>
+<td>
+<p>Specify for paired data/repeated measures/with-subject
+comparisons only. Name or index of ID column for repeated measures/paired
+data. Observations for the same individual must have the same ID. For
+non-paired data, do not specify an <code>id.col</code>, (or use <code>id.col =
+  NA</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>Vector of group names. Defaults to all groups in <code>x</code> in
+<em>natural</em> order. If <code>groups</code> is a named vector, the names are
+used as group labels for plotting or printing. If <code>data.col</code> and
+<code>group.col</code> are not specified, <code>x</code> is assumed be to in <em>wide
+format</em>, and <code>groups</code> must be a list of column names identifying the
+group/treatment data (see example).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>Specify the pairs of groups to be compared. By default, all
+pairwise differences are generated. May be a single string, a vector of
+strings, or a matrix. Specify
+<code>NULL</code> to avoid calculating any contrasts. See Details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effect.type</code></td>
+<td>
+<p>Type of group difference to be estimated. Values cannot be
+abbreviated. See Details for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>The number of bootstrap replicates. <code>R</code> should be larger than
+your sample size, so the default value of 1000 may need to be increased for
+large sample sizes. If <code>R &lt;= nrow(x)</code>, an error such as "<code>Error in
+  bca.ci... estimated adjustment 'a' is NA</code>" will be thrown. Additionally,
+warnings such as "<code>In norm.inter(t, adj.alpha) : extreme order
+  statistics used as endpoints</code>" may be avoided by increasing <code>R</code>.
+Specify <code>R = NA</code> if you do not wish to calculate any CIs, either
+for group means for for effect sizes. This may be useful if Durga is
+only being used for plotting large data sets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot.params</code></td>
+<td>
+<p>Optional list of additional names parameters to pass to
+the <code>boot</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci.conf</code></td>
+<td>
+<p>Numeric confidence level of the required confidence interval,
+e.g. <code>ci.conf = 0.95</code> specifies that 95\
+be calculated. Applies to both CI of effect sizes and CI of group means.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot.ci.params</code></td>
+<td>
+<p>Optional list of additional names parameters to pass to
+the <code>boot.ci</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>a logical evaluating to TRUE or FALSE indicating whether NA
+values should be stripped before the computation proceeds. If <code>TRUE</code>
+for "paired" data (i.e. <code>id.col</code> is specified), all rows
+(observations) for IDs with missing data are stripped.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Data format</h4>
+
+<p><code>x</code> may be a formula; see <code>DurgaDiff.formula</code>.
+</p>
+<p>If <code>x</code> is a <code>data.frame</code> (or similar) it may be in either <em>long</em> or <em>wide</em>
+format. In long format, one column (<code>data.col</code>) contains the measurement or value to be
+compared, and another column (<code>group.col</code>) contains the group identity. Repeated
+measures/paired data/within-subject comparisons in long format require a subject
+identity column (<code>id.col</code>).
+</p>
+<p>Wide format contains different measurements in different columns of the same row, and
+is well-suited for repeated measures/paired/within-subject comparison data. To pass
+wide format data, do not specify the arguments <code>data.col</code> or
+<code>group.col</code>. Instead, you must explicitly specify the groups to be
+compared in the <code>groups</code> argument. Each group must be the name of a
+column in <code>x</code>. For paired data, you may specify <code>id.col</code>, although it is not
+required, as wide format data is assumed to be paired. The <code>id.col</code> can be a column
+that already exists and uniquely identifies each specimen, or it can be the name of a
+column to be created, in which case the specimen ID will be a generated integer sequence.
+Unpaired data can be in wide format, but it is necessary to inform Durga by passing <code>id.col = NULL</code>.
+Wide format data will be internally converted to long format, then processing continues as
+for long format input.
+</p>
+
+
+
+<h4>Contrasts</h4>
+
+<p>The pairs of groups to be compared are defined by the parameter
+<code>contrasts</code>. An asterisk (<code>"*"</code>, the default) creates contrasts for
+all possible pairs of groups. A single string has a format such as
+<code>"group1 - group2, group3 - group4"</code>. A single string such as <code>".-
+control"</code> compares all groups against the <code>"control"</code> group, i.e. the
+<code>"."</code> expands to all groups except the named group. A vector of strings
+looks like <code>c("group1 - group2", "group3 - group4")</code>. If a matrix is
+specified, it must have a column for each contrast, with the first group in
+row 1 and the second in row 2.
+</p>
+
+
+
+<h4>Effect types</h4>
+
+<p>The <code>effect.type</code> parameter determines the effect size measure to be
+calculated. Our terminology generally follows Lakens (2013), with <em>d</em> meaning
+a biased estimate and <em>g</em> meaning a bias-corrected estimate. Some writers
+reverse this usage or use alternative terminology. Cumming (2012) recommends
+always using a bias-corrected estimate (although bias
+correction is unnecessary for large sample sizes).
+Durga applies Hedges' exact method for bias correction.
+</p>
+<p>The effect type we call
+<code class="reqn">Cohen's\text{ }d</code> for unpaired data is called <code class="reqn">Cohen's\text{ }d_s^*</code>
+by Delacre et al. (2021). For paired data, our <code class="reqn">Cohen's\text{ }d</code> is
+identical to <code class="reqn">Cohen's\text{ }d</code>
+for unpaired data (Delacre et al. 2021); it is called <code class="reqn">d_{av}</code>
+by Cumming (2012; equation 11.10). For further details, refer to Khan and McLean (2023).
+</p>
+<p>The set of possible values for the <code>effect.type</code> argument, and
+their meanings, is described below.
+</p>
+
+
+<h5>Unpaired effect types</h5>
+
+
+<table>
+<tr>
+<td style="text-align: left;">
+   <strong>Code</strong> </td>
+<td style="text-align: left;"> <strong>Label</strong> </td>
+<td style="text-align: left;"> <strong>Effect type</strong> </td>
+<td style="text-align: left;"> <strong>Standardiser</strong> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>mean</code> </td>
+<td style="text-align: left;"> <code class="reqn">Mean\text{ }difference</code> </td>
+<td style="text-align: left;"> Unstandardised difference of group means </td>
+<td style="text-align: left;"> NA </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code style="white-space: pre;">⁠cohens d⁠</code> </td>
+<td style="text-align: left;"> <code class="reqn">Cohen's\text{ }d</code> </td>
+<td style="text-align: left;"> Difference in means standardised by non-pooled average SD (Delacre et al. 2021) </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{({s_1}^2 + {s_2}^2)/2}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code style="white-space: pre;">⁠hedges g⁠</code> </td>
+<td style="text-align: left;"> <code class="reqn">Hedges'\text{ }g</code> </td>
+<td style="text-align: left;"> Bias-corrected <code class="reqn">Cohen's\text{ }d</code> (Delacre et al. 2021) </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{({s_1}^2 + {s_2}^2)/2}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>cohens</code> <code>d_s</code> </td>
+<td style="text-align: left;"> <code class="reqn">Cohen's\text{ }d_s</code> </td>
+<td style="text-align: left;"> Difference in means standardised by the pooled standard deviation (Lakens 2013, equation 1) </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{\frac{(n_1-1){s_1}^2 + (n_2-1){s_2}^2}{{n_1} + {n_2} - 2}}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code style="white-space: pre;">⁠hedges g_s⁠</code> </td>
+<td style="text-align: left;"> <code class="reqn">Hedges'\text{ }g_s</code> </td>
+<td style="text-align: left;"> Bias-corrected <code class="reqn">Cohen's\text{ }d_s</code> (Lakens 2013, equation 4) </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{\frac{(n_1-1){s_1}^2 + (n_2-1){s_2}^2}{{n_1} + {n_2} - 2}}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>glass</code> <code>delta_pre</code> </td>
+<td style="text-align: left;"> <code class="reqn">Glass's\text{ }\Delta_{pre}</code> </td>
+<td style="text-align: left;"> Difference in means standardised by the standard deviation of the pre-measurement group (which is the 2nd group in a contrast). Lakens (2013) recommends using Glass's <code class="reqn">\Delta</code> whenever standard deviations differ substantially between conditions </td>
+<td style="text-align: left;"> <code class="reqn">s_2</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>glass</code> <code>delta_post</code> </td>
+<td style="text-align: left;"> <code class="reqn">Glass's\text{ }\Delta_{post}</code> </td>
+<td style="text-align: left;"> Difference in means standardised by the standard deviation of the post-measurement group (which is the 1st group in a contrast) </td>
+<td style="text-align: left;"> <code class="reqn">s_1</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h5>Paired effect types</h5>
+
+
+<table>
+<tr>
+<td style="text-align: left;">
+   <strong>Code</strong> </td>
+<td style="text-align: left;"> <strong>Label</strong> </td>
+<td style="text-align: left;"> <strong>Effect type</strong> </td>
+<td style="text-align: left;"> <strong>Standardiser</strong> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>mean</code> </td>
+<td style="text-align: left;"> <code class="reqn">Mean\text{ }difference</code> </td>
+<td style="text-align: left;"> Unstandardised mean of group differences </td>
+<td style="text-align: left;"> NA </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>cohens</code> <code>d</code> </td>
+<td style="text-align: left;"> <code class="reqn">Cohen's\text{ }d</code> </td>
+<td style="text-align: left;"> Similar to <code class="reqn">Cohen's\text{ }d_{av}</code> except that the normaliser is non-pooled average SD rather than mean SD, as recommended by Cummings (2012, eqn 11.9) </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{({s_1}^2 + {s_2}^2)/2}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>hedges</code> <code>g</code> </td>
+<td style="text-align: left;"> <code class="reqn">Hedges'\text{ }g</code> </td>
+<td style="text-align: left;"> Bias-corrected <code class="reqn">Cohen's\text{ }d</code> </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{({s_1}^2 + {s_2}^2)/2}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>cohens</code> <code>d_z</code> </td>
+<td style="text-align: left;"> <code class="reqn">Cohen's\text{ }d_z</code> </td>
+<td style="text-align: left;"> Mean of differences, standardised by the standard deviation of the differences, (Lakens 2013, equation 6). Cummings (2012) recommends against using <code class="reqn">Cohen's\text{ }d_z</code>, preferring <code class="reqn">Cumming's\text{ }d_{av}</code> </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{\frac{\sum{({X_{diff}} - {M_{diff}})^2}}{n-1}}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code style="white-space: pre;">⁠hedges g_z⁠</code> </td>
+<td style="text-align: left;"> <code class="reqn">Hedges'\text{ }g_z</code> </td>
+<td style="text-align: left;"> Bias-corrected <code class="reqn">Cohen's\text{ }d_z</code> </td>
+<td style="text-align: left;"> <code class="reqn">\sqrt{\frac{\sum{({X_{diff}} - {M_{diff}})^2}}{n-1}}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>cohens</code> <code>d_av</code> </td>
+<td style="text-align: left;"> <code class="reqn">Cohen's\text{ }d_{av}</code> </td>
+<td style="text-align: left;"> Difference in means standardised by the average standard deviation of the groups (Lakens 2013, equation 10) </td>
+<td style="text-align: left;"> <code class="reqn">\dfrac{{s_1} + {s_2}}{2}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>hedges</code> <code>g_av</code> </td>
+<td style="text-align: left;"> <code class="reqn">Hedges'\text{ }g_{av}</code> </td>
+<td style="text-align: left;"> Bias-corrected <code class="reqn">Cohen's\text{ }d_{av}</code> </td>
+<td style="text-align: left;"> <code class="reqn">\dfrac{{s_1} + {s_2}}{2}</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>As a simple rule of thumb, if you want a standardised effect type and you
+don't know which one to use, use <code>"hedges g"</code> for either paired or unpaired data,
+as it is recommended by Delacre et al., (2021) for unpaired data and cumming (2012)
+for paired data.
+</p>
+<p>Additional effect types can be applied by passing a function for
+<code>effect.type</code>. The function must accept two
+parameters and return a single numeric value, the effect size.
+Each parameter is a vector of values from one of the two groups to be
+compared (group 2 and group 1).
+</p>
+
+
+
+
+<h4>Confidence intervals</h4>
+
+<p>Confidence intervals for the estimate are determined using bootstrap
+resampling, using the adjusted bootstrap percentile (BCa) method (see
+<code>boot</code> and <code>boot.ci</code>). Additional
+arguments can be passed to the <code>boot</code>
+(<code>boot.ci</code>) by passing a named list of values as the
+argument <code>boot.params</code> (<code>boot.ci.params</code>).
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>A <code>DurgaDiff</code> object, which is a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>group.statistics</code></td>
+<td>
+<p>Matrix with a row for each group, columns
+are: <code>mean</code>, <code>median</code>, <code>sd</code> (standard deviation), <code>se</code>
+(standard error of the mean), <code>CI.lower</code> and <code>CI.upper</code> (lower
+and upper bootstrapped confidence intervals of the mean, confidence level
+as set by the <code>ci.conf</code> parameter) and <code>n</code> (group sample size).
+If there are fewer than 3 distinct values in the group, or if <code>R</code> is
+<code>NA</code>, the confidence interval will not be calculated and
+<code>CI.lower</code> and <code>CI.upper</code> will be <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.differences</code></td>
+<td>
+<p>List of <code>DurgaGroupDiff</code> objects,
+which are <code>boot</code> objects with added confidence interval information.
+See <code>boot</code> and <code>boot.ci</code>. This element will be missing
+if <code>contrasts</code> is empty or <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>Vector of group names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.names</code></td>
+<td>
+<p>Labels used to identify groups</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effect.type</code></td>
+<td>
+<p>Value of <code>effect.type</code> parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effect.name</code></td>
+<td>
+<p>Name of the effect type; may include formatting
+such as subscripts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effect.name.print</code></td>
+<td>
+<p>Text-only version of
+<code>effect.name</code> for printing; subscripts are indicated by <code>"_"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.col</code></td>
+<td>
+<p>Value of <code>data.col</code> parameter; may be an index
+or a name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.col.name</code></td>
+<td>
+<p>Name of the <code>data.col</code> column</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.col</code></td>
+<td>
+<p>Value of <code>group.col</code> parameter; may be an
+index or a name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.col.name</code></td>
+<td>
+<p>Name of the <code>group.col</code> column</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id.col</code></td>
+<td>
+<p>Value of <code>id.col</code> parameter. May be <code>NULL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired.data</code></td>
+<td>
+<p><code>TRUE</code> if paired differences
+were estimated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The input data frame (<code>x</code>), or the reshaped (long format) data
+frame if the input data set was in wide format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>How this function was called</p>
+</td>
+</tr>
+</table>
+<p>A <code>DurgaGroupDiff</code> object is a <code>boot</code> object (as returned by
+<code>boot</code>) with added <code>bootci</code> components (as returned
+by <code>boot.ci</code>) and components identifying the groups used
+to estimate the difference. Particularly relevant members are:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>t0</code></td>
+<td>
+<p>The observed value of the statistic</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bca[4]</code></td>
+<td>
+<p>The lower endpoint of the confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bca[5]</code></td>
+<td>
+<p>The upper endpoint of the confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>The difference is estimated on <code>groups[1]</code> -
+<code>groups[2]</code></p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Cumming, G. (2012). Understanding the new statistics : effect sizes,
+confidence intervals, and meta-analysis (1st ed.). New York: Routledge.
+</p>
+</li>
+<li>
+<p> Delacre, M., Lakens, D., Ley, C., Liu, L., &amp; Leys, C. (2021). Why
+Hedges' g* based on the non-pooled standard deviation should be reported
+with Welch's t-test. <a href="https://doi.org/10.31234/osf.io/tu6mp">doi:10.31234/osf.io/tu6mp</a>
+</p>
+</li>
+<li>
+<p> Khan, M. K., &amp; McLean, D. J. (2023). Durga: An R package for effect size estimation
+and visualisation. bioRxiv, 2023.2002.2006.526960.
+<a href="https://doi.org/10.1101/2023.02.06.526960">doi:10.1101/2023.02.06.526960</a>
+</p>
+</li>
+<li>
+<p> Lakens, D. (2013). Calculating and reporting effect sizes to facilitate
+cumulative science: a practical primer for t-tests and ANOVAs. Frontiers in
+Psychology, 4. <a href="https://doi.org/10.3389/fpsyg.2013.00863">doi:10.3389/fpsyg.2013.00863</a>
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>DurgaDiff.formula</code>, <code>boot</code>,
+<code>boot.ci</code>, <code>DurgaPlot</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+d &lt;- DurgaDiff(insulin, "sugar", "treatment", "id")
+print(d)
+
+# Change group order and displayed group labels, reverse the
+# direction of one of the contrasts from the default
+d &lt;- DurgaDiff(petunia, 1, 2,
+               groups = c("Self-fertilised" = "self_fertilised",
+                          "Intercrossed" = "inter_cross",
+                          "Westerham-crossed" = "westerham_cross"),
+               contrasts = c("Westerham-crossed - Self-fertilised",
+                             "Westerham-crossed - Intercrossed",
+                             "Intercrossed - Self-fertilised"))
+
+# Wide format data
+d &lt;- DurgaDiff(insulin.wide, groups = c("sugar.before", "sugar.after"))
+
+</code></pre>
+
+
+</div>

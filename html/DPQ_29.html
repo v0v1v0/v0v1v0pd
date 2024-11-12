@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>algdiv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute log(gamma(b)/gamma(a+b)) when b &gt;= 8</h2>
+
+<h3>Description</h3>
+
+<p>Computes </p>
+<p style="text-align: center;"><code class="reqn">\code{algdiv(a,b)} := \log \frac{\Gamma(b)}{\Gamma(a+b)} = \log
+    \Gamma(b) - \log\Gamma(a+b) = \code{lgamma(b) - lgamma(a+b)}</code>
+</p>
+
+<p>in a numerically stable way.
+</p>
+<p>This is an auxiliary function in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s (TOMS 708) implementation of
+<code>pbeta()</code>, aka the incomplete beta function ratio.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">algdiv(a, b)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>a, b</code></td>
+<td>
+<p>numeric vectors which will be recycled to the same length.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>Note that this is also useful to compute the Beta function
+</p>
+<p style="text-align: center;"><code class="reqn">B(a,b) = \frac{\Gamma(a)\Gamma(b)}{\Gamma(a+b)}.</code>
+</p>
+
+<p>Clearly,  </p>
+<p style="text-align: center;"><code class="reqn">\log B(a,b) = \log\Gamma(a) + \mathrm{algdiv(a,b)} = \log\Gamma(a) - \mathrm{logQab}(a,b)</code>
+</p>
+
+<p>In our ‘<span class="file">../tests/qbeta-dist.R</span>’  we look into computing
+<code class="reqn">\log(p B(p,q))</code> accurately for
+<code class="reqn">p \ll q</code> .
+</p>
+<p>We are proposing a nice solution there.
+<br> How is this related to <code>algdiv()</code> ?
+</p>
+<p>Additionally, we have defined
+</p>
+<p style="text-align: center;"><code class="reqn">Qab = Q_{a,b} := \frac{\Gamma(a+b),\Gamma(b)},</code>
+</p>
+
+<p>such that <code class="reqn">\code{logQab(a,b)} := \log Qab(a,b)</code>
+fulfills simply
+</p>
+<p style="text-align: center;"><code class="reqn">\code{logQab(a,b)} = - \code{algdiv(a,b)}</code>
+</p>
+
+<p>see <code>logQab_asy</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector of length <code>max(length(a), length(b))</code> (if neither
+is of length 0, in which case the result has length 0 as well).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Didonato, A. and Morris, A., Jr, (1992); <code>algdiv()</code>'s C
+version from the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> sources, authored by the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> core team; C and <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
+interface: Martin Maechler
+</p>
+
+
+<h3>References</h3>
+
+<p>Didonato, A. and Morris, A., Jr, (1992)
+Algorithm 708: Significant digit computation of the incomplete beta
+function ratios,
+<em>ACM Transactions on Mathematical Software</em> <b>18</b>, 360–373. 
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gamma</code>, <code>beta</code>;
+my own <code>logQab_asy()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">Qab &lt;- algdiv(2:3, 8:14)
+cbind(a = 2:3, b = 8:14, Qab) # recycling with a warning
+
+## algdiv()  and my  logQab_asy()  give *very* similar results for largish b:
+all.equal( -   algdiv(3, 100),
+           logQab_asy(3, 100), tolerance=0) # 1.283e-16 !!
+(lQab &lt;- logQab_asy(3, 1e10))
+## relative error
+1 + lQab/ algdiv(3, 1e10) # 0 (64b F 30 Linux; 2019-08-15)
+
+## in-and outside of "certified" argument range {b &gt;= 8}:
+a. &lt;- c(1:3, 4*(1:8))/32
+b. &lt;- seq(1/4, 20, by=1/4)
+ad &lt;- t(outer(a., b., algdiv))
+## direct computation:
+f.algdiv &lt;- function(a,b) lgamma(b) - lgamma(a+b)
+ad.d &lt;- t(outer(a., b., f.algdiv))
+
+matplot (b., ad.d, type = "o", cex=3/4,
+         main = quote(log(Gamma(b)/Gamma(a+b)) ~"  vs.  algdiv(a,b)"))
+mtext(paste0("a[1:",length(a.),"] = ",
+        paste0(paste(head(paste0(formatC(a.*32), "/32")), collapse=", "), ", .., 1")))
+matlines(b., ad,   type = "l", lwd=4, lty=1, col=adjustcolor(1:6, 1/2))
+abline(v=1, lty=3, col="midnightblue")
+# The larger 'b', the more accurate the direct formula wrt algdiv()
+all.equal(ad[b. &gt;= 1,], ad.d[b. &gt;= 1,]       )# 1.5e-5
+all.equal(ad[b. &gt;= 2,], ad.d[b. &gt;= 2,], tol=0)# 3.9e-9
+all.equal(ad[b. &gt;= 4,], ad.d[b. &gt;= 4,], tol=0)# 4.6e-13
+all.equal(ad[b. &gt;= 6,], ad.d[b. &gt;= 6,], tol=0)# 3.0e-15
+all.equal(ad[b. &gt;= 8,], ad.d[b. &gt;= 8,], tol=0)# 2.5e-15 (not much better)
+
+</code></pre>
+
+
+</div>

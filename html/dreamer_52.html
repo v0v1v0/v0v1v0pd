@@ -1,0 +1,207 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>post_medx</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Posterior Distribution of Minimum X% Effective Dose</h2>
+
+<h3>Description</h3>
+
+<p>Posterior Distribution of Minimum X% Effective Dose
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">post_medx(
+  x,
+  ed,
+  probs,
+  time,
+  lower,
+  upper,
+  greater,
+  small_bound,
+  return_samples,
+  ...
+)
+
+## S3 method for class 'dreamer_bma'
+post_medx(
+  x,
+  ed,
+  probs = c(0.025, 0.975),
+  time = NULL,
+  lower = min(x$doses),
+  upper = max(x$doses),
+  greater = TRUE,
+  small_bound = 0,
+  return_samples = FALSE,
+  ...
+)
+
+## S3 method for class 'dreamer_mcmc'
+post_medx(
+  x,
+  ed,
+  probs = c(0.025, 0.975),
+  time = NULL,
+  lower = min(attr(x, "doses")),
+  upper = max(attr(x, "doses")),
+  greater = TRUE,
+  small_bound = 0,
+  return_samples = FALSE,
+  index = 1:(nrow(x[[1]]) * length(x)),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from <code>dreamer_mcmc()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ed</code></td>
+<td>
+<p>a number between 0 and 100 indicating the ed% dose that is
+being sought.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>a vector of quantiles to calculate on the posterior.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>the slice of time for which to calculate the posterior EDX dose.
+Applies to longitudinal models only.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>the lower bound of the doses for calculating EDX.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>the upper bound of the doses for calculating EDX.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greater</code></td>
+<td>
+<p>if <code>TRUE</code>, higher values indicate better efficacy.  If
+<code>FALSE</code>, lower responses indicate better efficacy.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>small_bound</code></td>
+<td>
+<p>the minimum (<code>greater = TRUE</code>) or maximum
+(<code>greater = FALSE</code>) bound of the response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_samples</code></td>
+<td>
+<p>logical indicating if the posterior samples should be
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments for specific methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>a vector indicating which MCMC samples to use in the
+calculation.  If <code>NULL</code> (default), all MCMC samples are used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The minimum X% effective dose is the dose that has X% of the
+largest effect for doses between <code>lower</code> and <code>upper</code>.  When <code>greater</code>
+is <code>TRUE</code>, larger positive responses are considered more effective and
+vice versa.  The X% response is calculated as <code>small_bound</code> +
+<code>ed</code> / 100 * (max_effect - <code>small_bound</code>) where "max_effect" is the
+maximum response for doses between <code>lower</code> and <code>upper</code>.  The X% effective
+dose is the smallest dose which has X% response within the dose range.
+It is possible that for some MCMC samples, an X% effective dose may
+not exist, so probabilities are not guaranteed to sum to one.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Posterior quantities and samples (if applicable),
+generally in the form of a list.  The <code>pr_edx_exists</code> column gives the
+posterior probability that an EDX% effect exists.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e3,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+post_medx(output, ed = c(50, 90))
+
+# from a single model
+post_medx(output$mod_linear, ed = c(50, 90))
+</code></pre>
+
+
+</div>

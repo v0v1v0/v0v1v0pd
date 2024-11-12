@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate.dsmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate a sequence given a drifting semi-Markov kernel.</h2>
+
+<h3>Description</h3>
+
+<p>Generic function that simulates a sequence under the rule of a
+drifting semi-Markov kernel. The number of simulated states is <code>nsim</code>,
+while the kernel is retrieved from the object <code>obj</code> via inheritance
+from the S3 class <code>dsmm</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dsmm'
+simulate(
+  object,
+  nsim = NULL,
+  seed = NULL,
+  max_seq_length = NULL,
+  klim = 100,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of S3 class <code>dsmm</code>,
+<code>dsmm_fit_nonparametric</code>, <code>dsmm_nonparametric</code>,
+<code>dsmm_fit_parametric</code> or <code>dsmm_parametric</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>Optional. An integer specifying the number of simulations to be made
+from the drifting semi-Markov kernel. The maximum value of <code>nsim</code> is the
+model size which is specified in <code>obj</code>. This is also the default value.
+We define a special case for <code>nsim = 0</code>, where only the initial distribution
+is considered and only the simulation of its sojourn time will be made, without
+the next state.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Optional. An integer specifying the initialization of the random
+number generator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_seq_length</code></td>
+<td>
+<p>Optional. A positive integer that will ensure the simulated
+sequence will not have a <em>maximum total length</em> greater than
+<code>max_seq_length</code> (however, it is possible for the total length to be
+<em>less</em> than <code>max_seq_length</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>klim</code></td>
+<td>
+<p>Optional. Positive integer. Passed down to <code>get_kernel</code>
+for the parametric object, with class <code>dsmm_parametric</code>.
+Default value is <code class="reqn">100</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional. Attributes passed down from the <code>simulate</code> method.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns the simulated sequence for the given drifting
+semi-Markov model. It is a character vector based on <code>nsim</code> simulations,
+with a maximum length of <code>max_seq_length</code>.
+</p>
+<p>This sequence is not to be confused with the embedded Markov chain. The user
+can apply the <code>base::rle()</code> function on this simulated sequence, if he wishes
+to obtain the corresponding embedded Markov chain and the sojourn times.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>About random number generation in R: <code>RNG</code>.
+</p>
+<p>Fitting a model through a sequence from this function: fit_dsmm.
+</p>
+<p>For the theoretical background of drifting semi-Markov models: dsmmR.
+</p>
+<p>For obtaining the lengths and values of equals values in a vector:
+<code>rle</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Setup.
+sequence &lt;- create_sequence("DNA", len = 1000)
+states &lt;- sort(unique(sequence))
+d &lt;- 1
+obj_model_3 &lt;- fit_dsmm(sequence = sequence,
+                        states = states,
+                        degree = d,
+                        f_is_drifting = TRUE,
+                        p_is_drifting = FALSE)
+
+# Using the method `simulate.dsmm()`.
+simulated_seq &lt;- simulate(obj_model_3, seed = 1)
+short_sim &lt;- simulate(obj = obj_model_3, nsim = 10, seed = 1)
+cut_sim &lt;- simulate(obj = obj_model_3, max_seq_length = 10, seed = 1)
+str(simulated_seq)
+str(short_sim)
+str(cut_sim)
+
+# To obtain the embedded Markov chain (EMC) and the corresponding sojourn times
+# of any simulated sequence, we can simply use the `base::rle()` function.
+
+sim_seq_emc &lt;- base::rle(cut_sim)$values # embedded Markov chain
+sim_seq_sojourn_times &lt;- base::rle(cut_sim)$lengths # sojourn times
+cat("Start of the simulated sequence: ", head(cut_sim),
+    "...\nThe embedded Markov chain:       ", head(sim_seq_emc),
+    "...\nThe sojourn times:               ", head(sim_seq_sojourn_times), "...")
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,495 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deltaPlot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Delta Plot method for dichotomous DIF</h2>
+
+<h3>Description</h3>
+
+<p>This command computes the Delta plot statistics for dichotomous differential item functioning, with all associated
+output (Delta points, perpendicular distances). The modified Delta plot is also available, as well as several item
+purification techniques.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+deltaPlot(data, type = "response", group, focal.name, thr = "norm", 
+ purify = FALSE, purType = "IPP1", maxIter = 10, alpha =0.05, 
+ extreme = "constraint", const.range = c(0.001, 0.999), nrAdd = 1, 
+ save.output = FALSE,output = c("out", "default"))
+## S3 method for class 'deltaPlot'
+print(x, only.final = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>numeric: either (a) the data matrix with item responses and group membership, (b) the two-column matrix of proportions of correct responses per item and per group, or (c) the two-column matrix of Delta scores. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character: the type of <code>data</code> argument. Possible values are <code>"response"</code> (default), <code>"prop"</code> and <code>"delta"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>integer or character: a single value for locating the group membership column in the <code>data</code> argument. Ignored if <code>type</code> is not <code>"response"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focal.name</code></td>
+<td>
+<p>numeric or character: the value used in the group membership column to refer to the focal group. Ignored if <code>type</code> is not <code>"response"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thr</code></td>
+<td>
+<p>numeric or character: the threshold for flagging items as DIF. Can be a positive numeric value or <code>"norm"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purify</code></td>
+<td>
+<p>logical: should item purification be performed? (Default is codeFALSE). See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purType</code></td>
+<td>
+<p>character: the type of purification process to be run. Possible values are <code>"IPP1"</code> (default), <code>"IPP2"</code> and <code>"IPP3"</code>. Ignored if <code>purify</code> is <code>FALSE</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+<p>integer: the maximum number of iteration in the purification process (default is 10). Ignored if <code>purify</code> is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric: the significance level for calculating the detection threshold (default is 0.05). Ignored if <code>thr</code> is numeric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extreme</code></td>
+<td>
+<p>character: the method used to modify the extreme proportions. Possible values are <code>"constraint"</code> (default) or <code>"add"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>const.range</code></td>
+<td>
+<p>numeric: a vector of two constraining proportions. Default values are 0.001 and 0.999. Ignored if <code>extreme</code> is <code>"add"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrAdd</code></td>
+<td>
+<p>integer: the number of successes and the number of failures to add to the data in order to adjust the proportions. Default value is 1. Ignored if <code>extreme</code> is <code>"constraint"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.output</code></td>
+<td>
+<p>logical: should the output be saved into a text file? (Default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>character: a vector of two components. The first component is the name of the output file (<code>"out"</code> by default), the second component is either the file path or <code>"default"</code> (default value). See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class <code>"deltaPlot"</code>, typically the output of the <code>deltaPlot</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>only.final</code></td>
+<td>
+<p>logical: should only the first and last steps of the purification process be printed? (default is <code>TRUE</code>. If <code>FALSE</code> all perpendicular distances, parameters of the major axis, and detection thresholds are printed additionally. Ignored if <code>purify</code> is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other generic parameters for the <code>plot</code> or the <code>print</code> functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Angoff's Delta plot (Angoff and Ford, 1973) is a straightforward test-score method to detect DIF among dichotomously scored items. Proportions of correct responses are computed first per item and per group of respondents, and are successively transformed onto <em>z</em>-scores and then onto <code class="reqn">\Delta</code> scores. The pairs of <code class="reqn">\Delta</code> scores can
+be displayed onto a scatter plot, called the <em>Delta plot</em>, and the majr axis of the ellipsoid of Delta points is
+derived. Eventually, items whose perpendicular distance (from the major axis) is too large are flagged as DIF. See Angoff and Ford (1973) for further details.
+</p>
+<p>The data must be passed through the argument <code>data</code> and can be of three types. Each type is defined by the 
+<code>type</code> argument and can take three values: <code>"response"</code>, <code>"prop"</code> and <code>"delta"</code>.
+</p>
+
+<ul>
+<li>
+<p> If <code>type</code> is <code>"response"</code>, the input <code>data</code> consist in a matrix with one row per respondent and
+<code class="reqn">J+1</code> columns, where <code class="reqn">J</code> is the number of items. In the colmuns coding for the items, only possible entries are 0
+(for incorrect responses), 1 (for corect responses) and <code>NA</code> (for missing values). The extra column is used to
+define group membership: all respondents of the reference group take the same value (either numeric or character), and all respondents in the focal group take the same (numeric or character) value but different from the reference group. Note 
+that the group membership column can be located anywhere in the data set (not especially in first or last position).
+</p>
+</li>
+<li>
+<p> If <code>type</code> is <code>"prop"</code>, the input <code>data</code> consist in a two-column matrix with one row per item. Each
+row contains the proportions of correct responses, respectively in the reference group (first column) and in the focal group (second column). 
+</p>
+</li>
+<li>
+<p> If <code>type</code> is <code>"delta"</code>, the input <code>data</code> consist in a two-column matrix that is similar to that
+provided with the <code>"prop"</code> type of input, but with the Delta scores provided instead of the proportions of correct
+responses.
+</p>
+</li>
+</ul>
+<p>If the <code>type</code> of input is either <code>"prop"</code> or <code>"delta"</code>, not anymore input information is required and the
+arguments <code>group</code> and <code>focal.bname</code> are ignored. Otherwise, the group membership column in the <code>data</code>
+matrix is specified by giving to argument <code>group</code> either the column number (1 for first column, etc.) or the column
+name (provided the <code>data</code> matrix has argument names). Moreover, the focal group is specified by giving to the
+argument <code>focal.name</code> the value that was used in the group membership column to code for the focal group.
+</p>
+<p>If the input <code>type</code> is not <code>"delta"</code>, then extreme proportions of correct responses (either provided when 
+<code>type</code> is <code>"prop"</code> or computed from the data if <code>type</code> is <code>"response"</code>) are adjusted by specifying
+the arguments <code>extreme</code>, <code>const.range</code> and <code>nrAdd</code> with appropriate values. See the <code>adjustExtreme</code> function for further details (note that the cuyrrent <code>extreme</code> argument corresponds to the <code>method</code> argument in this function).
+</p>
+<p>The threshold for flaging items as DIF can be of two types and is specified by the <code>thr</code> argument.
+</p>
+
+<ol>
+<li>
+<p> It can be fixed to some arbitrary positive value by the user, for instance 1.5 (Angoff and Ford, 1973). In this 
+case, <code>thr</code> takes the required numeric threshold value.
+</p>
+</li>
+<li>
+<p> Alternatively, it can be derived from the bivariate normal approximation of the Delta points (Magis and Facon, 2012). In this case, <code>thr</code> must be given the character value <code>"norm"</code> (which is the default value).
+This threshold equals
+</p>
+<p style="text-align: center;"><code class="reqn">\Phi^{-1}(1-\alpha/2) \; \sqrt{\frac{b^2\,{s_0}^2-2\,b\,s_{01}+{s_1}^2}{b^2+1}}</code>
+</p>
+
+<p>where <code class="reqn">\Phi</code> is the density of the standard normal distribution, <code class="reqn">\alpha</code> is the significance level (set by the argument <code>alpha</code> with default value 0.05), <code class="reqn">b</code> is the slope parameter of the major axis, <code class="reqn">s_0</code> and <code class="reqn">s_1</code>
+are the sample standard deviations of the Delta scores in the reference group and the focal group, respecively, and
+<code class="reqn">s_{01}</code> is the sample covariance of the Delta scores (see Magis and Facon, 2012, for further details).
+</p>
+</li>
+</ol>
+<p>Item purification can be performed by setting the argument <code>purify</code> to <code>TRUE</code> (by default it is <code>FALSE</code> so 
+no purification is performed). The item purification process (IPP) starts when at least one item was flagged as DIF after
+the first run of the Delta plot, and proceeds as follows.
+</p>
+
+<ol>
+<li>
+<p> The intercept and slope parameters of the major axis are re-calculated by removing all DIF that are currently 
+flagged as DIF. This yields updated values <code class="reqn">a^*</code>, <code class="reqn">b^*</code>, <code class="reqn">s_0^*</code>, <code class="reqn">s_1^*</code> and <code class="reqn">s_{01}^*</code> of the 
+intercept and slope parameters, sample stanbdard deviations and sample covariance of the Delta scores.
+</p>
+</li>
+<li>
+<p> Perpendicular distances (for all items) are updated with respect to the updated major axis.
+</p>
+</li>
+<li>
+<p> Detection threshold is also updated. Three possible updates are possible: see below.
+</p>
+</li>
+<li>
+<p> All items are now tested for the presence of DIF, given the updated perpendicular distances and major axis.
+</p>
+</li>
+<li>
+<p> If the set of items flagged as DIF is the same as the one from the previous loop, stop the process. Otherwise go
+back to step 1.
+</p>
+</li>
+</ol>
+<p>Unlike traditional DIF methods, the detection threshold may also be updated since it depends on the sample estimates (when 
+the normal approximation is considered). Three approaches are currently implemented and are specified by the <code>purType</code> argument.
+</p>
+
+<ol>
+<li>
+<p> Method 1 (<code>purType=="IPP1"</code>): the same threshold is used throughout the purification process, it is not
+iteratively updated. The threshold is the one obtained after the first run of the Delta plot.
+</p>
+</li>
+<li>
+<p> Method 2 (<code>purType=="IPP2"</code>): only the slope parameter is updated in the threshold formula. By this way, one keeps the full data structure (i.e. neither the sample variances nor the sample covariance of the Delta scores are 
+modified) but only the slope parameter is adjusted to lessen the impact of DIF items.
+</p>
+</li>
+<li>
+<p> Method 3 (<code>purType=="IPP3"</code>): all adjusted parameters are plugged in the threshold formula. This approach
+completely discards the effect of items flagged as DIF from the computation of the threshold.
+</p>
+</li>
+</ol>
+<p>See Magis and Facon (2013) for further details. Note that purification can also be performed with fixed threshold (i.e.
+specified by the user), but then only IPP1 process is performed.
+</p>
+<p>In order to avoid possible infinite loops in the purification process, a maximal number of iterations must be specified
+through the argument <code>maxIter</code>. The default maximal number of iterations is 10. 
+</p>
+<p>The output contains all input information, the Delta scores and perpendicular distances, the parameter of the major axis
+and the items flagged as DIF (if none, a character sentence is returned). In addition, the detection threshold and the
+type of threshold (fixed or normal approximation) is provided. 
+</p>
+<p>If item purification was run, several additional elements are returned: the number of iterations, a logical indicator
+whether the convergence was reached (or not, meaning that the process stopped because of reaching the maximal number of 
+allowed iterations), a matrix with indicators of which items were flagged as DIF at each iteration, and the type of item
+purification process. Moreover, perpendicular distances are returned in a matrix format (one column per iteration), as
+well as successive major axis parameters (one row per iteration) and successive thresholds (as a vector).
+</p>
+<p>The output is managed and printed in a more user-friendly way. When item purification is performed, only the first and
+last steps are displayed. Specifying the argument <code>only.final</code> to <code>FALSE</code> prints in addition all intermediate steps of the process (successive perpendicular distances, parameters of the major axis, and detection thresholds).
+</p>
+<p>The output can be saved into na text file by specifying the argument <code>save.output</code> to <code>TRUE</code> (by default the 
+output is not captured). If so, the argument <code>output</code> can be specified as a vector of two character values. The first
+one gives the desired name of the text file, and the second one specifies the directory where the file will be saved (full
+path is required but without the final "/" symbol, see <b>Examples</b> below). By default, the output will be saved in the current working directory as "out.txt" file.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>"deltaPlot"</code> with the following arguments:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Props</code></td>
+<td>
+<p>the matrix of proportions of correct responses, or <code>NA</code> if <code>type</code> is <code>"delta"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjProps</code></td>
+<td>
+<p>the restricted proportions, in the same format as the output <code>Props</code> matrix, or <code>NA</code> if <code>type</code> is <code>"delta"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Deltas</code></td>
+<td>
+<p>the matrix of Delta scores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dist</code></td>
+<td>
+<p>a matrix with perpendicular distances, one row per item and one column per run of the Delta plot. If <code>purify</code> is <code>FALSE</code>, only a single column is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>axis.par</code></td>
+<td>
+<p>a matrix with two columns, holding respectively the intercepts and the slope parameters of the major axis. Each row refers to one step of the purification process. If <code>purify</code> is <code>FALSE</code>, only a single row is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrIter</code></td>
+<td>
+<p>the number of iterations invloved in the purification process. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+<p>the value of the <code>maxIter</code> argument. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>a logical value indicating whether convergence was reached in the purification process. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>difPur</code></td>
+<td>
+<p>a matrix with one column per item and one row per iteration in the purification process, holding zeros and ones to indicate which items were flagged as DIF or not at each step of the process. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thr</code></td>
+<td>
+<p>a vector of successive threshold values used during the purification process. If <code>purify</code> is <code>FALSE</code>, a single value is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule</code></td>
+<td>
+<p>a character value indicating whether the threshold was <code>"fixed"</code> by the user (i.e. by setting <code>thr</code> to a numeric value) or whether it was computed by normal approximation (i.e. by setting <code>thr</code> to <code>"norm"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purType</code></td>
+<td>
+<p>the value of the <code>purType</code> argument. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DIFitems</code></td>
+<td>
+<p>either <code>"No DIF item detected"</code> or an integer vector with the items that were flagged as DIF.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjust.extreme</code></td>
+<td>
+<p>the value of the <code>extreme</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>const.range</code></td>
+<td>
+<p>the value of the <code>const.range</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrAdd</code></td>
+<td>
+<p>the value of the <code>nrAdd</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purify</code></td>
+<td>
+<p>the value of the <code>purify</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the value of the <code>alpha</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.output</code></td>
+<td>
+<p>the value of the <code>save.output</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>the value of the <code>output</code> argument.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Magis <br>
+Post-doc Fellow of the National Funds for Scientific Research (FNRS, Belgium) <br>
+University of Liege <br><a href="mailto:David.Magis@ulg.ac.be">David.Magis@ulg.ac.be</a>, <a href="http://ppw.kuleuven.be/okp/home/">http://ppw.kuleuven.be/okp/home/</a> <br>
+Bruno Facon<br>
+Professor, Department of Psychology <br>
+Universite Lille-Nord de France<br><a href="mailto:bruno.facon@univ-lille3.fr">bruno.facon@univ-lille3.fr</a>, <br></p>
+
+
+<h3>References</h3>
+
+<p>Angoff, W. H. and Ford, S. F. (1973). Item-race interaction on a test of scholastic aptitude. <em>Journal of
+Educational Measurement</em>, 10, 95-106.
+</p>
+<p>Magis, D., and Facon, B. (2012). Angoff's Delta method revisited: improving the DIF detection under small samples.
+<em>British Journal of Mathematical and Statistical Psychology, 65</em>, 302-321.
+</p>
+<p>Magis, D., and Facon, B. (2013). Item purification does not always improve DIF detection: a counter-example with Angoff's Delta plot. <em>Educational and Psychological Measurement, 73</em>, 293-311.
+</p>
+<p>Magis, D. and Facon, B. (2014). <em>deltaPlotR</em>: An R Package for Differential Item Functioning Analysis with Angoff's Delta Plot. <em>Journal of Statistical Software, Code Snippets, 59(1)</em>, 1-19. URL <a href="http://www.jstatsoft.org/v59/c01/">http://www.jstatsoft.org/v59/c01/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>adjustExtreme</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+ # Loading of the verbal data
+ data(verbal)
+ attach(verbal)
+
+ # Excluding the "Anger" variable
+ verbal &lt;- verbal[colnames(verbal)!="Anger"]
+
+ # Basic Delta plot, threshold 1.5, no item purification
+ res &lt;- deltaPlot(data=verbal, type="response", group=25, focal.name=1, purify=FALSE, 
+                  thr=1.5)
+
+ # Equivalent writing
+ res &lt;- deltaPlot(data=verbal, type="response", group="Gender", focal.name=1, 
+                  purify=FALSE, thr=1.5)
+
+ # Using proportions of correct responses as input
+ dataRef &lt;- verbal[verbal[,25]==0,1:24]
+ dataFoc &lt;- verbal[verbal[,25]==1,1:24]
+ p0 &lt;- colMeans(dataRef)
+ p1 &lt;- colMeans(dataFoc)
+ res.1 &lt;- deltaPlot(data=cbind(p0,p1), type="prop", purify=FALSE, thr=1.5)
+
+ # Using Delta values as input
+ Delta &lt;- 4*qnorm(1-cbind(p0,p1))+13
+ res.2 &lt;- deltaPlot(data=Delta, type="delta", purify=FALSE, thr=1.5)
+
+ # 'norm' threshold
+ res &lt;- deltaPlot(data=verbal, type="response", group="Gender", focal.name=1, 
+                  purify=FALSE, thr="norm")
+
+ # Keeping the first 10 items to exhibit DIF
+ data &lt;- verbal[,c(1:10,25)]
+ deltaPlot(data=data, type="response", group=11, focal.name=1, purify=FALSE, thr="norm")
+   # Item 8 is flagged as DIF
+
+ # Item purification with the three processes
+ res0 &lt;- deltaPlot(data=data, type="response", group=11, focal.name=1, purify=TRUE, 
+           thr=1.5, purType="IPP1") 
+ res0 # No DIF item detected
+
+ res1 &lt;- deltaPlot(data=data, type="response", group=11, focal.name=1, purify=TRUE, 
+           thr="norm", purType="IPP1") 
+ res1 # Item 8 flagged as DIF after 2 iterations
+
+ res2 &lt;- deltaPlot(data=data, type="response", group=11, focal.name=1, purify=TRUE, 
+           thr="norm", purType="IPP2") 
+ res2 # Item 8 flagged as DIF after 2 iterations
+
+ res3 &lt;- deltaPlot(data=data, type="response", group=11, focal.name=1, purify=TRUE, 
+           thr="norm", purType="IPP3") 
+ res3 # Items 6, 7 and 8 flagged as DIF after 4 iterations
+
+ # Printing the full results of item purification
+ print(res, only.final=FALSE)
+ print(res0, only.final=FALSE)
+ print(res1, only.final=FALSE)
+ print(res2, only.final=FALSE)
+ print(res3, only.final=FALSE)
+</code></pre>
+
+
+</div>

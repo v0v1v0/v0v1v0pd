@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>copy_dm_to</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Copy data model to data source</h2>
+
+<h3>Description</h3>
+
+<p><code>copy_dm_to()</code> takes a dplyr::src_dbi object or a <code>DBI::DBIConnection</code> object as its first argument
+and a <code>dm</code> object as its second argument.
+The latter is copied to the former.
+The default is to create temporary tables, set <code>temporary = FALSE</code> to create permanent tables.
+Unless <code>set_key_constraints</code> is <code>FALSE</code>, primary key constraints are set on all databases,
+and in addition foreign key constraints are set on MSSQL and Postgres databases.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">copy_dm_to(
+  dest,
+  dm,
+  ...,
+  set_key_constraints = TRUE,
+  table_names = NULL,
+  temporary = TRUE,
+  schema = NULL,
+  progress = NA,
+  unique_table_names = NULL,
+  copy_to = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dest</code></td>
+<td>
+<p>An object of class <code>"src"</code> or <code>"DBIConnection"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dm</code></td>
+<td>
+<p>A <code>dm</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>These dots are for future extensions and must be empty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set_key_constraints</code></td>
+<td>
+<p>If <code>TRUE</code> will mirror <code>dm</code> primary and foreign key constraints on a database
+and create indexes for foreign key constraints.
+Set to <code>FALSE</code> if your data model currently does not satisfy primary or foreign key constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table_names</code></td>
+<td>
+<p>Desired names for the tables on <code>dest</code>; the names within the <code>dm</code> remain unchanged.
+Can be <code>NULL</code>, a named character vector, or a vector of DBI::Id objects.
+</p>
+<p>If left <code>NULL</code> (default), the names will be determined automatically depending on the <code>temporary</code> argument:
+</p>
+
+<ol>
+<li> <p><code>temporary = TRUE</code> (default): unique table names based on the names of the tables in the <code>dm</code> are created.
+</p>
+</li>
+<li> <p><code>temporary = FALSE</code>: the table names in the <code>dm</code> are used as names for the tables on <code>dest</code>.
+</p>
+</li>
+</ol>
+<p>If a function or one-sided formula, <code>table_names</code> is converted to a function
+using <code>rlang::as_function()</code>.
+This function is called with the unquoted table names of the <code>dm</code> object
+as the only argument.
+The output of this function is processed by <code>DBI::dbQuoteIdentifier()</code>,
+that result should be a vector of identifiers of the same length
+as the original table names.
+</p>
+<p>Use a variant of
+<code>table_names = ~ DBI::SQL(paste0("schema_name", ".", .x))</code>
+to specify the same schema for all tables.
+Use <code>table_names = identity</code> with <code>temporary = TRUE</code>
+to avoid giving temporary tables unique names.
+</p>
+<p>If a named character vector,
+the names of this vector need to correspond to the table names in the <code>dm</code>,
+and its values are the desired names on <code>dest</code>.
+The value is processed by <code>DBI::dbQuoteIdentifier()</code>,
+that result should be a vector of identifiers of the same length
+as the original table names.
+</p>
+<p>Use qualified names corresponding to your database's syntax
+to specify e.g. database and schema for your tables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporary</code></td>
+<td>
+<p>If <code>TRUE</code>, only temporary tables will be created.
+These tables will vanish when disconnecting from the database.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>schema</code></td>
+<td>
+<p>Name of schema to copy the <code>dm</code> to.
+If <code>schema</code> is provided, an error will be thrown if <code>temporary = FALSE</code> or
+<code>table_names</code> is not <code>NULL</code>.
+</p>
+<p>Not all DBMS are supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>Whether to display a progress bar, if <code>NA</code> (the default)
+hide in non-interactive mode, show in interactive mode. Requires the
+'progress' package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unique_table_names, copy_to</code></td>
+<td>
+<p>Must be <code>NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>dm</code> object on the given <code>src</code> with the same table names
+as the input <code>dm</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+con &lt;- DBI::dbConnect(RSQLite::SQLite())
+
+# Copy to temporary tables, unique table names by default:
+temp_dm &lt;- copy_dm_to(
+  con,
+  dm_nycflights13(),
+  set_key_constraints = FALSE
+)
+
+# Persist, explicitly specify table names:
+persistent_dm &lt;- copy_dm_to(
+  con,
+  dm_nycflights13(),
+  temporary = FALSE,
+  table_names = ~ paste0("flights_", .x)
+)
+dbplyr::remote_name(persistent_dm$planes)
+
+DBI::dbDisconnect(con)
+
+</code></pre>
+
+
+</div>

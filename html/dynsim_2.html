@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynsimGG</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot dynamic simulation results from <code>dynsim</code>
+</h2>
+
+<h3>Description</h3>
+
+<p><code>dynsimGG</code> uses ggplot2 to plot dynamic simulation results
+created by <code>dynsim</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynsimGG(
+  obj,
+  lsize = 1,
+  color,
+  alpha = 0.5,
+  xlab = "\nTime",
+  ylab = "Predicted Value\n",
+  title = "",
+  leg.name = "Scenario",
+  leg.labels,
+  legend = "legend",
+  shockplot.var,
+  shockplot.ylab,
+  shockplot.heights = c(12, 4),
+  shockplot.heights.units = c("cm", "cm")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>a <code>dynsim</code> class object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lsize</code></td>
+<td>
+<p>size of the smoothing line. Default is 1. See
+ggplot2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>color</code></td>
+<td>
+<p>character string. Specifies the color of the lines and ribbons.
+If only one scenario is to be plotted then it can either be a single color
+value using any color value allowed by ggplot2. The default is
+the hexadecimal color <code>"#2B8CBE"</code>. If more than one scenario is to be
+plotted then a color brewer palette is set. The default is<code>"Set1"</code>. See
+<code>scale_colour_brewer</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric. Alpha (e.g. transparency) for the ribbons. Default is
+<code>alpha = 0.1</code>. See ggplot2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab</code></td>
+<td>
+<p>a label for the plot's x-axis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylab</code></td>
+<td>
+<p>a label of the plot's y-axis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>the plot's main title.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leg.name</code></td>
+<td>
+<p>name of the legend (if applicable).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>leg.labels</code></td>
+<td>
+<p>character vector specifying the labels for each scenario in
+the legend.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend</code></td>
+<td>
+<p>specifies what type of legend to include (if applicable). The
+default is <code>legend = "legend"</code>. To hide the legend use
+<code>legend = FALSE</code>. See <code>discrete_scale</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shockplot.var</code></td>
+<td>
+<p>character string naming the one shock variable to plot
+fitted values of over time specified underneath the main plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shockplot.ylab</code></td>
+<td>
+<p>character string for the shockplot's y-axis label.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shockplot.heights</code></td>
+<td>
+<p>numeric vector with of length 2 with units of
+the main and shockplot height plots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shockplot.heights.units</code></td>
+<td>
+<p>a character vector of length 2 with the
+unit types for the values in <code>shockplot.heights</code>.
+See <code>unit</code> for details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Plots dynamic simulations of autoregressive relationships from
+<code>dynsim</code>. The central line is the mean of the simulation
+distributions. The outer ribbon is the furthest extent of the simulation
+distributions' central intervals found in <code>dynsim</code> with the
+<code>sig</code> argument. The middle ribbons plot the limits of the simulation
+distributions' central 50
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load package
+library(DataCombine)
+
+# Load Grunfeld data
+data(grunfeld, package = "dynsim")
+
+# Create lag invest variable
+grunfeld &lt;- slide(grunfeld, Var = "invest", GroupVar = "company",
+               NewVar = "InvestLag")
+
+# Convert company to factor for fixed-effects specification
+grunfeld$company &lt;- as.factor(grunfeld$company)
+
+# Estimate basic model
+M1 &lt;- lm(invest ~ InvestLag + mvalue + kstock + company, data = grunfeld)
+
+# Set up scenarios for company 4
+attach(grunfeld)
+Scen1 &lt;- data.frame(InvestLag = mean(InvestLag, na.rm = TRUE),
+                    mvalue = quantile(mvalue, 0.05),
+                    kstock = quantile(kstock, 0.05),
+                    company4 = 1)
+Scen2 &lt;- data.frame(InvestLag = mean(InvestLag, na.rm = TRUE),
+                    mvalue = mean(mvalue),
+                    kstock = mean(kstock),
+                    company4 = 1)
+Scen3 &lt;- data.frame(InvestLag = mean(InvestLag, na.rm = TRUE),
+                    mvalue = quantile(mvalue, 0.95),
+                    kstock = quantile(kstock, 0.95),
+                    company4 = 1)
+detach(grunfeld)
+
+# Combine into a single list
+ScenComb &lt;- list(Scen1, Scen2, Scen3)
+
+## Run dynamic simulations without shocks
+Sim1 &lt;- dynsim(obj = M1, ldv = "InvestLag", scen = ScenComb, n = 20)
+
+# Create plot legend label
+Labels &lt;- c("5th Percentile", "Mean", "95th Percentile")
+
+# Plot
+dynsimGG(Sim1, leg.labels = Labels)
+
+## Run dynamic simulations with shocks
+
+# Create data frame of shock values
+mShocks &lt;- data.frame(times = c(5, 10), kstock = c(100, 1000))
+
+# Run simulations
+Sim2 &lt;- dynsim(obj = M1, ldv = "InvestLag", scen = ScenComb, n = 20,
+               shocks = mShocks)
+
+# Plot
+dynsimGG(Sim2, leg.labels = Labels)
+
+# Plot with accompanying shock plot
+dynsimGG(Sim2, leg.labels = Labels, shockplot.var = "kstock")
+
+</code></pre>
+
+
+</div>

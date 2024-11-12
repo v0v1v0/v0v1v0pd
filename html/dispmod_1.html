@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>glm.binomial.disp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Overdispersed binomial logit models</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates overdispersed binomial logit models using the approach discussed by Williams (1982).</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">glm.binomial.disp(object, maxit = 30, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of class <code>"glm"</code> providing a fitted binomial logistic regression model; see <code>glm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>integer giving the maximal number of iterations for the model fitting procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical, if <code>TRUE</code> information are printed during each step of the algorithm.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Extra-binomial variation in logistic linear models is discussed, among others, in Collett (1991). Williams (1982) proposed a quasi-likelihood approach for handling overdispersion in logistic regression models. 
+</p>
+<p>Suppose we observe the number of successes <code class="reqn">y_i</code> in <code class="reqn">m_i</code> trials, for <code class="reqn">i = 1, \ldots, n</code>, such that 
+</p>
+<p style="text-align: center;"><code class="reqn">y_i \mid p_i \sim \mathrm{Binomial}(m_i, p_i)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">p_i \sim \mathrm{Beta}(\gamma, \delta)</code>
+</p>
+
+<p>Under this model, each of the <code class="reqn">n</code> binomial observations has a different probability of success <code class="reqn">p_i</code>, where <code class="reqn">p_i</code> is a random draw from a Beta distribution. Thus,
+</p>
+<p style="text-align: center;"><code class="reqn">E(p_i) = \frac{\gamma}{\gamma+\delta} = \theta</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">V(p_i) = \phi\theta(1-\theta)</code>
+</p>
+
+<p>Assuming <code class="reqn">\gamma &gt; 1</code> and <code class="reqn">\delta &gt; 1</code>, the Beta density is zero at the extreme values of zero and one, and thus <code class="reqn">0 &lt; \phi \le 1/3</code>. From this, the unconditional mean and variance can be calculated:
+</p>
+<p style="text-align: center;"><code class="reqn">E(y_i) = m_i \theta</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">V(y_i) = m_i \theta (1-\theta)(1+(m_i-1)\phi)</code>
+</p>
+
+<p>so unless <code class="reqn">m_i = 1</code> or <code class="reqn">\phi = 0</code>, the unconditional variance of <code class="reqn">y_i</code> is larger than binomial variance.
+</p>
+<p>Identical expressions for the mean and variance of <code class="reqn">y_i</code> can be obtained if we assume that the <code class="reqn">m_i</code> counts on the i-th unit are dependent, with the same correlation <code class="reqn">\phi</code>. In this case, <code class="reqn">-1/(m_i - 1) &lt; \phi \le 1</code>.
+</p>
+<p>The method proposed by Williams uses an iterative algorithm for estimating the dispersion parameter <code class="reqn">\phi</code> and hence the necessary weights <code class="reqn">1/(1 + \phi(m_i - 1))</code> (for details see Williams, 1982).
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns an object of class <code>"glm"</code> with the usual information and the added components:   
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>dispersion</code></td>
+<td>
+<p>the estimated dispersion parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>disp.weights</code></td>
+<td>
+<p>the final weights used to fit the model.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Based on a similar procedure available in Arc (Cook and Weisberg, <a href="http://www.stat.umn.edu/arc">http://www.stat.umn.edu/arc</a>)</p>
+
+
+<h3>References</h3>
+
+<p>Collett, D. (1991), <em>Modelling Binary Data</em>, London: Chapman and Hall.
+</p>
+<p>Williams, D. A. (1982), Extra-binomial variation in logistic linear models, 
+<em>Applied Statistics</em>, 31, 144–148.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lm</code>, <code>glm</code>, <code>lm.disp</code>, <code>glm.poisson.disp</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(orobanche)
+
+mod &lt;- glm(cbind(germinated, seeds-germinated) ~ host*variety, data = orobanche,
+           family = binomial(logit))
+summary(mod)
+
+mod.disp &lt;- glm.binomial.disp(mod)
+summary(mod.disp)
+mod.disp$dispersion
+</code></pre>
+
+
+</div>

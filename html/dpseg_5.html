@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dpseg_old</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>inefficient <code>dpseg</code> implementation</h2>
+
+<h3>Description</h3>
+
+<p>See  <code>dpseg</code> for a current version of this algorithm.
+Note: this was a first test implementation of the linear
+piecewise segmentation by a dynamic programming approach.
+This implementation is very slow. A much more efficient
+version, <code>dpseg</code>, calculates the variance of residuals of a
+linear regression incrementally while looping through the recursion, and
+is implemented in <code>Rcpp</code>.
+See there for details on the algorithm.
+This version is kept alive, since it is a more general implementation,
+allowing to test different regression and scoring functions by
+command-line arguments.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dpseg_old(x, y, minl, maxl = length(x), P = 0, EPS,
+  store.matrix = FALSE, fitscoref = fitscore, fitf = linregf,
+  scoref = varscore, verb = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>x-values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>y-values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minl</code></td>
+<td>
+<p>minimal segment length</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxl</code></td>
+<td>
+<p>maximal segment length</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>jump penalty, increase to get fewer segments #
+@inheritParams score</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EPS</code></td>
+<td>
+<p>a pre-calculated fitscore matrix, will be generated if
+missing</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>store.matrix</code></td>
+<td>
+<p>store the fitscore matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitscoref</code></td>
+<td>
+<p>the heavy-load loop that fills the fitscore matrix
+using <code>fitf</code> and <code>scoref</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitf</code></td>
+<td>
+<p>fit function, used in the scoring function
+<code>scoref</code>; (TODO: currently expecting a fit object that
+provides intercept and slope as <code>coef(obj)[1:2]</code> only for
+the result table)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scoref</code></td>
+<td>
+<p>function to calculate a score from the passed fit
+function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>print progress messages</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The recursion calculates <code class="reqn">S_j = max ( S_i +
+fitscore(i+1,j)) - P</code>, where the fitscore is the variance of the
+residuals of a linear regression (<code>lm(y~x</code>)) between
+<code class="reqn">x_{i+1}</code> to <code class="reqn">x_j</code>, <code>P</code> is a jump penality that
+implicitly regulates the number of segments, <code>minl</code> and
+<code>maxl</code> are minimal and maximal lengths of segments. Uses
+<code>RcppEigen:fastLm</code> for linear
+regression.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list of result structures very similar to the
+list of class "dpseg" returned by function <code>dpseg</code>,
+except for the name of the scoring function matrix, here:
+<code>EPS</code>. See <code>?dpseg</code> for detailed information on these
+structures.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+## NOTE: not run because it's too slow for R CMD check --as-cran
+## calculate linear segments in semi-log bacterial growth data
+## NOTE: library loads bacterial growth curve data as data.frame oddata
+Sj &lt;- dpseg_old(x=oddata$Time, y=log(oddata$A3), minl=5, P=0.0001, verb=1)
+
+## inspect resulting segments
+print(Sj)
+
+## plot results
+plot(Sj, delog=TRUE, log="y")
+
+## NOTE: predict method &amp; movie function do not work for dpseg_old
+
+</code></pre>
+
+
+</div>

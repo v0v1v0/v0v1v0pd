@@ -1,0 +1,535 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>BatchContainer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>R6 Class representing a batch container.</h2>
+
+<h3>Description</h3>
+
+<p>Describes container dimensions and samples to container location assignment.
+</p>
+
+
+<h3>Details</h3>
+
+<p>A typical workflow starts with creating a <code>BatchContainer</code>. Then
+samples can be assigned to locations in that container.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>trace</code></dt>
+<dd>
+<p>Optimization trace, a <code>tibble::tibble()</code></p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Active bindings</h3>
+
+<div class="r6-active-bindings">
+
+<dl>
+<dt><code>scoring_f</code></dt>
+<dd>
+<p>Scoring functions used for optimization.
+Each scoring function should receive a BatchContainer.
+This function should return a floating
+point score value for the assignment. This a list of functions.
+Upon assignment a single function will be automatically converted to a list
+In the later case each function is called.</p>
+</dd>
+<dt><code>has_samples</code></dt>
+<dd>
+<p>Returns TRUE if <code>BatchContainer</code> has samples.</p>
+</dd>
+<dt><code>has_samples_attr</code></dt>
+<dd>
+<p>Returns TRUE if <code>BatchContainer</code> has sample atrributes assigned.</p>
+</dd>
+<dt><code>n_locations</code></dt>
+<dd>
+<p>Returns number of locations in a <code>BatchContainer</code>.</p>
+</dd>
+<dt><code>n_dimensions</code></dt>
+<dd>
+<p>Returns number of dimensions in a <code>BatchContainer</code>.
+This field cannot be assigned.</p>
+</dd>
+<dt><code>dimension_names</code></dt>
+<dd>
+<p>character vector with dimension names.
+This field cannot be assigned.</p>
+</dd>
+<dt><code>samples</code></dt>
+<dd>
+<p>Samples in the batch container.
+When assigning data.frame should not have column named .sample_id column.</p>
+</dd>
+<dt><code>samples_attr</code></dt>
+<dd>
+<p>Extra attributes of samples. If set, this is included into
+<code>BatchContainer$get_samples()</code> output.</p>
+</dd>
+<dt><code>assignment</code></dt>
+<dd>
+<p>Sample assignment vector. Should contain NAs for empty locations.
+</p>
+<p>Assigning this field is deprecated, please use <code style="white-space: pre;">⁠$move_samples()⁠</code> instead.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-BatchContainer-new"><code>BatchContainer$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-get_samples"><code>BatchContainer$get_samples()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-get_locations"><code>BatchContainer$get_locations()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-move_samples"><code>BatchContainer$move_samples()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-score"><code>BatchContainer$score()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-copy"><code>BatchContainer$copy()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-print"><code>BatchContainer$print()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-scores_table"><code>BatchContainer$scores_table()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-BatchContainer-plot_trace"><code>BatchContainer$plot_trace()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-BatchContainer-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create a new BatchContainer object.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$new(locations_table, dimensions, exclude = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>locations_table</code></dt>
+<dd>
+<p>A table with available locations.</p>
+</dd>
+<dt><code>dimensions</code></dt>
+<dd>
+<p>A vector or list of dimensions. Every dimension
+should have a name. Could be an integer vector of dimensions or
+a named list. Every value of a list could be either dimension size
+or parameters for
+BatchContainerDimension$new().
+Can be used as an alternative to passing <code>locations_table</code>.</p>
+</dd>
+<dt><code>exclude</code></dt>
+<dd>
+<p>data.frame with excluded locations of a container.
+Only used together with dimensions.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Examples</h5>
+
+<div class="r example copy">
+<pre>bc &lt;- BatchContainer$new(
+  dimensions = list(
+    "plate" = 3,
+    "row" = list(values = letters[1:3]),
+    "column" = list(values = c(1, 3))
+  ),
+  exclude = data.frame(plate = 1, row = "a", column = c(1, 3), stringsAsFactors = FALSE)
+)
+
+bc
+</pre>
+</div>
+
+
+<hr>
+<a id="method-BatchContainer-get_samples"></a>
+
+
+
+<h4>Method <code>get_samples()</code>
+</h4>
+
+<p>Return table with samples and sample assignment.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$get_samples(
+  assignment = TRUE,
+  include_id = FALSE,
+  remove_empty_locations = FALSE,
+  as_tibble = TRUE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>assignment</code></dt>
+<dd>
+<p>Return sample assignment. If FALSE, only
+samples table is returned, with out batch assignment.</p>
+</dd>
+<dt><code>include_id</code></dt>
+<dd>
+<p>Keep .sample_id in the table. Use <code>TRUE</code> for
+lower overhead.</p>
+</dd>
+<dt><code>remove_empty_locations</code></dt>
+<dd>
+<p>Removes empty locations
+from the result tibble.</p>
+</dd>
+<dt><code>as_tibble</code></dt>
+<dd>
+<p>Return <code>tibble</code>.
+If <code>FALSE</code> returns <code>data.table</code>. This should have
+lower overhead, as internally there is a cached <code>data.table</code>.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>table with samples and sample assignment.
+</p>
+
+
+<hr>
+<a id="method-BatchContainer-get_locations"></a>
+
+
+
+<h4>Method <code>get_locations()</code>
+</h4>
+
+<p>Get a table with all the locations in a <code>BatchContainer</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$get_locations()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>A <code>tibble</code> with all the available locations.
+</p>
+
+
+<hr>
+<a id="method-BatchContainer-move_samples"></a>
+
+
+
+<h4>Method <code>move_samples()</code>
+</h4>
+
+<p>Move samples between locations
+</p>
+<p>This method can receive either <code>src</code> and <code>dst</code> or <code>locations_assignment</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$move_samples(src, dst, location_assignment)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>src</code></dt>
+<dd>
+<p>integer vector of source locations</p>
+</dd>
+<dt><code>dst</code></dt>
+<dd>
+<p>integer vector of destination locations (the same length as <code>src</code>).</p>
+</dd>
+<dt><code>location_assignment</code></dt>
+<dd>
+<p>integer vector with location assignment.
+The length of the vector should match the number of locations,
+<code>NA</code> should be used for empty locations.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p><code>BatchContainer</code>, invisibly
+</p>
+
+
+<hr>
+<a id="method-BatchContainer-score"></a>
+
+
+
+<h4>Method <code>score()</code>
+</h4>
+
+<p>Score current sample assignment,
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$score(scoring)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>scoring</code></dt>
+<dd>
+<p>a function or a names list of scoring functions.
+Each function should return a numeric vector.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Returns a named vector of all scoring functions values.
+</p>
+
+
+<hr>
+<a id="method-BatchContainer-copy"></a>
+
+
+
+<h4>Method <code>copy()</code>
+</h4>
+
+<p>Create an independent copy (clone) of a <code>BatchContainer</code>
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$copy()</pre></div>
+
+
+
+<h5>Returns</h5>
+
+<p>Returns a new <code>BatchContainer</code>
+</p>
+
+
+<hr>
+<a id="method-BatchContainer-print"></a>
+
+
+
+<h4>Method <code>print()</code>
+</h4>
+
+<p>Prints information about <code>BatchContainer</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$print(...)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>...</code></dt>
+<dd>
+<p>not used.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-BatchContainer-scores_table"></a>
+
+
+
+<h4>Method <code>scores_table()</code>
+</h4>
+
+<p>Return a table with scores from an optimization.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$scores_table(index = NULL, include_aggregated = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>index</code></dt>
+<dd>
+<p>optimization index, all by default</p>
+</dd>
+<dt><code>include_aggregated</code></dt>
+<dd>
+<p>include aggregated scores</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>a <code>tibble::tibble()</code> with scores
+</p>
+
+
+<hr>
+<a id="method-BatchContainer-plot_trace"></a>
+
+
+
+<h4>Method <code>plot_trace()</code>
+</h4>
+
+<p>Plot trace
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>BatchContainer$plot_trace(index = NULL, include_aggregated = FALSE, ...)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>index</code></dt>
+<dd>
+<p>optimization index, all by default</p>
+</dd>
+<dt><code>include_aggregated</code></dt>
+<dd>
+<p>include aggregated scores</p>
+</dd>
+<dt><code>...</code></dt>
+<dd>
+<p>not used.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>a <code>ggplot2::ggplot()</code> object
+List of scoring functions.
+Tibble with batch container locations.
+Tibble with sample information and sample ids.
+Sample attributes, a data.table.
+Vector with assignment of sample ids to locations.
+Cached data.table with samples assignment.
+Validate sample assignment.
+</p>
+
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## ------------------------------------------------
+## Method `BatchContainer$new`
+## ------------------------------------------------
+
+bc &lt;- BatchContainer$new(
+  dimensions = list(
+    "plate" = 3,
+    "row" = list(values = letters[1:3]),
+    "column" = list(values = c(1, 3))
+  ),
+  exclude = data.frame(plate = 1, row = "a", column = c(1, 3), stringsAsFactors = FALSE)
+)
+
+bc
+</code></pre>
+
+
+</div>

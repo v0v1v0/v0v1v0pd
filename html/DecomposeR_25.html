@@ -1,0 +1,100 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>integrity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Integrity of a decomposition</h2>
+
+<h3>Description</h3>
+
+<p>The function additions each component of a decomposition by
+depth/time, subtract it with the original signal, and provides the absolute
+of this subtraction. This is allows to verify if the
+decomposition is computed correctly.
+</p>
+<p>The bulk value is the cumulated value of this proxy. If the decomposition
+is done right the value should be very small, but non-zero due to the
+floating-point arithmetics used by computers that generate tiny errors. Its
+actually interesting: the first computations of the orbital solutions were
+strongly affected by this error, as the chaotic behaviour of the equations
+enhanced the effect of these tiny tiny errors.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">integrity(xy, emd = NULL, m = NULL, repl = 1, bulk = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>the signal</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>emd</code></td>
+<td>
+<p>an emd object to test. The emd$xy original signal is not used,
+to avoid confusion: you always have to provide the xy signal yourself.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>a matrix with columns of same length that xy, made of the
+decomposition of the signal. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repl</code></td>
+<td>
+<p>the replication of decompositions in m. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bulk</code></td>
+<td>
+<p>whether to have a bulk value each decomposition replication, or
+for each dt of each replication</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a matrix with each column being a replication, or a list of bulk
+values for each replication
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+  rnorm(n, sd = 0.5)
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+
+dec &lt;- extricate(xy, dt, nimf = 7, repl = 10, comb = 10, factor_noise = 10,
+                 sifting = 10, speak = TRUE, output_sifting = TRUE)
+
+integrity(xy, dec)
+
+</code></pre>
+
+
+</div>

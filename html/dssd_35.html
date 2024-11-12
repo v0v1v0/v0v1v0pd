@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>write.transects</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Writes transects to file</h2>
+
+<h3>Description</h3>
+
+<p>This function will write a set of transects to file, either as
+a shapefile or gpx file, or it will write the transect coordinates (centre
+points for point transects or end points for line transects) to a
+comma-separated values 'csv' file or a text file 'txt' with tabular spacing
+between columns. For line transects which have been split across geographical
+features (such as islands or lakes) there will be two or more rows in the
+csv / txt file with all rows having the same transect ID.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">write.transects(
+  object,
+  dsn,
+  layer = NULL,
+  dataset.options = character(0),
+  overwrite = FALSE,
+  proj4string = character(0)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object inheriting from class Transect. Alternatively, for 
+all file types except gpx an sf spatial object can be supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dsn</code></td>
+<td>
+<p>the data source name, currently a filename with a 'shp'
+'csv', 'txt' or 'gpx' extension.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layer</code></td>
+<td>
+<p>a character vector specifying the layer name, only
+required for gpx files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataset.options</code></td>
+<td>
+<p>a character vector of options, which vary by
+driver, and should be treated as experimental. Used to specify
+"GPX_USE_EXTENSIONS=yes" for writing gpx files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>whether or not existing files should be overwritten.
+Only applicable when writing to gpx files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proj4string</code></td>
+<td>
+<p>The projection you wish the coordinates of the
+output file to be in. Note, when writing to gpx file the transect
+coordinates must be in latitude and longitude.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To write the transects to file usually only the dsn is needed with
+a 'shp', 'csv' or 'txt' file extension. To write a gpx file you need to
+specify the dsn and a projection so allow the coordinates to be transformed.
+back into latitude and longitude.
+</p>
+
+
+<h3>Value</h3>
+
+<p>invisibly the Transect object
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Laura Marshall
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Note that for CRAN testing purposes all files written in example code must
+# be written to a temporary directory, to view this location type tempdir().
+# It is however advised that you replace the tempdir() commands in the code
+# below to a more easily accessible directory to which the files will be
+# written.
+
+# Make the default design in the default study area
+design &lt;- make.design()
+transects &lt;- generate.transects(design)
+write.transects(transects, dsn = paste0(tempdir(), "/", "transects.shp"))
+
+# Writing csv file example
+write.transects(transects, dsn = paste0(tempdir(), "/", "transects.csv"))
+
+# Writing txt file example
+write.transects(transects, dsn = paste0(tempdir(), "/", "transects.txt"))
+
+# Writing gpx file example - must project transect coords into lat/lon
+#Load the unprojected shapefile
+shapefile.name &lt;- system.file("extdata", "TentsmuirUnproj.shp", package = "dssd")
+sf.shape &lt;- sf::read_sf(shapefile.name)
+# Check current coordinate reference system
+orig.crs &lt;- sf::st_crs(sf.shape)
+# Define a European Albers Equal Area projection
+proj4string &lt;- "+proj=aea +lat_1=56 +lat_2=62 +lat_0=50 +lon_0=-3 +x_0=0
+                +y_0=0 +ellps=intl +units=m"
+# Project the study area on to a flat plane
+projected.shape &lt;- sf::st_transform(sf.shape, crs = proj4string)
+# Create the survey region in dssd
+region.tm &lt;- make.region(region.name = "Tentsmuir",
+                         strata.name = c("Main Area", "Morton Lochs"),
+                         shape = projected.shape)
+
+design &lt;- make.design(region = region.tm,
+                      transect.type = "line",
+                      design = "systematic",
+                      samplers = 20,
+                      design.angle = 90)
+survey &lt;- generate.transects(design)
+plot(region.tm, survey)
+
+write.transects(survey,
+                dsn = paste0(tempdir(), "/", "transects.gpx"),
+                layer = "lines",
+                proj4string = orig.crs)
+
+</code></pre>
+
+
+</div>

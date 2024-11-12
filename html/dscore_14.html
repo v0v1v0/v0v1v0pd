@@ -1,0 +1,457 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dscore</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>D-score estimation</h2>
+
+<h3>Description</h3>
+
+<p>The <code>dscore()</code> function estimates the following quantities: <em>D-score</em>,
+a numeric score that quantifies child development by one number,
+<em>Development-for-Age Z-score (DAZ)</em> that corrects the D-score for age,
+<em>standard error of measurement (SEM)</em> of the D-score.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dscore(
+  data,
+  items = names(data),
+  key = NULL,
+  population = NULL,
+  xname = "age",
+  xunit = c("decimal", "days", "months"),
+  prepend = NULL,
+  itembank = dscore::builtin_itembank,
+  metric = c("dscore", "logit"),
+  prior_mean = NULL,
+  prior_sd = NULL,
+  transform = NULL,
+  qp = NULL,
+  dec = c(2L, 3L),
+  relevance = c(-Inf, Inf),
+  algorithm = c("current", "1.8.7"),
+  verbose = FALSE
+)
+
+dscore_posterior(
+  data,
+  items = names(data),
+  key = NULL,
+  population = NULL,
+  xname = "age",
+  xunit = c("decimal", "days", "months"),
+  prepend = NULL,
+  itembank = dscore::builtin_itembank,
+  metric = c("dscore", "logit"),
+  prior_mean = NULL,
+  prior_sd = NULL,
+  transform = NULL,
+  qp = NULL,
+  dec = c(2L, 3L),
+  relevance = c(-Inf, Inf),
+  algorithm = c("current", "1.8.7"),
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code> with the data.
+A row collects all observations made on a child on a set of
+milestones administered at a given age. The function calculates
+a D-score for each row. Different rows can correspond to different
+children or ages.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>items</code></td>
+<td>
+<p>A character vector containing names of items to be
+included into the D-score calculation. Milestone scores are coded
+numerically as <code>1</code> (pass) and <code>0</code> (fail). By default,
+D-score calculation is done on all items found in the data
+that have a difficulty parameter under the specified <code>key</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key</code></td>
+<td>
+<p>String. Name of the key that bundles the difficulty estimates
+pertaining one the same Rasch model. View <code>builtin_keys</code> for an overview
+of the available keys.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>population</code></td>
+<td>
+<p>String. The name of the reference population to calculate DAZ.
+Use <code>unique(builtin_references$population)</code> to obtain the set of currently
+available reference populations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xname</code></td>
+<td>
+<p>A string with the name of the age variable in
+<code>data</code>. The default is <code>"age"</code>. Do not round age.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xunit</code></td>
+<td>
+<p>A string specifying the unit in which age is measured
+(either <code>"decimal"</code>, <code>"days"</code> or <code>"months"</code>).
+The default <code>"decimal"</code> corresponds to decimal age in years.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prepend</code></td>
+<td>
+<p>Character vector with column names in <code>data</code> that will
+be prepended to the returned data frame. This is useful for copying
+columns from data into the result, e.g., for matching.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itembank</code></td>
+<td>
+<p>A <code>data.frame</code> with at least two columns
+named <code>item</code> and <code>tau</code>. By default, the function uses
+<code>dscore::builtin_itembank</code>. If you specify your own <code>itembank</code>,
+then you should also provide the relevant <code>transform</code> and <code>qp</code> arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>A string, either <code>"dscore"</code> (default) or
+<code>"logit"</code>, signalling the metric in which ability is estimated.
+<code>daz</code> is not calculated for the logit scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_mean</code></td>
+<td>
+<p>A string or numeric scalar. If a string, it should
+refer to a column name in <code>data</code> with user-supplied values of the prior mean
+for each observation. If a numeric scalar, it is used as the prior mean
+for all observations. The default (<code>NULL</code>) will consult the
+<code>base_population</code> field in <code>builtin_keys</code>, and use the corresponding
+median of that reference as prior mean for the D-score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_sd</code></td>
+<td>
+<p>A string or a numeric scalar. If a string, it should
+refer to a column name in <code>data</code> with user-supplied values of the prior
+sd for all observations. If a numeric scalar, it is used as the prior sd
+for all observations. The default (<code>NULL</code>) uses a values of 5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transform</code></td>
+<td>
+<p>Numeric vector, length 2, containing the intercept
+and slope of the linear transform from the logit scale into the
+the D-score scale. The default (<code>NULL</code>) searches <code>builtin_keys</code>
+for intercept and slope values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qp</code></td>
+<td>
+<p>Numeric vector of equally spaced quadrature points.
+This vector should span the range of all D-score or logit values.
+The default (<code>NULL</code>) creates <code>seq(from, to, by)</code> searching the
+arguments from <code>builtin_keys</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dec</code></td>
+<td>
+<p>A vector of two integers specifying the number of
+decimals for rounding the D-score and DAZ, respectively.
+The default is <code>dec = c(2L, 3L)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relevance</code></td>
+<td>
+<p>A numeric vector of length with the lower and
+upper bounds of the relevance interval. The procedure calculates
+a dynamic EAP for each item. If the difficulty level (tau) of the
+next item is outside the relevance interval around EAP, the procedure
+ignore the score on the item. The default is <code>c(-Inf, +Inf)</code> does not
+ignore scores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithm</code></td>
+<td>
+<p>Computational method, for backward compatibility.
+Either <code>"current"</code> (default) or <code>"1.8.7"</code> (deprecated).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Print settings.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The scoring algorithm is based on the method by Bock and Mislevy (1982).
+The method uses Bayes rule to update a prior ability into a posterior
+ability.
+</p>
+<p>The item names should correspond to the <code>"gsed"</code> lexicon.
+</p>
+<p>A key is defined by the set of estimated item difficulties.</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   Key </td>
+<td style="text-align: right;"> Model </td>
+<td style="text-align: right;"> Quadrature </td>
+<td style="text-align: right;"> Instruments </td>
+<td style="text-align: center;"> Direct/Caregiver </td>
+<td style="text-align: left;"> Reference </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>"dutch"</code> </td>
+<td style="text-align: right;"> <code style="white-space: pre;">⁠75_0⁠</code> </td>
+<td style="text-align: right;"> <code>-10:80</code> </td>
+<td style="text-align: right;"> 1 </td>
+<td style="text-align: center;"> direct </td>
+<td style="text-align: left;"> Van Buuren, 2014/2020 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>"gcdg"</code> </td>
+<td style="text-align: right;"> <code style="white-space: pre;">⁠565_18⁠</code> </td>
+<td style="text-align: right;"> <code>-10:100</code> </td>
+<td style="text-align: right;"> 13 </td>
+<td style="text-align: center;"> direct </td>
+<td style="text-align: left;"> Weber, 2019 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>"gsed1912"</code> </td>
+<td style="text-align: right;"> <code style="white-space: pre;">⁠807_17⁠</code> </td>
+<td style="text-align: right;"> <code>-10:100</code> </td>
+<td style="text-align: right;"> 21 </td>
+<td style="text-align: center;"> mixed </td>
+<td style="text-align: left;"> GSED Team, 2019 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>"293_0"</code> </td>
+<td style="text-align: right;"> <code style="white-space: pre;">⁠293_0⁠</code> </td>
+<td style="text-align: right;"> <code>-10:100</code> </td>
+<td style="text-align: right;"> 2 </td>
+<td style="text-align: center;"> mixed </td>
+<td style="text-align: left;"> GSED Team, 2022 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>"gsed2212"</code> </td>
+<td style="text-align: right;"> <code style="white-space: pre;">⁠818_6⁠</code> </td>
+<td style="text-align: right;"> <code>-10:100</code> </td>
+<td style="text-align: right;"> 27 </td>
+<td style="text-align: center;"> mixed </td>
+<td style="text-align: left;"> GSED Team, 2022 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>"gsed2406"</code> </td>
+<td style="text-align: right;"> <code style="white-space: pre;">⁠818_6⁠</code> </td>
+<td style="text-align: right;"> <code>-10:100</code> </td>
+<td style="text-align: right;"> 27 </td>
+<td style="text-align: center;"> mixed </td>
+<td style="text-align: left;"> GSED Team, 2024 </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>As a general rule, one should only compare D-scores
+that are calculated using the same key and the same
+set of quadrature points. For calculating D-scores on new data,
+the advice is to use the default, which currently is <code>"gsed2406"</code>.
+</p>
+<p>The default starting prior is a mean calculated from a so-called
+"Count model" that describes mean D-score as a function of age. The
+The Count models are implemented in the function <code style="white-space: pre;">⁠[count_mu()]⁠</code>.
+By default, the spread of the starting prior
+is 5 D-score points around the mean D-score, which corresponds to
+approximately 1.5 to 2 times the normal spread of child of a given age. The
+starting prior is informative for very short test (say &lt;5 items), but has
+little impact on the posterior for larger tests.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The <code>dscore()</code> function returns a <code>data.frame</code> with <code>nrow(data)</code> rows.
+Optionally, the first block of columns can be copied to the
+result by using <code>prepend</code>. The second block consists of the
+following columns:</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+   Name </td>
+<td style="text-align: left;"> Label </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>a</code> </td>
+<td style="text-align: left;"> Decimal age </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>n</code> </td>
+<td style="text-align: left;"> Number of items with valid (0/1) data </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>p</code> </td>
+<td style="text-align: left;"> Percentage of passed milestones </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>d</code> </td>
+<td style="text-align: left;"> Ability estimate, mean of posterior </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>sem</code> </td>
+<td style="text-align: left;"> Standard error of measurement, standard deviation of the posterior </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+   <code>daz</code> </td>
+<td style="text-align: left;"> D-score corrected for age, calculated in Z-scale (for metric <code>"dscore"</code>) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>For more detail, the <code>dscore_posterior()</code> function returns a data frame with
+<code>nrow(data)</code> rows and <code>length(qp)</code> plus prepended columns with the
+full posterior density of the D-score at each quadrature point.
+If no valid responses are found, <code>dscore_posterior()</code> returns the
+prior density. Versions prior to 1.8.5 returned a <code>matrix</code> (instead of
+a <code>data.frame</code>). Code that depends on the result being a <code>matrix</code> may break
+and may need adaptation.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Stef van Buuren, Iris Eekhout, Arjan Huizing (2022)
+</p>
+
+
+<h3>References</h3>
+
+<p>Bock DD, Mislevy RJ (1982).
+Adaptive EAP Estimation of Ability in a Microcomputer Environment.
+Applied Psychological Measurement, 6(4), 431-444.
+</p>
+<p>Van Buuren S (2014). Growth charts of human development.
+Stat Methods Med Res, 23(4), 346-368.
+<a href="https://stefvanbuuren.name/publication/van-buuren-2014-gc/">https://stefvanbuuren.name/publication/van-buuren-2014-gc/</a>
+</p>
+<p>Weber AM, Rubio-Codina M, Walker SP, van Buuren S, Eekhout I,
+Grantham-McGregor S, Caridad Araujo M, Chang SM, Fernald LCH,
+Hamadani JD, Hanlon A, Karam SM, Lozoff B, Ratsifandrihamanana L,
+Richter L, Black MM (2019). The D-score: a metric for interpreting
+the early development of infants and toddlers across global settings.
+BMJ Global Health, BMJ Global Health 4: e001724.
+<a href="https://gh.bmj.com/content/bmjgh/4/6/e001724.full.pdf">https://gh.bmj.com/content/bmjgh/4/6/e001724.full.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>builtin_keys()</code>, <code>builtin_itembank()</code>, <code>builtin_itemtable()</code>,
+<code>builtin_references()</code>, <code>get_tau()</code>, <code>posterior()</code>, <code>milestones()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># using all defaults and properly formatted data
+ds &lt;- dscore(milestones)
+head(ds)
+
+# step-by-step example
+data &lt;- data.frame(
+  id = c(
+    "Jane", "Martin", "ID-3", "No. 4", "Five", "6",
+    NA_character_, as.character(8:10)
+  ),
+  age = rep(round(21 / 365.25, 4), 10),
+  ddifmd001 = c(NA, NA, 0, 0, 0, 1, 0, 1, 1, 1),
+  ddicmm029 = c(NA, NA, NA, 0, 1, 0, 1, 0, 1, 1),
+  ddigmd053 = c(NA, 0, 0, 1, 0, 0, 1, 1, 0, 1)
+)
+items &lt;- names(data)[3:5]
+
+# third item is not part of the default key
+get_tau(items, verbose = TRUE)
+
+# calculate D-score
+dscore(data)
+
+# prepend id variable to output
+dscore(data, prepend = "id")
+
+# or prepend all data
+# dscore(data, prepend = colnames(data))
+
+# calculate full posterior
+p &lt;- dscore_posterior(data)
+
+# check that rows sum to 1
+rowSums(p)
+
+# plot full posterior for measurement 7
+barplot(as.matrix(p[7, 12:36]),
+  names = 1:25,
+  xlab = "D-score", ylab = "Density", col = "grey",
+  main = "Full D-score posterior for measurement in row 7",
+  sub = "D-score (EAP) = 11.58, SEM = 3.99")
+
+# plot P10, P50 and P90 of D-score references
+g &lt;- expand.grid(age = seq(0.1, 4, 0.1), p = c(0.1, 0.5, 0.9))
+d &lt;- zad(z = qnorm(g$p), x = g$age, verbose = TRUE)
+matplot(
+  x = matrix(g$age, ncol = 3), y = matrix(d, ncol = 3), type = "l",
+  lty = 1, col = "blue", xlab = "Age (years)", ylab = "D-score",
+  main = "D-score preliminary standards: P10, P50 and P90")
+abline(h = seq(10, 80, 10), v = seq(0, 4, 0.5), col = "gray", lty = 2)
+
+# add measurements made on very preterms, ga &lt; 32 weeks
+ds &lt;- dscore(milestones)
+points(x = ds$a, y = ds$d, pch = 19, col = "red")
+</code></pre>
+
+
+</div>

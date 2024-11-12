@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prodist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extracting fitted or predicted probability distributions from models</h2>
+
+<h3>Description</h3>
+
+<p>Generic function with methods for various model classes for extracting
+fitted (in-sample) or predicted (out-of-sample) probability <code>distributions3</code>
+objects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prodist(object, ...)
+
+## S3 method for class 'lm'
+prodist(object, ..., sigma = "ML")
+
+## S3 method for class 'glm'
+prodist(object, ..., dispersion = NULL)
+
+## S3 method for class 'distribution'
+prodist(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A model object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed on to methods, typically for calling the
+underlying <code>predict</code> methods, e.g., <code>newdata</code> for
+<code>lm</code> or <code>glm</code> objects or <code>n.ahead</code>
+for <code>arima</code> objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>character or numeric or <code>NULL</code>. Specification of the standard
+deviation <code>sigma</code> to be used for the <code>Normal</code> distribution in the
+<code>lm</code> method. The default <code>"ML"</code> (or equivalently <code>"MLE"</code> or <code>NULL</code>)
+uses the maximum likelihood estimate based on the residual sum of squares divided
+by the number of observations, n. Alternatively, <code>sigma = "OLS"</code> uses the
+least-squares estimate (divided by the residual degrees of freedom, n - k). Finally,
+a concrete numeric value can also be specified in <code>sigma</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dispersion</code></td>
+<td>
+<p>character or numeric or <code>NULL</code>. Specification of the
+dispersion parameter in the <code>glm</code> method. The default <code>NULL</code>
+(or equivalently <code>"deviance"</code>) is to use the <code>deviance</code>
+divided by the number of observations, n. Alternatively, <code>dispersion = "Chisquared"</code>
+uses the Chi-squared statistic divided by the residual degrees of freedom, n - k.
+Finally, a concrete numeric value can also be specified in <code>dispersion</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To facilitate making probabilistic forecasts based on regression and time
+series model objects, the function <code>prodist</code> extracts fitted or
+predicted probability <code>distribution</code> objects. Currently, methods are
+provided for objects fitted by <code>lm</code>,
+<code>glm</code>, and <code>arima</code> in base R as
+well as <code>glm.nb</code> from the <span class="pkg">MASS</span> package and
+<code>hurdle</code>/<code>zeroinfl</code>/<code>zerotrunc</code> from the <span class="pkg">pscl</span> or
+<span class="pkg">countreg</span> packages.
+</p>
+<p>All methods essentially
+proceed in two steps: First, the standard <code>predict</code>
+method for these model objects is used to compute fitted (in-sample, default)
+or predicted (out-of-sample) distribution parameters. Typically, this includes
+the mean plus further parameters describing scale, dispersion, shape, etc.).
+Second, the <code>distributions</code> objects are set up using the generator
+functions from <span class="pkg">distributions3</span>.
+</p>
+<p>Note that these probability distributions only reflect the random variation in
+the dependent variable based on the model employed (and its associated
+distributional assumpation for the dependent variable). This does not capture
+the uncertainty in the parameter estimates.
+</p>
+<p>For both linear regression models and generalized linear models, estimated
+by <code>lm</code> and <code>glm</code> respectively, there is some ambiguity as to which
+estimate for the dispersion parameter of the model is to be used. While the
+<code>logLik</code> methods use the maximum-likelihood (ML) estimate
+implicitly, the <code>summary</code> methods report an estimate that is standardized
+with the residual degrees of freedom, n - k (rather than the number of
+observations, n). The <code>prodist</code> methods for these objects follow
+the <code>logLik</code> method by default but the <code>summary</code> behavior can be
+mimicked by setting the <code>sigma</code> or <code>dispersion</code> arguments
+accordingly.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object inheriting from <code>distribution</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict</code>, <code>lm</code>,
+<code>glm</code>, <code>arima</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Model: Linear regression
+## Fit: lm
+## Data: 1920s cars data
+data("cars", package = "datasets")
+
+## Stopping distance (ft) explained by speed (mph)
+reg &lt;- lm(dist ~ speed, data = cars)
+
+## Extract fitted normal distributions (in-sample, with constant variance)
+pd &lt;- prodist(reg)
+head(pd)
+
+## Extract log-likelihood from model object
+logLik(reg)
+
+## Replicate log-likelihood via distributions object
+sum(log_pdf(pd, cars$dist))
+log_likelihood(pd, cars$dist)
+
+## Compute corresponding medians and 90% interval
+qd &lt;- quantile(pd, c(0.05, 0.5, 0.95))
+head(qd)
+
+## Visualize observations with predicted quantiles
+plot(dist ~ speed, data = cars)
+matplot(cars$speed, qd, add = TRUE, type = "l", col = 2, lty = 1)
+
+## Sigma estimated by maximum-likelihood estimate (default, used in logLik)
+## vs. least-squares estimate (used in summary)
+nd &lt;- data.frame(speed = 50)
+prodist(reg, newdata = nd, sigma = "ML")
+prodist(reg, newdata = nd, sigma = "OLS")
+summary(reg)$sigma
+
+
+## Model: Poisson generalized linear model
+## Fit: glm
+## Data: FIFA 2018 World Cup data
+data("FIFA2018", package = "distributions3")
+
+## Number of goals per team explained by ability differences
+poisreg &lt;- glm(goals ~ difference, data = FIFA2018, family = poisson)
+summary(poisreg)
+## Interpretation: When the ratio of abilities increases by 1 percent,
+## the expected number of goals increases by around 0.4 percent
+
+## Predict fitted Poisson distributions for teams with equal ability (out-of-sample)
+nd &lt;- data.frame(difference = 0)
+prodist(poisreg, newdata = nd)
+
+## Extract fitted Poisson distributions (in-sample)
+pd &lt;- prodist(poisreg)
+head(pd)
+
+## Extract log-likelihood from model object
+logLik(poisreg)
+
+## Replicate log-likelihood via distributions object
+sum(log_pdf(pd, FIFA2018$goals))
+log_likelihood(pd, FIFA2018$goals)
+
+
+## Model: Autoregressive integrated moving average model
+## Fit: arima
+## Data: Quarterly approval ratings of U.S. presidents (1945-1974)
+data("presidents", package = "datasets")
+
+## ARMA(2,1) model
+arma21 &lt;- arima(presidents, order = c(2, 0, 1))
+
+## Extract predicted normal distributions for next two years
+p &lt;- prodist(arma21, n.ahead = 8)
+p
+
+## Compute median (= mean) forecast along with 80% and 95% interval
+quantile(p, c(0.5, 0.1, 0.9, 0.025, 0.975))
+
+</code></pre>
+
+
+</div>

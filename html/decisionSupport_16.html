@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimate_read_csv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read an Estimate from CSV - File.</h2>
+
+<h3>Description</h3>
+
+<p>This function reads an <code>estimate</code> from the specified csv files. In this context, an 
+estimate of several variables is defined by its marginal distribution types, its marginal
+90%-confidence intervals <code>[lower,upper]</code> and, optionally, its correlations.
+</p>
+<p><code>estimate_read_csv_old</code> reads an estimate from CSV file(s) according to the deprecated 
+standard. This function is for backward compatibility only.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimate_read_csv(fileName, strip.white = TRUE, ...)
+
+estimate_read_csv_old(fileName, strip.white = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fileName</code></td>
+<td>
+<p>Name of the file containing the marginal information of the estimate that 
+should be read.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strip.white</code></td>
+<td>
+<p>logical. Used only when <code>sep</code> has
+been specified, and allows the stripping of leading and trailing
+white space from unquoted <code>character</code> fields (<code>numeric</code> fields
+are always stripped).  See <code>scan</code> for further details
+(including the exact meaning of ‘white space’),
+remembering that the columns may include the row names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further parameters to be passed to <code>read.table</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>An estimate might consists of uncorrelated and correlated variables. This is reflected
+in the input file structure, which is described in the following.
+</p>
+
+
+<h4> CSV input file structures</h4>
+
+<p>The estimate is read from one or two csv files: the marginal csv file which is mandatory and
+the correlation csv file which is optional. The marginal csv file contains the definition of
+the distribution of all variables ignoring potential correlations. The correlation csv file
+only defines correlations. </p>
+
+
+<h5>The structure of the marginal distributions input file
+(mandatory)</h5>
+
+<p>File name structure: <code>&lt;marginal-filename&gt;.csv</code>
+</p>
+<p>Mandatory columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+      <b>Column name</b>       </td>
+<td style="text-align: left;">  <b>R-type</b>    </td>
+<td style="text-align: left;"> <b>Explanation</b>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      <code>variable</code>          </td>
+<td style="text-align: left;">  <code>character vector</code>       </td>
+<td style="text-align: left;">  Variable names</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      <code>distribution</code>      </td>
+<td style="text-align: left;">  <code>character vector</code> </td>
+<td style="text-align: left;">  Marginal distribution types </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      <code>lower</code>             </td>
+<td style="text-align: left;">  <code>numeric vector</code>   </td>
+<td style="text-align: left;">  Marginal 5%-quantiles </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      <code>upper</code>             </td>
+<td style="text-align: left;">  <code>numeric vector</code>   </td>
+<td style="text-align: left;">  Marginal 95%-quantiles 
+     </td>
+</tr>
+</table>
+<p>Frequent optional columns are:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+       <b>Column name</b>       </td>
+<td style="text-align: left;">  <b>R-type</b>              </td>
+<td style="text-align: left;"> <b>Explanation</b>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+       <code>description</code>       </td>
+<td style="text-align: left;">  <code>character</code>           </td>
+<td style="text-align: left;">  Short description of the variable.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+       <code>median</code>            </td>
+<td style="text-align: left;">  cf. <code>estimate</code> </td>
+<td style="text-align: left;">  Marginal 50%-quantiles </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+       <code>method</code>            </td>
+<td style="text-align: left;">  <code>character vector</code>    </td>
+<td style="text-align: left;">  Methods for calculation of marginal distribution parameters
+     </td>
+</tr>
+</table>
+<p>Columns without names are ignored. Rows where the <code>variable</code> field is empty are also dropped.
+</p>
+
+
+
+<h5>The structure of the correlation file (optional)</h5>
+
+<p>File name structure: <code>&lt;marginal-filename&gt;_cor.csv</code>
+</p>
+<p>Columns and rows are named by the corresponding variables. Only those variables need to be 
+present which are correlated with others.
+</p>
+<p>The element <code>["rowname","columnname"]</code> contains the correlation between the variables 
+<code>rowname</code> and <code>columnname</code>. Uncorrelated elements have to be set to <code>0</code>. The
+diagonal element <code>["name","name"]</code> has to be set to <code>1</code>.
+</p>
+<p>The matrix must be given in symmetric form.
+</p>
+
+
+
+
+<h4>Deprecated input standard (<code>estimate_read_csv_old</code>)</h4>
+
+<p>File name structure of the correlation file: <code>&lt;marginal-filename&gt;.csv_correlations.csv</code><br></p>
+
+
+
+<h3>Value</h3>
+
+<p>An object of type <code>estimate</code> which element <code>$marginal</code> is read from 
+file <code>fileName</code> and which element <code>$correlation_matrix</code> is read from file
+<code>gsub(".csv","_cor.csv",fileName)</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>estimate_write_csv</code>, <code>read.table</code>, <code>estimate</code>
+</p>
+<p><code>estimate_read_csv</code>, <code>read.table</code>, <code>estimate</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> # Read the joint estimate information for the variables "sales", "productprice" and 
+ # "costprice" from file:
+ ## Get the path to the file with the marginal information:
+ marginalFilePath=system.file("extdata","profit-4.csv",package="decisionSupport")
+ ## Read the marginal information from file "profit-4.csv" and print it to the screen as
+ ## illustration:
+ read.csv(marginalFilePath, strip.white=TRUE)
+ ## Read the correlation information from file "profit-4_cor.csv" and print it to the screen as
+ ## illustration: 
+ read.csv(gsub(".csv","_cor.csv",marginalFilePath), row.names=1)
+ ## Now read marginal and correlation file straight into an estimate:
+ parameterEstimate&lt;-estimate_read_csv(fileName=marginalFilePath)
+ print(parameterEstimate)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,492 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>svmDP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Privacy-preserving Support Vector Machine</h2>
+
+<h3>Description</h3>
+
+<p>This class implements differentially private support vector
+machine (SVM) (Chaudhuri et al. 2011). It can be either weighted
+(Yang et al. 2005) or unweighted. Either the output or the
+objective perturbation method can be used for unweighted SVM, though only
+the output perturbation method is currently supported for weighted SVM.
+</p>
+
+
+<h3>Details</h3>
+
+<p>To use this class for SVM, first use the <code>new</code> method to
+construct an object of this class with the desired function values and
+hyperparameters, including a choice of the desired kernel. After
+constructing the object, the <code>fit</code> method can be applied to fit the
+model with a provided dataset, data bounds, and optional observation
+weights and weight upper bound. In fitting, the model stores a vector of
+coefficients <code>coeff</code> which satisfy differential privacy. Additionally,
+if a nonlinear kernel is chosen, the models stores a mapping function from
+the input data X to a higher dimensional embedding V in the form of a
+method <code>XtoV</code> as required (Chaudhuri et al. 2011). These
+can be released directly, or used in conjunction with the <code>predict</code>
+method to privately predict the label of new datapoints. Note that the
+mapping function <code>XtoV</code> is based on an approximation method via
+Fourier transforms (Rahimi and Recht 2007; Rahimi and Recht 2008).
+</p>
+<p>Note that in order to guarantee differential privacy for the SVM model,
+certain constraints must be satisfied for the values used to construct the
+object, as well as for the data used to fit. These conditions depend on the
+chosen perturbation method. First, the loss function is assumed to be
+differentiable (and doubly differentiable if the objective perturbation
+method is used). The hinge loss, which is typically used for SVM, is not
+differentiable at 1. Thus, to satisfy this constraint, this class utilizes
+the Huber loss, a smooth approximation to the hinge loss
+(Chapelle 2007). The level of approximation to the hinge
+loss is determined by a user-specified constant, h, which defaults to 0.5,
+a typical value. Additionally, the regularizer must be 1-strongly convex
+and differentiable. It also must be doubly differentiable if objective
+perturbation is chosen. If weighted SVM is desired, the provided weights
+must be nonnegative and bounded above by a global or public value, which
+must also be provided.
+</p>
+<p>Finally, it is assumed that if x represents a single row of the dataset X,
+then the l2-norm of x is at most 1 for all x. In order to ensure this
+constraint is satisfied, the dataset is preprocessed and scaled, and the
+resulting coefficients are postprocessed and un-scaled so that the stored
+coefficients correspond to the original data. Due to this constraint on x,
+it is best to avoid using a bias term in the model whenever possible. If a
+bias term must be used, the issue can be partially circumvented by adding a
+constant column to X before fitting the model, which will be scaled along
+with the rest of X. The <code>fit</code> method contains functionality to add a
+column of constant 1s to X before scaling, if desired.
+</p>
+
+
+<h3>Super classes</h3>
+
+<p><code>DPpack::EmpiricalRiskMinimizationDP.CMS</code> -&gt; <code>DPpack::WeightedERMDP.CMS</code> -&gt; <code>svmDP</code>
+</p>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-svmDP-new"><code>svmDP$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-svmDP-fit"><code>svmDP$fit()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-svmDP-XtoV"><code>svmDP$XtoV()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-svmDP-predict"><code>svmDP$predict()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-svmDP-clone"><code>svmDP$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-svmDP-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create a new <code>svmDP</code> object.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>svmDP$new(
+  regularizer,
+  eps,
+  gamma,
+  perturbation.method = "objective",
+  kernel = "linear",
+  D = NULL,
+  kernel.param = NULL,
+  regularizer.gr = NULL,
+  huber.h = 0.5
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>regularizer</code></dt>
+<dd>
+<p>String or regularization function. If a string, must be
+'l2', indicating to use l2 regularization. If a function, must have form
+<code>regularizer(coeff)</code>, where <code>coeff</code> is a vector or matrix, and
+return the value of the regularizer at <code>coeff</code>. See
+<code>regularizer.l2</code> for an example. Additionally, in order to
+ensure differential privacy, the function must be 1-strongly convex and
+doubly differentiable.</p>
+</dd>
+<dt><code>eps</code></dt>
+<dd>
+<p>Positive real number defining the epsilon privacy budget. If set
+to Inf, runs algorithm without differential privacy.</p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>Nonnegative real number representing the regularization
+constant.</p>
+</dd>
+<dt><code>perturbation.method</code></dt>
+<dd>
+<p>String indicating whether to use the 'output' or
+the 'objective' perturbation methods (Chaudhuri et al. 2011).
+Defaults to 'objective'.</p>
+</dd>
+<dt><code>kernel</code></dt>
+<dd>
+<p>String indicating which kernel to use for SVM. Must be one of
+{'linear', 'Gaussian'}. If 'linear' (default), linear SVM is used. If
+'Gaussian,' uses the sampling function corresponding to the Gaussian
+(radial) kernel approximation.</p>
+</dd>
+<dt><code>D</code></dt>
+<dd>
+<p>Nonnegative integer indicating the dimensionality of the transform
+space approximating the kernel if a nonlinear kernel is used. Higher
+values of D provide better kernel approximations at a cost of
+computational efficiency. This value must be specified if a nonlinear
+kernel is used.</p>
+</dd>
+<dt><code>kernel.param</code></dt>
+<dd>
+<p>Positive real number corresponding to the Gaussian
+kernel parameter. Defaults to 1/p, where p is the number of predictors.</p>
+</dd>
+<dt><code>regularizer.gr</code></dt>
+<dd>
+<p>Optional function representing the gradient of the
+regularization function with respect to <code>coeff</code> and of the form
+<code>regularizer.gr(coeff)</code>. Should return a vector. See
+<code>regularizer.gr.l2</code> for an example. If <code>regularizer</code> is
+given as a string, this value is ignored. If not given and
+<code>regularizer</code> is a function, non-gradient based optimization methods
+are used to compute the coefficient values in fitting the model.</p>
+</dd>
+<dt><code>huber.h</code></dt>
+<dd>
+<p>Positive real number indicating the degree to which the
+Huber loss approximates the hinge loss. Defaults to 0.5
+(Chapelle 2007).</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A new svmDP object.
+</p>
+
+
+<hr>
+<a id="method-svmDP-fit"></a>
+
+
+
+<h4>Method <code>fit()</code>
+</h4>
+
+<p>Fit the differentially private SVM model. This method runs
+either the output perturbation or the objective perturbation algorithm
+(Chaudhuri et al. 2011), depending on the value of
+perturbation.method used to construct the object, to generate an
+objective function. A numerical optimization method is then run to find
+optimal coefficients for fitting the model given the training data,
+weights, and hyperparameters. The built-in <code>optim</code> function
+using the "BFGS" optimization method is used. If <code>regularizer</code> is
+given as 'l2' or if <code>regularizer.gr</code> is given in the construction of
+the object, the gradient of the objective function is utilized by
+<code>optim</code> as well. Otherwise, non-gradient based optimization methods
+are used. The resulting privacy-preserving coefficients are stored in
+<code>coeff</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>svmDP$fit(
+  X,
+  y,
+  upper.bounds,
+  lower.bounds,
+  add.bias = FALSE,
+  weights = NULL,
+  weights.upper.bound = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Dataframe of data to be fit.</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>Vector or matrix of true labels for each row of <code>X</code>.</p>
+</dd>
+<dt><code>upper.bounds</code></dt>
+<dd>
+<p>Numeric vector of length <code>ncol(X)</code> giving upper
+bounds on the values in each column of X. The <code>ncol(X)</code> values are
+assumed to be in the same order as the corresponding columns of <code>X</code>.
+Any value in the columns of <code>X</code> larger than the corresponding upper
+bound is clipped at the bound.</p>
+</dd>
+<dt><code>lower.bounds</code></dt>
+<dd>
+<p>Numeric vector of length <code>ncol(X)</code> giving lower
+bounds on the values in each column of <code>X</code>. The <code>ncol(X)</code>
+values are assumed to be in the same order as the corresponding columns
+of <code>X</code>. Any value in the columns of <code>X</code> larger than the
+corresponding upper bound is clipped at the bound.</p>
+</dd>
+<dt><code>add.bias</code></dt>
+<dd>
+<p>Boolean indicating whether to add a bias term to <code>X</code>.
+Defaults to FALSE.</p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>Numeric vector of observation weights of the same length as
+<code>y</code>. If not given, no observation weighting is performed.</p>
+</dd>
+<dt><code>weights.upper.bound</code></dt>
+<dd>
+<p>Numeric value representing the global or public
+upper bound on the weights. Required if weights are given.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-svmDP-XtoV"></a>
+
+
+
+<h4>Method <code>XtoV()</code>
+</h4>
+
+<p>Convert input data X into transformed data V. Uses sampled
+pre-filter values and a mapping function based on the chosen kernel to
+produce D-dimensional data V on which to train the model or predict
+future values. This method is only used if the kernel is nonlinear. See
+Chaudhuri et al. (2011) for more details.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>svmDP$XtoV(X)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Matrix corresponding to the original dataset.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Matrix V of size n by D representing the transformed dataset, where
+n is the number of rows of X, and D is the provided transformed space
+dimension.
+</p>
+
+
+<hr>
+<a id="method-svmDP-predict"></a>
+
+
+
+<h4>Method <code>predict()</code>
+</h4>
+
+<p>Predict label(s) for given <code>X</code> using the fitted
+coefficients.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>svmDP$predict(X, add.bias = FALSE, raw.value = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Dataframe of data on which to make predictions. Must be of same
+form as <code>X</code> used to fit coefficients.</p>
+</dd>
+<dt><code>add.bias</code></dt>
+<dd>
+<p>Boolean indicating whether to add a bias term to <code>X</code>.
+Defaults to FALSE. If add.bias was set to TRUE when fitting the
+coefficients, add.bias should be set to TRUE for predictions.</p>
+</dd>
+<dt><code>raw.value</code></dt>
+<dd>
+<p>Boolean indicating whether to return the raw predicted
+value or the rounded class label. If FALSE (default), outputs the
+predicted labels 0 or 1. If TRUE, returns the raw score from the SVM
+model.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Matrix of predicted labels or scores corresponding to each row of
+<code>X</code>.
+</p>
+
+
+<hr>
+<a id="method-svmDP-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>svmDP$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>References</h3>
+
+<p>Chaudhuri K, Monteleoni C, Sarwate AD (2011).
+“Differentially Private Empirical Risk Minimization.”
+<em>Journal of Machine Learning Research</em>, <b>12</b>(29), 1069-1109.
+<a href="https://jmlr.org/papers/v12/chaudhuri11a.html">https://jmlr.org/papers/v12/chaudhuri11a.html</a>.
+</p>
+<p>Yang X, Song Q, Cao A (2005).
+“Weighted support vector machine for data classification.”
+In <em>Proceedings. 2005 IEEE International Joint Conference on Neural Networks, 2005.</em>, volume 2, 859-864 vol. 2.
+<a href="https://doi.org/10.1109/IJCNN.2005.1555965">doi:10.1109/IJCNN.2005.1555965</a>.
+</p>
+<p>Chapelle O (2007).
+“Training a Support Vector Machine in the Primal.”
+<em>Neural Computation</em>, <b>19</b>(5), 1155-1178.
+<a href="https://doi.org/10.1162/neco.2007.19.5.1155">doi:10.1162/neco.2007.19.5.1155</a>.
+</p>
+<p>Rahimi A, Recht B (2007).
+“Random Features for Large-Scale Kernel Machines.”
+In Platt J, Koller D, Singer Y, Roweis S (eds.), <em>Advances in Neural Information Processing Systems</em>, volume 20.
+<a href="https://proceedings.neurips.cc/paper/2007/file/013a006f03dbc5392effeb8f18fda755-Paper.pdf">https://proceedings.neurips.cc/paper/2007/file/013a006f03dbc5392effeb8f18fda755-Paper.pdf</a>.
+</p>
+<p>Rahimi A, Recht B (2008).
+“Weighted Sums of Random Kitchen Sinks: Replacing minimization with randomization in learning.”
+In Koller D, Schuurmans D, Bengio Y, Bottou L (eds.), <em>Advances in Neural Information Processing Systems</em>, volume 21.
+<a href="https://proceedings.neurips.cc/paper/2008/file/0efe32849d230d7f53049ddc4a4b0c60-Paper.pdf">https://proceedings.neurips.cc/paper/2008/file/0efe32849d230d7f53049ddc4a4b0c60-Paper.pdf</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Build train dataset X and y, and test dataset Xtest and ytest
+N &lt;- 400
+X &lt;- data.frame()
+y &lt;- data.frame()
+for (i in (1:N)){
+  Xtemp &lt;- data.frame(x1 = stats::rnorm(1,sd=.28) , x2 = stats::rnorm(1,sd=.28))
+  if (sum(Xtemp^2)&lt;.15) ytemp &lt;- data.frame(y=0)
+  else ytemp &lt;- data.frame(y=1)
+  X &lt;- rbind(X, Xtemp)
+  y &lt;- rbind(y, ytemp)
+}
+Xtest &lt;- X[seq(1,N,10),]
+ytest &lt;- y[seq(1,N,10),,drop=FALSE]
+X &lt;- X[-seq(1,N,10),]
+y &lt;- y[-seq(1,N,10),,drop=FALSE]
+
+# Construct object for SVM
+regularizer &lt;- 'l2' # Alternatively, function(coeff) coeff%*%coeff/2
+eps &lt;- 1
+gamma &lt;- 1
+perturbation.method &lt;- 'output'
+kernel &lt;- 'Gaussian'
+D &lt;- 20
+svmdp &lt;- svmDP$new(regularizer, eps, gamma, perturbation.method,
+                   kernel=kernel, D=D)
+
+# Fit with data
+# Bounds for X based on construction
+upper.bounds &lt;- c( 1, 1)
+lower.bounds &lt;- c(-1,-1)
+weights &lt;- rep(1, nrow(y)) # Uniform weighting
+weights[nrow(y)] &lt;- 0.5 # Half weight for last observation
+wub &lt;- 1 # Public upper bound for weights
+svmdp$fit(X, y, upper.bounds, lower.bounds, weights=weights,
+          weights.upper.bound=wub) # No bias term
+
+# Predict new data points
+predicted.y &lt;- svmdp$predict(Xtest)
+n.errors &lt;- sum(predicted.y!=ytest)
+
+</code></pre>
+
+
+</div>

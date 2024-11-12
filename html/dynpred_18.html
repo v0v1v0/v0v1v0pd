@@ -1,0 +1,188 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pe</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate prediction error curve</h2>
+
+<h3>Description</h3>
+
+<p>Calculate prediction error curve.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pe(time, status, tsurv, survmat, tcens, censmat, FUN = c("KL", "Brier"), tout)
+
+pecox(formula, censformula, data, censdata, FUN = c("KL", "Brier"), tout,
+  CV = FALSE, progress = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>Vector of time points in data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>status</code></td>
+<td>
+<p>Vector of event indicators in data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsurv</code></td>
+<td>
+<p>Vector of time points corresponding to the estimated survival
+probabilities in <code>survmat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>survmat</code></td>
+<td>
+<p>Matrix of estimated survival probabilities; dimension should
+be length of tsurv x length of time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tcens</code></td>
+<td>
+<p>Vector of time points corresponding to the estimated censoring
+probabilities in <code>censmat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censmat</code></td>
+<td>
+<p>Matrix of estimated censoring probabilities; dimension should
+be length of tcens x length of time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>The error function, either <code>"KL"</code> (default) for
+Kullback-Leibler or <code>"Brier"</code> for Brier score</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tout</code></td>
+<td>
+<p>Vector of time points at which to evaluate prediction error. If
+missing, prediction error will be evaluated at all time points where the
+estimate will change value</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Formula for prediction model to be used as in
+<code>coxph</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censformula</code></td>
+<td>
+<p>Formula for censoring model, also to be used as in
+<code>coxph</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data set in which to interpret <code>formula</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censdata</code></td>
+<td>
+<p>Data set in which to interpret <code>censformula</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CV</code></td>
+<td>
+<p>Boolean (default=<code>FALSE</code>); if <code>TRUE</code>, (leave-one-out)
+cross-validation is used for the survival probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>Boolean (default=<code>FALSE</code>); if <code>TRUE</code>, progress is
+printed on screen</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>censformula</code> is used to calculate inverse probability of censoring
+weights (IPCW).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with columns </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>Event time points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Err</code></td>
+<td>
+<p>Prediction error of model specified by <code>formula</code> at these
+time points</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Hein Putter <a href="mailto:H.Putter@lumc.nl">H.Putter@lumc.nl</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Graf E, Schmoor C, Sauerbrei W &amp; Schumacher M (1999), Assessment
+and comparison of prognostic classification schemes for survival data,
+Statistics in Medicine 18, 2529-2545.
+</p>
+<p>Gerds &amp; Schumacher (2006), Consistent estimation of the expected Brier score
+in general survival models with right-censored event times, Biometrical
+Journal 48, 1029-1040.
+</p>
+<p>van Houwelingen HC, Putter H (2012). Dynamic Prediction in Clinical Survival
+Analysis. Chapman &amp; Hall.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ova)
+# Example on a subset, because the effect of CV is clearer
+ova2 &lt;- ova[1:100,]
+pecox(Surv(tyears, d) ~ Karn + Broders + FIGO + Ascites + Diam, Surv(tyears, 1-d) ~ 1,
+  data = ova2, FUN="Brier", tout=seq(0,6,by=0.5))
+pecox(Surv(tyears, d) ~ Karn + Broders + FIGO + Ascites + Diam, Surv(tyears, 1-d) ~ 1,
+  data = ova2, FUN="Brier", tout=seq(0,6,by=0.5), CV=TRUE, progress=TRUE)
+
+
+pecox(Surv(tyears, d) ~ Karn + Broders + FIGO + Ascites + Diam, Surv(tyears, 1-d) ~ 1,
+  data = ova, FUN="Brier", tout=seq(0,6,by=0.5))
+pecox(Surv(tyears, d) ~ Karn + Broders + FIGO + Ascites + Diam, Surv(tyears, 1-d) ~ 1,
+  data = ova, FUN="Brier", tout=seq(0,6,by=0.5), CV=TRUE, progress=TRUE)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lifeTable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Life Table Construction and Estimates</h2>
+
+<h3>Description</h3>
+
+<p>Constructs a life table and estimates discrete hazards, survival
+functions, discrete cumulative hazards and their standard errors without
+covariates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lifeTable(dataShort, timeColumn, eventColumn, intervalLimits = NULL)
+
+## S3 method for class 'discSurvLifeTable'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataShort</code></td>
+<td>
+<p>Original data in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Name of the column with discrete survival times ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumn</code></td>
+<td>
+<p>Gives the column name of the event indicator (1=observed,
+0=censored) ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intervalLimits</code></td>
+<td>
+<p>Optional names of the intervals for each row, e. g.
+[a_0, a_1), [a_1, a_2), ..., [a_q-1, a_q) ("character vector")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Object of class "discSurvLifeTable"("class discSurvLifeTable")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to the print function</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List containing an object of class "data.frame" with following
+columns </p>
+ <ul>
+<li>
+<p>n Number of individuals at risk in a given time
+interval (integer) </p>
+</li>
+<li>
+<p>events Observed number of events in a given time
+interval (integer) </p>
+</li>
+<li>
+<p>dropouts Observed number of dropouts in a given
+time interval (integer) </p>
+</li>
+<li>
+<p>atRisk Estimated number of individuals at
+risk, corrected by dropouts (numeric) </p>
+</li>
+<li>
+<p>hazard Estimated risk of death
+(without covariates) in a given time interval </p>
+</li>
+<li>
+<p>seHazard Estimated
+standard deviation of estimated hazard </p>
+</li>
+<li>
+<p>S Estimated survival curve
+</p>
+</li>
+<li>
+<p>seS Estimated standard deviation of estimated survival function
+</p>
+</li>
+<li>
+<p>cumHazard Estimated cumulative hazard function </p>
+</li>
+<li>
+<p>seCumHazard
+Estimated standard deviation of the estimated cumulative hazard function
+</p>
+</li>
+<li>
+<p>margProb Estimated marginal probability of event in time interval </p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+<p>Matthias Schmid <a href="mailto:matthias.schmid@imbie.uni-bonn.de">matthias.schmid@imbie.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Lawless JF (2002).
+<em>Statistical Models and Methods for Lifetime Data, 2nd edition</em>.
+Wiley series in probability and statistics.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Extract subset of all persons smaller or equal the median of age
+UnempDurSubset &lt;- subset(UnempDur, age &lt;= median(UnempDur$age))
+LifeTabUnempDur &lt;- lifeTable(dataShort = UnempDurSubset, timeColumn = "spell", 
+eventColumn = "censor1")
+LifeTabUnempDur
+
+# Example with monoclonal gammapothy data
+library(survival)
+head(mgus)
+
+# Extract subset of mgus
+subMgus &lt;- mgus [mgus$futime&lt;=median(mgus$futime), ]
+
+# Transform time in days to intervals [0, 1), [1, 2), [2, 3), ... , [12460, 12461)
+mgusInt &lt;- subMgus
+mgusInt$futime &lt;- mgusInt$futime + 1
+LifeTabGamma &lt;- lifeTable(dataShort = mgusInt, timeColumn= "futime", eventColumn = "death")
+head(LifeTabGamma$Output, 25)
+plot(x = 1:dim(LifeTabGamma$Output)[1], y = LifeTabGamma$Output$hazard, type = "l", 
+xlab = "Time interval", ylab = "Hazard", las = 1, 
+main = "Life table estimated marginal discrete hazards")
+
+</code></pre>
+
+
+</div>

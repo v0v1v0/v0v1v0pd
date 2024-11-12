@@ -1,0 +1,242 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DAMOCLES_bootstrap</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Phylogenetic community structure hypothesis test</h2>
+
+<h3>Description</h3>
+
+<p>This function computes the maximum likelihood estimates of colonisation and
+local extinction rate for a given phylogeny and presence-absence data under
+the DAMOCLES model.  These rate estimates are used to simulate null
+communities under the DAMOCLES model.  Standardized effect size of mean
+nearest taxon distance (mntd), mean phylogentic distance (mpd) and
+loglikelihood are calculated For comparison, standardised effect sizes are
+also calculated relative to a "Random-Draw" null model i.e. presence absence
+randomised across tips
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DAMOCLES_bootstrap(
+  phy = ape::rcoal(10),
+  pa = matrix(c(phy$tip.label, sample(c(0, 1), ape::Ntip(phy), replace = T)), nrow =
+    ape::Ntip(phy), ncol = 2),
+  initparsopt = c(0.1, 0.1),
+  idparsopt = 1:length(initparsopt),
+  parsfix = NULL,
+  idparsfix = NULL,
+  pars2 = c(0.001, 1e-04, 1e-05, 1000),
+  pchoice = 0,
+  runs = 999,
+  estimate_pars = FALSE,
+  conf.int = 0.95
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>phy</code></td>
+<td>
+<p>phylogeny in phylo format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pa</code></td>
+<td>
+<p>presence-absence table.<br> The first column contains the labels of
+the species (corresponding to the tip labels in the phylogeny.<br> The second
+column contains the presence (1) or absence (0) of species in the local
+community.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initparsopt</code></td>
+<td>
+<p>The initial values of the parameters that must be
+optimized</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idparsopt</code></td>
+<td>
+<p>The ids of the parameters that must be optimized, e.g. 1:2
+for extinction rate, and offset of immigration rate The ids are defined as
+follows: <br> id == 1 corresponds to mu (extinction rate) <br> id == 2
+corresponds to gamma_0 (offset of immigration rate) <br></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parsfix</code></td>
+<td>
+<p>The values of the parameters that should not be optimized.
+See idparsfix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idparsfix</code></td>
+<td>
+<p>The ids of the parameters that should not be optimized, e.g. c(1) if mu
+should not be optimized, but only gamma_0. In that case idparsopt must be
+c(2). The default is to fix the parameters not specified in idparsopt.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars2</code></td>
+<td>
+<p>Vector of settings: <br><code>pars2[1]</code> sets the relative
+tolerance in the parameters <br><br><code>pars2[2]</code> sets the relative
+tolerance in the function <br><br><code>pars2[3]</code> sets the absolute
+tolerance in the parameters <br><br><code>pars2[4]</code> sets the maximum number
+of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pchoice</code></td>
+<td>
+<p>sets which p-value to optimize and with which root state to
+simulate (default pchoice = 0) <br> pchoice == 0 correspond to optimizing sum
+of p_0f + p_1f, and simulating with an equal number of root states being 0
+or 1 <br> pchoice == 1 correspond to optimizing p_0f, and simulating with
+root state being 0<br> pchoice == 2 correspond to optimizing p_1f, and
+simulating with root state being 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runs</code></td>
+<td>
+<p>the number null communities to generate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate_pars</code></td>
+<td>
+<p>Whether to estimate parameters on the simulated
+datasets (default = FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.int</code></td>
+<td>
+<p>The width of the conifdence intervals calculated on
+bootstrapped parameter estimates</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The output is a list of two dataframes. The first dataframe, summary_table,
+contains the summary results. The second dataframe, null_community_data,
+contains decsriptive statistics for each null community.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>summary_table</code></td>
+<td>
+ <p><code>mu</code> gives the maximum likelihood
+estimate of mu and confidence intervals in brackets if estimate_pars = TRUE
+<code>gamma_0</code> gives the maximum likelihood estimate of gamma_0 and
+confidence intervals in brackets if bootstrap=TRUE <code>loglik</code> gives the
+maximum loglikelihood <code>df</code> gives the number of estimated parameters,
+i.e. degrees of feedom <code>conv</code> gives a message on convergence of
+optimization; conv = 0 means convergence <code>n.obs</code> gives the number of
+species locally present in the observed community <code>mntd.obs</code> gives the
+MNTD of the observed community <code>mpd.obs</code> gives the MPD of the observed
+community <code>runs</code> gives the number of null communities simulated
+<code>mntd.mean.RD</code> mean of MNTD from null communities generated by a
+"Random Draw" model <code>mntd.sd.RD</code> standard deviation of MNTD from null
+communities generated by a "Random Draw" model <code>mntd.obs.z.RD</code>
+standardized effect size of MNTD compared to null communities generated by a
+"Random Draw" model (= -1*(mntd.obs - mntd.mean.RD)/ mntd.sd.RD)
+<code>mntd.obs.rank.RD</code> rank of observed MNTD compared to null communities
+generated by a "Random Draw" model <code>mntd.obs.q.RD</code> quantile of observed
+MNTD vs. null communities (= mntd.obs.rank.RD /runs + 1) <code>mpd.mean.RD</code>
+mean of MPD from null communities generated by a "Random Draw" model
+<code>mpd.sd.RD</code> standard deviation of MPD from null communities generated
+by a "Random Draw" model <code>mpd.obs.z.RD</code> standardized effect size of MPD
+compared to null communities generated by a "Random Draw" model (=
+-1*(mpd.obs - mpd.mean.RD)/ mpd.sd.RD) <code>mpd.obs.rank.RD</code> rank of
+observed MPD compared to null communities generated by a "Random Draw" model
+<code>mpd.obs.q.RD</code> quantile of observed MPD vs. null communities (=
+mpd.obs.rank.RD /runs + 1) <code>n.mean.DAMOCLES</code> mean number of species
+locally present in the null communities generated by DAMOCLES
+<code>mntd.mean.DAMOCLES</code> mean of MNTD from null communities generated by
+DAMOCLES <code>mntd.sd.DAMOCLES</code> standard deviation of MNTD from null
+communities generated by DAMOCLES <code>mntd.obs.z.DAMOCLES</code> standardized
+effect size of MNTD compared to null communities generated by DAMOCLES (=
+-1*(mntd.obs - mntd.mean.DAMOCLES)/ mntd.sd.DAMOCLES)
+<code>mntd.obs.rank.DAMOCLES</code> rank of observed MNTD compared to null
+communities generated by DAMOCLES <code>mntd.obs.q.DAMOCLES</code> quantile of
+observed MNTD vs. null communities (= mntd.obs.rank.DAMOCLES /runs + 1)
+<code>mpd.mean.DAMOCLES</code> mean of MPD from null communities generated by
+DAMOCLES <code>mpd.sd.DAMOCLES</code> standard deviation of MPD from null
+communities generated by DAMOCLES <code>mpd.obs.z.DAMOCLES</code> standardized
+effect size of MPD compared to null communities generated by DAMOCLES (=
+-1*(mpd.obs - mpd.mean.DAMOCLES)/ mpd.sd.DAMOCLES)
+<code>mpd.obs.rank.DAMOCLES</code> rank of observed MPD compared to null
+communities generated by DAMOCLES <code>mpd.obs.q.DAMOCLES</code> quantile of
+observed MPD vs. null communities (= mpd.obs.rank.DAMOCLES /runs + 1)
+<code>loglik.mean.DAMOCLES</code> mean of loglikelihoods from null communities
+generated by DAMOCLES <code>loglik.sd.DAMOCLES</code> standard deviation of
+loglikelihoods from null communities generated by DAMOCLES
+<code>loglik.obs.z.DAMOCLES</code> standardized effect size of loglikelihood
+compared to null communities generated by DAMOCLES (= -1*(loglik.obs -
+loglik.mean.DAMOCLES)/ loglik.sd.DAMOCLES) <code>loglik.obs.rank.DAMOCLES</code>
+rank of observed loglikelihood compared to null communities generated by
+DAMOCLES <code>loglik.obs.q.DAMOCLES</code> quantile of observed loglikelihoods
+vs. null communities (= loglik.obs.rank.DAMOCLES /runs + 1) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null_community_data</code></td>
+<td>
+ <p><code>run</code> gives the simulation run
+<code>root.state.print</code> gives the state of the ancestral species in the
+local community assumed in the simulation, i.e. present (1) or absent (0)
+<code>n</code> gives the number of species locally present in the observed
+community <code>n.RD</code> gives the number of species locally present in the
+null community generated by a "Random Draw" model <code>mntd.RD</code> gives the
+MNTD of the null community generated by a "Random Draw" model <code>mpd.RD</code>
+gives the MPD of the null community generated by a "Random Draw" model
+<code>n.DAMOCLES</code> gives the number of species locally present in the null
+community generated by DAMOCLES <code>mntd.DAMOCLES</code> gives the MNTD of the
+null community generated by DAMOCLES <code>mpd.DAMOCLES</code> gives the MPD of
+the null community generated by DAMOCLES <code>loglik.DAMOCLES</code> gives the
+maximum loglikelihood for the null community generated by DAMOCLES
+<code>mu.DAMOCLES</code> gives the maximum likelihood estimate of mu for the null
+community generated by DAMOCLES <code>gamma_0.DAMOCLES</code> gives the maximum
+likelihood estimate of gamma_0 for the null community generated by DAMOCLES
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Rampal S. Etienne
+</p>
+
+
+<h3>References</h3>
+
+<p>Pigot, A.L. &amp; R.S. Etienne (2015). A new dynamic null model for
+phylogenetic community structure. Ecology Letters 18: 153-163.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DAMOCLES_ML</code> <code>DAMOCLES_sim</code>
+</p>
+
+
+</div>

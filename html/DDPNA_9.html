@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DEP_Mod_net_plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+DEP_Mod_net_plot
+</h2>
+
+<h3>Description</h3>
+
+<p>remove hubs which is not in the IDsets and replot the PFG network
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DEP_Mod_net_plot(ModNet, IDsets = NULL, data = NULL, module = NULL,
+                 plot = TRUE, filename = NULL, filetype = "pdf",
+                 OnlyPlotLast = TRUE, BranchCut = TRUE,
+                 reconstructNet = TRUE,
+                 iteration = Inf, label.hubs.only = TRUE,
+                 node.default.color = "grey",
+                 hubLabel.col = "black", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ModNet</code></td>
+<td>
+
+<p>data contains network information which get from <code>getmoduleHub</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IDsets</code></td>
+<td>
+
+<p>ID sets information which get from <code>DEPsets</code>
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>the value should be defined only when <code>reconstructNet</code> is TRUE.
+The value is proteomic quantification data, which is same as the input in <code>getmoduleHub</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>module</code></td>
+<td>
+
+<p>the value should be defined only when <code>reconstructNet</code> is TRUE.
+The value is module information which is same as the input in <code>getmoduleHub</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+
+<p>a logical value whether plot a picture.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+
+<p>the filename of plot. The default value is <code>NULL</code> which means no file saving. The function is use <code>ggsave</code> to achieve.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filetype</code></td>
+<td>
+
+<p>the file type of plot.  the type should be one of "eps", "ps", "tex" (pictex), "pdf", "jpeg", "tiff", "png", "bmp", "svg" or "wmf" (windows only).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OnlyPlotLast</code></td>
+<td>
+
+<p>a logical value whether plot the final network.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BranchCut</code></td>
+<td>
+
+<p>a logical value whether remove unhub proteins which have no connection to DEPs.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reconstructNet</code></td>
+<td>
+
+<p>a logical value whether reconstruct network.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iteration</code></td>
+<td>
+
+<p>iteration times when reconstruct network.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label.hubs.only</code></td>
+<td>
+
+<p>a logical value whether show labels for hubs only.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>node.default.color</code></td>
+<td>
+
+<p>Default node colors for those that do not intersect with signatures in gene.set.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hubLabel.col</code></td>
+<td>
+
+<p>Label color for hubs.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>additional <code>ggsave</code> parameter
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+<p>a list contains network information
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>netgene </code></td>
+<td>
+<p>all IDs in network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hub </code></td>
+<td>
+<p>hub IDs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PMFG </code></td>
+<td>
+<p>PMFG graph data frame information</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Kefu Liu
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(net)
+data(imputedData)
+Module &lt;- Module_inf(net, imputedData$inf)
+group &lt;- gsub("[0-9]+","", colnames(imputedData$intensity))
+data &lt;- imputedData
+data$inf &lt;- data$inf[1:100,]
+data$intensity &lt;- data$intensity[1:100,]
+stat &lt;- dataStatInf(data, group, meanmethod = "median",
+                    T.test = "pairwise", Aadj = "fdr",
+                    Tadj = "fdr", cutoff = FALSE)
+stat1 &lt;- stat$ori.ID[stat$ad &gt; 1]
+stat2 &lt;- stat$ori.ID[stat$asym &gt; 1]
+datalist &lt;- list(stat1 = stat1, stat2 = stat2)
+sets &lt;- DEPsets(datalist)
+
+logD &lt;- imputedData$log2_value
+rownames(logD) &lt;- imputedData$inf$ori.ID
+Mod3 &lt;- getmoduleHub(logD, Module, 3, coln = "ori.ID", adjustp = FALSE)
+
+newnet &lt;- DEP_Mod_net_plot(Mod3, sets,
+                           data = logD, module = Module,
+                           plot = FALSE, filename = NULL, filetype = "pdf",
+                           OnlyPlotLast = FALSE,reconstructNet = FALSE)
+
+
+</code></pre>
+
+
+</div>

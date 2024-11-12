@@ -1,0 +1,346 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>domin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dominance analysis supporting <code>formula</code>-based modeling functions</h2>
+
+<h3>Description</h3>
+
+<p>Computes dominance statistics for predictive modeling functions that accept a <code>formula</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">domin(
+  formula_overall,
+  reg,
+  fitstat,
+  sets = NULL,
+  all = NULL,
+  conditional = TRUE,
+  complete = TRUE,
+  consmodel = NULL,
+  reverse = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula_overall</code></td>
+<td>
+<p>An object of class <code>formula</code> or that can be coerced to class <code>formula</code> for use in the modeling function in <code>reg</code>.  The <code>terms</code> on the right hand side of this formula are used as separate entries to the dominance analysis.
+</p>
+<p>A valid <code>formula_overall</code> entry is necessary, even if only submitting entries in <code>sets</code>, to define a valid left hand side of the prediction equation (see examples).  The function called in <code>reg</code> must accept one or more responses on the left hand side.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reg</code></td>
+<td>
+<p>A function implementing the predictive (or "reg"ression) model called.
+</p>
+<p>String function names (e.g., "lm"), function names (e.g., <code>lm</code>), or anonymous functions (e.g., <code>function(x) lm(x)</code>) are acceptable entries.  This argument's contents are passed to <code>do.call</code> and thus any function call <code>do.call</code> would accept is valid.
+</p>
+<p>The predictive model in <code>reg</code> must accept a <code>formula</code> object as its first argument or must be adapted to do so with a wrapper function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitstat</code></td>
+<td>
+<p>List providing arguments to call a fit statistic extracting function (see details). The <code>fitstat</code> list must be of at least length two.
+</p>
+<p>The first element of <code>fitstat</code> must be a function implementing the fit statistic extraction. String function names (e.g., "summary"), function names (e.g., <code>summary</code>), or anonymous functions (e.g., <code>function(x) summary(x)</code>) are acceptable entries. This element's contents are passed to <code>do.call</code> and thus any function call <code>do.call</code> would accept is valid.
+</p>
+<p>The second element of <code>fitstat</code> must be the named element of the list or vector produced by the fit extractor function called in the first element of <code>fitstat</code>.  This element must be a string (e.g., "r.squared").
+</p>
+<p>All list elements beyond the second are submitted as additional arguments to the fit extractor function call.
+</p>
+<p>The fit statistic extractor function in the first list element of <code>fitstat</code> must accept the model object produced by the predictive modeling function in <code>reg</code> as its first argument or be adapted to do so with a wrapper function.
+</p>
+<p>The fit statistic produced must be scalar valued (i.e., vector of length 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sets</code></td>
+<td>
+<p>A list with each element comprised of vectors containing variable/factor names or <code>formula</code> coercible strings.
+</p>
+<p>Each separate list element-vector in <code>sets</code> is concatenated (when the list element-vector is of length &gt; 1) and used as an entry to the dominance analysis along with the terms in <code>formula_overall</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all</code></td>
+<td>
+<p>A vector of variable/factor names or <code>formula</code> coercible strings.  The entries in this vector are concatenated (when of length &gt; 1) but are not used in the dominance analysis.  Rather the value of the fit statistic associated with these terms is removed from the dominance analysis; this vector is used like a set of covariates.
+</p>
+<p>The entries in <code>all</code> are removed from and considered an additional component that explains the fit metric.  As a result, the general dominance statistics will no longer sum to the overall fit metric and the standardized vector will no longer sum to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conditional</code></td>
+<td>
+<p>Logical.  If <code>FALSE</code> then conditional dominance matrix is not computed.
+</p>
+<p>If conditional dominance is not desired as an importance criterion, avoiding computing the conditional dominance matrix can save computation time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>complete</code></td>
+<td>
+<p>Logical.  If <code>FALSE</code> then complete dominance matrix is not computed.
+</p>
+<p>If complete dominance is not desired as an importance criterion, avoiding computing complete dominance designations can save computation time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>consmodel</code></td>
+<td>
+<p>A vector of variable/factor names, <code>formula</code> coercible strings, or other formula terms (i.e., 1 to indicate an intercept).  The entries in this vector are concatenated (when of length &gt; 1) and, like the entries of <code>all</code>, are not used in the dominance analysis; this vector is used as an adjustment to the baseline value of the overall fit statistic.
+</p>
+<p>The use of <code>consmodel</code> changes the interpretation of the the general and conditional dominance statistics.  When <code>consmodel</code> is used, the general and conditional dominance statistics are reflect the difference between the constant model and the overall fit statistic values.
+</p>
+<p>Typical usage of <code>consmodel</code> is to pass "1" to set the intercept as the baseline and control for its value when the baseline model's fit statistic value is not 0 (e.g., if using the AIC or BIC as a fit statistic; see examples).
+</p>
+<p>As such, this vector is used to set a baseline for the fit statistic when it is non-0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reverse</code></td>
+<td>
+<p>Logical. If <code>TRUE</code> then standardized vector, ranks, and complete dominance designations are reversed in their interpretation.
+</p>
+<p>This argument should be changed to <code>TRUE</code> if the fit statistic used decreases with better fit to the data (e.g., AIC, BIC).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to the function call in the <code>reg</code> argument.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>domin</code> automates the computation of all possible combination of entries to the dominance analysis (DA), the creation of <code>formula</code> objects based on those entries, the modeling calls/fit statistic capture, and the computation of all the dominance statistics for the user.
+</p>
+<p><code>domin</code> accepts only a "deconstructed" set of inputs and "reconstructs" them prior to formulating a coherent predictive modeling call.
+</p>
+<p>One specific instance of this deconstruction is in generating the number of entries to the DA. The number of entries is taken as all the <code>terms</code> from <code>formula_overall</code> and the separate list element vectors from <code>sets</code>. The entries themselves are concatenated into a single formula, combined with the entries in <code>all</code>, and submitted to the predictive modeling function in <code>reg</code>.  Each different combination of entries to the DA forms a different <code>formula</code> and thus a different model to estimate.
+</p>
+<p>For example, consider this <code>domin</code> call:
+</p>
+<p><code>domin(y ~ x1 + x2, lm, list(summary, "r.squared"), sets = list(c("x3", "x4")), all = c("c1", "c2"), data = mydata))</code>
+</p>
+<p>This call records three entries and results in seven (i.e., <code class="reqn">2^3 - 1</code>) different combinations:
+</p>
+
+<ol>
+<li>
+<p> x1
+</p>
+</li>
+<li>
+<p> x2
+</p>
+</li>
+<li>
+<p> x3, x4
+</p>
+</li>
+<li>
+<p> x1, x2
+</p>
+</li>
+<li>
+<p> x1, x3, x4
+</p>
+</li>
+<li>
+<p> x2, x3, x4
+</p>
+</li>
+<li>
+<p> x1, x2, x3, x4
+</p>
+</li>
+</ol>
+<p><code>domin</code> parses <code>formula_overall</code> to obtain all the terms in it and combines them with <code>sets</code>.  When parsing <code>formula_overall</code>, only the processing that is available in the <code>stats</code> package is applied.  Note that <code>domin</code> is not programmed to process terms of order &gt; 1 (i.e., interactions/products) appropriately (i.e., only include in the presence of lower order component terms). <code>domin</code> also does not allow <code>offset</code> terms.
+</p>
+<p>From these combinations, the predictive models are constructed and called. The predictive model call includes the entries in <code>all</code>, applies the appropriate formula, and reconstructs the function itself. The seven combinations above imply the following series of predictive model calls:
+</p>
+
+<ol>
+<li> <p><code>lm(y ~ x1 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+<li> <p><code>lm(y ~ x2 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+<li> <p><code>lm(y ~ x3 + x4 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+<li> <p><code>lm(y ~ x1 + x2 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+<li> <p><code>lm(y ~ x1 + x3 + x4 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+<li> <p><code>lm(y ~ x2 + x3 + x4 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+<li> <p><code>lm(y ~ x1 + x2 + x3 + x4 + c1 + c2, data = mydata</code>)
+</p>
+</li>
+</ol>
+<p>It is possible to use a <code>domin</code> with only sets (i.e., no IVs in <code>formula_overall</code>; see examples below). There must be at least two entries to the DA for <code>domin</code> to run.
+</p>
+<p>All the called predictive models are submitted to the fit extractor function implied by the entries in <code>fitstat</code>. Again applying the example above, all seven predictive models' objects would be individually passed as follows:
+</p>
+<p><code>summary(lm_obj)["r.squared"]</code>
+</p>
+<p>where <code>lm_obj</code> is the model object returned by <code>lm</code>.
+</p>
+<p>The entries to <code>fitstat</code> must be as a list and follow a specific structure:
+<code>list(fit_function, element_name, ...)</code>
+</p>
+
+<dl>
+<dt><code>fit_function</code></dt>
+<dd>
+<p>First element and function to be applied to the object produced by the <code>reg</code> function</p>
+</dd>
+<dt><code>element_name</code></dt>
+<dd>
+<p>Second element and name of the element from the object returned by <code>fit_function</code> to be used as a fit statistic.  The fit statistic must be scalar-valued/length 1</p>
+</dd>
+<dt><code>...</code></dt>
+<dd>
+<p>Subsequent elements and are additional arguments passed to <code>fit_function</code></p>
+</dd>
+</dl>
+<p>In the case that the model object returned by <code>reg</code> includes its own fit statistic without the need for an extractor function, the user can apply an anonymous function following the required format to extract it.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of <code>class</code> "domin".
+An object of class "domin" is a list composed of the following elements:
+</p>
+
+<dl>
+<dt><code>General_Dominance</code></dt>
+<dd>
+<p>Vector of general dominance statistics.</p>
+</dd>
+<dt><code>Standardized</code></dt>
+<dd>
+<p>Vector of general dominance statistics normalized to sum to 1.</p>
+</dd>
+<dt><code>Ranks</code></dt>
+<dd>
+<p>Vector of ranks applied to the general dominance statistics.</p>
+</dd>
+<dt><code>Conditional_Dominance</code></dt>
+<dd>
+<p>Matrix of conditional dominance statistics.  Each row represents a term; each column represents an order of terms.</p>
+</dd>
+<dt><code>Complete_Dominance</code></dt>
+<dd>
+<p>Logical matrix of complete dominance designations. The term represented in each row indicates dominance status; the terms represented in each columns indicates dominated-by status.</p>
+</dd>
+<dt><code>Fit_Statistic_Overall</code></dt>
+<dd>
+<p>Value of fit statistic for the full model.</p>
+</dd>
+<dt><code>Fit_Statistic_All_Subsets</code></dt>
+<dd>
+<p>Value of fit statistic associated with terms in <code>all</code>.</p>
+</dd>
+<dt><code>Fit_Statistic_Constant_Model</code></dt>
+<dd>
+<p>Value of fit statistic associated with terms in <code>consmodel</code>.</p>
+</dd>
+<dt><code>Call</code></dt>
+<dd>
+<p>The matched call.</p>
+</dd>
+<dt><code>Subset_Details</code></dt>
+<dd>
+<p>List containing the full model and descriptions of terms in the full model by source.</p>
+</dd>
+</dl>
+<h3>Notes</h3>
+
+<p><code>domin</code> is an R port of the Stata command with the same name (see Luchman, 2021).
+</p>
+<p><code>domin</code> has been superseded by <code>domir</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Luchman, J. N. (2021). Relative importance analysis in Stata using dominance analysis: domin and domme.
+The Stata Journal, 21, 2. doi: 10.1177/1536867X211025837.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Basic linear model with r-square
+
+domin(mpg ~ am + vs + cyl, 
+  lm, 
+  list("summary", "r.squared"), 
+  data = mtcars)
+
+
+## Linear model including sets
+
+domin(mpg ~ am + vs + cyl, 
+  lm, 
+  list("summary", "r.squared"), 
+  data = mtcars, 
+  sets = list(c("carb", "gear"), c("disp", "wt")))
+
+
+## Multivariate linear model with custom multivariate r-square function 
+## and all subsets variable
+
+Rxy &lt;- function(obj, names, data) {
+   return(list("r2" = cancor(predict(obj), 
+       as.data.frame(mget(names, as.environment(data))))[["cor"]][1]^2)) 
+       }
+       
+domin(cbind(wt, mpg) ~ vs + cyl + am, 
+  lm, 
+  list(Rxy, "r2", c("mpg", "wt"), mtcars), 
+  data = mtcars, 
+  all = c("carb"))
+
+
+## Sets only
+
+domin(mpg ~ 1, 
+  lm, 
+  list("summary", "r.squared"), 
+  data = mtcars, 
+  sets = list(c("am", "vs"), c("cyl", "disp"), c("qsec", "carb")))
+  
+## Constant model using AIC
+
+domin(mpg ~ am + carb + cyl, 
+  lm, 
+  list(function(x) list(aic = extractAIC(x)[[2]]), "aic"), 
+  data = mtcars, 
+  reverse = TRUE, consmodel = "1")
+</code></pre>
+
+
+</div>

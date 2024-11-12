@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>update</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Update a GP or DGP emulator</h2>
+
+<h3>Description</h3>
+
+<p>This function updates the training input and output of a GP or DGP emulator with an option to refit the emulator.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">update(object, X, Y, refit, reset, verb, ...)
+
+## S3 method for class 'dgp'
+update(
+  object,
+  X,
+  Y,
+  refit = FALSE,
+  reset = FALSE,
+  verb = TRUE,
+  N = 100,
+  cores = 1,
+  ess_burn = 10,
+  B = NULL,
+  ...
+)
+
+## S3 method for class 'gp'
+update(object, X, Y, refit = FALSE, reset = FALSE, verb = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>can be one of the following:
+</p>
+
+<ul>
+<li>
+<p> the S3 class <code>gp</code>.
+</p>
+</li>
+<li>
+<p> the S3 class <code>dgp</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>the new input data which is a matrix where each row is an input training data point and each column is an input dimension.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>the new output data:
+</p>
+
+<ul>
+<li>
+<p> If <code>object</code> is an instance of the <code>gp</code> class, <code>Y</code> is a matrix with only one column and each row being an output data point.
+</p>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>dgp</code> class, <code>Y</code> is a matrix with its rows being output data points and columns being
+output dimensions. When <code>likelihood</code> (see below) is not <code>NULL</code>, <code>Y</code> must be a matrix with only one column.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refit</code></td>
+<td>
+<p>a bool indicating whether to re-fit the emulator <code>object</code> after the training input and output are updated. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reset</code></td>
+<td>
+<p>a bool indicating whether to reset hyperparameters of the emulator <code>object</code> to their initial values when the emulator was
+constructed, after the training input and output are updated. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>a bool indicating if the trace information will be printed during the function execution.
+Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>N/A.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>number of training iterations used to re-fit the emulator <code>object</code> if it is an instance of the <code>dgp</code> class. Defaults to <code>100</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>the number of cores/workers to be used to re-fit GP components (in the same layer)
+at each M-step during the re-fitting. If set to <code>NULL</code>, the number of cores is set to <code style="white-space: pre;">⁠(max physical cores available - 1)⁠</code>.
+Only use multiple cores when there is a large number of GP components in different layers and optimization of GP components
+is computationally expensive. Defaults to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ess_burn</code></td>
+<td>
+<p>number of burnin steps for the ESS-within-Gibbs at each I-step in training the emulator <code>object</code> if it is an
+instance of the <code>dgp</code> class. Defaults to <code>10</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>the number of imputations for predictions from the updated emulator <code>object</code> if it is an instance of the <code>dgp</code> class.
+This overrides the number of imputations set in <code>object</code>. Set to <code>NULL</code> to use the same number of imputations set
+in <code>object</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated <code>object</code>.
+</p>
+
+
+<h3>Note</h3>
+
+
+<ul>
+<li>
+<p> The following slots:
+</p>
+
+<ul>
+<li> <p><code>loo</code> and <code>oos</code> created by <code>validate()</code>;
+</p>
+</li>
+<li> <p><code>results</code> created by <code>predict()</code>; and
+</p>
+</li>
+<li> <p><code>design</code> created by <code>design()</code>
+</p>
+</li>
+</ul>
+<p>in <code>object</code> will be removed and not contained in the returned object.
+</p>
+</li>
+<li>
+<p> Any R vector detected in <code>X</code> and <code>Y</code> will be treated as a column vector and automatically converted into a single-column
+R matrix. Thus, if <code>X</code> is a single data point with multiple dimensions, it must be given as a matrix.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# See alm(), mice(), pei(), or vigf() for an example.
+
+## End(Not run)
+</code></pre>
+
+
+</div>

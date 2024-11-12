@@ -1,0 +1,109 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>coef.dynrModel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract fitted parameters from a dynrCook Object</h2>
+
+<h3>Description</h3>
+
+<p>aliases coef.dynrModel coef&lt;- coef&lt;-.dynrModel
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynrModel'
+coef(object, ...)
+
+coef(object) &lt;- value
+
+## S3 replacement method for class 'dynrModel'
+coef(object) &lt;- value
+
+## S3 method for class 'dynrCook'
+coef(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>The dynrCook object for which the coefficients are desired</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further named arguments, ignored for this method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>values for setting</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A numeric vector of the fitted parameters.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other S3 methods <code>logLik.dynrCook</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a minimal cooked model called 'cook'
+require(dynr)
+
+meas &lt;- prep.measurement(
+	values.load=matrix(c(1, 0), 1, 2),
+	params.load=matrix(c('fixed', 'fixed'), 1, 2),
+	state.names=c("Position","Velocity"),
+	obs.names=c("y1"))
+
+ecov &lt;- prep.noise(
+	values.latent=diag(c(0, 1), 2),
+	params.latent=diag(c('fixed', 'dnoise'), 2),
+	values.observed=diag(1.5, 1),
+	params.observed=diag('mnoise', 1))
+
+initial &lt;- prep.initial(
+	values.inistate=c(0, 1),
+	params.inistate=c('inipos', 'fixed'),
+	values.inicov=diag(1, 2),
+	params.inicov=diag('fixed', 2))
+
+dynamics &lt;- prep.matrixDynamics(
+	values.dyn=matrix(c(0, -0.1, 1, -0.2), 2, 2),
+	params.dyn=matrix(c('fixed', 'spring', 'fixed', 'friction'), 2, 2),
+	isContinuousTime=TRUE)
+
+data(Oscillator)
+data &lt;- dynr.data(Oscillator, id="id", time="times", observed="y1")
+
+model &lt;- dynr.model(dynamics=dynamics, measurement=meas,
+	noise=ecov, initial=initial, data=data)
+
+## Not run: 
+cook &lt;- dynr.cook(model,
+	verbose=FALSE, optimization_flag=FALSE, hessian_flag=FALSE)
+
+# Now grab the coef!
+coef(cook)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

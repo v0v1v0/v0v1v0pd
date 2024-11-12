@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict_diagnostics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Instance Level Residual Diagnostics</h2>
+
+<h3>Description</h3>
+
+<p>This function performs local diagnostic of residuals.
+For a single instance its neighbors are identified in the validation data.
+Residuals are calculated for neighbors and plotted against residuals for all data.
+Find information how to use this function here: <a href="https://ema.drwhy.ai/localDiagnostics.html">https://ema.drwhy.ai/localDiagnostics.html</a>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predict_diagnostics(
+  explainer,
+  new_observation,
+  variables = NULL,
+  ...,
+  nbins = 20,
+  neighbors = 50,
+  distance = gower::gower_dist
+)
+
+individual_diagnostics(
+  explainer,
+  new_observation,
+  variables = NULL,
+  ...,
+  nbins = 20,
+  neighbors = 50,
+  distance = gower::gower_dist
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>explainer</code></td>
+<td>
+<p>a model to be explained, preprocessed by the 'explain' function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_observation</code></td>
+<td>
+<p>a new observation for which predictions need to be explained</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variables</code></td>
+<td>
+<p>character - name of variables to be explained</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbins</code></td>
+<td>
+<p>number of bins for the histogram. By default 20</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>neighbors</code></td>
+<td>
+<p>number of neighbors for histogram. By default 50.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+<p>the distance function, by default the <code>gower_dist()</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class 'predict_diagnostics'.
+It's a data frame with calculated distribution of residuals.
+</p>
+
+
+<h3>References</h3>
+
+<p>Explanatory Model Analysis. Explore, Explain, and Examine Predictive Models. <a href="https://ema.drwhy.ai/">https://ema.drwhy.ai/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library("ranger")
+titanic_glm_model &lt;- ranger(survived ~ gender + age + class + fare + sibsp + parch,
+                     data = titanic_imputed)
+explainer_glm &lt;- explain(titanic_glm_model,
+                         data = titanic_imputed,
+                         y = titanic_imputed$survived)
+johny_d &lt;- titanic_imputed[24, c("gender", "age", "class", "fare", "sibsp", "parch")]
+
+id_johny &lt;- predict_diagnostics(explainer_glm, johny_d, variables = NULL)
+id_johny
+plot(id_johny)
+
+id_johny &lt;- predict_diagnostics(explainer_glm, johny_d,
+                       neighbors = 10,
+                       variables = c("age", "fare"))
+id_johny
+plot(id_johny)
+
+id_johny &lt;- predict_diagnostics(explainer_glm,
+                       johny_d,
+                       neighbors = 10,
+                       variables = c("class", "gender"))
+id_johny
+plot(id_johny)
+
+
+</code></pre>
+
+
+</div>

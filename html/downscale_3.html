@@ -1,0 +1,306 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ensemble.downscale</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ensemble modelling of multiple downscaling functions</h2>
+
+<h3>Description</h3>
+
+<p>Predict area of occupancy at fine grain sizes for multiple downscaling methods using <code>downscale</code> and <code>predict.downscale</code>. Occupancies are converted to area of occupancy (AOO) by multiplying by the total extent. The mean of the logged predicted occupancies of all models is then calculated.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ensemble.downscale(occupancies, new.areas, extent, cell.width = NULL, 
+                   models = "all", tolerance_mod = 1e-6, tolerance_pred = 1e-6,
+                   tolerance_hui = 1e-6, starting_params = NULL, plot = TRUE, 
+                   verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>occupancies</code></td>
+<td>
+<p>Either a data frame containing two columns or an object of class "upgrain" from the upgrain function. If using the <code>Hui</code> model (or <code>model = "all"</code>) occupancies must be of class <code>"upgrain"</code>. If using a data frame the first column must be the grain sizes (cell area in squared units e.g. km^2). The second column is the proportion of occupancies at each grain size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new.areas</code></td>
+<td>
+<p>vector of grain sizes (in squared units e.g. km^2) for which area of occupancy will be predicted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extent</code></td>
+<td>
+<p>total area in same units as occupancy. If using an object of class "upgrain", this is automatically inputted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cell.width</code></td>
+<td>
+<p>the cell width of the atlas data. Only required for <code>Hui</code> model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance_mod</code></td>
+<td>
+<p>only applicable for the <code>Thomas</code> model. The tolerance used during integration in the Thomas model during optimisation of parameters. Lower numbers allow for greater accuracy but require longer processing times (default = <code>1e-6</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance_pred</code></td>
+<td>
+<p>only applicable for the <code>Thomas</code> model. The tolerance used during the prediction stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance_hui</code></td>
+<td>
+<p>only applicable for the <code>Hui</code> model. The tolerance used during integration in the Thomas model during optimisation of parameters. Lower numbers allow for greater accuracy but require longer processing times (default = <code>1e-6</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>vector of chosen downscaling models. Default <code>models = "all"</code> runs all available models. See <code>downscale</code> for list of available models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>starting_params</code></td>
+<td>
+<p>Starting values for model parameters if a model is not converging sufficiently. A list where each model to be specified is a list of parameter values. The parameter names must be the same for the default values (see <code>Details</code> for information on the parameters and how to specify them).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>if <code>TRUE</code> predictions of all models (red) are plotted against
+grain size along with the mean of all models (grey) and observed occupancies (black).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if <code>TRUE</code> prints updates on modelling status.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Ten downscaling models are available: <code>"Nachman"</code>, <code>"PL"</code>, <code>"Logis"</code>, <code>"Poisson"</code>, <code>"NB"</code>, <code>"GNB"</code>, <code>"INB"</code>, <code>"FNB"</code>, <code>"Thomas"</code> and <code>"Hui"</code>. They can be input in any order, or all models run through <code>models = "all"</code>. If the <code>Hui</code> model is included the input data must be an object of class <code>"upgrain"</code> generated through <code>upgrain</code>. See <code>downscale</code> and <code>hui.downscale</code> for more details of the available models.
+</p>
+<p>The optimisation procedure requires initial starting values for all model parameters. In most cases the default values should work, however if one or more models are not converging adequately it is possible to input the starting parameters. For each model we wish to specify, the parameters must be in the form of a list with the same parameter names as in the table below. <code>starting_params</code> is then a list of these lists - the names of the lists are the same as the models. For example, if we wish to specify the starting parameters for the Nachman model and the Generalised Negative Binomial model the code would be:
+</p>
+
+
+<p><code style="white-space: pre;">⁠starting_params = list(Nachman = list("C" = 0.1, "z" = 0.01),
+                       GNB = list("C" = 0.1, "z" = 1, "k" = 0.01))⁠</code>
+
+</p>
+<p>Please take particular note of captials. The default starting parameters are:
+</p>
+
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>"Nachman"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> C = 0.01; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> z = 0.01 </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"PL"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> C = 0.01; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> z = 0.01 </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"Logis"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> C = 0.01; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> z = 0.01 </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"Poisson"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> gamma = 1e-8 </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"NB"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> C = 0.01; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> k = 0.01 </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"GNB"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> C = 0.00001; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> z = 1; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> k = 0.01</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"INB"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> C = 1; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> gamma = 0.01; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> b = 0.1</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"FNB"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> N = 10; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> k = 10 </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"Thomas"</code> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> rho = 1e-8; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> mu = 10; </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> sigma = 1</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list of two data frames: 
+<code>Occupancy</code> = proportion of occupancies; 
+<code>AOO</code> = occupancies converted to area of occupancy. 
+</p>
+<p>In each data frame the first column <code>cell.area</code> are the grain sizes used for predictions. The final column <code>Means</code> are the mean of the logged predictions of all models for each grain size. Intermediate columns are the predicted occupancies for the selected downscaling models.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Charles Marsh &lt;<a href="mailto:charlie.marsh@mailbox.org">charlie.marsh@mailbox.org</a>&gt; with input from Louise Barwell.
+</p>
+
+
+<h3>References</h3>
+
+<p>Azaele, S., Cornell, S.J., &amp; Kunin, W.E. (2012). Downscaling species occupancy from coarse spatial scales. <em>Ecological Applications</em> 22, 1004-1014.
+</p>
+<p>Barwell, L.J., Azaele, S., Kunin, W.E., &amp; Isaac, N.J.B. (2014). Can coarse-grain patterns in insect atlas data predict local occupancy? <em>Diversity and Distributions</em> 20, 895-907.
+</p>
+<p>Groom, Q., Marsh, C.J., Gavish, Y. Kunin, W.E. (2018). How to predict fine resolution occupancy from coarse occupancy data, <em>Methods in Ecology and Evolution</em>. 9(11), 2273-2284.
+</p>
+<p>Marsh, C.J, Barwell, L.J., Gavish, Y., Kunin, W.E. (2018). downscale: An R package for downscaling species occupancy from coarse-grain data to predict occupancy at fine-grain sizes, <em>Journal of Statistical Software</em> 86(Code Snippet 3), 1-20.
+</p>
+<p>Marsh, C.J, Gavish, Y., Kunin, W.E., Brummitt N.A. (2019). Mind the gap: Can downscaling Area of Occupancy overcome sampling gaps when assessing IUCN Red List status?, <em>Diversity and Distributions</em> 25, 1832-1845.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>upgrain</code> for creating objects of class <code>"upgrain"</code>. See <code>downscale</code> and <code>predict.downscale</code>, and <code>link{hui.downscale}</code> for downscaling models individually.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example species data
+data.file &lt;- system.file("extdata", "atlas_data.txt", package = "downscale")
+atlas.data &lt;- read.table(data.file, header = TRUE)
+
+## if the input data is a data frame it must have the columns "x", "y"
+## and "presence"
+head(atlas.data)
+
+## upgrain data (using All Samples threshold)
+occupancy &lt;- upgrain(atlas.data,
+                     cell.width = 10,
+                     scales = 3,
+                     method = "All_Sampled",
+                     plot = FALSE)
+
+## ensemble downscaling with an object of class upgrain
+ensemble.downscale(occupancies = occupancy,
+                   new.areas = c(1, 2, 5, 15, 50, 100, 400, 1600, 6400),
+                   cell.width = 10,
+                   models = c("Nachman", "PL", "Logis", "GNB", "FNB", "Hui"),
+                   plot = TRUE)
+
+## ensemble modelling with data frame of occupancies (not applicable for Hui
+## model) with hypothetical species occupancy data
+occupancy.dd &lt;- data.frame(Cell.areas = c(100, 400, 1600, 6400),
+                           Occupancy = c(0.16, 0.36, 0.59, 0.86))
+
+## now extent must be specified (but cell.width not needed)
+ensemble.downscale(occupancies = occupancy.dd,
+                   new.areas = c(1, 2, 5, 15, 50, 100, 400, 1600, 6400),
+                   extent = 384000,
+                   models = c("Nachman", "PL", "Logis", "GNB", "FNB"),
+                   plot = TRUE)
+</code></pre>
+
+
+</div>

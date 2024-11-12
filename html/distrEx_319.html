@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distrExIntegrate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Integration of One-Dimensional Functions</h2>
+
+<h3>Description</h3>
+
+<p>Numerical integration via <code>integrate</code>. In case <code>integrate</code>
+fails a Gauss-Legendre quadrature is performed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">distrExIntegrate(f, lower, upper, subdivisions = 100, 
+                 rel.tol = .Machine$double.eps^0.25, 
+                 abs.tol = rel.tol, stop.on.error = TRUE, 
+                 distr, order, ..., diagnostic = FALSE)
+showDiagnostic(x, what, withNonShows = FALSE, ...)
+getDiagnostic(x, what, reorganized=TRUE)
+## S3 method for class 'DiagnosticClass'
+print(x, what, withNonShows = FALSE, xname, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p> an R function taking a numeric first argument and returning a
+numeric vector of the same length.  Returning a non-finite
+element will generate an error. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p> lower limit of integration. Can be <code>-Inf</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p> upper limit of integration. Can be <code>Inf</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subdivisions</code></td>
+<td>
+<p> the maximum number of subintervals. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rel.tol</code></td>
+<td>
+<p> relative accuracy requested. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>abs.tol</code></td>
+<td>
+<p> absolute accuracy requested. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop.on.error</code></td>
+<td>
+<p> logical. If <code>TRUE</code> (the default) an error 
+stops the function. If false some errors will give a result with a 
+warning in the <code>message</code> component. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distr</code></td>
+<td>
+<p> object of class <code>UnivariateDistribution</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p> order of Gauss-Legendre quadrature. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diagnostic</code></td>
+<td>
+<p> logical; if <code>TRUE</code>, the return value obtains
+an attribute <code>"diagnostic"</code> with diagnostic information on the
+integration, i.e., a list with entries <code>method</code> (<code>"integrate"</code>
+or <code>"GLIntegrate"</code>), <code>call</code>, <code>result</code> (the complete return
+value of the method),  <code>args</code> (the args with which the
+method was called), and <code>time</code> (the time to compute the integral). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> In case of integrators: additional arguments to be passed to <code>f</code>. Remember
+to use argument names not matching those of <code>integrate</code>
+and <code>GLIntegrate</code>! In case of <code>showDiagnostic</code>, <code>print.DiagnosticClass</code>:
+additional arguments to be passed on to print methods called for particular
+items in the diagnostic list. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p> the item for which the diagnostic is to be shown. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>what</code></td>
+<td>
+<p> a character vector with all the diagnostic items to be
+selected/shown. If empty or missing all items are selected/shown. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>withNonShows</code></td>
+<td>
+<p> internally we distinguish items which are easily
+printed (first kind) (numeric, logical, character)
+and more difficult ones (second kind), e.g., calls, functions, lists. The
+distinction is made according to the list item name. If
+<code>withNonShows==TRUE</code> one also attempts to show the selected items
+of the second kind, otherwise they are not shown (but returned). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xname</code></td>
+<td>
+<p> an optional name for the diagnostic object to be shown. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reorganized</code></td>
+<td>
+<p>should the diagnostic information be reorganized
+(using internal function <code>.reorganizeDiagnosticList</code>? </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>distrExIntegrate</code> calls <code>integrate</code>. In case <code>integrate</code>
+returns an error a Gauss-Legendre integration is performed using
+<code>GLIntegrate</code>. If <code>lower</code> or (and) <code>upper</code> are infinite
+the <code>GLIntegrateTruncQuantile</code>, respectively the 
+<code>1-GLIntegrateTruncQuantile</code> quantile of <code>distr</code> is used 
+instead.
+</p>
+<p><code>distrExIntegrate</code> is called from many places in the distr and robast
+families of packages. At every such instance, diagnostic information can
+be collected (setting a corresponding argument <code>diagnostic</code> to <code>TRUE</code>
+in the calling function. This diagnostic information is originally stored in
+a tree like list structure of S3 class <code>DiagnosticClass</code> which is then
+attached as attribute <code>diagnostic</code> to the respective object. It can be
+inspected and accessed through <code>showDiagnostic</code> and  <code>getDiagnostic</code>.
+More specifically, for any object with attribute <code>diagnostic</code>,
+<code>showDiagnostic</code> shows the diagnostic collected during integration, and
+<code>getDiagnostic</code> returns the diagnostic collected during integration.
+To this end, <code>print.DiagnosticClass</code> is an S3 method for <code>print</code>
+for objects of S3 class <code>DiagnosticClass</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The value of <code>distrExIntegrate</code> is a numeric approximation of the integral.
+If argument <code>diagnostic==TRUE</code> in <code>distrExIntegrate</code>, the return
+value has an attribute <code>diagnostic</code> of S3 class <code>DiagnosticClass</code>
+containing diagnostic information on the integration.
+</p>
+<p><code>showDiagnostic</code>, <code>getDiagnostic</code>, <code>print.DiagnosticClass</code> all
+return (invisibly) a list with the selected items, reorganized by internal
+function <code>.reorganizeDiagnosticList</code>, respectively, in case
+of argument <code>reorganized==FALSE</code>, <code>getDiagnostic</code> returns (invisibly)
+the diagnostic information as is.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matthias Kohl <a href="mailto:Matthias.Kohl@stamats.de">Matthias.Kohl@stamats.de</a></p>
+
+
+<h3>References</h3>
+
+ 
+<p>Based on QUADPACK routines <code>dqags</code> and <code>dqagi</code> by
+R. Piessens and E. deDoncker-Kapenga, available from Netlib.
+</p>
+<p>R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner (1983)
+<em>Quadpack: a Subroutine Package for Automatic Integration</em>.
+Springer Verlag.
+</p>
+<p>W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery (1992)
+<em>Numerical Recipies in C</em>. The Art of Scientific Computing.
+Second Edition. Cambridge University Press.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>integrate</code>, <code>GLIntegrate</code>, 
+<code>distrExOptions</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">fkt &lt;- function(x){x*dchisq(x+1, df = 1)}
+integrate(fkt, lower = -1, upper = 3)
+GLIntegrate(fkt, lower = -1, upper = 3)
+try(integrate(fkt, lower = -1, upper = 5))
+distrExIntegrate(fkt, lower = -1, upper = 5)
+</code></pre>
+
+
+</div>

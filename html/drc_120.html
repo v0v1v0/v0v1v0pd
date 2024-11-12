@@ -1,0 +1,115 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>MM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Michaelis-Menten model</h2>
+
+<h3>Description</h3>
+
+<p>The functions can be used to fit (shifted) Michaelis-Menten models that are used
+for modeling enzyme kinetics, weed densities etc.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R"> 
+  MM.2(fixed = c(NA, NA), names = c("d", "e"), ...)
+  
+  MM.3(fixed = c(NA, NA, NA), names = c("c", "d", "e"), ...)  
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>numeric vector. Specifies which parameters are fixed and at what value they are fixed. 
+NAs for parameter that are not fixed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>a vector of character strings giving the names of the parameters (should not contain ":").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments from convenience functions to <code>llogistic</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The model is defined by the three-parameter model function
+</p>
+<p style="text-align: center;"><code class="reqn">f(x, (c, d, e)) = c + \frac{d-c}{1+(e/x)}</code>
+</p>
+
+<p>It is an increasing as a function of the dose <code class="reqn">x</code>, attaining the lower limit <code class="reqn">c</code> at dose 0 (<code class="reqn">x=0</code>) 
+and the upper limit <code class="reqn">d</code> for infinitely large doses. The parameter <code class="reqn">e</code> corresponds to the dose yielding a response
+halfway between <code class="reqn">c</code> and <code class="reqn">d</code>. 
+</p>
+<p>The common two-parameter Michaelis-Menten model (<code>MM.2</code>) is obtained by
+setting <code class="reqn">c</code> equal to 0.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class <code>drcMean</code>, containing the mean function, the self starter function,
+the parameter names and other components such as derivatives and a function for calculating ED values.
+</p>
+
+
+<h3>Note</h3>
+
+<p>At the moment the implementation cannot deal with infinite concentrations.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Christian Ritz</p>
+
+
+<h3>See Also</h3>
+
+<p>Related models are the asymptotic regression models <code>AR.2</code> and <code>AR.3</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Fitting Michaelis-Menten model
+met.mm.m1 &lt;- drm(gain~dose, product, data=methionine, fct=MM.3(), 
+pmodels = list(~1, ~factor(product), ~factor(product)))
+plot(met.mm.m1, log = "", ylim=c(1450, 1800))
+summary(met.mm.m1)
+ED(met.mm.m1, c(10, 50))
+
+## Calculating bioefficacy: approach 1
+coef(met.mm.m1)[4] / coef(met.mm.m1)[5] * 100
+
+## Calculating bioefficacy: approach 2
+EDcomp(met.mm.m1, c(50,50))
+
+## Simplified models
+met.mm.m2a &lt;- drm(gain~dose, product, data=methionine, fct=MM.3(), 
+pmodels = list(~1, ~factor(product), ~1))
+anova(met.mm.m2a, met.mm.m1)  # model reduction not possible
+
+met.mm.m2b &lt;- drm(gain~dose, product, data=methionine, fct=MM.3(), 
+pmodels = list(~1, ~1, ~factor(product)))
+anova(met.mm.m2b, met.mm.m1)  # model reduction not possible
+
+</code></pre>
+
+
+</div>

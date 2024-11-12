@@ -1,0 +1,187 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>infer_trajectories</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Infer one or more trajectories from a single-cell dataset</h2>
+
+<h3>Description</h3>
+
+<p>Infer one or more trajectories from a single-cell dataset
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">infer_trajectories(
+  dataset,
+  method,
+  parameters = NULL,
+  give_priors = NULL,
+  seed = random_seed(),
+  verbose = FALSE,
+  return_verbose = FALSE,
+  debug = FALSE,
+  map_fun = map
+)
+
+infer_trajectory(
+  dataset,
+  method,
+  parameters = NULL,
+  give_priors = NULL,
+  seed = random_seed(),
+  verbose = FALSE,
+  return_verbose = FALSE,
+  debug = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataset</code></td>
+<td>
+<p>One or more datasets as created by <code>wrap_data()</code> or <code>wrap_expression()</code>. Prior information can be added using <code>add_prior_information()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>One or more methods. Must be one of:
+</p>
+
+<ul>
+<li>
+<p>an object or list of ti_... objects (e.g. <code>dynmethods::ti_comp1</code>,
+</p>
+</li>
+<li>
+<p>a character vector containing the names of methods to execute (e.g. <code>"scorpius"</code>),
+</p>
+</li>
+<li>
+<p>a character vector containing dockerhub repositories (e.g. <code>dynverse/paga</code>), or
+</p>
+</li>
+<li>
+<p>a dynguidelines data frame.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>A set of parameters to be used during trajectory inference.
+A parameter set must be a named list of parameters.
+If multiple methods were provided in the <code>method</code> parameter,
+<code>parameters</code> must be an unnamed list of the same length.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give_priors</code></td>
+<td>
+<p>All the priors a method is allowed to receive.
+Must be a subset of all available priors (priors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>A seed to be passed to the TI method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Whether or not to print information output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_verbose</code></td>
+<td>
+<p>Whether to store and return messages printed by the method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>Used for debugging containers methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>map_fun</code></td>
+<td>
+<p>A map function to use when inferring trajectories with multiple datasets or methods.
+Allows to parallellise the execution in an arbitrary way.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any additional parameters given to the method, will be concatenated to the parameters argument</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><strong><code>infer_trajectory</code></strong>: A trajectory object, which is a list containing
+</p>
+
+<ul>
+<li> <p><em>milestone_ids</em>: The names of the milestones, a character vector.
+</p>
+</li>
+<li> <p><em>milestone_network</em>: The network between the milestones, a dataframe with the from milestone, to milestone, length of the edge, and whether it is directed.
+</p>
+</li>
+<li> <p><em>divergence_regions</em>: The regions between three or more milestones where cells are diverging, a dataframe with the divergence id, the milestone id and whether this milestone is the start of the divergence
+</p>
+</li>
+<li> <p><em>milestone_percentages</em>: For each cell its closeness to a particular milestone, a dataframe with the cell id, the milestone id, and its percentage (a number between 0 and 1 where higher values indicate that a cell is close to the milestone).
+</p>
+</li>
+<li> <p><em>progressions</em>: For each cell its progression along a particular edge of the <em>milestone_network</em>. Contains the same information as <em>milestone_percentages</em>. A dataframe with cell id, from milestone, to milestone, and its percentage (a number between 0 and 1 where higher values indicate that a cell is close to the 'to' milestone and far from the 'from' milestone).
+</p>
+</li>
+<li> <p><em>cell_ids</em>: The names of the cells
+</p>
+</li>
+</ul>
+<p>Some methods will include additional information in the output, such as
+</p>
+
+<ul>
+<li>
+<p> A dimensionality reduction (<em>dimred</em>), the location of the trajectory milestones and edges in this dimensionality reduction (<em>dimred_milestones</em>, <em>dimred_segment_progressions</em> and <em>dimred_segment_points</em>). See <code>add_dimred()</code> for more information on these objects.
+</p>
+</li>
+<li>
+<p> A cell grouping (<em>grouping</em>). See <code>add_grouping()</code> for more information on this object.
+</p>
+</li>
+</ul>
+<p><strong><code>infer_trajectories</code></strong>: A tibble containing the dataset and method identifiers (<em>dataset_id</em> and <em>method_id</em>), the trajectory model as described above (<em>model</em>), and a <em>summary</em> containing the execution times, output and error if appropriate
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dataset &lt;- example_dataset
+method &lt;- get_ti_methods(as_tibble = FALSE)[[1]]$fun
+
+trajectory &lt;- infer_trajectory(dataset, method())
+
+head(trajectory$milestone_network)
+head(trajectory$progressions)
+
+</code></pre>
+
+
+</div>

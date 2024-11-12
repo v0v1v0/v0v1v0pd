@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulateWEV</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulation of confidence ratings and RTs in dynWEV and 2DSD confidence models</h2>
+
+<h3>Description</h3>
+
+<p>Simulates the decision responses and reaction times together with a
+discrete confidence judgment in the dynaViTE model, the 2DSD model (Pleskac &amp; Busemeyer, 2010)
+and the dynWEV model (Hellmann et al., 2023), given specific parameter constellations.
+See <code>dWEV</code> and <code>d2DSD</code> for more information about parameters.
+Also computes the Gamma rank correlation between the confidence ratings and condition
+(task difficulty), reaction times and accuracy in the simulated output.
+Basically, this function is a wrapper for <code>rWEV</code> and <code>r2DSD</code>
+for application in confidence experiments with manipulation of specific parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulateWEV(paramDf, n = 10000, model = "dynWEV", simult_conf = FALSE,
+  gamma = FALSE, agg_simus = FALSE, stimulus = c(-1, 1), delta = 0.01,
+  maxrt = 15, seed = NULL, process_results = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>paramDf</code></td>
+<td>
+<p>a list or dataframe with one row. Column names should match the names
+of dynaViTE and 2DSD model specific parameter names. For different stimulus quality/mean
+drift rates, names should be <code>v1</code>, <code>v2</code>, <code>v3</code>,....
+Different <code>sv</code> and/or <code>s</code> parameters are possible with <code>sv1</code>, <code>sv2</code>, <code>sv3</code>... (<code>s1</code>, <code>s2</code>, <code>s3</code>,...
+respectively) with equally many steps as for drift rates. Additionally, the confidence
+thresholds should be given by names with <code>thetaUpper1</code>, <code>thetaUpper2</code>,..., <code>thetaLower1</code>,... or,
+for symmetric thresholds only by <code>theta1</code>, <code>theta2</code>,....</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer. The number of samples (per condition and stimulus direction) generated.
+Total number of samples is <code>n*nConditions*length(stimulus)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character scalar. One of "dynaViTE", "dynWEV", or "2DSD".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simult_conf</code></td>
+<td>
+<p>logical. <code>TRUE</code>, if in the experiment confidence was reported simultaneously
+with the decision, as then decision and confidence judgment are assumed to have happened
+subsequent before response and tau is added to the simulated decision time. If <code>FALSE</code>
+returned response time will only be decision time plus non-judgment time component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>logical. If TRUE, the gamma correlation between confidence ratings, rt
+and accuracy is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>agg_simus</code></td>
+<td>
+<p>logical. Simulation is done on a trial basis with RTs outcome.
+If TRUE, the simulations will be aggregated over RTs to return only the distribution
+of response and confidence ratings. Default: FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stimulus</code></td>
+<td>
+<p>numeric vector. Either 1, -1 or c(-1, 1) (default). Together with
+condition represents the experimental situation. In a binary decision task the presented
+stimulus belongs to one of two categories. In the default setting trials with
+both categories presented are simulated but one can choose to simulate only trials with
+the stimulus coming from one category (1 for the category that is associated with positive
+drift in the decision process where "upper"/1 responses are considered correct and -1
+correspondingly for negative drifts and "lower"/-1 correct decisions).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>numeric. Discretization steps for simulations with the stochastic process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxrt</code></td>
+<td>
+<p>numeric. Maximum reaction time returned.
+If the simulation of the stochastic process exceeds a rt of <code>maxrt</code>,
+the response will be set to 0 and <code>maxrt</code> will be returned as rt.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>numerical. Seeding for non-random data generation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>process_results</code></td>
+<td>
+<p>logical. Whether the output simulations should contain the final
+state of the decision (and visibility) process as additional column. Default is FALSE, meaning that
+no additional columns for the final process states are returned.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Simulation of response and decision times is done by simulating
+normal variables in discretized steps until the lower or upper boundary
+is met (or the maximal rt is reached). Afterwards, a confidence measure
+is simulated according to the respective model.
+</p>
+<p>The confidence outputs are then binned according to the given thresholds.
+The output of the fitting function <code>fitRTConf</code> with the respective model
+fits the argument <code>paramDf</code> for simulation.
+The Gamma coefficients are computed separately for correct/incorrect responses for the
+correlation of confidence ratings with condition and rt and separately for conditions
+for the correlation of accuracy and confidence. The
+resulting data frames in the output thus have two columns. One for the grouping variable
+and one for the Gamma coefficient.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Depending on <code>gamma</code> and <code>agg_simus</code>.
+</p>
+<p>If <code>gamma</code> is <code>FALSE</code>, returns a <code>data.frame</code> with columns: <code>condition</code>,
+<code>stimulus</code>, <code>response</code>, <code>correct</code>, <code>rt</code>, <code>conf</code> (the continuous confidence
+measure) and <code>rating</code> (the discrete confidence rating), and <code>dec</code> and <code>vis</code>
+(only if <code>process_results=TRUE</code>) for the final states of accumulators in the
+simulation or
+(if <code>agg_simus=TRUE</code>): <code>condition</code>, <code>stimulus</code>,<code>response</code>, <code>correct</code>,
+<code>rating</code> and <code>p</code> (for the probability of a response and rating, given
+the condition and stimulus).
+</p>
+<p>If <code>gamma</code> is <code>TRUE</code>, returns a <code>list</code> with elements:
+<code>simus</code> (the simulated data frame) and <code>gamma</code>, which is again a <code>list</code> with elements
+<code>condition</code>, <code>rt</code> and <code>correct</code>, each a <code>tibble</code> with two columns (see details for more
+information).
+</p>
+
+
+<h3>Note</h3>
+
+<p>Different parameters for different conditions are only allowed for drift rate,
+<code>v</code>, drift rate variability, <code>sv</code> and diffusion constant <code>s</code>.
+All other parameters are used for all conditions.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastian Hellmann.
+</p>
+
+
+<h3>References</h3>
+
+<p>Hellmann, S., Zehetleitner, M., &amp; Rausch, M. (2023). Simultaneous modeling of choice, confidence and response time in visual perception. <em>Psychological Review</em> 2023 Mar 13. doi: 10.1037/rev0000411. Epub ahead of print. PMID: 36913292.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Examples for "dynWEV" model (equivalent applicable
+# for "2DSD" model (with less parameters))
+# 1. Define some parameter set in a data.frame
+paramDf &lt;- data.frame(a=2.5,v1=0.1, v2=1, t0=0.1,z=0.55,
+                      sz=0.3,sv=0.8, st0=0,  tau=3, w=0.1,
+                      theta1=0.8, svis=0.5, sigvis=0.8)
+
+# 2. Simulate trials for both stimulus categories and all conditions (2)
+simus &lt;- simulateWEV(paramDf, model="dynWEV")
+head(simus)
+
+  library(ggplot2)
+  simus &lt;- simus[simus$response!=0,]
+  simus$rating &lt;- factor(simus$rating, labels=c("unsure", "sure"))
+  ggplot(simus, aes(x=rt, group=interaction(correct, rating),
+                    color=as.factor(correct), linetype=rating))+
+    geom_density(size=1.2)+xlim(c(0,5))+
+    facet_grid(rows=vars(condition), labeller = "label_both")
+
+
+# automatically aggregate simulation distribution
+# to get only accuracy x confidence rating distribution for
+# all conditions
+agg_simus &lt;- simulateWEV(paramDf, model="dynWEV", agg_simus = TRUE)
+head(agg_simus)
+
+  agg_simus$rating &lt;- factor(agg_simus$rating, labels=c("unsure", "sure"))
+  library(ggplot2)
+  ggplot(agg_simus, aes(x=rating, group=correct, fill=as.factor(correct), y=p))+
+    geom_bar(stat="identity", position="dodge")+
+    facet_grid(cols=vars(condition), labeller = "label_both")
+
+
+  # Compute Gamma correlation coefficients between
+  # confidence and other behavioral measures
+  # output will be a list
+  simu_list &lt;- simulateWEV(paramDf,n = 400, model="dynWEV", gamma=TRUE)
+  simu_list
+
+</code></pre>
+
+
+</div>

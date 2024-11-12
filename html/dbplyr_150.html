@@ -1,0 +1,82 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sql_expr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate SQL from R expressions</h2>
+
+<h3>Description</h3>
+
+<p>Low-level building block for generating SQL from R expressions.
+Strings are escaped; names become bare SQL identifiers. User infix
+functions have <code style="white-space: pre;">⁠%⁠</code> stripped.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sql_expr(x, con = sql_current_con())
+
+sql_call2(.fn, ..., con = sql_current_con())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A quasiquoted expression</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>con</code></td>
+<td>
+<p>Connection to use for escaping. Will be set automatically when
+called from a function translation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.fn</code></td>
+<td>
+<p>Function name (as string, call, or symbol)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Using <code>sql_expr()</code> in package will require use of <code>globalVariables()</code>
+to avoid <code style="white-space: pre;">⁠R CMD check⁠</code> NOTES. This is a small amount of additional pain,
+which I think is worthwhile because it leads to more readable translation
+code.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">con &lt;- simulate_dbi() # not necessary when writing translations
+
+sql_expr(f(x + 1), con = con)
+sql_expr(f("x", "y"), con = con)
+sql_expr(f(x, y), con = con)
+
+x &lt;- ident("x")
+sql_expr(f(!!x, y), con = con)
+
+sql_expr(cast("x" %as% DECIMAL), con = con)
+sql_expr(round(x) %::% numeric, con = con)
+
+sql_call2("+", quote(x), 1, con = con)
+sql_call2("+", "x", 1, con = con)
+</code></pre>
+
+
+</div>

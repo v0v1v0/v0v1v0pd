@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drake_slice</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Take a strategic subset of a dataset.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p><code>drake_slice()</code> is similar to <code>split()</code>.
+Both functions partition data into disjoint subsets,
+but whereas <code>split()</code> returns <em>all</em> the subsets, <code>drake_slice()</code>
+returns just <em>one</em>. In other words, <code>drake_slice(..., index = i)</code>
+returns <code>split(...)[[i]]</code>.
+Other features:
+1. <code>drake_slice()</code> works on vectors, data frames,
+matrices, lists, and arbitrary arrays.
+2. Like <code>parallel::splitIndices()</code>, <code>drake_slice()</code> tries to
+distribute the data uniformly across subsets.
+See the examples to learn why splitting is useful in <code>drake</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drake_slice(data, slices, index, margin = 1L, drop = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A list, vector, data frame, matrix, or arbitrary array.
+Anything with a <code>length()</code> or <code>dim()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slices</code></td>
+<td>
+<p>Integer of length 1, number of slices (i.e. pieces)
+of the whole dataset. Remember, <code>drake_slice(index = i)</code> returns
+only slice number <code>i</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>Integer of length 1, which piece of the partition to return.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>margin</code></td>
+<td>
+<p>Integer of length 1, margin over which to split the data.
+For example, for a data frame or matrix,
+use <code>margin = 1</code> to split over rows and <code>margin = 2</code>
+to split over columns. Similar to <code>MARGIN</code> in <code>apply()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>Logical, for matrices and arrays.
+If <code>TRUE</code>,<code style="white-space: pre;">⁠ the result is coerced to the lowest possible dimension. See ?⁠</code>[' for details.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A subset of <code>data</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simple usage
+x &lt;- matrix(seq_len(20), nrow = 5)
+x
+drake_slice(x, slices = 3, index = 1)
+drake_slice(x, slices = 3, index = 2)
+drake_slice(x, slices = 3, index = 3)
+drake_slice(x, slices = 3, margin = 2, index = 1)
+# In drake, you can split a large dataset over multiple targets.
+## Not run: 
+isolate_example("contain side effects", {
+plan &lt;- drake_plan(
+  large_data = mtcars,
+  data_split = target(
+    drake_slice(large_data, slices = 32, index = i),
+    transform = map(i = !!seq_len(32))
+  )
+)
+plan
+cache &lt;- storr::storr_environment()
+make(plan, cache = cache, session_info = FALSE, verbose = FALSE)
+readd(data_split_1L, cache = cache)
+readd(data_split_2L, cache = cache)
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

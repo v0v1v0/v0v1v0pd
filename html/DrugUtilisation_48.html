@@ -1,0 +1,128 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>summariseIndication</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Summarise the indications of individuals in a drug cohort</h2>
+
+<h3>Description</h3>
+
+<p>Summarise the observed indications of patients in a drug cohort based on
+their presence in an indication cohort in a specified time window. If an
+individual is not in one of the indication cohorts, they will be considered
+to have an unknown indication if they are present in one of the specified
+OMOP CDM clinical tables. Otherwise, if they  are neither in an indication
+cohort or a clinical table they will be considered as having no observed
+indication.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">summariseIndication(
+  cohort,
+  strata = list(),
+  indicationCohortName,
+  indicationCohortId = NULL,
+  indicationWindow = list(c(0, 0)),
+  unknownIndicationTable = NULL,
+  indexDate = "cohort_start_date",
+  censorDate = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cohort</code></td>
+<td>
+<p>A cohort table in a cdm reference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p>List of variables to stratify results by. These variables
+must be present in the cohort table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indicationCohortName</code></td>
+<td>
+<p>Name of the cohort table with potential
+indications.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indicationCohortId</code></td>
+<td>
+<p>The target cohort ID to add indication. If NULL all
+cohorts will be considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indicationWindow</code></td>
+<td>
+<p>The time window over which to identify indications.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unknownIndicationTable</code></td>
+<td>
+<p>Tables in the OMOP CDM to search for unknown
+indications.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indexDate</code></td>
+<td>
+<p>A date variable in the cohort table for which indications
+will be found relative to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>censorDate</code></td>
+<td>
+<p>After that day no indication will be considered.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A summarised result
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(DrugUtilisation)
+library(CDMConnector)
+library(dplyr)
+
+cdm &lt;- mockDrugUtilisation()
+
+indications &lt;- list("headache" = 378253, "asthma" = 317009)
+cdm &lt;- generateConceptCohortSet(cdm, indications, "indication_cohorts")
+
+cdm &lt;- generateIngredientCohortSet(
+  cdm = cdm, name = "drug_cohort",
+  ingredient = "acetaminophen"
+)
+
+cdm$drug_cohort |&gt;
+  summariseIndication(
+    indicationCohortName = "indication_cohorts",
+    unknownIndicationTable = "condition_occurrence",
+    indicationWindow = list(c(-Inf, 0))
+  ) |&gt;
+  glimpse()
+
+
+</code></pre>
+
+
+</div>

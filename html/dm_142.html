@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rows-dm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Modifying rows for multiple tables</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental"><img src="../help/figures/lifecycle-experimental.svg" alt="[Experimental]"></a>
+</p>
+<p>These functions provide a framework for updating data in existing tables.
+Unlike <code>compute()</code>, <code>copy_to()</code> or <code>copy_dm_to()</code>, no new tables are created
+on the database.
+All operations expect that both existing and new data are presented
+in two compatible dm objects on the same data source.
+</p>
+<p>The functions make sure that the tables in the target dm
+are processed in topological order so that parent (dimension)
+tables receive insertions before child (fact) tables.
+</p>
+<p>These operations, in contrast to all other operations,
+may lead to irreversible changes to the underlying database.
+Therefore, in-place operation must be requested explicitly with <code>in_place = TRUE</code>.
+By default, an informative message is given.
+</p>
+<p><code>dm_rows_insert()</code> adds new records via <code>rows_insert()</code> with <code>conflict = "ignore"</code>.
+Duplicate records will be silently discarded.
+This operation requires primary keys on all tables, use <code>dm_rows_append()</code>
+to insert unconditionally.
+</p>
+<p><code>dm_rows_append()</code> adds new records via <code>rows_append()</code>.
+The primary keys must differ from existing records.
+This must be ensured by the caller and might be checked by the underlying database.
+Use <code>in_place = FALSE</code> and apply <code>dm_examine_constraints()</code> to check beforehand.
+</p>
+<p><code>dm_rows_update()</code> updates existing records via <code>rows_update()</code>.
+Primary keys must match for all records to be updated.
+</p>
+<p><code>dm_rows_patch()</code> updates missing values in existing records
+via <code>rows_patch()</code>.
+Primary keys must match for all records to be patched.
+</p>
+<p><code>dm_rows_upsert()</code> updates existing records and adds new records,
+based on the primary key, via <code>rows_upsert()</code>.
+</p>
+<p><code>dm_rows_delete()</code> removes matching records via <code>rows_delete()</code>,
+based on the primary key.
+The order in which the tables are processed is reversed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dm_rows_insert(x, y, ..., in_place = NULL, progress = NA)
+
+dm_rows_append(x, y, ..., in_place = NULL, progress = NA)
+
+dm_rows_update(x, y, ..., in_place = NULL, progress = NA)
+
+dm_rows_patch(x, y, ..., in_place = NULL, progress = NA)
+
+dm_rows_upsert(x, y, ..., in_place = NULL, progress = NA)
+
+dm_rows_delete(x, y, ..., in_place = NULL, progress = NA)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Target <code>dm</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p><code>dm</code> object with new data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>These dots are for future extensions and must be empty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in_place</code></td>
+<td>
+<p>Should <code>x</code> be modified in place? This argument is only
+relevant for mutable backends (e.g. databases, data.tables).
+</p>
+<p>When <code>TRUE</code>, a modified version of <code>x</code> is returned invisibly;
+when <code>FALSE</code>, a new object representing the resulting changes is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>Whether to display a progress bar, if <code>NA</code> (the default)
+hide in non-interactive mode, show in interactive mode. Requires the
+'progress' package.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dm object of the same <code>dm_ptype()</code> as <code>x</code>.
+If <code>in_place = TRUE</code>, the underlying data is updated as a side effect,
+and <code>x</code> is returned, invisibly.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Establish database connection:
+sqlite &lt;- DBI::dbConnect(RSQLite::SQLite())
+
+# Entire dataset with all dimension tables populated
+# with flights and weather data truncated:
+flights_init &lt;-
+  dm_nycflights13() %&gt;%
+  dm_zoom_to(flights) %&gt;%
+  filter(FALSE) %&gt;%
+  dm_update_zoomed() %&gt;%
+  dm_zoom_to(weather) %&gt;%
+  filter(FALSE) %&gt;%
+  dm_update_zoomed()
+
+# Target database:
+flights_sqlite &lt;- copy_dm_to(sqlite, flights_init, temporary = FALSE)
+print(dm_nrow(flights_sqlite))
+
+# First update:
+flights_jan &lt;-
+  dm_nycflights13() %&gt;%
+  dm_select_tbl(flights, weather) %&gt;%
+  dm_zoom_to(flights) %&gt;%
+  filter(month == 1) %&gt;%
+  dm_update_zoomed() %&gt;%
+  dm_zoom_to(weather) %&gt;%
+  filter(month == 1) %&gt;%
+  dm_update_zoomed()
+print(dm_nrow(flights_jan))
+
+# Copy to temporary tables on the target database:
+flights_jan_sqlite &lt;- copy_dm_to(sqlite, flights_jan)
+
+# Dry run by default:
+dm_rows_append(flights_sqlite, flights_jan_sqlite)
+print(dm_nrow(flights_sqlite))
+
+# Explicitly request persistence:
+dm_rows_append(flights_sqlite, flights_jan_sqlite, in_place = TRUE)
+print(dm_nrow(flights_sqlite))
+
+# Second update:
+flights_feb &lt;-
+  dm_nycflights13() %&gt;%
+  dm_select_tbl(flights, weather) %&gt;%
+  dm_zoom_to(flights) %&gt;%
+  filter(month == 2) %&gt;%
+  dm_update_zoomed() %&gt;%
+  dm_zoom_to(weather) %&gt;%
+  filter(month == 2) %&gt;%
+  dm_update_zoomed()
+
+# Copy to temporary tables on the target database:
+flights_feb_sqlite &lt;- copy_dm_to(sqlite, flights_feb)
+
+# Explicit dry run:
+flights_new &lt;- dm_rows_append(
+  flights_sqlite,
+  flights_feb_sqlite,
+  in_place = FALSE
+)
+print(dm_nrow(flights_new))
+print(dm_nrow(flights_sqlite))
+
+# Check for consistency before applying:
+flights_new %&gt;%
+  dm_examine_constraints()
+
+# Apply:
+dm_rows_append(flights_sqlite, flights_feb_sqlite, in_place = TRUE)
+print(dm_nrow(flights_sqlite))
+
+DBI::dbDisconnect(sqlite)
+
+</code></pre>
+
+
+</div>

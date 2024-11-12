@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>covFdcca</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Autocovariance function of the detrended cross-covariance</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the autocovariance of the detrended cross-covariance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">covFdcca(m = 3, nu = 0, h = 0, overlap = TRUE, G1, G2, G12, Cumulants = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>an integer or integer valued vector indicating the size of the window for the polinomial fit. <code class="reqn">min(m)</code> must be greater or equal than <code class="reqn">nu</code> or else it will return an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nu</code></td>
+<td>
+<p>a non-negative integer denoting the degree of the polinomial fit applied on the integrated series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>an integer or integer valued vector indicating the lags for which the autocovariance function is to be calculated. Negative values are not allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overlap</code></td>
+<td>
+<p>logical: if true (the default), overlapping boxes are used for calculations. Otherwise, non-overlapping boxes are applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G1, G2</code></td>
+<td>
+<p>the autocovariance matrices for the original time series. The dimension of <code class="reqn">G1</code> and <code class="reqn">G2</code> must be compatible with the highest values in  vectors <code class="reqn">m</code> and <code class="reqn">h</code>. More specifically, the dimension of <code class="reqn">G1</code> and <code class="reqn">G2</code> is <code class="reqn">(max(m)+max(h)+1)</code> by <code class="reqn">(max(m)+max(h)+1)</code> if overlap = TRUE and <code class="reqn">dim(G1) = dim(G2) = (max(m)+max(h))(max(h)+1)</code> by <code class="reqn">(max(m)+max(h))(max(h)+1)</code> otherwise.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G12</code></td>
+<td>
+<p>the cross-covariance matrix for the original time series. The dimension of <code class="reqn">G12</code>  must be compatible with the highest values in  vectors <code class="reqn">m</code> and <code class="reqn">h</code>. If overlap = TRUE, <code class="reqn">dim(G12) = [(max(m)+1)*(max(h)+1) - max(m)*max(h)]</code> by <code class="reqn">[(max(m)+1)*(max(h)+1) - max(m)*max(h)]</code> and <code class="reqn">dim(G12) = [(max(m)+1)*(max(h)+1)]</code> by <code class="reqn">[max(m)+1)*(max(h)+1)]</code>, otherwise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Cumulants</code></td>
+<td>
+<p>The matrix of cumulants. If not provided, it is assumed that the cumulants are all zero.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A matrix of dimension <code class="reqn">lenght(h)</code> by <code class="reqn">length(m)</code> with the autocovariance of lag <code class="reqn">h</code> (rows), for each value of <code class="reqn">m</code> (columns) provided. This matrix is obtained from expressions (24) for <code class="reqn">h = 0</code> and (25) for <code class="reqn">h &gt; 0</code> in Prass and Pumi (2019).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Taiane Schaedler Prass</p>
+
+
+<h3>References</h3>
+
+<p>Prass, T.S. and Pumi, G. (2019). On the behavior of the DFA and DCCA in trend-stationary
+processes &lt;arXiv:1910.10589&gt;.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+ms = seq(3,100,1)
+hs = seq(0,50,1)
+overlap = TRUE
+nu = 0
+m_max = (max(ms)+1)*(max(hs)+1) - max(ms)*max(hs)*as.integer(overlap)
+
+theta = c(c(1,(20:1)/10), rep(0, m_max - 20))
+Gamma1 = diag(m_max+1)
+Gamma2 = matrix(0, ncol = m_max+1, nrow = m_max+1)
+Gamma12 = matrix(0, ncol = m_max+1, nrow = m_max+1)
+for(t in 1:(m_max+1)){
+    for(h in 0:(m_max+1-t)){
+        Gamma2[t,t+h] = sum(theta[1:(length(theta)-h)]*theta[(1+h):length(theta)])
+        Gamma2[t+h,t] = Gamma2[t,t+h]
+        Gamma12[t,t+h] = theta[h+1]
+    }
+}
+
+covdcca = covFdcca(m = ms, nu = 0, h = hs,
+                   G1 = Gamma1, G2 = Gamma2, G12 = Gamma12)
+                   
+## End(Not run)
+</code></pre>
+
+
+</div>

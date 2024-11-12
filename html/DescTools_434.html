@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>OddsRatio</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Odds Ratio Estimation and Confidence Intervals</h2>
+
+<h3>Description</h3>
+
+<p>Calculates odds ratio by unconditional maximum likelihood estimation (<code>wald</code>),
+conditional maximum likelihood estimation (<code>mle</code>) or median-unbiased estimation (<code>midp</code>).
+Confidence intervals are calculated using normal approximation (<code>wald</code>) and exact methods
+(<code>midp</code>, <code>mle</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">OddsRatio(x, conf.level = NULL, ...)
+
+## S3 method for class 'glm'
+OddsRatio(x, conf.level = NULL, digits = 3, use.profile = FALSE, ...)
+
+## S3 method for class 'multinom'
+OddsRatio(x, conf.level = NULL, digits = 3, ...)
+
+## S3 method for class 'zeroinfl'
+OddsRatio(x, conf.level = NULL, digits = 3, ...)
+
+## Default S3 method:
+OddsRatio(x, conf.level = NULL, y = NULL, method = c("wald", "mle", "midp"),
+          interval = c(0, 1000), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector or a <code class="reqn">2 \times 2</code> numeric matrix, resp. table.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>NULL (default) or a vector with compatible dimensions to <code>x</code>. If y is provided, <code>table(x, y, ...)</code> will be calculated.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>the number of fixed digits to be used for printing the odds ratios.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>method for calculating odds ratio and confidence intervals. Can be one out of
+"<code>wald</code>", "<code>mle</code>", "<code>midp</code>". Default is <code>"wald"</code> (not because it is the best, but
+because it is the most commonly used.)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>confidence level. Default is <code>NA</code> for tables and numeric vectors, meaning no confidence intervals will be reported. 0.95 is used as default for models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+
+<p>interval for the function <code>uniroot</code> that finds the
+odds ratio median-unbiased estimate and <code>midp</code> exact confidence
+interval.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.profile</code></td>
+<td>
+<p>logical. Defines if profile approach should be used, which normally is a good choice. Calculating profile can however take ages for large datasets and not be necessary there. So we can fallback to normal confidence intervals. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments are passed to the function <code>table</code>, allowing i.e. to set <code>useNA</code>. This refers only to the vector interface.
+
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If a <code class="reqn">2 \times 2</code> table is provided the following table structure is preferred:
+</p>
+<pre>
+                    disease=1   disease=0
+    exposed=1          n11         n10
+    exposed=0          n01         n00
+  </pre>
+<p>however, for odds ratios the following table is
+equivalent:
+</p>
+<pre>
+                    disease=0   disease=1
+    exposed=0 (ref)    n00         n01
+    exposed=1          n10         n11
+  </pre>
+<p>If the table to be  provided to this function is not in the
+preferred form, the function <code>Rev()</code> can be used to "reverse" the table rows, resp.
+-columns. Reversing columns or rows (but not both) will lead to the inverse of the odds ratio.
+</p>
+
+
+
+
+
+
+
+
+<p>In case of zero entries, 0.5 will be added to the table.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a single numeric value if conf.level is set to <code>NA</code><br>
+a numeric vector with 3 elements for estimate, lower and upper confidence interval if conf.level is provided
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Andri Signorell &lt;andri@signorell.net&gt;, strongly based on code from Tomas Aragon, &lt;aragon@berkeley.edu&gt;</p>
+
+
+<h3>References</h3>
+
+<p>Kenneth J. Rothman and Sander Greenland (1998): <em>Modern Epidemiology</em>,
+Lippincott-Raven Publishers
+</p>
+<p>Kenneth J. Rothman (2002): <em>Epidemiology: An Introduction</em>, Oxford
+University Press
+</p>
+<p>Nicolas P. Jewell (2004): <em>Statistics for Epidemiology</em>, 1st Edition,
+2004, Chapman &amp; Hall, pp. 73-81
+</p>
+<p>Agresti, Alan (2013) <em>Categorical Data Analysis</em>. NY: John Wiley and Sons, Chapt. 3.1.1
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>RelRisk</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Case-control study assessing whether exposure to tap water
+#   is associated with cryptosporidiosis among AIDS patients
+
+tab &lt;- matrix(c(2, 29, 35, 64, 12, 6), 3, 2, byrow=TRUE)
+dimnames(tab) &lt;- list("Tap water exposure" = c("Lowest", "Intermediate", "Highest"),
+                      "Outcome" = c("Case", "Control"))
+tab &lt;- Rev(tab, margin=2)
+
+OddsRatio(tab[1:2,])
+OddsRatio(tab[c(1,3),])
+
+OddsRatio(tab[1:2,], method="mle")
+OddsRatio(tab[1:2,], method="midp")
+OddsRatio(tab[1:2,], method="wald", conf.level=0.95)
+
+# in case of zeros consider using glm for calculating OR
+dp &lt;- data.frame (a=c(20, 7, 0, 0), b=c(0, 0, 0, 12), t=c(1, 0, 1, 0))
+fit &lt;- glm(cbind(a, b) ~ t, data=dp, family=binomial)
+
+exp(coef(fit))
+
+# calculation of log oddsratios in a 2x2xk table
+migraine &lt;- xtabs(freq ~ .,
+                  cbind(expand.grid(treatment=c("active","placebo"),
+                                    response=c("better","same"),
+                                    gender=c("female","male")),
+                        freq=c(16,5,11,20,12,7,16,19))
+)
+
+log(apply(migraine, 3, OddsRatio))
+
+# OddsRatio table for logistic regression models
+r.glm &lt;- glm(type ~ ., data=MASS::Pima.tr2, family=binomial)
+OddsRatio(r.glm)
+
+plot(OddsRatio(r.glm), xlim=c(0.5, 2), main="OddsRatio - glm", pch=NA,
+     lblcolor=DescTools::hred, args.errbars=list(col=DescTools::horange, pch=21, 
+     col.pch=DescTools::hblue,
+     bg.pch=DescTools::hyellow, cex.pch=1.5))
+</code></pre>
+
+
+</div>

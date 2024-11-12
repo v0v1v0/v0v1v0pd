@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>uploadDataPackage</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Upload a DataPackage to a DataONE member node.</h2>
+
+<h3>Description</h3>
+
+<p>Upload all DataObjects contained in the DataPackage by calling <code>uploadDataObject</code>
+on each of the members. Also a resourceMap object is created from the
+recorded relationships between DataObjects, and this is uploaded as well.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">uploadDataPackage(x, ...)
+
+## S4 method for signature 'D1Client'
+uploadDataPackage(
+  x,
+  dp,
+  replicate = NA,
+  numberReplicas = NA,
+  preferredNodes = NA,
+  public = as.logical(FALSE),
+  accessRules = NA,
+  quiet = as.logical(TRUE),
+  resolveURI = as.character(NA),
+  packageId = as.character(NA),
+  as = "character",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A D1Client instance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>(Not yet used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dp</code></td>
+<td>
+<p>The DataPackage instance to be submitted to DataONE for creation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replicate</code></td>
+<td>
+<p>A value of type <code>"logical"</code>, if TRUE then DataONE will replicate this object to other member nodes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numberReplicas</code></td>
+<td>
+<p>A value of type <code>"numeric"</code>, for number of supported replicas.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preferredNodes</code></td>
+<td>
+<p>A list of <code>"character"</code>, each of which is the node identifier for a node to which a replica should be sent.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>public</code></td>
+<td>
+<p>A <code>'logical'</code>, if TRUE then all objects in this package will be accessible by any user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>accessRules</code></td>
+<td>
+<p>Access rules of <code>'data.frame'</code> that will be added to the access policy of each object in the datapackage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>A <code>'logical'</code>. If TRUE (the default) then informational messages will not be printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolveURI</code></td>
+<td>
+<p>A URI to prepend to identifiers (i.e. for use when creating the ResourceMap). See serializePackage</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>packageId</code></td>
+<td>
+<p>A value of type <code>"character"</code> specifying a unique identifier to use for the uploaded package (resource map pid)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as</code></td>
+<td>
+<p>A value of type <code>"character"</code> that specifies the return value. Possible values are <code>"character"</code> (the default) or <code>"DataPackage"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The DataPackage describes the collection of data object and their associated 
+metadata object, with the relationships and members serialized into a document
+stored under, and retrievable with, the packageId as it's own distinct object.
+Any objects in the data map that have a dateUploaded value are assumed to be 
+pre-existing in the system, and skipped.
+</p>
+
+
+<h3>Value</h3>
+
+<p>id The identifier of the resource map for this data package
+</p>
+
+
+<h3>Note</h3>
+
+<p>Member objects are created serially, and most errors in creating one object will 
+interrupt the create process for the whole, with the result that some members will 
+be created, and the remainder not.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>D1Client</code> class description.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(dataone)
+library(datapack)
+dp &lt;- new("DataPackage")
+sampleData &lt;- system.file("extdata/sample.csv", package="dataone")
+dataObj &lt;- new("DataObject", format="text/csv", file=sampleData)
+dataObj &lt;- setPublicAccess(dataObj)
+sampleEML &lt;- system.file("extdata/strix-pacific-northwest.xml", package="dataone")
+metadataObj &lt;- new("DataObject", format="eml://ecoinformatics.org/eml-2.1.1", file=sampleEML)
+metadataObj &lt;- setPublicAccess(metadataObj)
+dp &lt;- addMember(dp, do = dataObj, mo = metadataObj)
+d1c &lt;- D1Client("STAGING", "urn:node:mnStageUCSB2")
+# Upload all members of the DataPackage to DataONE (requires authentication)
+packageId &lt;- uploadDataPackage(d1c, dp, replicate=TRUE, public=TRUE, numberReplicas=2)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

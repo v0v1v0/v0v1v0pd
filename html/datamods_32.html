@@ -1,0 +1,227 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>import-modal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Import from all sources</h2>
+
+<h3>Description</h3>
+
+<p>Wrap all import modules into one, can be displayed inline or in a modal window..
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">import_ui(
+  id,
+  from = c("env", "file", "copypaste", "googlesheets", "url"),
+  file_extensions = c(".csv", ".txt", ".xls", ".xlsx", ".rds", ".fst", ".sas7bdat",
+    ".sav")
+)
+
+import_server(
+  id,
+  validation_opts = NULL,
+  allowed_status = c("OK", "Failed", "Error"),
+  return_class = c("data.frame", "data.table", "tbl_df", "raw"),
+  read_fns = list()
+)
+
+import_modal(
+  id,
+  from,
+  title = i18n("Import data"),
+  size = "l",
+  file_extensions = c(".csv", ".txt", ".xls", ".xlsx", ".rds", ".fst", ".sas7bdat",
+    ".sav")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module's id</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>The import_ui &amp; server to use, i.e. the method.
+There are 5 options to choose from. ("env", "file", "copypaste", "googlesheets", "url")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file_extensions</code></td>
+<td>
+<p>File extensions accepted by <code>shiny::fileInput()</code>, can also be MIME type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>validation_opts</code></td>
+<td>
+<p><code>list</code> of arguments passed to [validation_server().</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allowed_status</code></td>
+<td>
+<p>Vector of statuses allowed to confirm dataset imported,
+if you want that all validation rules are successful before importing data use <code>allowed_status = "OK"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_class</code></td>
+<td>
+<p>Class of returned data: <code>data.frame</code>, <code>data.table</code>, <code>tbl_df</code> (tibble) or <code>raw</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>read_fns</code></td>
+<td>
+<p>Named list with custom function(s) to read data:
+</p>
+
+<ul>
+<li>
+<p> the name must be the extension of the files to which the function will be applied
+</p>
+</li>
+<li>
+<p> the value must be a function that can have 5 arguments (you can ignore some of them, but you have to use the same names),
+passed by user through the interface:
+</p>
+
+<ul>
+<li> <p><code>file</code>: path to the file
+</p>
+</li>
+<li> <p><code>sheet</code>: for Excel files, sheet to read
+</p>
+</li>
+<li> <p><code>skip</code>: number of row to skip
+</p>
+</li>
+<li> <p><code>dec</code>: decimal separator
+</p>
+</li>
+<li> <p><code>encoding</code>: file encoding
+</p>
+</li>
+<li> <p><code>na.strings</code>: character(s) to interpret as missing values.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>Modal window title.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>Modal window size, default to <code>"l"</code> (large).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> UI: HTML tags that can be included in shiny's UI
+</p>
+</li>
+<li>
+<p> Server: a <code>list</code> with three slots:
+</p>
+
+<ul>
+<li> <p><strong>status</strong>: a <code>reactive</code> function returning the status: <code>NULL</code>, <code>error</code> or <code>success</code>.
+</p>
+</li>
+<li> <p><strong>name</strong>: a <code>reactive</code> function returning the name of the imported data as <code>character</code>.
+</p>
+</li>
+<li> <p><strong>data</strong>: a <code>reactive</code> function returning the imported <code>data.frame</code>.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(shiny)
+library(datamods)
+
+ui &lt;- fluidPage(
+  # Try with different Bootstrap version
+  theme = bslib::bs_theme(version = 5, preset = "bootstrap"),
+  fluidRow(
+    column(
+      width = 4,
+      checkboxGroupInput(
+        inputId = "from",
+        label = "From",
+        choices = c("env", "file", "copypaste", "googlesheets", "url"),
+        selected = c("file", "copypaste")
+      ),
+      actionButton("launch_modal", "Launch modal window")
+    ),
+    column(
+      width = 8,
+      tags$b("Imported data:"),
+      verbatimTextOutput(outputId = "name"),
+      verbatimTextOutput(outputId = "data"),
+      verbatimTextOutput(outputId = "str_data")
+    )
+  )
+)
+
+server &lt;- function(input, output, session) {
+
+  observeEvent(input$launch_modal, {
+    req(input$from)
+    import_modal(
+      id = "myid",
+      from = input$from,
+      title = "Import data to be used in application"
+    )
+  })
+
+  imported &lt;- import_server("myid", return_class = "tbl_df")
+
+  output$name &lt;- renderPrint({
+    req(imported$name())
+    imported$name()
+  })
+
+  output$data &lt;- renderPrint({
+    req(imported$data())
+    imported$data()
+  })
+
+  output$str_data &lt;- renderPrint({
+    req(imported$data())
+    str(imported$data())
+  })
+
+}
+
+if (interactive())
+  shinyApp(ui, server)
+</code></pre>
+
+
+</div>

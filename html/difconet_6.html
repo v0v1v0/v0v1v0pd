@@ -1,0 +1,250 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>difconet.run</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>RUNS A DIFCONET ANALYSIS</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the DIFferential COrrelation NETworks analysis from a given dataset.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">difconet.run(data, predictor, metric=c(1,2,3,4,5,6), cutoff=0.3, blocs=5000, 
+  num_perms=10, comparisons="all", perm_mode="columns", use_all_perm = TRUE,
+  save_perm=FALSE, speedup=0, verbose=TRUE, metricfunc=NULL, 
+  corfunc=function(a,b) cor(a,b,method="spearman") )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame or matrix represent the dataset. Genes in rows, samples in columns. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor</code></td>
+<td>
+<p>Factor or numeric vector representing the classes of each column in data. The correlations will be estimated for each class separately.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>The metrics needed to be calculated. Valid values are 1 to 6 and 8. 1 to 6 are already implemented and shown in details. 8 specifies a user-defined metric specified in metricfunc. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff</code></td>
+<td>
+<p>Cut off values used for metric 1 and/or 3.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blocs</code></td>
+<td>
+<p>Number of rows per block. Because of memory issues, the correlations are estimated by blocks of genes. This value represent the size of the block. Larger values requires more memory if needed. Lower values requiere more cycles and therefore it is slower but makes it computable depending on database size and memory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_perms</code></td>
+<td>
+<p>Number of permutations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>comparisons</code></td>
+<td>
+<p>Character or list. If character, it could be "all" to specify all possible combinations of classes. If set to "seq", classes are taken in order and comparisons are done by first versus second, second versus third, and so on. If this is a list containing vectors of two elements, the estimations are done for the specific comparisons included (numeric or character).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>perm_mode</code></td>
+<td>
+<p>Character. It determines the how the permutated data is generated. It can be permutated by "columns",  permutated by "rows" (all classes/stages), or permutated by rows within each class separately using "rows.class", or "all" in which all data is shuffled. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_all_perm</code></td>
+<td>
+<p>Logical. If TRUE, it uses all permutated data to estimate the p-value, otherwise it uses only the same row permutations to estimate the p-value (it requires a lot more permutations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_perm</code></td>
+<td>
+<p>Logical. If TRUE, it save all permutated data. It may require more memory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speedup</code></td>
+<td>
+<p>Numeric. Determines whether the calculation will be sped up. This is experimental. The value specify which metric will be used to speed up. This is done by modeling the dependency of the metric and p-value using 1 percent of the rows.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Determines if printing progress information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metricfunc</code></td>
+<td>
+<p>Function. Specify the function to be used if a metric==8 is included. The function should receive dObj, a, and b which correspond to the difconet object and the a and b vectors of correlations needed to estimate the value of the metric. It is assumed a distance-like measure (non-negative) and values close to 0 means no difference whereas larger values represent more dissimilar correlations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corfunc</code></td>
+<td>
+<p>Function. Specify the function that estimates the correlations, similar to the cor function. The default uses cor and spearman coefficients.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Run the whole process of estimation differences in correlations for a given dataset. The estimations are done for all <strong>metric</strong> values, all <strong>cutoff</strong> values across all <strong>comparisons</strong>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A difconet object represented as a list. The items are the followings:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>stage</code></td>
+<td>
+<p>Vector. A copy of <strong>predictor</strong> (classes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>Vector. The levels or values of the different classes. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>comparisons</code></td>
+<td>
+<p>The specified <strong>comparisons</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_perms</code></td>
+<td>
+<p>The specified number of permutations <strong>num_perms</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>perm_mode</code></td>
+<td>
+<p>The specified number of permutations <strong>perm_mode</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_all_perm</code></td>
+<td>
+<p>The specified number of permutations <strong>use_all_perm</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speedup</code></td>
+<td>
+<p>The specified <strong>speedup</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>The specified <strong>verbose</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metricfunc</code></td>
+<td>
+<p>The specified <strong>metricfunc</strong> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combinations</code></td>
+<td>
+<p>A data.frame of the combinations that were compared.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stages.data</code></td>
+<td>
+<p>A list of datasets. This is only the original <strong>data</strong> split by classes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combstats</code></td>
+<td>
+<p>A list of all comparisons made. Each element contains a matrix whose rows represent the genes and columns represent the results of all metrics (metric.dist : metric value, metric.p : p-value, metric.q : q-value, metric.expr.p : p-value of differential expression for comparison purposes, metric.expr.q : q-value of differential expression.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combdens</code></td>
+<td>
+<p>A list of the densities of the metric for observed data and permutations. This can be used to compare the estimated metric statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permutations</code></td>
+<td>
+<p>List. If <strong>save_perm==TRUE</strong>, it saves all permutated data.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Elpidio Gonzalez and Victor Trevino <a href="mailto:vtrevino@itesm.mx">vtrevino@itesm.mx</a></p>
+
+
+<h3>References</h3>
+
+<p>Gonzalez-Valbuena and Trevino 2017 Metrics to Estimate Differential Co-Expression Networks <em>Journal Pending</em> <b>volume</b> 00–10
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>difconet.build.controlled.dataset</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+xdata &lt;- matrix(rnorm(1000), ncol=100)
+xpredictor &lt;- sample(c("A","B","C","D"),100,replace=TRUE)
+dObj &lt;- difconet.run(xdata, xpredictor, metric = 4, num_perms = 10,              
+  comparisons = list(c("A","D"), c("A","B"), c("B","D")),
+  perm_mode = "columns")
+
+## Not run: 
+  #xpredictor contains A, B, C, and D.
+  #xdata contains the data matrix
+  dObj &lt;- difconet.run(xdata, xpredictor,
+  metric = c(1,2,4),
+  cutoff = 0.6,
+  blocs = 7000,
+  num_perms = 10,              
+  comparisons = list(c("A","D"), c("A","B"), c("B","D")),          
+  perm_mode = "columns")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

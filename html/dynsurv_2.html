@@ -1,0 +1,355 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bayesCox</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit Bayesian Cox Model for Interval Censored Survival Data</h2>
+
+<h3>Description</h3>
+
+<p>Fit Bayesian Cox model with time-independent, time-varying or dynamic
+covariate coefficient. The fit is done within a Gibbs sampling framework.
+The reversible jump algorithm is employed for the dynamic coefficient
+model. The baseline hazards are allowed to be either time-varying or
+dynamic.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bayesCox(
+  formula,
+  data,
+  grid = NULL,
+  out = NULL,
+  model = c("TimeIndep", "TimeVarying", "Dynamic"),
+  base.prior = list(),
+  coef.prior = list(),
+  gibbs = list(),
+  control = list(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula object, with the response on the left of a '~'
+operator, and the terms on the right. The response must be a survival
+object as returned by the function <code>Surv</code> with <code>type =
+"interval2"</code>. <code>help(Surv)</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data.frame in which to interpret the variables named in the
+<code>formula</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>Vector of pre-specified time grid points for model fitting.  It
+will be automatically set up from data if it is left unspecified in the
+function call. By default, it consists of all the unique finite
+endpoints (rounded to two significant numbers) of the censoring
+intervals after time zero.  The <code>grid</code> specified in the function
+call determines the location of possible jumps. It should be sorted
+increasingly and cover all the finite non-zero endpoints of the
+censoring intervals. Inappropriate <code>grid</code> specified will be taken
+care by the function internally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out</code></td>
+<td>
+<p>An optional character string specifying the name of Markov chain
+Monte Carlo (MCMC) samples output file.  By default, the MCMC samples
+will be output to a temporary directory set by <code>tempdir</code> and saved
+in the returned <code>bayesCox</code> object after burning and thinning.  If
+<code>out</code> is specified, the MCMC samples will be preserved in the
+specified text file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Model type to fit. Available options are <code>"TimeIndep"</code>,
+<code>"TimeVarying"</code>, and <code>"Dynamic"</code>. Partial matching on the name
+is allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base.prior</code></td>
+<td>
+<p>List of options for prior of baseline lambda. Use
+<code>list(type = "Gamma", shape = 0.1, rate = 0.1)</code> for all models;
+<code>list(type = "Const", value = 1)</code> for <code>Dynamic</code> model when
+<code>intercept = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coef.prior</code></td>
+<td>
+<p>List of options for prior of coefficient beta. Use
+<code>list(type = "Normal", mean = 0, sd = 1)</code> for <code>TimeIndep</code>
+model; <code>list(type = "AR1", sd = 1)</code> for <code>TimeVarying</code> and
+<code>Dynamic</code> models; <code>list(type = "HAR1", shape = 2, scale = 1)</code>
+for <code>TimeVarying</code> and <code>Dynamic</code> models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gibbs</code></td>
+<td>
+<p>List of options for Gibbs sampler.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>List of general control options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments that are for futher extension.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To use default hyper parameters in the specification of either
+<code>base.prior</code> or <code>coef.prior</code>, one only has to supply the name of
+the prior, e.g., <code>list(type = "Gamma")</code>, <code>list(type = "HAR1")</code>.
+</p>
+<p>The <code>gibbs</code> argument is a list of components:
+</p>
+
+<dl>
+<dt>iter:</dt>
+<dd>
+<p>Number of iterations, default 3000;</p>
+</dd>
+<dt>burn:</dt>
+<dd>
+<p>Number of burning, default 500;</p>
+</dd>
+<dt>thin:</dt>
+<dd>
+<p>Number of thinning, default 1;</p>
+</dd>
+<dt>verbose:</dt>
+<dd>
+<p>A logical value, default <code>TRUE</code>. If
+<code>TRUE</code>, print the iteration;</p>
+</dd>
+<dt>nReport:</dt>
+<dd>
+<p>Print frequency, default 100.</p>
+</dd>
+</dl>
+<p>The <code>control</code> argument is a list of components:
+</p>
+
+<dl>
+<dt>intercept:</dt>
+<dd>
+<p>A logical value, default <code>FALSE</code>. If
+<code>TRUE</code>, the model will estimate the intercept, which is the
+log of baseline hazards. If <code>TRUE</code>, please remember to turn
+off the direct estimation of baseline hazards, i.e.,
+<code>base.prior = list(type = "Const")</code></p>
+</dd>
+<dt>a0:</dt>
+<dd>
+<p>Multiplier for initial variance in time-varying or dynamic
+models, default 100;</p>
+</dd>
+<dt>eps0:</dt>
+<dd>
+<p>Size of auxiliary uniform latent variable in dynamic model,
+default 1.</p>
+</dd>
+</dl>
+<p>For users interested in extracting MCMC sampling information from the
+output files, the detail of the output files is presented as follows: Let
+<code class="reqn">k</code> denote the number of time points (excluding time zero) specified
+in grid, <code class="reqn">ck</code> equal <code class="reqn">1</code> for model with time-invariant coefficients;
+<code class="reqn">ck</code> equal <code class="reqn">k</code> otherwise, and <code class="reqn">p</code> denote the number of
+covariates.  Then the each sample saved in each row consists of the
+following possible parts.
+</p>
+
+<dl>
+<dt>Part 1:</dt>
+<dd>
+<p>The first <code class="reqn">k</code> numbers represent the jump size of
+baseline hazard function at each time grid.  If we take the column mean
+of the first <code class="reqn">k</code> columns of the output file, we will get the same
+numbers with <code>obj$est$lambda</code>, where <code>obj</code> is the <code>bayesCox</code>
+object returned by the function.</p>
+</dd>
+<dt>Part 2:</dt>
+<dd>
+<p>The sequence from <code class="reqn">(k + 1) to (k + ck * p)</code>
+represent the coefficients of covariates at the time grid.  The first
+<code class="reqn">k</code> numbers in the sequence are the coefficients for the first covariate
+at the time grid; The second <code class="reqn">k</code> numbers' sub-sequence are the
+coefficients for the second covariate and so on.</p>
+</dd>
+<dt>Part 3:</dt>
+<dd>
+<p>The sequence from <code class="reqn">(k + ck * p + 1)</code> to
+<code class="reqn">(k + ck * p + p)</code> represents the sampled latent variance of
+coefficients.</p>
+</dd>
+<dt>Part 4:</dt>
+<dd>
+<p>The sequence from <code class="reqn">(k + ck * p + p + 1)</code> to
+<code class="reqn">(k + 2 * ck * p + p)</code> represents the indicator of whether there is
+a jump of the covariate coefficients at the time grid.  Similar with Part 2,
+the first k numbers' sub-sequence is for the first covariate, the second
+<code class="reqn">k</code> numbers' sub-sequence is for the second covariate, and so on.</p>
+</dd>
+</dl>
+<p>For the model with time-independent coefficients, the output file only
+has Part 1 and Part 2 in each row; For time-varying coefficient model,
+the output file has Part 1, 2, and 3; The output file for the dynamic
+model has all the four parts.  Note that the dynamic baseline hazard will
+be taken as one covariate.  So <code class="reqn">p</code> needs being replaced with
+<code class="reqn">(p + 1)</code> for model with dynamic baseline hazard rate.
+No function in the package actually needs the Part 1 from the output file
+now; The Part 2 is used by function <code>coef</code> and <code>survCurve</code>;
+The Part 3 is needed by function <code>nu</code>; Function <code>jump</code> extracts
+the Part 4.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of S3 class <code>bayesCox</code> representing the fit.
+</p>
+
+
+<h3>References</h3>
+
+<p>X. Wang, M.-H. Chen, and J. Yan (2013). Bayesian dynamic regression
+models for interval censored survival data with application to children
+dental health. Lifetime data analysis, 19(3), 297–316.
+</p>
+<p>X. Wang, X. Sinha, J. Yan, and M.-H. Chen (2014). Bayesian inference of
+interval-censored survival data. In: D. Chen, J. Sun, and K. Peace,
+Interval-censored time-to-event data: Methods and applications, 167–195.
+</p>
+<p>X. Wang, M.-H. Chen, and J. Yan (2011). Bayesian dynamic
+regression models for interval censored survival data. Technical Report 13,
+Department of Statistics, University of Connecticut.
+</p>
+<p>D. Sinha, M.-H. Chen, and S.K. Ghosh (1999). Bayesian analysis and model
+selection for interval-censored survival data. <em>Biometrics</em> 55(2),
+585–590.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>coef.bayesCox</code>, <code>jump.bayesCox</code>,
+<code>nu.bayesCox</code>, <code>plotCoef</code>,
+<code>plotJumpTrace</code>, <code>plotNu</code>,
+<code>survCurve</code>, <code>survDiff</code>, and
+<code>plotSurv</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+library(dynsurv)
+set.seed(1216)
+
+## breast cancer data
+data(bcos)
+mydata &lt;- bcos
+myformula &lt;- Surv(left, right, type = "interval2") ~ trt
+
+### Fit time-independent coefficient model
+fit0 &lt;- bayesCox(myformula, mydata, model = "TimeIndep",
+                 base.prior = list(type = "Gamma", shape = 0.1, rate = 0.1),
+                 coef.prior = list(type = "Normal", mean = 0, sd = 1),
+                 gibbs = list(iter = 100, burn = 20, thin = 1, verbose = FALSE))
+
+## plot coefficient estimates
+plotCoef(coef(fit0, level = 0.9))
+
+## Plot the estimated survival function for given new data
+newDat &lt;- data.frame(trt = c("Rad", "RadChem"))
+row.names(newDat) &lt;- unique(newDat$trt)
+plotSurv(survCurve(fit0, newDat), conf.int = TRUE)
+
+### Fit time-varying coefficient model
+fit1 &lt;- bayesCox(myformula, mydata, model = "TimeVary",
+                 base.prior = list(type = "Gamma", shape = 0.1, rate = 0.1),
+                 coef.prior = list(type = "AR1", sd = 1),
+                 gibbs = list(iter = 100, burn = 20, thin = 1,
+                              verbose = TRUE, nReport = 20))
+
+plotCoef(coef(fit1))
+plotSurv(survCurve(fit1), conf.int = TRUE)
+
+### Fit dynamic coefficient model with time-varying baseline hazards
+fit2 &lt;- bayesCox(myformula, mydata, model = "Dynamic",
+                 base.prior = list(type = "Gamma", shape = 0.1, rate = 0.1),
+                 coef.prior = list(type = "HAR1", shape = 2, scale = 1),
+                 gibbs = list(iter = 100, burn = 20, thin = 1,
+                              verbose = TRUE, nReport = 20))
+
+plotCoef(coef(fit2))
+plotJumpTrace(jump(fit2))
+plotJumpHist(jump(fit2))
+plotNu(nu(fit2))
+plotSurv(survCurve(fit2), conf.int = TRUE)
+
+## Plot the coefficient estimates from three models together
+plotCoef(rbind(coef(fit0), coef(fit1), coef(fit2)))
+
+### Fit dynamic coefficient model with dynamic hazards (in log scales)
+fit3 &lt;- bayesCox(myformula, mydata, model = "Dynamic",
+                 base.prior = list(type = "Const"),
+                 coef.prior = list(type = "HAR1", shape = 2, scale = 1),
+                 gibbs = list(iter = 100, burn = 20, thin = 1,
+                              verbose = TRUE, nReport = 20),
+                 control = list(intercept = TRUE))
+
+plotCoef(coef(fit3))
+plotJumpTrace(jump(fit3))
+plotJumpHist(jump(fit3))
+plotNu(nu(fit3))
+plotSurv(survCurve(fit3), conf.int = TRUE)
+
+## Plot the estimated survival function and the difference
+plotSurv(survCurve(fit3, newdata = newDat, type = "survival"),
+         legendName = "Treatment", conf.int = TRUE)
+plotSurv(survDiff(fit3, newdata = newDat, type = "survival"),
+         legendName = "Treatment", conf.int = TRUE, smooth = TRUE)
+
+## extract MCMC samples
+mcmc_list &lt;- bayesCoxMcmc(fit3, part = "coef")
+posterior_coef &lt;- mcmc_list$coef
+## posterior probabilities of hazard ratio of RadChem (vs. Rad)
+## greater than 1 at time 10
+posterior_coef[covariate == "trtRadChem" &amp; time == 10, mean(exp(coef) &gt; 1)]
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

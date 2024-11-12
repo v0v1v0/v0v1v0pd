@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mixest1</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Computes Mixture Estimation with State-Space Components.</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates recursively mixtures with state-space components with a dynamic model of switching. The components are normal linear models. Suppose there are available <code class="reqn">k</code> potentially important predictors of <code>y</code>, i.e., <code class="reqn">x_1, \dots, x_k</code>. Then up to <code class="reqn">2^{k}</code> linear models including constant term can be created by inclding or not including each of these predictors in the individual model, i.e., component of the mixture.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mixest1(y,x,mods=NULL,ftype=NULL,lambda=NULL,kappa=NULL,V=NULL,W=NULL,atype=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>one column <code>matrix</code> of forecasted time-series, observations inserted rowwise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>matrix</code> of independent time-series (predictors), observations inserted rowwise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mods</code></td>
+<td>
+<p>optional, <code>matrix</code> indicating which models should be used as components, the first column indicates inclusion of a constant in a component model, by default all possible models with a constant are used, inclusion of a variable is indicated by 1, omitting by 0, component models are indexed by rows, variables (time-series) are indexed by columns</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ftype</code></td>
+<td>
+<p>optional, <code>numeric</code> indicating type of forecasting, 0 represents forecasting based on coefficients derived from the estimated mixture, 1 represents averaging forecasts from all components by the estimated weights, 2 represents selecting the forecast given by the model with the highest weight, 3 represents selecting the forecast from the so-called median probability model (Barbieri and Berger, 2004), by default <code>ftype=0</code> is taken</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>optional, <code>numeric</code> between 0 and 1, a forgetting factor in covariance estimation method described by Raftery et al. (2010), by default the method of Nagy and Suzdaleva (2013) is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kappa</code></td>
+<td>
+<p>optional, <code>numeric</code> between 0 and 1, a parameter for the exponentially weighted moving average estimation of components variances, described for example by Koop and Korobilis (2012), if <code>lambda</code> is specified but <code>kappa</code> is not, then the method of recursive moments described by Raftery et al. (2010) is used, by default the method of Nagy and Suzdaleva (2013) is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>V</code></td>
+<td>
+<p>optional, <code>numeric</code> initial variance for all components (output equation), by default <code>V=1</code> is taken</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>optional, <code>numeric</code> initial value to be put in the diagonal matrix representing the covariance matrices (state equation), by default <code>W=1</code> is taken</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>atype</code></td>
+<td>
+<p>optional, <code>numeric</code> indicating approximation of pdf, 0 represents quasi-Bayesian approach, 1 represents minimization of the Kerridge inaccuracy (where suitiable optimization is done with the Gauss-Newton method, still this increases the computation time greatly), by default <code>atype=0</code> is taken</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>object of class <code>mixest</code>, i.e., <code>list</code> of 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>$y.hat</code></td>
+<td>
+<p><code>vector</code> of predictions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$rvi</code></td>
+<td>
+<p><code>matrix</code> of relative variable importances</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$coef</code></td>
+<td>
+<p><code>matrix</code> of regression coefficients corresponding to <code>ftype</code> method chosen</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$weights</code></td>
+<td>
+<p><code>matrix</code> of estimated weights of component models</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$V</code></td>
+<td>
+<p><code>vector</code> of updated variances from the selected models, consistent with <code>ftype</code> chosen</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$R</code></td>
+<td>
+<p><code>matrix</code> of updated diagonal of covariances corresponding to independent variables in regressions, consistent with <code>ftype</code> chosen</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$components</code></td>
+<td>
+<p><code>matrix</code> of <code>mods</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$parameters</code></td>
+<td>
+<p><code>character</code> of parameters used in the model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$data.last</code></td>
+<td>
+<p><code>list</code> of selected parameters obtained in the last iteration, necessary for the internal use by <code>cauimp</code></p>
+</td>
+</tr>
+</table>
+<h3>Source</h3>
+
+<p>Nagy, I., Suzdaleva, E., 2013, Mixture estimation with state-space components and Markov model of switching. <em>Applied Mathematical Modelling</em> <b>37</b>, 9970–9984.
+</p>
+
+
+<h3>References</h3>
+
+<p>Barbieri, M. M., Berger, J. O., 2004, Optimal predictive model selection. <em>The Annals of Statistics</em> <b>32</b>, 870–897.
+</p>
+<p>Burnham, K. P., Anderson, D. R., 2002, <em>Model Selection and Multimodel Inference</em>, Springer. 
+</p>
+<p>Karny, M. (ed.), 2006, <em>Optimized Bayesian Dynamic Advising</em>, Springer. 
+</p>
+<p>Koop, G., Korobilis, D., 2012, Forecasting inflation using Dynamic Model Averaging. <em>International Economic Review</em> <b>53</b>, 867–886.
+</p>
+<p>Nagy, I., Suzdaleva, E., 2017, <em>Algorithms and Programs of Dynamic Mixture Estimation</em>, Springer. 
+</p>
+<p>Quarteroni, A., Sacco, R., Saleri, F., 2007, <em>Numerical Mathematics</em>, Springer.
+</p>
+<p>Raftery, A. E., Karny, M., Ettler, P., 2010, Online prediction under model uncertainty via Dynamic Model Averaging: Application to a cold rolling mill. <em>Technometrics</em> <b>52</b>, 52–66.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mixest2</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(oil)
+m1 &lt;- mixest1(y=oil[,1,drop=FALSE],x=oil[,-1,drop=FALSE],ftype=1,V=100,W=100)
+
+# Models with only one variable
+mods &lt;- diag(1,nrow=ncol(oil[,-1,drop=FALSE]),ncol=ncol(oil[,-1,drop=FALSE]))
+mods &lt;- cbind(1,mods)
+m2 &lt;- mixest1(y=oil[,1,drop=FALSE],x=oil[,-1,drop=FALSE],mods=mods,ftype=1,V=100,W=100)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mahal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Mahalanobis Distance Matrix for Optimal Matching
+</h2>
+
+<h3>Description</h3>
+
+<p>Computes a Mahalanobis distance matrix between treated individuals and potential controls.  The method is discussed in Chapter 8 of Design of Observational Studies (2010).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mahal(z, X)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+
+<p>z is a vector that is 1 for a treated individual and 0 for a control.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>A matrix of continuous or binary covariates.  The number of rows of X must equal the length of z.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The distance matrix has one row for each treated individual (z=1) and one column for each potential control (z=0).  The row and column names of the distance matrix refer to the position in z, 1, 2, ..., length(z).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Paul R. Rosenbaum
+</p>
+
+
+<h3>References</h3>
+
+<p>Hansen, B. B. and Klopfer, S. O. (2006). Optimal full matching and related designs via network flows. Journal of computational and Graphical Statistics, 15(3), 609-627. (optmatch package)
+</p>
+<p>Hansen, B. B. (2007). Flexible, optimal matching for observational studies. R News, 7, 18-24. (optmatch package)
+</p>
+<p>Rosenbaum, P. R. (2010). Design of Observational Studies.
+New York: Springer.  The method and example are discussed in Chapter 8.
+</p>
+<p>Rosenbaum, P. R. and Rubin, D. B. (1985). Constructing a control group using multivariate matched sampling methods that incorporate the propensity score. The American Statistician, 39, 33-38.
+</p>
+<p>Rubin, D. B. (1980). Bias reduction using Mahalanobis-metric matching. Biometrics, 36, 293-298.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(costa)
+z&lt;-1*(costa$welder=="Y")
+aa&lt;-1*(costa$race=="A")
+smoker=1*(costa$smoker=="Y")
+age&lt;-costa$age
+x&lt;-cbind(age,aa,smoker)
+dmat&lt;-mahal(z,x)
+# Mahalanobis distances
+round(dmat[,1:6],2) # Compare with Table 8.5 in Design of Observational Studies (2010)
+# Impose propensity score calipers
+prop&lt;-glm(z~age+aa+smoker,family=binomial)$fitted.values # propensity score
+# Mahalanobis distanced penalized for violations of a propensity score caliper.
+# This version is used for numerical work.
+dmat&lt;-addcaliper(dmat,z,prop,caliper=.5)
+round(dmat[,1:6],2) # Compare with Table 8.5 in Design of Observational Studies (2010)
+## Not run: 
+# Find the minimum distance match within propensity score calipers.
+optmatch::pairmatch(dmat,data=costa)
+
+## End(Not run)
+# Conceptual versions with infinite distances for violations of propensity caliper.
+dmat[dmat&gt;20]&lt;-Inf
+round(dmat[,1:6],2) # Compare with Table 8.5 in Design of Observational Studies (2010)
+</code></pre>
+
+
+</div>

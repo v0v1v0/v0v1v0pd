@@ -1,0 +1,256 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynlm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dynamic Linear Models and Time Series Regression</h2>
+
+<h3>Description</h3>
+
+<p>Interface to <code>lm.wfit</code> for fitting dynamic linear models
+and time series regression relationships.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynlm(formula, data, subset, weights, na.action, method = "qr",
+  model = TRUE, x = FALSE, y = FALSE, qr = TRUE, singular.ok = TRUE,
+  contrasts = NULL, offset, start = NULL, end = NULL, ...)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a <code>"formula"</code> describing the linear model to be fit.
+For details see below and <code>lm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional <code>"data.frame"</code> or time series object (e.g.,
+<code>"ts"</code> or <code>"zoo"</code>), containing the variables
+in the model.  If not found in <code>data</code>, the variables are taken
+from <code>environment(formula)</code>, typically the environment from which
+<code>lm</code> is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations
+to be used in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>an optional vector of weights to be used
+in the fitting process. If specified, weighted least squares is used
+with weights <code>weights</code> (that is, minimizing <code>sum(w*e^2)</code>);
+otherwise ordinary least squares is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen
+when the data contain <code>NA</code>s.  The default is set by
+the <code>na.action</code> setting of <code>options</code>, and is
+<code>na.fail</code> if that is unset.  The “factory-fresh”
+default is <code>na.omit</code>. Another possible value is
+<code>NULL</code>, no action. Note, that for time series regression
+special methods like <code>na.contiguous</code>, <code>na.locf</code>
+and <code>na.approx</code> are available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the method to be used; for fitting, currently only
+<code>method = "qr"</code> is supported; <code>method = "model.frame"</code> returns
+the model frame (the same as with <code>model = TRUE</code>, see below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model, x, y, qr</code></td>
+<td>
+<p>logicals.  If <code>TRUE</code> the corresponding
+components of the fit (the model frame, the model matrix, the
+response, the QR decomposition) are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>singular.ok</code></td>
+<td>
+<p>logical. If <code>FALSE</code> (the default in S but
+not in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>) a singular fit is an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>an optional list. See the <code>contrasts.arg</code>
+of <code>model.matrix.default</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>this can be used to specify an <em>a priori</em>
+known component to be included in the linear predictor
+during fitting.  An <code>offset</code> term can be included in the
+formula instead or as well, and if both are specified their sum is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>start of the time period which should be used for fitting the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>end</code></td>
+<td>
+<p>end of the time period which should be used for fitting the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments to be passed to the low level
+regression fitting functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The interface and internals of <code>dynlm</code> are very similar to <code>lm</code>,
+but currently <code>dynlm</code> offers three advantages over the direct use of
+<code>lm</code>: 1. extended formula processing, 2. preservation of time series
+attributes, 3. instrumental variables regression (via two-stage least squares).
+</p>
+<p>For specifying the <code>formula</code> of the model to be fitted, there are
+additional functions available which allow for convenient specification
+of dynamics (via <code>d()</code> and <code>L()</code>) or linear/cyclical patterns
+(via <code>trend()</code>, <code>season()</code>, and <code>harmon()</code>).
+All new formula functions require that their arguments are time
+series objects (i.e., <code>"ts"</code> or <code>"zoo"</code>).
+</p>
+<p>Dynamic models: An example would be <code>d(y) ~ L(y, 2)</code>, where
+<code>d(x, k)</code> is <code>diff(x, lag = k)</code> and <code>L(x, k)</code> is
+<code>lag(x, lag = -k)</code>, note the difference in sign. The default
+for <code>k</code> is in both cases <code>1</code>. For <code>L()</code>, it
+can also be vector-valued, e.g., <code>y ~ L(y, 1:4)</code>. 
+</p>
+<p>Trends: <code>y ~ trend(y)</code> specifies a linear time trend where
+<code>(1:n)/freq</code> is used by default as the regressor. <code>n</code> is the 
+number of observations and <code>freq</code> is the frequency of the series
+(if any, otherwise <code>freq = 1</code>). Alternatively, <code>trend(y, scale = FALSE)</code>
+would employ <code>1:n</code> and <code>time(y)</code> would employ the original time index.
+</p>
+<p>Seasonal/cyclical patterns: Seasonal patterns can be specified
+via <code>season(x, ref = NULL)</code> and harmonic patterns via
+<code>harmon(x, order = 1)</code>.
+<code>season(x, ref = NULL)</code> creates a factor with levels for each cycle of the season. Using
+the <code>ref</code> argument, the reference level can be changed from the default
+first level to any other. <code>harmon(x, order = 1)</code> creates a matrix of
+regressors corresponding to <code>cos(2 * o * pi * time(x))</code> and 
+<code>sin(2 * o * pi * time(x))</code> where <code>o</code> is chosen from <code>1:order</code>.
+</p>
+<p>See below for examples and <code>M1Germany</code> for a more elaborate application.
+</p>
+<p>Furthermore, a nuisance when working with <code>lm</code> is that it offers only limited
+support for time series data, hence a major aim of <code>dynlm</code> is to preserve 
+time series properties of the data. Explicit support is currently available 
+for <code>"ts"</code> and <code>"zoo"</code> series. Internally, the data is kept as a <code>"zoo"</code>
+series and coerced back to <code>"ts"</code> if the original dependent variable was of
+that class (and no internal <code>NA</code>s were created by the <code>na.action</code>).
+</p>
+<p>To specify a set of instruments, formulas of type <code>y ~ x1 + x2 | z1 + z2</code>
+can be used where <code>z1</code> and <code>z2</code> represent the instruments. Again,
+the extended formula processing described above can be employed for all variables
+in the model.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>zoo</code>, <code>merge.zoo</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">###########################
+## Dynamic Linear Models ##
+###########################
+
+## multiplicative SARIMA(1,0,0)(1,0,0)_12 model fitted
+## to UK seatbelt data
+data("UKDriverDeaths", package = "datasets")
+uk &lt;- log10(UKDriverDeaths)
+dfm &lt;- dynlm(uk ~ L(uk, 1) + L(uk, 12))
+dfm
+## explicitly set start and end
+dfm &lt;- dynlm(uk ~ L(uk, 1) + L(uk, 12), start = c(1975, 1), end = c(1982, 12))
+dfm
+
+## remove lag 12
+dfm0 &lt;- update(dfm, . ~ . - L(uk, 12))
+anova(dfm0, dfm)
+
+## add season term
+dfm1 &lt;- dynlm(uk ~ 1, start = c(1975, 1), end = c(1982, 12))
+dfm2 &lt;- dynlm(uk ~ season(uk), start = c(1975, 1), end = c(1982, 12))
+anova(dfm1, dfm2)
+
+plot(uk)
+lines(fitted(dfm0), col = 2)
+lines(fitted(dfm2), col = 4)
+
+## regression on multiple lags in a single L() call
+dfm3 &lt;- dynlm(uk ~ L(uk, c(1, 11, 12)), start = c(1975, 1), end = c(1982, 12))
+anova(dfm, dfm3)
+
+## Examples 7.11/7.12 from Greene (1993)
+data("USDistLag", package = "lmtest")
+dfm1 &lt;- dynlm(consumption ~ gnp + L(consumption), data = USDistLag)
+dfm2 &lt;- dynlm(consumption ~ gnp + L(gnp), data = USDistLag)
+plot(USDistLag[, "consumption"])
+lines(fitted(dfm1), col = 2)
+lines(fitted(dfm2), col = 4)
+if(require("lmtest")) encomptest(dfm1, dfm2)
+
+
+###############################
+## Time Series Decomposition ##
+###############################
+
+## airline data
+data("AirPassengers", package = "datasets")
+ap &lt;- log(AirPassengers)
+ap_fm &lt;- dynlm(ap ~ trend(ap) + season(ap))
+summary(ap_fm)
+
+## Alternative time trend specifications:
+##   time(ap)                  1949 + (0, 1, ..., 143)/12
+##   trend(ap)                 (1, 2, ..., 144)/12
+##   trend(ap, scale = FALSE)  (1, 2, ..., 144)
+
+## Exhibit 3.5/3.6 from Cryer &amp; Chan (2008)
+if(require("TSA")) {
+data("tempdub", package = "TSA")
+td_lm &lt;- dynlm(tempdub ~ harmon(tempdub))
+summary(td_lm)
+plot(tempdub, type = "p")
+lines(fitted(td_lm), col = 2)
+}
+</code></pre>
+
+
+</div>

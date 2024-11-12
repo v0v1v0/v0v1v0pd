@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.drf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict with a drf forest</h2>
+
+<h3>Description</h3>
+
+<p>Predict with a drf forest
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'drf'
+predict(
+  object,
+  newdata = NULL,
+  transformation = NULL,
+  functional = NULL,
+  num.threads = NULL,
+  custom.functional = function(y, w) apply(y, 2, sum(y * w)),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>The trained drf forest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>Points at which predictions should be made. If NULL, makes out-of-bag
+predictions on the training set instead (i.e., provides predictions at
+Xi using only trees that did not use the i-th training example). Note
+that this matrix (or vector) should have the number of columns as the training
+matrix, and that the columns must appear in the same order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transformation</code></td>
+<td>
+<p>a function giving a transformation of the responses, by default if NULL, the identity <code>function(y) y</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>functional</code></td>
+<td>
+<p>which type of statistical functional. One option between:
+</p>
+
+<ul>
+<li>
+<p>"mean"the conditional mean, the returned value is a list containing a matrix <code>mean</code> of size <code>n</code> x <code>f</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code> and <code>f</code> the dimension of the <code>transformation</code>.
+</p>
+</li>
+<li>
+<p>"sd"the conditional standard deviation, the returned value is a list containing a matrix <code>sd</code> of size <code>n</code> x <code>f</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code> and <code>f</code> the dimension of the <code>transformation</code>.
+</p>
+</li>
+<li>
+<p>"quantile"the conditional quantiles, the returned value is a list containing an array <code>quantile</code> of size <code>n</code> x <code>f</code>  x <code>q</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code>, <code>f</code> the dimension of the <code>transformation</code> and <code>q</code> the number of desired quantiles.
+</p>
+</li>
+<li>
+<p>"cor"the conditional correlation, the returned value is a list containing an array <code>cor</code> of size <code>n</code> x <code>f</code>  x <code>f</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code>, <code>f</code> the dimension of the <code>transformation</code>.
+</p>
+</li>
+<li>
+<p>"cov"the conditional covariance, the returned value is a list containing an array <code>cor</code> of size <code>n</code> x <code>f</code>  x <code>f</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code>, <code>f</code> the dimension of the <code>transformation</code>.
+</p>
+</li>
+<li>
+<p>"normalPredictionScore"a prediction score based on an asymptotic normality assumption, the returned value is a list containing a list of functions <code>normalPredictionScore</code> of size <code>n</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code>. Here the transformation should be uni-dimensional.
+</p>
+</li>
+<li>
+<p>"custom"a custom function provided by the user, the returned value is a list containing a matrix <code>custom</code> of size <code>n</code> x <code>f</code>,
+where <code>n</code> denotes the number of observation in <code>newdata</code> and <code>f</code> the dimension of the output of the function <code>custom.functional</code>.
+</p>
+</li>
+<li>
+<p>"MQ"multivariate quantiles, return a list containing a matrix of the inputed ranks u (that should be provided as an argument of the predict function) along with a list of the different corresponding MQ (same size as u).
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.threads</code></td>
+<td>
+<p>Number of threads used in training. If set to NULL, the software
+automatically selects an appropriate amount.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom.functional</code></td>
+<td>
+<p>a function giving the custom functional when <code>functional</code> is set to "custom". This should be a function <code>f(y,w)</code> using the
+training response matrix <code>y</code> and the weights <code>w</code> at a single testing point.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list containing an entry with the same name as the functional selected.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Train a distributional random forest with CART splitting rule.
+n &lt;- 100
+p &lt;- 2
+X &lt;- matrix(rnorm(n * p), n, p)
+Y &lt;- X + matrix(rnorm(n * p), ncol=p)
+drf.forest &lt;- drf(X = X, Y = Y)
+
+# Predict conditional correlation.
+X.test &lt;- matrix(0, 101, p)
+X.test[, 1] &lt;- seq(-2, 2, length.out = 101)
+cor.pred &lt;- predict(drf.forest, X.test, functional = "cor")
+
+# Predict on out-of-bag training samples.
+cor.oob.pred &lt;- predict(drf.forest,  functional = "cor")
+
+# Train a distributional random forest with "FourierMMD" splitting rule.
+n &lt;- 100
+p &lt;- 2
+X &lt;- matrix(rnorm(n * p), n, p)
+Y &lt;- X + matrix(rnorm(n * p), ncol=p)
+drf.forest &lt;- drf(X = X, Y = Y, splitting.rule = "FourierMMD", num.features = 10)
+
+# Predict conditional correlation.
+X.test &lt;- matrix(0, 101, p)
+X.test[, 1] &lt;- seq(-2, 2, length.out = 101)
+cor.pred &lt;- predict(drf.forest, X.test, functional = "cor")
+
+# Predict on out-of-bag training samples.
+cor.oob.pred &lt;- predict(drf.forest,  functional = "cor")
+
+
+</code></pre>
+
+
+</div>

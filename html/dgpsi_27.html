@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pack</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pack GP and DGP emulators into a bundle</h2>
+
+<h3>Description</h3>
+
+<p>This function packs GP emulators and DGP emulators into a <code>bundle</code> class for
+sequential designs if each emulator emulates one output dimension of the underlying simulator.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pack(..., id = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>a sequence or a list of emulators produced by <code>gp()</code> or <code>dgp()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>an ID to be assigned to the bundle emulator. If an ID is not provided (i.e., <code>id = NULL</code>), a UUID (Universally Unique Identifier) will be automatically generated
+and assigned to the emulator. Default to <code>NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An S3 class named <code>bundle</code> to be used by <code>design()</code> for sequential designs. It has:
+</p>
+
+<ul>
+<li>
+<p> a slot called <code>id</code> that is assigned through the <code>id</code> argument.
+</p>
+</li>
+<li> <p><em>N</em> slots named <code style="white-space: pre;">⁠emulator1,...,emulatorN⁠</code>, each of which contains a GP or DGP emulator, where <em>N</em> is the number of emulators
+that are provided to the function.
+</p>
+</li>
+<li>
+<p> a slot called <code>data</code> which contains two elements <code>X</code> and <code>Y</code>. <code>X</code> contains <em>N</em> matrices named <code style="white-space: pre;">⁠emulator1,...,emulatorN⁠</code> that are
+training input data for different emulators. <code>Y</code> contains <em>N</em> single-column matrices named <code style="white-space: pre;">⁠emulator1,...,emulatorN⁠</code> that are
+training output data for different emulators.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# load packages and the Python env
+library(lhs)
+library(dgpsi)
+
+# construct a function with a two-dimensional output
+f &lt;- function(x) {
+ y1 = sin(30*((2*x-1)/2-0.4)^5)*cos(20*((2*x-1)/2-0.4))
+ y2 = 1/3*sin(2*(2*x - 1))+2/3*exp(-30*(2*(2*x-1))^2)+1/3
+ return(cbind(y1,y2))
+}
+
+# generate the initial design
+X &lt;- maximinLHS(10,1)
+Y &lt;- f(X)
+
+# generate the validation data
+validate_x &lt;- maximinLHS(30,1)
+validate_y &lt;- f(validate_x)
+
+# training a 2-layered DGP emulator with respect to each output with the global connection off
+m1 &lt;- dgp(X, Y[,1], connect=F)
+m2 &lt;- dgp(X, Y[,2], connect=F)
+
+# specify the range of the input dimension
+lim &lt;- c(0, 1)
+
+# pack emulators to form an emulator bundle
+m &lt;- pack(m1, m2)
+
+# 1st wave of the sequential design with 10 steps with target RMSE 0.01
+m &lt;- design(m, N=10, limits = lim, f = f, x_test = validate_x, y_test = validate_y, target = 0.01)
+
+# 2rd wave of the sequential design with 10 steps, the same target, and the aggregation
+# function that takes the average of the criterion scores across the two outputs
+g &lt;- function(x){
+  return(rowMeans(x))
+}
+m &lt;- design(m, N=10, limits = lim, f = f, x_test = validate_x,
+                    y_test = validate_y, aggregate = g, target = 0.01)
+
+# draw sequential designs of the two packed emulators
+draw(m, emulator = 1, type = 'design')
+draw(m, emulator = 2, type = 'design')
+
+# inspect the traces of RMSEs of the two packed emulators
+draw(m, emulator = 1, type = 'rmse')
+draw(m, emulator = 2, type = 'rmse')
+
+# write and read the constructed emulator bundle
+write(m, 'bundle_dgp')
+m &lt;- read('bundle_dgp')
+
+# unpack the bundle into individual emulators
+m_unpacked &lt;- unpack(m)
+
+# plot OOS validations of individual emulators
+plot(m_unpacked[[1]], x_test = validate_x, y_test = validate_y[,1])
+plot(m_unpacked[[2]], x_test = validate_x, y_test = validate_y[,2])
+
+## End(Not run)
+</code></pre>
+
+
+</div>

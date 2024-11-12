@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>testZeroInflation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tests for zero-inflation</h2>
+
+<h3>Description</h3>
+
+<p>This function compares the observed number of zeros with the zeros expected from simulations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">testZeroInflation(simulationOutput, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>an object of class DHARMa, either created via <code>simulateResiduals</code> for supported models or by <code>createDHARMa</code> for simulations created outside DHARMa, or a supported model. Providing a supported model directly is discouraged, because simulation settings cannot be changed in this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments to <code>testGeneric</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The plot shows the expected distribution of zeros against the observed values, the ratioObsSim shows observed vs. simulated zeros. A value &lt; 1 means that the observed data has less zeros than expected, a value &gt; 1 means that it has more zeros than expected (aka zero-inflation). Per default, the function tests both sides.
+</p>
+<p>Some notes about common problems / questions:
+</p>
+
+<ul>
+<li>
+<p> Zero-inflation tests after fitting the model are crucial to see if you have zero-inflation. Just because there are a lot of zeros doesn't mean you have zero-inflation, see Warton, D. I. (2005). Many zeros does not mean zero inflation: comparing the goodness-of-fit of parametric models to multivariate abundance data. Environmetrics 16(3), 275-289.
+</p>
+</li>
+<li>
+<p> That being said, zero-inflation tests are often not a reliable guide to decide wheter to add a zi term or not. In general, model structures should be decided on ideally a priori, if that is not possible via model selection techniques (AIC, BIC, WAIC, Bayes Factor). A zero-inflation test should only be run after that decision, and to validate the decision that was taken.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>This function is a wrapper for <code>testGeneric</code>, where the summary argument is set to function(x) sum(x == 0)
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Florian Hartig
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>testResiduals</code>, <code>testUniformity</code>, <code>testOutliers</code>, <code>testDispersion</code>, <code>testZeroInflation</code>, <code>testGeneric</code>, <code>testTemporalAutocorrelation</code>, <code>testSpatialAutocorrelation</code>, <code>testQuantiles</code>, <code>testCategorical</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">testData = createData(sampleSize = 100, overdispersion = 0.5, randomEffectVariance = 0)
+fittedModel &lt;- glm(observedResponse ~ Environment1 , family = "poisson", data = testData)
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+
+# the plot function runs 4 tests
+# i) KS test i) Dispersion test iii) Outlier test iv) quantile test
+plot(simulationOutput, quantreg = TRUE)
+
+# testResiduals tests distribution, dispersion and outliers
+# testResiduals(simulationOutput)
+
+####### Individual tests #######
+
+# KS test for correct distribution of residuals
+testUniformity(simulationOutput)
+
+# KS test for correct distribution within and between groups
+testCategorical(simulationOutput, testData$group)
+
+# Dispersion test - for details see ?testDispersion
+testDispersion(simulationOutput) # tests under and overdispersion
+
+# Outlier test (number of observations outside simulation envelope)
+# Use type = "boostrap" for exact values, see ?testOutliers
+testOutliers(simulationOutput, type = "binomial")
+
+# testing zero inflation
+testZeroInflation(simulationOutput)
+
+# testing generic summaries
+countOnes &lt;- function(x) sum(x == 1)  # testing for number of 1s
+testGeneric(simulationOutput, summary = countOnes) # 1-inflation
+testGeneric(simulationOutput, summary = countOnes, alternative = "less") # 1-deficit
+
+means &lt;- function(x) mean(x) # testing if mean prediction fits
+testGeneric(simulationOutput, summary = means)
+
+spread &lt;- function(x) sd(x) # testing if mean sd fits
+testGeneric(simulationOutput, summary = spread)
+</code></pre>
+
+
+</div>

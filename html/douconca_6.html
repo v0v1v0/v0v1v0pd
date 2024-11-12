@@ -1,0 +1,412 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dc_CA</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Performs (weighted) double constrained correspondence analysis (dc-CA)</h2>
+
+<h3>Description</h3>
+
+<p>Double constrained correspondence analysis (dc-CA) for analyzing
+(multi-)trait (multi-)environment ecological data using library <code>vegan</code> 
+and native R code. It has a <code>formula</code> interface which allows to assess,
+for example, the importance of trait interactions in shaping ecological 
+communities. The function <code>dc_CA</code> has an option to divide the abundance
+data of a site by the site total, giving equal site weights. This division 
+has the advantage that the multivariate analysis corresponds with an 
+unweighted (multi-trait) community-level analysis, instead of being weighted
+(Kleyer et al. 2012).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dc_CA(
+  formulaEnv = NULL,
+  formulaTraits = NULL,
+  response = NULL,
+  dataEnv = NULL,
+  dataTraits = NULL,
+  divideBySiteTotals = TRUE,
+  dc_CA_object = NULL,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formulaEnv</code></td>
+<td>
+<p>formula or one-sided formula for the rows (samples) with 
+row predictors in <code>dataEnv</code>. When two-sided, the left hand side of 
+the formula is not used. Specify row covariates (if any ) by 
+adding <code>+ Condition(covariate-formula)</code> to <code>formulaEnv</code> as 
+in <code>rda</code>. The <code>covariate-formula</code> should not contain 
+a <code>~</code> (tilde). Default: <code>NULL</code> for <code>~.</code>, i.e. all variables 
+in <code>dataEnv</code> are predictor variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formulaTraits</code></td>
+<td>
+<p>formula or one-sided formula for the columns (species) 
+with column predictors in <code>dataTraits</code>. When two-sided, the left hand 
+side of the formula is not used. Specify column covariates (if any ) by 
+adding <code>+ Condition(covariate-formula)</code> to <code>formulaTraits</code> as 
+in <code>cca</code>. The <code>covariate-formula</code> should not contain 
+a <code>~</code> (tilde). Default: <code>NULL</code> for <code>~.</code>, i.e. all variables 
+in <code>dataTraits</code> are predictor traits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>matrix, data frame of the abundance data 
+(dimension <em>n</em> x <em>m</em>) or list with community weighted means (CWMs)
+from <code>fCWM_SNC</code>. See Details for analyses starting from community
+weighted means. Rownames of <code>response</code>, if any, are carried through.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataEnv</code></td>
+<td>
+<p>matrix or data frame of the row predictors, with rows 
+corresponding to those in <code>response</code>. (dimension <em>n</em> x <em>p</em>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataTraits</code></td>
+<td>
+<p>matrix or data frame of the column predictors, with rows 
+corresponding to the columns in <code>response</code>.
+(dimension <em>m</em> x <em>q</em>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>divideBySiteTotals</code></td>
+<td>
+<p>logical; default <code>TRUE</code> for closing the 
+data by dividing the rows in the <code>response</code> by their total.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dc_CA_object</code></td>
+<td>
+<p>optional object from an earlier run of this function. 
+Useful if the same formula for the columns (<code>formulaTraits</code>), 
+<code>dataTraits</code> and <code>response</code> are used with a new formula for the 
+rows. If set, the data of the previous run is used and the result of its 
+first step is taken for the new analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical for printing a simple summary (default: TRUE)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Empty (all zero) rows and columns in <code>response</code> are removed from the 
+<code>response</code> and the corresponding rows from <code>dataEnv</code> and 
+<code>dataTraits</code>. Subsequently, any columns with missing values are 
+removed from  <code>dataEnv</code> and <code>dataTraits</code>. It gives an error 
+('name_of_variable' not found), if variables with missing entries are
+specified in <code>formulaEnv</code> and <code>formulaTraits</code>.
+</p>
+<p>Computationally, dc-CA can be carried out by a single singular value 
+decomposition (ter Braak et al. 2018), but it is here computed in two steps.
+In the first step, the transpose of the <code>response</code> is regressed on to 
+the traits (the column predictors) using <code>cca</code> with 
+<code>formulaTraits</code>. The column scores of this analysis (in scaling 1) are 
+community weighted means (CWM) of the orthonormalized traits. These are then 
+regressed on the environmental (row) predictors using <code>wrda</code> 
+with <code>formulaEnv</code> or using <code>rda</code>, if site weights 
+are equal.
+</p>
+<p>A dc-CA can be carried out on, what statisticians call, the sufficient
+statistics of the method. This is useful, when the abundance data are not 
+available or could not be made public in a paper attempting reproducible 
+research. In this case, <code>response</code> should be a list
+with as first element community weighted means (CWMs) with respect to the 
+traits, and the trait data, and, optionally, further elements, for functions
+related to <code>dc_CA</code>. The minimum is a 
+<code>list(CWM, weight = list(columns = species_weights))</code> with CWM a matrix
+or data.frame, but then <code>formulaEnv</code>, <code>formulaTraits</code>, 
+<code>dataEnv</code>, <code>dataTraits</code> must be specified in the call to 
+<code>dc_CA</code>. The function <code>fCWM_SNC</code> and its example
+show how to set the
+<code>response</code> for this and helps to create the <code>response</code> from 
+abundance data in these non-standard applications of dc-CA. Species and site 
+weights, if not set in <code>response$weights</code> can be set by a variable
+<code>weight</code> in the data frames <code>dataTraits</code> and <code>dataEnv</code>, 
+respectively, but formulas should then not be <code>~.</code>.
+</p>
+<p>The statistics and scores in the example <code>dune_dcCA.r</code>, have been 
+checked against the results in Canoco 5.15 (ter Braak &amp; Šmilauer, 2018).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of <code>class</code> <code>dcca</code>; that is a list with elements
+</p>
+
+<dl>
+<dt>CCAonTraits</dt>
+<dd>
+<p>a <code>cca.object</code> from the 
+<code>cca</code> analysis of the transpose of the closed 
+<code>response</code> using formula <code>formulaTraits</code>.</p>
+</dd>
+<dt>formulaTraits</dt>
+<dd>
+<p>the argument <code>formulaTraits</code>. If the formula was
+<code>~.</code>, it was changed to explicit trait names.</p>
+</dd>
+<dt>data</dt>
+<dd>
+<p>a list of <code>Y</code>, <code>dataEnv</code> and <code>dataTraits</code>, 
+after removing empty rows and columns in <code>response</code> and after closure if 
+<code>divideBySiteTotals = TRUE</code> and with the corresponding rows in 
+<code>dataEnv</code> and <code>dataTraits</code> removed.</p>
+</dd>
+<dt>weights</dt>
+<dd>
+<p>a list of unit-sum weights of row and columns. The names of 
+the list are <code>c("row", "columns")</code>, in that order.</p>
+</dd>
+<dt>Nobs</dt>
+<dd>
+<p>number of sites (rows).</p>
+</dd>
+<dt>CWMs_orthonormal_traits</dt>
+<dd>
+<p>Community weighted means w.r.t. 
+orthonormalized traits.</p>
+</dd>
+<dt>RDAonEnv</dt>
+<dd>
+<p>a <code>wrda</code> object or 
+<code>cca.object</code> from the 
+<code>wrda</code> or, if with equal row weights, 
+<code>rda</code> analysis, respectively of the column scores of the
+<code>cca</code>, which are the CWMs of orthonormalized traits, using formula 
+<code>formulaEnv</code>.</p>
+</dd>
+<dt>formulaEnv</dt>
+<dd>
+<p>the argument <code>formulaEnv</code>. If the formula was 
+<code>~.</code>, it was changed to explicit environmental variable names.</p>
+</dd>
+<dt>eigenvalues</dt>
+<dd>
+<p>the dc-CA eigenvalues (same as those of the 
+<code>rda</code> analysis).</p>
+</dd>
+<dt>c_traits_normed0</dt>
+<dd>
+<p>mean, sd, VIF and (regression) coefficients of 
+the traits that define the dc-CA axes in terms of the 
+traits with t-ratios missing indicated by <code>NA</code>s for 'tval1'.</p>
+</dd>
+<dt>inertia</dt>
+<dd>
+<p>a one-column matrix with four inertias (weighted variances):
+</p>
+
+<ul>
+<li>
+<p> total: the total inertia.
+</p>
+</li>
+<li>
+<p> conditionT: the inertia explained by the condition in 
+<code>formulaTraits</code> if present (neglecting row constraints).
+</p>
+</li>
+<li>
+<p> traits_explain: the inertia explained by the traits (neglecting the 
+row predictors and any condition in <code>formulaTraits</code>). This is the 
+maximum that the row predictors could explain in dc-CA (the sum of the 
+following two items is thus less than this value).
+</p>
+</li>
+<li>
+<p> conditionE: the trait-constrained inertia explained by the condition 
+in <code>formulaEnv</code>.
+</p>
+</li>
+<li>
+<p> constraintsTE: the trait-constrained inertia explained by the 
+predictors (without the row covariates).
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+<p>If <code>verbose</code> is <code>TRUE</code> (or after <code>out &lt;- print(out)</code> is 
+invoked) there are three more items.
+</p>
+
+<ul>
+<li> <p><code>c_traits_normed</code>: mean, sd, VIF and (regression) coefficients of
+the traits that define the dc-CA trait axes (composite traits), and their 
+optimistic t-ratio.
+</p>
+</li>
+<li> <p><code>c_env_normed</code>: mean, sd, VIF and (regression) coefficients of 
+the environmental variables that define the dc-CA axes in terms of the 
+environmental variables (composite gradients), and their optimistic t-ratio.
+</p>
+</li>
+<li> <p><code>species_axes</code>: a list with four items
+</p>
+
+<ul>
+<li> <p><code>species_scores</code>: a list with names 
+<code>c("species_scores_unconstrained", "lc_traits_scores")</code> with the
+matrix with species niche centroids along the dc-CA axes (composite 
+gradients) and the matrix with linear combinations of traits.
+</p>
+</li>
+<li> <p><code>correlation</code>: a matrix with inter-set correlations of the 
+traits with their SNCs.
+</p>
+</li>
+<li> <p><code>b_se</code>: a matrix with (unstandardized) regression coefficients 
+for traits and their optimistic standard errors.
+</p>
+</li>
+<li> <p><code>R2_traits</code>: a vector with coefficient of determination (R2) 
+of the SNCs on to the traits. The square-root thereof could be called 
+the species-trait correlation in analogy with the species-environment 
+correlation in CCA.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>sites_axes</code>: a list with four items
+</p>
+
+<ul>
+<li> <p><code>site_scores</code>: a list with names 
+<code>c("site_scores_unconstrained", "lc_env_scores")</code> with the matrix 
+with community weighted means (CWMs) along the dc-CA axes (composite 
+gradients) and the matrix with linear combinations of environmental 
+variables.
+</p>
+</li>
+<li> <p><code>correlation</code>: a matrix with inter-set correlations of the 
+environmental variables with their CWMs.
+</p>
+</li>
+<li> <p><code>b_se</code>: a matrix with (unstandardized) regression coefficients 
+for environmental variables and their optimistic standard errors.
+</p>
+</li>
+<li> <p><code>R2_env</code>: a vector with coefficient of determination (R2) of 
+the CWMs on to the environmental variables. The square-root thereof 
+has been called the species-environmental correlation in CCA.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>All scores in the <code>dcca</code> object are in scaling <code>"sites"</code> (1): 
+the scaling with <em>Focus on Case distances</em> .
+</p>
+
+
+<h3>References</h3>
+
+<p>Kleyer, M., Dray, S., Bello, F., Lepš, J., Pakeman, R.J., Strauss, B., Thuiller,
+W. &amp; Lavorel, S. (2012) Assessing species and community functional responses to
+environmental gradients: which multivariate methods?
+Journal of Vegetation Science, 23, 805-821.
+<a href="https://doi.org/10.1111/j.1654-1103.2012.01402.x">doi:10.1111/j.1654-1103.2012.01402.x</a>
+</p>
+<p>ter Braak, CJF, Šmilauer P, and Dray S. 2018. Algorithms and biplots for
+double constrained correspondence analysis.
+Environmental and Ecological Statistics, 25(2), 171-197.
+<a href="https://doi.org/10.1007/s10651-017-0395-x">doi:10.1007/s10651-017-0395-x</a>
+</p>
+<p>ter Braak C.J.F. and  P. Šmilauer  (2018). Canoco reference manual
+and user's guide: software for ordination (version 5.1x).
+Microcomputer Power, Ithaca, USA, 536 pp.
+</p>
+<p>Oksanen, J., et al. (2024)
+vegan: Community Ecology Package. R package version 2.6-6.1.
+<a href="https://CRAN.R-project.org/package=vegan">https://CRAN.R-project.org/package=vegan</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.dcca</code>, <code>scores.dcca</code>, 
+<code>print.dcca</code> and <code>anova.dcca</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("dune_trait_env")
+
+# rownames are carried forward in results
+rownames(dune_trait_env$comm) &lt;- dune_trait_env$comm$Sites
+
+mod &lt;- dc_CA(formulaEnv = ~A1 + Moist + Mag + Use + Manure,
+             formulaTraits = ~ SLA + Height + LDMC + Seedmass + Lifespan,
+             response = dune_trait_env$comm[, -1],  # must delete "Sites"
+             dataEnv = dune_trait_env$envir,
+             dataTraits = dune_trait_env$traits)
+
+anova(mod, by = "axis")
+# For more demo on testing, see demo dune_test.r
+
+mod_scores &lt;- scores(mod)
+# correlation of axes with a variable that is not in the model
+scores(mod, display = "cor", scaling = "sym", which_cor = list(NULL, "X_lot"))
+
+cat("head of unconstrained site scores, with meaning\n")
+print(head(mod_scores$sites))
+
+mod_scores_tidy &lt;- scores(mod, tidy = TRUE)
+print("names of the tidy scores")
+print(names(mod_scores_tidy))
+cat("\nThe levels of the tidy scores\n")
+print(levels(mod_scores_tidy$score))
+
+cat("\nFor illustration: a dc-CA model with a trait covariate\n")
+mod2 &lt;- dc_CA(formulaEnv = ~ A1 + Moist + Mag + Use + Manure,
+              formulaTraits = ~ SLA + Height + LDMC + Lifespan + Condition(Seedmass),
+              response = dune_trait_env$comm[, -1],  # must delete "Sites"
+              dataEnv = dune_trait_env$envir,
+              dataTraits = dune_trait_env$traits)
+
+cat("\nFor illustration: a dc-CA model with both environmental and trait covariates\n")
+mod3 &lt;- dc_CA(formulaEnv = ~A1 + Moist + Use + Manure + Condition(Mag),
+              formulaTraits = ~ SLA + Height + LDMC + Lifespan + Condition(Seedmass),
+              response = dune_trait_env$comm[, -1],  # must delete "Sites"
+              dataEnv = dune_trait_env$envir,
+              dataTraits = dune_trait_env$traits, verbose = FALSE)
+
+cat("\nFor illustration: same model but using dc_CA_object = mod2 for speed, ", 
+    "as the trait model and data did not change\n")
+mod3B &lt;- dc_CA(formulaEnv = ~A1 + Moist + Use + Manure + Condition(Mag),
+               dataEnv = dune_trait_env$envir,
+               dc_CA_object = mod2, verbose= FALSE)
+cat("\ncheck on equality of mod3 (from data) and mod3B (from a dc_CA_object)\n",
+    "the expected difference is in the component 'call'\n ")
+print(all.equal(mod3, mod3B)) #  only the component call differs
+
+
+</code></pre>
+
+
+</div>

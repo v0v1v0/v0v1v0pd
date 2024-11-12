@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DisHet</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Heterogeneity Dissection</h2>
+
+<h3>Description</h3>
+
+<p>This function performs dissection of bulk sample gene expression using matched normal and tumorgraft RNA-seq data. It outputs the final proportion estiamtes of the three components for all patients. 
+</p>
+<p>The patient-specific dissection proportion estimates are saved in a 3-by-k matrix named "rho", where k is the number of patients. The 3 rows of "rho" matrix correspond to the tumor, normal, stroma components in order. That is, the proportion estimate of tumor component for patient i is stored in rho[1,i]; the normal component proportion estimate of this patient is stored in rho[2,i];and stroma component proportion in rho[3,i]. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DisHet(exp_T,exp_N,exp_G, save=TRUE, MCMC_folder, 
+      n_cycle=10000, save_last=500, mean_last=200, dirichlet_c=1, S_c=1, rho_small=1e-2, 
+      initial_rho_S=0.02,initial_rho_G=0.96,initial_rho_N=0.02)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>exp_T</code></td>
+<td>
+
+<p>Gene expression in bulk RNA-seq samples. The rows correspond to different genes. The columns correspond to different patients.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exp_N</code></td>
+<td>
+
+<p>Gene expression in the corresponding normal samples. The rows list the same set of genes as in exp_G. The columns correspond to patients matched with exp_T.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exp_G</code></td>
+<td>
+
+<p>Gene expression in the corresponding tumor samples. The rows list the same set of genes as in exp_G. The columns correspond to patients matched with exp_T.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save</code></td>
+<td>
+
+<p>When save==TRUE, as in default, all component proportion estimates during MCMC iterations can be saved into a user-specified directory using the "MCMC_folder" argument. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MCMC_folder</code></td>
+<td>
+
+<p>Directory for saving the estimated mixture proportion matrix updates during MCMC iterations. The default setting is to create a "DisHet" folder under the current working directory. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_cycle</code></td>
+<td>
+
+<p>Number of MCMC iterations(chain length). The default value is 10,000. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_last</code></td>
+<td>
+
+<p>Save the rho matrix updates for the last "save_last" Number of MCMC iterations. The default value is 500. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean_last</code></td>
+<td>
+
+<p>Calculate the final proportion estiamte matrix using the last "mean_last" number of MCMC iterations. The default value is 200.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dirichlet_c</code></td>
+<td>
+
+<p>Stride scale in sampling rho. Larger value leads to smaller steps in sampling rho. The default value is 1. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S_c</code></td>
+<td>
+
+<p>Stride scale in sampling Sij. Larger value leads to larger steps in sampling Sij. The default value is 1. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho_small</code></td>
+<td>
+
+<p>The smallest rho updates allowed during MCMC. The default is 1e-2. This threshold is set to help improve numerical stability of the algorithm. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial_rho_S</code></td>
+<td>
+
+<p>Initial value of the proportion estimate for the stroma component. The default value is 0.02. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial_rho_G</code></td>
+<td>
+
+<p>Initial value of the proportion estimate for the tumor component. The default value is 0.96. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial_rho_N</code></td>
+<td>
+
+<p>Initial value of the proportion estimate for the normal component. The default value is 0.02. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Un-logged expression values should be used in exp_N/T/G matrices, and their rows and columns must match each other corresponding to the same set of genes and patients. 
+</p>
+<p>The values specified for "initial_rho_S", "initial_rho_G", and "initial_rho_S" all have to be positive. If the three proportion initials are not summing to 1, normalization is performed automatically to force the sum to be 1. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  load(system.file("example/example_data.RData",package="DisHet"))
+  exp_T &lt;- exp_T[1:200,]
+  exp_N &lt;- exp_N[1:200,]
+  exp_G &lt;- exp_G[1:200,]
+  
+  rho &lt;- DisHet(exp_T, exp_N, exp_G, save=FALSE, n_cycle=200, mean_last=50)
+</code></pre>
+
+
+</div>

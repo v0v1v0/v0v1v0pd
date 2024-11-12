@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>backbone</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Backbone of the simulation model</h2>
+
+<h3>Description</h3>
+
+<p>A module is a group of genes which, to some extent, shows the same
+expression behaviour. Several modules are connected together such that
+one or more genes from one module will regulate the expression of
+another module. By creating chains of modules, a dynamic behaviour in gene
+regulation can be created.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">backbone(module_info, module_network, expression_patterns)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>module_info</code></td>
+<td>
+<p>A tibble containing meta information on the modules themselves.
+</p>
+
+<ul>
+<li>
+<p> module_id (character): the name of the module
+</p>
+</li>
+<li>
+<p> basal (numeric): basal expression level of genes in this module, must be between [0, 1]
+</p>
+</li>
+<li>
+<p> burn (logical): whether or not outgoing edges of this module will
+be active during the burn in phase
+</p>
+</li>
+<li>
+<p> independence (numeric): the independence factor between regulators of this module, must be between [0, 1]
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>module_network</code></td>
+<td>
+<p>A tibble describing which modules regulate which other modules.
+</p>
+
+<ul>
+<li>
+<p> from (character): the regulating module
+</p>
+</li>
+<li>
+<p> to (character): the target module
+</p>
+</li>
+<li>
+<p> effect (integer): <code>1L</code> if the regulating module upregulates
+the target module, <code>-1L</code> if it downregulates
+</p>
+</li>
+<li>
+<p> strength (numeric): the strength of the interaction
+</p>
+</li>
+<li>
+<p> hill (numeric): hill coefficient, larger than 1 for positive cooperativity,
+between 0 and 1 for negative cooperativity
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expression_patterns</code></td>
+<td>
+<p>A tibble describing the expected expression pattern
+changes when a cell is simulated by dyngen. Each row represents one transition between
+two cell states.
+</p>
+
+<ul>
+<li>
+<p> from (character): name of a cell state
+</p>
+</li>
+<li>
+<p> to (character): name of a cell state
+</p>
+</li>
+<li>
+<p> module_progression (character): differences in module expression between the two states.
+Example: <code>"+4,-1|+9|-4"</code> means the expression of module 4 will go up at the same time as module 1 goes down;
+afterwards module 9 expression will go up, and afterwards module 4 expression will go down again.
+</p>
+</li>
+<li>
+<p> start (logical): Whether or not this from cell state is the start of the trajectory
+</p>
+</li>
+<li>
+<p> burn (logical): Whether these cell states are part of the burn in phase. Cells will
+not get sampled from these cell states.
+</p>
+</li>
+<li>
+<p> time (numeric): The duration of an transition.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dyngen backbone.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dyngen on how to run a dyngen simulation
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(tibble)
+backbone &lt;- backbone(
+  module_info = tribble(
+    ~module_id, ~basal, ~burn, ~independence,
+    "M1",       1,      TRUE,  1,
+    "M2",       0,      FALSE, 1,
+    "M3",       0,      FALSE, 1
+  ),
+  module_network = tribble(
+    ~from, ~to,  ~effect, ~strength, ~hill,
+    "M1",  "M2", 1L,      1,         2,
+    "M2",  "M3", 1L,      1,         2
+  ), 
+  expression_patterns = tribble(
+    ~from, ~to,  ~module_progression, ~start, ~burn, ~time,
+    "s0",  "s1", "+M1",               TRUE,   TRUE,  30,
+    "s1",  "s2", "+M2,+M3",           FALSE,  FALSE, 80
+  )
+)
+</code></pre>
+
+
+</div>

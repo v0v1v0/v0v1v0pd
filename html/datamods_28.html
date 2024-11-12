@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>import-globalenv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Import data from an Environment</h2>
+
+<h3>Description</h3>
+
+<p>Let the user select a dataset from its own environment or from a package's environment.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">import_globalenv_ui(
+  id,
+  globalenv = TRUE,
+  packages = get_data_packages(),
+  title = TRUE
+)
+
+import_globalenv_server(
+  id,
+  btn_show_data = TRUE,
+  show_data_in = c("popup", "modal"),
+  trigger_return = c("button", "change"),
+  return_class = c("data.frame", "data.table", "tbl_df", "raw"),
+  reset = reactive(NULL)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module's ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>globalenv</code></td>
+<td>
+<p>Search for data in Global environment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>packages</code></td>
+<td>
+<p>Name of packages in which to search data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>Module's title, if <code>TRUE</code> use the default title,
+use <code>NULL</code> for no title or a <code>shiny.tag</code> for a custom one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>btn_show_data</code></td>
+<td>
+<p>Display or not a button to display data in a modal window if import is successful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_data_in</code></td>
+<td>
+<p>Where to display data: in a <code>"popup"</code> or in a <code>"modal"</code> window.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trigger_return</code></td>
+<td>
+<p>When to update selected data:
+<code>"button"</code> (when user click on button) or
+<code>"change"</code> (each time user select a dataset in the list).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_class</code></td>
+<td>
+<p>Class of returned data: <code>data.frame</code>, <code>data.table</code>, <code>tbl_df</code> (tibble) or <code>raw</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reset</code></td>
+<td>
+<p>A <code>reactive</code> function that when triggered resets the data.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> UI: HTML tags that can be included in shiny's UI
+</p>
+</li>
+<li>
+<p> Server: a <code>list</code> with three slots:
+</p>
+
+<ul>
+<li> <p><strong>status</strong>: a <code>reactive</code> function returning the status: <code>NULL</code>, <code>error</code> or <code>success</code>.
+</p>
+</li>
+<li> <p><strong>name</strong>: a <code>reactive</code> function returning the name of the imported data as <code>character</code>.
+</p>
+</li>
+<li> <p><strong>data</strong>: a <code>reactive</code> function returning the imported <code>data.frame</code>.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">if (interactive()) {
+  library(shiny)
+  library(datamods)
+
+  # Create some data.frames
+
+  my_df &lt;- data.frame(
+    variable1 = sample(letters, 20, TRUE),
+    variable2 = sample(1:100, 20, TRUE)
+  )
+
+  results_analysis &lt;- data.frame(
+    id = sample(letters, 20, TRUE),
+    measure = sample(1:100, 20, TRUE),
+    response = sample(1:100, 20, TRUE)
+  )
+
+
+  # Application
+
+  ui &lt;- fluidPage(
+    fluidRow(
+      column(
+        width = 4,
+        import_globalenv_ui("myid")
+      ),
+      column(
+        width = 8,
+        tags$b("Import status:"),
+        verbatimTextOutput(outputId = "status"),
+        tags$b("Name:"),
+        verbatimTextOutput(outputId = "name"),
+        tags$b("Data:"),
+        verbatimTextOutput(outputId = "data")
+      )
+    )
+  )
+
+  server &lt;- function(input, output, session) {
+
+    imported &lt;- import_globalenv_server("myid")
+
+    output$status &lt;- renderPrint({
+      imported$status()
+    })
+    output$name &lt;- renderPrint({
+      imported$name()
+    })
+    output$data &lt;- renderPrint({
+      imported$data()
+    })
+
+  }
+
+  shinyApp(ui, server)
+}
+</code></pre>
+
+
+</div>

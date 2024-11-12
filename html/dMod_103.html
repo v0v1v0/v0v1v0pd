@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>parframe</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate a parameter frame</h2>
+
+<h3>Description</h3>
+
+<p>A parameter frame is a data.frame where the rows correspond to different
+parameter specifications. The columns are divided into three parts. (1) the meta-information
+columns (e.g. index, value, constraint, etc.), (2) the attributes of an objective function
+(e.g. data contribution and prior contribution) and (3) the parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">parframe(
+  x = NULL,
+  parameters = colnames(x),
+  metanames = NULL,
+  obj.attributes = NULL
+)
+
+is.parframe(x)
+
+## S3 method for class 'parframe'
+x[i = NULL, j = NULL, drop = FALSE]
+
+## S3 method for class 'parframe'
+subset(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data.frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>character vector, the names of the parameter columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metanames</code></td>
+<td>
+<p>character vector, the names of the meta-information columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj.attributes</code></td>
+<td>
+<p>character vector, the names of the objective function attributes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>row index in any format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>j</code></td>
+<td>
+<p>column index in any format</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>logical. If TRUE the result is coerced to the lowest possible dimension</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Parameter frames can be subsetted either by <code>[ , ]</code> or by <code>subset</code>. If
+<code>[ , index]</code> is used, the names of the removed columns will also be removed from
+the corresponding attributes, i.e. metanames, obj.attributes and parameters.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>parframe</code>, i.e. a data.frame with attributes for the
+different names. Inherits from data.frame.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>profile, mstrust
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Generate a prediction function
+regfn &lt;- c(y = "sin(a*time)")
+
+g &lt;- Y(regfn, parameters = "a")
+x &lt;- Xt(condition = "C1")
+
+## Generate data
+data &lt;- datalist(
+  C1 = data.frame(
+    name = "y",
+    time = 1:5,
+    value = sin(1:5) + rnorm(5, 0, .1),
+    sigma = .1
+  )
+)
+
+## Initialize parameters and time 
+pars &lt;- c(a = 1)
+times &lt;- seq(0, 5, .1)
+
+plot((g*x)(times, pars), data)
+
+## Do many fits from random positions and store them into parlist
+out &lt;- as.parlist(lapply(1:50, function(i) {
+  trust(normL2(data, g*x), pars + rnorm(length(pars), 0, 1), rinit = 1, rmax = 10)
+}))
+
+summary(out)
+
+## Reduce parlist to parframe
+parframe &lt;- as.parframe(out)
+plotValues(parframe)
+
+## Reduce parframe to best fit
+bestfit &lt;- as.parvec(parframe)
+plot((g*x)(times, bestfit), data)
+
+
+</code></pre>
+
+
+</div>

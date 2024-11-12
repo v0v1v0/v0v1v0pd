@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qqbounds</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Computation of confidence intervals for qqplot</h2>
+
+<h3>Description</h3>
+
+<p>We compute confidence intervals for QQ plots.
+These can be simultaneous (to check whether the whole data set is compatible)
+or pointwise (to check whether each (single) data point is compatible);</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qqbounds(x,D,alpha,n,withConf.pw, withConf.sim,
+         exact.sCI=(n&lt;100),exact.pCI=(n&lt;100),
+         nosym.pCI = FALSE, debug = FALSE)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>data to be checked for compatibility with distribution <code>D</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>object of class <code>"UnivariateDistribution"</code>, the assumed data
+distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>confidence level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>sample size</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>withConf.pw</code></td>
+<td>
+<p>logical; shall pointwise confidence lines be computed?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>withConf.sim</code></td>
+<td>
+<p>logical; shall simultaneous confidence lines be computed?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact.pCI</code></td>
+<td>
+<p>logical; shall pointwise CIs be determined with exact Binomial distribution?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact.sCI</code></td>
+<td>
+<p>logical; shall simultaneous CIs be determined with exact kolmogorov distribution?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nosym.pCI</code></td>
+<td>
+<p>logical; shall we use (shortest) asymmetric CIs?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>logical; if <code>TRUE</code> additional output to debug confidence bounds.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Both simultaneous  and pointwise confidence intervals come in a
+finite-sample and an asymptotic version;
+the finite sample versions will get quite slow
+for large data sets <code>x</code>, so in these cases the asymptotic version
+will be preferrable.<br>
+For simultaneous intervals,
+the finite sample version is based on C function <code>"pkolmogorov2x"</code>
+from package <span class="pkg">stats</span>, while the asymptotic one uses
+R function <code>pkstwo</code> again from package <span class="pkg">stats</span>, both taken
+from the code to <code>ks.test</code>.
+</p>
+<p>Both finite sample and asymptotic versions use the fact,
+that the distribution of the supremal distance between the
+empirical distribution <code class="reqn">\hat F_n</code> and the corresponding theoretical one
+<code class="reqn">F</code> (assuming data from <code class="reqn">F</code>)
+does not depend on <code class="reqn">F</code> for continuous distribution <code class="reqn">F</code>
+and leads to the Kolmogorov distribution (compare, e.g. Durbin(1973)).
+In case of <code class="reqn">F</code> with jumps, the corresponding Kolmogorov distribution
+is used to produce conservative intervals.
+<br>
+For pointwise intervals,
+the finite sample version is based on corresponding binomial distributions,
+(compare e.g., Fisz(1963)), while the asymptotic one uses a CLT approximation
+for this binomial distribution. In fact, this approximation is only valid
+for distributions with strictly positive density at the evaluation quantiles.
+</p>
+<p>In the finite sample version, the binomial distributions will in general not
+be symmetric, so that, by setting <code>nosym.pCI</code> to <code>TRUE</code> we may
+produce shortest asymmetric confidence intervals (albeit with a considerable
+computational effort).
+</p>
+<p>The symmetric intervals returned by default will
+be conservative (which also applies to distributions with jumps in this case).
+</p>
+<p>For distributions with jumps or with density (nearly) equal to 0 at the
+corresponding quantile, we use the approximation of <code>(D-E(D))/sd(D)</code>
+by the standard normal at these points; this latter approximation is only
+available if package <span class="pkg">distrEx</span> is installed; otherwise the corresponding
+columns will be filled with <code>NA</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components <code>crit</code> — a matrix with the lower and upper confidence
+bounds, and <code>err</code> a logical vector of length 2.
+</p>
+<p>Component <code>crit</code> is a matrix with <code>length(x)</code> rows
+and four columns <code>c("sim.left","sim.right","pw.left","pw.right")</code>.
+Entries will be set to <code>NA</code> if the corresponding <code>x</code> component
+is not in <code>support(D)</code> or if the computation method returned an error
+or if the corresponding parts have not been required (if <code>withConf.pw</code>
+or <code>withConf.sim</code> is <code>FALSE</code>).
+</p>
+<p><code>err</code> has components <code>pw</code>
+—do we have a non-error return value for the computation of pointwise CI's
+(<code>FALSE</code> if <code>withConf.pw</code> is <code>FALSE</code>)—  and <code>sim</code>
+—do we have a   non-error return value for the computation of simultaneous CI's
+(<code>FALSE</code> if <code>withConf.sim</code> is <code>FALSE</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Peter Ruckdeschel <a href="mailto:peter.ruckdeschel@uni-oldenburg.de">peter.ruckdeschel@uni-oldenburg.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Durbin, J. (1973)
+<em>Distribution theory for tests based on the sample distribution
+function</em>.  SIAM.
+</p>
+<p>Fisz, M. (1963). <em>Probability Theory and Mathematical Statistics</em>.
+3rd ed. Wiley, New York.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>qqplot</code> from package <span class="pkg">stats</span> – the standard QQ plot
+function, <code>ks.test</code> again from package <span class="pkg">stats</span>
+for the implementation of the Kolmogorov distributions;
+<code>qqplot</code> from package <span class="pkg">distr</span> for
+comparisons of distributions, and
+<code>qqplot</code> from package <span class="pkg">distrMod</span> for comparisons
+of data with models, as well as  <code>RobAStBase::qqplot</code> from package <span class="pkg">RobAStBase</span> for
+checking of corresponding robust esimators.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">qqplot(Norm(15,sqrt(30)), Chisq(df=15))
+## uses:
+old.digits &lt;- getOption("digits")
+on.exit(options(digits = old.digits))
+options(digits = 6)
+set.seed(20230508)
+## IGNORE_RDIFF_BEGIN
+qqbounds(x = rnorm(30), Norm(), alpha = 0.95, n = 30,
+        withConf.pw = TRUE, withConf.sim  = TRUE,
+        exact.sCI = TRUE, exact.pCI = TRUE,
+        nosym.pCI = FALSE)
+## other calls:
+qqbounds(x = rchisq(30,df=4), Chisq(df=4), alpha = 0.95, n = 30,
+        withConf.pw = TRUE, withConf.sim  = TRUE,
+        exact.sCI = FALSE, exact.pCI = FALSE,
+        nosym.pCI = FALSE)
+qqbounds(x = rchisq(30,df=4), Chisq(df=4), alpha = 0.95, n = 30,
+        withConf.pw = TRUE, withConf.sim  = TRUE,
+        exact.sCI = TRUE, exact.pCI= TRUE,
+        nosym.pCI = TRUE)
+## IGNORE_RDIFF_END
+options(digits = old.digits)
+</code></pre>
+
+
+</div>

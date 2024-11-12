@@ -1,0 +1,249 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dpm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dynamic panel models fit with maximum likelihood</h2>
+
+<h3>Description</h3>
+
+<p>Estimate dynamic panel models with fixed effects via
+maximum likelihood estimation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dpm(
+  formula,
+  data,
+  error.inv = FALSE,
+  const.inv = FALSE,
+  alpha.free = FALSE,
+  y.lag = 1,
+  y.free = FALSE,
+  x.free = FALSE,
+  fixed.effects = TRUE,
+  partial.pre = FALSE,
+  print.only = FALSE,
+  id = NULL,
+  wave = NULL,
+  err.inv = NULL,
+  weights = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Model formula. See details for instructions on specifying
+parameters properly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame in "long" format. Prefers a "panel_data" object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.inv</code></td>
+<td>
+<p>Constrain the error variance to be equal across waves.
+Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>const.inv</code></td>
+<td>
+<p>Constrain the dependent variable's variance to be equal
+across waves (or makes its intercept equal across waves).
+This removes cross-sectional dependence. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.free</code></td>
+<td>
+<p>Estimate each wave of the dependent variable's loading on
+the alpha latent variable. Default is FALSE, meaning each wave has a loading
+of 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.lag</code></td>
+<td>
+<p>Which lag(s) of the dependent variable to include in the
+regression. Default is 1, but any number or vector of numbers can be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.free</code></td>
+<td>
+<p>If TRUE, allows the regression coefficient(s) for the lagged
+dependent variable to vary over time. Default is FALSE. You may alternately
+provide a number or vector of numbers corresponding to which lags should
+vary freely.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.free</code></td>
+<td>
+<p>If TRUE, allows the regressions coefficient(s) for the
+predictor(s) to vary over time. Default is FALSE. If TRUE, the predictor
+regression coefficient(s) can vary over time. Alternately, you may provide
+a character vector of predictors to allow to vary if you only want a subset
+of predictors to vary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.effects</code></td>
+<td>
+<p>Fit a fixed effects model? Default is TRUE. If FALSE,
+you get a random effects specification instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partial.pre</code></td>
+<td>
+<p>Make lagged, predetermined predictors (i.e., they are
+surrounded by pre() in the model formula) correlated with the contemporaneous
+error term, as discussed in Allison (2022)? Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print.only</code></td>
+<td>
+<p>Instead of estimating the model, print the <span class="pkg">lavaan</span>
+model string to the console instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Name of the data column that identifies which individual the
+observation is. Not needed if <code>data</code> is a "panel_data" object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wave</code></td>
+<td>
+<p>Name of the data column that identifies which wave the
+observation is from. Not needed if <code>data</code> is a "panel_data" object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>err.inv</code></td>
+<td>
+<p>Deprecated, same purpose as <code>error.inv</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Equivalent to the argument to <code>lm</code>, presumably the unquoted
+name of a variable in the data that represents the weight. It is passed
+to <code>lavaan()</code>'s <code>sampling.weights</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra parameters to pass to <code>sem</code>. Examples
+could be <code>missing = "fiml"</code> for missing data or
+<code>estimator = "MLM"</code> for robust estimation.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The right-hand side of the formula has two parts, separated by a bar
+(<code>|</code>). The first part should include the time-varying predictors.
+The second part, then, is for the time-invariant variables. If you put
+a time-varying variable in the second part of the formula, by default
+the first wave's value of that variable is treated as the constant.
+</p>
+<p>You must include time-varying predictors. If you do not include a bar
+in the formula, all variables are treated as time-varying.
+</p>
+<p>If you would like to include an interaction between time-varying and
+time-invariant predictors, you can add a third part to the formula to
+specify that term.
+</p>
+<p><em>Predetermined variables</em>:
+</p>
+<p>To set a variable as predetermined, or weakly exogenous, surround the
+variable with a <code>pre</code> function. For instance, if you want the variable
+<code>union</code> to be predetermined, you could specify the formula like this:
+<code>wks ~ pre(union) + lwage | ed</code>, where <code>wks</code> is the dependent
+variable, <code>lwage</code> is a strictly exogenous time-varying predictor,
+and <code>ed</code> is a strictly exogenous time-invariant predictor.
+</p>
+<p>To lag a predictor, surround the variable with a <code>lag</code> function in
+the same way. Note that the lag function used is specific to this package,
+so it does not work the same way as the built-in lag function (i.e., it
+understands that you can only lag values <em>within</em> entities).
+</p>
+<p><strong>Note</strong>: CFI and TLI model fit measures for these models should not be
+used. They are anti-conservative compared to other implementations and
+we have not yet figured out how to get more plausible values.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>dpm</code> which has its own <code>summary</code> method.
+</p>
+<p>The <code>dpm</code> object is an extension of the <code>lavaan</code> class and has all
+the capabilities of <code>lavaan</code> objects, with some extras.
+</p>
+<p>It contains extra slots for: </p>
+
+<ul>
+<li> <p><code>mod_string</code>, the character object used to specify the model
+to lavaan. This is helpful if you want to fit the model yourself or
+wish to check that the specification is correct.
+</p>
+</li>
+<li> <p><code>wide_data</code>, the widened data frame necessary to fit the SEM.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Jacob A. Long, in consultation with Richard A. Williams and
+Paul D. Allison. All errors are Jacob's.
+</p>
+
+
+<h3>References</h3>
+
+<p>Allison, P. D., Williams, R., &amp; Moral-Benito, E. (2017). Maximum likelihood
+for cross-lagged panel models with fixed effects. <em>Socius</em>, <em>3</em>, 1–17.
+http://journals.sagepub.com/doi/10.1177/2378023117710578
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load example data
+data("WageData", package = "panelr")
+# Convert data to panel_data format for ease of use
+wages &lt;- panel_data(WageData, id = id, wave = t)
+
+# Replicates Allison, Williams, &amp; Moral-Benito (2017) analysis
+fit &lt;- dpm(wks ~ pre(lag(union)) + lag(lwage) | ed, data = wages,
+            error.inv = TRUE, information = "observed")
+# Note: information = "observed" only needed to match Stata/SAS standard errors
+summary(fit)
+
+
+</code></pre>
+
+
+</div>

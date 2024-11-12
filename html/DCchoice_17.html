@@ -1,0 +1,234 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>oohbchoice</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parametric approach to analyze one-and-one-half-bound dichotomous choice contingent valuation data</h2>
+
+<h3>Description</h3>
+
+<p>This function analyzes one-and-one-half-bound dichotomous choice contingent 
+valuation (CV) data on the basis of the utility difference approach.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">oohbchoice(formula, data, subset, na.action = na.omit, dist = "log-logistic",
+           par = NULL, ...)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>an object of S3 class <code>"Formula"</code> and specifies the model structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing the variables in the model formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen when the data contains <code>NA</code>s.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>a character string setting the error distribution in the model, which 
+takes one of <code>"logistic"</code>, <code>"normal"</code>, <code>"log-logistic"</code>, 
+<code>"log-normal"</code> or <code>"weibull"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>a vector of initial parameters over which the optimization is carried out.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional arguments. Currently not in use.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>One-and-one-half-bound dichotomous choice contingent valuation (OOHBDC-CV), which was developed by Cooper et al. (2002), is an intermediate CV format between single-bounded dichotomous choice (SBDC) CV format and double-bounded dichotomous choice (DBDC) CV format. 
+</p>
+<p>On the basis of an example of environmental valuation study, we will explain differences in question format among SBDC-CV, DBDC-CV, and OOHBDC-CV below.
+</p>
+<p>In any of three CV surveys, two situations are firstly explained to the respondents: the current situation and the improved situation where an environmental improvement plan is assumed to be implemented. Question following the explanation of situations differs according to CV types.
+</p>
+<p>In an SBDC-CV survey, after the explanation of situation mentioned above, the respondents are asked whether they would be willing to pay a certain amount of money toward the implementation of the plan. Therefore, there are two possible responses to the SBDC-CV survey: "yes (agree)," and "no (disagree)." The amounts (bids) that respondents are requested to contribute toward the plan are listed in advance. Each respondent is requested to answer a question randomly assigned with one of the listed bids. 
+</p>
+<p>In a DBDC-CV survey, the CV question consists of two stages: after answering the SBDC-CV style question mentioned above (the first stage), the respondents are also asked to answer an additional SBDC-CV style question (the second stage). The bid in the second stage varies according the response in the first stage: a higher bid is displayed in the second stage if the response in the first stage is "yes," whereas a lower bid is displayed when the response in the first stage is "no." Therefore, there are four possible responses to the DBDC-CV survey: "yes-yes" ("yes" in the both stages), "yes-no" ("yes" and "no" in the first and second stages, respectively), "no-yes" ("no" and "yes" in the first and second stages, respectively), and "no-no" ("no" in the both stages).
+</p>
+<p>In the OOHBDC-CV survey, after answering the first SBDC-CV style question (the first stage), only respondents who satisfy certain conditions are requested to answer an additional SBDC-CV style question (the second stage). Details in the OOHBDC-CV survey are as follows:
+Step 1) A list of bid ranges [BLj, BHj] (j = 1, 2, ..., J), where BLj &lt; BHj, are decided: i.e., [BL1, BH1], [BL2, BH2], ..., and [BLJ, BHJ]. 
+Step 2) One of the bid ranges is randomly presented to respondents (e.g., a bid range of [BL3, BH3] for j = 3).
+Step 3) One of the two bids presented to the respondents is selected randomly (i.e., BL3 or BH3 in the case of step 2 example) and then the respondents are asked whether they would be willing to pay the amount of the bid selected (the first stage).
+Step 4) The respondents are asked to answer the second stage if they satisfy either condition: (a) their answer in the first stage is "yes" when the lower bid is presented in the first stage, or (b) their answer in the first stage is "no" when the higher bid is presented in the first stage. Therefore, there are six possible responses to the OOHBDC-CV survey: "no", "yes-no", and "yes-yes" when the lower bid is shown in the first stage; and "yes", "no-yes", and "no-no" when the higher bid is shown in the first stage. Refer to Cooper et al. (2002) for detailed explanation of OOHBDC-CV, including the example CV questions.
+</p>
+<p>The function <code>oohbchoice()</code> implements an analysis of OOHBDC-CV responses (data) on the basis of the utility difference approach (Hanemann, 1984). 
+</p>
+<p>The function returns an object of S3 class <code>oohbchoice</code> (see below for details), which inherits from an S3 class <code>dbchoice</code>. The generic functions for the S3 class <code>dbchoice</code> such as <code>print()</code>, <code>summary()</code>, <code>vcov()</code>, <code>logLik()</code>, <code>plot()</code>, and <code>update()</code>, are available for the S3 class <code>oohbchoice</code>. In addition, the two functions <code>krCI()</code> and <code>bootCI()</code> are available to compute the confidence intervals for the estimates of willingness-to-pays (WTPs): <code>krCI()</code> implements simulations to construct empirical distributions of the WTP, while <code>bootCI()</code> carries out nonparametric bootstrapping (see the package <span class="pkg">DCchoice</span> for details).
+</p>
+<p>Although <code>oohbchoice()</code> has six arguments, a basic generic call to <code>oohbchoice()</code> is given as follows:
+</p>
+<p><code>oohbchoice(formula, data, dist = "log-logistic")</code>
+</p>
+<p>The argument <code>formula</code> defines the response variables and covariates (see below for details on the formula). The argument <code>data</code> specifies the data frame containing the variables in the model. The argument <code>dist</code> sets the error distribution: one of <code>"logistic"</code>, <code>"normal"</code>, <code>"log-logistic"</code> (default value), <code>"log-normal"</code>, or <code>"weibull"</code> is available. The difference between normal and log-normal models or between logistic or log-logistic ones is how the bid variable is incorporated into the model to be estimated. For the Weibull model, the bid variable must be entered in the natural log. Therefore, the user must be careful in defining the model formula that is explained in details below. 
+</p>
+<p>A typical structure of the formula for <code>oohbchoice()</code> is defined as follows: 
+</p>
+<p><code>R1 + R2 ~ (the names of the covariates) | BL + BH</code>
+</p>
+<p>The formula is an object of S3 class <code>Formula</code> and specifies the model structure. It has to be written in a symbolic expression in R. The formula consists of three parts as follows.
+</p>
+<p>The first part, the left-hand side of the tilde sign (<code>~</code>), must contain the response variables for the suggested prices in the first and the second stage of CV questions. In the example below, <code>R1</code> denotes a binary or two-level factor response variable for a bid in the first stage and <code>R2</code> for a bid in the second stage. <code>R1</code> contains <code>yes</code> or <code>no</code> to the bid in the first stage or <code>1</code> for <code>yes</code> and <code>0</code> for <code>no</code>. <code>R2</code> contains <code>yes</code>, <code>no</code>, <code>none</code> to the bid in the second stage or <code>1</code> for <code>yes</code>, <code>0</code> for <code>no</code>, and <code>-9</code> for <code>none</code>. The value of <code>none</code> (<code>-9</code>) means that the respondents have no second stage: the respondents are asked to answer the second stage question only if they satisfy either condition: (a) they answer <code>yes</code> in the first stage when the lower bid is shown in the first stage, or (b) they answer <code>no</code> in the first stage when the higher bid is shown in the first stage.
+</p>
+<p>The covariates are defined in the second part of the formula in the place of (the names of the covariates). Each covariate is connected with the arithmetic operator <code>+</code> and (the names of the covariates) in the above syntax should be replaced with <code>var1 + var2</code> and the like. The plus sign is nothing to do with addition of the two variables in the symbolic expression. When the covariate contains only a constant term, a value of <code>1</code> is set as the covariate: <code>R1 + R2 ~ 1 | BL + BH</code> (see the examples section below) 
+</p>
+<p>The last part of the formula starts after the vertical bar (<code>|</code>). The names of the two variables (<code>BL</code> and <code>BH</code>) containing suggested lower and higher prices in OOHBDC-CV question are specified in this part. The two variables are also connected with the arithmetic operator (<code>+</code>). 
+</p>
+<p>According to the structure of the formula, a data set (data frame) consists of three parts. An example of the data set (first six rows) is as follows (<code>gender</code> and <code>age</code> are respondents' characteristics and assumed to be covariates): 
+</p>
+
+<table>
+<tr>
+<td style="text-align: right;">
+    <code>id</code> </td>
+<td style="text-align: right;"> <code>R1</code>  </td>
+<td style="text-align: right;">  <code>R2</code>  </td>
+<td style="text-align: right;"> <code>gender</code> </td>
+<td style="text-align: right;">    <code>age</code> </td>
+<td style="text-align: right;">  <code>BL</code> </td>
+<td style="text-align: right;">  <code>BH</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+    <code>1</code>  </td>
+<td style="text-align: right;"> <code>no</code>  </td>
+<td style="text-align: right;">  <code>none</code> </td>
+<td style="text-align: right;">  <code>male</code> </td>
+<td style="text-align: right;">    <code>51</code> </td>
+<td style="text-align: right;">  <code>2000</code> </td>
+<td style="text-align: right;">  <code>2500</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+    <code>2</code>  </td>
+<td style="text-align: right;"> <code>yes</code> </td>
+<td style="text-align: right;">  <code>no</code> </td>
+<td style="text-align: right;">  <code>male</code> </td>
+<td style="text-align: right;">    <code>30</code> </td>
+<td style="text-align: right;">  <code>500</code> </td>
+<td style="text-align: right;">  <code>1000</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+    <code>3</code>  </td>
+<td style="text-align: right;"> <code>yes</code> </td>
+<td style="text-align: right;">  <code>yes</code> </td>
+<td style="text-align: right;">  <code>female</code> </td>
+<td style="text-align: right;">  <code>25</code> </td>
+<td style="text-align: right;">  <code>500</code> </td>
+<td style="text-align: right;">  <code>1000</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+    <code>4</code>  </td>
+<td style="text-align: right;"> <code>yes</code> </td>
+<td style="text-align: right;">  <code>none</code> </td>
+<td style="text-align: right;">  <code>male</code> </td>
+<td style="text-align: right;">    <code>48</code> </td>
+<td style="text-align: right;">  <code>1000</code> </td>
+<td style="text-align: right;">  <code>1500</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+    <code>5</code>  </td>
+<td style="text-align: right;"> <code>no</code>  </td>
+<td style="text-align: right;">  <code>yes</code> </td>
+<td style="text-align: right;">  <code>male</code> </td>
+<td style="text-align: right;">    <code>60</code> </td>
+<td style="text-align: right;">  <code>1000</code> </td>
+<td style="text-align: right;"> <code>1500</code> </td>
+</tr>
+<tr>
+<td style="text-align: right;">
+    <code>6</code>  </td>
+<td style="text-align: right;"> <code>no</code>  </td>
+<td style="text-align: right;">  <code>no</code> </td>
+<td style="text-align: right;">  <code>female</code> </td>
+<td style="text-align: right;">  <code>34</code> </td>
+<td style="text-align: right;">  <code>2500</code> </td>
+<td style="text-align: right;">  <code>3000</code>
+</td>
+</tr>
+</table>
+<p>Respondent 1 faced a bid range [<code>2000</code>, <code>2500</code>]; respondents 2 and 3 faced a bid range [<code>500</code>, <code>1000</code>]; respondents 4 and 5 faced a bid range [<code>1000</code>, <code>1500</code>]; and respondent 6 faced [<code>2500</code>, <code>3000</code>]. Respondent 1 answered <code>no</code> in the first stage of CV question and had no the second stage; respondent 2 answered <code>yes</code> and <code>no</code> in the first and second stage, respectively; respondent 3 answered <code>yes</code> and <code>yes</code> in the both stages; respondent 4 answered <code>yes</code> in the first stage and had no the second stage; respondent 5 answered <code>no</code> and <code>yes</code> in the first and second stage; and respondent 6 answered <code>no</code> in the both stages.
+</p>
+<p>Note that <code>BL</code> and <code>BH</code> are NOT the first stage bid and the second stage bid, respectively. The function <code>oohbchoice()</code> understands which bids (<code>BL</code> and <code>BH</code>) are presented in the first stage and second stage, respectively, on the basis of values of variables <code>R1</code> and <code>R2</code>.
+</p>
+<p>Nonparametric analysis of OOHBDC-CV data can be done by <code>turnbull.oohb</code>. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns an S3 class object <code>oohbchoice</code>, which inherits from the S3 class <code>dbchoice</code>. See <code>dbchoice()</code> for the details on the S3 object <code>dbchoice</code>.
+</p>
+
+
+<h3>Acknowledgments</h3>
+
+<p>We would like to thank Dr. Joseph C. Cooper and Dr. Giovanni Signorello for their kindness.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cooper JC, Hanemann M, Signorello G (2002).
+“One-and-one-half-bound dichotomous choice contingent valuation”,
+<em>The Review of Economics and Statistics</em>,
+<b>84</b>, 742–750.
+</p>
+<p>Hanemann WM (1984).
+“Welfare Evaluations in Contingent Valuation Experiments with Discrete Responses”,
+<em>American Journal of Agricultural Economics</em>,
+<b>66</b>(2), 332–341.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.dbchoice</code>, <code>oohbsyn</code>, <code>krCI</code>, <code>bootCI</code>, 
+<code>turnbull.oohb</code>, <code>Formula</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## See oohbsyn.
+</code></pre>
+
+
+</div>

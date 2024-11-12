@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calculate_model_drift</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Model Drift for comparison of models trained on new/old data</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates differences between PDP curves calculated for new/old models
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calculate_model_drift(model_old, model_new, data_new, y_new,
+  predict_function = predict, max_obs = 100, scale = sd(y_new, na.rm
+  = TRUE))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model_old</code></td>
+<td>
+<p>model created on historical / 'old'data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_new</code></td>
+<td>
+<p>model created on current / 'new'data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_new</code></td>
+<td>
+<p>data frame with current / 'new' data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_new</code></td>
+<td>
+<p>true values of target variable for current / 'new' data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predict_function</code></td>
+<td>
+<p>function that takes two arguments: model and new data and returns numeric vector with predictions, by default it's 'predict'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_obs</code></td>
+<td>
+<p>if negative, them all observations are used for calculation of PDP, is positive, then only 'max_obs' are used for calculation of PDP</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>scale parameter for calculation of scaled drift</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of a class 'model_drift' (data.frame) with distances calculated based on Partial Dependency Plots
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> library("DALEX")
+ model_old &lt;- lm(m2.price ~ ., data = apartments)
+ model_new &lt;- lm(m2.price ~ ., data = apartments_test[1:1000,])
+ calculate_model_drift(model_old, model_new,
+                  apartments_test[1:1000,],
+                  apartments_test[1:1000,]$m2.price)
+
+ 
+ library("ranger")
+ predict_function &lt;- function(m,x,...) predict(m, x, ...)$predictions
+ model_old &lt;- ranger(m2.price ~ ., data = apartments)
+ model_new &lt;- ranger(m2.price ~ ., data = apartments_test)
+ calculate_model_drift(model_old, model_new,
+                  apartments_test,
+                  apartments_test$m2.price,
+                  predict_function = predict_function)
+
+ # here we compare model created on male data
+ # with model applied to female data
+ # there is interaction with age, and it is detected here
+ predict_function &lt;- function(m,x,...) predict(m, x, ..., probability=TRUE)$predictions[,1]
+ data_old = HR[HR$gender == "male", -1]
+ data_new = HR[HR$gender == "female", -1]
+ model_old &lt;- ranger(status ~ ., data = data_old, probability=TRUE)
+ model_new &lt;- ranger(status ~ ., data = data_new, probability=TRUE)
+ calculate_model_drift(model_old, model_new,
+                  HR_test,
+                  HR_test$status == "fired",
+                  predict_function = predict_function)
+
+ # plot it
+ library("ingredients")
+ prof_old &lt;- partial_dependency(model_old,
+                                     data = data_new[1:500,],
+                                     label = "model_old",
+                                     predict_function = predict_function,
+                                     grid_points = 101,
+                                     variable_splits = NULL)
+ prof_new &lt;- partial_dependency(model_new,
+                                     data = data_new[1:500,],
+                                     label = "model_new",
+                                     predict_function = predict_function,
+                                     grid_points = 101,
+                                     variable_splits = NULL)
+ plot(prof_old, prof_new, color = "_label_")
+
+
+</code></pre>
+
+
+</div>

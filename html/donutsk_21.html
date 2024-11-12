@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>layouts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The set of layout functions is designed to effectively display text and labels</h2>
+
+<h3>Description</h3>
+
+<p>The layout functions help to streamline displaying text and labels <em>geoms</em> without overlapping effectively leveraging space available for pie and donut charts
+</p>
+
+<ul>
+<li> <p><code>tv()</code> - The function builds layout resembled an old-fashioned TV screen
+</p>
+</li>
+<li> <p><code>petal()</code> - The function builds layout resembled flower with petals
+</p>
+</li>
+<li> <p><code>circle()</code> - The function builds circle layout
+</p>
+</li>
+<li> <p><code>eye()</code> - The function builds two-sided layout
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">tv(
+  scale_x = 1.5,
+  scale_y = 1.5,
+  bend_x = 1,
+  bend_y = 1,
+  thinner = FALSE,
+  thinner_gap = 0.1
+)
+
+petal(
+  rotate = 0,
+  n = 4,
+  scale = 2.5,
+  bend = 0.3,
+  thinner = FALSE,
+  thinner_gap = 0.1
+)
+
+circle(r = 2.5, thinner = FALSE, thinner_gap = 0.1)
+
+eye(scale_x = 2, bend_x = 1, alpha = 90, clove = 0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>scale_x</code></td>
+<td>
+<p>Scales the layout in horizontal perspective</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale_y</code></td>
+<td>
+<p>Scales the layout in vertical perspective</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bend_x</code></td>
+<td>
+<p>Adjusts the bend level in horizontal perspective</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bend_y</code></td>
+<td>
+<p>Adjusts the bend level in vertical perspective</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thinner</code></td>
+<td>
+<p>Distributes text or label elements across two different levels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thinner_gap</code></td>
+<td>
+<p>Sets the spacing between thinner levels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotate</code></td>
+<td>
+<p>Rotates the layout clockwise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Sets the number of petals in the layout</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>Scales the layout</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bend</code></td>
+<td>
+<p>Manages the bending level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>Sets the radius of the layout circle</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Defines the angle of distribution in horizontal perspective.
+Pick up value from degree interval (0, 180)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clove</code></td>
+<td>
+<p>Determines the distribution proportion between the left and right-hand parts.
+Default value is 0.5. There should be numeric value from interval (0, 1)
+e.g. 0.4 denotes 40% cases on the right hand and 60% cases on the left hand</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Layout functions return layout function i.e. a function that takes a vector of angles and returns a numeric
+radius vector giving a position for each input value.
+</p>
+<p>Layout functions are designed to be used with the layout argument of donutsk functions.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Utilized in the following functions: geom_label_ext, geom_text_ext, geom_pin
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Render multiple layouts simultaneously
+list(petal_2n = petal(n = 2),
+     petal_3n = petal(n = 3, rotate = 180),
+     petal_4n = petal(n = 4),
+     tv_base = tv(),
+     tv_ext = tv(bend_x = 0, bend_y = 0, thinner = TRUE)) |&gt;
+  lapply(function(x){
+    rlang::exec(x, 1:300/300) |&gt;
+      dplyr::tibble(r = _) |&gt;
+      dplyr::mutate(theta = 1:300/300)
+  }) |&gt;
+  dplyr::bind_rows(.id = "layouts") |&gt;
+  ggplot(aes(x=r, y=theta, col = layouts)) +
+  geom_point(alpha = .3) +
+  coord_polar(theta = "y") +
+  xlim(0, 3.5)
+
+# The eye() layout generates table as an output
+n &lt;- 20
+theta &lt;- 1:n/n
+
+dplyr::tibble(
+  theta = theta,
+  lbl = paste0("sample: ", sample(LETTERS, n, TRUE))
+  ) |&gt;
+ dplyr::bind_cols(lt = eye()(theta)) |&gt;
+ ggplot(aes(x=x, y=y)) +
+ geom_point(aes(x=1, y=theta)) +
+ geom_point() +
+ geom_segment(aes(x=1, xend=x, y=theta, yend=y), linewidth=.2) +
+ geom_label(aes(label=lbl, hjust=dplyr::if_else(theta &gt; 0.5, 1, 0)),
+  nudge_x =.2) +
+ coord_polar(theta = "y") +
+ xlim(0, 5) +
+ ylim(0, 1)
+
+</code></pre>
+
+
+</div>

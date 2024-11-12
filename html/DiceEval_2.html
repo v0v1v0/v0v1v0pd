@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crossValidation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>K-fold Cross Validation</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates the predicted values at each point of the design and gives an estimation of criterion using K-fold cross-validation.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crossValidation(model, K)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an output of the <code>modelFit</code> function. This argument is the initial model fitted with all the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>the number of groups into which the data should be split to apply cross-validation</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with the following components: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Ypred</code></td>
+<td>
+<p>a vector of predicted values obtained using K-fold cross-validation at the points of the design</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q2</code></td>
+<td>
+<p>a real which is the estimation of the criterion <code>R2</code> obtained by cross-validation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>folds</code></td>
+<td>
+<p>a list which indicates the partitioning of the data into the folds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RMSE_CV</code></td>
+<td>
+<p><code>RMSE</code> by K-fold cross-validation (see more details below)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MAE_CV</code></td>
+<td>
+<p><code>MAE</code>  by K-fold cross-validation (see more details below)</p>
+</td>
+</tr>
+</table>
+<p>In the case of a Kriging model, other components to test the robustess of the procedure are proposed: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>the range parameter theta estimated for each fold,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend</code></td>
+<td>
+<p>the trend parameter estimated for each fold,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>the estimated shape parameter if the covariance structure is of type <code>powerexp</code>.</p>
+</td>
+</tr>
+</table>
+<p>The principle of cross-validation is to split the data into <code class="reqn">K</code> folds of approximately equal size <code class="reqn">A_{1}{A1}, ..., A_{K}{AK}</code>. For <code class="reqn">k=1</code> to <code class="reqn">K</code>, a model <code class="reqn">\hat{Y}^{(-k)}</code> is fitted from the data <code class="reqn">\cup_{j \neq k} A_{k}</code> and this model is validated on the fold <code class="reqn">A_{k}</code>. Given a criterion of quality <code class="reqn">L</code> (here, <code class="reqn">L</code> could be the <code>RMSE</code> or the <code>MAE</code> criterion), the "evaluation" of the model consists in computing :
+</p>
+<p style="text-align: center;"><code class="reqn">L_{k} = \frac{1}{n/K} \sum_{i \in A_{k}} L \left( y_{i}, Y^{(-k)} (x_{i} )\right).</code>
+</p>
+
+<p>The cross-validation criterion is the mean of the <code class="reqn">K</code> criterion: <code class="reqn">L</code>_CV<code class="reqn">=\frac{1}{K} \sum_{k=1}^{K} L_{k}.</code>
+</p>
+<p>The <code>Q2</code> criterion is defined as: <code>Q2</code><code class="reqn">=\code{R2}(\code{Y},\code{Ypred})</code> with <code>Y</code> the response value and <code>Ypred</code> the value fit by cross-validation.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When <code>K</code> is equal to the number of observations, <em>leave-one-out</em> cross-validation
+is performed.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>D. Dupuy</p>
+
+
+<h3>See Also</h3>
+
+<p><code>R2</code>, <code>modelFit</code>, <code>MAE</code>, <code>RMSE</code>, <code>foldsComposition</code>, <code>testCrossValidation</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+rm(list=ls())
+# A 2D example
+Branin &lt;- function(x1,x2) {
+  x1 &lt;- x1*15-5   
+  x2 &lt;- x2*15
+  (x2 - 5/(4*pi^2)*(x1^2) + 5/pi*x1 - 6)^2 + 10*(1 - 1/(8*pi))*cos(x1) + 10
+}
+
+# Linear model on 50 points
+n &lt;- 50
+X &lt;- matrix(runif(n*2),ncol=2,nrow=n)
+Y &lt;- Branin(X[,1],X[,2])
+modLm &lt;- modelFit(X,Y,type = "Linear",formula=Y~X1+X2+X1:X2+I(X1^2)+I(X2^2))
+R2(Y,modLm$model$fitted.values)
+crossValidation(modLm,K=10)$Q2
+
+
+# kriging model : gaussian covariance structure, no trend, no nugget effect
+# on 16 points 
+n &lt;- 16
+X &lt;- data.frame(x1=runif(n),x2=runif(n))
+Y &lt;- Branin(X[,1],X[,2])
+mKm &lt;- modelFit(X,Y,type="Kriging",formula=~1, covtype="powexp")
+K &lt;- 10
+out   &lt;- crossValidation(mKm, K)
+par(mfrow=c(2,2))
+plot(c(0,1:K),c(mKm$model@covariance@range.val[1],out$theta[,1]),
+ 	xlab='',ylab='Theta1')
+ plot(c(0,1:K),c(mKm$model@covariance@range.val[2],out$theta[,2]),
+ 	xlab='',ylab='Theta2')
+ plot(c(0,1:K),c(mKm$model@covariance@shape.val[1],out$shape[,1]),
+ 	xlab='',ylab='p1',ylim=c(0,2))
+ plot(c(0,1:K),c(mKm$model@covariance@shape.val[2],out$shape[,2]),
+ 	xlab='',ylab='p2',ylim=c(0,2))
+par(mfrow=c(1,1))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

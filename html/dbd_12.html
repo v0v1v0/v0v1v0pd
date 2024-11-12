@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>finfo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fisher information.
+</h2>
+
+<h3>Description</h3>
+
+<p>Compute the Fisher information for a db distribution or
+a beta binomial distribution given the parameters of that
+distribution.  In the case of the db distribution a specified
+number of observations must be supplied.  In the case of
+the beta binomial distribution the actual observations must
+be supplied.  The inverse of the Fisher information is an
+estimate of the covariance matrix of the parameter estimates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">finfo(distr=c("db","betabinom"),alpha, beta, ntop, ndata,
+      zeta = FALSE, x, m, s, size)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>distr</code></td>
+<td>
+
+<p>Text string specifying which distribution to consisder.
+May be abbreviated (e.g. to <code>"d"</code> or <code>"b"</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>See <code>ddb()</code>.  Ignored if <code>distr</code> is <code>"betabinom"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+
+<p>See <code>ddb()</code>.  Ignored if <code>distr</code> is <code>"betabinom"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntop</code></td>
+<td>
+
+<p>See <code>ddb()</code>.  Ignored if <code>distr</code> is <code>"betabinom"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ndata</code></td>
+<td>
+
+<p>The number of observations for which the Fisher
+information is being determined.  Ignored if <code>distr</code>
+is <code>"betabinom"</code>; must be supplied if <code>distr</code>
+is <code>"db"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zeta</code></td>
+<td>
+
+<p>See <code>ddb()</code>.  Ignored if <code>distr</code> is <code>"betabinom"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A numeric vector of observations appropriate for the model
+under consideration.  Ignored if <code>distr</code> is <code>"db"</code>; the
+Fisher information for the db distribution depends only upon the
+parameters and not upon the data.  Must be supplied if <code>distr</code>
+is <code>"betabinom"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+
+<p>A numeric scalar, between 0 and 1, which may be interpreted
+as the “success” probability.  (See the help for
+<code>dbetabinom()</code>.) Ignored if <code>distr</code> is <code>"db"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+
+<p>Numeric scalar, greater than 0.  The overdispersion parameter of
+the distribution. (See the help for <code>dbetabinom()</code>.) Ignored
+if <code>distr</code> is <code>"db"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+
+<p>Integer scalar specifying the upper limit of the “support”
+of the betabinom distribution under consideration.  The support
+is the set of integers <code>{0, 1, ..., size}</code>.  (See the help
+for <code>dbetabinom()</code>.) Ignored if <code>distr</code> is <code>"db"</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function differs from <code>aHess()</code> in that its
+arguments are prescribed “individually” rather than being
+extracted from an <code>"mleDb"</code> or <code>"mleBb"</code> object.
+This allows <code>finfo()</code> to be applied to “true”
+parameters (where these are known) rather than estimated ones.
+</p>
+<p>Note that if <code>distr</code> is <code>"db"</code>, the number
+of observations must be supplied explicitly, whereas for
+<code>aHess()</code> this number is extracted from the <code>object</code>
+argument.  If <code>distr</code> is <code>"betabinom"</code> then a vector
+of actual observations must be supplied.
+</p>
+<p>If <code>distr</code> is <code>"db"</code> then <code>finfo()</code> in effect
+calculates the <em>expected</em> information, since the information
+matrix does not depend on the parameters.  This is not the case
+if <code>distr</code> is <code>"betabinom"</code>.  If the parameters
+supplied are the maximum likelihood estimates based on the
+supplied vector of observations <code>x</code>, then the value returned
+by <code>finfoBb()</code> is the <em>observed</em> Fisher information.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A two-by-two positive definite (with any luck!) numeric matrix.
+Its inverse is an estimate of the covariance matrix of the
+parameter estimates.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>link{aHess}()</code>
+<code>link{nHess}()</code>
+<code>link{mleDb}()</code>
+<code>link{mleBb}()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">print(finfo(alpha=0.6,beta=0.3,ntop=5,ndat=54))
+X   &lt;- hmm.discnp::SydColDisc
+X$y &lt;- as.numeric(X$y)
+X   &lt;- split(X,f=with(X,interaction(locn,depth)))
+x   &lt;- X[[19]]$y
+fit &lt;- mleDb(x, ntop=5)
+alpha &lt;- fit["alpha"]
+beta  &lt;- fit["beta"]
+ntop  &lt;- attr(fit,"ntop")
+zeta  &lt;- attr(fit,"zeta")
+ndat  &lt;- ndata(fit)
+print(finfo(alpha=alpha,beta=beta,ntop=ntop,ndat=ntop,zeta=zeta))
+print(aHess(fit)) # Same
+X     &lt;- hrsRcePred
+top1e &lt;- X[X$sbjType=="Expert","top1"]
+fit   &lt;- mleBb(top1e,size=10)
+print(finfo(distr="b",x=top1e,m=fit["m"],s=fit["s"],
+            size=10)) # Observed Fisher info.
+print(aHess(fit,x=top1e)) # Same
+</code></pre>
+
+
+</div>

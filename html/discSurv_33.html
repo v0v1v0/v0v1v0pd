@@ -1,0 +1,231 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>print.discSurvPredErrDisc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction Error Curves</h2>
+
+<h3>Description</h3>
+
+<p>Estimates prediction error curves of arbitrary discrete survival prediction models. 
+In prediction error curves the estimated and observed survival functions are
+compared adjusted by weights at given timepoints.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'discSurvPredErrDisc'
+print(x, ...)
+
+## S3 method for class 'discSurvPredErrDisc'
+plot(x, ...)
+
+predErrCurve(
+  timepoints,
+  estSurvList,
+  testTime,
+  testEvent,
+  trainTime,
+  trainEvent
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Object of class "discSurvPredErrDisc"("class discSurvPredErrDisc")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to S3 methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timepoints</code></td>
+<td>
+<p>Vector of the number of discrete time intervals ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estSurvList</code></td>
+<td>
+<p>List of persons in the test data ("class list"). Each element contains a
+estimated survival functions of all given time points ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testTime</code></td>
+<td>
+<p>Discrete survival times in the test data ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testEvent</code></td>
+<td>
+<p>Univariate event indicator in the test data ("binary vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainTime</code></td>
+<td>
+<p>Numeric vector of discrete survival times in the training
+data ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainEvent</code></td>
+<td>
+<p>Integer vector of univariate event indicator in the
+training data("integer vector").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The prediction error curves should be smaller than 0.25 for all time points,
+because this is equivalent to a random assignment error.
+</p>
+
+
+<h3>Value</h3>
+
+ <ul><li>
+<p>List List with objects: </p>
+ <ul>
+<li>
+<p>Output List
+with two components </p>
+ <ul>
+<li>
+<p>predErr Numeric vector with estimated
+prediction error values.  Names give the evaluation time point.
+</p>
+</li>
+<li>
+<p>weights List of weights used in the estimation. Each list component
+gives the weights of a person in the test data.  </p>
+</li>
+</ul>
+</li>
+<li>
+<p>Input A list of
+given argument input values (saved for reference) </p>
+</li>
+</ul>
+</li></ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Van der Laan MJ, Robins JM (2003).
+<em>Unified Methods for Censored Longitudinal Data and Causality</em>.
+Springer Series in Statistics. <br><br>
+Gerds TA, Schumacher M (2006).
+“Consistent estimation of the expected Brier Score in general survival models with right-censored event times.”
+<em>Biometrical Journal</em>, <b>48</b>, 1029-1040.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gam</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with cross validation and unemployment data 
+library(Ecdat)
+library(mgcv)
+data(UnempDur)
+summary(UnempDur$spell)
+
+# Extract subset of data
+set.seed(635)
+IDsample &lt;- sample(1:dim(UnempDur)[1], 100)
+UnempDurSubset &lt;- UnempDur [IDsample, ]
+head(UnempDurSubset)
+range(UnempDurSubset$spell)
+
+# Generate training and test data
+set.seed(7550)
+TrainIndices &lt;- sample (x = 1:dim(UnempDurSubset) [1], size = 75)
+TrainUnempDur &lt;- UnempDurSubset [TrainIndices, ]
+TestUnempDur &lt;- UnempDurSubset [-TrainIndices, ]
+
+# Convert to long format
+LongTrain &lt;- dataLong(dataShort = TrainUnempDur, timeColumn = "spell", eventColumn = "censor1")
+LongTest &lt;- dataLong(dataShort = TestUnempDur, timeColumn = "spell", eventColumn = "censor1")
+# Convert factor to numeric for smoothing
+LongTrain$timeInt &lt;- as.numeric(as.character(LongTrain$timeInt))
+LongTest$timeInt &lt;- as.numeric(as.character(LongTest$timeInt))
+
+######################################################################
+# Estimate a generalized, additive model in discrete survival analysis
+
+gamFit &lt;- gam (formula = y ~ s(timeInt) + age + logwage, data = LongTrain, family = binomial())
+
+# Estimate survival function of each person in the test data
+oneMinusPredHaz &lt;- 1 - predict(gamFit, newdata = LongTest, type = "response")
+predSurv &lt;- aggregate(oneMinusPredHaz ~ obj, data = LongTest, FUN = cumprod)
+
+# Prediction error in first interval
+tryPredErrDisc1 &lt;- predErrCurve (timepoints = 1, 
+estSurvList = predSurv [[2]], testTime = TestUnempDur$spell,
+testEvent=TestUnempDur$censor1, trainTime = TrainUnempDur$spell,
+ trainEvent=TrainUnempDur$censor1)
+tryPredErrDisc1
+
+# Prediction error of the 2. to 10. interval
+tryPredErrDisc2 &lt;- predErrCurve (timepoints = 2:10,
+estSurvList = predSurv [[2]], testTime = TestUnempDur$spell,
+testEvent = TestUnempDur$censor1, trainTime = TrainUnempDur$spell,
+trainEvent = TrainUnempDur$censor1)
+tryPredErrDisc2
+plot(tryPredErrDisc2)
+
+########################################
+# Fit a random discrete survival forest
+
+library(ranger)
+LongTrainRF &lt;- LongTrain
+LongTrainRF$y &lt;- factor(LongTrainRF$y)
+rfFit &lt;- ranger(formula = y ~ timeInt + age + logwage, data = LongTrainRF,
+probability = TRUE)
+
+# Estimate survival function of each person in the test data
+oneMinusPredHaz &lt;- 1 - predict(rfFit, data = LongTest)$predictions[, 2]
+predSurv &lt;- aggregate(oneMinusPredHaz ~ obj, data = LongTest, FUN = cumprod)
+
+# Prediction error in first interval
+tryPredErrDisc1 &lt;- predErrCurve (timepoints = 1, 
+estSurvList = predSurv [[2]], testTime = TestUnempDur$spell,
+testEvent = TestUnempDur$censor1, trainTime = TrainUnempDur$spell,
+ trainEvent = TrainUnempDur$censor1)
+tryPredErrDisc1
+
+# Prediction error of the 2. to 10. interval
+tryPredErrDisc2 &lt;- predErrCurve (timepoints = 2:10,
+estSurvList = predSurv [[2]], testTime = TestUnempDur$spell,
+testEvent = TestUnempDur$censor1, trainTime = TrainUnempDur$spell,
+trainEvent = TrainUnempDur$censor1)
+tryPredErrDisc2
+plot(tryPredErrDisc2)
+
+</code></pre>
+
+
+</div>

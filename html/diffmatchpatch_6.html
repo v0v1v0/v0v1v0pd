@@ -1,0 +1,191 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>diff_make</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute diffs between text strings</h2>
+
+<h3>Description</h3>
+
+<p>The following functions are used to construct or work with diff(s) between text strings.
+Specifically, <code>diff_make()</code> computes the character level differences between
+the source string (<code>x</code>) and destination string (<code>y</code>). These diffs can be made more human
+friendly via a secondary cleaning process via the <code>cleanup</code> argument.
+</p>
+<p>Once computed, diffs are represented using <code>diff_df</code> data frames, which consist of just
+two columns: <code>text</code> and <code>op</code>. Basic convenience functions for pretty printing of these are
+provided by the package.
+</p>
+<p>The following helper functions are provided:
+</p>
+
+<ul>
+<li> <p><code>print()</code> - prints a diff using ANSI colors if available.
+</p>
+</li>
+<li> <p><code>as.character()</code> - converts a diff (using ANSI colors if available) to a character vector.
+</p>
+</li>
+<li> <p><code>diff_levenshtein()</code> calculates the Levenshtein distance of a diff.
+</p>
+</li>
+<li> <p><code>diff_to_delta()</code> converts a diff to a delta string.
+</p>
+</li>
+<li> <p><code>diff_from_delta()</code> creates a diff from a source string (<code>x</code>) and a <code>delta</code> string.
+</p>
+</li>
+<li> <p><code>diff_to_html()</code> converts a diff to pretty HTML string.
+</p>
+</li>
+<li> <p><code>diff_to_patch()</code> converts a diff to a patch string.
+</p>
+</li>
+<li> <p><code>diff_text_source()</code> recovers the source string from a diff.
+</p>
+</li>
+<li> <p><code>diff_text_dest()</code> recovers the destination string from a diff.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">diff_make(x, y, cleanup = "semantic", checklines = TRUE)
+
+diff_levenshtein(diff)
+
+diff_to_delta(diff)
+
+diff_from_delta(x, delta)
+
+diff_to_html(diff)
+
+diff_to_patch(diff)
+
+diff_text_source(diff)
+
+diff_text_dest(diff)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The source string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The destination string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cleanup</code></td>
+<td>
+<p>Determines the cleanup method applied to the diffs. Allowed values include:
+<code>semantic</code>, <code>lossless</code>, <code>efficiency</code>, <code>merge</code> and <code>none</code>. See Details for the behavior of
+these methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checklines</code></td>
+<td>
+<p>Performance flag - if <code>FALSE</code>, then don't run a
+line-level diff first to identify the changed areas.
+If <code>TRUE</code>, run a faster slightly less optimal diff. Default: <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diff</code></td>
+<td>
+<p>A <code>diff_df</code> data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>A delta string.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Cleanup methods</h4>
+
+
+<ul>
+<li> <p><code>semantic</code> - Reduce the number of edits by eliminating semantically trivial equalities.
+</p>
+</li>
+<li>
+<p> semantic <code>lossless</code> - Look for single edits surrounded on both sides by equalities
+which can be shifted sideways to align the edit to a word boundary.
+e.g: The c<strong>at c</strong>ame. -&gt; The **cat **came.
+</p>
+</li>
+<li> <p><code>efficiency</code> - Reduce the number of edits by eliminating operationally trivial equalities.
+</p>
+</li>
+<li> <p><code>merge</code> - Reorder and merge like edit sections.  Merge equalities.
+Any edit section can move as long as it doesn't cross an equality.
+</p>
+</li>
+<li> <p><code>none</code> - Do not apply any cleanup methods to the diffs.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+
+<ul><li> <p><code>diff_make()</code> returns a <code>diff_df</code> data frame containing the diffs.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_make()</code> returns the Levenshtein distance as an integer.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_to_delta()</code> returns an character string.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_from_delta()</code> returns a <code>diff_df</code> data frame.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_to_html()</code> returns a character string.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_to_patch()</code> returns a character string.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_text_source()</code> returns a character string.
+</p>
+</li></ul>
+<ul><li> <p><code>diff_text_dest()</code> returns a character string.
+</p>
+</li></ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">(d = diff_make("abcdef", "abchij"))
+
+diff_levenshtein(d)
+
+diff_to_html(d)
+
+diff_text_source(d) 
+
+diff_text_dest(d) 
+
+diff_to_patch(d)
+
+(delta = diff_to_delta(d))
+
+diff_from_delta("abcdef", delta)
+</code></pre>
+
+
+</div>

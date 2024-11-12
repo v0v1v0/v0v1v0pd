@@ -1,0 +1,376 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>MDEstimator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Function to compute minimum distance estimates </h2>
+
+<h3>Description</h3>
+
+<p>The function <code>MDEstimator</code> provides a general way to compute 
+minimum distance estimates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">MDEstimator(x, ParamFamily, distance = KolmogorovDist, dist.name, 
+            paramDepDist = FALSE, startPar = NULL, Infos, trafo = NULL,
+            penalty = 1e20, validity.check = TRUE, asvar.fct, na.rm = TRUE,
+            ..., .withEvalAsVar = TRUE, nmsffx = "",
+            .with.checkEstClassForParamFamily = TRUE)
+CvMMDEstimator(x, ParamFamily, muDatOrMod = c("Mod","Dat", "Other"),
+            mu = NULL, paramDepDist = FALSE, startPar = NULL, Infos,
+            trafo = NULL, penalty = 1e20, validity.check = TRUE, 
+            asvar.fct = .CvMMDCovariance, na.rm = TRUE, ...,
+            .withEvalAsVar = TRUE, nmsffx = "",
+            .with.checkEstClassForParamFamily = TRUE)
+KolmogorovMDEstimator(x, ParamFamily, paramDepDist = FALSE, startPar = NULL, Infos, 
+            trafo = NULL, penalty = 1e20, validity.check = TRUE, asvar.fct, 
+            na.rm = TRUE, ..., .withEvalAsVar = TRUE, nmsffx = "",
+            .with.checkEstClassForParamFamily = TRUE)
+TotalVarMDEstimator(x, ParamFamily, paramDepDist = FALSE, startPar = NULL, Infos, 
+            trafo = NULL, penalty = 1e20, validity.check = TRUE, asvar.fct, 
+            na.rm = TRUE, ..., .withEvalAsVar = TRUE, nmsffx = "",
+            .with.checkEstClassForParamFamily = TRUE)
+HellingerMDEstimator(x, ParamFamily, paramDepDist = FALSE, startPar = NULL, Infos, 
+            trafo = NULL, penalty = 1e20, validity.check = TRUE, asvar.fct, 
+            na.rm = TRUE, ..., .withEvalAsVar = TRUE, nmsffx = "",
+            .with.checkEstClassForParamFamily = TRUE)
+CvMDist2(e1,e2,... )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p> (empirical) data </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ParamFamily</code></td>
+<td>
+<p> object of class <code>"ParamFamily"</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+<p> (generic) function: to compute distance beetween (emprical)
+data and objects of class <code>"Distribution"</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.name</code></td>
+<td>
+<p> optional name of distance </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>muDatOrMod</code></td>
+<td>
+<p> a character string specifying whether
+as integration measure <code class="reqn">mu</code> in Cramer-von-Mises distance,
+the empirical cdf (corresponding to argument value
+<code>"Dat"</code>) or the current model distribution
+(corresponding to argument value <code>"Mod"</code>) or a given
+integration (probability) measure / distribution <code>mu</code>
+(corresponding to argument value <code>"Other"</code>) is to be used;
+must be one of "Dat" (default) or "Mod" or "Other".
+You can specify just the initial letter; the default is <code>"Mod"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p> optional integration (probability) measure for CvM MDE.
+defaults to <code>NULL</code> and is ignored in options
+<code>muDatOrMod</code> in <code>"Dat"</code> and <code>"Mod"</code>;
+in case <code>"Other"</code>, it must be of class
+<code>UnivariateDistribution</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paramDepDist</code></td>
+<td>
+<p>logical; will computation of distance be parameter
+dependent (see also note below)? if <code>TRUE</code>, distance function
+must be able to digest a parameter <code>thetaPar</code>; otherwise
+this parameter will be eliminated if present in <code>...</code>-argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startPar</code></td>
+<td>
+<p> initial information used by <code>optimize</code> resp. <code>optim</code>;
+i.e; if (total) parameter is of length 1, <code>startPar</code> is 
+a search interval, else it is an initial parameter value; if <code>NULL</code>
+slot <code>startPar</code> of <code>ParamFamily</code> is used to produce it;
+in the multivariate case, <code>startPar</code> may also be of class <code>Estimate</code>,
+in which case slot <code>untransformed.estimate</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Infos</code></td>
+<td>
+<p> character: optional informations about estimator </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trafo</code></td>
+<td>
+<p> an object of class <code>MatrixorFunction</code> – a transformation
+for the main parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+<p>(non-negative) numeric: penalizes non valid parameter-values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>validity.check</code></td>
+<td>
+<p>logical: shall return parameter value be checked for
+validity? Defaults to yes (<code>TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asvar.fct</code></td>
+<td>
+<p>optionally: a function to determine the corresponding
+asymptotic variance; if given, <code>asvar.fct</code> takes arguments
+<code>L2Fam</code>((the parametric model as object of class <code>L2ParamFamily</code>)) 
+and <code>param</code> (the parameter value as object of class 
+<code>ParamFamParameter</code>); arguments are called by name; <code>asvar.fct</code>
+may also process further arguments passed through the <code>...</code> argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>logical: if  <code>TRUE</code>, the estimator is evaluated at <code>complete.cases(x)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> for the estimators: further arguments to <code>criterion</code> or <code>optimize</code>
+or <code>optim</code>, respectively; for <code>CvMDist2</code>,
+these can be used e.g. by <code>E()</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.withEvalAsVar</code></td>
+<td>
+<p>logical: shall slot <code>asVar</code> be evaluated
+(if <code>asvar.fct</code> is given) or
+just the call be returned?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmsffx</code></td>
+<td>
+<p>character: a potential suffix to be appended to the estimator name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e1</code></td>
+<td>
+<p>object of class <code>"Distribution"</code> or class <code>"numeric"</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e2</code></td>
+<td>
+<p>object of class <code>"Distribution"</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.with.checkEstClassForParamFamily</code></td>
+<td>
+<p>logical: Should a the end of the
+function <code>.checkEstClassForParamFamily</code>; defaults to <code>TRUE</code>;
+can be switched off for computational time or because this is already
+checked in a calling wrapper function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The argument <code>distance</code> has to be a (generic) function with arguments 
+the empirical data as well as an object of class <code>"Distribution"</code> 
+and possibly <code>...</code>; e.g. <code>KolmogorovDist</code> (default), 
+<code>TotalVarDist</code> or <code>HellingerDist</code>. Uses <code>mceCalc</code>
+for method dispatch.
+</p>
+<p>The functions <code>CvMMDEstimator</code>, <code>KolmogorovMDEstimator</code>,
+<code>TotalVarMDEstimator</code>, and <code>HellingerMDEstimator</code> are aliases
+where the distance is fixed. More specifically, <code>CvMMDEstimator</code>
+uses Cramer-von-Mises distance, see <code>CvMDist</code>
+with integration measure <code class="reqn">mu</code> either
+equal to the empirical cdf or to the current best fitting model distribution;
+the alternative is selected by argument <code>muDatOrMod</code>).
+As it is asymptotically linear, asymptotic variances are available.
+In case of alternative <code>"Dat"</code>, this variance is computed by means
+of helper function <code>.CvMMDCovarianceWithMux</code>, case of alternative
+<code>"Mod"</code> we use helper function <code>.CvMMDCovariance</code>. In both
+case one may use these helper function to get hand on the respective
+influence function. For covariances computed by <code>.CvMMDCovariance</code>,
+diagnostics on the involved integrations are available if argument
+<code>diagnostic</code> is <code>TRUE</code>. Then there is attribute <code>diagnostic</code>
+attached to the return value, which may be inspected
+and accessed through <code>showDiagnostic</code> and
+<code>getDiagnostic</code>.
+</p>
+<p><code>KolmogorovMDEstimator</code> uses Kolmogorov distance, see
+<code>KolmogorovDist</code>, <code>TotalVarMDEstimator</code>,
+uses total variation distance, see <code>TotalVarDist</code>
+and <code>HellingerMDEstimator</code>
+uses Hellinger distance, see <code>HellingerDist</code>.
+</p>
+<p>Function <code>CvMDist2</code> calls <code>CvMDist</code> and
+computes the Cramer-von-Mises distance between
+distributions <code>e1</code> and <code>e2</code> with integration
+measure <code>mu</code> equal to <code>e2</code>; it is used in alternative
+<code>"Mod"</code> in <code>CvMMDEstimator</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The estimators return an object of S4-class <code>"MCEstimate"</code> which inherits from class
+<code>"Estimate"</code>. <code>CvMDist2</code> returns the respective distance.
+</p>
+
+
+<h3>Theoretical Background</h3>
+
+<p>It should be noted that <code>CvMMDEstimator</code>
+results in an asymptotically linear (hence asymptotically normal) estimator
+with an influence function which is always bounded;
+<code>HellingerMDEstimator</code> adapts, for growing sample size,
+the MLE estimator, hence is asymptotically efficient, while for finite
+sample size is bias robust. <code>KolmogorovMDEstimator</code> is square-root-n
+consistent but, due to the facetted level sets of the distance fails to
+be asymptotically normal. In the terminology of Donoho/Liu,
+<code>TotalVarMDEstimator</code> and <code>HellingerMDEstimator</code> rely on
+strong distances, while <code>CvMMDEstimator</code> and
+<code>KolmogorovMDEstimator</code> use weak distances, so the latter ensure
+protection against larger classes of contamination (simply because the
+distribution balls based on the respective distances contain more elements).
+</p>
+
+
+<h3>Note</h3>
+
+<p>The distance function may be called together with a parameter <code>thetaPar</code>
+which is the current parameter value under consideration, i.e.; the value
+under which the model distribution is considered. Hence, if desired,
+particular distance functions could make use of this information, by, say
+computing the distance differently for different parameter values.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matthias Kohl <a href="mailto:Matthias.Kohl@stamats.de">Matthias.Kohl@stamats.de</a>,<br>
+Peter Ruckdeschel <a href="mailto:peter.ruckdeschel@uni-oldenburg.de">peter.ruckdeschel@uni-oldenburg.de</a></p>
+
+
+<h3>References</h3>
+
+<p>Beran, R. (1977). Minimum Hellinger distance estimates for parametric models.
+<em>Annals of Statistics</em>, <b>5</b>(3), 445-463.
+</p>
+<p>Donoho, D.L. and Liu, R.C. (1988). The "automatic" robustness of minimum
+distance functionals. <em>Annals of Statistics</em>, <b>16</b>(2), 552-586.
+</p>
+<p>Huber, P.J. (1981) <em>Robust Statistics</em>. New York: Wiley.
+</p>
+<p>Parr, W.C. and Schucany, W.R. (1980). Minimum distance and robust estimation.
+<em>Journal of the American Statistical Association</em>, <b>75</b>(371),
+616-624.
+</p>
+<p>Rao, P.V., Schuster, E.F., and Littell, R.C. (1975).
+Estimation of Shift and Center of Symmetry Based on Kolmogorov-Smirnov
+Statistics. <em>Annals of Statistics</em>, <b>3</b>, 862-873.
+</p>
+<p>Rieder, H. (1994) <em>Robust Asymptotic Statistics</em>. New York: Springer.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ParamFamily-class</code>, <code>ParamFamily</code>, 
+<code>MCEstimator</code>, <code>MCEstimate-class</code>,
+<code>fitdistr</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## (empirical) Data
+set.seed(123)
+x &lt;- rgamma(50, scale = 0.5, shape = 3)
+
+## parametric family of probability measures
+G &lt;- GammaFamily(scale = 1, shape = 2)
+
+## Kolmogorov(-Smirnov) minimum distance estimator
+MDEstimator(x = x, ParamFamily = G, distance = KolmogorovDist)
+## or
+KolmogorovMDEstimator(x = x, ParamFamily = G)
+
+## von Mises minimum distance estimator with default mu = Mod
+MDEstimator(x = x, ParamFamily = G, distance = CvMDist)
+
+
+### these examples take too much time for R CMD check --as-cran
+
+## von Mises minimum distance estimator with default mu = Mod
+MDEstimator(x = x, ParamFamily = G, distance = CvMDist,
+            asvar.fct = .CvMMDCovarianceWithMux)
+## or
+CvMMDEstimator(x = x, ParamFamily = G)
+## or
+CvMMDEstimator(x = x, ParamFamily = G, muDatOrMod="Mod")
+
+## or with data based integration measure:
+CvMMDEstimator(x = x, ParamFamily = G, muDatOrMod="Dat")
+
+## von Mises minimum distance estimator with mu = N(0,1)
+MDEstimator(x = x, ParamFamily = G, distance = CvMDist, mu = Norm())
+## or, with asy Var
+MDEstimator(x = x, ParamFamily = G, distance = CvMDist, mu = Norm(),
+            asvar.fct = function(L2Fam, param, ...){
+            .CvMMDCovariance(L2Fam=L2Fam, param=param, mu=Norm(), N = 400)
+            } )
+## synomymous to
+CvMMDEstimator(x = x, ParamFamily = G, muDatOrMod="Other", mu = Norm())
+
+## Total variation minimum distance estimator
+## gamma distributions are discretized
+MDEstimator(x = x, ParamFamily = G, distance = TotalVarDist)
+## or
+TotalVarMDEstimator(x = x, ParamFamily = G)
+## or smoothing of emprical distribution (takes some time!)
+#MDEstimator(x = x, ParamFamily = G, distance = TotalVarDist, asis.smooth.discretize = "smooth")
+
+## Hellinger minimum distance estimator
+## gamma distributions are discretized
+distroptions(DistrResolution = 1e-10)
+MDEstimator(x = x, ParamFamily = G, distance = HellingerDist, startPar = c(1,2))
+## or
+HellingerMDEstimator(x = x, ParamFamily = G, startPar = c(1,2))
+distroptions(DistrResolution = 1e-6) # default
+## or smoothing of emprical distribution (takes some time!)
+MDEstimator(x = x, ParamFamily = G, distance = HellingerDist, asis.smooth.discretize = "smooth")
+
+</code></pre>
+
+
+</div>

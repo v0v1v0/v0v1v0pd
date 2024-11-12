@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make.blocksraster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Makes new file with blocks</h2>
+
+<h3>Description</h3>
+
+<p>Produces a DeponsRaster object of type='blocks' for use in DEPONS
+simulations. This allows animals to be counted within specific regions (blocks)
+of the landscape during the simulation. The new blocks can be specified as
+either matrices or SpatialPolygons objects. For matrices, the blocks are
+defined as the smallest rectangle that includes all the specified positions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S4 method for signature 'DeponsRaster'
+make.blocksraster(
+  template,
+  blocks = NA,
+  blockvals = NULL,
+  NAvalue = -9999,
+  plot = FALSE,
+  fname = NULL,
+  overwrite = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>DeponsRaster object used as template for new blocks file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blocks</code></td>
+<td>
+<p>list of areas to be used for new blocks. Each item in 'blocks'
+should be a matrix (with two columns, corresponding to x- and y-coordinates)
+or a SpatialPolygons object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blockvals</code></td>
+<td>
+<p>Vector of integer values defining the labels of the new blocks.
+The first value defines the background value, so the length of 'blockvals'
+should equal the number of blocks plus 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NAvalue</code></td>
+<td>
+<p>Value used for missing data in the output object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>If TRUE, the raster block is plotted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fname</code></td>
+<td>
+<p>Name of the output raster file (character string ending with
+'.asc'). No file is written to disk if fname is not provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>Whether to replace existing file.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>RasterLayer</code> object defining different subregions of the
+landscape where animals should be counted.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The blocks file should not be modified when running DEPONS
+simulations using the 'Kattegat' landscape. In this landscape the simulated
+animals use the blocks file for navigation. Also note that blocks are added
+to the new blocks raster in the order they are file in the order in which
+they are listed in 'blocks', so the order mattes if the blocks overlap.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Load file to use as template for new blocks file
+data("bathymetry")
+
+# Make list of blocks to create
+new.blocks &lt;- list()
+x &lt;- runif(8, 700000, 760000)
+y &lt;- runif(8, 6200000, 6300000)
+new.blocks[[1]] &lt;- cbind(x,y)
+x &lt;- c(600000, 635000, 670000, 635000)
+y &lt;- c(6150000, 6200000, 6150000, 6100000)
+library(sp)
+srl &lt;- list(Polygon(cbind(x,y)))
+Srl &lt;- list(Polygons(srl, ID=as.vector("p")))
+new.blocks[[2]] &lt;- SpatialPolygons(Srl, proj4string=crs(bathymetry))
+
+make.blocksraster(bathymetry, new.blocks, plot=TRUE)
+points(new.blocks[[1]])
+plot(new.blocks[[2]], add=TRUE)
+
+
+the.dir &lt;- tempdir()
+make.blocksraster(bathymetry, new.blocks, fname=paste0(the.dir, "/test.asc"))
+
+</code></pre>
+
+
+</div>

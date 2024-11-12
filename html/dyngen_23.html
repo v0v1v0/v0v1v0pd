@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bblego</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Design your own custom backbone easily</h2>
+
+<h3>Description</h3>
+
+<p>You can use the <code>bblego</code> functions in order to create
+custom backbones using various components. Please note that the <code>bblego</code>
+functions currently only allow you to create tree-like backbones.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bblego(..., .list = NULL)
+
+bblego_linear(
+  from,
+  to,
+  type = sample(c("simple", "doublerep1", "doublerep2"), 1),
+  num_modules = sample(4:6, 1),
+  burn = FALSE
+)
+
+bblego_branching(
+  from,
+  to,
+  type = "simple",
+  num_steps = 3,
+  num_modules = 2 + length(to) * (3 + num_steps),
+  burn = FALSE
+)
+
+bblego_start(
+  to,
+  type = sample(c("simple", "doublerep1", "doublerep2"), 1),
+  num_modules = sample(4:6, 1)
+)
+
+bblego_end(
+  from,
+  type = sample(c("simple", "doublerep1", "doublerep2"), 1),
+  num_modules = sample(4:6, 1)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>..., .list</code></td>
+<td>
+<p><code>bblego</code> components, either as separate args or as a list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>The begin state of this component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>The end state of this component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Some components have alternative module regulatory networks.
+</p>
+<p><code>bblego_start()</code>, <code>bblego_linear()</code>, <code>bblego_end()</code>:
+</p>
+
+<ul>
+<li> <p><code>"simple"</code>: a sequence of modules in which every module upregulates the next module.
+</p>
+</li>
+<li> <p><code>"doublerep1"</code>: a sequence of modules in which every module downregulates the next
+module, and each module has positive basal expression.
+</p>
+</li>
+<li> <p><code>"doublerep2"</code>: a sequence of modules in which every module upregulates the next
+module, but downregulates the one after that.
+</p>
+</li>
+<li> <p><code>"flipflop"</code>: a sequence of modules in which every module upregulates the next module.
+In addition, the last module upregulates itself and strongly downregulates the first module.
+</p>
+</li>
+</ul>
+<p><code>bblego_branching()</code>:
+</p>
+
+<ul><li> <p><code>"simple"</code>: a set of <code>n</code> modules (with <code>n = length(to)</code>) which all downregulate
+one another and upregulate themselves. This causes a branching to occur in the trajectory.
+</p>
+</li></ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_modules</code></td>
+<td>
+<p>The number of modules this component is allowed to use.
+Various components might require a minimum number of components in order to work properly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burn</code></td>
+<td>
+<p>Whether or not these components are part of the warm-up simulation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_steps</code></td>
+<td>
+<p>The number of branching steps to reduce the odds of double positive cells occurring.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A backbone always needs to start with a single <code>bblego_start()</code> state and
+needs to end with one or more <code>bblego_end()</code> states.
+The order of the mentioned states needs to be such that a state is never
+specified in the first argument (except for <code>bblego_start()</code>) before
+having been specified as the second argument.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dyngen backbone.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">backbone &lt;- bblego(
+  bblego_start("A", type = "simple", num_modules = 2),
+  bblego_linear("A", "B", type = "simple", num_modules = 3),
+  bblego_branching("B", c("C", "D"), type = "simple", num_steps = 3),
+  bblego_end("C", type = "flipflop", num_modules = 4),
+  bblego_end("D", type = "doublerep1", num_modules = 7)
+)
+</code></pre>
+
+
+</div>

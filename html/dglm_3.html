@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dglm-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Double Generalized Linear Model - class</h2>
+
+<h3>Description</h3>
+
+<p>Class of objects returned by fitting double generalized linear models.</p>
+
+
+<h3>Details</h3>
+
+<p>Write <code class="reqn">\mu_i = \mbox{E}[y_i]</code> for the expectation of the 
+<code class="reqn">i</code>th response. 
+Then <code class="reqn">\mbox{Var}[Y_i] = \phi_i V(\mu_i)</code> where <code class="reqn">V</code>
+is the variance function and <code class="reqn">\phi_i</code> is the dispersion of the 
+<code class="reqn">i</code>th response 
+(often denoted as the Greek character ‘phi’). 
+We assume the link linear models
+<code class="reqn">g(\mu_i) = \mathbf{x}_i^T \mathbf{b}</code> and
+<code class="reqn">h(\phi_i) = \mathbf{z}_i^T \mathbf{z}</code>,
+where <code class="reqn">\mathbf{x}_i</code> and <code class="reqn">\mathbf{z}_i</code> are vectors of covariates,
+and <code class="reqn">\mathbf{b}</code> and <code class="reqn">\mathbf{a}</code> are vectors of regression
+cofficients affecting the mean and dispersion respectively. 
+The argument <code>dlink</code> specifies <code class="reqn">h</code>. 
+See <code>family</code> for how to specify <code class="reqn">g</code>. 
+The optional arguments <code>mustart</code>, <code>betastart</code> and <code>phistart</code>
+specify starting values for <code class="reqn">\mu_i</code>, <code class="reqn">\mathbf{b}</code>
+and <code class="reqn">\phi_i</code> respectively.
+</p>
+<p>The parameters <code class="reqn">\mathbf{b}</code> are estimated as for an ordinary <abbr><span class="acronym">glm</span></abbr>.
+The parameters <code class="reqn">\mathbf{a}</code> are estimated by way of a dual <abbr><span class="acronym">glm</span></abbr>
+in which the deviance components of the ordinary <abbr><span class="acronym">glm</span></abbr> appear as responses.
+The estimation procedure alternates between one iteration for the mean submodel 
+and one iteration for the dispersion submodel until overall convergence.
+</p>
+<p>The output from <code>dglm</code>, <code>out</code> say, consists of two <code>glm</code> objects
+(that for the dispersion submodel is <code>out$dispersion.fit</code>) with a few more
+components for the outer iteration and overall likelihood. 
+The <code>summary</code> and <code>anova</code> functions have special methods for <code>dglm</code>
+objects. 
+Any generic function that has methods for <code>glm</code>s or <code>lm</code>s will work on
+<code>out</code>, giving information about the mean submodel. 
+Information about the dispersion submodel can be obtained by using
+<code>out$dispersion.fit</code> as argument rather than out itself. 
+In particular <code>drop1(out,scale=1)</code> gives correct score statistics for 
+removing terms from the mean submodel, 
+while <code>drop1(out$dispersion.fit,scale=2)</code> gives correct score 
+statistics for removing terms from the dispersion submodel.
+</p>
+<p>The dispersion submodel is treated as a gamma family unless the original 
+reponses are gamma, in which case the dispersion submodel is digamma. 
+This is exact if the original glm family is <code>gaussian</code>,
+<code>Gamma</code> or <code>inverse.gaussian</code>. In other cases it can be 
+justified by the saddle-point approximation to the density of the responses. 
+The results will therefore be close to exact ML or REML when the dispersions 
+are small compared to the means. In all cases the dispersion submodel has prior
+weights 1, and has its own dispersion parameter which is 2.
+</p>
+
+
+<h3>Generation</h3>
+
+<p>This class of objects is returned by the <code>dglm</code> function 
+to represent a fitted double generalized linear model. 
+Class <code>"dglm"</code> inherits from class <code>"glm"</code>, 
+since it consists of two coupled generalized linear models, 
+one for the mean and one for the dispersion. 
+Like <code>glm</code>, 
+it also inherits from <code>lm</code>. 
+The object returned has all the components of a <code>glm</code> object. 
+The returned component <code>object$dispersion.fit</code> is also a 
+<code>glm</code> object in its own right, 
+representing the result of modelling the dispersion.
+</p>
+
+
+<h3>Methods</h3>
+
+<p>Objects of this class have methods for the functions 
+<code>print</code>, <code>plot</code>, <code>summary</code>, <code>anova</code>, <code>predict</code>, 
+<code>fitted</code>, <code>drop1</code>, <code>add1</code>, and <code>step</code>, amongst others.
+Specific methods (not shared with <code>glm</code>) exist for 
+<code>summary</code> and <code>anova</code>. 
+</p>
+
+
+<h3>Structure</h3>
+
+<p>A <code>dglm</code> object consists of a <code>glm</code> object with the following additional components:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+		<code>dispersion.fit</code> </td>
+<td style="text-align: left;"> the dispersion submodel: a <code>glm</code> object 
+representing the fitted model for the dispersions. 
+The responses for this model are the deviance components from the original
+generalized linear model. 
+The prior weights are 1 and the dispersion or scale of this model is 2.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+		
+		<code>iter</code> </td>
+<td style="text-align: left;"> this component now represents the number of outer iterations 
+used to fit the coupled mean-dispersion models. 
+At each outer iteration, one IRLS is done for each of the mean and dispersion
+submodels.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+		
+		<code>method</code> </td>
+<td style="text-align: left;"> fitting method used: <code>"ml"</code> if maximum likelihood 
+was used or <code>"reml"</code> if adjusted profile likelihood was used.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+		
+		<code>m2loglik</code> </td>
+<td style="text-align: left;"> minus twice the log-likelihood or 
+adjusted profile likelihood of the fitted model.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+	</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>The anova method is questionable when applied to an <code>dglm</code> object with
+<code>method="reml"</code> (stick to <code>method="ml"</code>). 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Gordon Smyth,
+ported to R by Peter Dunn (<a href="mailto:pdunn2@usc.edu.au">pdunn2@usc.edu.au</a>)</p>
+
+
+<h3>References</h3>
+
+<p>Smyth, G. K. (1989). Generalized linear models with varying dispersion. 
+<em>J. R. Statist. Soc. B</em>, <b>51</b>, 47–60.
+<a href="https://doi.org/10.1111/j.2517-6161.1989.tb01747.x">doi:10.1111/j.2517-6161.1989.tb01747.x</a>
+</p>
+<p>Smyth, G. K., and Verbyla, A. P. (1999). 
+Adjusted likelihood methods for modelling dispersion in generalized linear models.
+<em>Environmetrics</em>, <b>10</b>, 696-709.
+<a href="https://doi.org/10.1002/%28SICI%291099-095X%28199911/12%2910%3A6%3C695%3A%3AAID-ENV385%3E3.0.CO%3B2-M">doi:10.1002/(SICI)1099-095X(199911/12)10:6&lt;695::AID-ENV385&gt;3.0.CO;2-M</a>
+<a href="https://gksmyth.github.io/pubs/Ties98-Preprint.pdf">https://gksmyth.github.io/pubs/Ties98-Preprint.pdf</a>
+</p>
+<p>Smyth, G. K., and Verbyla, A. P. (1999).
+Double generalized linear models: approximate REML and diagnostics.
+In <em>Statistical Modelling: Proceedings of the 14th International Workshop on Statistical Modelling</em>, Graz, Austria, July 19-23, 1999, H. Friedl, A. Berghold, G. Kauermann (eds.), Technical University, Graz, Austria, pages 66-80.
+<a href="https://gksmyth.github.io/pubs/iwsm99-Preprint.pdf">https://gksmyth.github.io/pubs/iwsm99-Preprint.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dglm</code>, <code>Digamma family</code>, <code>Polygamma</code></p>
+
+
+</div>

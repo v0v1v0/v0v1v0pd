@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dq.algorithm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculates instantaneous frequency of freqeuncy carriers using the DQ
+method</h2>
+
+<h3>Description</h3>
+
+<p>Calculates instantaneous frequency of frequency carriers using
+the direct quadrature method from Huang et al., 2009.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dq.algorithm(fc, dt)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fc</code></td>
+<td>
+<p>a matrix of amplitude between -1 and 1, making up the frequency
+carrier</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>a vector of depth or time values</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list of the depth/time (dt), frequency (f), and identity tuning
+(idt), i.e. depths adapted to transform the frequency carrier into a cosine
+of period 1.
+</p>
+
+
+<h3>References</h3>
+
+<p>Huang, Norden E., Zhaohua Wu, Steven R. Long, Kenneth C. Arnold,
+Xianyao Chen, and Karin Blank. 2009. "On Instantaneous Frequency". Advances
+in Adaptive Data Analysis 01 (02): 177–229.
+https://doi.org/10.1142/S1793536909000096.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n &lt;- 600
+
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+
+xy &lt;- sin(t*2*pi/p1 + 50)
+
+int &lt;- c(rep(1, 99 + 100), seq(1,3,2/100), seq(3,1,-2/100), rep(1,100 + 99))
+
+dt &lt;- cumsum(int)
+
+cond &lt;- dt &lt; 75
+
+xy &lt;- xy[!cond]
+dt &lt;- dt[!cond]/1.2 - 62.5
+
+res &lt;- dq.algorithm(xy, dt)
+
+opar &lt;- par("mfrow")
+
+par(mfrow = c(3,1))
+
+plot(dt, xy, type = "o", pch = 19, main = "Frequency carrier")
+
+plot(dt, 1/res$f, pch = 19, type = "l", log = "y", lwd = 2, ylim = c(25,80),
+     main = "Period (Direct Quadrature method)", ylab = "Period")
+
+plot(res$idt[,1], xy, type = "o", pch = 19,
+     main = "Identity tuning", axes = FALSE, ylab = "xy", xlab = "dt")
+
+ap &lt;- approx(x = dt, y = res$idt[,1], xout = seq(0,600, by = 20))
+
+axis(1, at = ap$y, labels = ap$x)
+axis(2)
+box()
+
+par(mfrow = opar)
+
+</code></pre>
+
+
+</div>

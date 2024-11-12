@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prepareSequences</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prepare sequences for a comparison analysis.</h2>
+
+<h3>Description</h3>
+
+<p>This function prepares two or more multivariate time-series that are to be compared. It can work on two different scenarios:
+</p>
+
+<ul>
+<li> <p><em>Two dataframes</em>: The user provides two separated dataframes, each containing a multivariate time series. These time-series can be regular or irregular, aligned or unaligned, but must have at least a few columns with the same names (pay attention to differences in case between column names representing the same entity) and units. This mode uses exclusively the following arguments: <code>sequence.A</code>, <code>sequence.A.name</code> (optional), <code>sequence.B</code>, <code>sequence.B.name</code> (optional), and <code>merge.model</code>.
+</p>
+</li>
+<li> <p><em>One long dataframe</em>: The user provides a single dataframe, through the <code>sequences</code> argument, with two or more multivariate time-series identified by a <code>grouping.column</code>.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">prepareSequences(
+  sequence.A = NULL,
+  sequence.A.name = "A",
+  sequence.B = NULL,
+  sequence.B.name = "B",
+  merge.mode = "complete",
+  sequences = NULL,
+  grouping.column = NULL,
+  time.column = NULL,
+  exclude.columns = NULL,
+  if.empty.cases = "zero",
+  transformation = "none",
+  paired.samples = FALSE,
+  same.time = FALSE
+  )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sequence.A</code></td>
+<td>
+<p>dataframe containing a multivariate time-series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sequence.A.name</code></td>
+<td>
+<p>character string with the name of <code>sequence.A</code>. Will be used as identificator in the <code>id</code> column of the output dataframe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sequence.B</code></td>
+<td>
+<p>dataframe containing a multivariate time-series. Must have overlapping columns with <code>sequence.A</code> with same column names and units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sequence.B.name</code></td>
+<td>
+<p>character string with the name of <code>sequence.B</code>. Will be used as identificator in the <code>id</code> column of the output dataframe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>merge.mode</code></td>
+<td>
+<p>character string, one of: "overlap", "complete" (default option). If "overlap", <code>sequence.A</code> and <code>sequence.B</code> are merged by their common columns, and non-common columns are dropped If "complete", columns absent in one dataset but present in the other are added, with values equal to 0. This argument is ignored if <code>sequences</code> is provided instead of <code>sequence.A</code> and <code>sequence.B</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sequences</code></td>
+<td>
+<p>dataframe with multiple sequences identified by a grouping column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grouping.column</code></td>
+<td>
+<p>character string, name of the column in <code>sequences</code> to be used to identify separates sequences within the file. If two sequences are provided through the arguments <code>sequence.A</code> and <code>sequence.B</code>, this argument defines the name of the grouping column in the output dataframe. If two or several sequences are provided as a single dataframe through the argument <code>sequences</code>, then <code>grouping.column</code> must be a column in this dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.column</code></td>
+<td>
+<p>character string, name of the column with time/depth/rank data. If <code>sequence.A</code> and <code>sequence.B</code> are provided, <code>time.column</code> must have the same name and units in both dataframes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude.columns</code></td>
+<td>
+<p>character string or character vector with column names in <code>sequences</code>, or <code>squence.A</code> and <code>sequence.B</code>, to be excluded from the transformation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>if.empty.cases</code></td>
+<td>
+<p>character string with two possible values: "omit", or "zero". If "zero" (default), <code>NA</code> values are replaced by zeroes. If "omit", rows with <code>NA</code> data are removed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transformation</code></td>
+<td>
+<p>character string. Defines what data transformation is to be applied to the sequences. One of: "none" (default), "percentage", "proportion", "hellinger", and "scale" (the latter centers and scales the data using the <code>scale</code> function).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired.samples</code></td>
+<td>
+<p>boolean. If <code>TRUE</code>, the function will test if the datasets have paired samples. This means that each dataset must have the same number of rows/samples, and that, if available, the <code>time.column</code> must have the same values in every dataset. This is only mandatory when using the functions <code>distancePairedSamples</code> or <code>workflowPsi</code> with <code>paired.samples = TRUE</code> after preparing the sequences. The default setting is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>same.time</code></td>
+<td>
+<p>boolean. If <code>TRUE</code>, samples in the sequences to compare will be tested to check if they have the same time/age/depth according to <code>time.column</code>. This argument is only useful when the user needs to compare two sequences taken at different sites but same time frames.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dataframe with the multivariate time series. If <code>squence.A</code> and <code>sequence.B</code> are provided, the column identifying the sequences is named "id". If <code>sequences</code> is provided, the time-series are identified by <code>grouping.column</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Blas Benito &lt;blasbenito@gmail.com&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#two sequences as inputs
+data(sequenceA)
+data(sequenceB)
+
+AB.sequences &lt;- prepareSequences(
+ sequence.A = sequenceA,
+ sequence.A.name = "A",
+ sequence.B = sequenceB,
+ sequence.B.name = "B",
+ merge.mode = "complete",
+ if.empty.cases = "zero",
+ transformation = "hellinger"
+ )
+
+
+#several sequences in a single dataframe
+data(sequencesMIS)
+MIS.sequences &lt;- prepareSequences(
+ sequences = sequencesMIS,
+ grouping.column = "MIS",
+ if.empty.cases = "zero",
+ transformation = "hellinger"
+ )
+
+</code></pre>
+
+
+</div>

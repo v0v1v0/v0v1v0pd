@@ -1,0 +1,222 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distmatch</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Optimal distance matching in observational studies</h2>
+
+<h3>Description</h3>
+
+<p>Function for optimal distance matching in observational studies.  <code>distmatch</code> minimizes the total sum of covariate distances between matches.  <code>distmatch</code> is a wrapper to <code>bmatch</code>.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	distmatch(t_ind, dist_mat = NULL, solver = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>t_ind</code></td>
+<td>
+<p>treatment indicator: a vector of zeros and ones indicating treatment (1 = treated; 0 = control).  Please note that the data needs to be sorted in decreasing order according to this treatment indicator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist_mat</code></td>
+<td>
+<p>distance matrix: a matrix of positive distances between treated units (rows) and controls (columns).  If <code>dist_mat = NULL</code> and <code>subset_weight = 1</code>, then bmatch will solve the cardinality matching problem in Zubizarreta et al. (2014).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solver</code></td>
+<td>
+
+<p>Optimization solver parameters: a list with four objects, 
+</p>
+<p><code>solver = list(name = name, t_max = t_max, approximate = 1, round_cplex = 0,</code><br><code>    trace_cplex = 0)</code>.
+</p>
+<p><code>solver</code> is a string that determines the optimization solver to be used.  The options are: <code>cplex</code>, <code>glpk</code>, <code>gurobi</code>, <code>highs</code>, and <code>symphony</code>.  The default solver is <code>highs</code> with <code>approximate = 1</code>, so that by default an approximate solution is found (see <code>approximate</code> below).  For an exact solution, we strongly recommend using <code>cplex</code> or <code>gurobi</code> as they are much faster than the other solvers, but they do require a license (free for academics, but not for people outside universities).  Between <code>cplex</code> and <code>gurobi</code>, note that installing the R interface for <code>gurobi</code> is much simpler.
+</p>
+<p><code>t_max</code> is a scalar with the maximum time limit for finding the matches.  This option is specific to <code>cplex</code> and <code>gurobi</code>.  If the optimal matches are not found within this time limit, a partial, suboptimal solution is given.  
+</p>
+<p><code>approximate</code> is a scalar that determines the method of solution.  If <code>approximate = 1</code> (the default), an approximate solution is found via a relaxation of the original integer program.  This method of solution is faster than <code>approximate = 0</code>, but some balancing constraints may be violated to some extent.  This option works only with <code>n_controls = 1</code>, i.e. pair matching.
+</p>
+<p><code>round_cplex</code> is binary specific to <code>cplex</code>.  <code>round_cplex = 1</code> ensures that the solution found is integral by rounding and all the constraints are exactly statisfied; <code>round_cplex = 0</code> (the default) encodes there is no rounding which may return slightly infeasible integer solutions.  
+</p>
+<p><code>trace</code> is a binary specific to <code>cplex</code> and <code>gurobi</code>. <code>trace = 1</code> turns the optimizer output on. The default is <code>trace = 0</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing the optimal solution, with the following objects:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj_total</code></td>
+<td>
+<p>value of the objective function at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj_dist_mat</code></td>
+<td>
+<p>value of the total sum of distances term of the objective function at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t_id</code></td>
+<td>
+<p>indexes of the matched treated units at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c_id</code></td>
+<td>
+<p>indexes of the matched controls at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_id</code></td>
+<td>
+<p>matched pairs or groups at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>time elapsed to find the optimal solution.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Jose R. Zubizarreta &lt;zubizarreta@hcp.med.harvard.edu&gt;, Cinar Kilcioglu &lt;ckilcioglu16@gsb.columbia.edu&gt;.
+</p>
+
+
+<h3>References</h3>
+
+<p>Rosenbaum, P. R. (2010), <em>Design of Observational Studies</em>, Springer.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><span class="pkg">sensitivitymv</span>, <span class="pkg">sensitivitymw</span>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">	
+# Load, sort, and attach data
+data(lalonde)
+lalonde = lalonde[order(lalonde$treatment, decreasing = TRUE), ]
+attach(lalonde)
+
+################################# 
+# Step 1: use cardinality matching to find the largest sample of matched pairs for which 
+# all the covariates are finely balanced.
+#################################
+
+# Discretize covariates
+quantiles = function(covar, n_q) {
+	p_q = seq(0, 1, 1/n_q)
+	val_q = quantile(covar, probs = p_q, na.rm = TRUE)
+	covar_out = rep(NA, length(covar))
+	for (i in 1:n_q) {
+		if (i==1) {covar_out[covar&lt;val_q[i+1]] = i}
+		if (i&gt;1 &amp; i&lt;n_q) {covar_out[covar&gt;=val_q[i] &amp; covar&lt;val_q[i+1]] = i}
+		if (i==n_q) {covar_out[covar&gt;=val_q[i] &amp; covar&lt;=val_q[i+1]] = i}}
+	covar_out
+}
+age_5 = quantiles(age, 5)
+education_5 = quantiles(education, 5)
+re74_5 = quantiles(re74, 5)
+re75_5 = quantiles(re75, 5)
+
+# Treatment indicator; note that the data needs to be sorted in decreasing order
+# according to this treatment indicator
+t_ind = treatment
+t_ind 
+
+# Fine balance
+fine_covs = cbind(black, hispanic, married, nodegree, age_5, education_5, re74_5, re75_5)
+fine = list(covs = fine_covs)
+
+# Solver options
+t_max = 60*5
+solver = "highs"
+approximate = 0
+solver = list(name = solver, t_max = t_max, approximate = approximate,
+round_cplex = 0, trace = 0)
+
+# Match                   
+out_1 = cardmatch(t_ind, fine = fine, solver = solver)
+
+# Indices of the treated units and matched controls
+t_id_1 = out_1$t_id  
+c_id_1 = out_1$c_id	
+
+# Mean balance
+covs = cbind(age, education, black, hispanic, married, nodegree, re74, re75)
+meantab(covs, t_ind, t_id_1, c_id_1)
+
+# Fine balance (note here we are getting an approximate solution)
+for (i in 1:ncol(fine_covs)) {		
+	print(finetab(fine_covs[, i], t_id_1, c_id_1))
+}
+
+################################# 
+# Step 2: use optimal matching (minimum distance matching) to find the (re)pairing of
+# treated and control that minimizes the total sum of covariate distances between matched 
+# pairs.  For this, use the function 'distmatch' which is a wrapper for 'bmatch'.  
+#################################
+
+# New treatment indicator
+t_ind_2 = t_ind[c(t_id_1, c_id_1)]
+table(t_ind_2)
+
+# To build the distance matrix, the idea is to use strong predictors of the outcome
+dist_mat_2 = abs(outer(re74[t_id_1], re74[c_id_1], "-"))
+dim(dist_mat_2)
+
+# Match
+out_2 = distmatch(t_ind_2, dist_mat_2, solver)
+
+# Indices of the treated units and matched controls
+t_id_2 = t_id_1[out_2$t_id]  
+c_id_2 = c_id_1[out_2$c_id-length(out_2$c_id)]	
+
+# Covariate balance is preserved...
+meantab(covs, t_ind, t_id_2, c_id_2)
+for (i in 1:ncol(fine_covs)) {		
+	print(finetab(fine_covs[, i], t_id_2, c_id_2))
+}
+
+# ... but covariate distances are reduced
+distances_step_1 = sum(diag(dist_mat_2)) 
+distances_step_2 = sum(diag(dist_mat_2[out_2$t_id, out_2$c_id-length(out_2$c_id)])) 
+distances_step_1
+distances_step_2
+
+# The mean difference in outcomes is the same...
+mean(re78[t_id_1]-re78[c_id_1])
+mean(re78[t_id_2]-re78[c_id_2])
+
+# ... but their standard deviation is reduced
+sd(re78[t_id_1]-re78[c_id_1])
+sd(re78[t_id_2]-re78[c_id_2])
+	
+</code></pre>
+
+
+</div>

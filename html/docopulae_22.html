@@ -1,0 +1,165 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nint_integrateNCube</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Integrate Hypercube</h2>
+
+<h3>Description</h3>
+
+<p>Interface to the integration over interval dimensions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nint_integrateNCube(f, lowerLimit, upperLimit, ...)
+
+nint_integrateNCube_integrate(integrate)
+
+nint_integrateNCube_cubature(adaptIntegrate)
+
+nint_integrateNCube_SparseGrid(createIntegrationGrid)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>integrate</code></td>
+<td>
+<p><code>function(f, lowerLimit, upperLimit, ...)</code> which calls <code>integrate</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adaptIntegrate</code></td>
+<td>
+<p><code>function(f, lowerLimit, upperLimit, ...)</code> which calls <code>cubature::adaptIntegrate</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>createIntegrationGrid</code></td>
+<td>
+<p><code>function(dimension)</code> which calls <code>SparseGrid::createIntegrationGrid</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>the scalar-valued wrapper function to be integrated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowerLimit</code></td>
+<td>
+<p>the lower limits of integration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upperLimit</code></td>
+<td>
+<p>the upper limits of integration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments passed to <code>f</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>nint_integrate</code> uses <code>nint_integrateNCube</code> to handle interval dimensions.
+See examples below on how to deploy different solutions.
+</p>
+<p>The function built by <code>nint_integrateNCube_integrate</code> calls <code>integrate</code> (argument) recursively.
+The number of function evaluations therefore increases exponentially with the number of dimensions (<code>(subdivisions * 21) ** D</code> if <code>integrate</code>, the default, is used).
+At the moment it is the default method because no additional package is required.
+However, you most likely want to consider different solutions.
+</p>
+<p>The function built by <code>nint_integrateNCube_cubature</code> is a trivial wrapper for <code>cubature::adaptIntegrate</code>.
+</p>
+<p>The function built by <code>nint_integrateNCube_SparseGrid</code> is an almost trivial wrapper for <code>SparseGrid::createIntegrationGrid</code>.
+It scales the grid to the integration region.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>nint_integrateNCube</code> returns a single numeric.
+</p>
+<p><code>nint_integrateNCube_integrate</code> returns a recursive implementation for <code>nint_integrateNCube</code> based on one dimensional integration.
+</p>
+<p><code>nint_integrateNCube_cubature</code> returns a trivial implementation for <code>nint_integrateNCube</code> indirectly based on <code>cubature::adaptIntegrate</code>.
+</p>
+<p><code>nint_integrateNCube_SparseGrid</code> returns an implementation for <code>nint_integrateNCube</code> indirectly based on <code>SparseGrid::createIntegrationGrid</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>nint_integrate</code>
+</p>
+<p><code>integrateA</code>, <code>integrate</code>
+</p>
+<p><code>adaptIntegrate</code> in package <span class="pkg">cubature</span>
+</p>
+<p><code>createIntegrationGrid</code> in package <span class="pkg">SparseGrid</span>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## integrate with defaults (stats::integrate)
+nint_integrate(sin, nint_space(nint_intvDim(pi/4, 3*pi/4)))
+
+
+dfltNCube = nint_integrateNCube
+
+## prepare for integrateA
+ncube = function(f, lowerLimit, upperLimit, ...) {
+    cat('using integrateA\n')
+    integrateA(f, lowerLimit, upperLimit, ..., subdivisions=2)
+}
+ncube = nint_integrateNCube_integrate(ncube)
+unlockBinding('nint_integrateNCube', environment(nint_integrate))
+assign('nint_integrateNCube', ncube, envir=environment(nint_integrate))
+
+## integrate with integrateA
+nint_integrate(sin, nint_space(nint_intvDim(pi/4, 3*pi/4)))
+
+
+## prepare for cubature
+ncube = function(f, lowerLimit, upperLimit, ...) {
+    cat('using cubature\n')
+    r = cubature::adaptIntegrate(f, lowerLimit, upperLimit, ..., maxEval=1e3)
+    return(r$integral)
+}
+unlockBinding('nint_integrateNCube', environment(nint_integrate))
+assign('nint_integrateNCube', ncube, envir=environment(nint_integrate))
+
+## integrate with cubature
+nint_integrate(sin, nint_space(nint_intvDim(pi/4, 3*pi/4)))
+
+
+## prepare for SparseGrid
+ncube = function(dimension) {
+    cat('using SparseGrid\n')
+    SparseGrid::createIntegrationGrid('GQU', dimension, 7)
+}
+ncube = nint_integrateNCube_SparseGrid(ncube)
+unlockBinding('nint_integrateNCube', environment(nint_integrate))
+assign('nint_integrateNCube', ncube, envir=environment(nint_integrate))
+
+## integrate with SparseGrid
+nint_integrate(sin, nint_space(nint_intvDim(pi/4, 3*pi/4)))
+
+
+assign('nint_integrateNCube', dfltNCube, envir=environment(nint_integrate))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dissever</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Spatial downscaling</h2>
+
+<h3>Description</h3>
+
+<p>Performs spatial downscaling of coarse grid mapping to fine grid mapping using predictive covariates and a model fitted using the caret package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S4 method for signature 'RasterLayer,RasterLayer'
+dissever(coarse, fine, method = "rf",
+  p = 0.5, nmax = NULL, thresh = 0.01, min_iter = 5, max_iter = 20,
+  boot = NULL, level = 0.9, tune_length = 3,
+  tune_grid = .create_tune_grid(model = method, tune_length = tune_length),
+  train_control_init = .default_control_init,
+  train_control_iter = .default_control_iter, verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>coarse</code></td>
+<td>
+<p>object of class <code>"RasterLayer"</code>, the coarse-resolution layer that needs to be downscaled</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fine</code></td>
+<td>
+<p>object of class <code>"RasterStack"</code>, the fine-resolution stack of predictive covariates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>a string specifying which classification or regression model to use (via the caret package). Possible values are found using names(caret::getModelInfo()).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>numeric, proportion of the fine map that is sampled for fitting the dissever model (between 0 and 1, defaults to 0.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmax</code></td>
+<td>
+<p>numeric maximum number of pixels selected for fitting the dissever model. It will override the number of pixels chosen by the <code>p</code> option if that number is over the value passed to <code>nmax</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresh</code></td>
+<td>
+<p>numeric, dissever iterations will proceed until the RMSE of the dissever model reaches this value, or until the maximum number of iterations is met (defaults to 0.01)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_iter</code></td>
+<td>
+<p>numeric, minimum number of iterations (defaults to 5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_iter</code></td>
+<td>
+<p>numeric, maximum number of iterations (defaults to 20)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot</code></td>
+<td>
+<p>numeric, if not NULL (default), the number of bootstrap replicates used to derive the confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>If this is a numeric value, it is used to derive confidence intervals using quantiles. If it is a function, it is used to derive the uncertainty using this function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune_length</code></td>
+<td>
+<p>numeric, the number of parameters to test to find the optimal parametrisation of the caret model (defaults to 3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tune_grid</code></td>
+<td>
+<p>a data frame with possible tuning values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>train_control_init</code></td>
+<td>
+<p>Control parameters for finding the optimal parameters of the caret model (see trainControl)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>train_control_iter</code></td>
+<td>
+<p>Control parameters for fitting the caret model during the iteration phase (see trainControl)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>controls the verbosity of the output (TRUE or FALSE)</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Brendan Malone, Pierre Roudier
+</p>
+
+
+<h3>References</h3>
+
+<p>Malone, B.P, McBratney, A.B., Minasny, B., Wheeler, I., (2011) A general method for downscaling earth resource information. Computers &amp; Geosciences, 41: 119-125. <a href="http://dx.doi.org/10.1016/j.cageo.2011.08.021">http://dx.doi.org/10.1016/j.cageo.2011.08.021</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load the Edgeroi dataset (see ?edgeroi)
+data(edgeroi)
+
+# Plot the Edgeroi dataset (using the raster package)
+library(raster)
+plot(edgeroi$carbon) # coarse resolution layer
+plot(edgeroi$predictors) # fine resolution predictors
+
+# Run dissever using a simple linear model.
+
+# In this instance we are subsampling heavily (p = 0.05) to keep
+# run time short
+res_lm &lt;- dissever(
+  coarse = edgeroi$carbon,
+  fine = edgeroi$predictors,
+  method = "lm",
+  min_iter = 5, max_iter = 10,
+  p = 0.05
+)
+
+# A lot more models are available through caret:
+## Not run: 
+subset(caret::modelLookup(), forReg == TRUE, select = 'model')
+
+## End(Not run)
+
+# Plot dissever results
+plot(res_lm, type = 'map', main = "Dissever using GAM")
+plot(res_lm, type = 'perf', main = "Dissever using GAM")
+
+</code></pre>
+
+
+</div>

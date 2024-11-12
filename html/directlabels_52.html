@@ -1,0 +1,141 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>geom_dl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>geom dl</h2>
+
+<h3>Description</h3>
+
+<p>Geom that will plot direct labels.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">geom_dl(mapping = NULL, 
+    data = NULL, ..., 
+    method = stop("must specify method= argument"), 
+    debug = FALSE, stat = "identity", 
+    position = "identity", 
+    inherit.aes = TRUE)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mapping</code></td>
+<td>
+<p>aes(label=variable_that_will_be_used_as_groups_in_Positioning_Methods).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data.frame to start with for direct label computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>passed to params.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Positioning Method for direct label placement, passed to <code>apply.method</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>Show directlabels debugging output?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+<p>passed to layer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>position</code></td>
+<td>
+<p>passed to layer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inherit.aes</code></td>
+<td>
+<p>inherit aes from global ggplot definition?</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Toby Dylan Hocking</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(require(ggplot2)){
+  vad &lt;- as.data.frame.table(VADeaths)
+  names(vad) &lt;- c("age","demographic","deaths")
+  ## color + legend
+  leg &lt;- ggplot(vad,aes(deaths,age,colour=demographic))+
+    geom_line(aes(group=demographic))+
+    xlim(8,80)
+  print(direct.label(leg,list("last.points",rot=30)))
+  ## this is what direct.label is doing internally:
+  labeled &lt;- leg+
+    geom_dl(aes(label=demographic), method=list("last.points",rot=30))+
+    scale_colour_discrete(guide="none")
+  print(labeled)
+  ## no color, just direct labels!
+  p &lt;- ggplot(vad,aes(deaths,age))+
+    geom_line(aes(group=demographic))+
+    geom_dl(aes(label=demographic),method="top.qp")
+  print(p)
+  ## add color:
+  p.color &lt;- p+aes(colour=demographic)+
+    scale_colour_discrete(guide="none")
+  print(p.color)
+  ## add linetype:
+  p.linetype &lt;- p+aes(linetype=demographic)+
+    scale_linetype(guide="none")
+  print(p.linetype)
+  ## no color, just direct labels
+  if(require(nlme)){
+    bwbase &lt;- ggplot(BodyWeight,aes(Time,weight,label=Rat))+
+      geom_line(aes(group=Rat))+
+      facet_grid(.~Diet)
+    bw &lt;- bwbase+geom_dl(method="last.qp")
+    print(bw)
+    ## add some more direct labels
+    bw2 &lt;- bw+geom_dl(method="first.qp")
+    print(bw2)
+    ## add color
+    colored &lt;- bw2+aes(colour=Rat)+
+      scale_colour_discrete(guide="none")
+    print(colored)
+    ## or just use direct.label if you use color:
+    print(direct.label(bwbase+aes(colour=Rat),dl.combine("first.qp","last.qp")))
+  }
+  ## iris data example
+  giris &lt;- ggplot(iris,aes(Petal.Length,Sepal.Length))+
+    geom_point(aes(shape=Species))
+  giris.labeled &lt;- giris+
+    geom_dl(aes(label=Species),method="smart.grid")+
+    scale_shape_manual(values=c(setosa=1,virginica=6,versicolor=3),
+                       guide="none")
+  ##png("~/R/directlabels/www/scatter-bw-ggplot2.png",h=503,w=503)
+  print(giris.labeled)
+  ##dev.off()
+}
+
+</code></pre>
+
+
+</div>

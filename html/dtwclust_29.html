@@ -1,0 +1,283 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtw_basic</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Basic DTW distance</h2>
+
+<h3>Description</h3>
+
+<p>This is a custom implementation of the DTW algorithm without all the functionality included in
+<code>dtw::dtw()</code>. Because of that, it should be faster, while still supporting the most common
+options.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtw_basic(
+  x,
+  y,
+  window.size = NULL,
+  norm = "L1",
+  step.pattern = dtw::symmetric2,
+  backtrack = FALSE,
+  normalize = FALSE,
+  sqrt.dist = TRUE,
+  ...,
+  error.check = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>Time series. Multivariate series must have time spanning the rows and variables
+spanning the columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window.size</code></td>
+<td>
+<p>Size for slanted band window. <code>NULL</code> means no constraint.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm</code></td>
+<td>
+<p>Norm for the LCM calculation, "L1" for Manhattan or "L2" for (squared) Euclidean. See
+notes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step.pattern</code></td>
+<td>
+<p>Step pattern for DTW. Only <code>symmetric1</code> or <code>symmetric2</code> supported here. Note
+that these are <em>not</em> characters. See dtw::stepPattern.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>backtrack</code></td>
+<td>
+<p>Also compute the warping path between series? See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p>Should the distance be normalized? Only supported for <code>symmetric2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sqrt.dist</code></td>
+<td>
+<p>Only relevant for <code>norm = "L2"</code>, see notes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Currently ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>backtrack</code> is <code>TRUE</code>, the mapping of indices between series is returned in a list.
+</p>
+<p>The windowing constraint uses a centered window.
+The calculations expect a value in <code>window.size</code> that represents the distance between the point considered and one of the edges of the window.
+Therefore, if, for example, <code>window.size = 10</code>, the warping for an observation <code class="reqn">x_i</code> considers the points between <code class="reqn">x_{i-10}</code> and <code class="reqn">x_{i+10}</code>,
+resulting in <code>10(2) + 1 = 21</code> observations falling within the window.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The DTW distance. For <code>backtrack</code> <code>=</code> <code>TRUE</code>, a list with:
+</p>
+
+<ul>
+<li> <p><code>distance</code>: The DTW distance.
+</p>
+</li>
+<li> <p><code>index1</code>: <code>x</code> indices for the matched elements in the warping path.
+</p>
+</li>
+<li> <p><code>index2</code>: <code>y</code> indices for the matched elements in the warping path.
+</p>
+</li>
+</ul>
+<h3>Proxy version</h3>
+
+<p>The version registered with <code>proxy::dist()</code> is custom (<code>loop = FALSE</code> in proxy::pr_DB).
+The custom function handles multi-threaded parallelization directly with RcppParallel.
+It uses all available threads by default (see <code>RcppParallel::defaultNumThreads()</code>),
+but this can be changed by the user with <code>RcppParallel::setThreadOptions()</code>.
+</p>
+<p>An exception to the above is when it is called within a <code>foreach</code> parallel loop <strong>made by dtwclust</strong>.
+If the parallel workers do not have the number of threads explicitly specified,
+this function will default to 1 thread per worker.
+See the parallelization vignette for more information - <code>browseVignettes("dtwclust")</code>
+</p>
+<p>It also includes symmetric optimizations to calculate only half a distance matrix when appropriate—only one list of series should be provided in <code>x</code>.
+Starting with version 6.0.0, this optimization means that the function returns an array with the lower triangular values of the distance matrix,
+similar to what <code>stats::dist()</code> does;
+see DistmatLowerTriangular for a helper to access elements as it if were a normal matrix.
+If you want to avoid this optimization, call proxy::dist by giving the same list of series in both <code>x</code> and <code>y</code>.
+</p>
+<p>In order for symmetry to apply here, the following must be true: no window constraint is used
+(<code>window.size</code> is <code>NULL</code>) or, if one is used, all series have the same length.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The elements of the local cost matrix are calculated by using either Manhattan or squared
+Euclidean distance. This is determined by the <code>norm</code> parameter. When the squared Euclidean
+version is used, the square root of the resulting DTW distance is calculated at the end (as
+defined in Ratanamahatana and Keogh 2004; Lemire 2009; see vignette references). This can be
+avoided by passing <code>FALSE</code> in <code>sqrt.dist</code>.
+</p>
+<p>The DTW algorithm (and the functions that depend on it) might return different values in 32 bit
+installations compared to 64 bit ones.
+</p>
+<p>An infinite distance value indicates that the constraints could not be fulfilled, probably due to
+a too small <code>window.size</code> or a very large length difference between the series.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# ====================================================================================
+# Understanding multivariate DTW
+# ====================================================================================
+
+# The variables for each multivariate time series are:
+# tip force, x velocity, and y velocity
+A1 &lt;- CharTrajMV[[1L]] # A character
+B1 &lt;- CharTrajMV[[6L]] # B character
+
+# Let's extract univariate time series
+A1_TipForce &lt;- A1[,1L] # first variable (column)
+A1_VelX &lt;- A1[,2L] # second variable (column)
+A1_VelY &lt;- A1[,3L] # third variable (column)
+B1_TipForce &lt;- B1[,1L] # first variable (column)
+B1_VelX &lt;- B1[,2L] # second variable (column)
+B1_VelY &lt;- B1[,3L] # third variable (column)
+
+# Looking at each variable independently:
+
+# Just force
+dtw_basic(A1_TipForce, B1_TipForce, norm = "L1", step.pattern = symmetric1)
+# Corresponding LCM
+proxy::dist(A1_TipForce, B1_TipForce, method = "L1")
+
+# Just x velocity
+dtw_basic(A1_VelX, B1_VelX, norm = "L1", step.pattern = symmetric1)
+# Corresponding LCM
+proxy::dist(A1_VelX, B1_VelX, method = "L1")
+
+# Just y velocity
+dtw_basic(A1_VelY, B1_VelY, norm = "L1", step.pattern = symmetric1)
+# Corresponding LCM
+proxy::dist(A1_VelY, B1_VelY, method = "L1")
+
+# NOTES:
+# In the previous examples there was one LCM for each *pair* of series.
+# Additionally, each LCM has dimensions length(A1_*) x length(B1_*)
+
+# proxy::dist won't return the LCM for multivariate series,
+# but we can do it manually:
+mv_lcm &lt;- function(mvts1, mvts2) {
+    # Notice how the number of variables (columns) doesn't come into play here
+    num_obs1 &lt;- nrow(mvts1)
+    num_obs2 &lt;- nrow(mvts2)
+
+    lcm &lt;- matrix(0, nrow = num_obs1, ncol = num_obs2)
+
+    for (i in 1L:num_obs1) {
+        for (j in 1L:num_obs2) {
+            # L1 norm for ALL variables (columns).
+            # Consideration: mvts1 and mvts2 MUST have the same number of variables
+            lcm[i, j] &lt;- sum(abs(mvts1[i,] - mvts2[j,]))
+        }
+    }
+
+    # return
+    lcm
+}
+
+# Let's say we start with only x velocity and y velocity for each character
+mvts1 &lt;- cbind(A1_VelX, A1_VelY)
+mvts2 &lt;- cbind(B1_VelX, B1_VelY)
+
+# DTW distance
+dtw_d &lt;- dtw_basic(mvts1, mvts2, norm = "L1", step.pattern = symmetric1)
+# Corresponding LCM
+lcm &lt;- mv_lcm(mvts1, mvts2) # still 178 x 174
+# Sanity check
+all.equal(
+    dtw_d,
+    dtw::dtw(lcm, step.pattern = symmetric1)$distance # supports LCM as input
+)
+
+# Now let's consider all variables for each character
+mvts1 &lt;- cbind(mvts1, A1_TipForce)
+mvts2 &lt;- cbind(mvts2, B1_TipForce)
+
+# Notice how the next code is exactly the same as before,
+# even though we have one extra variable now
+
+# DTW distance
+dtw_d &lt;- dtw_basic(mvts1, mvts2, norm = "L1", step.pattern = symmetric1)
+# Corresponding LCM
+lcm &lt;- mv_lcm(mvts1, mvts2) # still 178 x 174
+# Sanity check
+all.equal(
+    dtw_d,
+    dtw::dtw(lcm, step.pattern = symmetric1)$distance # supports LCM as input
+)
+
+# By putting things in a list,
+# proxy::dist returns the *cross-distance matrix*, not the LCM
+series_list &lt;- list(mvts1, mvts2)
+distmat &lt;- proxy::dist(series_list, method = "dtw_basic",
+                       norm = "L1", step.pattern = symmetric1)
+# So this should be TRUE
+all.equal(distmat[1L, 2L], dtw_d)
+
+# NOTE: distmat is a 2 x 2 matrix, because there are 2 multivariate series.
+# Each *cell* in distmat has a corresponding LCM (not returned by the function).
+# Proof:
+manual_distmat &lt;- matrix(0, nrow = 2L, ncol = 2L)
+for (i in 1L:nrow(manual_distmat)) {
+    for (j in 1L:ncol(manual_distmat)) {
+        lcm_cell &lt;- mv_lcm(series_list[[i]], series_list[[j]]) # LCM for this pair
+        manual_distmat[i, j] &lt;- dtw::dtw(lcm_cell, step.pattern = symmetric1)$distance
+    }
+}
+# TRUE
+all.equal(
+    as.matrix(distmat),
+    manual_distmat
+)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

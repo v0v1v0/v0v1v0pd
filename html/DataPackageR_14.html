@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>package_build</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pre-process, document and build a data package</h2>
+
+<h3>Description</h3>
+
+<p>Combines the preprocessing, documentation, and build steps into one.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">package_build(
+  packageName = NULL,
+  vignettes = FALSE,
+  log = INFO,
+  deps = TRUE,
+  install = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>packageName</code></td>
+<td>
+<p><code>character</code> path to package source directory. Defaults to the current path when NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vignettes</code></td>
+<td>
+<p><code>logical</code> specify whether to build vignettes. Default FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>log level <code>INFO,WARN,DEBUG,FATAL</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deps</code></td>
+<td>
+<p><code>logical</code> should we pass data objects into subsequent scripts? Default TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>install</code></td>
+<td>
+<p><code>logical</code> automatically install and load the package after building. Default FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments passed to <code>install.packages</code> when <code>install=TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that if <code>package_build</code> returns an error when rendering an <code>.Rmd</code>
+internally, but that same <code>.Rmd</code> can be run successfully manually using <code>rmarkdown::render</code>,
+then the following code facilitates debugging. Set <code>options(error = function(){ sink(); recover()})</code>
+before running <code>package_build</code> . This will enable examination of the active function calls at the time of the error,
+with output printed to the console rather than <code>knitr</code>'s default sink.
+After debugging, evaluate <code>options(error = NULL)</code> to revert to default error handling.
+See section "22.5.3 RMarkdown" at <a href="https://adv-r.hadley.nz/debugging.html">https://adv-r.hadley.nz/debugging.html</a> for more details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Character vector. File path of the built package.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(rmarkdown::pandoc_available()){
+f &lt;- tempdir()
+f &lt;- file.path(f,"foo.Rmd")
+con &lt;- file(f)
+writeLines("```{r}\n tbl = data.frame(1:10) \n```\n",con=con)
+close(con)
+pname &lt;- basename(tempfile())
+datapackage_skeleton(name=pname,
+   path=tempdir(),
+   force = TRUE,
+   r_object_names = "tbl",
+   code_files = f)
+
+package_build(file.path(tempdir(),pname), install = FALSE)
+}
+</code></pre>
+
+
+</div>

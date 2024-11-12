@@ -1,0 +1,322 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DI_data_manipulation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Data manipulation function
+</h2>
+
+<h3>Description</h3>
+
+
+<p>This function can be used to compute additional variables for the various types of interactions among pairs of species proportions. These variables are defined following Kirwan et al 2007 and 2009, and Connolly et al 2013. 
+</p>
+<p>The variables are denoted:  
+</p>
+<p><code>AV</code> and <code>E</code>: the average pairwise interaction variable (AV) and a scaled version of it (E), each a single variable. The variable AV is the sum of products of the  proportions of each pair of species in the mixture. The variable E is a scaled version of AV that ranges between 0 (for a monoculture community) to 1 for the equi-proportional mixture of all species in the pool.  
+</p>
+<p><code>FG</code>: the functional group interaction variables. There is a variable for (within) each functional group and one for (between) each pair of functional groups, i.e., if there are two functional groups, there will be three functional group interaction variables, while if there are three functional groups, there will be six functional group interaction variables.  
+</p>
+<p><code>ADD</code>: the additive species interaction variables, one for each species. 
+</p>
+<p><code>FULL</code>: all individual pairwise interactions. There will be <code class="reqn">s*(s-1)/2</code> new variables created, where <em>s</em> is the number of species in the pool.
+</p>
+<p>By default, the interaction variables described above are created with <code>theta = 1</code>, but a different value of theta can also be specified (Connolly et al 2013). 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DI_data(prop, FG, data, theta = 1, what = c("E","AV","FG","ADD","FULL"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>prop</code></td>
+<td>
+ 
+
+<p>A vector of column names identifying the species proportions in the dataset. For example, if the species proportions columns are labelled p1 to p4, then <code>prop = c("p1","p2","p3","p4")</code>. The column numbers in which the proportions are stored can also be referred to, for example,  <code>prop = 4:7</code> for the <code>Switzerland</code> data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FG</code></td>
+<td>
+
+
+<p>If species are classified by <em>g</em> functional groups, this argument takes a text list (of length <em>s</em>) of the functional group to which each species belongs. For example, for four grassland species with two grasses and two legumes, it could be <code>FG = c("G","G","L","L")</code>, where G stands for grass and L stands for legume. This argument is required when <code>"FG"</code> is included in the <code>what</code> argument. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+
+<p>Specify the dataset, for example, <code>data = Switzerland</code>. The dataset name should not appear in quotes. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+
+
+<p>Interaction variables will be computed with the theta power, equal to the value specified, on all <code class="reqn">pi*pj</code> components of each interaction variable, with default value one. For example, with three species <code>AV = p1*p2 + p1*p3 + p2*p3</code> and if computed with <code>theta</code> = 0.5, this becomes <code>(p1*p2)^0.5 + (p1*p3)^0.5 + (p2*p3)^0.5</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>what</code></td>
+<td>
+
+
+<p>The interactions to be computed. By default each set of variables will be computed: AV, E, FG (if <code>FG</code> argument specified), ADD and FULL. Individual sets can be selected. For example, <code>what = c("FULL")</code> or <code>what = c("AV", "FULL")</code>.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+ 
+
+<p><strong>What are Diversity-Interactions models?</strong> 
+</p>
+<p>Diversity-Interactions (DI) models (Kirwan et al 2009) are a set of tools for analysing and interpreting data from experiments that explore the effects of species diversity on community-level responses. We recommend that users of the <code>DImodels</code> package read the short introduction to DI models (available at: <code>DImodels</code>). Further information on DI models is available in Kirwan et al 2009 and Connolly et al 2013.
+</p>
+<p><strong>Checks on data prior to using the <code>DI_data</code> function.</strong> 
+</p>
+<p>Before using the <code>DI_data</code> function, check that the species proportions in each row of your dataset sum to one. See the 'Examples' section for code to do this. An error message will be generated if the proportions don't sum to one. 
+</p>
+<p><strong>When is the <code>DI_data</code> function needed?</strong> 
+</p>
+<p>It is not required to use the <code>DI_data</code> function if using the <code>autoDI</code> function, or the <code>DImodel</code> option in the <code>DI</code> function, as they will automatically create the species interaction variables needed. If using species interaction variables in the <code>extra_formula</code> or <code>custom_formula</code> options in <code>DI</code>, then it is required to have the variables already in the dataset and <code>DI_data</code> can do that.  
+</p>
+<p><strong>Short worked example to illustrate how the <code>DI_data</code> function works</strong> 
+</p>
+<p>The code to implement this example is provided in the 'Examples' section. 
+</p>
+<p>Assume four species with initial proportions in two communities: (0.1, 0.2, 0.3, 0.4) and (0.25, 0.25, 0.25, 0.25), with <code>FG = c("G","G","L","L")</code>. 
+</p>
+<p>For community 1: (0.1,0.2,0.3,0.4), assuming theta = 1, the data preparation functions will compute the following additional variables (details in Kirwan et al 2007 and 2009): 
+</p>
+<p>AV = 0.1*0.2 + 0.1*0.3 + 0.1*0.4 + 0.2*0.3 + 0.2*0.4 + 0.3*0.4 = 0.35
+</p>
+<p>E = <em>(2s/(s-1))</em>*AV = 0.9333
+</p>
+<p>p1_add = 0.1 * (1 - 0.1) = 0.09
+</p>
+<p>p2_add = 0.2 * (1 - 0.2) = 0.16
+</p>
+<p>p3_add = 0.3 * (1 - 0.3) = 0.21
+</p>
+<p>p4_add = 0.4 * (1 - 0.4) = 0.24
+</p>
+<p>bfg_G_L = 0.1*0.3 + 0.1*0.4 + 0.2*0.3 + 0.2*0.4 = 0.21
+</p>
+<p>wfg_G = 0.1*0.2 = 0.02
+</p>
+<p>wfg_L = 0.3*0.4 = 0.12
+</p>
+<p>For community 1: (0.1,0.2,0.3,0.4), assuming theta = 0.5, the data preparation functions will compute the follow additional variables (details in Connolly et al 2013): 
+</p>
+<p>AV = (0.1*0.2)^0.5 + (0.1*0.3)^0.5 + (0.1*0.4)^0.5 + (0.2*0.3)^0.5 + (0.2*0.4)^0.5 + (0.3*0.4)^0.5 = 1.3888
+</p>
+<p>E =<em>(2s/(s-1))</em>*AV = 3.7035
+</p>
+<p>p1_add = 0.1^0.5 * (0.2^0.5 + 0.3^0.5 + 0.4^0.5) = 0.5146
+</p>
+<p>p2_add = 0.2^0.5 * (0.1^0.5 + 0.3^0.5 + 0.4^0.5) = 0.6692
+</p>
+<p>p3_add = 0.3^0.5 * (0.1^0.5 + 0.2^0.5 + 0.4^0.5) = 0.7646
+</p>
+<p>p4_add = 0.4^0.5 * (0.1^0.5 + 0.2^0.5 + 0.3^0.5) = 0.8293
+</p>
+<p>bfg_G_L = (0.1*0.3)^0.5 + (0.1*0.4)^0.5 + (0.2*0.3)^0.5 + (0.2*0.4)^0.5 = 0.9010
+</p>
+<p>wfg_G = (0.1*0.2)^0.5 = 0.1414
+</p>
+<p>wfg_L = (0.3*0.4)^0.5 = 0.3464  
+</p>
+<p>When using the <code>DI_data</code> function to create interactions for theta values for a value different from 1, it is recommended to rename the new interaction variables to include <code>_theta</code>. 
+</p>
+<p>The data manipulation values for community 2 (0.25, 0.25, 0.25,0.25) can be seen when the 'Examples' section code is run.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>DI_data</code> returns a named list with one or more the following components (depending on the specification of the <code>what</code> argument:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>a numeric vector containing the evenness interaction variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AV</code></td>
+<td>
+<p>a numeric vector containing the average pairwise interaction variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FG</code></td>
+<td>
+<p>a matrix containing the functional group-related interaction variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ADD</code></td>
+<td>
+<p>a matrix containing the additive species contributions interaction variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FULL</code></td>
+<td>
+<p>a matrix containing all pairwise interactions</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Rafael A. Moral, John Connolly and Caroline Brophy
+</p>
+
+
+<h3>References</h3>
+
+<p>Connolly J, T Bell, T Bolger, C Brophy, T Carnus, JA Finn, L Kirwan, F Isbell, J Levine, A Lüscher, V Picasso, C Roscher, MT Sebastia, M Suter and A Weigelt (2013) An improved model to predict the effects of changing biodiversity levels on ecosystem function. Journal of Ecology, 101, 344-355. 
+</p>
+<p>Kirwan L, A Lüscher, MT Sebastia, JA Finn, RP Collins, C Porqueddu, A Helgadottir, OH Baadshaug, C Brophy, C Coran, S Dalmannsdottir, I Delgado, A Elgersma, M Fothergill, BE Frankow-Lindberg, P Golinski, P Grieu, AM Gustavsson, M Höglind, O Huguenin-Elie, C Iliadis, M Jørgensen, Z Kadziuliene, T Karyotis, T Lunnan, M Malengier, S Maltoni, V Meyer, D Nyfeler, P Nykanen-Kurki, J Parente, HJ Smit, U Thumm, &amp; J Connolly (2007) Evenness drives consistent diversity effects in intensive grassland systems across 28 European sites. Journal of Ecology, 95, 530-539.  
+</p>
+<p>Kirwan L, J Connolly, JA Finn, C Brophy, A Lüscher, D Nyfeler and MT Sebastia (2009) Diversity-interaction modelling - estimating contributions of species identities and interactions to ecosystem function. Ecology, 90, 2032-2038. 
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DI</code>
+<code>autoDI</code>
+</p>
+<p>Other examples using the <code>DI_data</code> function: 
+The <code>sim2</code> dataset examples. 
+The <code>sim3</code> dataset examples. 
+The <code>sim4</code> dataset examples. 
+The <code>sim5</code> dataset examples. 
+The <code>Switzerland</code> dataset examples. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">################################
+  
+#### Data manipulation for the Switzerland dataset
+  
+## Load the Switzerland data
+  data(Switzerland)
+  
+## Check that the proportions sum to 1 (required for DI models)
+## p1 to p4 are in the 4th to 7th columns in Switzerland
+  Switzerlandsums &lt;- rowSums(Switzerland[4:7])
+  summary(Switzerlandsums)
+  
+  
+## Create FG interaction variables and incorporate them into a new data frame Switzerland2.
+## Switzerland2 will contain the new variables:  bfg_G_L, wfg_G and wfg_L.
+  FG_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), FG = c("G","G","L","L"), 
+                       data = Switzerland, what = "FG")
+  Switzerland2 &lt;- data.frame(Switzerland, FG_matrix)
+  
+  
+## Create FG interaction variables and incorporate them into a new data frame Switzerland3.
+## Use theta = 0.5.
+  FG_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), FG = c("G","G","L","L"), 
+                       data = Switzerland, what = "FG", theta = 0.5)
+  Switzerland3 &lt;- data.frame(Switzerland, FG_matrix)
+## Add "_theta" to the new interaction variables to differentiate from when theta = 1
+  names(Switzerland3)[9:11] &lt;- paste0(names(Switzerland3)[9:11], "_theta") 
+
+
+#### All interactions can be added to a new dataset all together:
+
+## Create all interactions and add them to a new data frame called Switzerland4
+  newlist &lt;- DI_data(prop = c("p1","p2","p3","p4"), FG = c("G","G","L","L"), data = Switzerland, 
+                     what = c("E", "AV", "FG", "ADD", "FULL"))
+  Switzerland4 &lt;- data.frame(Switzerland, "E" = newlist$E, "AV" = newlist$AV, newlist$FG, 
+                             newlist$ADD, newlist$FULL)
+
+  
+#### Or the various interactions can also be added to a new dataset individually:
+  
+## Create the average pairwise interaction and evenness variables
+##  and store them in a new data frame called Switzerland5.
+## Switzerland5 will contain the new variables: AV, E
+  E_variable &lt;- DI_data(prop = c("p1","p2","p3","p4"), data = Switzerland, what = "E")
+  AV_variable &lt;- DI_data(prop = c("p1","p2","p3","p4"), data = Switzerland, what = "AV")
+  Switzerland5 &lt;- data.frame(Switzerland, "AV" = AV_variable, "E" = E_variable)
+  
+## Create the functional group variables and add them to Switzerland5.
+## In the FG names vector: G stands for grass, L stands for legume.
+## Switzerland5 will contain: bfg_G_L, wfg_G and wfg_L
+  FG_matrix &lt;- DI_data(prop = 4:7, FG = c("G","G","L","L"), data = Switzerland, what = "FG")
+  Switzerland5 &lt;- data.frame(Switzerland5, FG_matrix)
+  
+## Create the additive species variables and add them to Switzerland5.
+## Switzerland5 will contain the new variables: p1_add, p2_add, p3_add and p4_add.
+  ADD_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), data = Switzerland, what = "ADD")
+  Switzerland5 &lt;- data.frame(Switzerland5, ADD_matrix)
+  
+## Create all pairwise interaction variables and add them to Switzerland5.
+## Switzerland5 will contain the new variables: p1.p2, p1.p3, p1.p4, p2.p3, p2.p4, p3.p4.
+  FULL_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), data = Switzerland, what = "FULL")
+  Switzerland5 &lt;- data.frame(Switzerland5, FULL_matrix)
+  
+################################
+  
+
+################################ 
+  
+#### Short worked example (as illustrated the Details section)
+  
+## Create a dataframe
+  p1 &lt;- c(0.1, 0.25)
+  p2 &lt;- c(0.2, 0.25)
+  p3 &lt;- c(0.3, 0.25)
+  p4 &lt;- c(0.4, 0.25)
+  minidataset1 &lt;- data.frame(p1,p2,p3,p4)
+  
+## Check the rows sum to 1
+  rowSums(minidataset1[1:4]) 
+  
+## Create the FG variables, assume two functional groups and theta = 1
+  FG_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), FG = c("G","G","L","L"),
+                       data = minidataset1, what = "FG")
+  minidataset2 &lt;- data.frame(minidataset1, FG_matrix)
+  
+## Create the FG variables, assume two functional groups and theta = 0.5
+  FG_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), FG = c("G","G","L","L"), 
+                       data = minidataset1, what = "FG", theta = 0.5)
+  minidataset3 &lt;- data.frame(minidataset1, FG_matrix)
+## Create the ADD variables, assume theta = 0.5
+  ADD_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), 
+                        data = minidataset1, what = "ADD", theta = 0.5)
+  minidataset3 &lt;- data.frame(minidataset3, ADD_matrix)
+## Add "_theta" to the new interaction variables to differentiate from when theta = 1
+  names(minidataset3)[5:11] &lt;- paste0(names(minidataset3)[5:11], "_theta")   
+
+  
+################################
+</code></pre>
+
+
+</div>

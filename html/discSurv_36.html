@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predErrCompRisks</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction Error Curves for Competing Risks</h2>
+
+<h3>Description</h3>
+
+<p>Estimates prediction error curves for discrete survival competing risks models
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predErrCompRisks(
+  testPreds,
+  testDataShort,
+  trainDataShort,
+  timeColumn,
+  eventColumns,
+  tmax = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>testPreds</code></td>
+<td>
+<p>Predictions on the test data with model fitted on training data ("numeric matrix").
+Predictions are stored in the rows and the number of columns equal the number of events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testDataShort</code></td>
+<td>
+<p>Test data in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainDataShort</code></td>
+<td>
+<p>Train data in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character giving the column name of the observed times("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumns</code></td>
+<td>
+<p>Character vector giving the column names of the event indicators (excluding censoring column) ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tmax</code></td>
+<td>
+<p>Gives the maximum time interval for which prediction errors are
+calculated ("integer vector"). It must not be higher than the maximum observed time in the
+training data.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Calculated prediction errors for each competing event. Array with one matrix per competing event, 
+with the predictions in the rows and the time points in the columns.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Moritz Berger <a href="mailto:moritz.berger@imbie.uni-bonn.de">moritz.berger@imbie.uni-bonn.de</a> <br><a href="https://www.imbie.uni-bonn.de/personen/dr-moritz-berger/">https://www.imbie.uni-bonn.de/personen/dr-moritz-berger/</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Heyard R, Timsit J, Held L, COMBACTE-MAGNET,consortium (2019).
+“Validation of discrete time-to-event prediction models in the presence of competing risks.”
+<em>Biometrical Journal</em>, <b>62</b>, 643-657.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>intPredErrCompRisks</code>, <code>predErrCurve</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+###########################
+# Example unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Select subsample
+selectInd1 &lt;- 1:200
+selectInd2 &lt;- 201:400
+trainSet &lt;- UnempDur[which(UnempDur$spell %in% (1:10))[selectInd1], ]
+testSet &lt;- UnempDur[which(UnempDur$spell %in% (1:10))[selectInd2], ]
+
+# Convert to long format 
+trainSet_long &lt;- dataLongCompRisks(dataShort=trainSet, timeColumn="spell", 
+eventColumns=c("censor1", "censor4"), timeAsFactor=TRUE)
+tmax          &lt;- max(trainSet$spell)
+testSet_long &lt;- dataLongCompRisks(dataShort=testSet, timeColumn="spell", 
+eventColumns=c("censor1", "censor4"), aggTimeFormat = TRUE, lastTheoInt=tmax,
+timeAsFactor=TRUE)
+
+# Estimate continuation ratio model with logit link
+vglmFit &lt;- VGAM::vglm(formula=cbind(e0, e1, e2) ~ timeInt + age + logwage, 
+data=trainSet_long, family=VGAM::multinomial(refLevel="e0"))
+
+# Calculate predicted hazards
+predHazards &lt;- VGAM::predictvglm(vglmFit, newdata=testSet_long, type="response")
+
+# Compute prediction error 
+predErrCompRisks(testPreds=predHazards[,-1], testSet, trainSet, "spell", 
+c("censor1", "censor4"), tmax)
+
+
+</code></pre>
+
+
+</div>

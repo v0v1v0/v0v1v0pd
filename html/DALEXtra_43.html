@@ -1,0 +1,129 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>training_test_comparison</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare performance of model between training and test set</h2>
+
+<h3>Description</h3>
+
+<p>Function <code>training_test_comparison</code> calculates performance of the provided model based on specified measure function.
+Response of the model is calculated based on test data, extracted from the explainer and training data, provided by the user.
+Output can be easily shown with <code>print</code> or <code>plot</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">training_test_comparison(
+  champion,
+  challengers,
+  training_data,
+  training_y,
+  measure_function = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>champion</code></td>
+<td>
+<p>- explainer of champion model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>challengers</code></td>
+<td>
+<p>- explainer of challenger model or list of explainers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>training_data</code></td>
+<td>
+<p>- data without target column that will be passed to predict function and then to measure function. Keep in mind that
+they have to differ from data passed to an explainer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>training_y</code></td>
+<td>
+<p>- target column for <code>training_data</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measure_function</code></td>
+<td>
+<p>- measure function that calculates performance of model based on true observation and prediction.
+Order of parameters is important and should be (y, y_hat). By default it is RMSE.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class <code>training_test_comparison</code>.
+</p>
+<p>It is a named list containing:
+</p>
+
+<ul>
+<li> <p><code>data</code> data.frame with following columns
+</p>
+
+<ul>
+<li> <p><code>measure_test</code> performance on test set
+</p>
+</li>
+<li> <p><code>measure_train</code> performance on training set
+</p>
+</li>
+<li> <p><code>label</code> label of explainer
+</p>
+</li>
+<li> <p><code>type</code> flag that indicates if explainer was passed as champion or as challenger.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>models_info</code> data.frame containing information about models used in analysis
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library("mlr")
+library("DALEXtra")
+task &lt;- mlr::makeRegrTask(
+ id = "R",
+  data = apartments,
+   target = "m2.price"
+)
+ learner_lm &lt;- mlr::makeLearner(
+ "regr.lm"
+)
+model_lm &lt;- mlr::train(learner_lm, task)
+explainer_lm &lt;- explain_mlr(model_lm, apartmentsTest, apartmentsTest$m2.price, label = "LM")
+
+learner_rf &lt;- mlr::makeLearner(
+"regr.ranger"
+)
+model_rf &lt;- mlr::train(learner_rf, task)
+explainer_rf &lt;- explain_mlr(model_rf, apartmentsTest, apartmentsTest$m2.price, label = "RF")
+
+learner_gbm &lt;- mlr::makeLearner(
+"regr.gbm"
+)
+model_gbm &lt;- mlr::train(learner_gbm, task)
+explainer_gbm &lt;- explain_mlr(model_gbm, apartmentsTest, apartmentsTest$m2.price, label = "GBM")
+
+data &lt;- training_test_comparison(explainer_lm, list(explainer_gbm, explainer_rf),
+                                 training_data = apartments,
+                                 training_y = apartments$m2.price)
+plot(data)
+</code></pre>
+
+
+</div>

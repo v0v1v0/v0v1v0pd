@@ -1,0 +1,232 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fast.Discrete</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fast Application of Discrete Multiple Testing Procedures</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated"><img src="../help/figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a>
+</p>
+<p>Apply the [HSU], [HSD], [AHSU] or [AHSD] procedure,
+without computing the critical constants, to a data set of 2x2 contingency
+tables which may have to be pre-processed in order to have the correct
+structure for computing p-values using Fisher's exact test.
+</p>
+<p><strong>Note</strong>: This function is deprecated and will be removed in a future
+version. Please use <code>direct.discrete.BH()</code> with
+<code>test.fun = DiscreteTests::fisher.test.pv</code> and (optional)
+<code>preprocess.fun = DiscreteDatasets::reconstruct_two</code> or
+<code>preprocess.fun = DiscreteDatasets::reconstruct_four</code> instead. Alternatively,
+use a pipeline, e.g.<br><code style="white-space: pre;">⁠data |&gt;⁠</code><br><code style="white-space: pre;">⁠  DiscreteDatasets::reconstruct_*(&lt;args&gt;) |&gt;⁠</code><br><code style="white-space: pre;">⁠  DiscreteTests::*.test.pv(&lt;args&gt;) |&gt;⁠</code><br><code style="white-space: pre;">⁠  discrete.BH(&lt;args&gt;)⁠</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fast.Discrete(
+  counts,
+  alternative = "greater",
+  input = "noassoc",
+  alpha = 0.05,
+  direction = "su",
+  adaptive = FALSE,
+  select.threshold = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>counts</code></td>
+<td>
+<p>a data frame of two or four columns and any number of
+lines; each line representing a 2x2 contingency table to
+test. The number of columns and what they must contain
+depend on the value of the <code>input</code> argument (see Details
+section of <code>fisher.pvalues.support()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>same argument as in <code>stats::fisher.test()</code>. The three
+possible values are <code>"greater"</code> (default), <code>"two.sided"</code>
+or <code>"less"</code> (may be abbreviated).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input</code></td>
+<td>
+<p>the format of the input data frame (see Details section
+of <code>fisher.pvalues.support()</code>. The three possible
+values are <code>"noassoc"</code> (default), <code>"marginal"</code> or
+<code>"HG2011"</code> (may be abbreviated).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>single real number strictly between 0 and 1 indicating the target FDR level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direction</code></td>
+<td>
+<p>single character string specifying whether to perform a step-up (<code>"su"</code>; the default) or step-down procedure (<code>"sd"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adaptive</code></td>
+<td>
+<p>single boolean specifying whether to conduct an adaptive procedure or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select.threshold</code></td>
+<td>
+<p>single real number strictly between 0 and 1 indicating the largest raw p-value to be considered, i.e. only p-values below this threshold are considered and the procedures are adjusted in order to take this selection effect into account; if <code>threshold = 1</code> (the default), all raw p-values are selected.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>DiscreteFDR</code> S3 class object whose elements are:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Rejected</code></td>
+<td>
+<p>rejected raw p-values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Indices</code></td>
+<td>
+<p>indices of rejected hypotheses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Num.rejected</code></td>
+<td>
+<p>number of rejections.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Adjusted</code></td>
+<td>
+<p>adjusted p-values (only for step-down direction).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Critical.constants</code></td>
+<td>
+<p>critical values (only exists if computations where performed with <code>ret.crit.consts = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Select$Threshold</code></td>
+<td>
+<p>p-value selection <code>threshold</code> (only exists if <code>threshold &lt; 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Select$Effective.Thresholds</code></td>
+<td>
+<p>results of each p-value CDF evaluated at the selection threshold (only exists if <code>threshold &lt; 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Select$Pvalues</code></td>
+<td>
+<p>selected p-values that are <code class="reqn">\leq</code> selection <code>threshold</code> (only exists if <code>threshold &lt; 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Select$Indices</code></td>
+<td>
+<p>indices of p-values <code class="reqn">\leq</code> selection <code>threshold</code> (only exists if <code>threshold &lt; 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Select$Scaled</code></td>
+<td>
+<p>scaled selected p-values (only exists if <code>threshold &lt; 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Select$Number</code></td>
+<td>
+<p>number of selected p-values <code class="reqn">\leq</code> <code>threshold</code> (only exists if <code>threshold &lt; 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data$Method</code></td>
+<td>
+<p>character string describing the used algorithm, e.g. 'Discrete Benjamini-Hochberg procedure (step-up)'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data$raw.pvalues</code></td>
+<td>
+<p>observed p-values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data$pCDFlist</code></td>
+<td>
+<p>list of the p-value supports.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data$FDR.level</code></td>
+<td>
+<p>FDR level <code>alpha</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data$Data.name</code></td>
+<td>
+<p>the respective variable names of the input data.</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>fisher.pvalues.support()</code>, <code>discrete.BH()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X1 &lt;- c(4, 2, 2, 14, 6, 9, 4, 0, 1)
+X2 &lt;- c(0, 0, 1, 3, 2, 1, 2, 2, 2)
+N1 &lt;- rep(148, 9)
+N2 &lt;- rep(132, 9)
+Y1 &lt;- N1 - X1
+Y2 &lt;- N2 - X2
+df &lt;- data.frame(X1, Y1, X2, Y2)
+df
+
+DBH.su &lt;- fast.Discrete(df, input = "noassoc", direction = "su")
+summary(DBH.su)
+
+DBH.sd &lt;- fast.Discrete(df, input = "noassoc", direction = "sd")
+DBH.sd$Adjusted
+summary(DBH.sd)
+
+ADBH.su &lt;- fast.Discrete(df, input = "noassoc", direction = "su", adaptive = TRUE)
+summary(ADBH.su)
+
+ADBH.sd &lt;- fast.Discrete(df, input = "noassoc", direction = "sd", adaptive = TRUE)
+ADBH.sd$Adjusted
+summary(ADBH.sd)
+
+</code></pre>
+
+
+</div>

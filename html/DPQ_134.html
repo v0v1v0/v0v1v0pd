@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>phyperAllBin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute Hypergeometric Probabilities via Binomial Approximations</h2>
+
+<h3>Description</h3>
+
+<p>Simple utilities for ease of comparison of the different
+<code>phyper</code> approximation in package <span class="pkg">DPQ</span>:
+</p>
+
+<ul>
+<li> <p><code>phyperAllBinM()</code> computes all four Molenaar binomial approximations
+to the hypergeometric cumulative distribution function <code>phyper()</code>.
+</p>
+</li>
+<li> <p><code>phyperAllBin()</code> computes Molenaar's four and additionally the other
+four
+<code>phyperBin.1()</code>, <code>*.2</code>, <code>*.3</code>, and <code>*.4</code>.
+</p>
+</li>
+<li> <p><code>.suppHyper()</code>, <em>supp</em>ort of the Hyperbolic, is a
+simple 1-liner, providing all sensible integer values for the first
+argument <code>q</code> (or also <code>x</code>) of the hyperbolic probability
+functions (<code>dhyper()</code> and <code>phyper()</code>), and their
+approximations (here in <span class="pkg">DPQ</span>).
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">phyperAllBin (m, n, k, q = .suppHyper(m, n, k), lower.tail = TRUE, log.p = FALSE)
+phyperAllBinM(m, n, k, q = .suppHyper(m, n, k), lower.tail = TRUE, log.p = FALSE)
+.suppHyper(m, n, k)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>the number of white balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the number of black balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>the number of balls drawn from the urn, hence must be in <code class="reqn">0,1,\dots, m+n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>vector of quantiles representing the number of white balls
+drawn without replacement from an urn which contains both black and
+white balls.  The default, <code>.suppHyper(m, n, k)</code> provides the full
+(finite) support.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if TRUE (default), probabilities are
+<code class="reqn">P[X \le x]</code>, otherwise, <code class="reqn">P[X &gt; x]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.p</code></td>
+<td>
+<p>logical; if TRUE, probabilities p are given as log(p).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the <code>phyperAllBin*()</code> functions return
+a numeric <code>matrix</code>, with each column a different
+approximation to <code>phyper(m,n,k,q, lower.tail, log.p)</code>.
+</p>
+<p>Note that the columns of <code>phyperAllBinM()</code> are a <em>subset</em> of
+those from <code>phyperAllBin()</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>See those in <code>phyperBinMolenaar</code>.</p>
+
+
+<h3>See Also</h3>
+
+<p><code>phyperBin.1</code> etc, and
+<code>phyperBinMolenaar</code>.
+</p>
+<p><code>phyper</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">.suppHyper # very simple:
+stopifnot(identical(.suppHyper, ignore.environment = TRUE,
+         function (m, n, k) max(0, k-n):min(k, m)))
+
+phBall &lt;- phyperAllBin (5,15, 7)
+phBalM &lt;- phyperAllBinM(5,15, 7)
+stopifnot(identical( ## indeed, ph...AllBinM() gives a *subset* of ph...AllBin():
+            phBall[, colnames(phBalM)] ,
+            phBalM)
+         , .suppHyper(5, 15, 7) == 0:5
+)
+
+round(phBall, 4)
+cbind(q = 0:5, round(-log10(abs(1 - phBall / phyper(0:5, 5,15,7))),  digits=2))
+
+require(sfsmisc)## --&gt;  relErrV() {and eaxis()}: 
+qq &lt;-    .suppHyper(20, 47, 31)
+phA &lt;- phyperAllBin(20, 47, 31)
+rE &lt;- relErrV(target = phyper(qq, 20,47,31), phA)
+signif(cbind(qq, rE), 4)
+## Relative approximation error [ log scaled ] :
+matplot(qq, abs(rE), type="b", log="y", yaxt="n")
+eaxis(2)
+## ---&gt; approximations useful only "on the right", aka the right tail
+</code></pre>
+
+
+</div>

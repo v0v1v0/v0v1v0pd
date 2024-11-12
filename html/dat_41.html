@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mutar</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tools for Data Frames</h2>
+
+<h3>Description</h3>
+
+<p><code>mutar</code> is literally the same function as <code>[.DataFrame</code> and can be
+used as interface to dplyr or data.table. Other functions here listed are a
+convenience to mimic dplyr's syntax in a <code>R CMD check</code> friendly way.
+These functions can also be used with S4 data.frame(s) / data_frame(s) /
+data.table(s). They will always try to preserve the input class.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mutar(x, i, j, ..., by, sby, drop)
+
+filtar(x, i)
+
+sumar(x, ..., by)
+
+withReference(expr)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>(DataFrame | data.frame)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>(logical | numeric | integer | OneSidedFormula | TwoSidedFormula |
+FormulaList) see the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>j</code></td>
+<td>
+<p>(logical | character | TwoSidedFormula | FormulaList | function)
+character beginning with '^' are interpreted as regular expression</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arbitrary number of args
+<br> in <code>[</code> (TwoSidedFormulas)
+<br> in constructor see tibble</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>(character) variables to group by. by will be used to do
+transformations within groups. sby will collapse each group to one row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sby</code></td>
+<td>
+<p>(character) variables to group by. by will be used to do
+transformations within groups. sby will collapse each group to one row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>(ignored) never drops the class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+<p>(expression) any R expression that should be evaluated using data
+tables reference semantics on data transformations.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The real workhorse of this interface is <code>mutar</code>. All other functions
+exist to ease the transition from dplyr.
+</p>
+<p><code>OneSidedFormula</code> is always used for subsetting rows.
+</p>
+<p><code>TwoSidedFormula</code> is used instead of name-value expressions. Instead of
+writing <code>x = 1</code> you simply write <code>x ~ 1</code>.
+</p>
+<p><code>FormulaList</code> can be used to repeat the same operation on different
+columns. See more details in FL.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>extract, DataFrame, FL
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("airquality")
+airquality %&gt;%
+  filtar(~Month &gt; 4) %&gt;%
+  mutar(meanWind ~ mean(Wind), by = "Month") %&gt;%
+  sumar(meanWind ~ mean(Wind), by = "Month") %&gt;%
+  extract("meanWind")
+
+airquality %&gt;%
+  sumar(
+    .n ~ mean(.n) | c("Wind", "Temp"),
+    by = "Month"
+  )
+
+# Enable data.tables reference semantics with:
+withReference({
+  x &lt;- data.table::data.table(x = 1)
+  mutar(x, y ~ 2)
+})
+
+## Not run: 
+# Use dplyr as back-end:
+options(dat.use.dplyr = TRUE)
+x &lt;- data.frame(x = 1)
+mutar(x, y ~ dplyr::n())
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

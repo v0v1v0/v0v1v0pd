@@ -1,0 +1,336 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gl.filter.hwe</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Filters loci that show significant departure from Hardy-Weinberg
+Equilibrium
+@family matched filter</h2>
+
+<h3>Description</h3>
+
+<p>This function filters out loci showing significant departure from H-W
+proportions based on observed frequencies of reference homozygotes,
+heterozygotes and alternate homozygotes.
+Loci are filtered out if they show HWE departure either in any one population 
+(n.pop.threshold =1) or in at least X number of populations 
+(n.pop.threshold &gt; 1).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gl.filter.hwe(
+  x,
+  subset = "each",
+  n.pop.threshold = 1,
+  test.type = "Exact",
+  mult.comp.adj = FALSE,
+  mult.comp.adj.method = "BY",
+  alpha = 0.05,
+  pvalue.type = "midp",
+  cc.val = 0.5,
+  n.min = 5,
+  verbose = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Name of the genlight object containing the SNP data [required].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>Way to group individuals to perform H-W tests. Either a vector
+with population names, 'each', 'all' (see details) [default 'each'].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.pop.threshold</code></td>
+<td>
+<p>The minimum number of populations where the same locus 
+has to be out of H-W proportions to be removed [default 1].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test.type</code></td>
+<td>
+<p>Method for determining statistical significance: 
+'ChiSquare'
+or 'Exact' [default 'Exact'].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mult.comp.adj</code></td>
+<td>
+<p>Whether to adjust p-values for multiple comparisons
+[default FALSE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mult.comp.adj.method</code></td>
+<td>
+<p>Method to adjust p-values for multiple comparisons:
+'holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY', 'fdr'
+(see details) [default 'fdr'].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Level of significance for testing [default 0.05].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalue.type</code></td>
+<td>
+<p>Type of p-value to be used in the Exact method.
+Either 'dost','selome','midp' (see details) [default 'midp'].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cc.val</code></td>
+<td>
+<p>The continuity correction applied to the ChiSquare test
+[default 0.5].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.min</code></td>
+<td>
+<p>Minimum number of individuals per population in which
+perform H-W tests [default 5].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+progress log; 3, progress and results summary; 5, full report
+[default 2, unless specified using gl.set.verbosity].</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Several factors can cause deviations from Hardy-Weinberg
+equilibrium including: mutation, finite population size, selection,
+population structure, age structure, assortative mating, sex linkage,
+nonrandom sampling and genotyping errors. Refer to Waples (2015).
+Note that tests for departure from H-W equilibrium are only valid if there is no population
+substructure (assuming random mating) and have sufficient power only when
+there is sufficient sample size (n individuals &gt; 15).
+Populations can be defined in three ways:
+</p>
+
+<ul>
+<li>
+<p> Merging all populations in the dataset using subset = 'all'.
+</p>
+</li>
+<li>
+<p> Within each population separately using: subset = 'each'.
+</p>
+</li>
+<li>
+<p> Within selected populations using for example: subset = 
+c('pop1','pop2').
+</p>
+</li>
+</ul>
+<p>Two different statistical methods to test for deviations from Hardy Weinberg
+proportions:
+</p>
+
+<ul>
+<li>
+<p> The classical chi-square test (test.type='ChiSquare') based on the
+function <code>HWChisq</code> of the R package HardyWeinberg.
+By default a continuity correction is applied (cc.val=0.5). The
+continuity correction can be turned off (by specifying cc.val=0), for example
+when extreme allele frequencies occur continuity correction can
+lead to excessive Type I error rates.
+</p>
+</li>
+<li>
+<p> The exact test (test.type='Exact') based on the exact calculations
+contained in the function <code>HWExactStats</code> of the R
+package HardyWeinberg as described by Wigginton  et al. (2005). The exact
+test is recommended in most cases.
+Three different methods to estimate p-values (pvalue.type) in the Exact test
+can be used:
+</p>
+
+<ul>
+<li>
+<p> 'dost' p-value is computed as twice the tail area of a one-sided test.
+</p>
+</li>
+<li>
+<p> 'selome' p-value is computed as the sum of the probabilities of all
+samples less or equally likely as the current sample.
+</p>
+</li>
+<li>
+<p> 'midp', p-value is computed as half the probability of the current
+sample + the probabilities of all samples that are more extreme.
+</p>
+</li>
+</ul>
+<p>The standard exact p-value is overly conservative, in particular
+for small minor allele frequencies. The mid p-value ameliorates this problem
+by bringing the rejection rate closer to the nominal level, at the price of
+occasionally exceeding the nominal level (Graffelman &amp; Moreno, 2013).
+</p>
+</li>
+</ul>
+<p>Correction for multiple tests can be applied using the following methods
+based on the function <code>p.adjust</code>:
+</p>
+
+<ul>
+<li>
+<p> 'holm' is also known as the sequential Bonferroni technique 
+(Rice, 1989).
+This method has a greater statistical power than the standard Bonferroni 
+test,
+however this method becomes very stringent when many tests are performed and
+many real deviations from the null hypothesis can go undetected 
+(Waples, 2015).
+</p>
+</li>
+<li>
+<p> 'hochberg' based on Hochberg, 1988.
+</p>
+</li>
+<li>
+<p> 'hommel' based on Hommel, 1988. This method is more powerful than
+Hochberg's, but the difference is usually small.
+</p>
+</li>
+<li>
+<p> 'bonferroni' in which p-values are multiplied by the number of tests.
+This method is very stringent and therefore has reduced power to detect
+multiple departures from the null hypothesis.
+</p>
+</li>
+<li>
+<p> 'BH' based on Benjamini &amp; Hochberg, 1995.
+</p>
+</li>
+<li>
+<p> 'BY' based on Benjamini &amp; Yekutieli, 2001.
+</p>
+</li>
+</ul>
+<p>The first four methods are designed to give strong control of the family-wise
+error rate. The last two methods control the false discovery rate (FDR),
+the expected proportion of false discoveries among the rejected hypotheses.
+The false discovery rate is a less stringent condition than the family-wise
+error rate, so these methods are more powerful than the others, especially
+when number of tests is large.
+The number of tests on which the adjustment for multiple comparisons is
+the number of populations times the number of loci.
+<b>From v2.1</b> <code>gl.filter.hwe</code> takes the argument
+<code>n.pop.threshold</code>.
+if <code>n.pop.threshold &gt; 1</code> loci will be removed only if they are 
+concurrently 
+significant (after adjustment if applied) out of hwe in &gt;= 
+<code>n.pop.threshold &gt; 1</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A genlight object with the loci departing significantly from H-W
+proportions removed.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Custodian: Luis Mijangos – Post to
+<a href="https://groups.google.com/d/forum/dartr">https://groups.google.com/d/forum/dartr</a>
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Benjamini, Y., and Yekutieli, D. (2001). The control of the false
+discovery rate in multiple testing under dependency. Annals of Statistics,
+29, 1165–1188.
+</p>
+</li>
+<li>
+<p> Graffelman, J. (2015). Exploring Diallelic Genetic Markers: The Hardy
+Weinberg Package. Journal of Statistical Software 64:1-23.
+</p>
+</li>
+<li>
+<p> Graffelman, J. &amp; Morales-Camarena, J. (2008). Graphical tests for
+Hardy-Weinberg equilibrium based on the ternary plot. Human Heredity 
+65:77-84.
+</p>
+</li>
+<li>
+<p> Graffelman, J., &amp; Moreno, V. (2013). The mid p-value in exact tests for
+Hardy-Weinberg equilibrium. Statistical applications in genetics and
+molecular
+biology, 12(4), 433-448.
+</p>
+</li>
+<li>
+<p> Hochberg, Y. (1988). A sharper Bonferroni procedure for multiple tests
+of significance. Biometrika, 75, 800–803.
+</p>
+</li>
+<li>
+<p> Hommel, G. (1988). A stagewise rejective multiple test procedure based
+on a modified Bonferroni test. Biometrika, 75, 383–386.
+</p>
+</li>
+<li>
+<p> Rice, W. R. (1989). Analyzing tables of statistical tests. Evolution,
+43(1), 223-225.
+</p>
+</li>
+<li>
+<p> Waples, R. S. (2015). Testing for Hardy–Weinberg proportions: have we
+lost the plot?. Journal of heredity, 106(1), 1-19.
+</p>
+</li>
+<li>
+<p> Wigginton, J.E., Cutler, D.J., &amp; Abecasis, G.R. (2005). A Note on Exact
+Tests of Hardy-Weinberg Equilibrium. American Journal of Human Genetics
+76:887-893.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>gl.report.hwe</code>
+</p>
+<p>Other filter functions: 
+<code>gl.filter.allna()</code>,
+<code>gl.report.allna()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">result &lt;- gl.filter.hwe(x = bandicoot.gl)
+</code></pre>
+
+
+</div>

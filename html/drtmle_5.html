@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ci.adaptive_iptw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Confidence intervals for adaptive_iptw objects</h2>
+
+<h3>Description</h3>
+
+<p>Estimate confidence intervals for objects of class <code>"adaptive_iptw"</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'adaptive_iptw'
+ci(object, est = c("iptw_tmle"), level = 0.95, contrast = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>"adaptive_iptw"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est</code></td>
+<td>
+<p>A vector indicating for which estimators to return a
+confidence interval. Possible estimators include the TMLE IPTW
+(<code>"iptw_tmle"</code>, recommended), the one-step IPTW
+(<code>"iptw_os"</code>, not recommended), the standard IPTW
+(<code>"iptw"</code>, recommended only for comparison to the other two estimators).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>The nominal coverage probability of the desired confidence
+interval (should be between 0 and 1). Default computes 95\
+intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>Specifies the parameter for which to return confidence
+intervals. If <code>contrast=NULL</code>, then confidence intervals for the
+marginal means are computed. If instead, <code>contrast</code> is a numeric vector
+of ones, negative ones, and zeros to define linear combinations of the
+various means (e.g., to estimate an average treatment effect, see example).
+Finally, <code>contrast</code> can be a list with named functions <code>f</code>,
+<code>f_inv</code>, <code>h</code>, and <code>fh_grad</code>. The first two functions should
+take as input argument <code>eff</code>. Respectively, these specify which
+transformation of the effect measure to compute the confidence interval for
+and the inverse transformation to put the confidence interval back on the
+original scale. The function <code>h</code> defines the contrast to be estimated
+and should take as input <code>est</code>, a vector of the same length as
+<code>object$a_0</code>, and output the desired contrast. The function
+<code>fh_grad</code> is the gradient of the function <code>h</code>. See examples and
+vignette for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other options (not currently used).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"ci.adaptive_iptw"</code> with point estimates and
+confidence intervals of the specified level.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load super learner
+library(SuperLearner)
+# fit adaptive_iptw
+set.seed(123456)
+n &lt;- 200
+W &lt;- data.frame(W1 = runif(n), W2 = rnorm(n))
+A &lt;- rbinom(n, 1, plogis(W$W1 - W$W2))
+Y &lt;- rbinom(n, 1, plogis(W$W1 * W$W2 * A))
+
+fit1 &lt;- adaptive_iptw(
+  W = W, A = A, Y = Y, a_0 = c(1, 0),
+  SL_g = c("SL.glm", "SL.mean", "SL.step"),
+  SL_Qr = "SL.glm"
+)
+
+# get confidence intervals for each mean
+ci_mean &lt;- ci(fit1)
+
+# get confidence intervals for ATE
+ci_ATE &lt;- ci(fit1, contrast = c(1, -1))
+
+# get confidence intervals for risk ratio
+# by inputting own contrast function
+# this computes CI on log scale and back transforms
+myContrast &lt;- list(
+  f = function(eff) {
+    log(eff)
+  },
+  f_inv = function(eff) {
+    exp(eff)
+  },
+  h = function(est) {
+    est[1] / est[2]
+  },
+  fh_grad = function(est) {
+    c(1 / est[1], -1 / est[2])
+  }
+)
+ci_RR &lt;- ci(fit1, contrast = myContrast)
+</code></pre>
+
+
+</div>

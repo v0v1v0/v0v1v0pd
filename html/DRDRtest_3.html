@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drdrtest.superlearner</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The function for performing tests of average treatment effects with SuperLearner</h2>
+
+<h3>Description</h3>
+
+<p>This is the function for testing average treatment effects with user specified nuisance functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drdrtest.superlearner(
+  y,
+  a,
+  l,
+  arange,
+  pi.sl.lib = c("SL.earth", "SL.glm", "SL.gam", "SL.glmnet"),
+  mu.sl.lib = c("SL.earth", "SL.glm", "SL.gam", "SL.glmnet"),
+  mu.family = "gaussian",
+  h = NULL,
+  b = 1000,
+  dist = "TwoPoint",
+  a.grid.size = 401,
+  pi.low = 0.01,
+  pi.var.low = 0.01
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A vector containing the outcomes for each observation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>A vector containing the treatment levels (dosage) for each observation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l</code></td>
+<td>
+<p>A data.frame containing the observations of covariates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arange</code></td>
+<td>
+<p>A vector of length 2 giving the lower bound and upper bound of  treatment levels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.sl.lib</code></td>
+<td>
+<p>Models will be used by SuperLearner to estiamte propensity scores</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu.sl.lib</code></td>
+<td>
+<p>Models will be used by SuperLearner to estiamte outcome regression function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu.family</code></td>
+<td>
+<p>Type of response. Currently only support "gaussian" and "binomial"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth to be used in kernel regression. If not specified, will by default use "rule of thumb" bandwidth selector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>number of Bootstrap samples to be generated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>distibution used to generate residuals for Bootstrap samples. Currently only have two options, "TwoPoint" and "Rademachar"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a.grid.size</code></td>
+<td>
+<p>size of equally spaced grid points over <code>arange</code> to be generate for numerically evaluating the integral in test statistic</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.low</code></td>
+<td>
+<p>Lower bound to truncate propensity scores</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi.var.low</code></td>
+<td>
+<p>Lower bound to truncate conditional variance of treament (used in propensity score estimation).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing </p>
+
+<dl>
+<dt>p.value:</dt>
+<dd>
+<p>P value of the test result</p>
+</dd>
+<dt>test.stat:</dt>
+<dd>
+<p>Value of the observed test statistic</p>
+</dd>
+<dt>Bootstrap.samples:</dt>
+<dd>
+<p>A vector containing test statistic values from Bootstrap samples</p>
+</dd>
+<dt>loc.fit:</dt>
+<dd>
+<p>A list containg evalution points of average treatment effect and the corresponding values</p>
+</dd>
+<dt>bandwidth:</dt>
+<dd>
+<p>Bandwidth used in kernel regression</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">mu.mod&lt;-function(a,l,delta,height){
+    mu &lt;- as.numeric(l%*%c(0.2,0.2,0.3,-0.1))+triangle(a-2.5,delta,height)+a*(-0.1*l[,1]+0.1*l[,3])
+    return(mu)
+}
+triangle &lt;- function(a,delta,height){
+    y &lt;- exp(-a^2/((delta/2)^2))*height
+    return(y)
+}
+set.seed(2000)
+n &lt;- 500
+d &lt;- 4
+sigma &lt;- 0.05
+delta &lt;- 1
+height &lt;- 0
+arange&lt;-c(0.01,4.99)
+
+l &lt;- matrix(rnorm(n*d),ncol=d)
+colnames(l) &lt;- paste("l",1:4,sep="")
+logit.lambda &lt;- as.numeric(l%*%c(0.1,0.1,-0.1,0.2))
+lambda &lt;- exp(logit.lambda)/(1+exp(logit.lambda))
+a &lt;- rbeta(n, shape1 = lambda, shape2 =1-lambda)*5
+
+mu &lt;- mu.mod(a,l,delta,height)
+residual.list &lt;- rnorm(n,mean=0,sd=sigma)
+y &lt;- mu+residual.list
+
+out &lt;- drdrtest.superlearner(y,a,l,arange,pi.sl.lib=c("SL.glm"),mu.sl.lib=c("SL.glm"))
+</code></pre>
+
+
+</div>

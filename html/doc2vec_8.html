@@ -1,0 +1,233 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>top2vec</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distributed Representations of Topics</h2>
+
+<h3>Description</h3>
+
+<p>Perform text clustering by using semantic embeddings of documents and words
+to find topics of text documents which are semantically similar.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">top2vec(
+  x,
+  data = data.frame(doc_id = character(), text = character(), stringsAsFactors = FALSE),
+  control.umap = list(n_neighbors = 15L, n_components = 5L, metric = "cosine"),
+  control.dbscan = list(minPts = 100L),
+  control.doc2vec = list(),
+  umap = uwot::umap,
+  trace = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>either an object returned by <code>paragraph2vec</code> or a data.frame 
+with columns 'doc_id' and 'text' storing document ids and texts as character vectors or a matrix with document embeddings to cluster
+or a list with elements docs and words containing document embeddings to cluster and word embeddings for deriving topic summaries</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>optionally, a data.frame with columns 'doc_id' and 'text' representing documents. 
+This dataset is just stored, in order to extract the text of the most similar documents to a topic.
+If it also contains a field 'text_doc2vec', this will be used to indicate the most relevant topic words
+by class-based tfidf</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control.umap</code></td>
+<td>
+<p>a list of arguments to pass on to <code>umap</code> for reducing the dimensionality of the embedding space</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control.dbscan</code></td>
+<td>
+<p>a list of arguments to pass on to <code>hdbscan</code> for clustering the reduced embedding space</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control.doc2vec</code></td>
+<td>
+<p>optionally, a list of arguments to pass on to <code>paragraph2vec</code> in case <code>x</code> is a data.frame
+instead of a doc2vec model trained by <code>paragraph2vec</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>umap</code></td>
+<td>
+<p>function to apply UMAP. Defaults to <code>umap</code>, can as well be <code>tumap</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>logical indicating to print evolution of the algorithm</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments not used yet</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class <code>top2vec</code> which is a list with elements
+</p>
+
+<ul>
+<li>
+<p>embedding: a list of matrices with word and document embeddings
+</p>
+</li>
+<li>
+<p>doc2vec: a doc2vec model
+</p>
+</li>
+<li>
+<p>umap: a matrix of representations of the documents of <code>x</code>
+</p>
+</li>
+<li>
+<p>dbscan: the result of the hdbscan clustering
+</p>
+</li>
+<li>
+<p>data: a data.frame with columns doc_id and text
+</p>
+</li>
+<li>
+<p>size: a vector of frequency statistics of topic occurrence
+</p>
+</li>
+<li>
+<p>k: the number of clusters
+</p>
+</li>
+<li>
+<p>control: a list of control arguments to doc2vec / umap / dbscan
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>The topic '0' is the noise topic
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://arxiv.org/abs/2008.09470">https://arxiv.org/abs/2008.09470</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>paragraph2vec</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(word2vec)
+library(uwot)
+library(dbscan)
+data(be_parliament_2020, package = "doc2vec")
+x      &lt;- data.frame(doc_id = be_parliament_2020$doc_id,
+                     text   = be_parliament_2020$text_nl,
+                     stringsAsFactors = FALSE)
+x$text &lt;- txt_clean_word2vec(x$text)
+x      &lt;- subset(x, txt_count_words(text) &lt; 1000)
+d2v    &lt;- paragraph2vec(x, type = "PV-DBOW", dim = 50, 
+                        lr = 0.05, iter = 10,
+                        window = 15, hs = TRUE, negative = 0,
+                        sample = 0.00001, min_count = 5, 
+                        threads = 1)
+# write.paragraph2vec(d2v, "d2v.bin")
+# d2v    &lt;- read.paragraph2vec("d2v.bin")
+model  &lt;- top2vec(d2v, data = x,
+                  control.dbscan = list(minPts = 50), 
+                  control.umap = list(n_neighbors = 15L, n_components = 4), trace = TRUE)
+model  &lt;- top2vec(d2v, data = x,
+                  control.dbscan = list(minPts = 50), 
+                  control.umap = list(n_neighbors = 15L, n_components = 3), umap = tumap, 
+                  trace = TRUE)
+                                  
+info   &lt;- summary(model, top_n = 7)
+info$topwords
+info$topdocs
+library(udpipe)
+info   &lt;- summary(model, top_n = 7, type = "c-tfidf")
+info$topwords
+
+## Change the model: reduce doc2vec model to 2D
+model  &lt;- update(model, type = "umap", 
+                 n_neighbors = 100, n_components = 2, metric = "cosine", umap = tumap, 
+                 trace = TRUE)
+info   &lt;- summary(model, top_n = 7)
+data = x
+info$topwords
+info$topdocs
+
+## Change the model: have minimum 200 points for the core elements in the hdbscan density
+model  &lt;- update(model, type = "hdbscan", minPts = 200, trace = TRUE)
+info   &lt;- summary(model, top_n = 7)
+data = x
+info$topwords
+info$topdocs
+
+
+
+##
+## Example on a small sample 
+##  with unrealistic hyperparameter settings especially regarding dim / iter / n_epochs
+##  in order to have a basic example finishing &lt; 5 secs
+##
+
+library(uwot)
+library(dbscan)
+library(word2vec)
+data(be_parliament_2020, package = "doc2vec")
+x        &lt;- data.frame(doc_id = be_parliament_2020$doc_id,
+                       text   = be_parliament_2020$text_nl,
+                       stringsAsFactors = FALSE)
+x        &lt;- head(x, 1000)
+x$text   &lt;- txt_clean_word2vec(x$text)
+x        &lt;- subset(x, txt_count_words(text) &lt; 1000)
+d2v      &lt;- paragraph2vec(x, type = "PV-DBOW", dim = 10, 
+                          lr = 0.05, iter = 0,
+                          window = 5, hs = TRUE, negative = 0,
+                          sample = 0.00001, min_count = 5)
+emb      &lt;- list(docs  = as.matrix(d2v, which = "docs"),
+                 words = as.matrix(d2v, which = "words"))
+model    &lt;- top2vec(emb, 
+                    data = x,
+                    control.dbscan = list(minPts = 50), 
+                    control.umap = list(n_neighbors = 15, n_components = 2, 
+                                        init = "spectral"), 
+                    umap = tumap, trace = TRUE)
+info     &lt;- summary(model, top_n = 7)
+print(info, top_n = c(5, 2))
+
+</code></pre>
+
+
+</div>

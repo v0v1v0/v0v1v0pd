@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simulate_dispersal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulates first arrival times from one or more origins.</h2>
+
+<h3>Description</h3>
+
+<p>The model uses density-dependent growth and emigration. The carrying
+capacity, growth rates and mobility are allowed to vary with the environment.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simulate_dispersal(
+  environment,
+  terrain,
+  coords,
+  years,
+  r = 0.025,
+  phi = 0.5,
+  t = 30,
+  dist = 50,
+  accel = 3,
+  gamma = 1,
+  updates = NULL,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>environment</code></td>
+<td>
+<p>A Raster*. Environmental values that affect carrying
+capacity and growth rate. Typically given as a fraction (0-1) of the max K.
+If the environment will be updated during the experiment, this parameter
+must be a raster stack.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terrain</code></td>
+<td>
+<p>A Raster*. Cells with value 1 are barriers and cells with
+value 2 are corridors. If the terrain will be updated during the experiment,
+this parameter must be a raster stack.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coords</code></td>
+<td>
+<p>A DataFrame. Must contain columns x, y, and date with the
+coordinates and starting date (yr BP) of each origin. Coordinates must be in
+the same system as the environment and terrain layers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>years</code></td>
+<td>
+<p>Numeric. Number of years to run the model for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>Numeric. The annual growth rate as a decimal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+<p>Numeric. The emigration threshold as a fraction of carrying
+capacity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>Numeric. The duration, in years, of a generation (model time step).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>Numeric. The distance, in km, that migrants move over a
+generation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>accel</code></td>
+<td>
+<p>Numeric. The factor by which the usual distance is increased
+along corridors. E.g. if dist = 50 km and accel = 3, migrants can move up to
+150 km along a corridor. Must range from 2 to 4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>Numeric. A power that controls the shape of the dependency
+between r and the environment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>updates</code></td>
+<td>
+<p>Numeric. Optional vector with the years at which the
+environment and terrain grids will be updated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Boolean. If TRUE, write messages to the console.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The simulation starts with n populated cells at coordinates and start times
+defined by the parameter coords and runs for a number of time. Each time step
+corresponds to a generation (defined by parameter t). Growth is applied to
+every populated cell using a logistic model and emigration to a neighboring
+cell is calculated from an asymptotic threshold model.
+</p>
+<p>The carrying capacity (K) in the density-dependend growth and emigration
+models is determined by an environment raster, which normally represents a
+variable or combination of variables assumed to affect population density
+(e.g. net primary production, elevation) scaled to 0-1 range.
+</p>
+<p>The dependence of the carrying capacity and growth rate on the environment
+is allowed to be controlled by a power gamma. By default, the dependence is
+linear (gamma = 1).
+</p>
+<p>For emigration, a threshold phi is considered, expressed as a fraction of
+carrying capacity. Migrants are distributed among the available cells of the
+Moore neighborhood proportionally to the inverse of the distance squared.
+</p>
+<p>Terrain can be represented by a raster specifying barriers (e.g. mountains),
+which block movement, and corridors (e.g. rivers), which accelerate movement.
+For the latter, an acceleration factor can be specified.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A RasterLayer with simulated arrival times.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">terr &lt;- raster::stack(replicate(8, euro_terr))
+sim &lt;- simulate_dispersal(euro_npp, terr, ppnb, 5500, phi=0.33, updates=seq(10000,4000,-1000))
+</code></pre>
+
+
+</div>

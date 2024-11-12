@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_plate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot plate layouts</h2>
+
+<h3>Description</h3>
+
+<p>Plot plate layouts
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_plate(
+  .tbl,
+  plate = plate,
+  row = row,
+  column = column,
+  .color,
+  .alpha = NULL,
+  .pattern = NULL,
+  title = paste("Layout by", rlang::as_name(rlang::enquo(plate))),
+  add_excluded = FALSE,
+  rename_empty = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.tbl</code></td>
+<td>
+<p>a <code>tibble</code> (or <code>data.frame</code>) with the samples assigned to locations.
+Alternatively a BatchContainter with samples can be supplied here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plate</code></td>
+<td>
+<p>optional dimension variable used for the plate ids</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row</code></td>
+<td>
+<p>the dimension variable used for the row ids</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>column</code></td>
+<td>
+<p>the dimension variable used for the column ids</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.color</code></td>
+<td>
+<p>the continuous or discrete variable to color by</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.alpha</code></td>
+<td>
+<p>a continuous variable encoding transparency</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.pattern</code></td>
+<td>
+<p>a discrete variable encoding tile pattern (needs ggpattern)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>string for the plot title</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_excluded</code></td>
+<td>
+<p>flag to add excluded wells (in bc$exclude) to the plot.
+A BatchContainer must be provided for this.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rename_empty</code></td>
+<td>
+<p>whether NA entries in sample table should be renamed to 'empty'.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the ggplot object
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>siebourj
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">nPlate &lt;- 3
+nColumn &lt;- 4
+nRow &lt;- 6
+
+treatments &lt;- c("CTRL", "TRT1", "TRT2")
+timepoints &lt;- c(1, 2, 3)
+
+
+bc &lt;- BatchContainer$new(
+  dimensions = list(
+    plate = nPlate,
+    column = list(values = letters[1:nColumn]),
+    row = nRow
+  )
+)
+
+sample_sheet &lt;- tibble::tibble(
+  sampleID = 1:(nPlate * nColumn * nRow),
+  Treatment = rep(treatments, each = floor(nPlate * nColumn * nRow) / length(treatments)),
+  Timepoint = rep(timepoints, floor(nPlate * nColumn * nRow) / length(treatments))
+)
+
+# assign samples from the sample sheet
+bc &lt;- assign_random(bc, samples = sample_sheet)
+
+plot_plate(bc$get_samples(),
+  plate = plate, column = column, row = row,
+  .color = Treatment, .alpha = Timepoint
+)
+
+
+plot_plate(bc$get_samples(),
+  plate = plate, column = column, row = row,
+  .color = Treatment, .pattern = Timepoint
+)
+
+</code></pre>
+
+
+</div>

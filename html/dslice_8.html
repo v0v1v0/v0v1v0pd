@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ds_gsa</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Gene set analysis via dynamic slicing
+</h2>
+
+<h3>Description</h3>
+
+<p>Gene set analysis via dynamic slicing.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  ds_gsa(expdat, geneset, label, generank, ..., lambda = 1, bycol = FALSE,
+         minsize = 15, maxsize = 500, randseed = 11235, rounds = 1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>expdat</code></td>
+<td>
+<p>Either a character string of gene expression file name (.gct file), or an expression matrix with rownames, each row is a gene and each column is a sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geneset</code></td>
+<td>
+<p>Either a character string of gene set file name (.gmt file), or a list contains a vector of gene set names, a vector of gene set description and a list of gene symbols in each gene set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>Either a character string of phenotypes file (.cls file), or a list contains a vector of types of pheotype and a vector of encoded pheotypes of samples. It should match gene expression matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>generank</code></td>
+<td>
+<p>Either an integer vector of rank of each gene according to some statistic, or a character string naming a function which takes gene expression matrix as input and returns a vector of gene rank (not tie).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters of the function specified (as a character string) by <code>generank</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>Penalty for introducing an additional slice in dynamic slicing procedure, which is used to avoid making too many slices. It corresponds to the type I error under the scenario that the two variables are independent. <code>lambda</code> should be greater than 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bycol</code></td>
+<td>
+<p>Type of permutation, by row (default) or by column. Permutation by row means shuffling the gene rank. Permutation by column means shuffling pheotypes then obtain gene rank.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minsize</code></td>
+<td>
+<p>Minimum number of genes in genesets to be considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxsize</code></td>
+<td>
+<p>Maximum number of genes in genesets to be considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randseed</code></td>
+<td>
+<p>Optional initial seed for random number generator (integer).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rounds</code></td>
+<td>
+<p>Number of permutations for estimating significant level of results.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>ds_gsa</code> performs gene set analysis via dynamic slicing. It returns the DS statistics and slicing strategy of each gene set.
+<code>ds_gsa</code> does not attempt to integrate the ranking method into it. It requires ranking method or directly the gene rank as a parameter. Leaving ranking method as an optional input parameter is convenience for users who would like to use any ranking methods they want.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with informations of gene sets whose size satisfy the minimum and maximum size thresholds. Its contains the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>set_name</code></td>
+<td>
+<p>A vector of gene set names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set_size</code></td>
+<td>
+<p>A vector of gene set sizes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DS_value</code></td>
+<td>
+<p>A vector of dynamic slicing statistic of each gene set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalue</code></td>
+<td>
+<p>A vector of <em>p</em>-value of each gene set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FDR</code></td>
+<td>
+<p>A vector of FDR of each gene set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slices</code></td>
+<td>
+<p>A list of slicing strategy of each gene set. Each component is a matrix of slices.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Jiang, B., Ye, C. and Liu, J.S. Non-parametric <em>K</em>-sample tests via dynamic slicing. <em>Journal of the American Statistical Association</em>, 110(510): 642-653, 2015.
+</p>
+<p>Subramanian, A., Tamayo, P., Mootha, V. K., <em>et al</em>. Gene set enrichment analysis: a knowledge-based approach for interpreting genome-wide expression profiles. <em>Proceedings of the National Academy of Sciences of the United States of America</em>, 2005, 102(43): 15545-15550.
+</p>
+<p>Benjamini, Y. and Hochberg, Y. Controlling the false discovery rate: a practical and powerful approach to multiple testing. <em>Journal of the Royal Statistical Society. Series B (Methodological)</em>, 1995, 57(1): 289-300.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ds_k</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##  Loading data from files
+## Not run: 
+gctpath &lt;- "P53.gct"
+clspath &lt;- "P53.cls"
+gmtpath &lt;- "C2.gmt"
+expdat &lt;- load_gct(gctpath)
+label &lt;- load_cls(clspath)
+geneset &lt;- load_gmt(gmtpath)
+fc &lt;- function(x, label)
+{
+  d0 &lt;- apply(x[,which(label == 0)], 1, mean)
+  d1 &lt;- apply(x[,which(label == 1)], 1, mean)
+  d &lt;- d1 / d0
+  return(order(d))
+}
+ds_gsa_obj &lt;- ds_gsa(expdat, geneset, label, "fc", lambda = 1.2, bycol = TRUE,
+                     minsize = 15, maxsize = 500, randseed = 11235, rounds = 100)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

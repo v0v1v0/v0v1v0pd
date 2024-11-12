@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>KinhomEnvelope</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimation of the confidence envelope of the Kinhom function under its null hypothesis
+</h2>
+
+<h3>Description</h3>
+
+<p>Simulates point patterns according to the null hypothesis and returns the envelope of <em>Kinhom</em> according to the confidence level.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">KinhomEnvelope(X, r = NULL, NumberOfSimulations = 100, Alpha = 0.05, 
+               ReferenceType = "", lambda = NULL, SimulationType = "RandomPosition", 
+               Global = FALSE, verbose = interactive())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+
+<p>A point pattern (<code>wmppp.object</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+
+<p>A vector of distances. If <code>NULL</code>, a sensible default value is chosen (512 intervals, from 0 to half the diameter of the window) following <strong>spatstat</strong>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NumberOfSimulations</code></td>
+<td>
+
+<p>The number of simulations to run.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Alpha</code></td>
+<td>
+
+<p>The risk level.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ReferenceType</code></td>
+<td>
+
+<p>One of the point types. Default is all point types.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>An estimation of the point pattern density, obtained by the <code>density.ppp</code> function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SimulationType</code></td>
+<td>
+
+<p>A string describing the null hypothesis to simulate. The null hypothesis, may be 
+"<em>RandomPosition</em>": points are drawn in an inhomogenous Poisson process (intensity is either <code>lambda</code> or estimated from <code>X</code>); 
+"<em>RandomLocation</em>": points are redistributed across actual locations;
+"<em>RandomLabeling</em>": randomizes point types, keeping locations unchanged;
+"<em>PopulationIndependence</em>": keeps reference points unchanged, redistributes others across actual locations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Global</code></td>
+<td>
+
+<p>Logical; if <code>TRUE</code>, a global envelope sensu Duranton and Overman (2005) is calculated. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>Logical; if <code>TRUE</code>, print progress reports during the simulations.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The random location null hypothesis is that of Duranton and Overman (2005). It is appropriate to test the univariate <em>Kinhom</em> function of a single point type, redistributing it over all point locations.
+It allows fixing lambda along simulations so the warning message can be ignored.
+</p>
+<p>The random labeling hypothesis is appropriate for the bivariate <em>Kinhom</em> function.
+</p>
+<p>The population independence hypothesis is that of Marcon and Puech (2010).
+</p>
+<p>This envelope is local by default, that is to say it is computed separately at each distance. See Loosmore and Ford (2006) for a discussion.
+</p>
+<p>The global envelope is calculated by iteration: the simulations reaching one of the upper or lower values at any distance are eliminated at each step. The process is repeated until <em>Alpha / Number of simulations</em> simulations are dropped. The remaining upper and lower bounds at all distances constitute the global envelope. Interpolation is used if the exact ratio cannot be reached.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An envelope object (<code>envelope</code>). There are methods for print and plot for this class.
+</p>
+<p>The <code>fv</code> contains the observed value of the function, its average simulated value and the confidence envelope.
+</p>
+
+
+<h3>References</h3>
+
+<p>Duranton, G. and Overman, H. G. (2005). Testing for Localisation Using Micro-Geographic Data. <em>Review of Economic Studies</em> 72(4): 1077-1106.
+</p>
+<p>Kenkel, N. C. (1988). Pattern of Self-Thinning in Jack Pine: Testing the Random Mortality Hypothesis. <em>Ecology</em> 69(4): 1017-1024.
+</p>
+<p>Loosmore, N. B. and Ford, E. D. (2006). Statistical inference using the G or K point pattern spatial statistics. <em>Ecology</em> 87(8): 1925-1931.
+</p>
+<p>Marcon, E. and Puech, F. (2010). Measures of the Geographic Concentration of Industries: Improving Distance-Based Methods. <em>Journal of Economic Geography</em> 10(5): 745-762.
+</p>
+<p>Marcon, E. and F. Puech (2017). A typology of distance-based measures of spatial concentration. <em>Regional Science and Urban Economics</em>. 62:56-67.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Kinhomhat</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(paracou16)
+# Keep only 20% of points to run this example
+X &lt;- as.wmppp(rthin(paracou16, 0.2))
+autoplot(X, 
+  labelSize = expression("Basal area (" ~cm^2~ ")"), 
+  labelColor = "Species")
+
+# Density of all trees
+lambda &lt;- density.ppp(X, bw.diggle(X))
+plot(lambda)
+V.americana &lt;- X[X$marks$PointType=="V. Americana"]
+plot(V.americana, add=TRUE)
+
+# Calculate Kinhom according to the density of all trees
+# and confidence envelope (should be 1000 simulations, reduced to 4 to save time)
+r &lt;- 0:30
+NumberOfSimulations &lt;- 4
+Alpha &lt;- .10
+autoplot(KinhomEnvelope(X, r,NumberOfSimulations, Alpha, , 
+    SimulationType="RandomPosition", lambda=lambda), ./(pi*r^2) ~ r)
+</code></pre>
+
+
+</div>

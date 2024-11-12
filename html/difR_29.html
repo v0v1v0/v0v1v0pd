@@ -1,0 +1,308 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Logistik</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Logistic regression DIF statistic</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the "logistic regression" likelihood-ratio statistics and effect sizes
+for DIF detection. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Logistik(data, member, member.type = "group", match = "score",
+	 anchor = 1:ncol(data), type = "both", criterion = "LRT", all.cov = FALSE)
+ </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>numeric: the data matrix (one row per subject, one column per item).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>member</code></td>
+<td>
+<p>numeric or factor: the vector of group membership. Can either take two distinct values (zero for the reference group and one for the focal group) or be a continuous vector. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>member.type</code></td>
+<td>
+<p>character: either <code>"group"</code> (default) to specify that group membership is made of two groups, or <code>"cont"</code> to indicate that group membership is based on a  continuous criterion. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>specifies the type of matching criterion. Can be either <code>"score"</code> (default) to compute the test score, or any continuous or discrete variable with the same length as the number of rows of <code>data</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor</code></td>
+<td>
+<p>a vector of integer values specifying which items (all by default) are currently considered as anchor (DIF free) items. Ignored if <code>match</code> is not <code>"score"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>a character string specifying which DIF effects must be tested. Possible values are <code>"both"</code> (default), <code>"udif"</code> and <code>"nudif"</code>. 
+See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>a character string specifying which DIF statistic is computed. Possible values are <code>"LRT"</code> (default) or <code>"Wald"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all.cov</code></td>
+<td>
+<p>logical: should <em>all</em> covariance matrices of model parameter estimates be returned (as lists) for both nested models and all items? (default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This command computes the logistic regression statistic (Swaminathan and Rogers, 1990) in the specific framework of differential item functioning. 
+It forms the basic command of <code>difLogistic</code> and is specifically designed for this call.
+</p>
+<p>If the <code>member.type</code> argument is set to <code>"group"</code>, the <code>member</code> argument must be a vector with two distinct (numeric or factor) values, say 0 and 1 (for the reference and focal groups respectively). Those values are internally transformed onto factors to denote group membership. The three possible models to be fitted are then:
+</p>
+<p style="text-align: center;"><code class="reqn">M_0: logit (\pi_g) = \alpha + \beta X + \gamma_g + \delta_g X</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">M_1: logit (\pi_g) = \alpha + \beta X + \gamma_g</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">M_2: logit (\pi_g) = \alpha + \beta X</code>
+</p>
+
+<p>where <code class="reqn">\pi_g</code> is the probability of answering correctly the item in group <em>g</em> and <code class="reqn">X</code> is the matching variable. Parameters <code class="reqn">\alpha</code> and 
+<code class="reqn">\beta</code> are the intercept and the slope of the logistic curves (common to all groups), while <code class="reqn">\gamma_g</code> and <code class="reqn">\delta_g</code> are group-specific
+parameters. For identification reasons the parameters <code class="reqn">\gamma_0</code> and <code class="reqn">\delta_0</code> for reference group (<code class="reqn">g=0</code>) are set to zero. The parameter
+<code class="reqn">\gamma_1</code> of the focal group (<code class="reqn">g=1</code>) represents the uniform DIF effect, and the parameter <code class="reqn">\delta_1</code> is used to model nonuniform DIF 
+effect. The models are fitted with the <code>glm</code> function.
+</p>
+<p>If <code>member.type</code> is set to <code>"cont"</code>, then "group membership" is replaced by a continuous or discrete variable, given by the <code>member</code> argument, and the models above are written as
+</p>
+<p style="text-align: center;"><code class="reqn">M_0: logit (\pi_g) = \alpha + \beta X + \gamma Y+ \delta X Y</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">M_1: logit (\pi_g) = \alpha + \beta X + \gamma Y</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">M_2: logit (\pi_g) = \alpha + \beta X</code>
+</p>
+
+<p>where <code>Y</code> is the group variable. Parameters <code class="reqn">\gamma</code> and <code class="reqn">\delta</code> act now as the <code class="reqn">\gamma_1</code> and <code class="reqn">\delta_1</code> DIF parameters.
+</p>
+<p>The matching criterion can be either the test score or any other continuous or discrete variable to be passed in the <code>Logistik</code> function. This is specified by the <code>match</code> argument. By default, it takes the value <code>"score"</code> and the test score (i.e. raw score) is computed. The second option is to assign to <code>match</code> a vector of continuous or discrete numeric values, which acts as the matching criterion. Note that for consistency this vector should not belong to the <code>data</code> matrix.
+</p>
+<p>Two types of DIF statistics can be computed: the likelihood ratio test statistics, obtained by comparing the fit of two nested models,
+and the Wald statistics, obtained with an appropriate contrast matrix for testing the model parameters (Johnson and Wichern, 1998).
+These are specified by the argument <code>criterion</code>, with respective values <code>"LRT"</code> and <code>"Wald"</code>. By default, the LRT
+statistics are computed.
+</p>
+<p>If <code>criterion</code> is <code>"LRT"</code>, the argument <code>type</code> determines the models to be compared by means of the LRT statistics.
+The three possible values of <code>type</code> are: <code>type="both"</code> (default) which tests the hypothesis <code class="reqn">H_0: \gamma_1 = \delta_1=0</code> (or <code class="reqn">H_0: \gamma = \delta=0</code>) by comparing models <code class="reqn">M_0</code> and <code class="reqn">M_2</code>; <code>type="nudif"</code> which tests the hypothesis <code class="reqn">H_0: \delta_1 = 0</code> (or <code class="reqn">H_0: \delta = 0</code>) by comparing models <code class="reqn">M_0</code> and <code class="reqn">M_1</code>; and <code>type="udif"</code>
+which tests the hypothesis <code class="reqn">H_0: \gamma_1 = 0</code> (or <code class="reqn">H_0: \gamma = 0</code>) by comparing models <code class="reqn">M_1</code> and <code class="reqn">M_2</code> (assuming that <code class="reqn">\delta_1 = 0</code> or <code class="reqn">\delta = 0</code>). In other words, <code>type="both"</code>
+tests for DIF (without distinction between uniform and nonuniform effects), while <code>type="udif"</code> and <code>type="nudif"</code> test for uniform and nonuniform DIF,
+respectively. 
+</p>
+<p>If <code>criterion</code> is <code>"Wald"</code>, the argument <code>type</code> determines the logistic model to be considered and the appropriate contrast matrix. 
+If <code>type=="both"</code>, the considered model is model <code class="reqn">M_0</code> and the contrast matrix has two rows, (0,0,1,0) and (0,0,0,1). If <code>type=="nudif"</code>, 
+the considered model is also model <code class="reqn">M_0</code> but the contrast matrix has only one row, (0,0,0,1). Eventually, if <code>type=="udif"</code>, the considered model
+is model <code class="reqn">M_1</code> and the contrast matrix has one row, (0,0,1). 
+</p>
+<p>The data are passed through the <code>data</code> argument, with one row per subject and one column per item. Missing values are allowed but must be coded as <code>NA</code>
+values. They are discarded from the fitting of the logistic models (see <code>glm</code> for further details).
+</p>
+<p>The vector of group membership, specified with <code>member</code> argument, must hold only zeros and ones, a value of zero corresponding to the
+reference group and a value of one to the focal group.
+</p>
+<p>Option <code>anchor</code> sets the items which are considered as anchor items for computing the test scores and related logistic regression DIF statistics. Items other than the anchor items and the tested item are discarded. <code>anchor</code> must hold integer values specifying the column numbers of the corresponding anchor items. It is mainly designed to perform item purification. Note that this option is discarded when <code>match</code> is not <code>"score"</code>.
+</p>
+<p>The output contains: the selected DIF statistics (either the LRT or the Wald statistic) computed for each item, two matrices with the parameter estimates of
+both models (for each item) and two matrices of related standard error values. In addition, Nagelkerke's <code class="reqn">R^2</code> coefficients (Nagelkerke, 1991) are computed for each model and the output returns both, the vectors of <code class="reqn">R^2</code> coefficients for each model and the differences in these coefficients. Such differences are used as measures of effect size by the <code>difLogistic</code> command; see Gomez-Benito, Dolores Hidalgo and Padilla
+(2009), Jodoin and Gierl (2001) and Zumbo and Thomas (1997). The <code>criterion</code> and <code>member.type</code> arguments are also returned, as well as a character argument named <code>match</code> that specifies the type of matching criterion that was used.
+</p>
+
+
+<h3>Value</h3>
+
+ 
+<p>A list with nine components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+<p>the values of the logistic regression DIF statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R2M0</code></td>
+<td>
+<p>the values of Nagelkerke's R^2 coefficients for the "full" model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R2M1</code></td>
+<td>
+<p>the values of Nagelkerke's R^2 coefficients for the "simpler" model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaR2</code></td>
+<td>
+<p>the differences between Nagelkerke's <code class="reqn">R^2</code> coefficients of the tested models. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parM0</code></td>
+<td>
+<p>a matrix with one row per item and four columns, holding successively the fitted parameters <code class="reqn">\hat{\alpha}</code>, <code class="reqn">\hat{\beta}</code>, <code class="reqn">\hat{\gamma}_1</code>
+and <code class="reqn">\hat{\delta}_1</code> of the "full" model (<code class="reqn">M_0</code> if <code>type="both"</code> or <code>type="nudif"</code>, <code class="reqn">M_1</code> if <code>type="udif"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parM1</code></td>
+<td>
+<p>the same matrix as <code>parM0</code> but with fitted parameters for the "simpler" model (<code class="reqn">M_1</code> if <code>type="nudif"</code>, <code class="reqn">M_2</code> if <code>type="both"</code>
+or <code>type="udif"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seM0</code></td>
+<td>
+<p>a matrix with the standard error values of the parameter estimates in matrix <code>parM0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seM1</code></td>
+<td>
+<p>a matrix with the standard error values of the parameter estimates in matrix <code>parM1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.M0</code></td>
+<td>
+<p>either <code>NULL</code> (if <code>all.cov</code> argument is <code>FALSE</code>) or a list of covariance matrices of parameter estimates of the "full" model (<code class="reqn">M_0</code>) for each item (if <code>all.cov</code> argument is <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.M1</code></td>
+<td>
+<p>either <code>NULL</code> (if <code>all.cov</code> argument is <code>FALSE</code>) or a list of covariance matrices of parameter estimates of the "reduced" model (<code class="reqn">M_1</code>) for each item (if <code>all.cov</code> argument is <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>the value of the <code>criterion</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>member.type</code></td>
+<td>
+<p>the value of the <code>member.type</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>a character string, either <code>"score"</code> or <code>"matching variable"</code> depending on the <code>match</code> argument.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Sebastien Beland <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:sebastien.beland.1@hotmail.com">sebastien.beland.1@hotmail.com</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br>
+David Magis <br>
+Department of Psychology, University of Liege <br>
+Research Group of Quantitative Psychology and Individual Differences, KU Leuven <br><a href="mailto:David.Magis@uliege.be">David.Magis@uliege.be</a>, <a href="http://ppw.kuleuven.be/okp/home/">http://ppw.kuleuven.be/okp/home/</a> <br>
+Gilles Raiche <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:raiche.gilles@uqam.ca">raiche.gilles@uqam.ca</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Gomez-Benito, J., Dolores Hidalgo, M. and Padilla, J.-L. (2009). Efficacy of effect size measures in logistic regression: an application for detecting DIF. 
+<em>Methodology, 5</em>, 18-25. doi: <a href="https://doi.org/10.1027/1614-2241.5.1.18">10.1027/1614-2241.5.1.18</a>
+</p>
+<p>Jodoin, M. G. and Gierl, M. J. (2001). Evaluating Type I error and power rates using an effect size measure with logistic regression procedure for DIF detection. <em>Applied Measurement in Education, 14</em>, 329-349. doi: <a href="https://doi.org/10.1207/S15324818AME1404_2">10.1207/S15324818AME1404_2</a>
+</p>
+<p>Johnson, R. A. and Wichern, D. W. (1998). <em>Applied multivariate statistical analysis (fourth edition)</em>. Upper Saddle River, NJ: Prentice-Hall.
+</p>
+<p>Magis, D., Beland, S., Tuerlinckx, F. and De Boeck, P. (2010). A general framework and an R package for the detection
+of dichotomous differential item functioning. <em>Behavior Research Methods, 42</em>, 847-862. doi: <a href="https://doi.org/10.3758/BRM.42.3.847">10.3758/BRM.42.3.847</a>
+</p>
+<p>Nagelkerke, N. J. D. (1991). A note on a general definition of the coefficient of determination. <em>Biometrika, 78</em>, 691-692. doi: <a href="https://doi.org/10.1093/biomet/78.3.691">10.1093/biomet/78.3.691</a>
+</p>
+<p>Swaminathan, H. and Rogers, H. J. (1990). Detecting differential item functioning using logistic regression procedures. <em>Journal of Educational 
+Measurement, 27</em>, 361-370. doi: <a href="https://doi.org/10.1111/j.1745-3984.1990.tb00754.x">10.1111/j.1745-3984.1990.tb00754.x</a>
+</p>
+<p>Zumbo, B. D. and Thomas, D. R. (1997). A measure of effect size for a model-based approach for studying DIF. Prince George, Canada: University of Northern British
+Columbia, Edgeworth Laboratory for Quantitative Behavioral Science.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>difLogistic</code>, <code>dichoDif</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+ # Loading of the verbal data
+ data(verbal)
+
+ # Testing both types of DIF simultaneously
+ # With all items, test score as matching criterion
+ Logistik(verbal[,1:24], verbal[,26])
+
+ # Returning all covariance matrices of model parameters
+ Logistik(verbal[,1:24], verbal[,26], all.cov = TRUE)
+
+ # Testing both types of DIF simultaneously
+ # With all items and Wald test
+ Logistik(verbal[,1:24], verbal[,26], criterion = "Wald")
+
+ # Removing item 6 from the set of anchor items
+ Logistik(verbal[,1:24], verbal[,26], anchor = c(1:5, 7:24))
+
+ # Testing for nonuniform DIF
+ Logistik(verbal[,1:24], verbal[,26], type = "nudif")
+
+ # Testing for uniform DIF
+ Logistik(verbal[,1:24], verbal[,26], type = "udif")
+
+ # Using the "anger" trait variable as matching criterion
+ Logistik(verbal[,1:24],verbal[,26], match = verbal[,25])
+
+ # Using the "anger" trait variable as group membership
+ Logistik(verbal[,1:24],verbal[,25], member.type = "cont")
+ 
+## End(Not run)
+ </code></pre>
+
+
+</div>

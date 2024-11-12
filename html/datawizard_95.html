@@ -1,0 +1,83 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>makepredictcall.dw_transformer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Utility Function for Safe Prediction with <code>datawizard</code> transformers</h2>
+
+<h3>Description</h3>
+
+<p>This function allows for the use of (some of) <code>datawizard</code>'s transformers
+inside a model formula. See examples below.
+<br><br>
+Currently, <code>center()</code>, <code>standardize()</code>, <code>normalize()</code>, &amp; <code>rescale()</code> are
+supported.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dw_transformer'
+makepredictcall(var, call)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>var</code></td>
+<td>
+<p>A variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The term in the formula, as a call.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A replacement for <code>call</code> for the <code>predvars</code> attribute of
+the terms.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>stats::makepredictcall()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data("mtcars")
+train &lt;- mtcars[1:30, ]
+test &lt;- mtcars[31:32, ]
+
+m1 &lt;- lm(mpg ~ center(hp), data = train)
+predict(m1, newdata = test) # Data is "centered" before the prediction is made,
+# according to the center of the old data
+
+m2 &lt;- lm(mpg ~ standardize(hp), data = train)
+m3 &lt;- lm(mpg ~ scale(hp), data = train) # same as above
+predict(m2, newdata = test) # Data is "standardized" before the prediction is made.
+predict(m3, newdata = test) # Data is "standardized" before the prediction is made.
+
+
+m4 &lt;- lm(mpg ~ normalize(hp), data = mtcars)
+m5 &lt;- lm(mpg ~ rescale(hp, to = c(-3, 3)), data = mtcars)
+
+(newdata &lt;- data.frame(hp = c(range(mtcars$hp), 400))) # 400 is outside original range!
+
+model.frame(delete.response(terms(m4)), data = newdata)
+model.frame(delete.response(terms(m5)), data = newdata)
+
+</code></pre>
+
+
+</div>

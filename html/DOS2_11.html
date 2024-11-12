@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>frontseat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Safety Belts in Vehicle Crashes
+</h2>
+
+<h3>Description</h3>
+
+<p>Data from the US Fatality Analysis Reporting System (FARS) in 2010-2011, as discussed in Rosenbaum (2015) and in the "Design of Observational Studies", second edition, Chapter 7.  The data concern crashes in which a driver and a right front passenger were present, following Evans (1986).  The data compare the injuries of the driver and passenger, and are particularly interesting when their safety belt use is different.  The example illustrates the analysis of a counterclaim.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("frontseat")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 17014 observations on the following 7 variables.
+</p>
+
+<dl>
+<dt><code>restraint</code></dt>
+<dd>
+<p>Saftey belt use by (Driver,Passenger), where n=unbelted, ls=lap-shoulder belt.  A factor with levels <code>ls.ls</code> <code>ls.n</code> <code>n.ls</code> <code>n.n</code>.  Here, ls.n means the driver was belted and the passenger was not.</p>
+</dd>
+<dt><code>injury</code></dt>
+<dd>
+<p>Injury of (Driver,Passenger).</p>
+</dd>
+<dt><code>injurydif</code></dt>
+<dd>
+<p>Difference in injury scores, driver-minus-passenger, from -4 to 4.  A score of -4 means the driver was uninjured, but the passenger died.</p>
+</dd>
+<dt><code>ejection</code></dt>
+<dd>
+<p>Ejection from the vehicle of the (Driver,Passenger).</p>
+</dd>
+<dt><code>ejectiondif</code></dt>
+<dd>
+<p>1 if the driver was ejected but the passenger was not, -1 if the passenger was ejected but the driver was not, 0 if their fates were the same.</p>
+</dd>
+<dt><code>gender</code></dt>
+<dd>
+<p>Genders of the (Driver,Passenger).</p>
+</dd>
+<dt><code>agedif</code></dt>
+<dd>
+<p>Difference in ages, driver-minus-passenger.</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>This example is discussed in "Design of Observational Studies", second edition, Chapter 7.
+</p>
+<p>Details are given in Rosenbaum (2015).  A crash, perhaps involving several vehicles, is recorded in FARS only if there is at least
+one fatality, creating issues of ascertainment (Fisher 1934) that do not affect tests of the hypothesis of no effect,
+but that do affect estimation.  Only tests of no effect are considered in this example.
+</p>
+
+
+<h3>Source</h3>
+
+<p>Rosenbaum (2015)
+</p>
+
+
+<h3>References</h3>
+
+<p>Evans, L. (1986) &lt;doi:10.1016/0001-4575(86)90007-2&gt; "The
+Effectiveness of Safety Belts in Preventing Fatalities".
+Accident Analysis and Prevention, 18, 229–241.
+</p>
+<p>Fisher, R.A. (1934) &lt;doi:10.1111/j.1469-1809.1934.tb02105.x&gt; "The Effect of Methods of Ascertainment Upon the Estimation of Frequencies". Annals of Eugenics, 6(1), 13-25.
+</p>
+<p>Imai, K., Keele, L., Yamamoto, T. (2010) &lt;doi:10.1214/10-STS321&gt; "Identification, Inference and Sensitivity Analysis for Causal Mediation Effects". Statistical Science, 25, 51–71.
+</p>
+<p>Rosenbaum, P.R. (2015) &lt;doi:10.1080/01621459.2015.1054489&gt; "Some Counterclaims Undermine Themselves in Observational Studies". Journal of the American Statistical Association, 110:512, 1389-1398.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(frontseat)
+attach(frontseat)
+use&lt;-(!is.na(injurydif))
+# Compare with Table 1 in Rosenbaum (2015), case ls.n
+table(restraint[use])
+use&lt;-use&amp;(restraint=="ls.n")
+2*sensitivitymv::senmv(-injurydif[use],gamma=5,
+       trim=1,lambda=.99)$pval
+2*sensitivitymv::senmv(-injurydif[use],gamma=5.5,
+       trim=1,lambda=.99)$pval
+2*sensitivitymv::senmv(-injurydif[use],gamma=6,
+       trim=1,lambda=.99,inner=.25)$pval
+2*sensitivitymv::senmv(-injurydif[use],gamma=6.5,
+       trim=1,lambda=.99,inner=.25)$pval
+
+# Counterclaim analysis, one ejected individual
+# Compare with Table 2 in Rosenbaum (2015), case ls.n
+table(ejection,ejectiondif)
+use&lt;-use&amp;(!is.na(ejectiondif))&amp;(ejectiondif!=0)
+sum(use)
+2*sensitivitymv::senmv(-injurydif[use],gamma=9,
+       trim=1,lambda=.99)$pval
+2*sensitivitymv::senmv(-injurydif[use],gamma=11,
+       trim=1,lambda=.99,inner=.25)$pval
+detach(frontseat)
+</code></pre>
+
+
+</div>

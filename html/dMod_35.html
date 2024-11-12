@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>datalist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate a datalist object</h2>
+
+<h3>Description</h3>
+
+<p>The datalist object stores time-course data in a list of data.frames.
+The names of the list serve as identifiers, e.g. of an experimental condition, etc.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">datalist(...)
+
+as.datalist(x, ...)
+
+## S3 method for class 'data.frame'
+as.datalist(x, split.by = NULL, keep.covariates = NULL, ...)
+
+## S3 method for class 'list'
+as.datalist(x, names = NULL, ..., condition.grid = attr(x, "condition.grid"))
+
+## S3 replacement method for class 'datalist'
+names(x) &lt;- value
+
+is.datalist(x)
+
+## S3 method for class 'datalist'
+c(...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>data.frame objects to be coerced into a list and additional arguments</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object of class <code>data.frame</code> or <code>list</code>. Data frames are required to
+provide "name", "time" and "value" as columns. Columns "sigma" and "lloq" can be provided.
+If "sigma" and "lloq" are missing, they
+are imputed with <code>NA</code> and <code>-Inf</code>, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split.by</code></td>
+<td>
+<p>vector of columns names which yield a unique identifier (conditions). If NULL, all
+columns except for the expected standard columns "name", "time", "value", "sigma" and "lloq" will be
+selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.covariates</code></td>
+<td>
+<p>vector of additional column names which should be kept in the condition.grid.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>optional names vector, otherwise names are taken from <code>mylist</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition.grid</code></td>
+<td>
+<p>Optionally, to manually specify a condition.grid</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>The new condition names of the datalist and its condition.grid</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Datalists can be plotted, see plotData and merged, see sumdatalist.
+They are the basic structure when combining model prediction and data via the normL2
+objective function.
+</p>
+<p>The standard columns of the datalist data frames are "name" (observable name), 
+"time" (time points), "value" (data value), "sigma" (uncertainty, can be NA), and
+"lloq" (lower limit of quantification, <code>-Inf</code> by default).
+</p>
+<p>Datalists carry the attribute <code>condition.grid</code> which contains additional information about different
+conditions, such as dosing information for the experiment. It can be conveniently accessed by the covariates-function.
+Reassigning names to a datalist also renames the rows of the <code>condition.grid</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class <code>datalist</code>.
+</p>
+<p>Object of class datalist
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Generate datalist from scratch
+mydata1 &lt;- data.frame(name = "A",
+                      time = 0:5,
+                      value = 0:5,
+                      sigma = .1,
+                      lloq = -0.5)
+
+mydata2 &lt;- data.frame(name = "A",
+                      time = 0:5,
+                      value = sin(0:5),
+                      sigma = .1)
+
+data &lt;- datalist(C1 = mydata1, C2 = mydata2)
+print(data)
+plot(data)
+
+## Generate datalist from singla data.frame
+times &lt;- seq(0, 2*pi, length.out = 20)
+mydata &lt;- data.frame(name = "A", 
+                     time = times, 
+                     value = c(sin(times), 1.5 * sin(times)), 
+                     sigma = .1, 
+                     stage = rep(c("upper", "lower"), each = 10),
+                     phase = rep(c("first", "second"), each = 20),
+                     amplitude = rep(c(1,1.5), each = 20))
+
+data &lt;- as.datalist(mydata, split.by = c("stage", "phase"), keep.covariates = "amplitude")
+print(data)
+plot(data)
+
+condition.grid &lt;- attr(data, "condition.grid")
+print(condition.grid)
+</code></pre>
+
+
+</div>

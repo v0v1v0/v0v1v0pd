@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>re_estimator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Estimate model parameters
+</h2>
+
+<h3>Description</h3>
+
+<p>Re-estimate known model parameters from replicate datasets simulated under a given model. Facilitates power analyses and the measure of accuracy and precision in parameter estimation. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">re_estimator(model, div, ages, me1=NULL, me2=NULL, GRAD = NULL, cats=NULL, 
+  breakpoint = NULL, domain = NULL, p_starting = NULL, parallel = FALSE, cores = NULL, 
+  absolute = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+
+<p>Character string defining one of ten models of trait divergence (options: "BM_null", "BM_linear", "OU_null", "OU_linear", "DA_null", "DA_linear", "DA_wt", "DA_bp", "DA_wt_linear", "DA_bp_linear"). See find_mle for model descriptions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>div</code></td>
+<td>
+
+<p>Vector of trait divergences for a set of lineage pairs. Calculated for each pair as abs(trait_val_lineage_2 - trait_val_lineage1). Raw values (i.e. not absolute values) can also be used but must be noted by the user in the argument 'absolute'.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ages</code></td>
+<td>
+
+<p>Vector containing the age (i.e. estimated time since divergence) for each pair in the dataset. IMPORTANT: div, ages, GRAD, and breakpoint vectors must be aligned such that div[i] age[i] grad[i] and breakpoint[i] represent values for the same lineage pair.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>me1</code></td>
+<td>
+
+<p>Vector containing the measurement error (standard error of mean) for species 1s of each pair (for one species = variance/No.measurements)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>me2</code></td>
+<td>
+
+<p>Vector containing the measurement error (standard error of mean) for species 2s of each pair (for one species = variance/No.measurements)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GRAD</code></td>
+<td>
+
+<p>Vector containing the gradient position of each pair. This is the value of a continuous variable such as latitude or body size across which parameters are hypothesized to vary. Required for models with 'linear' suffix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cats</code></td>
+<td>
+
+<p>Vector containing the category code (0, 1, or 2) for each pair (see model_select help page for details).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breakpoint</code></td>
+<td>
+
+<p>Vector of breakpoint times for each pair in the dataset. These are the times AFTER divergence at which a shift occurs in the psi parameter of DA model. Required for DA_bp and DA_bp_linear. See find_mle for details on how to calculate.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>domain</code></td>
+<td>
+
+<p>Vector of length 2 defining the low and high ends of the gradient domain. Essentially identical to the 'xlim' argument in plotting functions. Required for models with 'linear' suffix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_starting</code></td>
+<td>
+
+<p>Optional matrix of customized parameter values from which to launch likelihood searches. Must match the structure required for the chosen model. See the model descriptions in find_mle for details. If p_starting=NULL, default starting values are used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+
+<p>Logical indicating whether likelihood searches should be conducted in parallel across multiple cores. Not available on windows machines. Defaults to FALSE.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+
+<p>If parallel=TRUE, the number of cores on which to run the function. Defaults to all virtual cores.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>absolute</code></td>
+<td>
+
+<p>Logical indicating whether 'div' represents absolute value of trait divergence or the raw divergence values.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>re_estimator is a wrapper to find_mle that returns just the parameter values. The argument 'div' can be a vector of trait divergences or a list containing several vectors of trait divergence. When 'div' is a list, the function can be used to generate a distribution of parameter values. These can in turn be used to evaluate precision and accuracy of likelihood searches when replicate datasets are simulated under a known model. 
+</p>
+<p>TIME CONSIDERATIONS
+Warning: re-estimating parametres from a large number of replicate datasets can be extremely time intensive when DA_wt, DA_bp, DA_wt_linear, or DA_bp_linear are the model in question. Re-estimating parameters to assess model performance using a reasonable number of replicates (~1000), from one of these four complex models, can take hours on a multi-core server. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a matrix of parameter estimates. Each column contains replicate estimates of one parameter. The matrix has one row if div is a vector and N rows if div is a list of length N.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sean A.S. Anderson
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># simulate a dataset of trait divergence with 150 lineage pairs with a range of ages.
+ages = rep(c(0.5, 1, 1.5, 2, 3, 8), 25)
+alpha = 0.8
+sig2 = 0.2
+psi=0.8
+N=10
+sis_div = simulate_div(model="DA_null", ages=ages, pars=c(alpha, sig2, psi), N=N)
+
+# estimate pars from one trait divergence dataset
+par_es = re_estimator(model = "DA_null", div=sis_div[[1]], ages=ages)
+par_es
+
+# estimate pars from a list of trait divergence datasets and find the median
+# of each estimate
+
+par_es = re_estimator(model = "DA_null", div=sis_div, ages=ages)
+head(par_es)
+meds = apply(par_es, 2, median)
+meds
+
+</code></pre>
+
+
+</div>

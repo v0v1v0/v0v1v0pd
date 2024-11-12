@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qpoisR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pure R Implementation of R's qpois()  with Tuning Parameters</h2>
+
+<h3>Description</h3>
+
+
+<p>A pure R implementation, including many tuning parameter arguments, of
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own Rmathlib C code algorithm, but with more flexibility.
+</p>
+<p>It is using <code>Vectorize(qpoisR1, *)</code> where the hidden
+<code>qpoisR1</code> works for numbers (aka ‘scalar’, length one)
+arguments only, the same as the C code.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qpoisR(p, lambda, lower.tail = TRUE, log.p = FALSE,
+       yLarge = 4096, # was hard wired to 1e5
+       incF = 1/64,   # was hard wired to .001
+       iShrink = 8,   # was hard wired to 100
+       relTol = 1e-15,# was hard wired to 1e-15
+       pfEps.n = 8,   # was hard wired to 64: "fuzz to ensure left continuity"
+       pfEps.L = 2,   # was hard wired to 64:   "   "   ..
+       fpf = 4, # *MUST* be &gt;= 1 (did not exist previously)
+       trace = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p, lambda, lower.tail, log.p</code></td>
+<td>
+<p><code>qpois()</code> standard
+argument, see its help page.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yLarge</code></td>
+<td>
+<p>a positive number; in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> up to 2021, was internally
+hardwired to <code>yLarge = 1e5</code>:  Uses more careful search for
+<code class="reqn">y \ge y_L</code>, where <code class="reqn">y</code> is the initial approximate result,
+derived from a Cornish-Fisher expansiion.
+
+
+
+
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>incF</code></td>
+<td>
+<p>a positive “increment factor” (originally hardwired to
+0.001), used only when <code>y &gt;= yLarge</code>; defines the initial increment in
+the search algorithm as <code>incr &lt;- floor(incF * y)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iShrink</code></td>
+<td>
+<p>a positive increment shrinking factor, used only when
+<code>y &gt;= yLarge</code> to define the new increment from the old one as
+<code>incr &lt;- max(1, floor(incr/iShrink))</code> where the LHS was hardired
+original to <code>(incr/100)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relTol</code></td>
+<td>
+<p>originally hard wired to 1e-15, defines the convergence
+tolerance for the search iterations when <code>y &gt;= yLarge</code>; the
+iterations stop when (new) <code>incr &lt;= y * relTol</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pfEps.n, pfEps.L</code></td>
+<td>
+<p>positive factors defining “fuzz to ensure
+left continuity”, both originally hardwired to <code>64</code>, the fuzz adjustment was
+</p>
+<pre>p &lt;- p * (1 - 64 *.Machine$double.eps)</pre>
+<p>Now, <code>pfEps.L</code> is used <code>if(log.p)</code> is true and <code>pfEps.n</code>
+is used otherwise ("n"ormal case), and the adjustments also depend on
+<code>lower.tail</code>, and also on <code>fpf</code> : </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fpf</code></td>
+<td>
+<p>a number larger than <code>1</code>, together with <code>pfEps.n</code>
+determines the fuzz-adjustment to <code>p</code> in the case
+<code>(lower=tail=FALSE, log.p=FALSE)</code>:
+with <code>e &lt;- pfEps.n * .Machine$double.eps</code>, the adjustment
+<code>p &lt;- p * (1 + e)</code> is made <em>iff</em> <code>1 - p &gt; fpf*e</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>logical (or integer) specifying if (and how much) output
+should be produced from the algorithm.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The defaults and exact meaning of the algorithmic tuning arguments from
+<code>yLarge</code> to <code>fpf</code> were experimentally determined are subject to change.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector like <code>p</code> recycled to the common lengths of <code>p</code>
+and <code>lambda</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>qpois</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- 10*(15:25)
+Pp &lt;- ppois(x, lambda = 100, lower.tail = FALSE)  # no cancellation
+qPp &lt;- qpois(Pp, lambda = 100, lower.tail=FALSE)
+table(x == qPp) # all TRUE ?
+## future: if(getRversion() &gt;= "4.2") stopifnot(x == qPp) # R-devel
+qpRp &lt;- qpoisR(Pp, lambda = 100, lower.tail=FALSE)
+all.equal(x, qpRp, tol = 0)
+stopifnot(all.equal(x, qpRp, tol = 1e-15))
+</code></pre>
+
+
+</div>

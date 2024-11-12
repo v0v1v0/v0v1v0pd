@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>affinity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Environmental affinities of taxa</h2>
+
+<h3>Description</h3>
+
+<p>This function will return the preferred environment of the taxa, given the distribution of occurrences.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">affinity(
+  x,
+  tax,
+  bin,
+  env,
+  coll = NULL,
+  method = "binom",
+  alpha = 1,
+  reldat = NULL,
+  na.rm = FALSE,
+  bycoll = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>(data.frame)</code> The occurrence dataset containing the taxa with unknown environmental affinities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tax</code></td>
+<td>
+<p><code>(character)</code> The column name of taxon names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin</code></td>
+<td>
+<p><code>(character)</code> The column name of bin names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p><code>(character)</code> The environmental variable of the occurrences.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coll</code></td>
+<td>
+<p><code>(character)</code> The column name of collection identifiers (optional). If this is provided, then then the multiple entries of a taxon within the collections will be treated as 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p><code>(character)</code> The method used for affinity calculations. Can be either <code>"binom"</code> or <code>"majority"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p><code>(numeric)</code> The alpha value of the binomial tests. By default binomial testing is off (<code>alpha=1</code>) and the methods returns that environment as the preferred one, which has the highest likelihood (odds ratio).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reldat</code></td>
+<td>
+<p><code>(data.frame)</code> Database with the same structure as <code>x</code>.  <code>x</code> is typically a subset of <code>reldat</code>. If given, the occurrence distribution of <code>reldat</code> is used 
+as the null model of sampling. Defaults to <code>NULL</code>, which means that <code>x</code> itself will be used as <code>reldat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p><code>(logical)</code> Should the <code>NA</code> entries in the relevant columns of <code>x</code> be omitted automatically?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bycoll</code></td>
+<td>
+<p><code>(logical)</code> If set to <code>TRUE</code>, the number of collections (or samples, in <code>coll</code>) will be used rather than the number of occurrences.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Sampling patterns have an overprinting effect on the frequency of taxon occurrences in different environments. The environmental affinity (Foote, 2006; Kiessling and Aberhan, 2007; Kiessling and Kocsis, 2015) expresses whether the taxa are more likely to occur in an environment, given the sampling patterns of the dataset at hand. The function returns the likely preferred environment for each taxon as a vector. <code>NA</code> outputs indicate that the environmental affinity is equivocal based on the selected method.
+</p>
+<p><strong>The following methods are implemented:</strong>
+</p>
+<p><code>'majority'</code>: Environmental affinity will be assigned based on the number of occurrences of the taxon in the different environments, without taking sampling of the entire dataset into account. If the taxon has more occurrences in <em>environment 1</em>, the function will return <em>environment 1</em> as the preferred habitat. 
+</p>
+<p><code>'binom'</code>: The proportion of occurrences of a taxon in <em>environment 1</em> and <em>environment 2</em> will be compared to a null model, which is based on the distribution of all occurrences from the stratigraphic range of the taxon (in <code>x</code> or if provided, in <code>reldat</code>). Then a binomial test is run on with the numbers of the most likely preference (against all else). The <code>alpha</code> value indicates the significance of the binomial tests, setting <code>alpha</code> to <code>1</code> will effectively switch the testing off: if the ratio of occurrences for the taxon is different from the ratio observed in the dataset, an affinity will be assigned. This is the default method. If an environment is not sampled at all in the dataset to which the taxon's occurrences are compared to, the binomial method returns <code>NA</code> for the taxon's affinity. 
+</p>
+<p><strong>References</strong>
+</p>
+<p>Foote, M. (2006). Substrate affinity and diversity dynamics of Paleozoic marine animals. Paleobiology, 32(3), 345-366.
+</p>
+<p>Kiessling, W., &amp; Aberhan, M. (2007). Environmental determinants of marine benthic biodiversity dynamics through Triassic–Jurassic time. Paleobiology, 33(3), 414-434.
+</p>
+<p>Kiessling, W., &amp; Kocsis, Á. T. (2015). Biodiversity dynamics and environmental occupancy of fossil azooxanthellate and zooxanthellate scleractinian corals. Paleobiology, 41(3), 402-414.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A named vector, values corresponding to affinities.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(corals)
+# omit values where no occurrence environment entry is present, or where unknown
+  fossils&lt;-subset(corals, stg!=95)
+  fossilEnv&lt;-subset(fossils, bath!="uk")
+# calculate affinities
+  aff&lt;-affinity(fossilEnv, env="bath", tax="genus", bin="stg", alpha=1)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>reformat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Reformat Values</h2>
+
+<h3>Description</h3>
+
+<p>Reformat Values
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">reformat(obj, ...)
+
+## Default S3 method:
+reformat(obj, format, ...)
+
+## S3 method for class 'character'
+reformat(obj, format, ...)
+
+## S3 method for class 'factor'
+reformat(obj, format, ...)
+
+## S3 method for class 'list'
+reformat(obj, format, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>(<code>character</code>, <code>factor</code> or <code style="white-space: pre;">⁠list of data.frame⁠</code>) to reformat.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>for compatibility between methods and pass additional special mapping to transform rules.
+</p>
+
+<ul>
+<li> <p><code>.string_as_fct</code> (<code>flag</code>) whether the reformatted character object should be converted to factor.
+</p>
+</li>
+<li> <p><code>.to_NA</code> (<code>character</code>) values that should be converted to <code>NA</code>. For <code>factor</code>, the corresponding levels are
+dropped. If <code>NULL</code>, the argument will be taken from the <code>to_NA</code>attribute of the rule.
+</p>
+</li>
+<li> <p><code>.drop</code> (<code>flag</code>) whether to drop empty levels. If <code>NULL</code>, the argument will be taken from the <code>drop</code>attribute of
+the rule.
+</p>
+</li>
+<li> <p><code>.na_last</code> (<code>flag</code>) whether the level replacing <code>NA</code> should be last.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>(<code>rule</code>) or (<code>list</code>) of <code>rule</code> depending on the class of obj.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>(<code>character</code>, <code>factor</code> or <code style="white-space: pre;">⁠list of data.frame⁠</code>) with remapped values.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When the rule is empty rule or when values subject to reformatting are absent from the object, no error is
+raised. The conversion to factor if <code>.string_as_fct = TRUE</code>) is still carried out. The conversion of the levels
+declared in <code>.to_NA</code> to <code>NA</code> values occurs after the remapping. <code>NA</code> values created this way are not affected by a
+rule declaring a remapping of <code>NA</code> values. For factors, level dropping is the last step, hence, levels converted to
+<code>NA</code> by the <code>.to_NA</code> argument, will be removed if <code>.drop</code> is <code>TRUE</code>. Arguments passed via <code>reformat</code> override the
+ones defined during rule creation.
+</p>
+<p>the variables listed under the <code>all_dataset</code> keyword will be reformatted with the corresponding rule in every
+data set except where another rule is specified for the same variable under a specific data set name.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Reformatting of character.
+obj &lt;- c("a", "b", "x", NA, "")
+attr(obj, "label") &lt;- "my label"
+format &lt;- rule("A" = "a", "NN" = NA)
+
+reformat(obj, format)
+reformat(obj, format, .string_as_fct = FALSE, .to_NA = NULL)
+
+
+# Reformatting of factor.
+obj &lt;- factor(c("first", "a", "aa", "b", "x", NA), levels = c("first", "x", "b", "aa", "a", "z"))
+attr(obj, "label") &lt;- "my label"
+format &lt;- rule("A" = c("a", "aa"), "NN" = c(NA, "x"), "Not_present" = "z", "Not_a_level" = "P")
+
+reformat(obj, format)
+reformat(obj, format, .na_last = FALSE, .to_NA = "b", .drop = FALSE)
+
+
+# Reformatting of list of data.frame.
+df1 &lt;- data.frame(
+  var1 = c("a", "b", NA),
+  var2 = factor(c("F1", "F2", NA))
+)
+
+df2 &lt;- data.frame(
+  var1 = c("x", NA, "y"),
+  var2 = factor(c("F11", NA, "F22"))
+)
+
+db &lt;- list(df1 = df1, df2 = df2)
+
+format &lt;- list(
+  df1 = list(
+    var1 = rule("X" = "x", "N" = NA, .to_NA = "b")
+  ),
+  df2 = list(
+    var2 = rule("f11" = "F11", "NN" = NA)
+  ),
+  all_datasets = list(
+    var1 = rule("xx" = "x", "aa" = "a")
+  )
+)
+
+reformat(db, format)
+</code></pre>
+
+
+</div>

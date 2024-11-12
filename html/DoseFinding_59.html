@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>powMCT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate power for multiple contrast test</h2>
+
+<h3>Description</h3>
+
+<p>Calculate power for a multiple contrast test for a set of specified
+alternatives.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">powMCT(
+  contMat,
+  alpha = 0.025,
+  altModels,
+  n,
+  sigma,
+  S,
+  placAdj = FALSE,
+  alternative = c("one.sided", "two.sided"),
+  df,
+  critV = TRUE,
+  control = mvtnorm.control()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contMat</code></td>
+<td>
+<p>Contrast matrix to use. The individual contrasts should be
+saved in the columns of the matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Significance level to use</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>altModels</code></td>
+<td>
+<p>An object of class ‘<span class="samp">⁠Mods⁠</span>’, defining the mean vectors
+under which the power should be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n, sigma, S</code></td>
+<td>
+<p>Either a vector ‘<span class="samp">⁠n⁠</span>’ and ‘<span class="samp">⁠sigma⁠</span>’ or ‘<span class="samp">⁠S⁠</span>’ need
+to be specified.  When ‘<span class="samp">⁠n⁠</span>’ and ‘<span class="samp">⁠sigma⁠</span>’ are specified it is assumed
+computations are made for a normal homoscedastic ANOVA model with group
+sample sizes given by ‘<span class="samp">⁠n⁠</span>’ and residual standard deviation ‘<span class="samp">⁠sigma⁠</span>’,
+i.e. the covariance matrix used for the estimates is thus
+<code>sigma^2*diag(1/n)</code> and the degrees of freedom are calculated as
+<code>sum(n)-nrow(contMat)</code>. When a single number is specified for ‘<span class="samp">⁠n⁠</span>’
+it is assumed this is the sample size per group and balanced allocations are
+used.<br></p>
+<p>When ‘<span class="samp">⁠S⁠</span>’ is specified this will be used as covariance matrix for the
+estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>placAdj</code></td>
+<td>
+<p>Logical, if true, it is assumed that the standard deviation
+or variance matrix of the placebo-adjusted estimates are specified in
+‘<span class="samp">⁠sigma⁠</span>’ or ‘<span class="samp">⁠S⁠</span>’, respectively. The contrast matrix has to be
+produced on placebo-adjusted scale, see <code>optContr</code>, so that the
+coefficients are no longer contrasts (i.e. do not sum to 0).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>Character determining the alternative for the multiple
+contrast trend test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Degrees of freedom to assume in case ‘<span class="samp">⁠S⁠</span>’ (a general
+covariance matrix) is specified. When ‘<span class="samp">⁠n⁠</span>’ and ‘<span class="samp">⁠sigma⁠</span>’ are
+specified the ones from the corresponding ANOVA model are calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>critV</code></td>
+<td>
+<p>Critical value, if equal to ‘<span class="samp">⁠TRUE⁠</span>’ the critical value will
+be calculated. Otherwise one can directly specify the critical value here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list specifying additional control parameters for the
+‘<span class="samp">⁠qmvt⁠</span>’ and ‘<span class="samp">⁠pmvt⁠</span>’ calls in the code, see also
+‘<span class="samp">⁠mvtnorm.control⁠</span>’ for details.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Numeric containing the calculated power values
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>References</h3>
+
+<p>Pinheiro, J. C., Bornkamp, B., and Bretz, F. (2006). Design and
+analysis of dose finding studies combining multiple comparisons and modeling
+procedures, <em>Journal of Biopharmaceutical Statistics</em>, <b>16</b>,
+639–656
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>powN</code>, <code>sampSizeMCT</code>,
+<code>MCTtest</code>, <code>optContr</code>, <code>Mods</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## look at power under some dose-response alternatives
+## first the candidate models used for the contrasts
+doses &lt;- c(0,10,25,50,100,150)
+## define models to use as alternative 
+fmodels &lt;- Mods(linear = NULL, emax = 25,
+                logistic = c(50, 10.88111), exponential= 85,
+                betaMod=rbind(c(0.33,2.31),c(1.39,1.39)),
+                doses = doses, addArgs=list(scal = 200),
+                placEff = 0, maxEff = 0.4)
+## plot alternatives
+plot(fmodels)
+## power for to detect a trend
+contMat &lt;- optContr(fmodels, w = 1)
+powMCT(contMat, altModels = fmodels, n = 50, alpha = 0.05, sigma = 1)
+
+## Not run: 
+## power under the Dunnett test
+## contrast matrix for Dunnett test with informative names
+contMatD &lt;- rbind(-1, diag(5))
+rownames(contMatD) &lt;- doses
+colnames(contMatD) &lt;- paste("D", doses[-1], sep="")
+powMCT(contMatD, altModels = fmodels, n = 50, alpha = 0.05, sigma = 1)
+
+## now investigate power of the contrasts in contMat under "general" alternatives
+altFmods &lt;- Mods(linInt = rbind(c(0, 1, 1, 1, 1),
+                                  c(0.5, 1, 1, 1, 0.5)),
+                 doses=doses, placEff=0, maxEff=0.5)
+plot(altFmods)
+powMCT(contMat, altModels = altFmods, n = 50, alpha = 0.05, sigma = 1)
+
+## now the first example but assume information only on the
+## placebo-adjusted scale
+## for balanced allocations and 50 patients with sigma = 1 one obtains
+## the following covariance matrix
+S &lt;- 1^2/50*diag(6)
+## now calculate variance of placebo adjusted estimates
+CC &lt;- cbind(-1,diag(5))
+V &lt;- (CC)%*%S%*%t(CC)
+linMat &lt;- optContr(fmodels, doses = c(10,25,50,100,150),
+                   S = V, placAdj = TRUE)
+powMCT(linMat, altModels = fmodels, placAdj=TRUE,
+       alpha = 0.05, S = V, df=6*50-6) # match df with the df above
+
+## End(Not run)
+</code></pre>
+
+
+</div>

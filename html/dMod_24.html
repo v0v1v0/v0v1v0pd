@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.parframe.parlist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Coerce object to a parameter frame</h2>
+
+<h3>Description</h3>
+
+<p>Coerce object to a parameter frame
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'parlist'
+as.parframe(x, sort.by = "value", ...)
+
+as.parframe(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object to be coerced</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sort.by</code></td>
+<td>
+<p>character indicating by which colum the returned parameter frame
+should be sorted. Defaults to <code>"value"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>object of class parframe.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Generate a prediction function
+regfn &lt;- c(y = "sin(a*time)")
+
+g &lt;- Y(regfn, parameters = "a")
+x &lt;- Xt(condition = "C1")
+
+## Generate data
+data &lt;- datalist(
+  C1 = data.frame(
+    name = "y",
+    time = 1:5,
+    value = sin(1:5) + rnorm(5, 0, .1),
+    sigma = .1
+  )
+)
+
+## Initialize parameters and time 
+pars &lt;- c(a = 1)
+times &lt;- seq(0, 5, .1)
+
+plot((g*x)(times, pars), data)
+
+## Do many fits from random positions and store them into parlist
+out &lt;- as.parlist(lapply(1:50, function(i) {
+  trust(normL2(data, g*x), pars + rnorm(length(pars), 0, 1), rinit = 1, rmax = 10)
+}))
+
+summary(out)
+
+## Reduce parlist to parframe
+parframe &lt;- as.parframe(out)
+plotValues(parframe)
+
+## Reduce parframe to best fit
+bestfit &lt;- as.parvec(parframe)
+plot((g*x)(times, bestfit), data)
+
+
+</code></pre>
+
+
+</div>

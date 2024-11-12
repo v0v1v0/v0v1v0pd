@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ALC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Active Learning Cohn for Sequential Design</h2>
+
+<h3>Description</h3>
+
+<p>Acts on a <code>gp</code>, <code>dgp2</code>, or <code>dgp3</code> object. 
+Current version requires squared exponential covariance 
+(<code>cov = "exp2"</code>).  Calculates ALC over the input locations 
+<code>x_new</code> using specified reference grid.  If no reference grid is 
+specified, <code>x_new</code> is used as the reference.  Optionally utilizes 
+SNOW parallelization.  User should 
+select the point with the highest ALC to add to the design.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ALC(object, x_new, ref, cores)
+
+## S3 method for class 'gp'
+ALC(object, x_new = NULL, ref = NULL, cores = 1)
+
+## S3 method for class 'dgp2'
+ALC(object, x_new = NULL, ref = NULL, cores = 1)
+
+## S3 method for class 'dgp3'
+ALC(object, x_new = NULL, ref = NULL, cores = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>object of class <code>gp</code>, <code>dgp2</code>, or <code>dgp3</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_new</code></td>
+<td>
+<p>matrix of possible input locations, if object has been run 
+through <code>predict</code> the previously stored <code>x_new</code> is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref</code></td>
+<td>
+<p>optional reference grid for ALC approximation, if <code>ref = NULL</code> 
+then <code>x_new</code> is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>number of cores to utilize in parallel, by default no 
+parallelization is used</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Not yet implemented for Vecchia-approximated fits or Matern kernels.
+</p>
+<p>All iterations in the object are used in the calculation, so samples 
+should be burned-in.  Thinning the samples using <code>trim</code> will
+speed up computation.  This function may be used in two ways:
+</p>
+
+<ul>
+<li>
+<p> Option 1: called on an object with only MCMC iterations, in 
+which case <code>x_new</code> must be specified
+</p>
+</li>
+<li>
+<p> Option 2: called on an object that has been predicted over, in 
+which case the <code>x_new</code> from <code>predict</code> is used
+</p>
+</li>
+</ul>
+<p>In Option 2,  it is recommended to set <code>store_latent = TRUE</code> for 
+<code>dgp2</code> and <code>dgp3</code> objects so
+latent mappings do not have to be re-calculated.  Through <code>predict</code>, 
+the user may specify a mean mapping (<code>mean_map = TRUE</code>) or a full 
+sample from the MVN distribution over <code>w_new</code> 
+(<code>mean_map = FALSE</code>).  When the object has not yet been predicted
+over (Option 1), the mean mapping is used.
+</p>
+<p>SNOW parallelization reduces computation time but requires more memory
+storage.  C code derived from the "laGP" package (Robert B Gramacy and 
+Furong Sun).
+</p>
+
+
+<h3>Value</h3>
+
+<p>list with elements:
+</p>
+
+<ul>
+<li> <p><code>value</code>: vector of ALC values, indices correspond to <code>x_new</code>
+</p>
+</li>
+<li> <p><code>time</code>: computation time in seconds
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Sauer, A., Gramacy, R.B., &amp; Higdon, D. (2023). Active learning for deep 
+Gaussian process surrogates. *Technometrics, 65,* 4-18.  arXiv:2012.08015
+<br><br>
+Seo, S, M Wallat, T Graepel, and K Obermayer. 2000. Gaussian Process Regression:
+Active Data Selection and Test Point Rejection. In Mustererkennung 2000, 
+2734. New York, NY: SpringerVerlag.<br><br>
+Gramacy, RB and F Sun. (2016). laGP: Large-Scale Spatial Modeling via Local 
+Approximate Gaussian Processes in R. <em>Journal of Statistical Software 
+72</em> (1), 1-46. doi:10.18637/jss.v072.i01
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Additional examples including real-world computer experiments are available at: 
+# https://bitbucket.org/gramacylab/deepgp-ex/
+
+# --------------------------------------------------------
+# Example 1: toy step function, runs in less than 5 seconds
+# --------------------------------------------------------
+
+f &lt;- function(x) {
+    if (x &lt;= 0.4) return(-1)
+    if (x &gt;= 0.6) return(1)
+    if (x &gt; 0.4 &amp; x &lt; 0.6) return(10*(x-0.5))
+}
+
+x &lt;- seq(0.05, 0.95, length = 7)
+y &lt;- sapply(x, f)
+x_new &lt;- seq(0, 1, length = 100)
+
+# Fit model and calculate ALC
+fit &lt;- fit_two_layer(x, y, nmcmc = 100, cov = "exp2")
+fit &lt;- trim(fit, 50)
+fit &lt;- predict(fit, x_new, cores = 1, store_latent = TRUE)
+alc &lt;- ALC(fit)
+
+
+# --------------------------------------------------------
+# Example 2: damped sine wave
+# --------------------------------------------------------
+
+f &lt;- function(x) {
+    exp(-10*x) * (cos(10*pi*x - 1) + sin(10*pi*x - 1)) * 5 - 0.2
+}
+
+# Training data
+x &lt;- seq(0, 1, length = 30)
+y &lt;- f(x) + rnorm(30, 0, 0.05)
+
+# Testing data
+xx &lt;- seq(0, 1, length = 100)
+yy &lt;- f(xx)
+
+plot(xx, yy, type = "l")
+points(x, y, col = 2)
+
+# Conduct MCMC (can replace fit_two_layer with fit_one_layer/fit_three_layer)
+fit &lt;- fit_two_layer(x, y, D = 1, nmcmc = 2000, cov = "exp2")
+plot(fit)
+fit &lt;- trim(fit, 1000, 2)
+
+# Option 1 - calculate ALC from MCMC iterations
+alc &lt;- ALC(fit, xx)
+
+# Option 2 - calculate ALC after predictions
+fit &lt;- predict(fit, xx, cores = 1, store_latent = TRUE)
+alc &lt;- ALC(fit)
+
+# Visualize fit
+plot(fit)
+par(new = TRUE) # overlay ALC
+plot(xx, alc$value, type = 'l', lty = 2, axes = FALSE, xlab = '', ylab = '')
+
+# Select next design point
+x_new &lt;- xx[which.max(alc$value)]
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>intPredErr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Integrated prediction error</h2>
+
+<h3>Description</h3>
+
+<p>Computes the integrated prediction error curve for discrete survival models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">intPredErr(
+  hazards,
+  testTime,
+  testEvent,
+  trainTime,
+  trainEvent,
+  testDataLong,
+  tmax = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>hazards</code></td>
+<td>
+<p>Predicted discrete hazards in the test data ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testTime</code></td>
+<td>
+<p>Discrete time intervals in short format of the test set
+("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testEvent</code></td>
+<td>
+<p>Events in short format in the test set ("binary vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainTime</code></td>
+<td>
+<p>Discrete time intervals in short format of the
+training data set ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainEvent</code></td>
+<td>
+<p>Events in short format in the training set ("binary
+vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testDataLong</code></td>
+<td>
+<p>Test data in long format("class data.frame"). The discrete survival function is
+calculated based on the predicted hazards. It is assumed that the data was
+preprocessed with a function with prefix "dataLong", see e. g.
+<code>dataLong</code>, <code>dataLongTimeDep</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tmax</code></td>
+<td>
+<p>Gives the maximum time interval for which prediction errors are
+calculated ("integer vector"). It must be smaller than the maximum observed time in the
+training data of the object produced by function. The default setting NULL means, that all observed intervals are used.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Integrated prediction error ("numeric vector").
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Gneiting T, Raftery AE (2007).
+“Strictly Proper Scoring Rules, Prediction, and Estimation.”
+<em>Journal of the American Statistical Association</em>, <b>102</b>, 359-378.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predErrCurve</code>, <code>aggregate</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##########################
+# Example with cancer data
+
+library(survival)
+head(cancer)
+
+# Data preparation and convertion to 30 intervals
+cancerPrep &lt;- cancer
+cancerPrep$status &lt;- cancerPrep$status-1
+intLim &lt;- quantile(cancerPrep$time, prob = seq(0, 1, length.out = 30))
+intLim [length(intLim)] &lt;- intLim [length(intLim)] + 1
+
+# Cut discrete time in smaller number of intervals
+cancerPrep &lt;- contToDisc(dataShort = cancerPrep, timeColumn = "time", intervalLimits = intLim)
+
+# Generate training and test data
+set.seed(753)
+TrainIndices &lt;- sample (x = 1:dim(cancerPrep) [1], size = dim(cancerPrep) [1] * 0.75)
+TrainCancer &lt;- cancerPrep [TrainIndices, ]
+TestCancer &lt;- cancerPrep [-TrainIndices, ]
+TrainCancer$timeDisc &lt;- as.numeric(as.character(TrainCancer$timeDisc))
+TestCancer$timeDisc &lt;- as.numeric(as.character(TestCancer$timeDisc))
+
+# Convert to long format
+LongTrain &lt;- dataLong(dataShort = TrainCancer, timeColumn = "timeDisc", eventColumn = "status",
+timeAsFactor=FALSE)
+LongTest &lt;- dataLong(dataShort = TestCancer, timeColumn = "timeDisc", eventColumn = "status",
+timeAsFactor=FALSE)
+# Convert factors
+LongTrain$timeInt &lt;- as.numeric(as.character(LongTrain$timeInt))
+LongTest$timeInt &lt;- as.numeric(as.character(LongTest$timeInt))
+LongTrain$sex &lt;- factor(LongTrain$sex)
+LongTest$sex &lt;- factor(LongTest$sex)
+
+# Estimate, for example, a generalized, additive model in discrete survival analysis
+library(mgcv)
+gamFit &lt;- gam (formula = y ~ s(timeInt) + s(age) + sex + ph.ecog, data = LongTrain, 
+family = binomial())
+summary(gamFit)
+
+# 1. Specification of predicted discrete hazards
+# Estimate survival function of each person in the test data
+testPredHaz &lt;- predict(gamFit, newdata = LongTest, type = "response")
+
+# 2. Calculate integrated prediction error
+intPredErr(hazards = testPredHaz, 
+testTime = TestCancer$timeDisc, testEvent = TestCancer$status, 
+trainTime = TrainCancer$timeDisc, trainEvent = TrainCancer$status, 
+testDataLong = LongTest)
+
+</code></pre>
+
+
+</div>

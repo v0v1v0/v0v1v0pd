@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qtAppr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute Approximate Quantiles of the (Non-Central) t-Distribution</h2>
+
+<h3>Description</h3>
+
+<p>Compute quantiles (inverse distribution values) for the non-central t distribution.
+using Johnson,Kotz,.. p.521, formula (31.26 a) (31.26 b) &amp; (31.26 c)
+</p>
+<p>Note that <code>qt(.., ncp=*)</code> did not exist yet in 1999, when MM
+implemented <code>qtAppr()</code>.
+</p>
+<p><code>qtNappr()</code> approximates t-quantiles for large <code>df</code>, i.e., when
+close to the Gaussian / normal distribution, using up to 4 asymptotic
+terms from Abramowitz &amp; Stegun 26.7.5 (p.949).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qtAppr (p, df, ncp, lower.tail = TRUE, log.p = FALSE, method = c("a", "b", "c"))
+qtNappr(p, df,      lower.tail = TRUE, log.p=FALSE, k) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>vector of probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>degrees of freedom <code class="reqn">&gt; 0</code>, maybe non-integer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncp</code></td>
+<td>
+<p>non-centrality parameter <code class="reqn">\delta</code>; ....</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail, log.p</code></td>
+<td>
+<p>logical, see, e.g., <code>qt()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>a string specifying the approximation method to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>an integer in {0,1,2,3,4}, choosing the number of terms in <code>qtNappr()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>numeric vector of length <code>length(p + df + ncp)</code> with approximate t-quantiles.
+</p>
+
+
+<h3>References</h3>
+
+<p>Johnson, N.L., Kotz, S. and Balakrishnan, N. (1995)
+Continuous Univariate Distributions Vol~2, 2nd ed.; Wiley;
+chapter 31, Section <em>6  Approximation</em>, p.519 ff
+</p>
+<p>Abramowitz, M. and Stegun, I. A. (1972)
+<em>Handbook of Mathematical Functions</em>. New York: Dover;
+formula (26.7.5), p.949;
+<a href="https://en.wikipedia.org/wiki/Abramowitz_and_Stegun">https://en.wikipedia.org/wiki/Abramowitz_and_Stegun</a> provides
+links to the full text which is in public domain.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Our <code>qtU()</code>; several non-central density and probability
+approximations in <code>dntJKBf</code>, and e.g., <code>pntR</code>.
+Further, <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>qt</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+qts &lt;- function(p, df) {
+    cbind(qt = qt(p, df=df)
+        , qtN0 = qtNappr(p, df=df, k=0)
+        , qtN1 = qtNappr(p, df=df, k=1)
+        , qtN2 = qtNappr(p, df=df, k=2)
+        , qtN3 = qtNappr(p, df=df, k=3)
+        , qtN4 = qtNappr(p, df=df, k=4)
+          )
+}
+p &lt;- (0:100)/100
+ii &lt;- 2:100 # drop p=0 &amp; p=1  where q*(p, .) == +/- Inf
+
+df &lt;- 100 # &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+qsp1c &lt;- qts(p, df = df)
+matplot(p, qsp1c, type="l") # "all on top"
+(dq &lt;- (qsp1c[,-1] - qsp1c[,1])[ii,])
+matplot(p[ii], dq, type="l", col=2:6,
+        main = paste0("difference qtNappr(p,df) - qt(p,df), df=",df), xlab=quote(p))
+matplot(p[ii], pmax(abs(dq), 1e-17), log="y", type="l", col=2:6,
+        main = paste0("abs. difference |qtNappr(p,df) - qt(p,df)|, df=",df), xlab=quote(p))
+legend("bottomright", paste0("k=",0:4), col=2:6, lty=1:5, bty="n")
+matplot(p[ii], abs(dq/qsp1c[ii,"qt"]), log="y", type="l", col=2:6,
+        main = sprintf("rel.error qtNappr(p, df=%g, k=*)",df), xlab=quote(p))
+legend("left", paste0("k=",0:4), col=2:6, lty=1:5, bty="n")
+
+df &lt;- 2000 # &lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;
+qsp1c &lt;- qts(p, df=df)
+(dq &lt;- (qsp1c[,-1] - qsp1c[,1])[ii,])
+matplot(p[ii], dq, type="l", col=2:6,
+        main = paste0("difference qtNappr(p,df) - qt(p,df), df=",df), xlab=quote(p))
+legend("top", paste0("k=",0:4), col=2:6, lty=1:5)
+matplot(p[ii], pmax(abs(dq), 1e-17), log="y", type="l", col=2:6,
+        main = paste0("abs.diff. |qtNappr(p,df) - qt(p,df)|, df=",df), xlab=quote(p))
+legend("right", paste0("k=",0:4), col=2:6, lty=1:5, bty="n")
+
+matplot(p[ii], abs(dq/qsp1c[ii,"qt"]), log="y", type="l", col=2:6,
+        main = sprintf("rel.error qtNappr(p, df=%g, k=*)",df), xlab=quote(p))
+legend("left", paste0("k=",0:4), col=2:6, lty=1:5, bty="n")
+</code></pre>
+
+
+</div>

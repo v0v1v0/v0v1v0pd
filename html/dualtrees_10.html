@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dualtree-transform</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The 2D forward and inverse dualtree complex wavelet transform</h2>
+
+<h3>Description</h3>
+
+<p>These functions perform the dualtree complex wavelet analysis and synthesis, either with or without decimation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtcwt(fld, fb1 = near_sym_b, fb2 = qshift_b, J = NULL, dec = TRUE,
+  verbose = FALSE)
+
+idtcwt(pyr, fb1 = near_sym_b, fb2 = qshift_b, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fld</code></td>
+<td>
+<p>real matrix representing the field to be transformed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fb1</code></td>
+<td>
+<p>A list of filter coefficients for the first level. Currently only <code>near_sym_b</code> and <code>near_sym_b_bp</code> are implemented</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fb2</code></td>
+<td>
+<p>A list of filter coefficients for all following levels. Currently only <code>qshift_b</code> and <code>qshift_b_bp</code> are implemented</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>J</code></td>
+<td>
+<p>number of levels for the decomposition. Defaults to <code>log2( min(Nx,Ny) )</code> in the decimated case and <code>log2( min(Nx,Ny) ) - 3</code> otherwise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dec</code></td>
+<td>
+<p>whether or not the decimated transform is desired</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if TRUE, the function tells you which level it is working on</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pyr</code></td>
+<td>
+<p>a list containing arrays of complex coefficients for each level of the decomposition, produced by <code>dtcwt( ..., dec=TRUE )</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is the 2D complex dualtree wavelet transform as described by Selesnick et al. (2005). It consists of four discerete wavelet transform trees, generated from two filter banks a and b by applying one set of filters to the rows and another (or the same) one to the columns. The 12 resulting coefficients are combined into six complex values representing six directions (15°, 45°, 75°, 105°, 135°, 165°). 
+In the decimated case (dec=TRUE), each convolution is followed by a downsampling by two, meaining that the size of the six coefficient fields is cut in half at each level. The decimated transform can be reversed to recover the original image. For the <code>near_sym_b</code> and <code>qshift_b</code> filter banks, this reconstrcution should be basically perfect. In the case of the the <code>b_bp</code> filters, non-negligible artifacts appear near +-45° edges.
+</p>
+
+
+<h3>Value</h3>
+
+<p>if dec=TRUE a list of complex coefficient fields, otherwise a complex <code>J x Nx x Ny x 6</code> array.
+</p>
+
+
+<h3>Note</h3>
+
+<p>At present, the inverse transform only works if the input image had dimensions <code>2^N x 2^N</code>. You can use <code>boundaries</code> to achieve that.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Nick Kingsbury (canonical MATLAB implementation), Rich Wareham (open source Python implementation, <a href="https://github.com/rjw57/dtcwt">https://github.com/rjw57/dtcwt</a>), Sebastian Buschow (R port).
+</p>
+
+
+<h3>References</h3>
+
+<p>Kingsbury, Nick (1999) &lt;doi:10.1098/rsta.1999.0447&gt;.
+Selesnick, I.W., R.G. Baraniuk, and N.C. Kingsbury (2005) &lt;doi:10.1109/MSP.2005.1550194&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>filterbanks</code>, <code>fld2dt</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">oldpar &lt;- par( no.readonly=TRUE )
+# forward transform
+dt &lt;- dtcwt( blossom )
+par( mfrow=c(2,3), mar=rep(2,4) )
+for( j in 1:6 ){
+    image( blossom, col=grey.colors(32,0,1) )
+    contour( Mod( dt[[3]][ ,,j ] )**2, add=TRUE, col="green" )
+} 
+par( oldpar ) 
+
+# exmaple for the inverse transform
+blossom_i &lt;- idtcwt( dt )
+image( blossom - blossom_i )
+
+# example for a non-square case
+boy &lt;- blossom[50:120, 50:150]
+bc  &lt;- put_in_mirror(boy, 128)
+dt  &lt;- dtcwt(bc$res)
+idt &lt;- idtcwt(dt)[ bc$px, bc$py ]
+</code></pre>
+
+
+</div>

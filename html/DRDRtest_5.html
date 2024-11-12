@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drdrtest_em.base</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The base function for testing effect modifiers</h2>
+
+<h3>Description</h3>
+
+<p>This is the base function for testing whether a discrete covariate is an effect modifier.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drdrtest_em.base(
+  ylist,
+  alist,
+  pilist,
+  varpilist,
+  mulist,
+  malist,
+  arange,
+  h = NULL,
+  b = 1000,
+  dist = "TwoPoint",
+  a.grid.size = 401
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ylist</code></td>
+<td>
+<p>A list containing vectors of outcomes for each class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alist</code></td>
+<td>
+<p>A list containing vectors of  treatment levels (dosage) for each class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pilist</code></td>
+<td>
+<p>A list containing vectors of propensity scores for each class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varpilist</code></td>
+<td>
+<p>A list containing vectors of mean propensity scores for each class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mulist</code></td>
+<td>
+<p>A list containing vectors of outcome regression function values for each class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>malist</code></td>
+<td>
+<p>A list containing vectors of  mean outcome regression values for each class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arange</code></td>
+<td>
+<p>A vector of length 2 giving the lower bound and upper bound of  treatment levels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth to be used in kernel regression. If not specified, will by default use "rule of thumb" bandwidth selector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>number of Bootstrap samples to be generated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>distibution used to generate residuals for Bootstrap samples. Currently only have two options, "TwoPoint" and "Rademachar"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a.grid.size</code></td>
+<td>
+<p>size of equally spaced grid points over <code>arange</code> to be generate for numerically evaluating the integral in test statistic</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing </p>
+
+<dl>
+<dt>p.value:</dt>
+<dd>
+<p>P value of the test result</p>
+</dd>
+<dt>test.stat:</dt>
+<dd>
+<p>Value of the observed test statistic</p>
+</dd>
+<dt>Bootstrap.samples:</dt>
+<dd>
+<p>A vector containing test statistic values from Bootstrap samples</p>
+</dd>
+<dt>bandwidth:</dt>
+<dd>
+<p>Bandwidth used in kernel regression</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">d &lt;- 4
+n &lt;- 200
+sigma &lt;- 0.5
+delta &lt;- 1
+height &lt;-1
+arange &lt;- c(0,5)
+triangle &lt;- function(a,height){
+   y &lt;- exp(-a^2/((1/2)^2))*height
+   return(y)
+}
+mu.mod&lt;-function(a,l,delta,height){
+   mu &lt;- as.numeric(l%*%c(0.2,0.2,0.3,-0.1*delta))+
+         triangle(a-2.5,height)+a*(-0.1*l[,1]+0.1*delta*l[,4])
+   return(mu)
+}
+l &lt;- matrix(rnorm(n*d),ncol=d)
+l[,4] &lt;- ifelse(l[,4]&gt;0,1,0)
+colnames(l) &lt;- paste("l",1:4,sep="")
+
+logit.lambda &lt;- as.numeric(l%*%c(0.1,0.1,-0.1,0))
+lambda &lt;- exp(logit.lambda)/(1+exp(logit.lambda))
+a &lt;- rbeta(n, shape1 = lambda, shape2 =1-lambda)*5
+
+mu &lt;- mu.mod(a,l,delta,height)
+residual.list &lt;- rnorm(n,mean=0,sd =sigma)
+y &lt;- mu+residual.list
+
+class_label &lt;- l[,4]
+ylist &lt;- split(y,class_label)
+alist &lt;- split(a,class_label)
+pilist &lt;- split(pmin(dbeta(a/5,shape1=lambda,shape2=1-lambda)/5,100),class_label)
+mulist &lt;- split(mu,class_label)
+
+varpilist &lt;- list()
+malist &lt;- list()
+for(c in c(0,1)){
+   ac &lt;- a[class_label==c]
+   lc &lt;- l[class_label==c,]
+
+   logit.lambdac &lt;- as.numeric(lc[rep(1:nrow(lc),nrow(lc)),]%*%c(0.1,0.1,-0.1,0))
+   lambdac &lt;- exp(logit.lambdac)/(1+exp(logit.lambdac))
+   varpic &lt;- colMeans(matrix(pmin(dbeta(rep(ac,each=length(ac))/5,
+                                  shape1=lambdac,
+                                  shape2 = 1-lambdac)/5,100),nrow=length(ac)))
+
+   mac &lt;- colMeans(matrix(mu.mod(rep(ac,each=length(ac)),
+                                     lc[rep(1:nrow(lc),nrow(lc)),],
+                                     delta,height),
+                          nrow=length(ac)))
+
+   varpilist[[as.character(c)]]&lt;-varpic
+   malist[[as.character(c)]] &lt;- mac
+   }
+   
+out &lt;- drdrtest_em.base(ylist,alist,pilist,varpilist,mulist,malist,arange)
+</code></pre>
+
+
+</div>

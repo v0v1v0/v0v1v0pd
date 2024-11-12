@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dapper_sample</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Private Posterior Sampler</h2>
+
+<h3>Description</h3>
+
+<p>Generates samples from the private posterior using a data augmentation framework.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dapper_sample(
+  data_model = NULL,
+  sdp = NULL,
+  init_par = NULL,
+  seed = NULL,
+  niter = 2000,
+  warmup = floor(niter/2),
+  chains = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_model</code></td>
+<td>
+<p>a data model represented by a <code>privacy</code> class object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdp</code></td>
+<td>
+<p>the observed privatized data. Must be a vector or matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_par</code></td>
+<td>
+<p>initial starting point of the chain.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>set random seed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>niter</code></td>
+<td>
+<p>number of draws.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warmup</code></td>
+<td>
+<p>number of iterations to discard as warmup. Default is half of niter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chains</code></td>
+<td>
+<p>number of MCMC chains to run. Can be done in parallel or sequentially.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Generates samples from the private posterior implied by <code>data_model</code>. The
+<code>data_model</code> input must by an object of class <code>privacy</code> which is created
+using the new_privacy() constructor. MCMC chains can be run in parallel
+using furrr::future_map(). See the <a href="https://CRAN.R-project.org/package=furrr"><span class="pkg">furrr</span></a> package documentation for specifics.
+Long computations can be monitored with the <a href="https://CRAN.R-project.org/package=progressr"><span class="pkg">progressr</span></a> package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dpout object which contains:
+*<code>chain</code>: a <code>draw_matrix</code> object containing <code>niter - warmpup</code> draws from the private posterior.
+*<code>accept_prob</code>: a <code>(niter - warmup)</code> row matrix containing acceptance probabilities.
+Each column corresponds to a parameter.
+</p>
+
+
+<h3>References</h3>
+
+<p>Ju, N., Awan, J. A., Gong, R., &amp; Rao, V. A. (2022). Data Augmentation MCMC
+for Bayesian Inference from Privatized Data. <em>arXiv</em>. <a href="https://doi.org/10.48550/ARXIV.2206.00710">doi:10.48550/ARXIV.2206.00710</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>new_privacy()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#simulate confidential data
+#privacy mechanism adds gaussian noise to each observation.
+set.seed(1)
+n &lt;- 100
+eps &lt;- 3
+y &lt;- rnorm(n, mean = -2, sd = 1)
+sdp &lt;- mean(y) + rnorm(1, 0, 1/eps)
+
+post_f &lt;- function(dmat, theta) {
+    x &lt;- c(dmat)
+    xbar &lt;- mean(x)
+    n &lt;- length(x)
+    pr_m &lt;- 0
+    pr_s2 &lt;- 4
+    ps_s2 &lt;- 1/(1/pr_s2 + n)
+    ps_m &lt;- ps_s2 * ((1/pr_s2)*pr_m + n * xbar)
+    rnorm(1, mean = ps_m, sd = sqrt(ps_s2))
+}
+latent_f &lt;- function(theta) {
+    matrix(rnorm(100, mean = theta, sd = 1), ncol = 1)
+}
+st_f &lt;- function(xi, sdp, i) {
+    mean(xi)
+}
+priv_f &lt;- function(sdp, sx) {
+  sum(dnorm(sdp - sx, 0, 1/eps, TRUE))
+}
+dmod &lt;- new_privacy(post_f = post_f,
+  latent_f = latent_f,
+  priv_f = priv_f,
+  st_f = st_f,
+  npar = 1)
+
+out &lt;- dapper_sample(dmod,
+                    sdp = sdp,
+                    init_par = -2,
+                    niter = 500)
+summary(out)
+
+# for parallel computing we 'plan' a session
+# the code below uses 2 CPU cores for parallel computing
+library(furrr)
+plan(multisession, workers = 2)
+out &lt;- dapper_sample(dmod,
+                    sdp = sdp,
+                    init_par = -2,
+                    niter = 500,
+                    chains = 2)
+
+# to go back to sequential computing we use
+plan(sequential)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,245 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_hist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Group and/or log-scale histogram</h2>
+
+<h3>Description</h3>
+
+<p>Specialised histogram: allows to work in log-scale (for x) and
+to distinguish different groups of data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_hist(
+  x,
+  breaks = 100,
+  id = NA,
+  select = NA,
+  pile = TRUE,
+  line = FALSE,
+  mids = FALSE,
+  xlim = NA,
+  ylim = NA,
+  xlog = FALSE,
+  axes = TRUE,
+  xa = list(),
+  ya = list(),
+  main = "",
+  xlab = "X",
+  ylab = "Counts",
+  col = NA,
+  border = NA,
+  text = FALSE,
+  labels = NA,
+  t = list(adj = c(0.5, -2), font = 2),
+  add = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector or matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>one of:
+</p>
+
+<ul>
+<li>
+<p>a vector giving the breakpoints between histogram cells,
+</p>
+</li>
+<li>
+<p>a function to compute the vector of breakpoints,
+</p>
+</li>
+<li>
+<p>a single number giving the number of cells for the histogram,
+</p>
+</li>
+<li>
+<p>a character string naming an algorithm to compute the number of cells
+(see ‘Details’ in <code>hist</code>),
+</p>
+</li>
+<li>
+<p>a function to compute the number of cells.
+</p>
+</li>
+</ul>
+<p>In the last three cases the number is a suggestion only; as the breakpoints
+will be set to pretty values, the number is limited to 1e6 (with a warning if
+it was larger). If breaks is a function, the x vector is supplied to it as
+the only argument (and the number of breaks is only limited by the amount of
+available memory).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>a vector of ids for each x value, to separate different groups of
+data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select</code></td>
+<td>
+<p>a vector of id values idenifying the groups of data to plot and
+their order</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pile</code></td>
+<td>
+<p>whether to cumulate the different one on the other</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>line</code></td>
+<td>
+<p>whether to plot as lines or rectangles</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mids</code></td>
+<td>
+<p>if lines is TRUE, whether the nodes of the lines are the middle
+positions or the upper corner of the rectangles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlim, ylim</code></td>
+<td>
+<p>the boundaries for the plots. If ylim = NA the upper ylim
+will be increased by 10% to allow for text (see 'text' parameter)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlog</code></td>
+<td>
+<p>whether to set the x axis in log scale</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>axes</code></td>
+<td>
+<p>whether to plot the axes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xa, ya</code></td>
+<td>
+<p>list of arguments to feed minorAxis for the x and y axes
+respectively</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main, xlab, ylab</code></td>
+<td>
+<p>the main title and the labels of the x and y axes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col</code></td>
+<td>
+<p>a function or a character vector defining the colors of the
+different modes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>border</code></td>
+<td>
+<p>the colour of the borders, by default identical to col</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>text</code></td>
+<td>
+<p>if there are different groups, whether to add a number above
+each of them to distinguish them</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>the labels to put on top of each group</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>a list of parameters to feed text()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p>whether to add the plot to a preexisting plot</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+  rnorm(n, sd = 0.5) + t * 0.01
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+
+dec &lt;- extricate(xy, dt, nimf = 7, sifting = 10,
+                 repl = 10, comb = 10, factor_noise = 10,
+                 speak = FALSE)
+## Not run: 
+plot_emd(dec, dir = tempdir())
+## End(Not run)
+
+integrity(xy, dec)
+parsimony(dec)
+
+ht  &lt;- inst.pulse(dec, plot = FALSE)
+
+opar &lt;- par('mfrow')
+
+par(mfrow = c(2,1))
+
+plot_hist(x = 1/ht$f, breaks = 500,
+          xlog = TRUE, xlab = "Period")
+
+plot_hist(x = 1/ht$f, breaks = 500, id = ht$mode,
+          xlog = TRUE, text = TRUE, add = TRUE, line = TRUE, pile = FALSE)
+
+abline(v = c(p1, p2), col = "red", lwd = 2, lty = 5)
+
+plot_hist(x = 1/ht$f, breaks = 500, id = ht$mode,
+          xlog = TRUE, text = TRUE, xlab = "Period")
+
+abline(v = c(p1, p2), col = "red", lwd = 2, lty = 5)
+
+par(mfrow = opar)
+
+</code></pre>
+
+
+</div>

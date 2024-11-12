@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distribution</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Defining, serialising and printing distributions</h2>
+
+<h3>Description</h3>
+
+<p>Distributions are used to define the domain of an
+<code>integer_parameter()</code> or a <code>numeric_parameter()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">distribution(lower, upper, ...)
+
+distribution_function(dist)
+
+quantile_function(dist)
+
+## S3 method for class 'distribution'
+as.list(x, ...)
+
+as_distribution(li)
+
+is_distribution(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>Lower limit of the distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>Upper limit of the distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Fields to be saved in the distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>A distribution object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object which might be a distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>li</code></td>
+<td>
+<p>A list to be converted into a distribution.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See the sections below for more information each of the functions.
+</p>
+
+
+<h3>List of all currently implemented distributions</h3>
+
+
+<ul>
+<li> <p><code>expuniform_distribution()</code>
+</p>
+</li>
+<li> <p><code>normal_distribution()</code>
+</p>
+</li>
+<li> <p><code>uniform_distribution()</code>
+</p>
+</li>
+</ul>
+<h3>Serialisation</h3>
+
+
+<ul>
+<li> <p><code>as.list(dist)</code>: Converting a distribution to a list.
+</p>
+</li>
+<li> <p><code>as_distribution(li)</code>: Converting a list back to a distribution.
+</p>
+</li>
+<li> <p><code>is_distribution(x)</code>: Checking whether something is a distribution.
+</p>
+</li>
+</ul>
+<h3>Defining a distribution</h3>
+
+<p>In order to create a new distribution named <code>xxx</code>, you need to create three functions.
+</p>
+
+<ul>
+<li>
+<p> A <code>xxx()</code> function that calls <code>distribution(...) %&gt;% add_class("xxx")</code> at the end.
+</p>
+</li>
+<li> <p><code>quantile_function.xxx()</code>: The quantile function for converting between a uniform distribution and the <code>xxx</code> distribution.
+</p>
+</li>
+<li> <p><code>distribution_function.xxx()</code>: The distribution function for converting between a uniform distribution and the <code>xxx</code> distribution.
+</p>
+</li>
+</ul>
+<p>Check the implementations of <code>normal_distribution()</code>, <code>quantile_function.normal_distribution()</code>
+and <code>distribution_function.normal_distribution()</code> for an example
+on how to do define these functions. Alternatively, check the examples below.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dynparam for an overview of all dynparam functionality.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">di &lt;- uniform_distribution(lower = 1, upper = 10)
+print(di)
+
+li &lt;- as.list(di)
+di2 &lt;- as_distribution(li)
+print(di2)
+
+# Defining a custom distribution, using the pbeta and qbeta functions
+beta_distribution &lt;- function(
+  shape1,
+  shape2,
+  ncp,
+  lower = -Inf,
+  upper = Inf
+) {
+  di &lt;- distribution(lower = lower, upper = upper, shape1, shape2, ncp)
+  add_class(di, beta_distribution)
+}
+
+distribution_function.beta_distribution &lt;- function(dist) {
+  function(q) {
+    stats::pbeta(q, shape1 = dist$shape1, shape2 = dist$shape2, ncp = dist$ncp)
+  }
+}
+
+quantile_function.beta_distribution &lt;- function(dist) {
+  function(p) {
+    stats::qbeta(p, shape1 = dist$shape1, shape2 = dist$shape2, ncp = dist$ncp)
+  }
+}
+</code></pre>
+
+
+</div>

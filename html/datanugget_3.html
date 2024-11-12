@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create.DN</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Create Data Nuggets
+</h2>
+
+<h3>Description</h3>
+
+<p>This function draws a random sample of observations from a large dataset and creates data nuggets, a type of representative sample of the dataset, using a specified distance metric.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create.DN(x,
+          center.method = "mean",
+          R = 5000,
+          delete.percent = .1,
+          DN.num1 = 10^4,
+          DN.num2 = 2000,
+          dist.metric = "euclidean",
+          seed = 291102,
+          no.cores = (detectCores() - 1),
+          make.pbs = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A data matrix (of class matrix, data.frame, or data.table) containing only entries of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center.method</code></td>
+<td>
+
+<p>The method used for choosing data nugget centers. Must be 'mean' or 'random'. 'mean' chooses the data nugget center to be the mean of all observations within that data nugget, while 'random' chooses the data nugget center to be some random observation within that data nugget.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+
+<p>The number of observations to sample from the data matrix when creating the initial data nugget centers. Must be of class numeric within [100,10000].
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.percent</code></td>
+<td>
+
+<p>The proportion of observations to remove from the data matrix at each iteration when finding data nugget centers. Must be of class numeric and within (0,1).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DN.num1</code></td>
+<td>
+
+<p>The number of initial data nugget centers to create. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DN.num2</code></td>
+<td>
+
+<p>The number of data nuggets to create. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.metric</code></td>
+<td>
+
+<p>The distance metric used to create the initial centers of data nuggets. Must be 'euclidean' or 'manhattan'.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Random seed for replication. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>no.cores</code></td>
+<td>
+
+<p>Number of cores used for parallel processing. If '0' then parallel processing is not used. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>make.pbs</code></td>
+<td>
+
+<p>Print progress bars? Must be TRUE or FALSE.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Data nuggets are a representative sample meant to summarize Big Data by reducing a large dataset to a much smaller dataset by eliminating redundant points while also preserving the peripheries of the dataset. Each data nugget is defined by a center (location), weight (importance), and scale (internal variability). This function creates data nuggets using Algorithm 1 provided in the reference.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class datanugget:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data Nuggets</code></td>
+<td>
+<p>DN.num by (ncol(x)+3) data frame containing the information for the data nuggets created (index, center, weight, scale).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data Nugget Assignments</code></td>
+<td>
+<p>Vector of length nrow(x) containing the data nugget assignment of each observation in x.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Traymon Beavers, Javier Cabrera, Mariusz Lubomirski
+</p>
+
+
+<h3>References</h3>
+
+<p>Beavers, T. E., Cheng, G., Duan, Y., Cabrera, J., Lubomirski, M., Amaratunga, D., &amp; Teigler, J. E. (2024). Data Nuggets: A Method for Reducing Big Data While Preserving Data Structure. Journal of Computational and Graphical Statistics, 1-21.
+</p>
+<p>Cherasia, K. E., Cabrera, J., Fernholz, L. T., &amp; Fernholz, R. (2022). Data Nuggets in Supervised Learning. <em>In Robust and Multivariate Statistical Methods: Festschrift in Honor of David E. Tyler</em> (pp. 429-449). Cham: Springer International Publishing.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+      ## small example
+      X = cbind.data.frame(rnorm(10^3),
+                           rnorm(10^3),
+                           rnorm(10^3))
+
+      suppressMessages({
+
+        my.DN = create.DN(x = X,
+                          R = 500,
+                          delete.percent = .1,
+                          DN.num1 = 500,
+                          DN.num2 = 250,
+                          no.cores = 0,
+                          make.pbs = FALSE)
+
+      })
+
+      my.DN$`Data Nuggets`
+      my.DN$`Data Nugget Assignments`
+
+    
+
+      ## large example
+      X = cbind.data.frame(rnorm(5*10^4),
+                           rnorm(5*10^4),
+                           rnorm(5*10^4),
+                           rnorm(5*10^4),
+                           rnorm(5*10^4))
+
+      my.DN = create.DN(x = X,
+                        R = 5000,
+                        delete.percent = .9,
+                        DN.num1 = 10^4,
+                        DN.num2 = 2000,
+                        no.cores = 2)
+
+      my.DN$`Data Nuggets`
+      my.DN$`Data Nugget Assignments`
+
+    
+
+</code></pre>
+
+
+</div>

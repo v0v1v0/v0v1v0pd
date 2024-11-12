@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>load_all</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Load complete package</h2>
+
+<h3>Description</h3>
+
+<p><code>load_all</code> loads a package. It roughly simulates what happens
+when a package is installed and loaded with <code>library()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">load_all(
+  path = ".",
+  reset = TRUE,
+  recompile = FALSE,
+  export_all = TRUE,
+  helpers = TRUE,
+  quiet = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>Path to a package, or within a package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reset</code></td>
+<td>
+<p>clear package environment and reset file cache before loading
+any pieces of the package. This largely equivalent to running
+<code>unload()</code>, however the old namespaces are not completely removed and no
+<code>.onUnload()</code> hooks are called. Use <code>reset = FALSE</code> may be faster for
+large code bases, but is a significantly less accurate approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recompile</code></td>
+<td>
+<p>DEPRECATED. force a recompile of DLL from source code, if
+present. This is equivalent to running <code>pkgbuild::clean_dll()</code> before
+<code>load_all</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>export_all</code></td>
+<td>
+<p>If <code>TRUE</code> (the default), export all objects.
+If <code>FALSE</code>, export only the objects that are listed as exports
+in the NAMESPACE file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helpers</code></td>
+<td>
+<p>if <code>TRUE</code> loads <span class="pkg">testthat</span> test helpers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>if <code>TRUE</code> suppresses output from this function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>pkgload::load_all()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Currently <code>load_all</code>:
+</p>
+
+<ul>
+<li>
+<p> Loads all data files in <code style="white-space: pre;">⁠data/⁠</code>.  See <code>load_data()</code> for more
+details.
+</p>
+</li>
+<li>
+<p> Sources all R files in the R directory, storing results in
+environment that behaves like a regular package namespace. See
+below and <code>load_code()</code> for more details.
+</p>
+</li>
+<li>
+<p> Compiles any C, C++, or Fortran code in the <code style="white-space: pre;">⁠src/⁠</code> directory and
+connects the generated DLL into R. See <code>pkgbuild::compile_dll()</code>
+for more details.
+</p>
+</li>
+<li>
+<p> Loads any compiled translations in <code>inst/po</code>.
+</p>
+</li>
+<li>
+<p> Runs <code>.onAttach()</code>, <code>.onLoad()</code> and <code>.onUnload()</code> functions at
+the correct times.
+</p>
+</li>
+<li>
+<p> If you use <span class="pkg">testthat</span>, will load all test helpers so you can
+access them interactively. devtools sets the <code>DEVTOOLS_LOAD</code>
+environment variable to <code>"true"</code> to let you check whether the
+helpers are run during package loading.
+</p>
+</li>
+</ul>
+<p><code>is_loading()</code> returns <code>TRUE</code> when it is called while <code>load_all()</code>
+is running. This may be useful e.g. in onLoad hooks.
+</p>
+
+
+<h3>Differences with <code>loadNamespace()</code> and <code>library()</code>
+</h3>
+
+<p><code>load_all()</code> tries its best to reproduce the behaviour of
+<code>loadNamespace()</code> and <code>library()</code>. However it deviates from normal
+package loading in several ways.
+</p>
+
+<ul>
+<li>
+<p> It doesn't install the package on disk, so <code>system.file()</code> has no
+way of determining the location of the development files. To work
+around this, pkgload installs its own version of <code>system.file()</code>
+on the search path to make it easier to use interactively while
+developing. However this definition is only visible to the global
+environment, not to the namespaces of third party packages.
+</p>
+<p>One workaround for other packages to see the development files of
+your package while you're developing with devtools is for them to
+use <code>fs::path_package()</code> instead of <code>system.file()</code>.
+</p>
+</li>
+<li>
+<p> Whereas <code>loadNamespace()</code> and <code>library()</code> only load package
+dependencies when they are needed, <code>load_all()</code> loads all packages
+referenced in <code>Imports</code> at load time.
+</p>
+</li>
+</ul>
+<h3>Namespaces</h3>
+
+<p>The namespace environment <code style="white-space: pre;">⁠&lt;namespace:pkgname&gt;⁠</code>, is a child of
+the imports environment, which has the name attribute
+<code>imports:pkgname</code>. It is in turn is a child of
+<code style="white-space: pre;">⁠&lt;namespace:base&gt;⁠</code>, which is a child of the global environment.
+(There is also a copy of the base namespace that is a child of the empty
+environment.)
+</p>
+<p>The package environment <code style="white-space: pre;">⁠&lt;package:pkgname&gt;⁠</code> is an ancestor of the
+global environment. Normally when loading a package, the objects
+listed as exports in the NAMESPACE file are copied from the namespace
+to the package environment. However, <code>load_all</code> by default will
+copy all objects (not just the ones listed as exports) to the package
+environment. This is useful during development because it makes all
+objects easy to access.
+</p>
+<p>To export only the objects listed as exports, use
+<code>export_all=FALSE</code>. This more closely simulates behavior when
+loading an installed package with <code>library()</code>, and can be
+useful for checking for missing exports.
+</p>
+
+
+<h3>Shim files</h3>
+
+<p><code>load_all</code> also inserts shim functions into the imports environment
+of the loaded package. It presently adds a replacement version of
+<code>system.file</code> which returns different paths from
+<code>base::system.file</code>. This is needed because installed and uninstalled
+package sources have different directory structures. Note that this is not
+a perfect replacement for <code>base::system.file</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Load the package in the current directory
+load_all("./")
+
+# Running again loads changed files
+load_all("./")
+
+# With reset=TRUE, unload and reload the package for a clean start
+load_all("./", TRUE)
+
+# With export_all=FALSE, only objects listed as exports in NAMESPACE
+# are exported
+load_all("./", export_all = FALSE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

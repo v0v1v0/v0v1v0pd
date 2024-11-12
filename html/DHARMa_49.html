@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotResiduals</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generic res ~ pred scatter plot with spline or quantile regression on top</h2>
+
+<h3>Description</h3>
+
+<p>The function creates a generic residual plot with either spline or quantile regression to highlight patterns in the residuals. Outliers are highlighted in red.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotResiduals(simulationOutput, form = NULL, quantreg = NULL, rank = T,
+  asFactor = NULL, smoothScatter = NULL, quantiles = c(0.25, 0.5, 0.75),
+  ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>on object, usually a DHARMa object, from which residual values can be extracted. Alternatively, a vector with residuals or a fitted model can be provided, which will then be transformed into a DHARMa object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>form</code></td>
+<td>
+<p>optional predictor against which the residuals should be plotted. Default is to used the predicted(simulationOutput)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantreg</code></td>
+<td>
+<p>whether to perform a quantile regression based on <code>testQuantiles</code> or a smooth spline around the mean. Default NULL chooses T for nObs &lt; 2000, and F otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rank</code></td>
+<td>
+<p>if T, the values provided in form will be rank transformed. This will usually make patterns easier to spot visually, especially if the distribution of the predictor is skewed. If form is a factor, this has no effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asFactor</code></td>
+<td>
+<p>should a numeric predictor provided in form be treated as a factor. Default is to choose this for &lt; 10 unique values, as long as enough predictions are available to draw a boxplot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothScatter</code></td>
+<td>
+<p>if T, a smooth scatter plot will plotted instead of a normal scatter plot. This makes sense when the number of residuals is very large. Default NULL chooses T for nObs &lt; 10000, and F otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantiles</code></td>
+<td>
+<p>for a quantile regression, which quantiles should be plotted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments to plot / boxplot.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function plots residuals against a predictor (by default against the fitted value, extracted from the DHARMa object, or any other predictor).
+</p>
+<p>Outliers are highlighted in red (for information on definition and interpretation of outliers, see <code>testOutliers</code>).
+</p>
+<p>To provide a visual aid in detecting deviations from uniformity in y-direction, the plot function calculates an (optional) quantile regression of the residuals, by default for the 0.25, 0.5 and 0.75 quantiles. As the residuals should be uniformly distributed for a correctly specified model, the theoretical expectations for these regressions are straight lines at 0.25, 0.5 and 0.75, which are displayed as dashed black lines on the plot. Some deviations from these expectations are to be expected by chance, however, even for a perfect model, especially if the sample size is small. The function therefore tests if deviation of the fitted quantile regression from the expectation is significant, using  <code>testQuantiles</code>. If so, the significant quantile regression will be highlighted as red, and a warning will be displayed in the plot.
+</p>
+<p>The quantile regression can take some time to calculate, especially for larger datasets. For that reason, quantreg = F can be set to produce a smooth spline instead. This is default for n &gt; 2000.
+</p>
+<p>If form is a factor, a boxplot will be plotted instead of a scatter plot. The distribution for each factor level should be uniformly distributed, so the box should go from 0.25 to 0.75, with the median line at 0.5 (within-group ). To test if deviations from those expecations are significant, KS-tests per group and a Levene test for homogeneity of variances is performed. See <code>testCategorical</code> for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>if quantile tests are performed, the function returns them invisibly.
+</p>
+
+
+<h3>Note</h3>
+
+<p>if nObs &gt; 10000, the scatter plot is replaced by graphics::smoothScatter
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plotQQunif</code>, <code>testQuantiles</code>, <code>testOutliers</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">testData = createData(sampleSize = 200, family = poisson(), 
+                      randomEffectVariance = 1, numGroups = 10)
+fittedModel &lt;- glm(observedResponse ~ Environment1, 
+                   family = "poisson", data = testData)
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+
+######### main plotting function #############
+
+# for all functions, quantreg = T will be more
+# informative, but slower
+
+plot(simulationOutput, quantreg = FALSE)
+
+#############  Distribution  ######################
+
+plotQQunif(simulationOutput = simulationOutput, 
+           testDispersion = FALSE,
+           testUniformity = FALSE,
+           testOutliers = FALSE)
+
+hist(simulationOutput )
+
+#############  residual plots  ###############
+
+# rank transformation, using a simulationOutput
+plotResiduals(simulationOutput, rank = TRUE, quantreg = FALSE)
+
+# smooth scatter plot - usually used for large datasets, default for n &gt; 10000
+plotResiduals(simulationOutput, rank = TRUE, quantreg = FALSE, smoothScatter = TRUE)
+
+# residual vs predictors, using explicit values for pred, residual 
+plotResiduals(simulationOutput, form = testData$Environment1, 
+              quantreg = FALSE)
+
+# if pred is a factor, or if asFactor = T, will produce a boxplot
+plotResiduals(simulationOutput, form = testData$group)
+
+# All these options can also be provided to the main plotting function
+
+# If you want to plot summaries per group, use
+simulationOutput = recalculateResiduals(simulationOutput, group = testData$group)
+plot(simulationOutput, quantreg = FALSE) 
+# we see one residual point per RE
+
+
+</code></pre>
+
+
+</div>

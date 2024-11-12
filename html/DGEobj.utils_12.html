@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>runVoom</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run functions in a typical voom/lmFit workflow</h2>
+
+<h3>Description</h3>
+
+<p>In the default workflow, this function runs voomWithQualityWeights followed by
+lmFit and optionally eBayes. If the contrasts of interest are already represented
+in the model, enable eBayes. To use contrasts.fit downstream, run eBayes
+after that step instead. eBayes should always be run last.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">runVoom(
+  dgeObj,
+  designMatrixName,
+  dupCorBlock,
+  runDupCorTwice = TRUE,
+  qualityWeights = TRUE,
+  var.design,
+  mvPlot = TRUE,
+  runEBayes = TRUE,
+  robust = TRUE,
+  proportion = 0.01
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dgeObj</code></td>
+<td>
+<p>A DGEobj containing a DGEList (e.g. from runEdgeRNorm) or counts (Required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>designMatrixName</code></td>
+<td>
+<p>Name of a design matrix within dgeObj. (Required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dupCorBlock</code></td>
+<td>
+<p>Supply a block argument to trigger duplicateCorrelation. (Optional)
+Should be a vector the same length as ncol with values to indicate common
+group membership for duplicateCorrelation.
+Also, 'statmod' package must be installed to run duplicate correlation calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runDupCorTwice</code></td>
+<td>
+<p>Default = TRUE. Gordon Smyth recommends running duplicateCorrelation
+twice. Set this to false to run duplicateCorrelation just once.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qualityWeights</code></td>
+<td>
+<p>Runs limma's voomWithQualityWeights() if set to TRUE (Default = TRUE).
+This should normally be set to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.design</code></td>
+<td>
+<p>Provide a design matrix (from model.matrix) to identify
+replicate groups (e.g. "~ ReplicateGroup") for quality weight determination.
+Causes quality weights to be determined on a group basis.  If omitted
+limma's voomWithQualityWeights() treats each sample individually.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mvPlot</code></td>
+<td>
+<p>Enables the voom mean-variance plot. (Default = TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runEBayes</code></td>
+<td>
+<p>Runs eBayes after lmFit. (Default = TRUE)
+Note, 'statmod' package must be installed to run eBayes calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>robust</code></td>
+<td>
+<p>Used by eBayes. (Default = TRUE)
+Note, 'statmod' package must be installed to run eBayes calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proportion</code></td>
+<td>
+<p>Proportion of genes expected to be differentially expressed
+(used by eBayes) (Default = 0.01) Modify the prior accordingly if the 1st pass analysis shows
+a significantly higher or lower proportion of genes regulated than the default.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Input is minimally a DGEobj containing a DGEList (which is typically TMM-normalized)
+and a formula (character representation).  If a DGEList is missing on the object the
+counts are used as-is.  Other arguments can invoke the duplicateCorrelation method and
+modify use of quality weights.
+</p>
+<p>Returns a DGEobj class object containing the VoomElist (voom
+output), and Fit object (lmFit output).
+</p>
+<p>Quality weights should be enabled unless there is a good reason to turn them
+off. If all samples are equal quality, the weights will all approach 1.0 with no
+consequence on the results. More typically, some samples are better than others
+and using quality weights improves the overall result.
+</p>
+<p>Use var.design if the quality weights are correlated with some factor in the experiment.
+This will cause the quality weights to be calculated as a group instead of individually.
+</p>
+<p>Use duplicate correlation (dupCorBlock) when there are subjects that have been sampled more
+than once (e.g. before and after some treatment).  This calculates a within-
+subject correlation and includes this in the model.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A DGEobj now containing designMatrix, Elist, and fit object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+  # NOTE: Requires the limma package
+
+   dgeObj &lt;- readRDS(system.file("exampleObj.RDS", package = "DGEobj"))
+   for (name in names(dgeObj)[11:length(dgeObj)]) {
+       dgeObj &lt;- DGEobj::rmItem(dgeObj, name)
+   }
+
+   dgeObj &lt;- runVoom(dgeObj,
+                     designMatrixName = "ReplicateGroupDesign",
+                     mvPlot = TRUE)
+
+   # Note the Elist and fit objects have been added
+   DGEobj::inventory(dgeObj)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitdmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Point by point estimates of a k-th order drifting Markov Model</h2>
+
+<h3>Description</h3>
+
+<p>Estimation of d+1 points of support transition matrices and <code class="reqn">|E|^{k}</code> initial law of a k-th
+order drifting Markov Model starting from one or several sequences.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fitdmm(
+  sequences,
+  order,
+  degree,
+  states,
+  init.estim = c("mle", "freq", "prod", "stationary", "unif"),
+  fit.method = c("sum"),
+  ncpu = 2
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sequences</code></td>
+<td>
+<p>A list of character vector(s) representing one (several) sequence(s)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>Order of the Markov chain</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p>Degree of the polynomials (e.g., linear drifting if <code>degree</code>=1, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>Vector of states space of length s &gt; 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init.estim</code></td>
+<td>
+<p>Default="mle". Method used to estimate the initial law.
+If <code>init.estim</code> = "mle", then the classical Maximum Likelihood Estimator
+is used, if <code>init.estim</code> = "freq", then, the initial distribution <code>init.estim</code>
+is estimated by taking the frequences of the words of length k for all
+sequences. If <code>init.estim</code> = "prod", then, <code>init.estim</code> is estimated by using
+the product of the frequences of each letter (for all the sequences) in
+the word of length k. If <code>init.estim</code> = "stationary", then <code>init.estim</code> is
+estimated by using the stationary law of the point of support transition
+matrices of each letter. If <code>init.estim</code> = "unif",
+then, <code>init.estim</code> of each letter is estimated by using <code class="reqn">\frac{1}{s}</code>. Or
+'init.estim'= customisable vector of length <code class="reqn">|E|^k</code>. See Details for the formulas.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit.method</code></td>
+<td>
+<p>If <code>sequences</code> is a list of several character vectors of the same length,
+the usual LSE over the sample paths is proposed when <code>fit.method</code>="sum" (a list of a single character vector
+is its special case).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncpu</code></td>
+<td>
+<p>Default=2. Represents the number of cores used to parallelized computation. If ncpu=-1, then it uses all available cores.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The fitdmm function creates a drifting Markov model object <code>dmm</code>.
+</p>
+<p>Let <code class="reqn">E={1,\ldots, s}</code>, s &lt; <code class="reqn">\infty</code> be random system with finite state space,
+with a time evolution governed by discrete-time stochastic process of values in <code class="reqn">E</code>.
+A sequence <code class="reqn">X_0, X_1, \ldots, X_n</code> with state space <code class="reqn">E= {1, 2, \ldots, s}</code> is said to be a
+linear drifting Markov chain (of order 1) of length <code class="reqn">n</code> between the Markov transition matrices
+<code class="reqn">\Pi_0</code> and  <code class="reqn">\Pi_1</code> if the distribution of <code class="reqn">X_t</code>, <code class="reqn">t = 1, \ldots, n</code>, is defined by
+<code class="reqn">P(X_t=v \mid X_{t-1}	= u, X_{t-2}, \ldots ) = \Pi_{\frac{t}{n}}(u, v), ; u, v \in E</code>, where
+<code class="reqn">\Pi_{\frac{t}{n}}(u, v) = ( 1 - \frac{t}{n}) \Pi_0(u, v) + \frac{t}{n} \Pi_1(u, v), \; u, v \in E</code>.
+The linear drifting Markov model of order <code class="reqn">1</code> can be generalized to polynomial drifting Markov model of
+order <code class="reqn">k</code> and degree <code class="reqn">d</code>.Let <code class="reqn">\Pi_{\frac{i}{d}} = (\Pi_{\frac{i}{d}}(u_1, \dots, u_k, v))_{u_1, \dots, u_k,v \in E}</code>
+be <code class="reqn">d</code> Markov transition matrices (of order <code class="reqn">k</code>) over a state space <code class="reqn">E</code>.
+</p>
+<p>The estimation of DMMs is carried out for 4 different types of data :
+</p>
+
+<dl>
+<dt>One can observe one sample path :</dt>
+<dd>
+<p>It is denoted by <code class="reqn">H(m,n):= (X_0,X_1, \ldots,X_{m})</code>,
+where m denotes the length of the sample path and <code class="reqn">n</code> the length of the drifting Markov chain.
+Two cases can be considered: </p>
+
+<ol>
+<li>
+<p> m=n (a complete sample path),
+</p>
+</li>
+<li>
+<p> m &lt; n (an incomplete sample path).</p>
+</li>
+</ol>
+</dd>
+<dt>One can also observe <code class="reqn">H</code> i.i.d. sample paths :</dt>
+<dd>
+<p>It is denoted by <code class="reqn">H_i(m_i,n_i), i=1, \ldots, H</code>.
+Two cases cases are considered : </p>
+
+<ol>
+<li> <p><code class="reqn">m_i=n_i=n \forall i=1, \ldots, H</code> (complete sample paths of drifting Markov chains of the same length),
+</p>
+</li>
+<li> <p><code class="reqn">n_i=n  \forall i=1, \ldots, H</code> (incomplete sample paths of drifting Markov chains of the same length).
+In this case, an usual LSE over the sample paths is used.</p>
+</li>
+</ol>
+</dd>
+</dl>
+<p>The initial distribution of a k-th order drifting Markov Model is defined as
+<code class="reqn">\mu_i = P(X_1 = i)</code>. The initial distribution of the k first letters is freely
+customisable by the user, but five methods are proposed for the estimation
+of the latter :
+</p>
+
+<dl>
+<dt>Estimation based on the Maximum Likelihood Estimator:</dt>
+<dd>
+<p>The Maximum Likelihood Estimator for the initial distribution. The
+formula is: <code class="reqn">\widehat{\mu_i} = \frac{Nstart_i}{L}</code>, where
+<code class="reqn">Nstart_i</code> is the number of occurences of the word <code class="reqn">i</code> (of
+length <code class="reqn">k</code>) at the beginning of each sequence and <code class="reqn">L</code> is the
+number of sequences. This estimator is reliable when the number of
+sequences <code class="reqn">L</code> is high.</p>
+</dd>
+<dt>Estimation based on the frequency:</dt>
+<dd>
+<p>The initial distribution is
+estimated by taking the frequences of the words of length k for all
+sequences. The formula is <code class="reqn">\widehat{\mu_i} = \frac{N_i}{N}</code>, where
+<code class="reqn">N_i</code> is the number of occurences of the word <code class="reqn">i</code> (of length <code class="reqn">k</code>)
+in the sequences and <code class="reqn">N</code> is the sum of the lengths of the sequences.</p>
+</dd>
+<dt>Estimation based on the product of the frequences of each state:</dt>
+<dd>
+<p>The initial distribution is estimated by using the product of the
+frequences of each state (for all the sequences) in the word of length
+<code class="reqn">k</code>.</p>
+</dd>
+<dt>Estimation based on the stationary law of point of support
+transition matrix for a word of length k :</dt>
+<dd>
+<p>The initial distribution is estimated using <code class="reqn">\mu(\Pi_{\frac{k-1}{n}})
+     </code></p>
+</dd>
+<dt>Estimation based on the uniform law :</dt>
+<dd>
+<p><code class="reqn">\frac{1}{s}</code></p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>An object of class <code>dmm</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Geoffray Brelurut, Alexandre Seiller
+</p>
+
+
+<h3>References</h3>
+
+<p>Barbu VS, Vergne N (2018).
+“Reliability and survival analysis for drifting Markov models: modelling and estimation.”
+<em>Methodology and Computing in Applied Probability</em>, 1–33.
+doi: <a href="https://doi.org/10.1007/s11009-018-9682-8">10.1007/s11009-018-9682-8</a>, <a href="https://doi.org/10.1007/s11009-018-9682-8">https://doi.org/10.1007/s11009-018-9682-8</a>.
+Vergne N (2008).
+“Drifting Markov models with polynomial drift and applications to DNA sequences.”
+<em>Statistical Applications in Genetics Molecular Biology </em>, <b>7(1) </b>.
+doi: <a href="https://doi.org/10.2202/1544-6115.1326">10.2202/1544-6115.1326</a>, <a href="https://doi.org/10.2202/1544-6115.1326">https://doi.org/10.2202/1544-6115.1326</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(lambda, package = "drimmR")
+states &lt;- c("a","c","g","t")
+order &lt;- 1
+degree &lt;- 1
+fitdmm(lambda,order,degree,states, init.estim = "freq",fit.method="sum")
+</code></pre>
+
+
+</div>

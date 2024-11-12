@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DLR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimating the Capacity for Improvement in Diagnostic Risk Prediction with an additional marker based on the Diagnostic Likelihood Ratio (DLR)</h2>
+
+<h3>Description</h3>
+
+<p>This function allows for estimating the log diagnostic likelihood ratio in a regression model approach. 
+It can be used to assess the gain in diagnostic accuracy for a new binary or continuous diagnostic marker compared
+to established markers, to determine the impact of covariates on the risk prediction model, and to estimate the
+DLR for selected marker/covariate values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DLR(basemodel, augmentedmodel, diseasestatus, dataset, clustervar = NULL, alpha=0.05)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>basemodel</code></td>
+<td>
+<p>pre-test/base model X, formula character string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>augmentedmodel</code></td>
+<td>
+<p>post-test/ augmented model V, formula character string,
+this is usually the basemodel X including the additional diagnostic test of interest Y and interactions XY</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diseasestatus</code></td>
+<td>
+<p>variable name containing disease status, assumed to be a 0/1 variable, for having condition of interest (1) or not (0), character string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataset</code></td>
+<td>
+<p>dataframe, needs to be in wide format with one observation per subject</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clustervar</code></td>
+<td>
+<p>optional, cluster variable name in dataset, character string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level alpha used for confidence intervals, the default is 0.05.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is an implementation of the algorithm described in the appendix of Gu and Pepe (2009) using the GEE approach in order to get standard error estimates. The definition of I and Zero matrices is slightly more flexible than the ones described in section 3 in order to allow for models without interaction. 
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list including
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>logPreTestModel</code></td>
+<td>
+<p>logistic regression model output for prior disease using base model X: P(D=1|X). All estimates are on a log scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logPostTestModel</code></td>
+<td>
+<p>logistic regression model output for posterior disease using augmented model V: P(D=1|X,Y),i.e. P(D=1|V). All estimates are on a log scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logDLRModel</code></td>
+<td>
+<p>regression model output for log DLR defined as difference between logPostTestModel and logPreTestModel. All estimates are on a log scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DLR</code></td>
+<td>
+<p>Positive/negative DLR for diagnostic marker Y, with all base covariates X set to 1. Results are only sensible for binary marker Y taking values 0/1.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Thomas Hielscher (t.hielscher@dkfz.de) 
+</p>
+
+
+<h3>References</h3>
+
+<p>Gu, W. and Pepe, M. S. (2009). Estimating the capacity for improvement in risk prediction with a marker. <em>Biostatistics</em>, 10(1):172-86.
+</p>
+
+
+
+<h3>See Also</h3>
+
+<p><code>dlr.regtest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DTComPair)
+data(Paired1)
+
+# test y1 conditioned on null model: DLR+(Y1=1) and DLR-(Y1=0)
+
+DLR("~ 1","~ y1","d",Paired1)
+
+# test y1 conditioned on test y2 with interaction, DLR+(Y1=1|Y2=1) and DLR-(Y1=0|Y2=1)
+
+DLR("~ y2","~ y2 * y1","d",Paired1) 
+</code></pre>
+
+
+</div>

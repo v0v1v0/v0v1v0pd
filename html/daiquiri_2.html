@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aggregate_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Aggregate source data</h2>
+
+<h3>Description</h3>
+
+<p>Aggregates a <code>daiquiri_source_data</code> object based on the <code>field_types()</code> specified at load time.
+Default time period for aggregation is a calendar day
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">aggregate_data(source_data, aggregation_timeunit = "day", show_progress = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>source_data</code></td>
+<td>
+<p>A <code>daiquiri_source_data</code> object returned from
+<code>prepare_data()</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregation_timeunit</code></td>
+<td>
+<p>Unit of time to aggregate over. Specify one of
+<code>"day"</code>, <code>"week"</code>, <code>"month"</code>, <code>"quarter"</code>, <code>"year"</code>. The <code>"week"</code> option is
+Monday-based. Default = <code>"day"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_progress</code></td>
+<td>
+<p>Print progress to console. Default = <code>TRUE</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>daiquiri_aggregated_data</code> object
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>prepare_data()</code>, <code>report_data()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# load example data into a data.frame
+raw_data &lt;- read_data(
+  system.file("extdata", "example_prescriptions.csv", package = "daiquiri"),
+  delim = ",",
+  col_names = TRUE
+)
+
+# validate and prepare the data for aggregation
+source_data &lt;- prepare_data(
+  raw_data,
+  field_types = field_types(
+    PrescriptionID = ft_uniqueidentifier(),
+    PrescriptionDate = ft_timepoint(),
+    AdmissionDate = ft_datetime(includes_time = FALSE),
+    Drug = ft_freetext(),
+    Dose = ft_numeric(),
+    DoseUnit = ft_categorical(),
+    PatientID = ft_ignore(),
+    Location = ft_categorical(aggregate_by_each_category = TRUE)
+  ),
+  override_column_names = FALSE,
+  na = c("", "NULL")
+)
+
+# aggregate the data
+aggregated_data &lt;- aggregate_data(
+  source_data,
+  aggregation_timeunit = "day"
+)
+
+aggregated_data
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,221 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>importRDB1</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function to return data from the NWIS RDB 1.0 format</h2>
+
+<h3>Description</h3>
+
+<p>This function accepts a url parameter that already contains the desired
+NWIS site, parameter code, statistic, startdate and enddate. It is not
+recommended to use the RDB format for importing multi-site data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">importRDB1(obs_url, asDateTime = TRUE, convertType = TRUE, tz = "UTC")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obs_url</code></td>
+<td>
+<p>character containing the url for the retrieval or a file path to the data file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asDateTime</code></td>
+<td>
+<p>logical, if <code>TRUE</code> returns date and time as POSIXct, if <code>FALSE</code>, Date</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convertType</code></td>
+<td>
+<p>logical, defaults to <code>TRUE</code>. If <code>TRUE</code>, the
+function will convert the data to dates, datetimes,
+numerics based on a standard algorithm. If false, everything is returned as a character</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz</code></td>
+<td>
+<p>character to set timezone attribute of datetime. Default converts the datetimes to UTC
+(properly accounting for daylight savings times based on the data's provided tz_cd column).
+Recommended US values include "UTC", "America/New_York", "America/Chicago", "America/Denver",
+"America/Los_Angeles",  "America/Anchorage", "America/Honolulu", "America/Jamaica", "America/Managua",
+"America/Phoenix", and "America/Metlakatla".
+For a complete list, see <a href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">https://en.wikipedia.org/wiki/List_of_tz_database_time_zones</a></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame with the following columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+agency_cd </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The NWIS code for the agency reporting the data</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+site_no </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The USGS site number </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+datetime </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> The date and time of the value converted to
+UTC (if asDateTime = <code>TRUE</code>), </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> or raw character string (if asDateTime = FALSE) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+tz_cd </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The time zone code for datetime </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+code </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> Any codes that qualify the corresponding value</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+value </td>
+<td style="text-align: left;"> numeric </td>
+<td style="text-align: left;"> The numeric value for the parameter </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+tz_cd_reported </td>
+<td style="text-align: left;"> The originally reported time zone </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>Note that code and value are repeated for the parameters requested. The names are of the form
+XD_P_S, where X is literal,
+D is an option description of the parameter,
+P is the parameter code,
+and S is the statistic code (if applicable).
+If a date/time (dt) column contained incomplete date and times, a new column
+of dates and time was inserted. This could happen
+when older data was reported as dates, and newer data was reported as a date/time.
+</p>
+<p>There are also several useful attributes attached to the data frame:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+url </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The url used to generate the data </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+queryTime </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> The time the data was returned </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+comment </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> Header comments from the RDB file </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+site_id &lt;- "02177000"
+startDate &lt;- "2012-09-01"
+endDate &lt;- "2012-10-01"
+offering &lt;- "00003"
+property &lt;- "00060"
+
+obs_url &lt;- constructNWISURL(site_id, property,
+  startDate, endDate, "dv",
+  format = "tsv"
+)
+
+data &lt;- importRDB1(obs_url)
+
+
+urlMultiPcodes &lt;- constructNWISURL("04085427", c("00060", "00010"),
+  startDate, endDate, "dv",
+  statCd = c("00003", "00001"), "tsv"
+)
+
+multiData &lt;- importRDB1(urlMultiPcodes)
+
+unitDataURL &lt;- constructNWISURL(site_id, property,
+  "2020-10-30", "2020-11-01", "uv",
+  format = "tsv"
+) # includes timezone switch
+
+unitData &lt;- importRDB1(unitDataURL, asDateTime = TRUE)
+
+qwURL &lt;- constructNWISURL(c("04024430", "04024000"),
+  c("34247", "30234", "32104", "34220"),
+  "2010-11-03", "", "qw",
+  format = "rdb"
+)
+
+qwData &lt;- importRDB1(qwURL, asDateTime = TRUE, tz = "America/Chicago")
+
+iceSite &lt;- "04024000"
+start &lt;- "2015-11-09"
+end &lt;- "2015-11-24"
+urlIce &lt;- constructNWISURL(iceSite, "00060", start, end, "uv", format = "tsv")
+
+ice &lt;- importRDB1(urlIce, asDateTime = TRUE)
+iceNoConvert &lt;- importRDB1(urlIce, convertType = FALSE)
+
+# User file:
+filePath &lt;- system.file("extdata", package = "dataRetrieval")
+fileName &lt;- "RDB1Example.txt"
+fullPath &lt;- file.path(filePath, fileName)
+importUserRDB &lt;- importRDB1(fullPath)
+
+</code></pre>
+
+
+</div>

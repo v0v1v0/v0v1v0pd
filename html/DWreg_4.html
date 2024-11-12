@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dw.reg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DW regression</h2>
+
+<h3>Description</h3>
+
+<p>Parametric regression for discrete response data. The conditional distribution of the response given the predictors is assumed to be DW with parameters q and beta dependent on the predictors.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dw.reg(formula, data,tau=0.5,para.q1=NULL,para.q2=NULL,para.beta=NULL,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>An object of class "formula": a symbolic description of the model to be fitted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An optional data frame, list or environment (or object coercible by as.data.frame to a data frame) containing the variables in the model. If not found in data, the variables are taken from environment(formula), typically the environment from which dw.qr is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>Quantile value (default 0.5). This is used only to extract the conditional quantile from the fitted distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>para.q1, para.q2</code></td>
+<td>
+<p>logical flag. If TRUE, the model includes a dependency of q on the predictors, as explained below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>para.beta</code></td>
+<td>
+<p>logical flag. If TRUE, the model includes a dependency of beta on the predictors, as explained below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to the maxLik function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The conditional distribution of Y (response) given x (predictors) is assumed a DW(q(x),beta(x)). 
+</p>
+<p>If para.q1=TRUE, 
+</p>
+<p style="text-align: center;"><code class="reqn">log(q/(1-q))=\theta_0+\theta_1 X_1+\ldots+\theta_pX_p.</code>
+</p>
+ 
+<p>If para.q2=TRUE, 
+</p>
+<p style="text-align: center;"><code class="reqn">log(-log(q))=\theta_0+\theta_1 X_1+\ldots+\theta_pX_p.</code>
+</p>
+
+<p>This is equivalent to a continuous Weibull regression model with interval-censored data.
+</p>
+<p>If para.q1=NULL and para.q2=NULL, then q(x) is constant.
+</p>
+<p>If para.beta=TRUE,
+</p>
+<p style="text-align: center;"><code class="reqn">log(\beta)= \gamma_0+\gamma_1 X_1+\ldots+\gamma_pX_p.</code>
+</p>
+<p> Otherwise beta(x) is constant.
+</p>
+
+
+<h3>Value</h3>
+
+<p> A list of class dw.reg containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>the matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>the input data as a list of response and covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>the theta and gamma estimated coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>the log-likelihood of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.values</code></td>
+<td>
+<p>fitted values (on the response scale) for the specified quantile tau.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.q</code></td>
+<td>
+<p>fitted q values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted.beta</code></td>
+<td>
+<p>fitted beta values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>randomised quantile residuals of the fitted model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tTable</code></td>
+<td>
+<p>coefficients, standard errors, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tTable.survreg</code></td>
+<td>
+<p>Only for the model para.q2=TRUE. Coefficients, standard errors, etc from the survreg parametrization. These estimates are linked to changes of log(Median+1).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Veronica Vinciotti, Hadeel Kalktawi, Alina Peluso</p>
+
+
+<h3>References</h3>
+
+<p>Kalktawi, Vinciotti and Yu (2016) A simple and adaptive dispersion regression model for count data.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#simulated example (para.q1=TRUE, beta constant)
+theta0 &lt;- 2
+theta1 &lt;- 0.5
+beta&lt;-0.5
+n&lt;-500
+x &lt;- runif(n=n, min=0, max=1.5)
+logq&lt;-theta0 + theta1 * x - log(1+exp(theta0  + theta1 * x))		
+y&lt;-unlist(lapply(logq,function(x,beta) rdw(1,q=exp(x),beta),beta=beta)) 
+data.sim&lt;-data.frame(x,y) #simulated data
+fit&lt;-dw.reg(y~x,data=data.sim,para.q1=TRUE)
+fit$tTable	
+
+#simulated example (para.q2=TRUE, beta constant)
+theta0 &lt;- -2
+theta1 &lt;- -0.5
+beta&lt;-0.5
+n&lt;-500
+x &lt;- runif(n=n, min=0, max=1.5)
+logq&lt;--exp(theta0  + theta1 * x)		
+y&lt;-unlist(lapply(logq,function(x,beta) rdw(1,q=exp(x),beta),beta=beta)) 
+data.sim&lt;-data.frame(x,y) #simulated data
+fit&lt;-dw.reg(y~x,data=data.sim,para.q2=TRUE)
+fit$tTable	
+fit$survreg
+
+#real example
+library(Ecdat)
+data(StrikeNb)
+fit&lt;-dw.reg(strikes~output,data=StrikeNb,para.q2=TRUE)
+fit$tTable
+fit$survreg
+</code></pre>
+
+
+</div>

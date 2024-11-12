@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>exactMeDb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Exact moment estimates for the db distribution.
+</h2>
+
+<h3>Description</h3>
+
+<p>Attempts to calculate “exact” moment estimates of the
+parameters of a db distribution.  This is done by minimising
+the sum of squared differences between the sample mean and variance
+(<code>xbar</code> and <code>s2</code>) and the theoretical mean and variance.
+Calls upon <code>optim()</code> with the <code>"BFGS"</code> method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">exactMeDb(x, ntop, zeta=FALSE, par0 = NULL, maxit = 1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A random sample from the db distribution whose parameters are
+being estimated.  Missing values are <em>allowed</em>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntop</code></td>
+<td>
+
+<p>The <code>ntop</code> parameter of the db distribution whose parameters are
+being estimated.  I.e. it is the maximum possible value of the distribution,
+whose values are integers between 1 and <code>ntop</code>, or between 0 and
+<code>ntop</code> if <code>zeta</code> (see below) is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zeta</code></td>
+<td>
+
+<p>See <code>ddb()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par0</code></td>
+<td>
+
+<p>Optional starting values for the iterative estimation procedure.
+A vector with entries <code>alpha</code> and <code>beta</code>.  Ideally this
+vector should be named; if not it is <em>assumed</em> that the
+entries are in the order <code>alpha</code>, <code>beta</code>.  If not
+supplied starting values are calculated using the undocumented function
+<code>meDb()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Integer scalar.  The maximum number of iterations to be undertaken
+by <code>optim()</code>.  What happens if this number is exceeded
+depends on the value of <code>options()[["maxitErrorOrWarning"]]</code>.
+This may be <code>"error"</code> (in which case an error is thrown if
+<code>maxit</code> is exceeded) or <code>"warning"</code> (in which case a
+warning is issued).  The values is set equal to <code>"error"</code> at
+startup.  It may be switched, from on possibility to the other,
+by means of the function <code>set.eow()</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is really an “intellectual curiosity”.  The
+results produced may be compared with those produced via maximum
+likelihood (using <code>mleDb()</code>) which in theory should
+be “better”.  Since numerical optimisation has to be applied
+to calculate the “exact” moment estimates, there is no
+real saving in terms of computation cost.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"exactMeDb"</code>.  Such an object consists
+of a named vector with entries <code>"alpha"</code> and <code>"beta"</code>,
+which are the “exact” moment estimates of the corresponding
+parameters.  It has a number of attributes:
+</p>
+
+<ul>
+<li> <p><code>"ntop"</code> The value of the <code>ntop</code> argument.
+</p>
+</li>
+<li> <p><code>"zeta"</code> The value of the <code>zeta</code> argument.
+</p>
+</li>
+<li> <p><code>"minSqDiff"</code> The (minimised) value of the sum of
+the squared differences between the sample mean and variance
+(<code>xbar</code> and <code>s2</code>) and the theoretical mean and
+variance.  Ideally this minimised value should be zero.
+</p>
+</li>
+<li> <p><code>ndata</code> The number of <em>non-missing</em> values
+in the data set for which the likelihood was maximised,
+i.e. <code>sum(!is.na(x))</code>.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ddb</code>
+<code>meDb()</code>
+<code>mleDb()</code>
+<code>expValDb()</code>
+<code>varDb()</code>
+<code>optim()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+x &lt;- rdb(500,3,5,2)
+eMom &lt;- exactMeDb(x,ntop=2,zeta=FALSE)
+eMle &lt;- mleDb(x,ntop=2)
+
+# Get much better results using true parameter values
+# as starting values; pity we can't do this in real life!
+eMom &lt;- exactMeDb(x,ntop=2,zeta=FALSE,par0=c(alpha=3,beta=5))
+eMle &lt;- mleDb(x,2,par0=c(alpha=3,beta=5))
+
+# Larger ntop value
+x &lt;- rdb(500,3,5,20)
+eMom &lt;- exactMeDb(x,ntop=20,zeta=FALSE)
+eMle &lt;- mleDb(x,ntop=20)
+
+# Binomial, n = 10, p = 0.3.
+set.seed(42)
+x    &lt;- rbinom(1000,10,0.3)
+eMom &lt;- exactMeDb(x,ntop=10,zeta=TRUE)
+eMle &lt;- mleDb(x,ntop=10,zeta=TRUE)
+p1   &lt;- dbinom(0:10,10,0.3)
+p2   &lt;- dbinom(0:10,10,mean(x)/10)
+p3   &lt;- table(factor(x,levels=0:10))/1000
+p4   &lt;- ddb(0:10,alpha=eMom["alpha"],beta=eMom["beta"],ntop=10,zeta=TRUE)
+plot(eMle,obsd=x,legPos=NULL,ylim=c(0,max(p1,p2,p3,p4)))
+lines(0.2+(0:10),p1,col="orange",type="h",ylim=c(0,max(p1,p2)))
+lines(0.3+(0:10),p2,col="green",type="h")
+legend("topright",lty=1,col=c("red","blue","orange","green","black"),
+       legend=c("dbMle","observed","true binomial","fitted binomial","dbMom"),bty="n")
+</code></pre>
+
+
+</div>

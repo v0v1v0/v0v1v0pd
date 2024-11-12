@@ -1,0 +1,87 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>import_from_dexter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>import data from a dexter project</h2>
+
+<h3>Description</h3>
+
+<p>This function will import items, scoring rules, persons, test designs and responses from
+a dexter database into the dexterMST database.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">import_from_dexter(db, dexter_db, dx_response_prefix = "")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>db</code></td>
+<td>
+<p>dextermst project db connection</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dexter_db</code></td>
+<td>
+<p>path to a dexter database file or open dexter db connection</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dx_response_prefix</code></td>
+<td>
+<p>string to prefix responses from dexter with (usually not necessary, see details)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>DexterMST has no problem calibrating data from linear tests. However, dexter and dexterMST have 
+differently structured project databases. If you already have response data from linear tests in
+a dexter database, you can easily import it into your dexterMST database from there.
+</p>
+<p>The dexterMST variables test_id, module_id and booklet_id will all be set to the dexter variable
+booklet_id (i.e. a linear test becomes a multistage test with one booklet and one module only).
+</p>
+<p>It is assumed that items with equal id's in your dexter and dexterMST project refer to the same items. 
+If an item in dexter has different score categories compared to an existing item with the same item_id in dexterMST
+an error will be generated. If the same response to the same item has a different score, this will also generate an error.
+However, it is possible for an item in dexter to have scoring rules for responses not defined in dexterMST and vice versa.
+</p>
+<p>In the unusual and unfortunate situation that the same response to the same item should have a different score
+in dexter than in dexterMST, you can use the parameter dx_response_prefix to prefix the responses in dexter with
+some unique combination of characters, e.g. "dexter". In practice this sometimes happens when old archived data
+is only available in scored form (i.e. response 0 has score 0, response 1 has score 1) and new data is available in
+raw form but the actual response can also be 0 or 1, etc. causing a conflict.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(dexter)
+dbDex = start_new_project(verbAggrRules, "verbAggression.db", 
+  person_properties=list(gender="unknown"))
+add_booklet(dbDex, verbAggrData, "agg")
+add_item_properties(dbDex, verbAggrProperties)
+db = create_mst_project(':memory:')
+import_from_dexter(db, dbDex)
+f_mst = fit_enorm_mst(db)
+f_dexter = fit_enorm(dbDex)
+close_mst_project(db)
+close_project(dbDex)
+
+## End(Not run)
+
+
+</code></pre>
+
+
+</div>

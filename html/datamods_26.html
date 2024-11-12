@@ -1,0 +1,240 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>import-file</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Import data from a file</h2>
+
+<h3>Description</h3>
+
+<p>Let user upload a file and import data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">import_file_ui(
+  id,
+  title = TRUE,
+  preview_data = TRUE,
+  file_extensions = c(".csv", ".txt", ".xls", ".xlsx", ".rds", ".fst", ".sas7bdat",
+    ".sav"),
+  layout_params = c("dropdown", "inline")
+)
+
+import_file_server(
+  id,
+  btn_show_data = TRUE,
+  show_data_in = c("popup", "modal"),
+  trigger_return = c("button", "change"),
+  return_class = c("data.frame", "data.table", "tbl_df", "raw"),
+  reset = reactive(NULL),
+  read_fns = list()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module's ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>Module's title, if <code>TRUE</code> use the default title,
+use <code>NULL</code> for no title or a <code>shiny.tag</code> for a custom one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preview_data</code></td>
+<td>
+<p>Show or not a preview of the data under the file input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file_extensions</code></td>
+<td>
+<p>File extensions accepted by <code>shiny::fileInput()</code>, can also be MIME type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layout_params</code></td>
+<td>
+<p>How to display import parameters : in a dropdown button or inline below file input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>btn_show_data</code></td>
+<td>
+<p>Display or not a button to display data in a modal window if import is successful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_data_in</code></td>
+<td>
+<p>Where to display data: in a <code>"popup"</code> or in a <code>"modal"</code> window.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trigger_return</code></td>
+<td>
+<p>When to update selected data:
+<code>"button"</code> (when user click on button) or
+<code>"change"</code> (each time user select a dataset in the list).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_class</code></td>
+<td>
+<p>Class of returned data: <code>data.frame</code>, <code>data.table</code>, <code>tbl_df</code> (tibble) or <code>raw</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reset</code></td>
+<td>
+<p>A <code>reactive</code> function that when triggered resets the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>read_fns</code></td>
+<td>
+<p>Named list with custom function(s) to read data:
+</p>
+
+<ul>
+<li>
+<p> the name must be the extension of the files to which the function will be applied
+</p>
+</li>
+<li>
+<p> the value must be a function that can have 5 arguments (you can ignore some of them, but you have to use the same names),
+passed by user through the interface:
+</p>
+
+<ul>
+<li> <p><code>file</code>: path to the file
+</p>
+</li>
+<li> <p><code>sheet</code>: for Excel files, sheet to read
+</p>
+</li>
+<li> <p><code>skip</code>: number of row to skip
+</p>
+</li>
+<li> <p><code>dec</code>: decimal separator
+</p>
+</li>
+<li> <p><code>encoding</code>: file encoding
+</p>
+</li>
+<li> <p><code>na.strings</code>: character(s) to interpret as missing values.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> UI: HTML tags that can be included in shiny's UI
+</p>
+</li>
+<li>
+<p> Server: a <code>list</code> with three slots:
+</p>
+
+<ul>
+<li> <p><strong>status</strong>: a <code>reactive</code> function returning the status: <code>NULL</code>, <code>error</code> or <code>success</code>.
+</p>
+</li>
+<li> <p><strong>name</strong>: a <code>reactive</code> function returning the name of the imported data as <code>character</code>.
+</p>
+</li>
+<li> <p><strong>data</strong>: a <code>reactive</code> function returning the imported <code>data.frame</code>.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(shiny)
+library(datamods)
+
+ui &lt;- fluidPage(
+  # theme = bslib::bs_theme(version = 5L),
+  # theme = bslib::bs_theme(version = 5L, preset = "bootstrap"),
+  tags$h3("Import data from a file"),
+  fluidRow(
+    column(
+      width = 4,
+      import_file_ui(
+        id = "myid",
+        file_extensions = c(".csv", ".txt", ".xls", ".xlsx", ".json"),
+        layout_params = "inline" # or "dropdown"
+      )
+    ),
+    column(
+      width = 8,
+      tags$b("Import status:"),
+      verbatimTextOutput(outputId = "status"),
+      tags$b("Name:"),
+      verbatimTextOutput(outputId = "name"),
+      tags$b("Code:"),
+      verbatimTextOutput(outputId = "code"),
+      tags$b("Data:"),
+      verbatimTextOutput(outputId = "data")
+    )
+  )
+)
+
+server &lt;- function(input, output, session) {
+
+  imported &lt;- import_file_server(
+    id = "myid",
+    # Custom functions to read data
+    read_fns = list(
+      xls = function(file, sheet, skip, encoding) {
+        readxl::read_xls(path = file, sheet = sheet, skip = skip)
+      },
+      json = function(file) {
+        jsonlite::read_json(file, simplifyVector = TRUE)
+      }
+    ),
+    show_data_in = "modal"
+  )
+
+  output$status &lt;- renderPrint({
+    imported$status()
+  })
+  output$name &lt;- renderPrint({
+    imported$name()
+  })
+  output$code &lt;- renderPrint({
+    imported$code()
+  })
+  output$data &lt;- renderPrint({
+    imported$data()
+  })
+
+}
+
+if (interactive())
+  shinyApp(ui, server)
+</code></pre>
+
+
+</div>

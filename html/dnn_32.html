@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>hyperTuning</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+A function for tuning of the hyper parameters
+</h2>
+
+<h3>Description</h3>
+
+
+<p>{ hyperTuning} is a tuning tool to find the optimal hyper parameter for the ANN model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">   hyperTuning(x, y, model, ER = c("cindex", "mse"), 
+          method = c('BuckleyJames', 'ipcw', 'transform', 'deepSurv'), 
+          lower = NULL, upper = NULL, node = FALSE,
+          K = 5, R = 25)
+### additional function used in hyperTuning is cross-validation prediction error
+#
+#  CVpredErr(x, y, model, control, method)
+#
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Covariates for the deep neural network model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Surv object for the deep neural network model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A deep neural network model, created by function dNNmodel().</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ER</code></td>
+<td>
+<p>Prediction error measurement to be used in the cross vaditation, can be either a concordance index (cindex) or a mean square error (mse), default is cindex</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Methods to handle censoring data in deep AFT model fit, 'BuckleyJames' for the Buckley and James method, 
+'ipcw' for the inverse probability censoring weights method.
+'transform' for the transformation method based on book of Fan and Gijbels (1996, page 168).
+'deepSurv' for the deepSurv model(Katzman, 2017)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>node</code></td>
+<td>
+<p>Tuning the number of nodes in each hidden layer, default is FALSE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>Number of folders of the cross-validatin, default is K = 5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower, upper</code></td>
+<td>
+<p>Bounds on the hyper parameters for the deep learning method. If NULL, then the default value for lower = dnnControl(alpha = 0.5, lambda = 1.0, lr_rate = 0.0001), upper = dnnControl(alpha = 0.97, lambda = 10, lr_rate = 0.001). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>Number of random sample draw from the hyper parameter space, default is R = 25.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<p>A random search method is used to optimal hyper parameter (Bergstra and Bengio, 2012). 
+The function { CVpredErr} will be call to calculate the cross-validation prediction error for the given x and y with the specified method from the input argument.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of "model" and "dnnControl" is returned.  The list contains at least the following components, 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The "model" contains the optimal number of nodes for each hidden layer in the model specified by <code>dNNmodel</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>The "control" contains the optimal tuning parameters with list components the same as those created by <code>dnnControl</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Chen, B. E. (chenbe@queensu.ca)
+</p>
+
+
+<h3>References</h3>
+
+<p>Bergstra, J. and Bengio, Y. (2012). Random search for hyper-parameter optimization. The Journal of Machine Learning Research. 13, page 281-305.
+</p>
+
+
+<h3>See Also</h3>
+
+
+<p><code>deepAFT</code>, <code>deepGLM</code>, <code>deepSurv</code>, <code>dnnFit</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### Tuning the hyper parameter for a deepAFT model: 
+#### cross-validation take a long time to run.
+
+  set.seed(101)
+### define model layers
+  model = dNNmodel(units = c(4, 3, 1), activation = c("elu", "sigmoid", "sigmoid"), 
+                   input_shape = 3)
+  x = matrix(runif(45), nrow = 15, ncol = 3)
+  time = exp(x[, 1])
+  status = rbinom(15, 1, 0.5)
+  y = Surv(time, status)
+  ctl = dnnControl(epochs = 30)
+  hyperTuning(x, y, model, method = "BuckleyJames", K = 2, R = 2, lower = ctl)
+
+</code></pre>
+
+
+</div>

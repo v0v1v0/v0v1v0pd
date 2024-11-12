@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pre_plot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Put a tibble in form to plot</h2>
+
+<h3>Description</h3>
+
+<p>Convert a tibble built using <code>freq_table</code> or <code>cont_table</code> in a
+shape that makes it easy to plot.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pre_plot(data, f = NULL, plot = NULL, ...)
+
+## S3 method for class 'freq_table'
+pre_plot(
+  data,
+  f = NULL,
+  plot = c("histogram", "freqpoly", "lorenz", "stacked", "cumulative"),
+  ...
+)
+
+## S3 method for class 'cont_table'
+pre_plot(data, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a tibble returned by the <code>freq_table</code> or the
+<code>cont_table</code> function, which should contain the center of the
+classes (<code>x</code>) and at least one measure of the frequencies or
+densities (one of <code>f</code>, <code>n</code>, <code>p</code>, <code>d</code>),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>mandatory argument if the tibble contains more than one
+frequency or density,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>for object of class <code>freq_table</code> one of <code>histogram</code>,
+<code>freqpoly</code>, <code>stacked</code>, <code>cumulative</code> and <code>lorenz</code> (see the
+details section),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>pre_plot</code> function returns a tibble containing:
+</p>
+
+<ul>
+<li>
+<p> if <code>plot = histogram</code>, <code>x</code>, <code>y</code> that should be
+passed to <code>geom_polygon</code>,
+</p>
+</li>
+<li>
+<p> if <code>plot = freqpoly</code> <code>x</code> and <code>y</code> that should be passed to <code>geom_line</code>,
+</p>
+</li>
+<li>
+<p> if <code>plot = stacked</code> <code>x</code> and <code>ypos</code> that should be passed
+respectively to <code>geom_col</code> and to <code>geom_text</code> to draw labels on
+the right position,
+</p>
+</li>
+<li>
+<p> if <code>plot = cumulative</code> <code>x</code>, <code>y</code>, <code>xend</code> and <code>yend</code> that should be passed to
+<code>geom_segment</code>,
+</p>
+</li>
+<li>
+<p> if <code>plot = lorenz</code> for the Lorenz curve, <code>F</code> and <code>M</code> for the
+coordinates of the polygons under the Lorenz curve, <code>pts</code> is
+logical which the defines the subset of points that belongs to the
+Lorenz curve.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>a tibble
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yves Croissant
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library("dplyr")
+library("ggplot2")
+pad &lt;- padova %&gt;%
+       freq_table(price, breaks = c(100, 200, 300, 400, 500, 1000),
+       right = TRUE, f = "Npd")
+pad %&gt;% pre_plot(f = "d") %&gt;% ggplot() + geom_polygon(aes(x, y))
+pad %&gt;% pre_plot(f = "d", plot = "freqpoly") %&gt;%
+ggplot() + geom_line(aes(x, y))
+## A pie chart
+wages %&gt;% freq_table(sector, "p", total = FALSE) %&gt;%
+  pre_plot("p", plot = "stacked") %&gt;% ggplot(aes(x = 2, y = p, fill = sector)) +
+  geom_col() + geom_text(aes(y = ypos, label = sector)) +
+  coord_polar(theta = "y") + theme_void() + guides(fill = FALSE)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nh0506Homocysteine</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Homocysteine and Smoking
+</h2>
+
+<h3>Description</h3>
+
+<p>NHANES 2005-2006 data on smoking and homocysteine levels in adults.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("nh0506Homocysteine")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 2759 observations on the following 11 variables.
+</p>
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Row number, 1 to 2759</p>
+</dd>
+<dt><code>SEQN</code></dt>
+<dd>
+<p>NHANES identification number</p>
+</dd>
+<dt><code>z</code></dt>
+<dd>
+<p>Smoking status, 1 = daily smoker, 0 = never smoker</p>
+</dd>
+<dt><code>female</code></dt>
+<dd>
+<p>1 = female, 0 = male</p>
+</dd>
+<dt><code>age</code></dt>
+<dd>
+<p>Age in years, &gt;=20, capped at 85</p>
+</dd>
+<dt><code>black</code></dt>
+<dd>
+<p>1=black race, 0=other</p>
+</dd>
+<dt><code>education</code></dt>
+<dd>
+<p>Level of education</p>
+</dd>
+<dt><code>povertyr</code></dt>
+<dd>
+<p>Ratio of family income to the poverty level, capped at 5 times poverty</p>
+</dd>
+<dt><code>bmi</code></dt>
+<dd>
+<p>BMI or body-mass-index</p>
+</dd>
+<dt><code>cigsperday30</code></dt>
+<dd>
+<p>Cigarettes smoked per day, 0 for never smokers</p>
+</dd>
+<dt><code>cotinine</code></dt>
+<dd>
+<p>Blood cotinine level, a biomarker of recent exposure to tobacco</p>
+</dd>
+<dt><code>homocysteine</code></dt>
+<dd>
+<p>Level of homocysteine</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>The following code constructed the data as used here. Attention is confined to adults, excluding children. Also, people who have smoked in the past, but do not now smoke daily, are excluded.
+A moderate number of individuals with missing povertyr, cotinine or homocysteine were excluded.
+</p>
+<p>library(foreign)
+</p>
+<p>DEMO&lt;-read.xport("DEMO_D.XPT")
+</p>
+<p>HCY&lt;-read.xport("HCY_D.XPT")
+</p>
+<p>SMQ&lt;-read.xport("SMQ_D.XPT")
+</p>
+<p>BMX&lt;-read.xport("BMX_D.XPT")
+</p>
+<p>COT&lt;-read.xport("COT_D.XPT")
+</p>
+<p>d&lt;-merge(DEMO, HCY, by="SEQN", all.x=TRUE)
+</p>
+<p>d&lt;-merge(d, SMQ, by="SEQN", all.x=TRUE)
+</p>
+<p>d&lt;-merge(d, COT, by="SEQN", all.x=TRUE)
+</p>
+<p>d&lt;-merge(d, BMX, by="SEQN", all.x=TRUE)
+</p>
+<p>rm(DEMO, HCY, SMQ, COT, BMX)
+</p>
+<p>SEQN&lt;-d$SEQN
+</p>
+<p>age&lt;-d$RIDAGEYR
+</p>
+<p>race&lt;-d$RIDRETH1
+</p>
+<p>black&lt;-1*(race==4)
+</p>
+<p>hispanic&lt;-1*((race==1)|(race==2))
+</p>
+<p>female&lt;-1*(d$RIAGENDR==2)
+</p>
+<p>education&lt;-d$DMDEDUC2
+</p>
+<p>education[education&gt;6]&lt;-NA
+</p>
+<p>povertyr&lt;-d$INDFMPIR
+</p>
+<p>homocysteine&lt;-d$LBXHCY
+</p>
+<p>bmi&lt;-d$BMXBMI
+</p>
+<p>cotinine&lt;-d$LBXCOT
+</p>
+<p>cigs100life&lt;-d$SMQ020
+</p>
+<p>cigs100life[cigs100life&gt;3]&lt;-NA
+</p>
+<p>cigs100life&lt;-(cigs100life==1)*1
+</p>
+<p>smokenow&lt;-1*(d$SMQ040&lt;2.5)
+</p>
+<p>smokenow[cigs100life==0]&lt;-0
+</p>
+<p>cigsdays30&lt;-d$SMD641
+</p>
+<p>cigsdays30[cigsdays30&gt;32]&lt;-NA
+</p>
+<p>cigsdays30[smokenow==0]&lt;-0
+</p>
+<p>cigsperday30&lt;-d$SMD650
+</p>
+<p>cigsperday30[cigsperday30&gt;100]&lt;-NA
+</p>
+<p>cigsperday30[smokenow==0]&lt;-0
+</p>
+<p>dailysmoker&lt;-1*((cigs100life==1)&amp;(cigsdays30==30)&amp;(smokenow==1)&amp;(cigsperday30&gt;=10))
+</p>
+<p>neversmoker&lt;-1*((cigs100life==0)&amp;(smokenow==0))
+</p>
+<p>z&lt;-dailysmoker
+</p>
+<p>z[(neversmoker==0)&amp;(dailysmoker==0)]&lt;-(-999)
+</p>
+<p>ds&lt;-data.frame(SEQN, female, age, black, education, povertyr, bmi, homocysteine, cotinine,   cigs100life, smokenow, cigsdays30, cigsperday30, dailysmoker, neversmoker, z)
+</p>
+<p>use&lt;-age&gt;=20
+</p>
+<p>ds1&lt;-ds[use,]
+</p>
+<p>use&lt;-complete.cases(ds1)
+</p>
+<p>ds1$z[ds1$z==-999]&lt;-NA
+</p>
+<p>ds2&lt;-ds1[use&amp;!is.na(ds1$z),]
+</p>
+<p>rm(SEQN, female, age, black, hispanic, education, povertyr, homocysteine, cotinine, cigs100life, smokenow, cigsdays30, cigsperday30, dailysmoker, neversmoker, z, race, use, bmi)
+</p>
+<p>ds2&lt;-ds2[order(1-ds2$z),]
+</p>
+<p>attach(ds2)
+</p>
+<p>nh0505Homocysteine&lt;-data.frame(SEQN, z, female, age, black, education, povertyr, bmi, cigsperday30, cotinine, homocysteine)
+</p>
+<p>write.csv(nh0506Homocysteine, "nh0506Homocysteine.csv")
+</p>
+
+
+<h3>Source</h3>
+
+<p>From the NHANES web page, for NHANES 2005-2006.
+</p>
+
+
+<h3>References</h3>
+
+<p>US National Health and Nutrition Examination Survey, 2005-2006.  From the US Center for Health Statistics.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(nh0506Homocysteine)
+summary(nh0506Homocysteine)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,194 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plus_minus</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>plus_minus</h2>
+
+<h3>Description</h3>
+
+<p>Plus-Minus Analysis:
+Investigate the effects of changing single attributes values on the evaluation of <code>alternative</code>.
+The values of discrete basic attributes ("input attributes") are changed, one attribute at a time,
+by a particular number of steps downwards (<code>minus</code>) and upwards (<code>plus</code>),
+while observing the changes of the <code>target</code> attribute values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plus_minus(
+  model,
+  alternative,
+  target = model$first(),
+  minus = .Machine$integer.max,
+  plus = .Machine$integer.max,
+  print = TRUE,
+  as_character = FALSE,
+  round = NULL,
+  id = NULL,
+  evaluate = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A DexiModel object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>Either a <code>data.frame</code> representing a single alternative
+or an index to <code>model$alternatives</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>The attribute on which effects are observed. Default: <code>model$first()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minus</code></td>
+<td>
+<p>The maximum number of downward steps to be made for each input attribute.
+Default: <code>.Machine$integer.max</code>.
+The actual <code>minus</code> value is further determined with respect to
+<code>alternative</code> values and involved attributes' scales.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plus</code></td>
+<td>
+<p>The maximum number of upward steps to be made for each input attribute.
+Default: <code>.Machine$integer.max</code>.
+The actual <code>plus</code> value is further determined with respect to
+<code>alternative</code> values and involved attributes' scales.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print</code></td>
+<td>
+<p><code>logical(1)</code>. When <code>TRUE</code>, pretty print (left justify) the results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_character</code></td>
+<td>
+<p><code>logical(1)</code>. Whether to represent alternative values
+numerically (<code>FALSE</code>) or using text (<code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>round</code></td>
+<td>
+<p>An integer number, argument to <code>value_text()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p><code>character(1)</code>.
+Determines the contents of the first or first two columns of the resulting <code>data.frame</code>s:
+</p>
+
+<dl>
+<dt><code>"id"</code></dt>
+<dd>
+<p>Attribute ID.</p>
+</dd>
+<dt><code>"structure"</code></dt>
+<dd>
+<p>Attribute <code style="white-space: pre;">⁠$structure() + $name⁠</code>.</p>
+</dd>
+<dt>anything else</dt>
+<dd>
+<p>Equivalent to both <code>"id"</code> and <code>"structure"</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>evaluate</code></td>
+<td>
+<p><code>logical(1)</code>. Whether or not to evaluate <code>alternative</code> beforehand.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional parameters for <code>evaluate()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame consisting of columns:
+</p>
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>IDs of input attributes (unless excluded by the <code>id</code> argument).</p>
+</dd>
+<dt><code>structure</code></dt>
+<dd>
+<p>Structure and names of input attributes (unless excluded by the <code>id</code> argument).</p>
+</dd>
+<dt>'For <code>-minus</code> to <code>-1</code>
+</dt>
+<dd>
+<p>Evaluation value of <code>target</code> when decreasing the corresponding attribute value by the corresponding number of steps.</p>
+</dd>
+<dt><code>target$id</code></dt>
+<dd>
+<p>Original <code>alternative</code> value assigned to the corresponding attribute <code>id</code>.</p>
+</dd>
+<dt>For <code>1</code> to <code>plus</code>
+</dt>
+<dd>
+<p>Evaluation value of <code>target</code> when increasing the corresponding attribute value by the corresponding number of steps.</p>
+</dd>
+</dl>
+<p>Special values <code>"["</code> and <code>"]"</code> denote that it is not possible to decrease of increase, respectively,
+the corresponding attributes value further.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>evaluate()</code>, <code>value_text()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load "Car.dxi"
+CarDxi &lt;- system.file("extdata", "Car.dxi", package = "DEXiR")
+Car &lt;- read_dexi(CarDxi)
+
+alt &lt;- Car$alternative("MyCar",
+       BUY.PRICE="low", MAINT.PRICE="*", X.PERS="more", X.DOORS="4", LUGGAGE=2, SAFETY=c(1, 3))
+alte &lt;- Car$evaluate(alt)
+
+# Default plus-minus analysis, evaluating `alt`.
+plus_minus(Car, alt, evaluate = TRUE)
+
+# Plus-minus analysis of `alte`, using character strings,
+# no pretty-printing and excluding structure info.
+plus_minus(Car, alte, as_character=TRUE, print=FALSE, id = "id")
+
+# Plus-minus analysis on `target="PRICE"`, using character strings.
+plus_minus(Car, alt, target="PRICE", as_character=TRUE, evaluate=TRUE)
+</code></pre>
+
+
+</div>

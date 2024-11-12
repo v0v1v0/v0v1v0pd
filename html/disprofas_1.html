@@ -1,0 +1,289 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bootstrap_f2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bootstrap f2</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>bootstrap_f2()</code> generates <code>rr</code> bootstrap replicates
+of the similarity factor <code class="reqn">f_2</code> based on resampling of complete profiles
+(nonparametric bootstrap) or on resampling per time point the values
+between profiles (parametric bootstrap). Estimates of “normal”,
+“basic”, “student”, “percent” and of
+“bias-corrected, accelerated” (BCa) percentile intervals are returned.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bootstrap_f2(
+  data,
+  tcol,
+  grouping,
+  rand_mode = "complete",
+  rr = 999,
+  each = 12,
+  new_seed = 100,
+  confid = 0.9,
+  use_ema = "no",
+  bounds = c(1, 85),
+  nsf = c(1, 2),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame with the dissolution profile data in wide format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tcol</code></td>
+<td>
+<p>A vector of indices that specifies the columns in <code>data</code>
+that contain the % release values. The length of <code>tcol</code> must be
+three or longer.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grouping</code></td>
+<td>
+<p>A character string that specifies the column in <code>data</code>
+that contains the group names (i.e. a factorial variable, e.g., for the
+differentiation of batches or formulations of a drug product).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rand_mode</code></td>
+<td>
+<p>A character string that indicates whether complete profiles
+shall be randomised (<code>"complete"</code>, the default) or individual data
+points (<code>"individual"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rr</code></td>
+<td>
+<p>An integer that specifies the number of bootstrap replicates. The
+default is <code>999</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>each</code></td>
+<td>
+<p>An integer that specifies the number of dissolution profiles to
+be selected per group per randomisation round. The default is <code>12</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_seed</code></td>
+<td>
+<p>An integer for setting the seed for random number generation.
+The default is <code>100</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confid</code></td>
+<td>
+<p>A numeric value between 0 and 1 that specifies the confidence
+limit for the calculation of the bootstrap confidence intervals. The
+default is <code>0.9</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_ema</code></td>
+<td>
+<p>A character string that indicates whether the similarity
+factor <code class="reqn">f_2</code> should be calculated according to the EMA guideline
+“On the investigation of bioequivalence” (<code>"yes"</code>) or not
+(<code>"no"</code>, the default). The default is <code>"no"</code> because the
+bootstrap <code class="reqn">f_2</code> method is one of the possible solutions if the
+condition concerning the variability between the profiles does not allow
+the evaluation of <code class="reqn">f_2</code> according to the EMA guideline. A third option
+is <code>"ignore"</code>. If <code>use_ema</code> is <code>"yes"</code>, the <code>bounds</code>
+are <code>c(0, 85)</code> per definition. If <code>use_ema</code> is <code>"no"</code>, the
+appropriate profile portion is determined on the basis of the values of
+the parameter <code>bounds</code>. If <code>use_ema</code> is <code>"ignore"</code>, the
+complete profiles are used as specified by the parameter <code>tcol</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bounds</code></td>
+<td>
+<p>A numeric vector of the form <code>c(lower, upper)</code> that
+specifies the “lower” and “upper” limits, respectively, for
+the % drug release given that <code>use_ema</code> is <code>"no"</code>. The default
+is <code>c(1, 85)</code>. Mean % release values of any of the two groups being
+compared that are smaller than or equal to the lower bound are ignored and
+only the first mean % release value that is greater than or equal to the
+upper bound is included while all the subsequent values are ignored. If
+<code>use_ema</code> is <code>"yes"</code> the <code>bounds</code> are <code>c(0, 85)</code> per
+definition. If <code>use_ema</code> is <code>"ignore"</code> the <code>bounds</code> are
+disregarded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsf</code></td>
+<td>
+<p>A vector of positive integers that specify the “number
+of significant figures” (nsf) of the corresponding values of the
+<code>bounds</code> parameter. It must thus have the same length as the
+<code>bounds</code> parameter. Before the % release values are compared with
+the limits that are specified by the <code>bounds</code> parameter, they are
+rounded to the corresponding number of significant figures as specified
+by the <code>nsf</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Named parameters of the functions <code>stat.fun()</code>,
+<code>ran.fun()</code> and <code>boot()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Information on <code class="reqn">f_2</code> can be found in at least three FDA
+guidances and in the guideline of the European Medicines Agency (EMA)
+“On the investigation of bioequivalence” (EMA 2010). For the
+assessment of the similarity of dissolution profiles using the similarity
+factor <code class="reqn">f_2</code> according to the EMA guideline the following constraints
+do apply:
+</p>
+
+<ol>
+<li>
+<p> A minimum of three time points (without zero) are necessary.
+</p>
+</li>
+<li>
+<p> The time points should be the same for the two formulations.
+</p>
+</li>
+<li>
+<p> For every time point and for each formulation at least 12 data points
+are required.
+</p>
+</li>
+<li>
+<p> A maximum of one mean value per formulation may be &gt; 85% dissolved.
+</p>
+</li>
+<li>
+<p> The coefficient of variation (%CV) should be &lt; 20% for the first
+time point and &lt; 10% from the second to the last time point for any
+formulation.
+</p>
+</li>
+</ol>
+<p>Dissolution profiles are regarded as similar if the <code class="reqn">f_2</code> value is
+between 50 and 100. <br></p>
+<p>One often encountered problem is that the %CV constraint cannot be
+fulfilled. One possibility in this situation is the use of the bootstrap
+<code class="reqn">f_2</code> method (Shah 1998) by which the distribution of <code class="reqn">f_2</code> is
+simulated to obtain an unbiased estimate of the expected value of <code class="reqn">f_2</code>
+and the variability of the underlying distribution. For the <code class="reqn">f_2</code>
+calculation only those parts of the profiles are taken into account where
+the means (per formulation) are <code class="reqn">&gt; d</code>% dissolved (e.g., <code class="reqn">d = 1</code>)
+and a maximum of one mean value per formulation is <code class="reqn">&gt; 85</code>% dissolved.
+In the literature it is suggested to make use of the lower 90% bias
+corrected and accelerated (BCa) confidence interval (CI) limit to come to
+a decision in terms of similarity (Stevens (2015)).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class ‘<code>bootstrap_f2</code>’ is returned,
+containing the following list elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Boot</code></td>
+<td>
+<p>An object of class ‘<code>boot</code>’ with the corresponding
+components.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Profile.TP</code></td>
+<td>
+<p>A named numeric vector of the columns in <code>data</code>
+specified by <code>tcol</code> and depending on the selection of <code>use_ema</code>.
+Given that the column names contain extractable numeric information, e.g.,
+the testing time points of the dissolution profile, it contains the
+corresponding numeric values. Elements where no numeric information could
+be extracted are <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>A vector of the Jackknife leave-one-out-values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CI</code></td>
+<td>
+<p>An object of class ‘<code>bootci</code>’ which contains the
+intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BCa_CI</code></td>
+<td>
+<p>The lower and upper limits of the BCa interval calculated
+by the <code>boot.ci()</code> function from the ‘<code>boot</code>’ package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Shah_BCa_CI</code></td>
+<td>
+<p>The lower and upper limits of the BCa interval calculated
+according to Shah (Shah 1998).</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>United States Food and Drug Administration (FDA). Guidance for industry:
+dissolution testing of immediate release solid oral dosage forms. 1997.<br><a href="https://www.fda.gov/media/70936/download">https://www.fda.gov/media/70936/download</a>
+</p>
+<p>United States Food and Drug Administration (FDA). Guidance for industry:
+immediate release solid oral dosage form: scale-up and post-approval
+changes, chemistry, manufacturing and controls, <em>in vitro</em> dissolution
+testing, and <em>in vivo</em> bioequivalence documentation (SUPAC-IR). 1995.<br><a href="https://www.fda.gov/media/70949/download">https://www.fda.gov/media/70949/download</a>
+</p>
+<p>European Medicines Agency (EMA), Committee for Medicinal Products for
+Human Use (CHMP). Guideline on the Investigation of Bioequivalence. 2010;
+<a href="https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-investigation-bioequivalence-rev1_en.pdf">
+CPMP/EWP/QWP/1401/98 Rev. 1</a>.
+</p>
+<p>Stevens, R. E., Gray, V., Dorantes, A., Gold, L., and Pham, L. Scientific
+and regulatory standards for assessing product performance using the
+similarity factor, <code class="reqn">f_2</code>. <em>AAPS Journal</em>. 2015; <strong>17</strong>(2):
+301-306.<br><a href="https://doi.org/10.1208/s12248-015-9723-y">doi:10.1208/s12248-015-9723-y</a>
+</p>
+<p>Shah, V. P., Tsong, Y., Sathe, P., and Liu, J. P. <em>In vitro</em> dissolution
+profile comparison - statistics and analysis of the similarity factor,
+<code class="reqn">f_2</code>. <em>Pharm Res</em>. 1998; <strong>15</strong>(6): 889-896.<br><a href="https://doi.org/10.1023/A%3A1011976615750">doi:10.1023/A:1011976615750</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>boot</code>, <code>boot.ci</code>,
+<code>mimcr</code>, <code>mztia</code>.
+</p>
+
+
+</div>

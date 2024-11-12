@@ -1,0 +1,299 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>imgplot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Image plot of spotted expression array data</h2>
+
+<h3>Description</h3>
+
+<p>Creates an image of graduated colors that represent the
+values of a statistic for each spot on a spotted microarray.
+By default, the only the 5
+shown.  The initial version was based on <code>plot.spatial</code>
+in the sma package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">imgplot(z = DAAGbio::coralRG$R[, 1], layout = DAAGbio::coralRG$printer, crit1 = 0.05,
+crit2 = crit1, key.side=2,
+lohi.colors = c("#9E0142", "#D53E4F", "#F46D43", "#FDAE61", "#ABDDA4",
+"#66C2A5", "#3288BD", "#5E4FA2"), nacolor = "#FFFF00",
+boxplot.side = 1, split = "quantiles")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>values to be plotted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layout</code></td>
+<td>
+<p>layout of spots, in the order (rows of grids, columns of
+grids, rows of spots in a grid, columns in a grid)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit1</code></td>
+<td>
+<p>Choose the lower threshold to include this proportion
+at the high end</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit2</code></td>
+<td>
+<p>Choose the upper threshold to include this proportion
+of values at the low end</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key.side</code></td>
+<td>
+<p>Side on which the color key should appear</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lohi.colors</code></td>
+<td>
+<p>Graduated sequence of colors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nacolor</code></td>
+<td>
+<p>Use this color for <code>NA</code>s</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boxplot.side</code></td>
+<td>
+<p>Show boxplot on this side of figure region</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split</code></td>
+<td>
+<p>Specify <code>"intervals"</code> or <code>"quantiles"</code>,
+as required</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A plot is created on the current graphics device
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>J. H. Maindonald</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## The function is currently defined as
+function (z=DAAGbio::coralRG$R[,1], layout=cDAAGbio::oralRG$printer, crit1 = 0.05,
+            crit2 = crit1, key.side=2,
+            lohi.colors=c("#9E0142","#D53E4F","#F46D43","#FDAE61",
+              "#ABDDA4","#66C2A5","#3288BD","#5E4FA2"),
+            nacolor="#FFFF00", boxplot.side=1, split="quantiles")
+{
+  "block2matrix" &lt;-
+    function(z, sr=3, sc=2, gr=2, gc=2){
+      ## Assumes that values in the vector z are  in row major
+      ## order within blocks of dimension sr x sc, with blocks
+      ## in row major order within a gr x gc array of grids.
+      ## Elements in the vector that is returned are in row
+      ## major order wrt the sr*gr x sc*gc matrix of values on
+      ## the slide. (It is given the dimensions of a matrix.)
+      xy &lt;- array(z, dim=c(sc, sr, gc, gr))
+      xy &lt;- aperm(xy, c(1,3,2,4))
+      dim(xy) &lt;- c(sc*gc, gr*sr)
+      xy}
+  quantile.na &lt;- function (z, ...)
+    {
+      tmp &lt;- !(is.na(z) | is.infinite(z))
+      quantile(z[tmp], ...)
+    }
+  length.na &lt;- function (z, ...)
+    {
+      tmp &lt;- !(is.na(z) | is.infinite(z))
+      length(z[tmp], ...)
+    }
+    if(is.matrix(z))warning("z is a matrix, You probably want a column vector")
+  bplot &lt;- function(z, boxplot.side=1){
+    xrange &lt;- range(z,na.rm=TRUE)
+    iqr &lt;- diff(quantile(xrange, c(.25,.75)))
+    bwex &lt;- diff(xrange)/(3*iqr)
+    xhi &lt;- max(z,na.rm=TRUE)
+    xusr &lt;- par()$usr[c(1:2)]
+    xpos=pretty(z[!is.na(z)], n=5)
+    z &lt;- xusr[1]+(z-xrange[1])*diff(xusr)/diff(xrange)
+    newpos &lt;- xusr[1]+(xpos-xrange[1])*diff(xusr)/diff(xrange)
+    par(xpd=TRUE)
+    atvert &lt;- switch(boxplot.side, par()$usr[3]-par()$cxy[2]*0.8,
+                     "", par()$usr[4]+par()$cxy[2]*0.8, "")
+    if(atvert!=""){
+      boxplot(z, at=atvert, boxwex=bwex, add=TRUE, horizontal=TRUE, xaxt="n")
+      axis(side=boxplot.side, line=1.5,
+           at=newpos, labels=xpos, cex.axis=0.75, mgp=c(2, 0.5, 0))
+    }
+    par(xpd=FALSE)
+  }
+  if (crit1 &gt;= 1)
+    crit1 &lt;- crit1/(length.na(z))
+  if (crit2 &gt;= 1)
+    crit2 &lt;- crit2/(length.na(z))
+  tmpind &lt;- (z &gt; quantile.na(z, probs = 1 - crit2)) | (z &lt;
+                                  quantile.na(z, probs = crit1))
+  n &lt;- prod(unlist(layout))
+  n.all &lt;- length(z)
+  n.na &lt;- sum(is.na(z))
+  nhalf &lt;- length(lohi.colors)%/%2
+  n2 &lt;- 2*nhalf
+  n.one &lt;- length(lohi.colors)
+  plo &lt;- crit1*(0:nhalf)/nhalf
+  phi &lt;- 1-crit2*(nhalf:0)/nhalf
+  quiles1 &lt;- quantile.na(z, plo)
+  quiles2 &lt;- quantile.na(z, phi)
+  if(split=="intervals"){
+    quiles1[2:nhalf] &lt;- quiles1[1]+(quiles1[nhalf+1]-quiles1[1])*
+      (1:(nhalf-1))/nhalf
+    quiles2[2:nhalf] &lt;- quiles2[1]-(quiles2[nhalf+1]-quiles2[1])*
+      ((nhalf-1):1)/nhalf
+    plo[-1] &lt;- sapply(quiles1[-1],
+                      function(x, z)sum(z&lt;=x, na.rm=TRUE)/length.na(z), z=z)
+    phi[-1] &lt;- sapply(quiles2[-1],
+                      function(x, z)sum(z&lt;=x, na.rm=TRUE)/length.na(z), z=z)
+  }
+
+  if(crit1+crit2&lt;1){
+    quiles &lt;- c(quiles1,quiles2)
+    frac &lt;- c(plo, phi)
+    colpal &lt;- c(lohi.colors[1:nhalf],"#FFFFFF",
+                lohi.colors[(n.one-nhalf+1):(n.one)])
+    midbreak &lt;- TRUE
+  }
+  else {colpal &lt;- lohi.colors
+        midbreak &lt;- FALSE
+        quiles &lt;- quantile.na(z, (0:n.one)/n.one)
+        frac &lt;- c(plo, phi[-1])
+      }
+  dups &lt;- duplicated(quiles)
+  if(any(dups)){
+    cats &lt;- seq(along=quiles[-1])
+    filledcats &lt;- cats[!dups]
+    cutcats &lt;- as.integer(cut(z, quiles[!dups], include.lowest=TRUE))
+    fullm &lt;- filledcats[cutcats]}
+  else fullm &lt;- as.integer(cut(z, quiles, include.lowest=TRUE))
+  n.one &lt;- length(colpal)
+  nrects &lt;- length(quiles)
+  if(any(is.na(z))){
+    nacat &lt;- TRUE
+    fullm[is.na(fullm)] &lt;- max(unique(fullm[!is.na(fullm)]))+1
+    colpal &lt;- c(colpal, nacolor)
+  }
+  else nacat &lt;- FALSE
+  if ((length(as.vector(z)) != n) &amp; (!is.null(names(z)))) {
+    y &lt;- fullm[tmpind]
+    fullm &lt;- rep(NA, n)
+    fullm[as.integer(names(y))] &lt;- y
+  }
+  else fullm[!tmpind] &lt;- NA
+  if ((length(as.vector(z)) != n) &amp; (is.null(names(z)))) {
+    stop(paste("Error: Length of vector is different from total number\n",
+               "of spots and vector has no row.name.\n"))
+  }
+#################################################################
+  gc &lt;- layout$ngrid.c
+  gr &lt;- layout$ngrid.r
+  sc &lt;- layout$nspot.c
+  sr &lt;- layout$nspot.r
+  full &lt;- block2matrix(fullm, sr, sc, gr, gc)
+  image(1:ncol(full), 1:nrow(full), t(full), axes = FALSE,
+        xlab = "", ylab = "", col=colpal)
+  box()
+  abline(v = ((gr - 1):1) * (sr) + 0.5)
+  abline(h = (1:(gc - 1)) * (sc) + 0.5)
+#################################################################
+  if(boxplot.side%in%c(1,3))bplot(z, boxplot.side=boxplot.side)
+  if(key.side%in%c(2,4)){
+    chw &lt;- par()$cxy[1]
+    barwid &lt;- 0.75*chw
+    if(key.side==2){
+      x0 &lt;- par()$usr[1]-chw-barwid
+      xcutpos &lt;- x0 - 0.4*chw
+      xquilepos &lt;- x0+barwid+0.55*chw
+      srt &lt;- 90
+    }
+    else {
+      x0 &lt;- par()$usr[2]+chw
+      xcutpos &lt;- x0 + barwid + 0.4*chw
+      xquilepos &lt;- x0-0.4*chw
+      srt &lt;- -90
+    }
+    yvals2 &lt;- seq(from=par()$usr[3], to=par()$usr[4],
+                  length=n2+midbreak+2*nacat+1)[-(n2+midbreak+2*nacat+1)]
+    eps2 &lt;- diff(yvals2[1:2])
+
+    if(nacat){
+      nlast &lt;- length(yvals2)
+      nclast &lt;- length(colpal)
+      rect(x0, yvals2[nlast], x0+barwid, yvals2[nlast]+eps2,
+           col=colpal[nclast], xpd=TRUE)
+      text(x0+0.5*barwid, yvals2[nlast]+0.5*eps2, "NA",
+           xpd=TRUE, srt=srt)
+      yvals2 &lt;- yvals2[-((nlast-1):nlast)]
+      colpal &lt;- colpal[-nclast]
+    }
+    if(!midbreak){
+      rect(x0, yvals2, x0+barwid, yvals2+eps2,
+           col=colpal, xpd=TRUE)
+      text(xcutpos, c(yvals2[1],yvals2+eps2),
+           paste(signif(quiles,3)), srt=srt, xpd=TRUE, cex=0.8)
+      text(xquilepos, yvals2[1], "(0%)", srt=srt, xpd=TRUE, cex=0.65)
+      fracs &lt;- frac[-c(1, length(frac))]
+      text(xquilepos, yvals2[-1],
+           paste("(",round(fracs*100,2),")",sep=""),
+           srt=srt, xpd=TRUE, cex=0.65)
+      text(xquilepos, yvals2[length(yvals2)]+eps2, "(100%)", srt=srt,
+           xpd=TRUE, cex=0.65)
+
+    }
+    else {rect(x0, yvals2[1:nhalf], x0+barwid, yvals2[1:nhalf]+eps2,
+               col=colpal[1:nhalf], xpd=TRUE)
+          rect(x0, yvals2[(nhalf+2):(2*nhalf+1)], x0+barwid,
+               yvals2[(nhalf+2):(2*nhalf+1)]+eps2,
+               col=colpal[(nhalf+2):(2*nhalf+1)], xpd=TRUE)
+          text(xcutpos, yvals2[1:(nhalf+1)],
+               paste(signif(quiles1,3)), srt=srt, xpd=TRUE, cex=0.8)
+          text(xquilepos, yvals2[2:(nhalf+1)],
+               paste("(",round(plo[-1]*100,2),")",sep=""), srt=srt,
+               xpd=TRUE, cex=0.65)
+          text(xquilepos, yvals2[1], "(0%)", srt=srt, xpd=TRUE, cex=0.65)
+          text(xcutpos,
+               c(yvals2[(nhalf+2):(2*nhalf+1)], yvals2[2*nhalf+1]+eps2),
+               paste(signif(quiles2,3)), srt=srt, xpd=TRUE, cex=0.8)
+          text(xquilepos, yvals2[(nhalf+2):(2*nhalf+1)],
+               paste("(",round(phi[-length(phi)]*100,2),")",sep=""),
+               srt=srt, xpd=TRUE, cex=0.65)
+          text(xquilepos, yvals2[2*nhalf+1]+eps2, "(100%)", srt=srt,
+               xpd=TRUE, cex=0.65)
+        }
+  }
+  invisible()
+  }
+</code></pre>
+
+
+</div>

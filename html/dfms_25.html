@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ICr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Information Criteria to Determine the Number of Factors (r)</h2>
+
+<h3>Description</h3>
+
+<p>Minimizes 3 information criteria proposed by Bai and Ng (2002) to determine the optimal number of factors r* to be used in an approximate factor model.
+A Screeplot can also be computed to eyeball the number of factors in the spirit of Onatski (2010).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ICr(X, max.r = min(20, ncol(X) - 1))
+
+## S3 method for class 'ICr'
+print(x, ...)
+
+## S3 method for class 'ICr'
+plot(x, ...)
+
+## S3 method for class 'ICr'
+screeplot(x, type = "pve", show.grid = TRUE, max.r = 30, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a <code>T x n</code> numeric data matrix or frame of stationary time series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.r</code></td>
+<td>
+<p>integer. The maximum number of factors for which IC should be computed (or eigenvalues to be displayed in the screeplot).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of type 'ICr'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments to <code>ts.plot</code> or <code>plot</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character. Either <code>"ev"</code> (eigenvalues), <code>"pve"</code> (percent variance explained), or <code>"cum.pve"</code> (cumulative PVE). Multiple plots can be requested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show.grid</code></td>
+<td>
+<p>logical. <code>TRUE</code> shows gridlines in each plot.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Following Bai and Ng (2002) and De Valk et al. (2019), let <code class="reqn">NSSR(r)</code> be the normalized sum of squared residuals <code class="reqn">SSR(r) / (n \times T)</code> when r factors are estimated using principal components.
+Then the information criteria can be written as follows:
+</p>
+<p style="text-align: center;"><code class="reqn">IC_{r1} = \ln(NSSR(r)) + r\left(\frac{n + T}{nT}\right) + \ln\left(\frac{nT}{n + T}\right)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">IC_{r2} = \ln(NSSR(r)) + r\left(\frac{n + T}{nT}\right) + \ln(\min(n, T))</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">IC_{r3} = \ln(NSSR(r)) + r\left(\frac{\ln(\min(n, T))}{\min(n, T)}\right)</code>
+</p>
+
+<p>The optimal number of factors r* corresponds to the minimum IC. The three criteria are are asymptotically equivalent, but may give significantly
+different results for finite samples. The penalty in <code class="reqn">IC_{r2}</code> is highest in finite samples.
+</p>
+<p>In the Screeplot a horizontal dashed line is shown signifying an eigenvalue of 1, or a share of variance corresponding to 1 divided by the number of eigenvalues.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of 4 elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>F_pca</code></td>
+<td>
+<p><code>T x n</code> matrix of principle component factor estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eigenvalues</code></td>
+<td>
+<p>the eigenvalues of the covariance matrix of <code>X</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IC</code></td>
+<td>
+<p><code>r.max x 3</code> 'table' containing the 3 information criteria of Bai and Ng (2002), computed for all values of <code>r</code> from <code>1:r.max</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.star</code></td>
+<td>
+<p>vector of length 3 containing the number of factors (<code>r</code>) minimizing each information criterion.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>To determine the number of lags (<code>p</code>) in the factor transition equation, use the function <code>vars::VARselect</code> with r* principle components (also returned by <code>ICr</code>).
+</p>
+
+
+<h3>References</h3>
+
+<p>Bai, J., Ng, S. (2002). Determining the Number of Factors in Approximate Factor Models. <em>Econometrica, 70</em>(1), 191-221. <a href="https://doi.org/10.1111/1468-0262.00273">doi:10.1111/1468-0262.00273</a>
+</p>
+<p>Onatski, A. (2010). Determining the number of factors from empirical distribution of eigenvalues. <em>The Review of Economics and Statistics, 92</em>(4), 1004-1016.
+</p>
+<p>De Valk, S., de Mattos, D., &amp; Ferreira, P. (2019). Nowcasting: An R package for predicting economic variables using dynamic factor models. <em>The R Journal, 11</em>(1), 230-244.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(xts)
+library(vars)
+
+ics = ICr(diff(BM14_M))
+print(ics)
+plot(ics)
+screeplot(ics)
+
+# Optimal lag-order with 6 factors chosen
+VARselect(ics$F_pca[, 1:6])
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,296 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mosek_MIPsearch</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Functions to Search for optimum MIP Based Array Using Gurobi or Mosek
+</h2>
+
+<h3>Description</h3>
+
+<p>The functions search through different orderings of the nlevels vector 
+with the goal to create an array with minimum resolution and optimized shortest 
+word length. They create the orders and call gurobi_MIParray or mosek_MIParray 
+for each order.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mosek_MIPsearch(nruns, nlevels, resolution = 3, maxtime = 60, 
+   stopearly=TRUE, listout=FALSE, orders=NULL, 
+   distinct = TRUE, detailed = 0, forced=NULL, find.only=TRUE,
+   nthread=2, mosek.opts = list(verbose = 1, soldetail = 1),
+   mosek.params = list(dparam = list(LOWER_OBJ_CUT = 0.5, MIO_TOL_ABS_GAP = 0.2,
+      INTPNT_CO_TOL_PFEAS = 1e-05, INTPNT_CO_TOL_INFEAS = 1e-07),
+      iparam = list(PRESOLVE_LINDEP_USE="OFF", LOG_MIO_FREQ=100)))
+gurobi_MIPsearch(nruns, nlevels, resolution = 3, maxtime = 60, 
+   stopearly=TRUE, listout=FALSE, orders=NULL, 
+   distinct = TRUE, detailed = 0, forced=NULL, find.only=TRUE, 
+   nthread = 2, heurist=0.5, MIQCPMethod=0, MIPFocus=1,
+   gurobi.params = list(BestObjStop = 0.5, OutputFlag=0))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nruns</code></td>
+<td>
+
+<p>positive integer; number of runs
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nlevels</code></td>
+<td>
+
+<p>vector of integers (&gt;=2); numbers of factor levels
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+
+<p>positive integer; the minimum resolution requested
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxtime</code></td>
+<td>
+
+<p>the maximum run time in seconds per Gurobi or Mosek optimization request (the overall run time may become (much) larger); in case of conflict between <code>maxtime</code> and an explicit timing request in
+<code>gurobi.params$TimeLimit</code> or <code>mosek.params$dparam$$MIO_MAX_TIME</code>, the stricter request prevails; the default values differ between Gurobi (60) and Mosek (Inf), because Mosek runs can be easily escaped, while Gurobi runs cannot.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stopearly</code></td>
+<td>
+
+<p>logical; if TRUE, the search stops if the shortest word length hits the lower bound; set to FALSE if you want longer word lengths to be optimized among several choices with the same shortest word length
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>listout</code></td>
+<td>
+
+<p>logical; if TRUE, all experimental plans are stored, instead of only the best one; if <code>stopearly=TRUE</code>, <code>listout=TRUE</code> does not make sense
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orders</code></td>
+<td>
+
+<p>NULL (in which case distinct level orders are automatically determined) or a list of level orders to be searched
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distinct</code></td>
+<td>
+
+<p>logical; if TRUE (default), restricts counting vector to 0/1 entries, which means that the resulting array is requested to have distinct rows; otherwise, duplicate rows are permitted, i.e. the counting vector can have arbitrary non-negative integers. Designs with distinct runs are usually better; in addition, binary variables are easier to handle by the optimization algorithm. Nevertheless, there are occasions where a better array is found faster with option <code>distinct=FALSE</code>, even if it has distinct rows.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>detailed</code></td>
+<td>
+
+<p>integer (default 0); determines the output detail: positive values imply inclusion of a problem and solution history (attribute <code>history</code>), values of at least 3 add the lists of optimization matrices (Us and Hs, attribute <code>matrices</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forced</code></td>
+<td>
+
+<p>for <code>resolution &gt; 1</code> only;<br>
+runs to force into the solution design; can be given as an array matrix with the appropriate number of columns and less than <code>nruns</code> rows or a counting vector for the full factorial in lexicographic order with sum smaller than <code>nruns</code>; if <code>distinct=TRUE</code>, <code>forced</code> must have distinct rows (matrix) or 0/1 elements only.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>find.only</code></td>
+<td>
+
+<p>logical; if TRUE (default), the function only attempts to find an array of the requested resolution, without optimizing word lenghts; otherwise, a design of the requested resolution is found, which is subsequently improved in terms of its word lengths up to words of length <code>kmax</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nthread</code></td>
+<td>
+
+<p>the number of threads (=cores) to use;
+there are also the Mosek parameter <code>NUM_THREADS</code> and the Gurobi parameter <code>Threads</code>; in case of conflict, the smaller request prevails.
+For using Gurobi's or Mosek's default (which is in most cases the use of all available cores), choose <code>nthread=0</code>.<br>
+CAUTION: <code>nthread</code> should not be chosen larger than the available number of cores. Gurobi warns that performance will deteriorate, but was observed to perform OK. For Mosek, performance will strongly deteriorate, and for extreme choices the R session might even crash (even for small problems)!
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mosek.opts</code></td>
+<td>
+
+<p>list of Mosek options; these have to be looked up in Mosek documentation
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mosek.params</code></td>
+<td>
+
+<p>list of mosek parameters, which can have the list-valued elements <code>dparam</code>, <code>iparam</code> and/or <code>sparam</code>; their use has to be looked up in the RMosek documentation.
+The arguments <code>maxtime</code> and <code>nthread</code> correspond to the <code>dparam$MIO_MAX_TIME</code> and
+<code>iparam$NUM_THREADS</code> specifications. Conflicts are resolved as stated in their documentation.
+</p>
+<p>The element <code>dparam$LOWER_OBJ_CUT</code> can be used to incorporate a best
+bound found in an earlier successless optimization attempt; per default, it is set to 0.5, since
+the target function can take on integer values only and cannot be negative.
+</p>
+<p>If a valid starting value is not accepted by Mosek, it may be worthwhile to increase <code>dparam$INTPNT_CO_TOL_PFEAS</code>.
+</p>
+<p>Users of Mosek versions 9 and higher may want to play with <code>iparam$MIO_SEED</code>, which was introduced as a new parameter with Mosek version 9 (default: 42); 
+different seeds modify the path taken through the search space for a given level ordering; thus, varying seeds can also be the route to choose where searching over level 
+orderings is not feasible. 
+</p>
+<p>Note that a user specified <code>mosek.params</code> should always contain the specifications shown under Usage. Exceptions: <code>LOWER_OBJ_CUT</code> is always specified to be at least 0.5, i.e. this option can be safely omitted without loosing anything, and intentional changes can of course be made.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>heurist</code></td>
+<td>
+
+<p>the proportion heuristics time used by Gurobi in quadratic objective optimization (default 0.5; Gurobi default is 0.05);
+there is also the Gurobi parameter Heuristics; in case of conflict, the larger request prevails;
+the setting for heurist is deactivated for the initial linear problem which is always run with the Gurobi default. It can be worthwhile playing with this option for improving the run time for certain settings; for example, with <code>nruns=48</code> and <code>nlevels=c(2,2,3,4,4)</code>, <code>heurist=0.05</code> performs better than the default 0.5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MIQCPMethod</code></td>
+<td>
+
+<p>the method used by Gurobi for quadratically constrained optimization (default 0; other possibilities -1 (Gurobi decides) or 1);
+there is also the Gurobi parameter MIQCPMethod; in case of conflict, the method is set to "0"; this choice is made because it proved beneficial in many cases explored (although there also were a few cases which fared better with Gurobi's default).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MIPFocus</code></td>
+<td>
+
+<p>the strategy used by Gurobi for quadratically constrained optimization (default 1: focus on finding good feasible solutions fast; other possibilities: 0 (Gurobi decides/compromise), 2 or 3 (focus on increasing the lower bound fast));
+there is also the Gurobi parameter MIPFocus; in case of conflict, MIPFocus is set to "0";
+the setting for MIPFocus is deactivated for the initial linear problem which is always run with the Gurobi default.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gurobi.params</code></td>
+<td>
+
+<p>list of gurobi parameters; these have to be looked up in Gurobi documentation;
+the arguments <code>maxtime</code>, <code>heurist</code>, <code>MIQCPMethod</code> and <code>MIPFocus</code> refer to the Gurobi parameters "TimeLimit", "Heuristics", "MIQCPMethod" and "MIPFocus", respectively. See their documentation for what happens in case of conflict.
+</p>
+<p>The Gurobi parameter <code>BestObjStop</code> can be used to incorporate a best
+bound found in an earlier successless optimization attempt; per default, it is set to 0.5, since
+the objective function can take on integer values only and cannot be negative.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The search functions have been implemented, because the algorithm's behavior may 
+strongly depend on the order of factors in case of mixed level arrays. 
+In many examples, Mosek quickly improved the objective function which 
+then stayed constant for a long time; thus, it may be promising to run 
+<code>mosek_MIPsearch</code> with <code>maxtime=60</code> (or even less). See also 
+Groemping and Fontana (2019) for examples of successful applications of the search 
+functionality.
+</p>
+<p>Even though Gurobi was less successful as a search tool in the examples that 
+were examined so far, it may be helpful for other examples.
+</p>
+<p>The options suppress printed output from the optimizers themselves.
+</p>
+<p>Mosek Version 9 has gained a seed argument (<code>iparam$MIO_SEED</code>, 
+which implements the Mosek parameter <code>MSK_IPAR_MIO_SEED</code>). 
+Playing with seeds in <code>mosek_MIParray</code> may be an alternative to using the search approach, 
+because it may lead to different paths through the search space for a fixed ordering of the <code>nlevels</code> vector. 
+So far, I have only very little experience with using seeds; user reports are very welcome.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an array of class <code>oa</code> with the attributes added 
+by <code>mosek_MIParray</code> or <code>gurobi_MIParray</code>, resp. <br>
+In addition, the attribute <code>optorder</code> contains the vector of level orders that yielded the best design; 
+if <code>listout=TRUE</code>, also the attributes <code>orders</code> and <code>allplans</code>.
+</p>
+<p>Objects with the attribute <code>allplans</code> are quite large. If the attribute is 
+no longer needed, it can be removed from an object named <code>obj</code> 
+(replace with the name of your object) by the command <br><code>attr(obj, "allplans") &lt;- NULL</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ulrike Groemping
+</p>
+
+
+<h3>References</h3>
+
+<p>Groemping, U. and Fontana R. (2019). An Algorithm for Generating Good Mixed Level Factorial Designs. <em>Computational Statistics &amp; Data Analysis</em> <b>137</b>, 101-114.
+</p>
+<p>Groemping, U. (2020). DoE.MIParray: an R package for algorithmic creation of orthogonal arrays. <em>Journal of Open Research Software</em>, <b>8: 24</b>. DOI: https://doi.org/10.5334/jors.286
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See also <code>mosek_MIParray</code> and <code>gurobi_MIParray</code>,
+<code>oa_feasible</code> from package <span class="pkg">DoE.base</span> for checking 
+feasibility of requested array strength (resolution - 1) 
+for combinations of <code>nruns</code> and <code>nlevels</code>, and 
+<code>lowerbound_AR</code> from package <span class="pkg">DoE.base</span> 
+for a lower bound for the length R words in a resolution R array.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## can also be run with gurobi_MIParray instead of mosek_MIParray
+## there are of course better ways to obtain good arrays for these parameters
+## (e.g. function FrF2 from package FrF2)
+oa_feasible(18, c(2,3,3,3,3), 2)  ## strength 2 array feasible
+lowerbound_AR(18, c(2,3,3,3,3), 3)  ## lower bound for A3
+## of course not necessary here, the design is found fast
+feld &lt;- mosek_MIPsearch(18, c(2,3,3,3,3), stopearly=FALSE, listout=TRUE, maxtime=30)
+## even stopearly=TRUE would not stop, because the lower bound 2 is not achievable
+feld
+names(attributes(feld))
+attr(feld, "optorder")
+## even for this simple case, running optimization until confirmed optimality 
+## would be very slow
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dm_filter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Filtering</h2>
+
+<h3>Description</h3>
+
+<p>Filtering a table of a <code>dm</code> object may affect other tables that are connected to it
+directly or indirectly via foreign key relations.
+</p>
+<p><code>dm_filter()</code> can be used to define filter conditions for tables using syntax that is similar to <code>dplyr::filter()</code>.
+The filters work across related tables:
+The resulting <code>dm</code> object only contains rows that are related
+(directly or indirectly) to rows that remain after applying the filters
+on all tables.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dm_filter(.dm, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.dm</code></td>
+<td>
+<p>A <code>dm</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Named logical predicates.
+The names correspond to tables in the <code>dm</code> object.
+The predicates are defined in terms of the variables in the corresponding table,
+they are passed on to <code>dplyr::filter()</code>.
+</p>
+<p>Multiple conditions are combined with <code>&amp;</code>.
+Only the rows where the condition evaluates
+to <code>TRUE</code> are kept.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>As of dm 1.0.0, these conditions are no longer stored in the <code>dm</code> object,
+instead they are applied to all tables during the call to <code>dm_filter()</code>.
+Calling <code>dm_apply_filters()</code> or <code>dm_apply_filters_to_tbl()</code> is no longer necessary.
+</p>
+<p>Use <code>dm_zoom_to()</code> and <code>dplyr::filter()</code> to filter rows without affecting related tables.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated <code>dm</code> object with filters executed across all tables.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+dm_nyc &lt;- dm_nycflights13()
+dm_nyc %&gt;%
+  dm_nrow()
+
+dm_nyc_filtered &lt;-
+  dm_nycflights13() %&gt;%
+  dm_filter(airports = (name == "John F Kennedy Intl"))
+
+dm_nyc_filtered %&gt;%
+  dm_nrow()
+
+# If you want to keep only those rows in the parent tables
+# whose primary key values appear as foreign key values in
+# `flights`, you can set a `TRUE` filter in `flights`:
+dm_nyc %&gt;%
+  dm_filter(flights = (1 == 1)) %&gt;%
+  dm_nrow()
+# note that in this example, the only affected table is
+# `airports` because the departure airports in `flights` are
+# only the three New York airports.
+
+</code></pre>
+
+
+</div>

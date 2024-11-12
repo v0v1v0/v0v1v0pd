@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>GetAccuracyOverTimePlotPreview</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Retrieve Accuracy over Time preview plot for a model.</h2>
+
+<h3>Description</h3>
+
+<p>Retrieve Accuracy over Time preview plot for a model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">GetAccuracyOverTimePlotPreview(
+  model,
+  backtest = 0,
+  source = SourceType$Validation,
+  seriesId = NULL,
+  forecastDistance = NULL,
+  maxWait = 600
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>An S3 object of class dataRobotModel like that returned by
+the function GetModel, or each element of the list returned by
+the function ListModels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>backtest</code></td>
+<td>
+<p>integer or character. Optional. Retrieve plots for a specific backtest.
+Use the backtest index starting from zero.
+To retrieve plots for holdout, use <code>DataSubset$Holdout</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p>character. Optional. The source of the data for the backtest/holdout.
+Must be one of <code>SourceType</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seriesId</code></td>
+<td>
+<p>character. Optional. The name of the series to retrieve for multiseries projects.
+If not provided an average plot for the first 1000 series will be retrieved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forecastDistance</code></td>
+<td>
+<p>integer. Optional. Forecast distance to retrieve the chartdata for.
+If not specified, the first forecast distance for this project will be used.
+Only available for time series projects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxWait</code></td>
+<td>
+<p>integer. Optional. The maximum time to wait for a compute job to complete
+before retrieving the plots. Default is 600. If 0, the plots would be retrieved
+without attempting the computation.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list with the following components:
+</p>
+
+<ul>
+<li>
+<p> startDate. POSIXct: The datetime of the start of the chartdata (inclusive).
+</p>
+</li>
+<li>
+<p> endDate. POSIXct: The datetime of the end of the chartdata (exclusive).
+</p>
+</li>
+<li>
+<p> bins. data.frame: Each row represents a bin in the plot. Dataframe has following columns:
+</p>
+
+<ul>
+<li>
+<p> startDate. POSIXct: The datetime of the start of the bin (inclusive).
+</p>
+</li>
+<li>
+<p> endDate. POSIXct: The datetime of the end of the bin (exclusive).
+</p>
+</li>
+<li>
+<p> actual. numeric: Average actual value of the target in the bin.
+NA if there are no entries in the bin.
+</p>
+</li>
+<li>
+<p> predicted. numeric: Average prediction of the model in the bin.
+NA if there are no entries in the bin.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+projectId &lt;- "59a5af20c80891534e3c2bde"
+modelId &lt;- "5996f820af07fc605e81ead4"
+model &lt;- GetModel(projectId, modelId)
+plot &lt;- GetAccuracyOverTimePlotPreview(model)
+png("accuracy_over_time_preview.png", width = 1200, height = 600, units = "px")
+par(mar = c(10, 5, 5, 5))
+plot(plot$bins$startDate, plot$bins$actual, type = "l", ylab = "Target", xaxt = "n", xlab = "")
+lines(plot$bins$startDate, plot$bins$predicted, col = "red")
+axis(1, plot$bins$startDate, format(plot$bins$startDate, "%Y-%m-%d"), las = 3)
+title(xlab = "Date", mgp = c(7, 1, 0))
+legend("topright", legend = c("Actual", "Predicted"), col = c("black", "red"), lty = 1:1)
+dev.off()
+
+## End(Not run)
+</code></pre>
+
+
+</div>

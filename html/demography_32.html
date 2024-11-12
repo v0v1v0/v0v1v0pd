@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lifetable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct lifetables from mortality rates</h2>
+
+<h3>Description</h3>
+
+<p>Computes period and cohort lifetables from mortality rates for multiple years.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lifetable(
+  data,
+  series = names(data$rate)[1],
+  years = data$year,
+  ages = data$age,
+  max.age = min(100, max(data$age)),
+  type = c("period", "cohort")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Demogdata object such as obtained from <code>read.demogdata</code>,
+<code>forecast.fdm</code> or <code>forecast.lca</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>series</code></td>
+<td>
+<p>Name of series to use.  Default is the first series in <code>data[["rate"]]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>years</code></td>
+<td>
+<p>Vector indicating which years to include in the tables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ages</code></td>
+<td>
+<p>Vector indicating which ages to include in table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.age</code></td>
+<td>
+<p>Age for last row. Ages beyond this are combined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Type of lifetable: <code>period</code> or <code>cohort</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For period lifetables, all years and all ages specified are included in the tables. For cohort lifetables,
+if <code>ages</code> takes a scalar value, then the cohorts are taken to be of that age in each year contained in <code>years</code>.
+But if <code>ages</code> is a vector of values, then the cohorts are taken to be of those ages in the first year contained in <code>years</code>.
+</p>
+<p>For example, if <code>ages=0</code> then lifetables of the birth cohorts for all years in <code>years</code> are computed. On the other hand,
+if <code>ages=0:100</code> and <code>years=1950:2010</code>, then lifetables of each age cohort in 1950 are computed.
+</p>
+<p>In all cases, <code class="reqn">q_x = m_x/(1+[(1-a_x)m_x])</code> as per Chiang (1984).
+</p>
+<p>Warning: the code has only been tested for data based on single-year age groups.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class “lifetable” containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>Name of region from which data are taken.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>series</code></td>
+<td>
+<p>Name of series</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>age</code></td>
+<td>
+<p>Ages for lifetable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>year</code></td>
+<td>
+<p>Period years or cohort years</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mx</code></td>
+<td>
+<p>Death rate at age x.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qx</code></td>
+<td>
+<p>The probability that an individual of exact age x will die before exact age x+1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lx</code></td>
+<td>
+<p>Number of survivors to exact age x.  The radix is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dx</code></td>
+<td>
+<p>The number of deaths between exact ages x and x+1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Lx</code></td>
+<td>
+<p>Number of years lived between exact age x and exact age x+1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tx</code></td>
+<td>
+<p>Number of years lived after exact age x.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ex</code></td>
+<td>
+<p>Remaining life expectancy at exact age x.</p>
+</td>
+</tr>
+</table>
+<p>Note that the lifetables themselves are not returned, only their components. However, there is a print method that constructs (and returns)
+the lifetables from the above components.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Heather Booth, Leonie Tickle, Rob J Hyndman, John Maindonald and Timothy Miller
+</p>
+
+
+<h3>References</h3>
+
+<p>Chiang CL. (1984) <em>The life table and its applications</em>. Robert E Krieger Publishing Company: Malabar.
+</p>
+<p>Keyfitz, N, and Caswell, H. (2005) <em>Applied mathematical demography</em>, Springer-Verlag: New York.
+</p>
+<p>Preston, S.H., Heuveline, P., and Guillot, M. (2001) <em>Demography: measuring and modeling population processes</em>. Blackwell
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>life.expectancy</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">france.lt &lt;- lifetable(fr.mort)
+plot(france.lt)
+lt1990 &lt;- print(lifetable(fr.mort,year=1990))
+
+france.LC &lt;- lca(fr.mort)
+france.fcast &lt;- forecast(france.LC)
+france.lt.f &lt;- lifetable(france.fcast)
+plot(france.lt.f)
+
+# Birth cohort lifetables, 1900-1910
+france.clt &lt;- lifetable(fr.mort,type="cohort",age=0, years=1900:1910)
+
+# Partial cohort lifetables for 1950
+lifetable(fr.mort, years=1950)
+</code></pre>
+
+
+</div>

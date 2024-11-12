@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dm_zoom_to</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mark table for manipulation</h2>
+
+<h3>Description</h3>
+
+<p>Zooming to a table of a <code>dm</code> allows for the use of many <code>dplyr</code>-verbs directly on this table, while retaining the
+context of the <code>dm</code> object.
+</p>
+<p><code>dm_zoom_to()</code> zooms to the given table.
+</p>
+<p><code>dm_update_zoomed()</code> overwrites the originally zoomed table with the manipulated table.
+The filter conditions for the zoomed table are added to the original filter conditions.
+</p>
+<p><code>dm_insert_zoomed()</code> adds a new table to the <code>dm</code>.
+</p>
+<p><code>dm_discard_zoomed()</code> discards the zoomed table and returns the <code>dm</code> as it was before zooming.
+</p>
+<p>Please refer to <code>vignette("tech-db-zoom", package = "dm")</code>
+for a more detailed introduction.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dm_zoom_to(dm, table)
+
+dm_insert_zoomed(dm, new_tbl_name = NULL, repair = "unique", quiet = FALSE)
+
+dm_update_zoomed(dm)
+
+dm_discard_zoomed(dm)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dm</code></td>
+<td>
+<p>A <code>dm</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table</code></td>
+<td>
+<p>A table in the <code>dm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_tbl_name</code></td>
+<td>
+<p>Name of the new table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repair</code></td>
+<td>
+<p>Either a string or a function. If a string, it must be one of
+<code>"check_unique"</code>, <code>"minimal"</code>, <code>"unique"</code>, <code>"universal"</code>, <code>"unique_quiet"</code>,
+or <code>"universal_quiet"</code>. If a function, it is invoked with a vector of
+minimal names and must return minimal names, otherwise an error is thrown.
+</p>
+
+<ul>
+<li>
+<p> Minimal names are never <code>NULL</code> or <code>NA</code>. When an element doesn't
+have a name, its minimal name is an empty string.
+</p>
+</li>
+<li>
+<p> Unique names are unique. A suffix is appended to duplicate
+names to make them unique.
+</p>
+</li>
+<li>
+<p> Universal names are unique and syntactic, meaning that you can
+safely use the names as variables without causing a syntax
+error.
+</p>
+</li>
+</ul>
+<p>The <code>"check_unique"</code> option doesn't perform any name repair.
+Instead, an error is raised if the names don't suit the
+<code>"unique"</code> criteria.
+</p>
+<p>The options <code>"unique_quiet"</code> and <code>"universal_quiet"</code> are here to help the
+user who calls this function indirectly, via another function which exposes
+<code>repair</code> but not <code>quiet</code>. Specifying <code>repair = "unique_quiet"</code> is like
+specifying <code style="white-space: pre;">⁠repair = "unique", quiet = TRUE⁠</code>. When the <code>"*_quiet"</code> options
+are used, any setting of <code>quiet</code> is silently overridden.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>By default, the user is informed of any renaming
+caused by repairing the names. This only concerns unique and
+universal repairing. Set <code>quiet</code> to <code>TRUE</code> to silence the
+messages.
+</p>
+<p>Users can silence the name repair messages by setting the
+<code>"rlib_name_repair_verbosity"</code> global option to <code>"quiet"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Whenever possible, the key relations of the original table are transferred to the resulting table
+when using <code>dm_insert_zoomed()</code> or <code>dm_update_zoomed()</code>.
+</p>
+<p>Functions from <code>dplyr</code> that are supported for a <code>dm_zoomed</code>: <code>group_by()</code>, <code>summarise()</code>, <code>mutate()</code>,
+<code>transmute()</code>, <code>filter()</code>, <code>select()</code>, <code>rename()</code> and <code>ungroup()</code>.
+You can use these functions just like you would
+with a normal table.
+</p>
+<p>Calling <code>filter()</code> on a zoomed <code>dm</code> is different from calling <code>dm_filter()</code>:
+only with the latter, the filter expression is added to the list of table filters stored in the dm.
+</p>
+<p>Furthermore, different <code>join()</code>-variants from <span class="pkg">dplyr</span> are also supported,
+e.g. <code>left_join()</code> and <code>semi_join()</code>.
+(Support for <code>nest_join()</code> is planned.)
+The join-methods for <code>dm_zoomed</code> infer the columns to join by from the primary and foreign keys,
+and have an extra argument <code>select</code> that allows choosing the columns of the RHS table.
+</p>
+<p>And – last but not least – also the <span class="pkg">tidyr</span>-functions <code>unite()</code> and <code>separate()</code> are supported for <code>dm_zoomed</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>For <code>dm_zoom_to()</code>: A <code>dm_zoomed</code> object.
+</p>
+<p>For <code>dm_insert_zoomed()</code>, <code>dm_update_zoomed()</code> and <code>dm_discard_zoomed()</code>: A <code>dm</code> object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+flights_zoomed &lt;- dm_zoom_to(dm_nycflights13(), flights)
+
+flights_zoomed
+
+flights_zoomed_transformed &lt;-
+  flights_zoomed %&gt;%
+  mutate(am_pm_dep = ifelse(dep_time &lt; 1200, "am", "pm")) %&gt;%
+  # `by`-argument of `left_join()` can be explicitly given
+  # otherwise the key-relation is used
+  left_join(airports) %&gt;%
+  select(year:dep_time, am_pm_dep, everything())
+
+flights_zoomed_transformed
+
+# replace table `flights` with the zoomed table
+flights_zoomed_transformed %&gt;%
+  dm_update_zoomed()
+
+# insert the zoomed table as a new table
+flights_zoomed_transformed %&gt;%
+  dm_insert_zoomed("extended_flights") %&gt;%
+  dm_draw()
+
+# discard the zoomed table
+flights_zoomed_transformed %&gt;%
+  dm_discard_zoomed()
+
+</code></pre>
+
+
+</div>

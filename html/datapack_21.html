@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DataObject-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DataObject wraps raw data with system-level metadata</h2>
+
+<h3>Description</h3>
+
+<p>DataObject is a wrapper class that associates raw data or a data file with system-level metadata 
+describing the data.  The system metadata includes attributes such as the object's identifier, 
+type, size, checksum, owner, version relationship to other objects, access rules, and other critical metadata.
+The SystemMetadata is compliant with the DataONE federated repository network's definition of SystemMetadata, and
+is encapsulated as a separate object of type <code>SystemMetadata</code> that can be manipulated as needed. Additional science-level and
+domain-specific metadata is out-of-scope for SystemMetadata, which is intended only for critical metadata for
+managing objects in a repository system.
+</p>
+
+
+<h3>Details</h3>
+
+<p>A DataObject can be constructed by passing the data and SystemMetadata to the new() method, or by passing
+an identifier, data, format, user, and DataONE node identifier, in which case a SystemMetadata instance will
+be generated with these fields and others that are calculated (such as size and checksum).
+</p>
+<p>Data are associated with the DataObject either by passing it as a <code>'raw'</code> value to the <code>'dataobj'</code>
+parameter in the constructor, which is then stored in memory, or by passing a fully qualified file path to the 
+data in the <code>'filename'</code> parameter, which is then stored on disk.  One of dataobj or filename is required.
+Use the <code>'filename'</code> approach when data are too large to be managed effectively in memory.  Callers can
+access the <code>'filename'</code> slot to get direct access to the file, or can call <code>'getData()'</code> to retrieve the
+contents of the data or file as a raw value (but this will read all of the data into memory).
+</p>
+
+
+<h3>Slots</h3>
+
+
+<dl>
+<dt><code>sysmeta</code></dt>
+<dd>
+<p>A value of type <code>"SystemMetadata"</code>, containing the metadata about the object</p>
+</dd>
+<dt><code>data</code></dt>
+<dd>
+<p>A value of type <code>"raw"</code>, containing the data represented in this object</p>
+</dd>
+<dt><code>filename</code></dt>
+<dd>
+<p>A character value that contains the fully-qualified path to the object data on disk</p>
+</dd>
+<dt><code>dataURL</code></dt>
+<dd>
+<p>A character value for the URL used to load data into this DataObject</p>
+</dd>
+<dt><code>updated</code></dt>
+<dd>
+<p>A list containing logical values which indicate if system metadata or the data object have been updated since object creation.</p>
+</dd>
+<dt><code>oldId</code></dt>
+<dd>
+<p>A character string containing the previous identifier used, before a <code>"replaceMember"</code> call.</p>
+</dd>
+<dt><code>targetPath</code></dt>
+<dd>
+<p>An optional character string holding the path of where the file is placed in a downloaded package.</p>
+</dd>
+</dl>
+<h3>Methods</h3>
+
+
+<ul>
+<li>
+<p><code>initialize</code>: Initialize a DataObject
+</p>
+</li>
+<li>
+<p><code>addAccessRule</code>: Add a Rule to the AccessPolicy
+</p>
+</li>
+<li>
+<p><code>canRead</code>: Test whether the provided subject can read an object.
+</p>
+</li>
+<li>
+<p><code>getData</code>: Get the data content of a specified data object
+</p>
+</li>
+<li>
+<p><code>getFormatId</code>: Get the FormatId of the DataObject
+</p>
+</li>
+<li>
+<p><code>getIdentifier</code>: Get the Identifier of the DataObject
+</p>
+</li>
+<li>
+<p><code>hasAccessRule</code>: Determine if an access rules exists for a DataObject.
+</p>
+</li>
+<li>
+<p><code>setPublicAccess</code>: Add a Rule to the AccessPolicy to make the object publicly readable.
+</p>
+</li>
+<li>
+<p><code>updateXML</code>: Update selected elements of the xml content of a DataObject
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>datapack</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data &lt;- charToRaw("1,2,3\n4,5,6\n")
+targetPath &lt;- "myData/time-trials/trial_data.csv"
+do &lt;- new("DataObject", "id1", dataobj=data, "text/csv", 
+  "uid=jones,DC=example,DC=com", "urn:node:KNB", targetPath=targetPath)
+getIdentifier(do)
+getFormatId(do)
+getData(do)
+canRead(do, "uid=anybody,DC=example,DC=com")
+do &lt;- setPublicAccess(do)
+canRead(do, "public")
+canRead(do, "uid=anybody,DC=example,DC=com")
+# Also can create using a file for storage, rather than memory
+## Not run: 
+tf &lt;- tempfile()
+con &lt;- file(tf, "wb")
+writeBin(data, con)
+close(con)
+targetPath &lt;- "myData/time-trials/trial_data.csv"
+do &lt;- new("DataObject", "id1", format="text/csv", user="uid=jones,DC=example,DC=com", 
+  mnNodeId="urn:node:KNB", filename=tf, targetPath=targetPath)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

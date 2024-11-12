@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pmprune</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pruning A Precision Medicine Tree</h2>
+
+<h3>Description</h3>
+
+<p>This function prunes classification trees designed
+for the precision medicine setting.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pmprune(tree)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>tree</code></td>
+<td>
+<p>A data frame object returned from either the 
+<code>dipm()</code> or <code>spmtree()</code> function</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>This function implements the simple pruning strategy
+proposed and used in Tsai et al. (2016). Terminal
+sister nodes, i.e., nodes with no child nodes that
+share the same parent node, are removed if they have
+the same identified optimal treatment assignment.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>pmprune</code> returns the pruned classification tree as a 
+data frame. The data frame contains the following columns 
+of information:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>node</code></td>
+<td>
+<p>Unique integer values that identify each node
+in the tree, where all of the nodes are
+indexed starting from 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitvar</code></td>
+<td>
+<p>Integers that represent the candidate split
+variable used to split each node, where
+all of the variables are indexed starting
+from 1; for terminal nodes, i.e., nodes
+without child nodes, the value is set 
+equal to NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitvar_name</code></td>
+<td>
+<p>The names of the candidate split 
+variables used to split each node
+obtained from the column names of the
+supplied data; for terminal nodes,
+the value is set equal to NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Characters that denote the type of each 
+candidate split variable; "bin" is for binary
+variables, "ord" for ordinal, and "nom" for
+nominal; for terminal nodes, the value is set
+equal to NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitval</code></td>
+<td>
+<p>Values of the left child node of the 
+current split/node; for binary variables,
+a value of 0 is printed, and subjects with
+values of 0 for the current <code>splitvar</code>
+are in the left child node, while subjects
+with values of 1 are in the right child
+node; for ordinal variables,
+<code>splitval</code> is numeric and implies
+that subjects with values of the current
+<code>splitvar</code> less than or equal to
+<code>splitval</code> are in the left child 
+node, while the remaining subjects with 
+values greater than <code>splitval</code> are in 
+the right child node; for nominal
+variables, the <code>splitval</code> is a set of
+integers separated by commas, and subjects
+in that set of categories are in the left
+child node, while the remaining subjects
+are in the right child node; for terminal
+nodes, the value is set equal to NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lchild</code></td>
+<td>
+<p>Integers that represent the index (i.e.,
+<code>node</code> value) of each node's left
+child node; for terminal nodes, the value is
+set equal to NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rchild</code></td>
+<td>
+<p>Integers that represent the index (i.e.,
+<code>node</code> value) of each node's right
+child node; for terminal nodes, the value is
+set equal to NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depth</code></td>
+<td>
+<p>Integers that specify the depth of each
+node; the root node has depth 1, its 
+children have depth 2, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsubj</code></td>
+<td>
+<p>Integers that count the total number of
+subjects within each node</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>besttrt</code></td>
+<td>
+<p>Integers that denote the identified best 
+treatment assignment of each node</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Tsai, W.-M., Zhang, H., Buta, E., O'Malley, S., 
+Gueorguieva, R. (2016). A modified classification
+tree method for personalized medicine decisions.
+<em>Statistics and its Interface</em> <strong>9</strong>, 
+239-253.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dipm</code>, <code>spmtree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#
+# ... an example with a continuous outcome variable
+#     and three treatment groups
+#
+
+
+N = 100
+set.seed(123)
+
+# generate treatments
+treatment = sample(1:3, N, replace = TRUE)
+
+# generate candidate split variables
+X1 = round(rnorm(n = N, mean = 0, sd = 1), 4)
+X2 = round(rnorm(n = N, mean = 0, sd = 1), 4)
+X3 = sample(1:4, N, replace = TRUE)
+X4 = sample(1:5, N, replace = TRUE)
+X5 = rbinom(N, 1, 0.5)
+X6 = rbinom(N, 1, 0.5)
+X7 = rbinom(N, 1, 0.5)
+X = cbind(X1, X2, X3, X4, X5, X6, X7)
+colnames(X) = paste0("X", 1:7)
+
+# generate continuous outcome variable
+calculateLink = function(X, treatment){
+
+    10.2 - 0.3 * (treatment == 1) - 0.1 * X[, 1] + 
+    2.1 * (treatment == 1) * X[, 1] +
+    1.2 * X[, 2]
+}
+
+Link = calculateLink(X, treatment)
+Y = rnorm(N, mean = Link, sd = 1)
+
+# combine variables in a data frame
+data = data.frame(X, Y, treatment)
+
+# create vector of variable types
+types = c(rep("ordinal", 2), rep("nominal", 2), rep("binary", 3),
+            "response", "treatment")
+
+# fit a classification tree
+tree = spmtree(Y ~ treatment | ., data, types = types, dataframe = TRUE)
+
+# prune the tree
+ptree = pmprune(tree)
+
+
+</code></pre>
+
+
+</div>

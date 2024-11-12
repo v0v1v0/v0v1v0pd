@@ -1,0 +1,410 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optimal_bias_normal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Optimal phase II/III drug development planning when discounting phase II results with normally distributed endpoint</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>optimal_bias_normal</code> of the drugdevelopR package enables planning of phase II/III drug development programs with optimal sample size allocation and go/no-go decision rules including methods for discounting of phase II results for normally distributed endpoints (Preussler et. al, 2020).
+The discounting may be necessary as programs that proceed to phase III can be overoptimistic about the treatment effect (i.e. they are biased).
+The assumed true treatment effects can be assumed fixed or modelled by a prior distribution.
+The R Shiny application <a href="https://web.imbi.uni-heidelberg.de/prior/">prior</a> visualizes the prior distributions used in this package.
+Fast computing is enabled by parallel programming.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optimal_bias_normal(
+  w,
+  Delta1,
+  Delta2,
+  in1,
+  in2,
+  a,
+  b,
+  n2min,
+  n2max,
+  stepn2,
+  kappamin,
+  kappamax,
+  stepkappa,
+  adj = "both",
+  lambdamin = NULL,
+  lambdamax = NULL,
+  steplambda = NULL,
+  alphaCImin = NULL,
+  alphaCImax = NULL,
+  stepalphaCI = NULL,
+  alpha,
+  beta,
+  c2,
+  c3,
+  c02,
+  c03,
+  K = Inf,
+  N = Inf,
+  S = -Inf,
+  steps1 = 0,
+  stepm1 = 0.5,
+  stepl1 = 0.8,
+  b1,
+  b2,
+  b3,
+  fixed = FALSE,
+  num_cl = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>weight for
+<a href="https://web.imbi.uni-heidelberg.de/prior/">mixture prior distribution</a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta1</code></td>
+<td>
+<p>assumed true prior treatment effect measured as the
+standardized difference in means, see
+<a href="https://web.imbi.uni-heidelberg.de/prior/">here</a> for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta2</code></td>
+<td>
+<p>assumed true prior treatment effect measured as the
+standardized difference in means, see
+<a href="https://web.imbi.uni-heidelberg.de/prior/">here</a> for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in1</code></td>
+<td>
+<p>amount of information for <code>Delta1</code> in terms of sample size, see
+<a href="https://web.imbi.uni-heidelberg.de/prior/">here</a>
+for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in2</code></td>
+<td>
+<p>amount of information for <code>Delta2</code> in terms of sample size, see
+<a href="https://web.imbi.uni-heidelberg.de/prior/">here</a>
+for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>lower boundary for the truncation of the <a href="https://web.imbi.uni-heidelberg.de/prior/">prior distribution</a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>upper boundary for the truncation of the <a href="https://web.imbi.uni-heidelberg.de/prior/">prior distribution</a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n2min</code></td>
+<td>
+<p>minimal total sample size for phase II; must be an even number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n2max</code></td>
+<td>
+<p>maximal total sample size for phase II, must be an even number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stepn2</code></td>
+<td>
+<p>step size for the optimization over n2; must be an even number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kappamin</code></td>
+<td>
+<p>minimal threshold value kappa for the go/no-go decision rule</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kappamax</code></td>
+<td>
+<p>maximal threshold value  kappa for the go/no-go decision rule</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stepkappa</code></td>
+<td>
+<p>step size for the optimization over the threshold value kappa</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adj</code></td>
+<td>
+<p>choose type of adjustment: <code>"multiplicative"</code>,
+<code>"additive"</code>, <code>"both"</code> or <code>"all"</code>. When using "both",
+<code>res[1,]</code> contains the results using the multiplicative method and <code>res[2,]</code>
+contains the results using the additive method. When using "all", there are
+also <code>res[3,]</code> and <code>res[4,]</code>, containing the results of a multiplicative
+and an additive method which do not only adjust the treatment effect but
+also the threshold value for the decision rule.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdamin</code></td>
+<td>
+<p>minimal multiplicative adjustment parameter lambda (i.e. use estimate with a retention factor)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambdamax</code></td>
+<td>
+<p>maximal multiplicative adjustment parameter lambda (i.e. use estimate with a retention factor)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steplambda</code></td>
+<td>
+<p>stepsize for the adjustment parameter lambda</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alphaCImin</code></td>
+<td>
+<p>minimal additive adjustment parameter alphaCI (i.e. adjust the lower bound of the one-sided confidence interval)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alphaCImax</code></td>
+<td>
+<p>maximal additive adjustment parameter alphaCI (i.e. adjust the lower bound of the one-sided confidence interval)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stepalphaCI</code></td>
+<td>
+<p>stepsize for alphaCI</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>one-sided significance level</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>type II error rate; i.e. <code>1 - beta</code> is the power for calculation of the sample size for phase III</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c2</code></td>
+<td>
+<p>variable per-patient cost for phase II in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c3</code></td>
+<td>
+<p>variable per-patient cost for phase III in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c02</code></td>
+<td>
+<p>fixed cost for phase II in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c03</code></td>
+<td>
+<p>fixed cost for phase III in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>constraint on the costs of the program, default: Inf, e.g. no constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>constraint on the total expected sample size of the program, default: Inf, e.g. no constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>constraint on the expected probability of a successful program, default: -Inf, e.g. no constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steps1</code></td>
+<td>
+<p>lower boundary for effect size category "small", default: 0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stepm1</code></td>
+<td>
+<p>lower boundary for effect size category "medium" = upper boundary for effect size category "small" default: 0.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stepl1</code></td>
+<td>
+<p>lower boundary for effect size category "large" = upper boundary for effect size category "medium", default: 0.8</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b1</code></td>
+<td>
+<p>expected gain for effect size category "small" in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b2</code></td>
+<td>
+<p>expected gain for effect size category "medium" in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b3</code></td>
+<td>
+<p>expected gain for effect size category "large" in 10^5 $</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>choose if true treatment effects are fixed or following a prior distribution, if TRUE <code>Delta1</code> is used as fixed effect</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num_cl</code></td>
+<td>
+<p>number of clusters used for parallel computing, default: 1</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The output of the function is a <code>data.frame</code> object containing the optimization results:
+</p>
+<dl>
+<dt>Method</dt>
+<dd>
+<p>Type of adjustment: "multipl." (multiplicative adjustment of effect size), "add." (additive adjustment of effect size), "multipl2." (multiplicative adjustment of effect size and threshold), "add2." (additive adjustment of effect size and threshold)</p>
+</dd>
+<dt>Adj</dt>
+<dd>
+<p>optimal adjustment parameter (lambda or alphaCI according to Method)</p>
+</dd>
+<dt>u</dt>
+<dd>
+<p>maximal expected utility under the optimization constraints, i.e. the expected utility of the optimal sample size and threshold value</p>
+</dd>
+<dt>Kappa</dt>
+<dd>
+<p>optimal threshold value for the decision rule to go to phase III</p>
+</dd>
+<dt>n2</dt>
+<dd>
+<p>total sample size for phase II; rounded to the next even natural number</p>
+</dd>
+<dt>n3</dt>
+<dd>
+<p>total sample size for phase III; rounded to the next even natural number</p>
+</dd>
+<dt>n</dt>
+<dd>
+<p>total sample size in the program; n = n2 + n3</p>
+</dd>
+<dt>K</dt>
+<dd>
+<p>maximal costs of the program (i.e. the cost constraint, if it is set or the sum K2+K3 if no cost constraint is set)</p>
+</dd>
+<dt>pgo</dt>
+<dd>
+<p>probability to go to phase III</p>
+</dd>
+<dt>sProg</dt>
+<dd>
+<p>probability of a successful program</p>
+</dd>
+<dt>sProg1</dt>
+<dd>
+<p>probability of a successful program with "small" treatment effect in phase III</p>
+</dd>
+<dt>sProg2</dt>
+<dd>
+<p>probability of a successful program with "medium" treatment effect in phase III</p>
+</dd>
+<dt>sProg3</dt>
+<dd>
+<p>probability of a successful program with "large" treatment effect in phase III</p>
+</dd>
+<dt>K2</dt>
+<dd>
+<p>expected costs for phase II</p>
+</dd>
+<dt>K3</dt>
+<dd>
+<p>expected costs for phase III</p>
+</dd>
+</dl>
+<p>and further input parameters. Taking <code>cat(comment())</code> of the
+data frame lists the used optimization sequences, start and
+finish date of the optimization procedure.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cohen, J. (1988). Statistical power analysis for the behavioral sciences.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Activate progress bar (optional)
+## Not run: progressr::handlers(global = TRUE)
+# Optimize
+
+optimal_bias_normal(w=0.3,             # define parameters for prior
+  Delta1 = 0.375, Delta2 = 0.625, in1=300, in2=600,    # (https://web.imbi.uni-heidelberg.de/prior/)
+  a = 0.25, b = 0.75,
+  n2min = 20, n2max = 100, stepn2 = 10,                # define optimization set for n2
+  kappamin = 0.02, kappamax = 0.2, stepkappa = 0.02,   # define optimization set for kappa
+  adj = "both",                                        # choose type of adjustment
+  lambdamin = 0.2, lambdamax = 1, steplambda = 0.05,   # define optimization set for lambda
+  alphaCImin = 0.025, alphaCImax = 0.5,
+  stepalphaCI = 0.025,                                 # define optimization set for alphaCI
+  alpha = 0.025, beta = 0.1,                           # drug development planning parameters
+  c2 = 0.675, c3 = 0.72, c02 = 15, c03 = 20,           # fixed and variable costs for phase II/III
+  K = Inf, N = Inf, S = -Inf,                          # set constraints
+  steps1 = 0,                                          # define lower boundary for "small"
+  stepm1 = 0.5,                                        # "medium"
+  stepl1 = 0.8,                                        # and "large" effect size categories
+  b1 = 3000, b2 = 8000, b3 = 10000,                    # define expected benefits
+  fixed = TRUE,                                        # true treatment effects are fixed/random
+  num_cl = 1)                                          # number of coresfor parallelized computing 
+                                          
+</code></pre>
+
+
+</div>

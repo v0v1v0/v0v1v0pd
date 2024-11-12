@@ -1,0 +1,88 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>collapse</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Collapse Sensors And Calculate Summations/Mean</h2>
+
+<h3>Description</h3>
+
+<p>Collapse Sensors And Calculate Summations/Mean
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">collapse(x, keep, average = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A numeric multi-mode tensor (array), without <code>NA</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep</code></td>
+<td>
+<p>Which dimension to keep</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>average</code></td>
+<td>
+<p>collapse to sum or mean</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a collapsed array with values to be mean or summation along
+collapsing dimensions
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1
+x = matrix(1:16, 4)
+
+# Keep the first dimension and calculate sums along the rest
+collapse(x, keep = 1)
+rowSums(x)  # Should yield the same result
+
+# Example 2
+x = array(1:120, dim = c(2,3,4,5))
+result = collapse(x, keep = c(3,2))
+compare = apply(x, c(3,2), sum)
+sum(abs(result - compare)) # The same, yield 0 or very small number (1e-10)
+
+# Example 3 (performance)
+# Small data, no big difference, even slower
+x = array(rnorm(240), dim = c(4,5,6,2))
+microbenchmark::microbenchmark(
+  result = collapse(x, keep = c(3,2)),
+  compare = apply(x, c(3,2), sum),
+  times = 1L, check = function(v){
+    max(abs(range(do.call('-', v)))) &lt; 1e-10
+  }
+)
+
+# large data big difference
+x = array(rnorm(prod(300,200,105)), c(300,200,105,1))
+microbenchmark::microbenchmark(
+  result = collapse(x, keep = c(3,2)),
+  compare = apply(x, c(3,2), sum),
+  times = 1L , check = function(v){
+    max(abs(range(do.call('-', v)))) &lt; 1e-10
+  })
+
+</code></pre>
+
+
+</div>

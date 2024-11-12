@@ -1,0 +1,252 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataLongSubDist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data Matrix and Weights for Discrete Subdistribution Hazard Models</h2>
+
+<h3>Description</h3>
+
+<p>Generates the augmented data matrix and the weights required for discrete
+subdistribution hazard modeling with right censoring.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataLongSubDist(
+  dataShort,
+  timeColumn,
+  eventColumns,
+  eventColumnsAsFactor = FALSE,
+  eventFocus,
+  timeAsFactor = FALSE,
+  aggTimeFormat = FALSE,
+  lastTheoInt = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataShort</code></td>
+<td>
+<p>Original data in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character specifying the column name of the observed event
+times ("logical vector"). It is required that the observed times are discrete ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumns</code></td>
+<td>
+<p>Character vector specifying the column names of the
+event indicators (excluding censoring events) ("logical vector"). It is required that a 0-1
+coding is used for all events. The algorithm treats row sums of zero of all
+event columns as censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumnsAsFactor</code></td>
+<td>
+<p>Should the argument <em>eventColumns</em> be interpreted
+as column name of a factor variable ("logical vector")? Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventFocus</code></td>
+<td>
+<p>Column name of the event of interest (type 1 event) ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeAsFactor</code></td>
+<td>
+<p>Logical indicating whether time should be coded as a
+factor in the augmented data matrix("logical vector"). If FALSE, a numeric coding will be
+used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggTimeFormat</code></td>
+<td>
+<p>Instead of the usual long format, should every
+observation have all time intervals? ("logical vector") Default is standard
+long format. In the case of nonlinear risk score models, the time effect has
+to be integrated out before these can be applied to the C-index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastTheoInt</code></td>
+<td>
+<p>Gives the number of the last theoretic interval ("integer vector"). Only used, if aggTimeFormat==TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function sets up the augmented data matrix and the weights that are
+needed for weighted maximum likelihood (ML) estimation of the discrete
+subdistribution model proposed by Berger et al. (2018). The model is a
+discrete-time extension of the original subdistribution model proposed by
+Fine and Gray (1999).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Data frame with additional column "subDistWeights". The latter
+column contains the weights that are needed for fitting a weighted binary
+regression model, as described in Berger et al. (2018). The weights are
+calculated by a life table estimator for the censoring event.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Berger M, Schmid M, Welchowski T, Schmitz-Valckenberg S, Beyersmann J (2020).
+“Subdistribution Hazard Models for Competing Risks in Discrete Time.”
+<em>Biostatistics</em>, <b>21</b>, 449-466. <br><br>
+Fine JP, Gray RJ (2012).
+“A Proportional Hazards Model for the Subdistribution of a Competing Risk.”
+<em>Journal of the American Statistical Association</em>, <b>94</b>, 496-509.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dataLong</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+################################
+# Example with unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Generate subsample, reduce number of intervals to k = 5
+SubUnempDur &lt;- UnempDur [1:500, ]
+SubUnempDur$time &lt;- as.numeric(cut(SubUnempDur$spell, c(0,4,8,16,28)))
+
+# Convert competing risks data to long format
+# The event of interest is re-employment at full job
+SubUnempDurLong &lt;- dataLongSubDist (dataShort=SubUnempDur, timeColumn = "time", 
+eventColumns=c("censor1", "censor2", "censor3"), eventFocus="censor1")
+head(SubUnempDurLong)
+
+# Fit discrete subdistribution hazard model with logistic link function
+logisticSubDistr &lt;- glm(y ~ timeInt + ui + age + logwage,
+                    family=binomial(), data = SubUnempDurLong, 
+                    weights = SubUnempDurLong$subDistWeights)
+summary(logisticSubDistr)
+
+########################################
+# Simulation 
+# Discrete subdistribution hazards model
+
+# Simulate covariates as multivariate normal distribution
+library(mvnfast)
+set.seed(1980)
+X &lt;- mvnfast::rmvn(n = 1000, mu = rep(0, 4), sigma = diag(4))
+
+# Specification of two discrete cause specific hazards with four intervals
+# Event 1
+theoInterval &lt;- 4
+betaCoef_event1 &lt;- seq(-1, 1, length.out = 5)[-3]
+timeInt_event1 &lt;- seq(0.1, -0.1, length.out = theoInterval-1)
+linPred_event1 &lt;- c(X %*% betaCoef_event1)
+# Event 2
+betaCoef_event2 &lt;- seq(-0.5, 0.5, length.out = 5)[-3]
+timeInt_event2 &lt;- seq(-0.1, 0.1, length.out = theoInterval-1)
+linPred_event2 &lt;- c(X %*% betaCoef_event2)
+# Discrete cause specific hazards in last theoretical interval
+theoHaz_event1 &lt;- 0.5
+theoHaz_event2 &lt;- 0.5
+
+# Derive discrete all cause hazard
+haz_event1_X &lt;- cbind(sapply(1:length(timeInt_event1), 
+                            function(x) exp(linPred_event1 + timeInt_event1[x]) / 
+                              (1 + exp(linPred_event1 + timeInt_event1[x]) + 
+                              exp(linPred_event2 + timeInt_event2[x])) ), 
+                     theoHaz_event1)
+
+haz_event2_X &lt;- cbind(sapply(1:length(timeInt_event2), 
+                            function(x) exp(linPred_event2 + timeInt_event2[x]) / 
+                              (1 + exp(linPred_event1 + timeInt_event1[x]) + 
+                              exp(linPred_event2 + timeInt_event2[x]) ) ),
+                     theoHaz_event2)
+allCauseHaz_X &lt;- haz_event1_X + haz_event2_X
+
+# Derive discrete cumulative incidence function of event 1 given covariates
+p_T_event1_X &lt;- haz_event1_X * cbind(1, (1-allCauseHaz_X)[, -dim(allCauseHaz_X)[2]])
+cumInc_event1_X &lt;-  t(sapply(1:dim(p_T_event1_X)[1], function(x) cumsum(p_T_event1_X[x, ])))
+
+# Calculate all cause probability P(T=t | X)
+pT_X &lt;- t(sapply(1:dim(allCauseHaz_X)[1], function(i) estMargProb(allCauseHaz_X[i, ]) ))
+
+# Calculate event probability given time interval P(R=r | T=t, X)
+pR_T_X_event1 &lt;- haz_event1_X / (haz_event1_X + haz_event2_X)
+
+# Simulate discrete survival times
+survT &lt;- sapply(1:dim(pT_X)[1], function(i) sample(x = 1:(length(timeInt_event1)+1), 
+                                                   size = 1, prob = pT_X[i, ]) )
+censT &lt;- sample(x = 1:(length(timeInt_event1)+1), size = dim(pT_X)[1], 
+               prob = rep(1/(length(timeInt_event1) + 1), (length(timeInt_event1) + 1)), 
+               replace = TRUE)
+
+# Calculate observed times
+obsT &lt;- ifelse(survT &lt;= censT, survT, censT)
+obsEvent &lt;- rep(0, length(obsT))
+obsEvent &lt;- sapply(1:length(obsT), 
+                  function(i) if(survT[i] &lt;= censT[i]){
+                    return(sample(x = c(1, 2), size = 1, 
+                    prob = c(pR_T_X_event1[i, obsT[i]  ], 
+                    1 - pR_T_X_event1[i, obsT[i]  ]) ))
+                  } else{
+                    
+                    return(0)
+                  }
+)
+
+# Recode last interval to censored
+lastInterval &lt;- obsT == theoInterval
+obsT[lastInterval] &lt;- theoInterval-1
+obsEvent[lastInterval] &lt;- 0
+obsT &lt;- factor(obsT)
+obsEvent &lt;- factor(obsEvent)
+
+# Data preparation
+datShort &lt;- data.frame(event = factor(obsEvent), time=obsT, X)
+
+# Conversion to long data format
+datLongSub &lt;- dataLongSubDist(dataShort = datShort, timeColumn = "time",
+                             eventColumns = "event", eventFocus = 1, eventColumnsAsFactor = TRUE)
+
+# Estimate discrete subdistribution hazard model
+estSubModel &lt;- glm(formula = y ~ timeInt + X1 + X2 + X3 + X4, data = datLongSub,
+                  family = binomial(link = "logit"), weights = datLongSub$subDistWeights)
+
+# Predict cumulative incidence function of first event
+predSubHaz1 &lt;- predict(estSubModel, newdata = datLongSub[datLongSub$obj == 2, ], type = "response")
+mean(((1 - estSurv(predSubHaz1)) - cumInc_event1_X[2, 1:3])^2)
+
+</code></pre>
+
+
+</div>

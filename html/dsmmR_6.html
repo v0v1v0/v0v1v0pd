@@ -1,0 +1,842 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>parametric_dsmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parametric Drifting semi-Markov model specification</h2>
+
+<h3>Description</h3>
+
+<p>Creates a parametric model specification for a drifting
+semi-Markov model. Returns an object of class
+<code>(dsmm_parametric, dsmm)</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">parametric_dsmm(
+  model_size,
+  states,
+  initial_dist,
+  degree,
+  f_is_drifting,
+  p_is_drifting,
+  p_dist,
+  f_dist,
+  f_dist_pars
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model_size</code></td>
+<td>
+<p>Positive integer that represents the size of
+the drifting semi-Markov model <code class="reqn">n</code>. It is equal to the length of a
+theoretical embedded Markov chain
+<code class="reqn">(J_{t})_{t\in \{0,\dots,n\}}</code>, without the last state.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>Character vector that represents the state space <code class="reqn">E</code>.
+It has length equal to <code class="reqn">s = |E|</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initial_dist</code></td>
+<td>
+<p>Numerical vector of <code class="reqn">s</code> probabilities, that
+represents the initial distribution for each state in the state space
+<code class="reqn">E</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p>Positive integer that represents the polynomial degree <code class="reqn">d</code>
+for the drifting semi-Markov model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_is_drifting</code></td>
+<td>
+<p>Logical. Specifies if <code class="reqn">f</code> is drifting or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_is_drifting</code></td>
+<td>
+<p>Logical. Specifies if <code class="reqn">p</code> is drifting or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_dist</code></td>
+<td>
+<p>Numerical array, that represents the probabilities of the
+transition matrix <code class="reqn">p</code> of the embedded Markov chain
+<code class="reqn">(J_{t})_{t\in \{0,\dots,n\}}</code> (it is defined
+the same way in the nonparametric_dsmm function).
+It can be defined in two ways:
+</p>
+
+<ul>
+<li>
+<p>If <code class="reqn">p</code> <strong>is not</strong> drifting, it has dimensions of
+<code class="reqn">s \times s</code>.
+</p>
+</li>
+<li>
+<p>If <code class="reqn">p</code> <strong>is</strong> drifting, it has dimensions of
+<code class="reqn">s \times s \times (d+1)</code>
+(see more in <em>Details, Defined Arguments</em>.)</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_dist</code></td>
+<td>
+<p>Character array, that represents the discrete sojourn time
+distribution <code class="reqn">f</code> of our choice.
+<code>NA</code> is allowed for state transitions
+that we do not wish to have a sojourn time distribution
+(e.g. all state transition to the same state should have <code>NA</code>
+as their value). The list of possible values is:
+<code>["unif", "geom", "pois", "dweibull", "nbinom", NA]</code>.
+It can be defined in two ways:
+</p>
+
+<ul>
+<li>
+<p>If <code class="reqn">f</code> <strong>is not</strong> drifting, it has dimensions of
+<code class="reqn">s \times s</code>.
+</p>
+</li>
+<li>
+<p>If <code class="reqn">f</code> <strong>is</strong> drifting, it has dimensions of
+<code class="reqn">s \times s \times (d+1)</code>
+(see more in <em>Details, Defined Arguments</em>.)</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f_dist_pars</code></td>
+<td>
+<p>Numerical array, that represents the parameters of the
+sojourn time distributions given in <code>f_dist</code>. <code>NA</code> is allowed,
+in the case that the distribution of our choice does not require
+a parameter. It can be defined in two ways:
+</p>
+
+<ul>
+<li>
+<p> If <code class="reqn">f</code> <strong>is not</strong> drifting, it has dimensions of
+<code class="reqn">s \times s \times 2</code>, specifying <strong>two</strong> possible
+parameters required for the discrete distributions.
+</p>
+</li>
+<li>
+<p> If <code class="reqn">f</code> <strong>is</strong> drifting, it has dimensions of
+<code class="reqn">s \times s \times 2 \times (d+1)</code>,
+specifying <strong>two</strong> possible parameters required for the discrete
+distributions, but for every single one of the <code class="reqn">i = 0, \dots, d</code>
+sojourn time distributions <code class="reqn">f_{\frac{i}{d}}</code> that are required.
+(see more in <em>Details, Defined Arguments</em>.)</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>Defined Arguments</strong>
+</p>
+<p>For the parametric case, we explicitly define:
+</p>
+
+<ol>
+<li>
+<p> The <em>transition matrix</em> of the embedded Markov chain
+<code class="reqn">(J_{t})_{t\in \{0,\dots,n\}}</code>, given in
+the attribute <code>p_dist</code>:
+</p>
+
+<ul>
+<li>
+<p> If <code class="reqn">p</code> <strong>is not drifting</strong>, it contains the values:
+</p>
+<p style="text-align: center;"><code class="reqn">p(u,v), \forall u, v \in E,</code>
+</p>
+
+<p>given in an array with dimensions of <code class="reqn">s \times s</code>,
+where the first dimension corresponds to the previous state <code class="reqn">u</code> and
+the second dimension corresponds to the current state <code class="reqn">v</code>.
+</p>
+</li>
+<li>
+<p> If <code class="reqn">p</code> <strong>is drifting</strong>, for <code class="reqn">i \in \{ 0,\dots,d \}</code>,
+it contains the values:
+</p>
+<p style="text-align: center;"><code class="reqn">p_{\frac{i}{d}}(u,v), \forall u, v \in E,</code>
+</p>
+
+<p>given in an array with dimensions of <code class="reqn">s \times s \times (d + 1)</code>,
+where the first and second dimensions are defined as in the non-drifting
+case, and the third dimension corresponds to the <code class="reqn">d+1</code> different
+matrices <code class="reqn">p_{\frac{i}{d}}.</code>
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> The <em>conditional sojourn time distribution</em>, given in the
+attribute <code>f_dist</code>:
+</p>
+
+<ul>
+<li>
+<p> If <code class="reqn">f</code> <strong>is not drifting</strong>, it contains the discrete
+distribution <em>names</em> (as characters or <code>NA</code>), given in an
+array with dimensions of <code class="reqn">s \times s</code>,
+where the first dimension corresponds to the previous state <code class="reqn">u</code>,
+the second dimension corresponds to the current state <code class="reqn">v</code>.
+</p>
+</li>
+<li>
+<p> If <code class="reqn">f</code> <strong>is drifting</strong>, it contains the discrete
+distribution <em>names</em> (as characters or <code>NA</code>) given in an
+array with dimensions of <code class="reqn">s \times s \times (d + 1)</code>,
+where the first and second dimensions are defined as in the
+non-drifting case, and the third dimension corresponds to the
+<code class="reqn">d+1</code> different arrays <code class="reqn">f_{\frac{i}{d}}.</code>
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> The <em>conditional sojourn time distribution parameters</em>,
+given in the attribute <code>f_dist_pars</code>:
+</p>
+
+<ul>
+<li>
+<p> If <code class="reqn">f</code> <strong>is not drifting</strong>, it contains the
+<em>numerical values</em> (or <code>NA</code>) of the corresponding
+distributions defined in <code>f_dist</code>, given in
+an array with dimensions of <code class="reqn">s \times s</code>,
+where the first dimension corresponds to the previous state <code class="reqn">u</code>,
+the second dimension corresponds to the current state <code class="reqn">v</code>.
+</p>
+</li>
+<li>
+<p> If <code class="reqn">f</code> <strong>is drifting</strong>, it contains the
+<em>numerical values</em> (or <code>NA</code>) of the corresponding
+distributions defined in <code>f_dist</code>, given in an array
+with dimensions of <code class="reqn">s \times s \times (d + 1)</code>,
+where the first and second dimensions are defined as in the
+non-drifting case, and the third dimension corresponds to the
+<code class="reqn">d+1</code> different arrays <code class="reqn">f_{\frac{i}{d}}.</code>
+</p>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>Sojourn time distributions</strong>
+</p>
+<p>In this package, the available distributions for the modeling of the
+conditional sojourn times, of the drifting semi-Markov model, used through
+the argument <code>f_dist</code>, are the following:
+</p>
+
+<ul>
+<li>
+<p> Uniform <code class="reqn">(n)</code>:
+</p>
+<p><code class="reqn">f(x) = 1/n</code>, for <code class="reqn">x = 1, 2, \dots, n</code>, where <code class="reqn">n</code> is a
+positive integer.
+This can be specified through the following:
+</p>
+
+<ul>
+<li> <p><code>f_dist = "unif"</code>
+</p>
+</li>
+<li> <p><code>f_dist_pars</code> = (<code class="reqn">n</code>, <code>NA</code>)
+(<code class="reqn">n</code> as defined here).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> Geometric <code class="reqn">(p)</code>:
+</p>
+<p><code class="reqn">f(x) = p (1-p)^{x-1}</code>, for
+<code class="reqn">x = 1, 2, \dots,</code> where <code class="reqn">p \in (0, 1)</code>
+is the probability of success.
+This can be specified through the following:
+</p>
+
+<ul>
+<li> <p><code>f_dist</code> = <code>"geom"</code>
+</p>
+</li>
+<li> <p><code>f_dist_pars</code> = (<code class="reqn">p</code>, <code>NA</code>)
+(<code class="reqn">p</code> as defined here).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> Poisson <code class="reqn">(\lambda)</code>:
+</p>
+<p><code class="reqn">f(x) = \frac{\lambda^{x-1} exp(-\lambda)}{(x-1)!}</code>, for
+<code class="reqn">x = 1, 2, \dots,</code> where <code class="reqn">\lambda &gt; 0</code>.
+This can be specified through the following:
+</p>
+
+<ul>
+<li> <p><code>f_dist</code> = <code>"pois"</code>
+</p>
+</li>
+<li> <p><code>f_dist_pars</code> = (<code class="reqn">\lambda</code>, <code>NA</code>)
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> Negative binomial <code class="reqn">(\alpha, p)</code>:
+</p>
+<p><code class="reqn">f(x)=\frac{\Gamma(x+\alpha-1)}{\Gamma(\alpha)(x-1)!}
+    p^{\alpha}(1-p)^{x-1}</code>, for <code class="reqn">x = 1, 2,\dots,</code> where
+<code class="reqn">\Gamma</code> is the Gamma function,
+<code class="reqn">\alpha \in (0, +\infty) </code> is the parameter describing the
+target for number of successful trials, or the dispersion parameter
+(the shape parameter of the gamma mixing distribution).
+<code class="reqn">p</code> is the probability of success, <code class="reqn">0 &lt; p &lt; 1</code>.
+</p>
+
+<ul>
+<li> <p><code>f_dist</code> = <code>"nbinom"</code>
+</p>
+</li>
+<li> <p><code>f_dist_pars</code> = (<code class="reqn">\alpha, p</code>)
+(<code class="reqn">p</code> as defined here)
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> Discrete Weibull  of type 1 <code class="reqn">(q, \beta)</code>:
+</p>
+<p><code class="reqn">f(x)=q^{(x-1)^{\beta}}-q^{x^{\beta}}</code>, for <code class="reqn">x=1,2,\dots,</code> with
+<code class="reqn">q \in (0, 1)</code> is the first parameter (probability)
+and <code class="reqn">\beta \in (0, +\infty)</code> is the second parameter.
+This can be specified through the following:
+</p>
+
+<ul>
+<li> <p><code>f_dist</code> = <code>"dweibull"</code>
+</p>
+</li>
+<li> <p><code>f_dist_pars</code> = (<code class="reqn">q, \beta</code>)
+(<code class="reqn">q</code> as defined here)
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>From these discrete distributions, by using <code>"dweibull", "nbinom"</code>
+we require two parameters. It's for this reason that the attribute
+<code>f_dist_pars</code> is an array of dimensions
+<code class="reqn">s \times s \times 2</code> if <code class="reqn">f</code>
+<strong>is not drifting</strong> or <code class="reqn">s \times s \times 2 \times (d+1)</code>
+if <code class="reqn">f</code> <strong>is drifting</strong>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of the S3 class <code>dsmm_parametric, dsmm</code>.
+It has the following attributes:
+</p>
+
+<ul>
+<li> <p><code>dist</code> : List. Contains 3 arrays, passing down from the arguments:
+</p>
+
+<ul>
+<li> <p><code>p_drift</code> or <code>p_notdrift</code>, corresponding to whether the
+defined <code class="reqn">p</code> transition matrix is drifting or not.
+</p>
+</li>
+<li> <p><code>f_drift_parametric</code> or <code>f_notdrift_parametric</code>,
+corresponding to whether the
+defined <code class="reqn">f</code> sojourn time distribution is drifting or not.
+</p>
+</li>
+<li> <p><code>f_drift_parameters</code> or <code>f_notdrift_parameters</code>,
+which are the defined <code class="reqn">f</code> sojourn time distribution parameters,
+depending on whether <code class="reqn">f</code> is drifting or not.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>initial_dist</code> : Numerical vector. Passing down from the arguments.
+It contains the initial distribution of the drifting semi-Markov model.
+</p>
+</li>
+<li> <p><code>states</code> : Character vector. Passing down from the arguments.
+It contains the state space <code class="reqn">E</code>.
+</p>
+</li>
+<li> <p><code>s</code> : Positive integer. It contains the number of states in the
+state space, <code class="reqn">s = |E|</code>, which is given in the attribute <code>states</code>.
+</p>
+</li>
+<li> <p><code>degree</code> : Positive integer. Passing down from the arguments.
+It contains the polynomial degree <code class="reqn">d</code> considered for the drifting of
+the model.
+</p>
+</li>
+<li> <p><code>model_size</code> : Positive integer. Passing down from the arguments.
+It contains the size of the drifting semi-Markov model <code class="reqn">n</code>, which
+represents the length of the embedded Markov chain
+<code class="reqn">(J_{t})_{t\in \{0,\dots,n\}}</code>, without the last state.
+</p>
+</li>
+<li> <p><code>f_is_drifting</code> : Logical. Passing down from the arguments.
+Specifies if <code class="reqn">f</code> is drifting or not.
+</p>
+</li>
+<li> <p><code>p_is_drifting</code> : Logical. Passing down from the arguments.
+Specifies if <code class="reqn">p</code> is drifting or not.
+</p>
+</li>
+<li> <p><code>Model</code> : Character. Possible values:
+</p>
+
+<ul>
+<li> <p><code>"Model_1"</code> : Both <code class="reqn">p</code> and <code class="reqn">f</code> are drifting.
+</p>
+</li>
+<li> <p><code>"Model_2"</code> : <code class="reqn">p</code> is drifting and <code class="reqn">f</code>
+is not drifting.
+</p>
+</li>
+<li> <p><code>"Model_3"</code> : <code class="reqn">f</code> is drifting and <code class="reqn">p</code>
+is not drifting.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>A_i</code> : Numerical matrix. Represents the polynomials
+<code class="reqn">A_i(t)</code> with degree <code class="reqn">d</code> that are used for solving
+the system <code class="reqn">MJ = P</code>. Used for the methods defined for the
+object. Not printed when viewing the object.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>V. S. Barbu, N. Limnios. (2008). semi-Markov Chains and Hidden semi-Markov
+Models Toward Applications - Their Use in Reliability and DNA Analysis.
+New York: Lecture Notes in Statistics, vol. 191, Springer.
+</p>
+<p>Vergne, N. (2008). Drifting Markov models with Polynomial Drift and
+Applications to DNA Sequences. Statistical Applications in Genetics
+Molecular Biology 7 (1).
+</p>
+<p>Barbu V. S., Vergne, N. (2019). Reliability and survival analysis for
+drifting Markov models: modeling and estimation.
+Methodology and Computing in Applied Probability, 21(4), 1407-1429.
+</p>
+<p>T. Nakagawa and S. Osaki. (1975). The discrete Weibull distribution.
+IEEE Transactions on Reliability, R-24, 300-301.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Methods applied to this object: simulate.dsmm, get_kernel.
+</p>
+<p>For the non-parametric drifting semi-Markov model specification:
+nonparametric_dsmm.
+</p>
+<p>For the theoretical background of drifting semi-Markov models: dsmmR.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># We can also define states in a flexible way, including spaces.
+states &lt;- c("Dollar $", " /1'2'3/ ", " Z E T A ", "O_M_E_G_A")
+s &lt;- length(states)
+d &lt;- 1
+
+# ===========================================================================
+# Defining parametric drifting semi-Markov models.
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Defining the drifting distributions for Model 1.
+# ---------------------------------------------------------------------------
+
+# `p_dist` has dimensions of: (s, s, d + 1).
+# Sums over v must be 1 for all u and i = 0, ..., d.
+
+# First matrix.
+p_dist_1 &lt;- matrix(c(0,   0.1, 0.4, 0.5,
+                     0.5, 0,   0.3, 0.2,
+                     0.3, 0.4, 0,   0.3,
+                     0.8, 0.1, 0.1, 0),
+                   ncol = s, byrow = TRUE)
+
+# Second matrix.
+p_dist_2 &lt;- matrix(c(0,   0.3, 0.6, 0.1,
+                     0.3, 0,   0.4, 0.3,
+                     0.5, 0.3, 0,   0.2,
+                     0.2, 0.3, 0.5, 0),
+                   ncol = s, byrow = TRUE)
+
+# get `p_dist` as an array of p_dist_1 and p_dist_2.
+p_dist_model_1 &lt;- array(c(p_dist_1, p_dist_2), dim = c(s, s, d + 1))
+
+# `f_dist` has dimensions of: (s, s, d + 1).
+# First matrix.
+f_dist_1 &lt;- matrix(c(NA,         "unif", "dweibull", "nbinom",
+                     "geom",      NA,    "pois",     "dweibull",
+                     "dweibull", "pois",  NA,        "geom",
+                     "pois",      NA,    "geom",      NA),
+                   nrow = s, ncol = s, byrow = TRUE)
+
+
+# Second matrix.
+f_dist_2 &lt;- matrix(c(NA,     "pois", "geom", "nbinom",
+                     "geom",  NA,    "pois", "dweibull",
+                     "unif", "geom",  NA,    "geom",
+                     "pois", "pois", "geom",  NA),
+                   nrow = s, ncol = s, byrow = TRUE)
+
+
+# get `f_dist` as an array of `f_dist_1` and `f_dist_2`
+f_dist_model_1 &lt;- array(c(f_dist_1, f_dist_2), dim = c(s, s, d + 1))
+
+
+# `f_dist_pars` has dimensions of: (s, s, 2, d + 1).
+# First array of coefficients, corresponding to `f_dist_1`.
+# First matrix.
+f_dist_1_pars_1 &lt;- matrix(c(NA,  5,  0.4, 4,
+                            0.7, NA, 5,   0.6,
+                            0.2, 3,  NA,  0.6,
+                            4,   NA, 0.4, NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+# Second matrix.
+f_dist_1_pars_2 &lt;- matrix(c(NA,  NA, 0.2, 0.6,
+                            NA,  NA, NA,  0.8,
+                            0.6, NA, NA,  NA,
+                            NA,  NA, NA,  NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+
+# Second array of coefficients, corresponding to `f_dist_2`.
+# First matrix.
+f_dist_2_pars_1 &lt;- matrix(c(NA,  6,   0.4, 3,
+                            0.7, NA,  2,   0.5,
+                            3,   0.6, NA,  0.7,
+                            6,   0.2, 0.7, NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+# Second matrix.
+f_dist_2_pars_2 &lt;- matrix(c(NA, NA, NA, 0.6,
+                            NA, NA, NA, 0.8,
+                            NA, NA, NA, NA,
+                            NA, NA, NA, NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+
+# Get `f_dist_pars`.
+f_dist_pars_model_1 &lt;- array(c(f_dist_1_pars_1, f_dist_1_pars_2,
+                               f_dist_2_pars_1, f_dist_2_pars_2),
+                             dim = c(s, s, 2, d + 1))
+
+# ---------------------------------------------------------------------------
+# Parametric object for Model 1.
+# ---------------------------------------------------------------------------
+
+obj_par_model_1 &lt;- parametric_dsmm(
+    model_size = 10000,
+    states = states,
+    initial_dist = c(0.8, 0.1, 0.1, 0),
+    degree = d,
+    p_dist = p_dist_model_1,
+    f_dist = f_dist_model_1,
+    f_dist_pars = f_dist_pars_model_1,
+    p_is_drifting = TRUE,
+    f_is_drifting = TRUE
+)
+
+# p drifting array.
+p_drift &lt;- obj_par_model_1$dist$p_drift
+p_drift
+
+# f distribution.
+f_dist_drift &lt;- obj_par_model_1$dist$f_drift_parametric
+f_dist_drift
+
+# parameters for the f distribution.
+f_dist_pars_drift &lt;- obj_par_model_1$dist$f_drift_parameters
+f_dist_pars_drift
+
+# ---------------------------------------------------------------------------
+# Defining Model 2 - p is drifting, f is not drifting.
+# ---------------------------------------------------------------------------
+
+# `p_dist` has the same dimensions as in Model 1: (s, s, d + 1).
+p_dist_model_2 &lt;- array(c(p_dist_1, p_dist_2), dim = c(s, s, d + 1))
+
+# `f_dist` has dimensions of: (s, s).
+f_dist_model_2 &lt;- matrix(c( NA,       "pois",  NA,       "nbinom",
+                            "geom",    NA,    "geom",    "dweibull",
+                            "unif",   "geom",  NA,       "geom",
+                            "nbinom", "unif", "dweibull", NA),
+                         nrow = s, ncol = s, byrow = TRUE)
+
+# `f_dist_pars` has dimensions of: (s, s, 2),
+#  corresponding to `f_dist_model_2`.
+
+# First matrix.
+f_dist_pars_1_model_2 &lt;- matrix(c(NA,  0.2, NA,  3,
+                                  0.2, NA,  0.2, 0.5,
+                                  3,   0.4, NA,  0.7,
+                                  2,   3,   0.7, NA),
+                                nrow = s, ncol = s, byrow = TRUE)
+
+# Second matrix.
+f_dist_pars_2_model_2 &lt;- matrix(c(NA,  NA, NA,  0.6,
+                                  NA,  NA, NA,  0.8,
+                                  NA,  NA, NA,  NA,
+                                  0.2, NA, 0.3, NA),
+                                nrow = s, ncol = s, byrow = TRUE)
+
+
+# Get `f_dist_pars`.
+f_dist_pars_model_2 &lt;- array(c(f_dist_pars_1_model_2,
+                               f_dist_pars_2_model_2),
+                             dim = c(s, s, 2))
+
+
+# ---------------------------------------------------------------------------
+# Parametric object for Model 2.
+# ---------------------------------------------------------------------------
+
+obj_par_model_2 &lt;- parametric_dsmm(
+    model_size = 10000,
+    states = states,
+    initial_dist = c(0.8, 0.1, 0.1, 0),
+    degree = d,
+    p_dist = p_dist_model_2,
+    f_dist = f_dist_model_2,
+    f_dist_pars = f_dist_pars_model_2,
+    p_is_drifting = TRUE,
+    f_is_drifting = FALSE
+)
+
+# p drifting array.
+p_drift &lt;- obj_par_model_2$dist$p_drift
+p_drift
+
+# f distribution.
+f_dist_notdrift &lt;- obj_par_model_2$dist$f_notdrift_parametric
+f_dist_notdrift
+
+# parameters for the f distribution.
+f_dist_pars_notdrift &lt;- obj_par_model_2$dist$f_notdrift_parameters
+f_dist_pars_notdrift
+
+# ---------------------------------------------------------------------------
+# Defining Model 3 - f is drifting, p is not drifting.
+# ---------------------------------------------------------------------------
+
+# `p_dist` has dimensions of: (s, s).
+p_dist_model_3 &lt;- matrix(c(0,   0.1,  0.3,  0.6,
+                           0.4, 0,    0.1,  0.5,
+                           0.4, 0.3,  0,    0.3,
+                           0.9, 0.01, 0.09, 0),
+                         ncol = s, byrow = TRUE)
+
+# `f_dist` has the same dimensions as in Model 1: (s, s, d + 1).
+f_dist_model_3 &lt;- array(c(f_dist_1, f_dist_2), dim = c(s, s, d + 1))
+
+
+# `f_dist_pars` has the same dimensions as in Model 1: (s, s, 2, d + 1).
+f_dist_pars_model_3 &lt;- array(c(f_dist_1_pars_1, f_dist_1_pars_2,
+                               f_dist_2_pars_1, f_dist_2_pars_2),
+                             dim = c(s, s, 2, d + 1))
+
+# ---------------------------------------------------------------------------
+# Parametric object for Model 3.
+# ---------------------------------------------------------------------------
+
+obj_par_model_3 &lt;- parametric_dsmm(
+    model_size = 10000,
+    states = states,
+    initial_dist = c(0.3, 0.2, 0.2, 0.3),
+    degree = d,
+    p_dist = p_dist_model_3,
+    f_dist = f_dist_model_3,
+    f_dist_pars = f_dist_pars_model_3,
+    p_is_drifting = FALSE,
+    f_is_drifting = TRUE
+)
+
+# p drifting array.
+p_notdrift &lt;- obj_par_model_3$dist$p_notdrift
+p_notdrift
+
+# f distribution.
+f_dist_drift &lt;- obj_par_model_3$dist$f_drift_parametric
+f_dist_drift
+
+# parameters for the f distribution.
+f_dist_pars_drift &lt;- obj_par_model_3$dist$f_drift_parameters
+f_dist_pars_drift
+
+# ===========================================================================
+# Parametric estimation using methods corresponding to an object
+#     which inherits from the class `dsmm_parametric`.
+# ===========================================================================
+
+### Comments
+### 1.  Using a larger `klim` and a larger `model_size` will increase the
+###     accuracy of the model, with the need of larger memory requirements
+###     and computational cost.
+### 2.  For the parametric estimation it is recommended to use a common set
+###     of distributions while only the parameters are drifting. This results
+###     in higher accuracy.
+
+
+# ---------------------------------------------------------------------------
+# Defining the distributions for Model 1 - both p and f are drifting.
+# ---------------------------------------------------------------------------
+
+# `p_dist` has dimensions of: (s, s, d + 1).
+# First matrix.
+p_dist_1 &lt;- matrix(c(0,   0.2, 0.4, 0.4,
+                     0.5, 0,   0.3, 0.2,
+                     0.3, 0.4, 0,   0.3,
+                     0.5, 0.3, 0.2, 0),
+                   ncol = s, byrow = TRUE)
+
+# Second matrix.
+p_dist_2 &lt;- matrix(c(0,   0.3, 0.5, 0.2,
+                     0.3, 0,   0.4, 0.3,
+                     0.5, 0.3, 0,   0.2,
+                     0.2, 0.4, 0.4, 0),
+                   ncol = s, byrow = TRUE)
+
+# get `p_dist` as an array of p_dist_1 and p_dist_2.
+p_dist_model_1 &lt;- array(c(p_dist_1, p_dist_2), dim = c(s, s, d + 1))
+
+# `f_dist` has dimensions of: (s, s, d + 1).
+# We will use the same sojourn time distributions.
+f_dist_1 &lt;- matrix(c( NA,        "unif",   "dweibull", "nbinom",
+                     "geom",      NA,      "pois",     "dweibull",
+                     "dweibull", "pois",    NA,        "geom",
+                     "pois",     'nbinom', "geom",      NA),
+                   nrow = s, ncol = s, byrow = TRUE)
+
+# get `f_dist`
+f_dist_model_1 &lt;- array(f_dist_1, dim = c(s, s, d + 1))
+
+# `f_dist_pars` has dimensions of: (s, s, 2, d + 1).
+# First array of coefficients, corresponding to `f_dist_1`.
+# First matrix.
+f_dist_1_pars_1 &lt;- matrix(c(NA,  7,  0.4, 4,
+                            0.7, NA, 5,   0.6,
+                            0.2, 3,  NA,  0.6,
+                            4,   4,  0.4, NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+# Second matrix.
+f_dist_1_pars_2 &lt;- matrix(c(NA,  NA,  0.2, 0.6,
+                            NA,  NA,  NA,  0.8,
+                            0.6, NA,  NA,  NA,
+                            NA,  0.3, NA,  NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+
+# Second array of coefficients, corresponding to `f_dist_2`.
+# First matrix.
+f_dist_2_pars_1 &lt;- matrix(c(NA,  6,  0.5, 3,
+                            0.5, NA, 4,   0.5,
+                            0.4, 5,  NA,  0.7,
+                            6,   5,  0.7, NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+# Second matrix.
+f_dist_2_pars_2 &lt;- matrix(c(NA,  NA,  0.4, 0.5,
+                            NA,  NA,  NA,  0.6,
+                            0.5, NA,  NA,  NA,
+                            NA,  0.4, NA,  NA),
+                          nrow = s, ncol = s, byrow = TRUE)
+# Get `f_dist_pars`.
+f_dist_pars_model_1 &lt;- array(c(f_dist_1_pars_1, f_dist_1_pars_2,
+                               f_dist_2_pars_1, f_dist_2_pars_2),
+                             dim = c(s, s, 2, d + 1))
+
+# ---------------------------------------------------------------------------
+# Defining the parametric object for Model 1.
+# ---------------------------------------------------------------------------
+
+obj_par_model_1 &lt;- parametric_dsmm(
+    model_size = 4000,
+    states = states,
+    initial_dist = c(0.8, 0.1, 0.1, 0),
+    degree = d,
+    p_dist = p_dist_model_1,
+    f_dist = f_dist_model_1,
+    f_dist_pars = f_dist_pars_model_1,
+    p_is_drifting = TRUE,
+    f_is_drifting = TRUE
+)
+
+cat("The object has class of (",
+    paste0(class(obj_par_model_1),
+           collapse = ', '), ").")
+
+
+# ---------------------------------------------------------------------------
+# Generating a sequence from the parametric object.
+# ---------------------------------------------------------------------------
+
+# A larger klim will lead to an increase in accuracy.
+klim &lt;- 20
+sim_seq &lt;- simulate(obj_par_model_1, klim = klim, seed = 1)
+
+
+# ---------------------------------------------------------------------------
+# Fitting the generated sequence under the same distributions.
+# ---------------------------------------------------------------------------
+
+fit_par_model1 &lt;- fit_dsmm(sequence = sim_seq,
+                           states = states,
+                           degree = d,
+                           f_is_drifting = TRUE,
+                           p_is_drifting = TRUE,
+                           estimation = 'parametric',
+                           f_dist = f_dist_model_1)
+
+cat("The object has class of (",
+    paste0(class(fit_par_model1),
+           collapse = ', '), ").")
+
+cat("\nThe estimated parameters are:\n")
+fit_par_model1$dist$f_drift_parameters
+
+
+</code></pre>
+
+
+</div>

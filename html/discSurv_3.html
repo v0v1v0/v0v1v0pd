@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calibrationPlot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calibration Plots</h2>
+
+<h3>Description</h3>
+
+<p>Calibration plot based on predictions. Overall root mean squared error (RMSE) of 
+predicted and observed discrete hazards is calculated.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calibrationPlot(
+  testPreds,
+  testDataLong,
+  weights = NULL,
+  K = 10,
+  event = "e1",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>testPreds</code></td>
+<td>
+<p>Predictions on the validation data with model fitted on training data ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testDataLong</code></td>
+<td>
+<p>Validation data set in long format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>optional vector of weights ("numeric vector"). The length of weights must be equal to the number of observations 
+of the validation data set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>Number of subsets for plotting ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>event</code></td>
+<td>
+<p>Column names of the event to be considered for plotting (only in case of cause-specific hazards) ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>plot</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Calibration plot
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Moritz Berger <a href="mailto:moritz.berger@imbie.uni-bonn.de">moritz.berger@imbie.uni-bonn.de</a> <br><a href="https://www.imbie.uni-bonn.de/personen/dr-moritz-berger/">https://www.imbie.uni-bonn.de/personen/dr-moritz-berger/</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Berger M, Schmid M (2018).
+“Semiparametric regression for discrete time-to-event data.”
+<em>Statistical Modelling</em>, <b>18</b>, 322–345. <br><br> Heyard R, Timsit J, Held L, COMBACTE-MAGNET,consortium (2019).
+“Validation of discrete time-to-event prediction models in the presence of competing risks.”
+<em>Biometrical Journal</em>, <b>62</b>, 643-657. <br><br> Berger M, Schmid M (2020).
+“Assessing the calibration of subdistribution hazard models in discrete time.”
+<em>arXiv:2001.11240</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>estRecal</code>, <code>dataLong</code>, <code>dataLongCompRisks</code>, <code>dataLongSubDist</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">####################
+# Data preprocessing
+
+# Example unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Select subsample
+selectInd1 &lt;- 1:100
+selectInd2 &lt;- 101:200
+trainSet &lt;- UnempDur[which(UnempDur$spell %in% (1:10))[selectInd1], ]
+valSet &lt;- UnempDur[which(UnempDur$spell %in% (1:10))[selectInd2], ]
+
+####################
+# One event
+
+# Convert to long format
+trainSet_long &lt;- dataLong(dataShort = trainSet, timeColumn = "spell", eventColumn = "censor1")
+valSet_long &lt;- dataLong(dataShort = valSet, timeColumn = "spell", eventColumn = "censor1")
+
+# Estimate continuation ratio model with logit link
+glmFit &lt;- glm(formula = y ~ timeInt + age + logwage, data = trainSet_long, family = binomial())
+
+# Calculate predicted hazards
+predHazards &lt;- predict(glmFit, newdata = valSet_long, type = "response")
+
+# Calibration plot
+calibrationPlot(predHazards, testDataLong = valSet_long)
+
+############################
+# Two cause specific hazards 
+
+# Convert to long format
+trainSet_long &lt;- dataLongCompRisks(dataShort = trainSet, timeColumn = "spell", 
+eventColumns = c("censor1", "censor4"))
+valSet_long &lt;- dataLongCompRisks(dataShort = valSet, timeColumn = "spell", 
+eventColumns = c("censor1", "censor4"))
+
+# Estimate continuation ratio model with logit link
+vglmFit &lt;- VGAM::vglm(formula = cbind(e0, e1, e2) ~ timeInt + age + logwage, data = trainSet_long, 
+family = VGAM::multinomial(refLevel = "e0"))
+
+# Calculate predicted hazards
+predHazards &lt;- VGAM::predictvglm(vglmFit, newdata = valSet_long, type = "response")
+
+# Calibration plots
+calibrationPlot(predHazards, testDataLong = valSet_long)
+calibrationPlot(predHazards, testDataLong = valSet_long, event = "e2")
+
+###############################
+# Subdistribution hazards model
+
+# Convert to long format
+trainSet_long &lt;- dataLongSubDist(dataShort = trainSet, timeColumn = "spell", 
+eventColumns = c("censor1", "censor4"), eventFocus = "censor1")
+valSet_long &lt;- dataLongSubDist(dataShort = valSet, timeColumn = "spell", 
+eventColumns = c("censor1", "censor4"), eventFocus = "censor1")
+
+# Estimate continuation ratio model with logit link
+glmFit &lt;- glm(formula = y ~ timeInt + age + logwage, data = trainSet_long, 
+family = binomial(), weights = trainSet_long$subDistWeights)
+
+# Calculate predicted  hazards 
+predHazards &lt;- predict(glmFit, newdata = valSet_long, type = "response")
+
+# Calibration plot 
+calibrationPlot(predHazards, testDataLong = valSet_long, weights = valSet_long$subDistWeights)
+
+</code></pre>
+
+
+</div>

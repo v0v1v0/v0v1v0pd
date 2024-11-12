@@ -1,0 +1,274 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deconv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A function to compute Empirical Bayes estimates using deconvolution</h2>
+
+<h3>Description</h3>
+
+<p>A function to compute Empirical Bayes estimates using deconvolution
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deconv(
+  tau,
+  X,
+  y,
+  Q,
+  P,
+  n = 40,
+  family = c("Poisson", "Normal", "Binomial"),
+  ignoreZero = TRUE,
+  deltaAt = NULL,
+  c0 = 1,
+  scale = TRUE,
+  pDegree = 5,
+  aStart = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>a vector of (implicitly m) discrete support points for
+<code class="reqn">\theta</code>. For the Poisson and normal families, <code class="reqn">\theta</code>
+is the mean parameter and for the binomial, it is the
+probability of success.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>the vector of sample values: a vector of counts for
+Poisson, a vector of z-scores for Normal, a 2-d matrix with
+rows consisting of pairs, (trial size <code class="reqn">n_i</code>, number of
+successes <code class="reqn">X_i</code>) for Binomial. See details below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>the multinomial counts. See details below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>the Q matrix, implies y and P are supplied as well; see
+details below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>the P matrix, implies Q and y are supplied as well; see
+details below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the number of support points for X. Applies only to
+Poisson and Normal. In the former, implies that support of X is
+1 to n or 0 to n-1 depending on the <code>ignoreZero</code> parameter
+below. In the latter, the range of X is divided into n bins to
+construct the multinomial sufficient statistic y (<code class="reqn">y_k</code> =
+number of X in bin K) described in the references below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>the exponential family, one of <code>c("Poisson",
+"Normal", "Binomial")</code> with <code>"Poisson"</code>, the default</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreZero</code></td>
+<td>
+<p>if the zero values should be ignored (default =
+<code>TRUE</code>). Applies to Poisson only and has the effect of
+adjusting <code>P</code> for the truncation at zero</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaAt</code></td>
+<td>
+<p>the theta value where a delta function is desired
+(default <code>NULL</code>). This applies to the Normal case only and
+even then only if it is non-null.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c0</code></td>
+<td>
+<p>the regularization parameter (default 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>if the Q matrix should be scaled so that the spline
+basis has mean 0 and columns sum of squares to be one, (default
+<code>TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pDegree</code></td>
+<td>
+<p>the degree of the splines to use (default 5). In
+notation used in the references below, <code class="reqn">p</code> = pDegree + 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aStart</code></td>
+<td>
+<p>the starting values for the non-linear optimization,
+default is a vector of 1s</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further args to function <code>nlm</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list of 9 items consisting of </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mle</code></td>
+<td>
+<p>the maximum
+likelihood estimate <code class="reqn">\hat{\alpha}</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>the m by p
+matrix Q</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>the n by m matrix P</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>the ratio of
+artificial to genuine information per the reference below,
+where it was referred to as <code class="reqn">R(\alpha)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov</code></td>
+<td>
+<p>the
+covariance matrix for the mle</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.g</code></td>
+<td>
+<p>the covariance
+matrix for the <code class="reqn">g</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats</code></td>
+<td>
+<p>an m by 6 or 7 matrix
+containing columns for <code class="reqn">theta</code>, <code class="reqn">g</code>, <code class="reqn">\tilde{g}</code>
+which is <code class="reqn">g</code> with thinning correction applied and named
+<code>tg</code>, std. error of <code class="reqn">g</code>, <code class="reqn">G</code> (the cdf of g),
+std. error of <code class="reqn">G</code>, and the bias of <code class="reqn">g</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>the negative log-likelihood function for the data
+taking a <code class="reqn">p</code>-vector argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statsFunction</code></td>
+<td>
+<p>a
+function to compute the statistics returned above</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The data <code>X</code> is always required with two exceptions. In the Poisson case,
+<code>y</code> alone may be specified and <code>X</code> omitted, in which case the sample space of
+the observations $<code class="reqn">X</code>$ is assumed to be 1, 2, .., <code>length(y)</code>. The second exception is
+for experimentation with other exponential families besides the three implemented here:
+<code>y</code>, <code>P</code> and <code>Q</code> can be specified together.
+</p>
+<p>Note also that in the Poisson case where there is zero truncation,
+the <code>stats</code> matrix has an additional column <code>"tg"</code> which
+accounts for the thinning correction induced by the truncation. See
+vignette for details.
+</p>
+
+
+<h3>References</h3>
+
+<p>Bradley Efron. Empirical Bayes Deconvolution Estimates. Biometrika 103(1), 1-20,
+ISSN 0006-3444. doi:10.1093/biomet/asv068.
+<a href="http://biomet.oxfordjournals.org/content/103/1/1.full.pdf+html">http://biomet.oxfordjournals.org/content/103/1/1.full.pdf+html</a>
+</p>
+<p>Bradley Efron and Trevor Hastie. Computer Age Statistical Inference.
+Cambridge University Press. ISBN 978-1-1-7-14989-2. Chapter 21.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(238923) ## for reproducibility
+N &lt;- 1000
+theta &lt;- rchisq(N,  df = 10)
+X &lt;- rpois(n = N, lambda = theta)
+tau &lt;- seq(1, 32)
+result &lt;- deconv(tau = tau, X = X, ignoreZero = FALSE)
+print(result$stats)
+##
+## Twin Towers Example
+## See Brad Efron: Bayes, Oracle Bayes and Empirical Bayes
+## disjointTheta is provided by deconvolveR package
+theta &lt;- disjointTheta; N &lt;- length(disjointTheta)
+z &lt;- rnorm(n = N, mean = disjointTheta)
+tau &lt;- seq(from = -4, to = 5, by = 0.2)
+result &lt;- deconv(tau = tau, X = z, family = "Normal", pDegree = 6)
+g &lt;- result$stats[, "g"]
+if (require("ggplot2")) {
+  ggplot() +
+     geom_histogram(mapping = aes(x = disjointTheta, y  = ..count.. / sum(..count..) ),
+                    color = "blue", fill = "red", bins = 40, alpha = 0.5) +
+     geom_histogram(mapping = aes(x = z, y  = ..count.. / sum(..count..) ),
+                    color = "brown", bins = 40, alpha = 0.5) +
+     geom_line(mapping = aes(x = tau, y = g), color = "black") +
+     labs(x = paste(expression(theta), "and x"), y = paste(expression(g(theta)), " and f(x)"))
+}
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,83 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>with_mock_path</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run the DBI queries in an alternate mock directory</h2>
+
+<h3>Description</h3>
+
+<p>When testing with dittodb, wrap your tests in <code>with_mock_path({})</code> to use the
+database fixtures located in other directories. <code>dittodb</code> will look for
+fixtures in the directory specified by the user, which can be a temporary
+or permanent location.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">with_mock_path(path, expr, replace = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>the alternate directory</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+<p>the expression to execute</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>logical, should the path replace the current mock paths
+(<code>TRUE</code>) or should they be appended (to the beginning) of the current mock
+paths (default, <code>FALSE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>nothing, called to execute the expression(s) in <code>expr</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Only run if RSQLite and testthat are available
+if (check_for_pkg("RSQLite", message) &amp; check_for_pkg("testthat", message)) {
+  with_mock_path(
+    system.file("nycflight_mocks", package = "dittodb"),
+    with_mock_db({
+      con &lt;- DBI::dbConnect(
+        RSQLite::SQLite(),
+        dbname = "nycflights"
+      )
+
+      one_airline &lt;- dbGetQuery(
+        con,
+        "SELECT carrier, name FROM airlines LIMIT 1"
+      )
+      testthat::test_that("We get one airline", {
+        testthat::expect_s3_class(one_airline, "data.frame")
+        testthat::expect_equal(nrow(one_airline), 1)
+        testthat::expect_equal(one_airline$carrier, "9E")
+        testthat::expect_equal(one_airline$name, "Endeavor Air Inc.")
+      })
+      one_airline
+    })
+  )
+}
+</code></pre>
+
+
+</div>

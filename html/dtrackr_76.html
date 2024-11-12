@@ -1,0 +1,141 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>p_slice_max</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Slice operations</h2>
+
+<h3>Description</h3>
+
+<p>Slice operations behave as in dplyr, except the history graph can be updated with
+tracked dataframe with the before and after sizes of the dataframe.
+See <code>dplyr::slice()</code>, <code>dplyr::slice_head()</code>, <code>dplyr::slice_tail()</code>,
+<code>dplyr::slice_min()</code>, <code>dplyr::slice_max()</code>, <code>dplyr::slice_sample()</code>,
+for more details on the underlying functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">p_slice_max(
+  .data,
+  ...,
+  .messages = c("{.count.in} before", "{.count.out} after"),
+  .headline = "slice data"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A data frame, data frame extension (e.g. a tibble), or a
+lazy data frame (e.g. from dbplyr or dtplyr). See <em>Methods</em>, below, for
+more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Arguments passed on to <code>dplyr::slice_max</code>
+</p>
+
+<dl>
+<dt><code>n,prop</code></dt>
+<dd>
+<p>Provide either <code>n</code>, the number of rows, or <code>prop</code>, the
+proportion of rows to select. If neither are supplied, <code>n = 1</code> will be
+used. If <code>n</code> is greater than the number of rows in the group
+(or <code>prop &gt; 1</code>), the result will be silently truncated to the group size.
+<code>prop</code> will be rounded towards zero to generate an integer number of
+rows.
+</p>
+<p>A negative value of <code>n</code> or <code>prop</code> will be subtracted from the group
+size. For example, <code>n = -2</code> with a group of 5 rows will select 5 - 2 = 3
+rows; <code>prop = -0.25</code> with 8 rows will select 8 * (1 - 0.25) = 6 rows.</p>
+</dd>
+<dt><code>order_by</code></dt>
+<dd>
+<p>&lt;<code>data-masking</code>&gt; Variable or
+function of variables to order by. To order by multiple variables, wrap
+them in a data frame or tibble.</p>
+</dd>
+<dt><code>with_ties</code></dt>
+<dd>
+<p>Should ties be kept together? The default, <code>TRUE</code>,
+may return more rows than you request. Use <code>FALSE</code> to ignore ties,
+and return the first <code>n</code> rows.</p>
+</dd>
+<dt><code>na_rm</code></dt>
+<dd>
+<p>Should missing values in <code>order_by</code> be removed from the result?
+If <code>FALSE</code>, <code>NA</code> values are sorted to the end (like in <code>arrange()</code>), so
+they will only be included if there are insufficient non-missing values to
+reach <code>n</code>/<code>prop</code>.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.messages</code></td>
+<td>
+<p>a set of glue specs. The glue code can use any global
+variable, {.count.in}, {.count.out} for the input and output dataframes
+sizes respectively and {.excluded} for the difference</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.headline</code></td>
+<td>
+<p>a glue spec. The glue code can use any global variable,
+{.count.in}, {.count.out} for the input and output dataframes sizes
+respectively.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the sliced dataframe with the history graph updated.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dplyr::slice_max()
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(dtrackr)
+
+
+# Subset the data by the maximum of a given value
+iris %&gt;% track() %&gt;% group_by(Species) %&gt;%
+  slice_max(prop=0.5, order_by = Sepal.Width,
+            .messages="{.count.out} / {.count.in} = {prop} (with ties)",
+            .headline="Widest 50% Sepals") %&gt;%
+  history()
+
+
+# The narrowest 25% of the iris data set by group can be calculated in the
+# slice_min() function. Recording this is a matter of tracking and
+# using glue specs.
+iris %&gt;%
+  track() %&gt;%
+  group_by(Species) %&gt;%
+  slice_min(prop=0.25, order_by = Sepal.Width,
+            .messages="{.count.out} / {.count.in} (with ties)",
+            .headline="narrowest {sprintf('%1.0f',prop*100)}% {Species}") %&gt;%
+  history()
+
+</code></pre>
+
+
+</div>

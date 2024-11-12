@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dlmMLE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parameter estimation by maximum likelihood</h2>
+
+<h3>Description</h3>
+
+<p>The function returns the MLE of unknown parameters in the specification of 
+a state space model. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dlmMLE(y, parm, build, method = "L-BFGS-B", ..., debug = FALSE) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>a vector, matrix, or time series of data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parm</code></td>
+<td>
+<p>vector of initial values - for the optimization routine -
+of the unknown parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>build</code></td>
+<td>
+<p>a function that takes a vector of the same length as
+<code>parm</code> and returns an object of class dlm, or a list that may
+be interpreted as such.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>passed to <code>optim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments passed to <code>optim</code> and
+<code>build</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>if <code>debug=TRUE</code>, the likelihood calculations are done
+entirely in R, otherwise C functions are used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The evaluation of the loglikelihood is done by <code>dlmLL</code>. 
+For the optimization, <code>optim</code> is called. It is possible for the
+model to depend on additional parameters, other than those in
+<code>parm</code>, passed to <code>build</code> via the <code>...</code> argument.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function <code>dlmMLE</code> returns the value returned by <code>optim</code>.
+</p>
+
+
+<h3>Warning</h3>
+
+<p>The <code>build</code> argument must return a dlm with nonsingular
+observation variance <code>V</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Giovanni Petris <a href="mailto:GPetris@uark.edu">GPetris@uark.edu</a></p>
+
+
+<h3>References</h3>
+
+<p>Giovanni Petris (2010), An R Package for Dynamic Linear
+Models. Journal of Statistical Software, 36(12), 1-16.
+<a href="https://www.jstatsoft.org/v36/i12/">https://www.jstatsoft.org/v36/i12/</a>.<br>
+Petris, Petrone, and Campagnoli, Dynamic Linear Models with
+R, Springer (2009).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dlmLL</code>, <code>dlm</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(NelPlo)
+### multivariate local level -- seemingly unrelated time series
+buildSu &lt;- function(x) {
+  Vsd &lt;- exp(x[1:2])
+  Vcorr &lt;- tanh(x[3])
+  V &lt;- Vsd %o% Vsd
+  V[1,2] &lt;- V[2,1] &lt;- V[1,2] * Vcorr
+  Wsd &lt;- exp(x[4:5])
+  Wcorr &lt;- tanh(x[6])
+  W &lt;- Wsd %o% Wsd
+  W[1,2] &lt;- W[2,1] &lt;- W[1,2] * Wcorr
+  return(list(
+              m0 = rep(0,2),
+              C0 = 1e7 * diag(2),
+              FF = diag(2),
+              GG = diag(2),
+              V = V,
+              W = W))
+}
+
+suMLE &lt;- dlmMLE(NelPlo, rep(0,6), buildSu); suMLE
+buildSu(suMLE$par)[c("V","W")]
+StructTS(NelPlo[,1], type="level") ## compare with W[1,1] and V[1,1]
+StructTS(NelPlo[,2], type="level") ## compare with W[2,2] and V[2,2]
+
+## multivariate local level model with homogeneity restriction
+buildHo &lt;- function(x) {
+  Vsd &lt;- exp(x[1:2])
+  Vcorr &lt;- tanh(x[3])
+  V &lt;- Vsd %o% Vsd
+  V[1,2] &lt;- V[2,1] &lt;- V[1,2] * Vcorr
+  return(list(
+              m0 = rep(0,2),
+              C0 = 1e7 * diag(2),
+              FF = diag(2),
+              GG = diag(2),
+              V = V,
+              W = x[4]^2 * V))
+}
+
+hoMLE &lt;- dlmMLE(NelPlo, rep(0,4), buildHo); hoMLE
+buildHo(hoMLE$par)[c("V","W")]
+</code></pre>
+
+
+</div>

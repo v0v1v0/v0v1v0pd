@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>readNWISstat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Site statistics retrieval from USGS (NWIS)</h2>
+
+<h3>Description</h3>
+
+<p>Retrieves site statistics from the USGS Statistics Web Service beta.
+See <a href="https://waterservices.usgs.gov/docs/statistics/">https://waterservices.usgs.gov/docs/statistics/</a> for more information.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">readNWISstat(
+  siteNumbers,
+  parameterCd,
+  startDate = "",
+  endDate = "",
+  convertType = TRUE,
+  statReportType = "daily",
+  statType = "mean"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>siteNumbers</code></td>
+<td>
+<p>character USGS site number (or multiple sites).  This is usually an 8 digit number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameterCd</code></td>
+<td>
+<p>character USGS parameter code.  This is usually a 5 digit number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startDate</code></td>
+<td>
+<p>character starting date for data retrieval in the form YYYY, YYYY-MM, or YYYY-MM-DD. Dates cannot
+be more specific than the statReportType, i.e. startDate for monthly statReportTypes cannot include days, and annual
+statReportTypes cannot include days or months.  Months and days are optional for the daily statReportType.
+Default is "" which indicates retrieval for the earliest possible record.  For daily data, this indicates the
+start of the period the statistics will be computed over.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>endDate</code></td>
+<td>
+<p>character ending date for data retrieval in the form YYYY, YYYY-MM, or YYYY-MM-DD. Default is ""
+which indicates retrieval for the latest possible record.  For daily data, this
+indicates the end of the period
+the statistics will be computed over.  The same restrictions as startDate apply.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convertType</code></td>
+<td>
+<p>logical, defaults to <code>TRUE</code>. If <code>TRUE</code>, the function will convert the data to
+numerics based on a standard algorithm. Years, months, and days (if appliccable) are also returned as numerics
+in separate columns.  If convertType is false, everything is returned as a character.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statReportType</code></td>
+<td>
+<p>character time division for statistics: daily, monthly, or annual.  Default is daily.
+Note that daily provides statistics for each calendar day over the specified range
+of water years, i.e. no more than 366
+data points will be returned for each site/parameter.  Use readNWISdata or readNWISdv for daily averages.
+Also note that 'annual' returns statistics for the calendar year.  Use readNWISdata
+for water years. Monthly and yearly
+provide statistics for each month and year within the range indivually.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statType</code></td>
+<td>
+<p>character type(s) of statistics to output for daily values.
+Default is mean, which is the only
+option for monthly and yearly report types. See the statistics service documentation
+at <a href="https://waterservices.usgs.gov/docs/statistics/">https://waterservices.usgs.gov/docs/statistics/</a> for a full list of codes.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame with the following columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+agency_cd </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The NWIS code for the agency reporting the data</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+site_no </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The USGS site number </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+parameter_cd </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The USGS parameter code </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+
+Other columns will be present depending on statReportType and statType
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>constructNWISURL</code>, <code>importRDB1</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+x1 &lt;- readNWISstat(
+  siteNumbers = c("02319394"),
+  parameterCd = c("00060"),
+  statReportType = "annual"
+)
+
+# all the annual mean discharge data for two sites
+x2 &lt;- readNWISstat(
+  siteNumbers = c("02319394", "02171500"),
+  parameterCd = c("00010", "00060"),
+  statReportType = "annual"
+)
+
+# Request p25, p75, and mean values for temperature and discharge for the 2000s
+# Note that p25 and p75 were not available for temperature, and return NAs
+x &lt;- readNWISstat(
+  siteNumbers = c("02171500"),
+  parameterCd = c("00010", "00060"),
+  statReportType = "daily",
+  statType = c("mean", "median"),
+  startDate = "2000", endDate = "2010"
+)
+
+
+</code></pre>
+
+
+</div>

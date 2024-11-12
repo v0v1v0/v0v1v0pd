@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>correctTypos</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Correct records under linear restrictions using typographical error suggestions</h2>
+
+<h3>Description</h3>
+
+<p>This algorithm tries to detect and repair records that violate linear equality constraints by correcting simple typo's as described in Scholtus (2009).
+The implemention of the detection of typing errors differs in that it uses the restricted Damerau-Levensthein distance. Furthermore it solves a broader class of
+problems: the original paper describes the class of equalities: <code class="reqn">Ex=0</code> (balance edits) and this implementation allows for  <code class="reqn">Ex=a</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">correctTypos(E, dat, ...)
+
+## S3 method for class 'editset'
+correctTypos(E, dat, ...)
+
+## S3 method for class 'editmatrix'
+correctTypos(E, dat, fixate = NULL, cost = c(1, 1, 1,
+  1), eps = sqrt(.Machine$double.eps), maxdist = 1, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p><code>editmatrix</code> or <code>editset</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p><code>data.frame</code> with data to be corrected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments to be passed to other methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixate</code></td>
+<td>
+<p><code>character</code> with variable names that should not be changed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cost</code></td>
+<td>
+<p>for a deletion, insertion, substition or transposition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p><code>numeric</code>, tolerance on edit check. Default value is <code>sqrt(.Machine$double.eps)</code>. Set to 2
+to allow for rounding errors. Set this parameter to 0 for exact checking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxdist</code></td>
+<td>
+<p><code>numeric</code>, tolerance used in finding typographical corrections. Default value 1 allows for one error. Used in combination with <code>cost</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each row in <code>dat</code> the correction algorithm first detects if row <code>x</code> violates the equality constraints of <code>E</code> taking possible rounding errors into account.
+Mathematically:
+<code class="reqn">|\sum_{i=1}^nE_{ji}x_i - a_j| \leq \varepsilon,\quad \forall j </code>
+</p>
+<p>It then generates correction suggestions by deriving alternative values for variables only involved in the violated edits. The correction suggestions must be within a typographical
+edit distance (default = 1) to be selected. If there are more then 1 solutions possible the algorithm tries to derive a partial solution, otherwise the solution is applied to the data.
+</p>
+<p><code>correctTypos</code> returns an object of class <code>deducorrect</code> object describing the status of the record and the corrections that have been applied.
+</p>
+<p>Inequalities in editmatrix <code>E</code> will be ignored in this algorithm, so if this is the case, the corrected records
+are valid according to the equality restrictions, but may be incorrect for the given inequalities.
+</p>
+<p>Please note that if the returned status of a record is "partial" the corrected record still is not valid.
+The partially corrected record will contain less errors and will violate less constraints.
+Also note that the status "valid" and "corrected" have to be interpreted in combination with <code>eps</code>.
+A common scenario is first to correct for typo's and then correct for rounding errors. This means that in the first
+step the algorithm should allow for typo's (e.g. <code>eps==2</code>). The returned "valid"  record therefore may still contain
+rounding errors.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>deducorrect</code> object with corrected data.frame, applied corrections and status of the records.
+</p>
+
+
+<h3>References</h3>
+
+<p>Scholtus S (2009). Automatic correction of simple typing errors in numerical data with balance edits.
+Discussion paper 09046, Statistics Netherlands, The Hague/Heerlen.
+</p>
+<p>Damerau F (1964). A technique for computer detection and correction of
+spelling errors. Communications of the ACM, 7,issue 3
+</p>
+<p>Levenshtein VI (1966). Binary codes capable of correcting deletions, insertions,
+and reversals. Soviet Physics Doklady 10: 707-10
+</p>
+<p>A good description of the restricted DL-distance can be found on wikipedia: http://en.wikipedia.org/wiki/Damerau
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>damerauLevenshteinDistance</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(editrules)
+
+# example from section 4 in Scholtus (2009)
+
+E &lt;- editmatrix( c("x1 + x2 == x3"
+                  ,"x2 == x4"
+                  ,"x5 + x6 + x7 == x8"
+                  ,"x3 + x8 == x9"
+                  ,"x9 - x10 == x11"
+                  )
+               )
+
+dat &lt;- read.csv(txt&lt;-textConnection(
+"    , x1, x2 , x3  , x4 , x5 , x6, x7, x8 , x9   , x10 , x11
+4  , 1452, 116, 1568, 116, 323, 76, 12, 411,  1979, 1842, 137
+4.1, 1452, 116, 1568, 161, 323, 76, 12, 411,  1979, 1842, 137
+4.2, 1452, 116, 1568, 161, 323, 76, 12, 411, 19979, 1842, 137
+4.3, 1452, 116, 1568, 161,   0,  0,  0, 411, 19979, 1842, 137
+4.4, 1452, 116, 1568, 161, 323, 76, 12,   0, 19979, 1842, 137"
+))
+close(txt)
+(cor &lt;- correctTypos(E,dat))
+
+
+
+# example with editset
+E &lt;- editset(expression(
+    x + y == z,
+    x &gt;= 0,
+    y &gt; 0,
+    y &lt; 2,
+    z &gt; 1,
+    z &lt; 3,
+    A %in% c('a','b'),
+    B %in% c('c','d'),
+    if ( A == 'a' ) B == 'b',
+    if ( B == 'b' ) x &gt; 3
+))
+
+x &lt;- data.frame(
+    x = 10,
+    y = 1,
+    z = 2,
+    A = 'a',
+    B = 'b'
+)
+
+correctTypos(E,x)
+
+
+</code></pre>
+
+
+</div>

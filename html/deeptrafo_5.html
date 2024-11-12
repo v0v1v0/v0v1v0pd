@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cotramNN</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Deep distribution-free count regression</h2>
+
+<h3>Description</h3>
+
+<p>Deep distribution-free count regression
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cotramNN(
+  formula,
+  data,
+  response_type = get_response_type(data[[all.vars(formula)[1]]]),
+  order = get_order(response_type, data[[all.vars(formula)[1]]]),
+  addconst_interaction = 0,
+  latent_distr = "logistic",
+  monitor_metrics = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Formula specifying the response, interaction, shift terms
+as <code>response | interacting ~ shifting</code>.
+auto-regressive transformation models (ATMs).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Named <code>list</code> or <code>data.frame</code> which may contain both
+structured and unstructured data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_type</code></td>
+<td>
+<p>Character; type of response. One of <code>"continuous"</code>,
+<code>"survival"</code>, <code>"count"</code>, or <code>"ordered"</code>. If not supplied
+manually it is determined by the first entry in <code>data[[response]]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>Integer; order of the response basis. Default 10 for Bernstein
+basis or number of levels minus one for ordinal responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addconst_interaction</code></td>
+<td>
+<p>Positive constant;
+a constant added to the additive predictor of the interaction term.
+If <code>NULL</code>, terms are left unchanged. If 0 and predictors have
+negative values in their design matrix, the minimum value of all predictors
+is added to ensure positivity. If &gt; 0, the minimum value plus the
+<code>addconst_interaction</code> is added to each predictor in the interaction
+term. This ensures a monotone non-decreasing transformation function in
+the response when using (tensor product) spline bases in the interacting
+term.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>latent_distr</code></td>
+<td>
+<p>A <code>tfd_distribution</code> or character; the base distribution for
+transformation models. If character, can be <code>"normal"</code>, <code>"logistic"</code>,
+<code>"gumbel"</code> or <code>"gompertz"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>monitor_metrics</code></td>
+<td>
+<p>See <code>deepregression</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>deepregression</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>See return statement of <code>deeptrafo</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1)
+df &lt;- data.frame(y = as.integer(abs(1 + rnorm(50, sd = 10))), x = rnorm(50))
+if (reticulate::py_module_available("tensorflow") &amp;
+    reticulate::py_module_available("keras") &amp;
+    reticulate::py_module_available("tensorflow_probability")) {
+    m &lt;- cotramNN(y ~ 0 + x, data = df, order = 6)
+
+    optimizer &lt;- optimizer_adam(learning_rate = 0.1, decay = 4e-4)
+    m &lt;- cotramNN(y ~ 0 + x, data = df, optimizer = optimizer, order = 6)
+    library(cotram)
+    fit(m, epochs = 800L, validation_split = 0)
+    logLik(mm &lt;- cotram(y ~ x, data = df, method = "logit")); logLik(m)
+    coef(mm, with_baseline = TRUE); unlist(c(coef(m, which = "interacting"),
+                                             coef(m, which = "shifting")))
+
+}
+
+</code></pre>
+
+
+</div>

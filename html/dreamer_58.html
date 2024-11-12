@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pr_eoi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Probability of Meeting Effect of Interest (EOI)</h2>
+
+<h3>Description</h3>
+
+<p>Calculate Pr(effect_dose - effect_reference_dose &gt; EOI | data)
+or Pr(effect_dose &gt; EOI | data).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pr_eoi(x, eoi, dose, reference_dose = NULL, time = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from a call to <code>dreamer_mcmc()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eoi</code></td>
+<td>
+<p>a vector of the effects of interest (EOI) in the probability
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p>a vector of the doses for which to calculate the
+posterior probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_dose</code></td>
+<td>
+<p>a vector of doses for relative effects of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>the time at which to calculate the posterior quantity.  Defaults
+to the latest timepoint.  Applies to longitudinal models only.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A tibble listing the doses, times, and
+Pr(effect_dose - effect_reference_dose &gt; eoi) if <code>reference_dose</code>
+is specified; otherwise, Pr(effect_dose &gt; eoi).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e4,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+pr_eoi(output, dose = 3, eoi = 10)
+
+# difference of two doses
+pr_eoi(output, dose = 3, eoi = 10, reference_dose = 0)
+
+# single model
+pr_eoi(output$mod_linear, dose = 3, eoi = 10)
+</code></pre>
+
+
+</div>

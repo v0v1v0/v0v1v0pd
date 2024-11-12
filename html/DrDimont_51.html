@@ -1,0 +1,129 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_pipeline</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Execute all DrDimont pipeline steps sequentially</h2>
+
+<h3>Description</h3>
+
+<p>This wrapper function executes all necessary steps to generate differential integrated
+drug response scores from the formatted input data. The following input data is required
+(and detailed below):
+</p>
+<p>* Layers of stratified molecular data.
+</p>
+<p>* Additional connections between the layers.
+</p>
+<p>* Interactions between drugs and nodes in the network.
+</p>
+<p>* Settings for pipeline execution.
+</p>
+<p>As this function runs through all steps of the DrDimont pipeline it can take a long time to complete,
+especially if the supplied molecular data is rather large. Several prompts will be printed to supply
+information on how the pipeline is proceeding. Calculation of the interaction score by
+<code>generate_interaction_score_graphs</code> requires saving large-scale graphs to file and calling
+a Python script. This handover may take time.
+</p>
+<p>Eventually a data frame is returned containing the supplied drug name and its associated
+differential drug response score computed by DrDimont.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_pipeline(
+  layers,
+  inter_layer_connections,
+  drug_target_interactions,
+  settings
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>layers</code></td>
+<td>
+<p>[list] Named list with different network layers containing data and identifiers for
+both groups. The required input format is a list with names corresponding to the content of
+the respective layer (e.g., "protein"). Each named element has to contain the molecular data
+and corresponding identifiers formatted by <code>make_layer</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inter_layer_connections</code></td>
+<td>
+<p>[list] A list with specified inter-layer connections. This list
+contains one or more elements defining individual inter-layer connections created by
+<code>make_connection</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drug_target_interactions</code></td>
+<td>
+<p>[list] A list specifying drug-target interactions for drug response
+score computation. The required input format of this list is created by
+<code>make_drug_target</code>. The drug response score is calculated for all drugs contained
+in this object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>settings</code></td>
+<td>
+<p>[list] A named list containing pipeline settings. The settings list has to be
+initialized by <code>drdimont_settings</code>. Items in the named list can be
+adjusted as desired.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Data frame containing drug name and associated differential integrated drug response score.
+If Python is not installed or the interaction score computation fails for some other reason, NULL
+is returned instead.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(drug_gene_interactions)
+data(metabolite_protein_interactions)
+data(layers_example)
+
+example_inter_layer_connections = list(make_connection(from='mrna', to='protein',
+                                           connect_on='gene_name', weight=1),
+                                       make_connection(from='protein', to='phosphosite',
+                                           connect_on='gene_name', weight=1),
+                                       make_connection(from='protein', to='metabolite',
+                                           connect_on=metabolite_protein_interactions,
+                                           weight='combined_score'))
+
+example_drug_target_interactions &lt;- make_drug_target(target_molecules='protein',
+                                        interaction_table=drug_gene_interactions,
+                                        match_on='gene_name')
+
+example_settings &lt;- drdimont_settings(
+                        handling_missing_data=list(
+                            default="pairwise.complete.obs",
+                            mrna="all.obs"),
+                        reduction_method="pickHardThreshold",
+                        r_squared=list(default=0.65, metabolite=0.1),
+                        cut_vector=list(default=seq(0.2, 0.65, 0.01)))
+
+
+run_pipeline(
+    layers=layers_example, 
+    inter_layer_connections=example_inter_layer_connections, 
+    drug_target_interactions=example_drug_target_interactions, 
+    settings=example_settings)
+
+
+</code></pre>
+
+
+</div>

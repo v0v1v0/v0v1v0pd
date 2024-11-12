@@ -1,0 +1,210 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dyn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> dynamic regression class </h2>
+
+<h3>Description</h3>
+
+<p>dyn is used to construct objects of class <code>"dyn"</code> 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dyn(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p> an object, typically a <code>"formula"</code> object or
+an object produced by <code>"lm"</code>, <code>"glm"</code> or other
+regression function.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p><code>"dyn"</code> enables regression functions that were not written to handle
+time series to handle them.  Both the dependent and independent variables
+may be time series and they may have different time indexes (in which 
+case they are automatically aligned). The time series may also have
+missing values including internal missing values. 
+</p>
+<p><code>"dyn"</code> currently works with any regression function that makes
+use of <code>"model.frame"</code> and is written in the style of <code>"lm"</code>.
+This includes <code>"lm"</code>, <code>"glm"</code>, <code>"loess"</code>, <code>"rlm"</code>
+(from <span class="pkg">"MASS"</span>), <code>"lqs"</code> (from <span class="pkg">"MASS"</span>), <code>"MCMCregress"</code>
+(from <span class="pkg">"MCMCpack"</span>), <code>"randomForest"</code>
+(from <span class="pkg">"randomForest"</span>), <code>"rq"</code> (from <span class="pkg">"quantreg"</span>) and
+others.  The time series objects can
+be one of the following classes: <code>"ts"</code>, <code>"irts"</code>,
+<code>"its"</code>, <code>"zoo"</code> or <code>"zooreg"</code>.   
+</p>
+<p>Typically <code>"dyn"</code> is used like this <code>"dyn$lm(y ~ lag(y, -1))"</code>.  
+That is, one prepends the usual <code>"lm"</code> or other regression function
+with <code>"dyn$"</code> and then uses time series including <code>"lag"</code>
+and <code>"diff"</code> operators in the formula.   
+The returned object has a class vector beginning with
+<code>"dyn"</code> and includes all classes that it would have had
+without <code>"dyn"</code>.  <code>"dyn"</code> methods include
+<code>"model.frame"</code>, <code>"fitted"</code>,
+<code>"residuals"</code>, <code>"predict"</code>, <code>"update"</code>, <code>"anova"</code>
+and <code>"$"</code> methods. 
+These methods preprocess their arguments, 
+call the real method which does the actual work
+and then post process the returned object.  In the case of <code>"fitted"</code>,
+<code>"residuals"</code> and <code>"predict"</code> they ensure that the result is
+a time series.  In the case of <code>anova</code> the times of the objects are
+intersected so that they all have the same time indexes
+to ensure that a comparable input is provided to <code>"anova"</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>"dyn"</code> returns its argument with the class name <code>"dyn"</code>
+prepended to its class vector.  The <code>"fitted"</code>, <code>"residuals"</code>
+and <code>"predict"</code> <code>"dyn"</code> methods return time series of the
+appropriate class.  <code>"model.frame"</code> creates a model frame with
+an attribute of <code>"series"</code> that contains a data frame of 
+the time series and factor variables as columns. <code>"model.matrix"</code>
+returns a model matrix of class <code>"matrix"</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p><code>"dyn"</code> relies on the underlying time series classes
+and regression routines for all substantive functionality.
+In particular note these limitations: <code>"irts"</code> has no
+<code>"lag"</code> or <code>"diff"</code> methods.  The lag function of
+<code>"its"</code> is called <code>"lagIts"</code>.  <code>"ts"</code> and
+<code>"zooreg"</code> series can be lagged outside of the data
+range (both forward and backward) but other time series
+classes cannot represent such data and therefore will drop them.
+If the regression function in question does not have an
+associated <code>"fitted"</code>, <code>"residuals"</code>, etc. method
+then such method will not be available with <code>"dyn"</code> either.  
+</p>
+<p>Internally the system uses <code>"zoo"</code>.  Additional time series 
+classes not already defined to work with <code>"dyn"</code>
+can be added by simply defining <code>"as"</code> methods between
+the new class and <code>"zoo"</code> and then creating new methods (for 
+<code>"model.frame"</code>, <code>"predict"</code>, <code>"fitted"</code>, etc.)
+In most cases these method names can be set equal to the
+corresponding <code>"zoo"</code> method name (e.g. 
+<code>"model.frame.newclass &lt;- model.frame.zoo"</code> so that
+no new function bodies need be written).
+</p>
+<p>The main requirements for new regression routines to work with
+<code>"dyn"</code> are that they use <code>"model.frame"</code>, that their
+<code>"fitted"</code>, <code>"residuals"</code> and <code>"predict"</code> methods
+return named vectors whose names are the corresponding indexes
+in the original data and that they follow the same style of
+processing as <code>"lm"</code>.  There is no <code>"dyn"</code> code
+specific to any particular regression routine.
+</p>
+<p><code>"dyn$lm(formula, ...)"</code> is equivalent to 
+<code>"dyn(lm(dyn(formula), ...))"</code> (where <code>"formula"</code> is assumed
+to be the first argument)
+but is easier to write.  When <code>"dyn"</code> is used with an argument,
+as just shown, then its effect is simply to return its argument with
+the <code>"dyn"</code> class prepended to the class vector so that further
+processing of the result is intercepted by other <code>"dyn"</code> methods.
+</p>
+
+
+<h3>See Also</h3>
+
+<p> See Also
+<code>model.frame</code>, 
+<code>predict</code>, 
+<code>fitted</code>, 
+<code>residuals</code>, 
+<code>anova</code>, 
+<code>update</code>, 
+<code>lm</code>, 
+<code>glm</code>, 
+<code>loess</code> 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">y &lt;- ts(1:12, start = c(2000,2), freq = 4)^3
+x &lt;- ts(1:9, start = c(2000,3), freq = 4)^2
+
+# can be used with numerous different regression functions
+y.lm &lt;- dyn$lm( window(y, start = c(2000,4)) ~ diff(x) )
+y.lm &lt;- dyn$lm( y ~ diff(x) )
+y.glm &lt;- dyn$glm( y ~ diff(x) )
+y.loess &lt;- dyn$loess( y ~ diff(x) )
+
+y.lm &lt;- dyn(lm(dyn(y ~ diff(x))))  # same
+y.lm
+summary(y.lm)
+residuals(y.lm)
+fitted(y.lm)
+y2.lm &lt;- update(y.lm, . ~ . + lag(x,-1))
+y2.lm
+anova(y.lm, y2.lm)
+
+# examples of using data
+dyn$lm(y ~ diff(x), list(y = y, x = x))
+dyn$lm(y ~ diffx, list(y = y, diffx = diff(x)))
+
+# invoke model.frame on formula as a dyn object
+dyn$model.frame( y ~ diff(x) )
+
+# superimpose a loess fit on Nile time series data
+plot(Nile)
+lines(fitted(dyn$loess(Nile ~ time(Nile))), col = "red")
+
+# lag.zoo can take vector lags
+set.seed(1)
+yz &lt;- zoo(rnorm(100)); xz &lt;- zoo(rnorm(100))
+yz.lm &lt;- dyn$lm(yz ~ lag(xz, 0:-3))
+
+
+###
+# simulate series and then NA out 7:10 and predict them
+###
+
+library(dyn)
+set.seed(123)
+tz &lt;- zoo(cbind(Y = 0, x = rnorm(10), z = rnorm(10)))
+
+# simulate values
+for(i in 2:10) {
+ tz$Y[i] &lt;- with(as.data.frame(tz), 
+	2*Y[i-1] + 3*z[i] +4* x[i] + 5*x[i-1] + rnorm(1))
+}
+
+# keep copy of tz to compare later to simulated Y's
+tz.orig &lt;- tz
+
+# NA out Y's that are to be predicted
+tz[7:10, "Y"] &lt;- NA
+
+L &lt;- function(x, k = 1) lag(x, -k)
+
+# predict 1 ahead each iteration
+for(i in 7:10) {
+   # fit based on first i-1 values
+   fit &lt;- dyn$lm(Y ~ L(Y) + z + L(x, 0:1), tz, subset = seq_len(i-1))
+   # get prediction for ith value
+   tz[i, "Y"] &lt;- tail(predict(fit, tz[1:i,]), 1)
+}
+cbind(pred = tz[7:10, "Y"], act = tz.orig[7:10, "Y"])
+
+
+</code></pre>
+
+
+</div>

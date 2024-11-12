@@ -1,0 +1,220 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>di_ppg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate disproportionate impact per the percentage point gap (PPG) method.</h2>
+
+<h3>Description</h3>
+
+<p>Calculate disproportionate impact per the percentage point gap (PPG) method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">di_ppg(
+  success,
+  group,
+  cohort,
+  weight,
+  reference = c("overall", "hpg", "all but current", unique(group)),
+  data,
+  min_moe = 0.03,
+  use_prop_in_moe = FALSE,
+  prop_sub_0 = 0.5,
+  prop_sub_1 = 0.5,
+  check_valid_reference = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>success</code></td>
+<td>
+<p>A vector of success indicators (<code>1</code>/<code>0</code> or <code>TRUE</code>/<code>FALSE</code>) or an unquoted reference (name) to a column in <code>data</code> if it is specified.  It could also be a vector of counts, in which case <code>weight</code> (group size) should also be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>A vector of group names of the same length as <code>success</code> or an unquoted reference (name) to a column in <code>data</code> if it is specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cohort</code></td>
+<td>
+<p>(Optional) A vector of cohort names of the same length as <code>success</code> or an unquoted reference (name) to a column in <code>data</code> if it is specified.  Disproportionate impact is calculated for every group within each cohort.  When <code>cohort</code> is not specified, then the analysis assumes a single cohort.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>(Optional) A vector of case weights of the same length as <code>success</code> or an unquoted reference (name) to a column in <code>data</code> if it is specified.  If <code>success</code> consists of counts instead of success indicators (1/0), then <code>weight</code> should also be specified to indicate the group size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>Either <code>'overall'</code> (default), <code>'hpg'</code> (highest performing group), <code>'all but current'</code> (success rate of everyone excluding the comparison group; also known as 'ppg minus 1'), a value from <code>group</code> (specifying a reference group), a single proportion (eg, 0.50), or a vector of proportions (one for each cohort).  Reference is used as a point of comparison for disproportionate impact for each group.  When <code>cohort</code> is specified:
+</p>
+
+<ul>
+<li> <p><code>'overall'</code> will use the overall success rate of each cohort group as the reference;
+</p>
+</li>
+<li> <p><code>'hpg'</code> will use the highest performing group in each cohort as reference;
+</p>
+</li>
+<li>  <p><code>'all but current'</code> will use the calculated success rate of each cohort group excluding the comparison group
+</p>
+</li>
+<li>
+<p> the success rate of the specified reference group from <code>group</code> in each cohort will be used;
+</p>
+</li>
+<li>
+<p> the specified proportion will be used for all cohorts;
+</p>
+</li>
+<li>
+<p> the specified vector of proportions will refer to the reference point for each cohort in alphabetical order (so the number of proportions should equal to the number of unique cohorts).
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>(Optional) A data frame containing the variables of interest.  If <code>data</code> is specified, then <code>success</code>, <code>group</code>, and <code>cohort</code> will be searched within it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_moe</code></td>
+<td>
+<p>The minimum margin of error (MOE) to be used in the calculation of disproportionate impact and is passed to ppg_moe.  Defaults to <code>0.03</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_prop_in_moe</code></td>
+<td>
+<p>A logical value indicating whether or not the MOE formula should use the observed success rates (<code>TRUE</code>).  Defaults to <code>FALSE</code>, which uses 0.50 as the proportion in the MOE formula.  If <code>TRUE</code>, the success rates are passed to the <code>proportion</code> argument of ppg_moe.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop_sub_0</code></td>
+<td>
+<p>For cases where <code>proportion</code> is 0, substitute with <code>prop_sub_0</code> (defaults to 0.5) to account for the zero MOE.  This is relevant only when <code>use_prop_in_moe=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop_sub_1</code></td>
+<td>
+<p>For cases where <code>proportion</code> is 1, substitute with <code>prop_sub_1</code> (defaults to 0.5) to account for the zero MOE.  This is relevant only when <code>use_prop_in_moe=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_valid_reference</code></td>
+<td>
+<p>Check whether <code>reference</code> is a valid value; defaults to <code>TRUE</code>.  This argument exists to be used in di_iterate as when iterating DI calculations, there may be some scenarios where a specified reference group does not contain any students.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function determines disproportionate impact based on the percentage point gap (PPG) method, as described in <a href="https://www.cccco.edu/-/media/CCCCO-Website/About-Us/Divisions/Digital-Innovation-and-Infrastructure/Research/Files/PercentagePointGapMethod2017.ashx">this</a> reference from the California Community Colleges Chancellor's Office.  It assumes that a higher rate is good ("success").  For rates that are deemed negative (eg, rate of drop-outs, high is bad), then consider looking at the converse of the non-success (eg, non drop-outs, high is good) instead in order to leverage this function properly.  Note that the margin of error (MOE) is calculated using using <code>1.96*sqrt(0.25^2/n)</code>, with a <code>min_moe</code> used as the minimum by default.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame consisting of:
+</p>
+
+<ul>
+<li> <p><code>cohort</code> (if used),
+</p>
+</li>
+<li> <p><code>group</code>,
+</p>
+</li>
+<li> <p><code>n</code> (sample size),
+</p>
+</li>
+<li> <p><code>success</code> (number of successes for the cohort-group),
+</p>
+</li>
+<li> <p><code>pct</code> (proportion of successes for the cohort-group),
+</p>
+</li>
+<li> <p><code>reference_group</code> (reference group used in DI calculation),
+</p>
+</li>
+<li> <p><code>reference</code> (reference value used in DI calculation),
+</p>
+</li>
+<li> <p><code>moe</code> (margin of error),
+</p>
+</li>
+<li> <p><code>pct_lo</code> (lower 95% confidence limit for pct),
+</p>
+</li>
+<li> <p><code>pct_hi</code> (upper 95% confidence limit for pct),
+</p>
+</li>
+<li> <p><code>di_indicator</code> (1 if there is disproportionate impact, ie, when <code>pct_hi &lt;= reference</code>), 
+</p>
+</li>
+<li> <p><code>success_needed_not_di</code> (the number of additional successes needed in order to no longer be considered disproportionately impacted as compared to the reference), and
+</p>
+</li>
+<li> <p><code>success_needed_full_parity</code> (the number of additional successes needed in order to achieve full parity with the reference).
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>California Community Colleges Chancellor's Office (2017).  <a href="https://www.cccco.edu/-/media/CCCCO-Website/About-Us/Divisions/Digital-Innovation-and-Infrastructure/Research/Files/PercentagePointGapMethod2017.ashx">Percentage Point Gap Method</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+data(student_equity)
+# Vector
+di_ppg(success=student_equity$Transfer
+  , group=student_equity$Ethnicity) %&gt;% as.data.frame
+# Tidy and column reference
+di_ppg(success=Transfer, group=Ethnicity, data=student_equity) %&gt;%
+  as.data.frame
+# Cohort
+di_ppg(success=Transfer, group=Ethnicity, cohort=Cohort
+ , data=student_equity) %&gt;%
+  as.data.frame
+# With custom reference (single)
+di_ppg(success=Transfer, group=Ethnicity, reference=0.54
+  , data=student_equity) %&gt;%
+  as.data.frame
+# With custom reference (multiple)
+di_ppg(success=Transfer, group=Ethnicity, cohort=Cohort
+  , reference=c(0.5, 0.55), data=student_equity) %&gt;%
+  as.data.frame
+# min_moe
+di_ppg(success=Transfer, group=Ethnicity, data=student_equity
+  , min_moe=0.02) %&gt;%
+  as.data.frame
+# use_prop_in_moe
+di_ppg(success=Transfer, group=Ethnicity, data=student_equity
+  , min_moe=0.02
+  , use_prop_in_moe=TRUE) %&gt;%
+  as.data.frame
+</code></pre>
+
+
+</div>

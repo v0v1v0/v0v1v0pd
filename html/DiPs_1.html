@@ -1,0 +1,97 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>addcaliper</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add a caliper, that need not be symmetric, to a distance object.</h2>
+
+<h3>Description</h3>
+
+<p>Imposes a caliper, that need not be symmetric, on p using a penalty function, adding the penalty to a distance matrix dmat and returning a new distance matrix.
+The symmetric version of this function is discussed in Rosenbaum (2010).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">addcaliper(dist, z, dx, rg, stdev = FALSE, penalty = 1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>A distance object with three components: d, start, end, typically created by maha_dense or maha_sparse. d[i] gives the distance between the (start[i])th treated and the (end[i]-sum(z))th control.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>A vector whose ith coordinate is 1 for a treated unit and is 0 for a control. Must have treated subjects (z = 1) before controls (z = 0).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dx</code></td>
+<td>
+<p>A vector of with length(z)=length(dx) giving the variable used to define the caliper. For instance, dx might be the propensity score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rg</code></td>
+<td>
+<p>A vector with length(rg) = 2 such that rg[1] &lt;= 0 &lt;= rg[2]. If the treated-minus-control difference in dx is &lt; rg[1] or &gt; rg[2], then penalty is added to the distance. If treated individuals have dx higher than controls, then you want to set rg[2] &lt; -rg[1], so that you tolerate smaller positive differences and larger negative differences.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stdev</code></td>
+<td>
+<p>If stdev = TRUE, rg is interpreted in units of an equally weighted pooled
+standard deviation; that is,rg is replaced by rg*sp where sp is sqrt((var(dx[z==1])+var(dx[z==0]))/2).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalty</code></td>
+<td>
+<p>The number added to a distance when the caliper is violated. A large penalty, like the default value of penalty = 1000, will try to enforce the caliper to the extent that this is feasible. Small penalties can slightly tilt a match in a desired direction. </p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a new distance object whose distance component d is updated by the sum of d and the penalties for caliper violations.</p>
+
+
+<h3>References</h3>
+
+<p>Yu, R., &amp; Rosenbaum, P. R. (2019). Directional penalties for optimal matching in observational studies. Biometrics, 75(4), 1380-1390.
+</p>
+<p>Rosenbaum, P. R. (2010) Design of Observational Studies.  New York: Springer.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("nh0506Homocysteine")
+attach(nh0506Homocysteine)
+X&lt;-cbind(female, age, black, education, povertyr, bmi)
+p&lt;-glm(z ~ female + age + black + education + povertyr + bmi,
+        family = binomial)$fitted.values
+d&lt;-cbind(nh0506Homocysteine, p)
+detach(nh0506Homocysteine)
+dist0&lt;-maha_dense(d$z, X)
+#symmetric caliper
+dist1&lt;-addcaliper(dist0, d$z, d$p, c(-.3,.3), stdev = TRUE,
+                    penalty = 1000)
+head(dist1$d)
+#asymmetric caliper
+dist2&lt;-addcaliper(dist0, d$z, d$p, c(-.5,.1), stdev = TRUE,
+                    penalty = 1000)
+head(dist2$d)
+</code></pre>
+
+
+</div>

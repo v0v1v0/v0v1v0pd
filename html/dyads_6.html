@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>p2ML</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+MCMC estimates for the (multilevel) p2 model
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the (multilevel) p2 model parameters,as described in Zijlstra, Van Duijn and Snijders (2006) &lt;doi: 10.1027/1614-2241.2.1.42&gt;.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">p2ML(nets, sender = NULL, receiver = NULL, density =~ 1, reciprocity =~ 1, 
+adapt = NULL, burnin = NULL, center = NULL, separate= NULL, seed = NULL) 
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nets</code></td>
+<td>
+<p>List with n dichotomous dependent directed networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sender</code></td>
+<td>
+<p>Optional matrix with a stacked actor-level sender covariate, corresponding to the n networks. Multiple sender covariates can be added as a formula object, see example below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>receiver</code></td>
+<td>
+<p>Optional matrix with a stacked actor-level receiver covariate, corresponding to the n networks. Multiple receiver covariates can be added as a formula object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>density</code></td>
+<td>
+<p>Optional stacked matrix with a density covariate, with dimensions similar to the n dependent networks. Multiple density covariates can be added as a formula object, see example below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reciprocity</code></td>
+<td>
+<p>Optional stacked matrix with a symmetric reciprocity covariate, with dimensions similar to the n dependent networks. Multiple reciprocity covariates can be added as a formula object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adapt</code></td>
+<td>
+<p>Optional number of adaptive sequenses (default is 125).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>Optional specification of number of burn-in iterations (default is 2500).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>Optional argument for centering predictors (default is TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separate</code></td>
+<td>
+<p>Optional argument for estimating separate coefficients for the n dependent networks (default is FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Optonal specification of random seed (delfault is 1).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a fitted model of class 2ML, to be opened with the function summary().
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bonne J.H. Zijlstra <a href="mailto:b.j.h.zijlstra@uva.nl">b.j.h.zijlstra@uva.nl</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Zijlstra, B. J., Van Duijn, M. A., &amp; Snijders, T. A. (2006). The Multilevel p2 Model A random effects model for the analysis of multiple social networks. <em>Methodology: European Journal of Research Methods for the Behavioral and Social Sciences</em>, 2(1), 42.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# create two very small networks with covariates for illustrative purposes
+Y1 &lt;- matrix(c(0,1,0,1,0,1,0,1,0,0,
+               0,0,1,1,0,1,0,1,0,1,
+               1,1,0,0,1,0,0,0,0,0,
+               1,1,1,0,1,0,0,0,0,1,
+               1,0,1,0,0,1,1,0,1,1,
+               0,0,0,0,0,0,1,1,1,1,
+               0,0,0,0,0,1,0,1,0,1,
+               1,0,0,0,0,1,1,0,1,1,
+               0,1,0,1,0,1,0,1,0,0,
+               0,0,1,1,1,0,0,0,0,0), ncol=10)
+Y2 &lt;- matrix(c(0,0,1,0,1,0,0,1,0,0,
+               0,0,0,0,0,0,0,1,1,0,
+               0,0,0,1,0,1,0,1,0,1,
+               0,0,1,0,0,0,1,1,0,0,
+               1,0,0,1,0,0,1,0,0,1,
+               0,0,1,0,0,0,1,1,0,0,
+               0,1,0,0,1,0,0,0,0,0,
+               1,0,1,0,1,1,1,0,0,1,
+               0,1,0,1,0,0,0,0,0,0,
+               0,1,0,1,0,0,0,1,0,0), ncol=10) 
+Y &lt;- list(Y1, Y2)                
+Sa1 &lt;- c(1,0,1,0,1,1,0,1,0,1)
+Sa2 &lt;- c(1,0,0,1,0,0,1,1,0,1)
+Sa &lt;- list(Sa1, Sa2)
+Sat &lt;- Rat &lt;-  do.call(plyr::rbind.fill.matrix, Sa)
+Sb1 &lt;- c(0,1,1,0,1,0,1,0,1,0)
+Sb2 &lt;- c(1,0,1,0,0,1,0,1,0,1)
+Sb &lt;- list(Sb1, Sb2)
+Sbt &lt;- do.call(plyr::rbind.fill.matrix, Sb)
+Da1 &lt;- abs(matrix(rep(Sa1,10), byrow = FALSE, ncol= 10) -
+              matrix(rep(Sa1,10), byrow = TRUE, ncol= 10))
+Da2 &lt;- abs(matrix(rep(Sa2,10), byrow = FALSE, ncol= 10) -
+              matrix(rep(Sa2,10), byrow = TRUE, ncol= 10))
+Da &lt;- list(Da1, Da2)
+Dat &lt;- do.call(plyr::rbind.fill.matrix, Da)
+
+# estimate p2 model for two networks
+M1 &lt;- p2ML(Y, sender= ~ Sat + Sbt,  receiver= ~ Rat, density = ~ Dat, adapt = 10, burnin = 100)
+summary(M1)
+# Notice: burn-in, and number of adaptive sequenses are 
+# much smaller than recommended to keep computation time low.
+# recommended code: 
+## Not run: 
+M1 &lt;- p2ML(Y,sender= ~ Sat + Sbt,  receiver= ~ Rat, density = ~ Dat)
+summary(M1)
+
+## End(Not run)
+
+# estimate p2 model for a single network
+M2 &lt;- p2ML(list(Y[[1]]),sender= ~ Sat[1:10,] + Sbt[1:10,],  receiver= ~ Rat[1:10,],
+density = ~ Dat[1:10,], adapt = 10, burnin = 100)
+summary(M2)
+# Notice: burn-in, and number of adaptive sequenses are 
+# much smaller than recommended to keep computation time low.
+# recommended code: 
+## Not run: 
+M2 &lt;- p2ML(list(Y[[1]]),sender= ~ Sat[1:10,] + Sbt[1:10,],  receiver= ~ Rat[1:10,], 
+density = ~ Dat[1:10,])
+summary(M2)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

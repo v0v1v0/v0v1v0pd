@@ -1,0 +1,400 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>makeDataReport</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Produce a data report</h2>
+
+<h3>Description</h3>
+
+<p>Make a data overview report that summarizes the contents of a dataset
+and flags potential problems. The potential problems are identified by
+running a set of class-specific validation checks, so that different 
+checks are performed on different variables types.  The checking
+steps can be customized according to user input and/or data type of the inputted
+variable.  The checks are saved to an R markdown file which can
+rendered into an easy-to-read data report in pdf, html or word formats. 
+This report also includes summaries and visualizations of each variable in the
+dataset.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">makeDataReport(
+  data,
+  output = NULL,
+  render = TRUE,
+  useVar = NULL,
+  ordering = c("asIs", "alphabetical"),
+  onlyProblematic = FALSE,
+  labelled_as = c("factor"),
+  mode = c("summarize", "visualize", "check"),
+  smartNum = TRUE,
+  preChecks = c("isKey", "isSingular", "isSupported"),
+  file = NULL,
+  replace = FALSE,
+  vol = "",
+  standAlone = TRUE,
+  twoCol = TRUE,
+  quiet = TRUE,
+  openResult = TRUE,
+  summaries = setSummaries(),
+  visuals = setVisuals(),
+  checks = setChecks(),
+  listChecks = TRUE,
+  maxProbVals = 10,
+  maxDecimals = 2,
+  addSummaryTable = TRUE,
+  codebook = FALSE,
+  reportTitle = NULL,
+  treatXasY = NULL,
+  includeVariableList = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The dataset to be checked. This dataset should be of class <code>data.frame</code>,
+<code>tibble</code> or <code>matrix</code>. If it is of classs <code>matrix</code>, it will be converted to a
+<code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Output format. Options are <code>"pdf"</code>, <code>"word"</code> (.docx) and <code>"html"</code>. If <code>NULL</code> (the default), 
+the output format depends two sequential checks. First, whether a LaTeX installation is available, 
+in which case <code>pdf</code> output is chosen. Secondly, if no LaTeX installation
+is found, then if the operating system is Windows, <code>word</code> output is used. Lastly, if neither of these 
+checks are positive, <code>html</code> output is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>render</code></td>
+<td>
+<p>Should the output file be rendered (defaults to <code>TRUE</code>),
+i.e. should a pdf/word/html document be generated and saved to the disc?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useVar</code></td>
+<td>
+<p>Variables to describe in the report. 
+If <code>NULL</code> (the default), all variables in <code>data</code>
+are included. If a vector of variable names is supplied, only the variables in <code>data</code> that are
+also in <code>useVar</code> are included in the data report.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ordering</code></td>
+<td>
+<p>Choose the ordering of the variables in the variable presentation. The options
+are "asIs" (ordering as in the dataset) and "alphabetical" (alphabetical order).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>onlyProblematic</code></td>
+<td>
+<p>A logical. If <code>TRUE</code>, only the variables flagged as
+problematic in the check step will be included in the variable list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labelled_as</code></td>
+<td>
+<p>A string explaining the way to handle labelled and haven_labelled vectors.
+Currently <code>"factor"</code> (the default) is the only possibility. This means that labelled or haven_labelled
+variables that appear factor-like (by having a non-<code>NULL</code> <code>labels</code>-attribute) will
+be treated as factors, while other labelled or haven_labelled variables will be treated as whatever base
+variable class they inherit from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>Vector of tasks to perform among the three categories "summarize", "visualize" and "check".
+The default, <code>c("summarize", "visualize", "check")</code>, implies that all three steps are
+performed. The steps selected in <code>mode</code> will be performed for each variable in
+<code>data</code> and their results are presented in the second part of the outputtet data report. 
+The "summarize" step is responsible for creating the summary table,
+the "visualize" step is responsible for creating the plot and the "check" step is responsible
+for performing checks on the variable and printing the results if any problems are found.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smartNum</code></td>
+<td>
+<p>If <code>TRUE</code> (the default), numeric and integer variables with
+less than 5 unique values are treated as factor variables in the checking,
+visualization and summary steps, and a message notifying the reader of this is
+printed in the data summary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preChecks</code></td>
+<td>
+<p>Vector of function names for check functions used in the pre-check stage.
+The pre-check stage consists of variable checks that should be performed before the
+summary/visualization/checking step. If any of these checks find problems, the variable
+will not be summarized nor visualized nor checked.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>The filename of the outputted rmarkdown (.Rmd) file.
+If set to <code>NULL</code> (the default), the filename will be the name of <code>data</code>
+prefixed with "dataReporter_", if this qualifies as a valid file name (e.g. no special
+characters allowed). Otherwise, <code>makeDataReport()</code> tries to create a valid filename by
+substituing illegal characters. Note that a valid file is of type .Rmd, hence all
+filenames should have a ".Rmd"-suffix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>If <code>FALSE</code> (the default), an error is thrown if one of the files
+that we are about to be created (.Rmd overview file and possible also a .html, .pdf or 
+.docx file) already exist. If <code>TRUE</code>, no checks are performed and files on disc thus
+might be overwritten.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vol</code></td>
+<td>
+<p>Extra text string or numeric that is appended on the end of the output
+file name(s). For example, if the dataset is called "myData", no file argument is
+supplied and <code>vol=2</code>, the output file will be called "dataReporter_myData2.Rmd"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standAlone</code></td>
+<td>
+<p>A logical. If <code>TRUE</code>, the document begins with a
+markdown YAML preamble such that it can be rendered as a stand alone rmarkdown
+file, e.g. by calling <code>render</code>. If <code>FALSE</code>, this preamble is removed.
+Moreover, no matter the input to the <code>render</code> argument, the document will now
+not be rendered, as it has no preamble.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>twoCol</code></td>
+<td>
+<p>A logical. Should the results from the <em>summarize</em> and <em>visualize</em>
+steps be presented in two columns? Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>A logical. If <code>TRUE</code> (the default), only a few messages
+are printed to the screen as <code>makeDataReport</code> runs. If <code>FALSE</code>, no messages are
+suppressed. The third option, <code>silent</code>, renders the function completely
+silent, such that only fatal errors are printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>openResult</code></td>
+<td>
+<p>A logical. If <code>TRUE</code> (the default), the last file produced
+by <code>makeDataReport</code> is automatically opened by the end of the function run. This
+means that if <code>render = TRUE</code>, the rendered pdf, word or html file is opened, while
+if <code>render = FALSE</code>, the .Rmd file is opened.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summaries</code></td>
+<td>
+<p>A list of summaries to use on each supported variable type. We recommend
+using <code>setSummaries</code> for creating this list and refer to the documentation
+of this function for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>visuals</code></td>
+<td>
+<p>A list of visual functions to use on each supported variable type. We recommend
+using <code>setVisuals</code> for creating this list and refer to the documentation
+of this function for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>checks</code></td>
+<td>
+<p>A list of checks to use on each supported variable type. We recommend
+using <code>setChecks</code> for creating this list and refer to the documentation
+of this function for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>listChecks</code></td>
+<td>
+<p>A logical. Controls whether what checks that were used for each
+possible variable type are summarized in the output. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxProbVals</code></td>
+<td>
+<p>A positive integer or <code>Inf</code>. Maximum number of unique
+values printed from check-functions. In the case of <code>Inf</code>, all problematic 
+values are printed. Defaults to <code>10</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxDecimals</code></td>
+<td>
+<p>A positive integer or <code>Inf</code>. Number of decimals used when
+printing numerical values in the data summary and in problematic values from the
+data checks. If <code>Inf</code>, no rounding is performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addSummaryTable</code></td>
+<td>
+<p>A logical. If <code>TRUE</code> (the default), a summary table
+of the variable checks is added between the Data Cleaning Summary and the
+Variable List. Only one of <code>addSummaryTable</code> and <code>addCodebookTable</code> can be <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>codebook</code></td>
+<td>
+<p>A logical. Defaults to <code>FALSE</code>. If <code>TRUE</code> then the document is tweaked to better represent a codebook.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reportTitle</code></td>
+<td>
+<p>A text string. If supplied, this will be the printed title of the
+report. If left unspecified, the title with the name of the supplied dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatXasY</code></td>
+<td>
+<p>A list that indicates how non-standard variable classes should be treated.
+This parameter allows you to include variables that are not of class <code>factor</code>, <code>character</code>, 
+<code>labelled</code>, <code>haven_labelled</code>, <code>numeric</code>, <code>integer</code>, <code>logical</code> nor <code>Date</code> (or a class
+that inherits from any of these classes). The names of the list are the new classes and the entries
+are the names of the class, they should be treated as. If <code>makeDataReport()</code> should e.g. treat variables of 
+class <code>raw</code> as characters and variables of class <code>complex</code> as numeric, you should put
+<code>treatXasY = list(raw = "character", complex = "numeric")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>includeVariableList</code></td>
+<td>
+<p>A logical indicating whether the results of the summarize/visualize/check-steps 
+should be added to the report. Defaults to <code>TRUE</code>. Note that setting it to <code>FALSE</code> does currently
+not speed up computations, it just means that the information is not printed in the report.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments that are passed on the to precheck,
+checking, summary and visualization functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each variable, a set of pre-check functions (controlled by the
+<code>preChecks</code> argument) are first run and then then a battery of
+functions are applied depending on the variable class.  For each
+variable type the summarize/visualize/check functions are applied
+and and the results are written to an R markdown file.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function does not return anything. Its side effect (the production
+of a data report) is the reason for running the function.
+</p>
+
+
+<h3>References</h3>
+
+<p>Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( doi: <a href="https://doi.org/10.18637/jss.v090.i06">10.18637/jss.v090.i06</a>).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(testData)
+data(toyData)
+
+check(toyData)
+
+ 
+DF &lt;- data.frame(x = 1:15)
+makeDataReport(DF)
+
+
+
+data(testData)
+makeDataReport(testData)
+
+
+# Overwrite any existing files generated by makeDataReport
+
+makeDataReport(testData, replace=TRUE)
+
+
+# Change output format to Word/docx:
+
+makeDataReport(testData, replace=TRUE, output = "word")
+
+
+# Only include problematic variables in the output document
+
+makeDataReport(testData, replace=TRUE, onlyProblematic=TRUE)
+
+
+# Add user defined check-function to the checks performed on character variables:
+# Here we add functionality to search for the string wally (ignoring case)
+
+wheresWally &lt;- function(v, ...) {
+     res &lt;- grepl("wally", v, ignore.case=TRUE)
+     problem &lt;- any(res)
+     message &lt;- "Wally was found in these data"
+     checkResult(list(problem = problem,
+                      message = message,
+                      problemValues = v[res]))
+}
+
+wheresWally &lt;- checkFunction(wheresWally,
+                             description = "Search for the string 'wally' ignoring case",
+                             classes = c("character")
+                             )
+# Add the newly defined function to the list of checks used for characters.
+makeDataReport(testData, 
+      checks = setChecks(character = defaultCharacterChecks(add = "wheresWally")),
+      replace=TRUE)
+
+
+#Handle non-supported variable classes using treatXasY: treat raw as character and
+#treat complex as numeric. We also add a list variable, but as lists are not 
+#handled through treatXasY, this variable will be caught in the preChecks and skipped:
+
+toyData$rawVar &lt;- as.raw(c(1:14, 1))
+toyData$compVar &lt;- c(1:14, 1) + 2i
+toyData$listVar &lt;- as.list(c(1:14, 1))
+makeDataReport(toyData, replace  = TRUE, 
+    treatXasY = list(raw = "character", complex = "numeric"))
+
+
+</code></pre>
+
+
+</div>

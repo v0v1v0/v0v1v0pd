@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model_profile</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dataset Level Variable Profile as Partial Dependence or Accumulated Local Dependence Explanations</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates explanations on a dataset level set that explore model response as a function of selected variables.
+The explanations can be calulated as Partial Dependence Profile or  Accumulated Local Dependence Profile.
+Find information how to use this function here: <a href="https://ema.drwhy.ai/partialDependenceProfiles.html">https://ema.drwhy.ai/partialDependenceProfiles.html</a>.
+The <code>variable_profile</code> function is a copy of <code>model_profile</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">model_profile(
+  explainer,
+  variables = NULL,
+  N = 100,
+  ...,
+  groups = NULL,
+  k = NULL,
+  center = TRUE,
+  type = "partial"
+)
+
+variable_profile(
+  explainer,
+  variables = NULL,
+  N = 100,
+  ...,
+  groups = NULL,
+  k = NULL,
+  center = TRUE,
+  type = "partial"
+)
+
+single_variable(explainer, variable, type = "pdp", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>explainer</code></td>
+<td>
+<p>a model to be explained, preprocessed by the <code>explain</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variables</code></td>
+<td>
+<p>character - names of variables to be explained</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>number of observations used for calculation of aggregated profiles. By default <code>100</code>. Use <code>NULL</code> to use all observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters that will be passed to <code>ingredients::aggregate_profiles</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>a variable name that will be used for grouping.
+By default <code>NULL</code> which means that no groups shall be calculated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>number of clusters for the hclust function (for clustered profiles)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>shall profiles be centered before clustering</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>the type of variable profile. Either <code>partial</code>, <code>conditional</code> or <code>accumulated</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable</code></td>
+<td>
+<p>deprecated, use variables instead</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Underneath this function calls the <code>partial_dependence</code> or
+<code>accumulated_dependence</code> functions from the <code>ingredients</code> package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of the class <code>model_profile</code>.
+It's a data frame with calculated average model responses.
+</p>
+
+
+<h3>References</h3>
+
+<p>Explanatory Model Analysis. Explore, Explain, and Examine Predictive Models. <a href="https://ema.drwhy.ai/">https://ema.drwhy.ai/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">titanic_glm_model &lt;- glm(survived~., data = titanic_imputed, family = "binomial")
+explainer_glm &lt;- explain(titanic_glm_model, data = titanic_imputed)
+model_profile_glm_fare &lt;- model_profile(explainer_glm, "fare")
+plot(model_profile_glm_fare)
+
+ 
+library("ranger")
+titanic_ranger_model &lt;- ranger(survived~., data = titanic_imputed, num.trees = 50,
+                               probability = TRUE)
+explainer_ranger  &lt;- explain(titanic_ranger_model, data = titanic_imputed)
+model_profile_ranger &lt;- model_profile(explainer_ranger)
+plot(model_profile_ranger, geom = "profiles")
+
+model_profile_ranger_1 &lt;- model_profile(explainer_ranger, type = "partial",
+                                        variables = c("age", "fare"))
+plot(model_profile_ranger_1 , variables = c("age", "fare"), geom = "points")
+
+model_profile_ranger_2  &lt;- model_profile(explainer_ranger, type = "partial", k = 3)
+plot(model_profile_ranger_2 , geom = "profiles")
+
+model_profile_ranger_3  &lt;- model_profile(explainer_ranger, type = "partial", groups = "gender")
+plot(model_profile_ranger_3 , geom = "profiles")
+
+model_profile_ranger_4  &lt;- model_profile(explainer_ranger, type = "accumulated")
+plot(model_profile_ranger_4 , geom = "profiles")
+
+# Multiple profiles
+model_profile_ranger_fare &lt;- model_profile(explainer_ranger, "fare")
+plot(model_profile_ranger_fare, model_profile_glm_fare)
+ 
+
+</code></pre>
+
+
+</div>

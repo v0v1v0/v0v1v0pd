@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>block_cluster_two_arm_designer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a two-arm design with blocks and clusters</h2>
+
+<h3>Description</h3>
+
+<p>Builds a two-arm design with blocks and clusters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">block_cluster_two_arm_designer(
+  N = NULL,
+  N_blocks = 1,
+  N_clusters_in_block = ifelse(is.null(N), 100, round(N/N_blocks)),
+  N_i_in_cluster = ifelse(is.null(N), 1, round(N/mean(N_blocks * N_clusters_in_block))),
+  sd = 1,
+  sd_block = 0.5773 * sd,
+  sd_cluster = max(0, (sd^2 - sd_block^2)/2)^0.5,
+  sd_i_0 = max(0, sd^2 - sd_block^2 - sd_cluster^2)^0.5,
+  sd_i_1 = sd_i_0,
+  rho = 1,
+  assignment_probs = 0.5,
+  control_mean = 0,
+  ate = 0,
+  treatment_mean = control_mean + ate,
+  verbose = TRUE,
+  args_to_fix = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>An integer. Total number of units. Usually not specified as <code>N</code> is determined by <code>N_blocks</code>, <code>N_clusters_in_block</code>, and <code>N_i_in_cluster</code>. If <code>N_blocks</code>, and  <code>N_clusters_in_block</code>, and <code>N_i_in_cluster</code> are specified then <code>N</code> is overridden. If these are not specified and <code>N</code> is specified then designer attempts to guess sizes of levels to approximate <code>N</code>, with preference for a design without blocks or clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N_blocks</code></td>
+<td>
+<p>An integer. Number of blocks. Defaults to 1 for no blocks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N_clusters_in_block</code></td>
+<td>
+<p>An integer or vector of integers of length <code>N_blocks</code>. Number of clusters in each block. This is the total <code>N</code> when <code>N_blocks</code> and <code>N_i_in_cluster</code> are at default values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N_i_in_cluster</code></td>
+<td>
+<p>An integer or vector of integers of length <code>sum(N_clusters_in_block)</code>. Individuals per cluster. Defaults to 1 for no clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>A nonnegative number. Overall standard deviation (combining individual level, cluster level, and block level shocks). Defaults to 1. Overridden if incompatible with other user-specified shocks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd_block</code></td>
+<td>
+<p>A nonnegative number. Standard deviation of block level shocks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd_cluster</code></td>
+<td>
+<p>A nonnegative number. Standard deviation of cluster level shock.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd_i_0</code></td>
+<td>
+<p>A nonnegative number. Standard deviation of individual level shock in control. If not specified, and when possible given <code>sd_block</code> and <code>sd_cluster</code>, <code>sd_i_0</code> defaults to make total variance = sd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd_i_1</code></td>
+<td>
+<p>A nonnegative number. Standard deviation of individual level shock in treatment. Defaults to <code>sd_i_0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p>A number in [-1,1]. Correlation in individual shock between potential outcomes for treatment and control.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>assignment_probs</code></td>
+<td>
+<p>A number or vector of numbers in (0,1). Treatment assignment probability for each block (specified in order of <code>N_clusters_in_block</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control_mean</code></td>
+<td>
+<p>A number. Average outcome in control.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ate</code></td>
+<td>
+<p>A number. Average treatment effect. Alternative to specifying <code>treatment_mean</code>. Note that <code>ate</code> is an argument for the designer but it does not appear as an argument in design code (design code uses <code>control_mean</code> and <code>treatment_mean</code> only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment_mean</code></td>
+<td>
+<p>A number. Average outcome in treatment. If <code>treatment_mean</code> is not provided then it is calculated as <code>control_mean + ate</code>. If both <code>ate</code> and  <code>treatment_mean</code> are provided then only  <code>treatment_mean</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. If TRUE, prints intra-cluster correlation implied by design parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args_to_fix</code></td>
+<td>
+<p>A character vector. Names of arguments to be args_to_fix in design.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Units are assigned to treatment using complete block cluster random assignment. Treatment effects can be specified either by providing <code>control_mean</code> and <code>treatment_mean</code>
+or by specifying an <code>ate</code>. Estimation uses differences in means accounting for blocks and clusters.
+</p>
+<p>In the usual case <code>N</code> is not provided by the user but is determined by <code>N_blocks</code>, <code>N_clusters_in_block</code>, <code>N_i_in_cluster</code> (when these are integers <code>N</code> is the product of these three numbers).
+</p>
+<p>Normal shocks can be specified at the individual, cluster, and block levels. If individual level shocks are not specified and cluster and block 
+level variances sum to less than 1, then individual level shocks are set such that total variance in outcomes equals 1.
+</p>
+<p>Key limitations: The designer assumes covariance between potential outcomes at the individual level only.
+</p>
+<p>See <a href="https://declaredesign.org/r/designlibrary/articles/block_cluster_two_arm.html">vignette online</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A block cluster two-arm design.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p><a href="https://declaredesign.org/">DeclareDesign Team</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Generate a design using default arguments:
+block_cluster_two_arm_design &lt;- block_cluster_two_arm_designer()
+block_cluster_uneven &lt;- block_cluster_two_arm_designer(
+       N_blocks = 3, N_clusters_in_block = 2:4, N_i_in_cluster = 1:9)
+# A design in which number of clusters of cluster size is not specified
+# but N and block size are:        
+block_cluster_guess &lt;- block_cluster_two_arm_designer(N = 24, N_blocks = 3)
+
+</code></pre>
+
+
+</div>

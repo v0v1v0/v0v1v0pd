@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_silencer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Wrapper for silencer method</h2>
+
+<h3>Description</h3>
+
+<p>Conducts co-expression analysis using the matrix silencer method
+(Barzel and Barabási 2013).
+Can be used for the <code>network_inference</code> argument in <code>dnapath</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_silencer(x, weights = NULL, method = "spearman", verbose = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A n by p matrix of gene expression data (n samples and p genes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>An optional vector of weights. This is used by <code>dnapath()</code> to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Argument is passed into <code>cor</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>If TRUE, updates are printed during the estimation process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments are ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A p by p matrix of association scores.
+</p>
+
+
+<h3>References</h3>
+
+<p>Barzel B, Barabási A (2013).
+“Network Link Prediction by Global Silencing of Indirect Correlations.”
+<em>Nature Biotechnology</em>, <b>31</b>(8), 720.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>run_aracne</code>,
+<code>run_bc3net</code>, <code>run_c3net</code>,
+<code>run_clr</code>, <code>run_corr</code>,
+<code>run_dwlasso</code>, <code>run_genie3</code>,
+<code>run_glasso</code>, <code>run_mrnet</code>, and
+<code>run_pcor</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(meso)
+data(p53_pathways)
+
+# To create a short example, we subset on two pathways from the p53 pathway list,
+# and will only run 1 permutation for significance testing.
+pathway_list &lt;- p53_pathways[13]
+n_perm &lt;- 1
+
+# Use this method to perform differential network analysis.
+# The parameters in run_silencer() can be adjusted using the ... argument.
+# For example, the 'method' parameter can be specified as shown here.
+results &lt;- dnapath(x = meso$gene_expression,
+                   pathway_list = pathway_list,
+                   group_labels = meso$groups,
+                   n_perm = n_perm,
+                   network_inference = run_silencer,
+                   method = "spearman")
+summary(results)
+
+# The group-specific association matrices can be extracted using get_networks().
+nw_list &lt;- get_networks(results) # Get networks for the pathway
+
+
+# nw_list has length 2 and contains the inferred networks for the two groups.
+# The gene names are the Entrezgene IDs from the original expression dataset.
+# Renaming the genes in the dnapath results to rename those in the networks.
+# NOTE: The temporary directory, tempdir(), is used in this example. In practice,
+#       this argument can be removed or changed to an existing directory
+results &lt;- rename_genes(results, to = "symbol", species = "human",
+                        dir_save = tempdir())
+nw_list &lt;- get_networks(results) # The genes (columns) will have new names.
+
+# (Optional) Plot the network using SeqNet package (based on igraph plotting).
+# First rename entrezgene IDs into gene symbols.
+SeqNet::plot_network(nw_list[[1]])
+
+</code></pre>
+
+
+</div>

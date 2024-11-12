@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotRel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot Relatedness Estimates</h2>
+
+<h3>Description</h3>
+
+<p>Represents a matrix of pairwise relatedness estimates with colors
+corresponding to the levels of relatedness. Optionally, also outlines results
+of a hypothesis testing. The plot follows a matrix layout.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotRel(
+  r,
+  rlim = c(0, 1),
+  isig = NULL,
+  alpha = NULL,
+  col = grDevices::hcl.colors(101, "YlGnBu", rev = TRUE),
+  draw_diag = FALSE,
+  col_diag = "gray",
+  border_diag = NA,
+  lwd_diag = 0.5,
+  border_sig = "orangered2",
+  lwd_sig = 1.5,
+  xlab = "",
+  ylab = "",
+  add = FALSE,
+  idlab = FALSE,
+  side_id = c(1, 2),
+  col_id = 1,
+  cex_id = 0.5,
+  srt_id = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>a matrix or a 3-dimensional array as returned by
+<code>ibdDat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rlim</code></td>
+<td>
+<p>the range of values for colors. If <code>NULL</code> or <code>NA</code>, will
+be calculated from <code>r</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>isig</code></td>
+<td>
+<p>a matrix with two columns providing indices of relatedness matrix
+entries to be outlined ("significant" sample pairs). Takes precedence over
+<code>alpha</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level for hypothesis testing; determines
+relatedness matrix entries to be outlined. Ignored if <code>isig</code> is not
+<code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col</code></td>
+<td>
+<p>the colors for the range of relatedness values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>draw_diag</code></td>
+<td>
+<p>a logical value specifying if diagonal cells should be
+distinguished from others by a separate color.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col_diag, border_diag, lwd_diag</code></td>
+<td>
+<p>the color for the fill, the color for
+the border, and the line width for the border of diagonal entries. Ignored
+if <code>draw_diag = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>border_sig, lwd_sig</code></td>
+<td>
+<p>the color and the line width for outlining entries
+specified by <code>isig</code> or <code>alpha</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab</code></td>
+<td>
+<p>axis labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p>a logical value specifying if the graphics should be added to the
+existing plot (useful for triangular matrices).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idlab</code></td>
+<td>
+<p>a logical value specifying if sample ID's should be displayed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>side_id</code></td>
+<td>
+<p>an integer vector specifying plot sides for sample ID labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col_id, cex_id</code></td>
+<td>
+<p>numeric vectors for the color and the size of sample ID
+labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>srt_id</code></td>
+<td>
+<p>a vector of the same length as <code>side_id</code> specifying
+rotation angles for sample ID labels. If <code>NULL</code>, the labels will be
+perpendicular to the axes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other graphical parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>NULL</code>; called for plotting.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plotColorbar</code> for a colorbar.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">parstart &lt;- par(no.readonly = TRUE)   # save starting graphical parameters
+
+par(mar = c(0.5, 0.5, 0.5, 0.5))
+plotRel(dres, alpha = 0.05, draw_diag = TRUE)
+
+# draw log of p-values in the upper triangle
+pmat &lt;- matrix(NA, nrow(dres), ncol(dres))
+pmat[upper.tri(pmat)] &lt;- t(log(dres[, , "p_value"]))[upper.tri(pmat)]
+pmat[pmat == -Inf] &lt;- min(pmat[is.finite(pmat)])
+plotRel(pmat, rlim = NULL, draw_diag = TRUE, col = hcl.colors(101, "PuRd"),
+        add = TRUE, col_diag = "slategray2", border_diag = 1)
+
+# symmetric matrix, outline significant in upper triangle, display sample ID
+par(mar = c(3, 3, 0.5, 0.5))
+dmat &lt;- dres[, , "estimate"]
+dmat[upper.tri(dmat)] &lt;- t(dmat)[upper.tri(t(dmat))]
+isig &lt;- which(dres[, , "p_value"] &lt;= 0.05, arr.ind = TRUE)
+col_id &lt;- rep(c("plum4", "lightblue4"), each = 26)
+plotRel(dmat, isig = isig[, 2:1], draw_diag = TRUE, idlab = TRUE,
+        col_id = col_id)
+abline(v = 26, h = 26, col = "gray45", lty = 5)
+
+# rotated sample ID labels on all sides
+par(mar = c(3, 3, 3, 3))
+plotRel(dmat, isig = rbind(isig, isig[, 2:1]), border_sig = "magenta2",
+        draw_diag = TRUE, idlab = TRUE, side_id = 1:4, col_id = col_id,
+        srt_id = c(-55, 25, 65, -35))
+par(parstart)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>colorize_node_attrs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply colors based on node attribute values</h2>
+
+<h3>Description</h3>
+
+<p>Within a graph's internal node data frame (ndf), use a categorical node
+attribute to generate a new node attribute with color values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">colorize_node_attrs(
+  graph,
+  node_attr_from,
+  node_attr_to,
+  cut_points = NULL,
+  palette = "Spectral",
+  alpha = NULL,
+  reverse_palette = FALSE,
+  default_color = "#D9D9D9"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>A graph object of class <code>dgr_graph</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>node_attr_from</code></td>
+<td>
+<p>The name of the node attribute column from which color
+values will be based.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>node_attr_to</code></td>
+<td>
+<p>The name of the new node attribute to which the color
+values will be applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_points</code></td>
+<td>
+<p>An optional vector of numerical breaks for bucketizing
+continuous numerical values available in a edge attribute column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>palette</code></td>
+<td>
+<p>Can either be: (1) a palette name from the RColorBrewer
+package (e.g., <code>Greens</code>, <code>OrRd</code>, <code>RdYlGn</code>), (2) <code>viridis</code>, which indicates
+use of the <code>viridis</code> color scale from the package of the same name, or (3)
+a vector of hexadecimal color names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>An optional alpha transparency value to apply to the generated
+colors. Should be in the range of <code>0</code> (completely transparent) to <code>100</code>
+(completely opaque).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reverse_palette</code></td>
+<td>
+<p>An option to reverse the order of colors in the chosen
+palette. The default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>default_color</code></td>
+<td>
+<p>A hexadecimal color value to use for instances when the
+values do not fall into the bucket ranges specified in the <code>cut_points</code>
+vector.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A graph object of class <code>dgr_graph</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other node creation and removal: 
+<code>add_n_node_clones()</code>,
+<code>add_n_nodes()</code>,
+<code>add_n_nodes_ws()</code>,
+<code>add_node()</code>,
+<code>add_node_clones_ws()</code>,
+<code>add_node_df()</code>,
+<code>add_nodes_from_df_cols()</code>,
+<code>add_nodes_from_table()</code>,
+<code>copy_node_attrs()</code>,
+<code>create_node_df()</code>,
+<code>delete_node()</code>,
+<code>delete_nodes_ws()</code>,
+<code>drop_node_attrs()</code>,
+<code>join_node_attrs()</code>,
+<code>layout_nodes_w_string()</code>,
+<code>mutate_node_attrs()</code>,
+<code>mutate_node_attrs_ws()</code>,
+<code>node_data()</code>,
+<code>recode_node_attrs()</code>,
+<code>rename_node_attrs()</code>,
+<code>rescale_node_attrs()</code>,
+<code>set_node_attr_to_display()</code>,
+<code>set_node_attr_w_fcn()</code>,
+<code>set_node_attrs()</code>,
+<code>set_node_attrs_ws()</code>,
+<code>set_node_position()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a graph with 8
+# nodes and 7 edges
+graph &lt;-
+  create_graph() %&gt;%
+  add_path(n = 8) %&gt;%
+  set_node_attrs(
+    node_attr = weight,
+    values = c(
+      8.2, 3.7, 6.3, 9.2,
+      1.6, 2.5, 7.2, 5.4))
+
+# Find group membership values for all nodes
+# in the graph through the Walktrap community
+# finding algorithm and join those group values
+# to the graph's internal node data frame (ndf)
+# with the `join_node_attrs()` function
+graph &lt;-
+  graph %&gt;%
+  join_node_attrs(
+    df = get_cmty_walktrap(.))
+
+# Inspect the number of distinct communities
+graph %&gt;%
+  get_node_attrs(
+    node_attr = walktrap_group) %&gt;%
+  unique() %&gt;%
+  sort()
+
+# Visually distinguish the nodes in the different
+# communities by applying colors using the
+# `colorize_node_attrs()` function; specifically,
+# set different `fillcolor` values with an alpha
+# value of 90 and apply opaque colors to the node
+# border (with the `color` node attribute)
+graph &lt;-
+  graph %&gt;%
+  colorize_node_attrs(
+    node_attr_from = walktrap_group,
+    node_attr_to = fillcolor,
+    palette = "Greens",
+    alpha = 90) %&gt;%
+  colorize_node_attrs(
+    node_attr_from = walktrap_group,
+    node_attr_to = color,
+    palette = "viridis",
+    alpha = 80)
+
+# Show the graph's internal node data frame
+graph %&gt;% get_node_df()
+
+# Create a graph with 8 nodes and 7 edges
+graph &lt;-
+  create_graph() %&gt;%
+  add_path(n = 8) %&gt;%
+  set_node_attrs(
+    node_attr = weight,
+    values = c(
+      8.2, 3.7, 6.3, 9.2,
+      1.6, 2.5, 7.2, 5.4))
+
+# We can bucketize values in `weight` using
+# `cut_points` and assign colors to each of the
+# bucketed ranges (for values not part of any
+# bucket, a gray color is assigned by default)
+graph &lt;-
+  graph %&gt;%
+  colorize_node_attrs(
+    node_attr_from = weight,
+    node_attr_to = fillcolor,
+    cut_points = c(1, 3, 5, 7, 9))
+
+# Now there will be a `fillcolor` node attribute
+# with distinct colors (the `#D9D9D9` color is
+# the default `gray85` color)
+graph %&gt;% get_node_df()
+
+</code></pre>
+
+
+</div>

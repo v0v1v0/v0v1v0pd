@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drop1.dr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Sequential fitting of coordinate tests using a dr object </h2>
+
+<h3>Description</h3>
+
+<p>This function implements backward elimination using a <code>dr</code> object for which
+a <code>dr.coordinate.test</code> is defined, currently for SIR SAVE, IRE and PIRE.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dr.step(object,scope=NULL,d=NULL,minsize=2,stop=0,trace=1,...)
+
+## S3 method for class 'dr'
+drop1(object, scope = NULL,  update=TRUE,
+test="general",trace=1,...)
+
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p> A <code>dr</code> object for which <code>dr.coordinate.test</code> 
+is defined, for <code>method</code> equal to one of <code>sir</code>, <code>save</code>
+or <code>ire</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scope</code></td>
+<td>
+<p>A one sided formula specifying predictors that will never
+be removed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>To use <em>conditional coordinate tests</em>, specify the dimension
+of the central (mean) subspace.  The default is <code>NULL</code>, meaning no
+conditioning. This is currently available only for methods <code>sir</code>, 
+<code>save</code> without categorical predictors, or for 
+<code>ire</code> with or without categorical predictors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minsize</code></td>
+<td>
+<p>Minimum subset size, must be greater than or equal to 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop</code></td>
+<td>
+<p>Set stopping criterion:  continue removing variables until
+the p-value for the next variable to be removed is less than stop.  The
+default is stop = 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>update</code></td>
+<td>
+<p>If true, the <code>update</code> method is used to return a
+<code>dr</code> object obtained from <code>object</code> by updating the formula to
+drop the variable with the largest p.value.  This can significantly slow
+the computations for IRE but has little effect on SAVE and SIR.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p> Type of test to be used for selecting the next predictor
+to remove for <code>method="save"</code> only. <code>"normal"</code> assumes normal 
+predictors, <code>"general"</code> assumes elliptically contoured predictors. 
+For other methods, this argument is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>If positive, print informative output at each step, the default.
+If trace is 0 or false, suppress all printing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>dr.coordinate.test</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Suppose a <code>dr</code> object has <code class="reqn">p=a+b</code> predictors, with <code class="reqn">a</code> predictors specified in the <code>scope</code> statement.  
+<code>drop1</code> will compute either marginal coordinate tests (if <code>d=NULL</code>)
+or conditional marginal coordinate tests (if <code>d</code> is positive) for dropping each of the <code>b</code> predictors not in the scope, and return p.values.
+The result is an object created from the original object with the predictor
+with the largest p.value removed.
+</p>
+<p><code>dr.step</code> will call <code>drop1.dr</code> repeatedly until 
+<code class="reqn">\max(a,d+1)</code> predictors remain.  </p>
+
+
+<h3>Value</h3>
+
+<p>As a side effect, 
+a data frame of labels, tests, df, and p.values is printed.  If
+<code>update=TRUE</code>, a  <code>dr</code>
+object is returned with the predictor with the largest p.value removed.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sanford Weisberg, &lt;sandy@stat.umn.edu&gt;, based on the 
+<code>drop1</code> generic function in the
+base R. The <code>dr.step</code> function is also similar to <code>step</code> in 
+base R.</p>
+
+
+<h3>References</h3>
+
+<p>Cook, R. D. (2004).  Testing predictor contributions in 
+sufficient dimension reduction.  <em>Annals of Statistics</em>, 32, 1062-1092.
+</p>
+<p>Shao, Y., Cook, R. D. and Weisberg (2007).  Marginal tests with 
+sliced average variance estimation.  <em>Biometrika</em>.</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>dr.coordinate.test</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ais)
+# To make this idential to ARC, need to modify slices to match by
+# using slice.info=dr.slices.arc() rather than nslices=8
+summary(s1 &lt;- dr(LBM~log(SSF)+log(Wt)+log(Hg)+log(Ht)+log(WCC)+log(RCC)+
+                 log(Hc)+log(Ferr), data=ais,method="sir",
+                 slice.method=dr.slices.arc,nslices=8)) 
+# The following will almost duplicate information in Table 5 of Cook (2004).
+# Slight differences occur because a different approximation for the
+# sum of independent chi-square(1) random variables is used:
+ans1 &lt;- drop1(s1)
+ans2 &lt;- drop1(s1,d=2)
+ans3 &lt;- drop1(s1,d=3)
+# remove predictors stepwise until we run out of variables to drop.
+dr.step(s1,scope=~log(Wt)+log(Ht))
+</code></pre>
+
+
+</div>

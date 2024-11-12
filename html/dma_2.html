@@ -1,0 +1,217 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dynamic model averaging for continuous outcomes</h2>
+
+<h3>Description</h3>
+
+<p>Implemtent dynamic model averaging for continuous outcomes as described in 
+Raftery, A.E., Karny, M., and Ettler, P. (2010). Online Prediction Under Model 
+Uncertainty Via Dynamic Model Averaging: Application to a Cold Rolling Mill. Technometrics 52:52-66. Along with the values
+described below, plot() creates a plot of the posterior model probabilities over time and 
+model-averaged fitted values and print() returns model matrix and posterior
+model probabilities.  
+There are TT time points, K models, and d total covariates.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dma(x, y, models.which, lambda=0.99, gamma=0.99, 
+ eps=.001/nrow(models.which), delay=0, initialperiod=200)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>TTxd matrix of system inputs
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>TT-vector of system outputs
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models.which</code></td>
+<td>
+
+<p>Kxd matrix, with 1 row per model and 1 col per variable
+indicating whether that variable is in the model
+(the state theta is of dim (model.dim+1); the extra 1 for the intercept)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>parameter forgetting factor
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+
+<p>flatterning parameter for model updating
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+
+<p>regularization parameter for regularizing posterior model
+model probabilities away from zero
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delay</code></td>
+<td>
+
+<p>When y_t is controlled, only y_t-delay-1 and before 
+are available. This is determined by the machine.
+Note that delay as defined here corresponds to (k-1)
+in the Ettler et al (2007, MixSim) paper.
+Thus k=25 in the paper corresponds to delay=24.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initialperiod</code></td>
+<td>
+
+<p>length of initial period. Performance is summarized with and
+without the first initialperiod samples.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>yhat.bymodel</code></td>
+<td>
+<p>TTxK matrix whose tk element gives yhat for yt for model k</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yhat.ma</code></td>
+<td>
+<p>TT vector whose t element gives the model-averaged yhat for yt</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmp</code></td>
+<td>
+<p>TTxK matrix whose tk element is the post prob of model k at t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetahat</code></td>
+<td>
+<p>KxTTx(nvar+1) array whose ktj element is the 
+estimate of theta_j-1 for model k at t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vtheta</code></td>
+<td>
+<p>KxTTx(nvar+1) array whose ktj element is the 
+variance of theta_j-1 for model k at t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetahat.ma</code></td>
+<td>
+<p>TTx(nvar+1) matrix whose tj element is the model-averaged 
+estimate of theta_j-1 at t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vtheta.ma</code></td>
+<td>
+<p>TTx(nvar+1) matrix whose tj element is the model-averaged
+variance of thetahat_j-1 at t</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mse.bymodel</code></td>
+<td>
+<p>MSE for each model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mse.ma</code></td>
+<td>
+<p>MSE of model-averaged prediction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mseinitialperiod.bymodel</code></td>
+<td>
+<p>MSE for each model excluding the first initialperiod samples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mseinitialperiod.ma</code></td>
+<td>
+<p>MSE of model averaging excluding the first initialperiod samples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.forget</code></td>
+<td>
+<p>forgetting factor for the model switching matrix</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Adrian Raftery, Tyler H. McCormick</p>
+
+
+<h3>References</h3>
+
+<p>Raftery, A.E., Karny, M., and Ettler, P. (2010). Online Prediction Under Model 
+Uncertainty Via Dynamic Model Averaging: Application to a Cold Rolling Mill. Technometrics 52:52-66.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#simulate some data to test
+#first, static coefficients
+coef&lt;-c(1.8,3.4,-2,3,-2.8,3)
+coefmat&lt;-cbind(rep(coef[1],200),rep(coef[2],200),
+            rep(coef[3],200),rep(coef[4],200),
+            rep(coef[5],200),rep(coef[6],200))
+#then, dynamic ones
+coefmat&lt;-cbind(coefmat,seq(1,2.45,length.out=nrow(coefmat)),
+            seq(-.75,-2.75,length.out=nrow(coefmat)),
+            c(rep(-1.5,nrow(coefmat)/2),rep(-.5,nrow(coefmat)/2)))
+npar&lt;-ncol(coefmat)-1
+dat&lt;-matrix(rnorm(200*(npar),0,1),200,(npar))
+ydat&lt;-rowSums((cbind(rep(1,nrow(dat)),dat))[1:100,]*coefmat[1:100,])
+ydat&lt;-c(ydat,rowSums((cbind(rep(1,nrow(dat)),dat)*coefmat)[-c(1:100),c(6:9)]))
+mmat&lt;-matrix(c(c(1,0,1,0,0,rep(1,(npar-7)),0,0),
+            c(rep(0,(npar-4)),rep(1,4)),rep(1,npar)),3,npar,byrow=TRUE)
+dma.test&lt;-dma(dat,ydat,mmat,lambda=.99,gamma=.99,initialperiod=20)
+plot(dma.test)
+</code></pre>
+
+
+</div>

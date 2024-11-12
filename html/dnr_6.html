@@ -1,0 +1,202 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>engineEdgeBayes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Implementation of simulation engine for dynamic networks using smoothing estimates of change statistics.</h2>
+
+<h3>Description</h3>
+
+<p>Implementation of simulation engine for dynamic networks using smoothing estimates of change statistics.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">engineEdgeBayes(
+  start_network,
+  inputcoeff,
+  ns,
+  model.terms,
+  model.formula,
+  graph_mode,
+  group,
+  intercept,
+  exvar,
+  maxlag,
+  lagmat,
+  ylag,
+  lambda = NA,
+  method = "bayesglm",
+  alpha.glmnet,
+  paramout = TRUE,
+  Theta = NA
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>start_network</code></td>
+<td>
+<p>Initial list of networks</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inputcoeff</code></td>
+<td>
+<p>coefficient vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ns</code></td>
+<td>
+<p>number of time points for simulation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.terms</code></td>
+<td>
+<p>model terms in formula</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.formula</code></td>
+<td>
+<p>model formula (ergm)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graph_mode</code></td>
+<td>
+<p>'digraph' by default</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>group terms</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>intercept terms</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exvar</code></td>
+<td>
+<p>extraneous covariates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxlag</code></td>
+<td>
+<p>maximum lag</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lagmat</code></td>
+<td>
+<p>lag matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylag</code></td>
+<td>
+<p>lag vector for network lag terms</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>'bayesglm' by default</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.glmnet</code></td>
+<td>
+<p>NA</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paramout</code></td>
+<td>
+<p>T/F parameter estimation is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Theta</code></td>
+<td>
+<p>= prior probability matrix.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+startNet &lt;- rdNets[1:50]
+model.terms=c("triadcensus.003", "triadcensus.012", "triadcensus.102", "triadcensus.021D", "gwesp")
+model.formula = net~triadcensus(0:3)+gwesp(alpha=0, fixed=FALSE, cutoff=30)-1
+graph_mode &lt;- 'digraph'
+group &lt;- 'dnc'
+alpha.glmnet &lt;- 1
+method &lt;- 'bayesglm'
+maxlag &lt;- 3
+lambda &lt;- NA
+intercept &lt;- "edges"
+cdim &lt;- length(model.terms)
+lagmat &lt;- matrix(sample(c(0,1),(maxlag+1)*cdim,replace = TRUE),ncol = cdim)
+ylag &lt;- rep(1,maxlag)
+lagmat[1,] &lt;- rep(0,ncol(lagmat))
+
+out.coef &lt;- paramEdge(input_network = startNet,
+                model.terms = model.terms,
+                model.formula = model.formula,
+                graph_mode='digraph',
+                group=group,intercept = intercept,
+                exvar=NA,
+                maxlag = maxlag,
+                lagmat = lagmat,
+                ylag = ylag,
+                lambda = NA, method='bayesglm',
+                alpha.glmnet=1)
+
+
+inputcoeff &lt;- out.coef$coef$coef.edge
+nvertex &lt;- 47 ##find vertex here
+ns &lt;- 1
+exvar &lt;- NA
+for(i in seq_along(startNet)) Theta &lt;- Theta + startNet[[i]][,]
+Theta &lt;- Theta/length(startNet)
+Theta &lt;- thresh(Theta)
+out.bayes &lt;- engineEdgeBayes(start_network=startNet,
+inputcoeff=inputcoeff,
+ns=ns,
+model.terms=model.terms,
+model.formula=model.formula,
+graph_mode=graph_mode,
+group=group,intercept=intercept,
+exvar=exvar,
+maxlag=maxlag,
+lagmat=lagmat,
+ylag=ylag,
+lambda = NA, method='bayesglm',
+alpha.glmnet=alpha.glmnet,
+Theta = Theta)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>checkConstraint</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Check constraints on dose-volume histograms (DVH)</h2>
+
+<h3>Description</h3>
+
+<p>Simultaneously checks one or more quality assurance constraints on one or more DVHs. Reports compliance with each constraint as well as observed difference between linearly interpolated DVH and the given constraints in terms of (relative) dose, (relative) volume, and (relative) minimal Euclidean distance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">checkConstraint(x, constr, byPat=TRUE, semSign=FALSE,
+                sortBy=c("none", "observed", "compliance", "structure",
+                         "constraint", "patID", "deltaV", "deltaD",
+                         "dstMin", "dstMinRel"),
+                interp=c("linear", "spline", "smooth"), ...)
+
+## S3 method for class 'DVHs'
+checkConstraint(x, constr, byPat=TRUE, semSign=FALSE,
+                sortBy=c("none", "observed", "compliance", "structure",
+                         "constraint", "patID", "deltaV", "deltaD",
+                         "dstMin", "dstMinRel"),
+                interp=c("linear", "spline", "smooth"), ...)
+
+## S3 method for class 'DVHLst'
+checkConstraint(x, constr, byPat=TRUE, semSign=FALSE,
+                sortBy=c("none", "observed", "compliance", "structure",
+                         "constraint", "patID", "deltaV", "deltaD",
+                         "dstMin", "dstMinRel"),
+                interp=c("linear", "spline", "smooth"), ...)
+
+## S3 method for class 'DVHLstLst'
+checkConstraint(x, constr, byPat=TRUE, semSign=FALSE,
+                sortBy=c("none", "observed", "compliance", "structure",
+                         "constraint", "patID", "deltaV", "deltaD",
+                         "dstMin", "dstMinRel"),
+                interp=c("linear", "spline", "smooth"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A single DVH (object of class <code>DVHs</code>), multiple DVHs from one patient/structure (object of class <code>DVHLst</code>), or multiple DVHs from many patients/structures (object of class <code>DVHLstLst</code>). See <code>readDVH</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constr</code></td>
+<td>
+<p>One or more constraints - given as a <code>character</code> vector or as a <code>data.frame</code>. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>byPat</code></td>
+<td>
+<p><code>logical</code>. Relevant if multiple DVHs are given. If <code>x</code> has class <code>DVHLst</code>: <code>byPat=TRUE</code> means that the DVHs are for one patient with multiple structures. <code>byPat=FALSE</code> means that the DVHs are for one structure from multiple patients. If <code>x</code> has class <code>DVHLstLst</code>: <code>byPat=TRUE</code> means that the DVHs are for multiple patients (list components of <code>x</code>) with multiple structures. <code>byPat=FALSE</code> means that the DVHs are for multiple structures (list components of <code>x</code>) from multiple patients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>semSign</code></td>
+<td>
+<p><code>logical</code>. Meaning of the sign of the observed dose/volume differences between DVHs and constraints. <code>semSign=TRUE</code> means that negative differences indicate constraint compliance, positive differences indicate constraint violations. With <code>semSign=FALSE</code>, the algebraic differences are returned as is.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sortBy</code></td>
+<td>
+<p><code>character</code> vector. Sorting criteria for the output data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interp</code></td>
+<td>
+<p><code>character</code>. Method of interpolation between DVH points: Linear interpolation using <code>approx</code>, monotone Hermite spline interpolation using <code>spline</code>, or local polynomial regression using <code>locpoly</code> with kernel bandwidth chosen by the direct plug-in method using <code>dpill</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters passed to <code>getMetric</code>. Use for constraints on EUD (see <code>getEUD</code> for parameter names), TCP (see <code>getTCP</code>), and NTCP (see <code>getNTCP</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A DVH constraint is a character string that consists of three parts: The DVH metric, the comparison operator (<code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>), and the reference value together with the measurement unit. See <code>getMetric</code> for defining a DVH metric, as well as for possible measurement units for dose and volume. For constraints involving the relative dose, the DVH must contain the prescription dose.
+</p>
+<p>Some example constraints are <code>"V10Gy &gt; 80%"</code> (more than 80% of the structure should have received 10Gy), <code>"V20% &lt; 10CC"</code> (less than 10cm^3 of the structure should have received 20% of the prescription dose), or <code>"D10CC &gt; 500cGy"</code> (The "hottest" 10cm^3 of the structure should have received more than 500cGy).
+</p>
+<p>For constraints on <code>DEUD</code>, <code>DNTCP</code> and <code>DTCP</code> (see <code>getMetric</code>), the reference measurement unit must be <code>Gy</code>, <code>cGy</code>, even though NTCP and TCP are probabilities. Example: <code>"DNTCP &lt; 0.5Gy"</code>.
+</p>
+<p>A DVH constraint can apply to a specific patient or to all patients, and to a specific structure or to all structures.
+</p>
+
+<ul>
+<li>
+<p> If constraints apply to all patients/structures in <code>x</code>, <code>constr</code> can be a <code>character</code> vector with elements like the examples above.
+</p>
+</li>
+<li>
+<p> If constraints apply only to some patients/structures, <code>constr</code> must be a data frame with variables <code>constraint</code>, <code>patID</code> and <code>structure</code>. Each row then defines one constraint and its scope: <code>constraint</code> must be a character string with one constraint definition as in the examples above. <code>patID</code> must be either a character string with a valid patient ID or <code>"*"</code> if the the constraint applies to all patients. <code>structure</code> must be either a character string with a valid structure or <code>"*"</code> if the the constraint applies to all structures. If variable <code>patID</code> is missing from the data frame, the constraints apply to all available patients. If variable <code>structure</code> is missing from the data frame, the constraints apply to all available structures. See <code>readConstraint</code> for reading appropriate constraint <code>data.frames</code> from external text files.
+</p>
+</li>
+</ul>
+<p>For calculating the minimal Euclidean distance between the constraint point and the DVH, the constraint point is orthogonally projected onto each DVH segment between (interpolated) DVH nodes. The relative Euclidean distance is the minimum of these distances divided by the distance of the constraint point to the closer one of both axes (dose and volume).
+</p>
+<p>If volume or dose values outside the range of possible values for a structure are requested, metrics cannot be calculated, and the result will be <code>NA</code> with a warning.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with details on constraint compliance / violation.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>patID</code></td>
+<td>
+<p>Patient ID</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>structure</code></td>
+<td>
+<p>Structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint</code></td>
+<td>
+<p>The checked constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observed</code></td>
+<td>
+<p>The observed value for the metric given in the constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compliance</code></td>
+<td>
+<p>Does the DVH satisfy the constraint?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaV</code></td>
+<td>
+<p>Volume difference between constraint and observed DVH (for the constraint dose) in measurement unit specified by constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaVpc</code></td>
+<td>
+<p>Percent volume difference between constraint and observed DVH (for the constraint dose) relative to constraint volume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaD</code></td>
+<td>
+<p>Dose difference between constraint and observed DVH (for the constraint volume) in measurement unit specified by constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaDpc</code></td>
+<td>
+<p>Percent dose difference between constraint and observed DVH (for the constraint volume) relative to constraint dose</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dstMin</code></td>
+<td>
+<p>Minimal Euclidean distance between constraint and the cumulative DVH, using linear interpolation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ptMinD</code></td>
+<td>
+<p>Dose coordinate of closest point on cumulative DVH to constraint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ptMinV</code></td>
+<td>
+<p>Volume coordinate of closest point on cumulative DVH to constraint</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p><code>getMetric</code>,
+<code>getEUD</code>,
+<code>getNTCP</code>,
+<code>getTCP</code>,
+<code>readConstraint</code>,
+<code>saveConstraint</code>,
+<code>showConstraint</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">res &lt;- checkConstraint(dataMZ, c("D10CC &lt; 10Gy", "V20Gy &lt; 20%"))
+head(res)
+
+# define constraints
+constr &lt;- data.frame(
+    patID=c("P123", "P234"),
+    structure=c("HEART", "*"),
+    constraint=c("D1CC &lt; 20Gy", "V10% &gt; 8CC"),
+    stringsAsFactors=FALSE)       # this is important
+checkConstraint(dataMZ, constr=constr)
+</code></pre>
+
+
+</div>

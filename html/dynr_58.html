@@ -1,0 +1,188 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Outliers</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated time series data for detecting outliers.</h2>
+
+<h3>Description</h3>
+
+<p>This is a list object containing true outliers, the dataset, and the saved result from running dynr.taste.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(Outliers)
+</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 6000 rows and 6 variables</p>
+
+
+<h3>Details</h3>
+
+<p>The true outliers for observed variables are saved in ‘Outliers$generated$shockO’.
+</p>
+
+<ul>
+<li>
+<p> id. Six outliers were added for each ID. 
+</p>
+</li>
+<li>
+<p> time_O. Time points where the outliers were added.
+</p>
+</li>
+<li>
+<p> obs. Variable indices where the outliers were added.
+</p>
+</li>
+<li>
+<p> shock.O. The magnitude of outliers.
+</p>
+</li>
+</ul>
+<p>The true outliers for state variables are saved in ‘Outliers$generated$shockL’.
+</p>
+
+<ul>
+<li>
+<p> id. Three outliers were added for each ID. 
+</p>
+</li>
+<li>
+<p> time_L. Time points where the outliers were added.
+</p>
+</li>
+<li>
+<p> lat. Variable indices where the outliers were added.
+</p>
+</li>
+<li>
+<p> shock.L. The magnitude of outliers.
+</p>
+</li>
+</ul>
+<p>A dataset simulated based on state-space model including the outliers. The data is saved in ‘Outliers$generated$y’.
+The variables are as follows:
+</p>
+
+<ul>
+<li>
+<p> id. ID of the systems (1 to 100)
+</p>
+</li>
+<li>
+<p> times. Time indices (100 time points for each participant)
+</p>
+</li>
+<li>
+<p> V1 - V6. observed variables
+</p>
+</li>
+</ul>
+<p>The detected innovative outliers from dynr.taste for this dataset, which is used for testing whether the dynr.taste replicate the same result. The data is saved in ‘Outliers$detect_O’.
+The variables are as follows:
+</p>
+
+<ul>
+<li>
+<p> id. IDs
+</p>
+</li>
+<li>
+<p> time_L. Time points where the outliers were detected
+</p>
+</li>
+<li>
+<p> obs. Variable indices for observed variables where the outliers were detected
+</p>
+</li>
+</ul>
+<p>The detected additive outliers from dynr.taste for this dataset, which is used for testing whether the dynr.taste replicate the same result. The data is saved in ‘Outliers$detect_L’.
+The variables are as follows:
+</p>
+
+<ul>
+<li>
+<p> id. IDs
+</p>
+</li>
+<li>
+<p> time_L. Time points where the outliers were detected
+</p>
+</li>
+<li>
+<p> obs. Variable indices for latent variables where the outliers were detected
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+ #The following was used to generate the data
+ #---------------------------------------
+ lambda &lt;- matrix(c(1.0, 0.0,
+ 0.9, 0.0,
+ 0.8, 0.0,
+ 0.0, 1.0,
+ 0.0, 0.9,
+ 0.0, 0.8), ncol=2, byrow=TRUE)
+ psi &lt;- matrix(c(0.3, -0.1,
+                 -0.1, 0.3), ncol=2, byrow=TRUE)
+ beta &lt;- matrix(c(0.8, -0.2,
+                  -0.2,  0.7), ncol=2, byrow=TRUE)
+ theta &lt;- diag(c(0.2, 0.2, 0.2, 0.2, 0.2, 0.2), ncol=6, nrow=6)
+ nlat &lt;- 2; nobs &lt;- 6
+ mean_0 &lt;- rep(0, nlat)
+ psi_inf &lt;- diag(1, 2*2) - kronecker(beta, beta)
+ psi_inf_inv &lt;- try(solve(psi_inf), silent=TRUE)
+ if("try-error" %in% class(psi_inf_inv)) {
+   psi_inf_inv &lt;- MASS::ginv(psi_inf)}
+ psi_0 &lt;- psi_inf_inv %*% as.vector(psi)
+ dim(psi_0) &lt;- c(2, 2)
+ # measurement error covariance matrix
+ mea_cov &lt;- lambda %*% psi_0 %*% t(lambda) + theta
+ resL &lt;- lapply(1:100, function(subj) {
+   # initial state
+   eta_0 &lt;- mvtnorm::rmvnorm(1, mean=mean_0, sigma=psi_0)#[1,nlat]
+   zeta_0 &lt;- mvtnorm::rmvnorm(1, mean=rep(0, nlat), sigma=psi)
+   eta &lt;- matrix(0, nrow=time, ncol=nlat)
+   eta[1, ] &lt;- beta %*% t(eta_0) + t(zeta_0) 
+   zeta &lt;- mvtnorm::rmvnorm(time, mean=rep(0, nlat), sigma=psi)
+   # random shock generation
+   # to avoid shock appearing too early or late (first and last 3)
+   shkLat_time &lt;- sample(4:(time-3), nshockLat)
+   shk_lat &lt;- sample(1:nlat, nshockLat, replace=TRUE)
+   shockLatIdx &lt;- matrix(c(shkLat_time, shk_lat), ncol=2)
+   shockSignL &lt;- sample(c(1,-1), nshockLat, replace=TRUE)
+   colnames(shockLatIdx) &lt;- c("time_L","lat")
+   shockLatV &lt;- shockSignL*( shockMag*sqrt(diag(shockPsi)))[shockLatIdx[,"lat"]]
+   shockLatM &lt;- matrix(0, time, nlat)
+   shockLatM[shockLatIdx] &lt;- shockLatV
+   shkObs_time &lt;- sample(4:(time-3), nshockObs)
+   shk_obs &lt;- sample(1:nobs, nshockObs, replace=TRUE)
+   shockObsIdx &lt;- matrix(c(shkObs_time, shk_obs), ncol=2)
+   shockSignO &lt;- sample(c(1,-1), nshockObs, replace=TRUE)
+   colnames(shockObsIdx) &lt;- c("time_O","obs")
+   shockObsV &lt;- shockSignO*( shockMag*sqrt(diag(mea_cov)) )[shockObsIdx[,"obs"]]
+   shockObsM &lt;- matrix(0, time, nobs)
+   shockObsM[shockObsIdx] &lt;- shockObsV
+   # generate state process WITH shock
+   for (t in 1:(time-1)) {
+     eta[t+1, ] &lt;- shockLatM[t, ] + beta %*% eta[t, ] + zeta[t, ]
+   }
+   # generate observed process
+   y &lt;- shockObsM + eta %*% t(lambda) +
+     mvtnorm::rmvnorm(time, mean=rep(0, nobs), sigma=theta)# epsilon
+ }
+ 
+## End(Not run)
+</code></pre>
+
+
+</div>

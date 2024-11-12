@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cache</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluate an expression and cache its results</h2>
+
+<h3>Description</h3>
+
+<p>This function extracts all dependencies of an R expression, hashes
+them together with the expression itself and either loads the
+already-existing file, or evaluates the expression and stores the
+result in that file.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  cache(expr, extra = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+
+<p>An expression to evaluate or load from cache, unquoted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extra</code></td>
+<td>
+
+<p>Any R value that should be considered part of the state deciding
+whether the expression should be re-computed. For example, if
+<code>expr</code> reads a file, consider using <code>file.mtime</code> or
+<code>md5sum</code> to check for changes in it.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional options, see <code>depcache.options</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Currently, the hash is obtained by means of serialisation. In order to
+make semantically same values have same hashes on a wide range of R
+versions, the following steps were taken: </p>
+
+<ul>
+<li>
+<p> When computing the hash of the serialized data (only the XDR
+format version 2 or 3 is supported), the first 14 bytes containing
+the header (including the version of R that serialized the data) are
+ignored.
+</p>
+</li>
+<li>
+<p> Every function is “rebuilt” from its body before
+hashing, forcing R to discard the bytecode and the source references
+from the copy of the function before it's hashed.
+</p>
+</li>
+<li>
+<p> Strings are converted to UTF-8 before hashing.
+</p>
+</li>
+<li>
+<p> All this is done recursively.
+</p>
+</li>
+</ul>
+<p>The exact algorithm used and the way hash is obtained are
+implementation details and may eventually change, though not without a
+good reason.
+</p>
+<p>Other aspects of R data structures are currently not handled:
+</p>
+
+<ul>
+<li>
+<p> Nothing is done about environments. Due to them being
+reference objects, any fix-up must re-create them from scratch,
+taking potentially recursive dependencies into account, which is
+likely expensive.
+</p>
+</li>
+<li>
+<p> Some S4 classes (like reference class implementations) just
+have different representations in different versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> and
+third-party packages. They may mean the same thing, but they
+serialize to different byte sequences.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>The result of evaluating <code>expr</code>, either directly, or loaded from
+cache.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>setCached</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  
+  a &lt;- 1
+  # will evaluate the expression the first time
+  cache({ message('evaluating expression'); a + 1 }) # 2
+  # saved value of the expression will be used
+  cache({
+    message('evaluating expression')
+    # even if written a bit differently
+    a + 1
+  }) # 2
+  a &lt;- -1
+  # expression evaluated again because dependencies changed
+  cache({ message('evaluating expression'); a + 1 }) # 0
+  
+</code></pre>
+
+
+</div>

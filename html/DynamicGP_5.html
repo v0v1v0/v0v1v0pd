@@ -1,0 +1,251 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>saEI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Saddlepoint Approximate Expected Improvement Criterion for
+the Sequential Design for Inverse Problems</h2>
+
+<h3>Description</h3>
+
+<p>This function performs the sequential design procedure for
+the inverse problem. It starts from an initial design set <code>xi</code>
+and selects the follow-up design points from the candidate set
+<code>candei</code> as per the expected improvement (EI) criterion which is
+numerically approximated by the saddlepoint approximation technique in
+Huang and Oosterlee (2011). The surrogate is refitted using the
+augmented data via <code>svdGP</code>. After the selection of <code>nadd</code>
+follow-up points, the solution of the inverse problem is estimated
+either by the <code>ESL2D</code> approach or by the <code>SL2D</code>
+approach. Details are provided in Chapter 4 of Zhang (2018).  </p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">saEI(xi,yi,yobs,nadd,candei,candest,func,...,
+     mtype=c("zmean","cmean","lmean"),
+     estsol=c("ESL2D","SL2D"),
+     frac=.95, nstarts=5, gstart=0.0001,
+     nthread=1, clutype="PSOCK")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p> An <code>N0</code> by <code class="reqn">d</code> matrix of <code>N0</code> initial design
+points.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yi</code></td>
+<td>
+<p> An <code class="reqn">L</code> by <code>N0</code> response matrix of <code>xi</code>,
+where <code class="reqn">L</code> is the length of the time series outputs, <code>N0</code> is
+the number of design points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yobs</code></td>
+<td>
+<p> A vector of length <code class="reqn">L</code> of the time-series valued
+field observations or the target response.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nadd</code></td>
+<td>
+<p> The number of the follow-up design points selected by
+this function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>candei</code></td>
+<td>
+<p>An <code>M1</code> by <code class="reqn">d</code> matrix of <code>M1</code> candidate points
+on which the follow-up design points are selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>candest</code></td>
+<td>
+<p> An <code>M2</code> by <code class="reqn">d</code> matrix of <code>M2</code> candidate points
+on which the (final) estimated solution to the inverse problem is extracted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p> An R function of the dynamic computer simulator. The
+first argument of <code>func</code> should be a vector of <code class="reqn">d</code>-dimensional
+inputs. The simulator <code>func</code> should return a vector of length
+<code class="reqn">L</code> as the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> The remaining arguments of the simulator <code>func</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mtype</code></td>
+<td>
+<p> The type of mean functions for the GP models. The choice
+"zmean" denotes zero-mean, "cmean" indicates constant-mean, "lmean" indicates
+linear-mean. The default choice is "zmean".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estsol</code></td>
+<td>
+<p> The method for estimating the final solution to the inverse
+problem after all follow-up design points are included, "ESL2D"
+denotes the ESL2D approach, "SL2D" denotes the SL2D approach. The
+default choice is "ESL2D".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frac</code></td>
+<td>
+<p> The threshold in the cumulative percentage criterion to select the
+number of SVD bases. The default value is 0.95.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstarts</code></td>
+<td>
+
+<p>The number of starting points used in the numerical maximization of
+the posterior density function. The larger <code>nstarts</code> will
+typically lead to more accurate prediction but longer computational
+time. The default value is 5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gstart</code></td>
+<td>
+<p> The starting number and upper bound for estimating the
+nugget parameter. If <code>gstart = sqrt(.Machine$double.eps)</code>, the
+nugget parameter will be fixed at <code>sqrt(.Machine$double.eps)</code>,
+since <code>sqrt(.Machine$double.eps)</code> is the lower bound of the
+nugget term. The default value is 0.0001.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nthread</code></td>
+<td>
+
+<p>The number of threads (processes) used in parallel execution of this
+function. <code>nthread=1</code> implies no parallelization. The default
+value is 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clutype</code></td>
+<td>
+
+<p>The type of cluster in the R package "parallel" to perform
+parallelization. The default value is "PSOCK". Required only if
+<code>nthread</code>&gt;1.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xx</code></td>
+<td>
+<p>The design set selected by the sequential design approach,
+which includes both the initial and the follow-up design points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yy</code></td>
+<td>
+<p>The response matrix collected on the design set <code>xx</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xhat</code></td>
+<td>
+<p>The estimated solution to the inverse problem obtained on the
+candidate set <code>candest</code> from the final fitted surrogate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxei</code></td>
+<td>
+<p> A vector of length <code>nadd</code>, it collects the maximum
+value of the EI criterion in each iteration of the sequential design
+approach.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Ru Zhang <a href="mailto:heavenmarshal@gmail.com">heavenmarshal@gmail.com</a>,
+</p>
+<p>C. Devon Lin <a href="mailto:devon.lin@queensu.ca">devon.lin@queensu.ca</a>,
+</p>
+<p>Pritam Ranjan <a href="mailto:pritamr@iimidr.ac.in">pritamr@iimidr.ac.in</a></p>
+
+
+<h3>References</h3>
+
+<p>Huang, X. and Oosterlee, C. W. (2011) <em>Saddlepoint approximations
+for expectations and an application to CDO pricing</em>, SIAM Journal on
+Financial Mathematics, 2(1) 692-714.
+</p>
+<p>Zhang, R. (2018) <em>Modeling and Analysis of Dynamic Computer Experiments</em>,
+PhD thesis, Queen's University, ON, Canada.</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ESL2D</code>, <code>SL2D</code>, <code>svdGP</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  library("lhs")
+  forretal &lt;- function(x,t,shift=1)
+  {
+    par1 &lt;- x[1]*6+4
+    par2 &lt;- x[2]*16+4
+    par3 &lt;- x[3]*6+1
+    t &lt;- t+shift
+    y &lt;- (par1*t-2)^2*sin(par2*t-par3)
+  }
+  timepoints &lt;- seq(0,1,len=200)
+  xi &lt;- lhs::randomLHS(30,3)
+  candei &lt;- lhs::randomLHS(500,3)
+  candest &lt;- lhs::randomLHS(500,3)
+  candest &lt;- rbind(candest, xi)
+
+  ## evaluate the response matrix on the design matrix
+  yi &lt;- apply(xi,1,forretal,timepoints)
+  x0 &lt;- runif(3)
+  y0 &lt;- forretal(x0,timepoints)
+  yobs &lt;- y0+rnorm(200,0,sd(y0)/sqrt(50))
+  ret &lt;- saEI(xi,yi,yobs,1,candei,candest,forretal,timepoints,
+              nstarts=1, nthread=1)
+  yhat &lt;- forretal(ret$xhat,timepoints)
+
+  ## draw a figure to illustrate
+  plot(y0,ylim=c(min(y0,yhat),max(y0,yhat)))
+  lines(yhat,col="red")
+</code></pre>
+
+
+</div>

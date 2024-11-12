@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>data_loading</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>data_loading helper function</h2>
+
+<h3>Description</h3>
+
+<p>Internal function to load the source and target data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data_loading(rv, system, keys_to_test)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>rv</code></td>
+<td>
+<p>The complete reactive-value dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>system</code></td>
+<td>
+<p>The part of the rv-list which should be loaded
+(e.g. rv$source or rv$target)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keys_to_test</code></td>
+<td>
+<p>A vector containing the names (keys) of
+the variables to test.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with the fields '$outdata' and if testing an SQL-based
+database also '$sql_statements'.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">utils_path &lt;- system.file(
+  "demo_data/utilities/",
+  package = "DQAstats"
+)
+mdr_filename &lt;- "mdr_example_data.csv"
+rv &lt;- list()
+rv$mdr &lt;- read_mdr(
+  utils_path = utils_path,
+  mdr_filename = mdr_filename
+)
+
+source_system_name &lt;- "exampleCSV_source"
+target_system_name &lt;- "exampleCSV_target"
+
+rv &lt;- c(rv, create_helper_vars(
+  mdr = rv$mdr,
+  source_db = source_system_name,
+  target_db = target_system_name
+))
+# save source/target vars
+rv$source$system_name &lt;- source_system_name
+rv$target$system_name &lt;- target_system_name
+rv$source$system_type &lt;- "csv"
+rv$target$system_type &lt;- "csv"
+
+rv$log$logfile_dir &lt;- tempdir()
+
+# set headless (without GUI, progressbars, etc.)
+rv$headless &lt;- TRUE
+
+# set configs
+demo_files &lt;- system.file("demo_data", package = "DQAstats")
+Sys.setenv("EXAMPLECSV_SOURCE_PATH" = demo_files)
+Sys.setenv("EXAMPLECSV_TARGET_PATH" = demo_files)
+
+# get configs
+rv$source$settings &lt;- DIZutils::get_config_env(
+  system_name = rv$source$system_name,
+  logfile_dir = rv$log$logfile_dir,
+  headless = rv$headless
+)
+rv$target$settings &lt;- DIZutils::get_config_env(
+  system_name = tolower(rv$target$system_name),
+  logfile_dir = rv$log$logfile_dir,
+  headless = rv$headless
+)
+
+# set start_time (e.g. when clicking the 'Load Data'-button in shiny
+rv$start_time &lt;- format(Sys.time(), usetz = TRUE, tz = "CET")
+
+# define restricting date
+rv$restricting_date$use_it &lt;- FALSE
+
+data_loading(
+  rv = rv,
+  system = rv$source,
+  keys_to_test = rv$keys_source
+)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_imf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot IMFs characteristics</h2>
+
+<h3>Description</h3>
+
+<p>General plot for the envelope, instantaneous frequency (period)
+and identity tuning of an intrinsic mode function (IMF)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_imf(
+  pulse,
+  dtlim = NULL,
+  xylim = NULL,
+  flim = NULL,
+  fclim = NULL,
+  dtline = NULL,
+  fline = NULL,
+  fcline = NULL,
+  vertical = FALSE,
+  n = 10,
+  at.maj = NULL,
+  ls = list(type = "o", pch = 19),
+  le1 = list(lwd = 2),
+  le2 = list(lty = 2),
+  lid = list(type = "p", pch = 19),
+  lcos = list(),
+  ldt = list(lty = 5, lwd = 2),
+  lf = list(lty = 5),
+  lfc = list(lty = 5),
+  box = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pulse</code></td>
+<td>
+<p>a pulse object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtlim, xylim, flim, fclim</code></td>
+<td>
+<p>the boundaries for the plots, respectively for
+the depth/time, amplitude, frequency and freqeuncy carrier</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtline, fline, fcline</code></td>
+<td>
+<p>coordinates to add vertical/horizontal lines</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vertical</code></td>
+<td>
+<p>whether to have the depth/time [dt] axis vertically</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the the number of intervals defined by minor ticks
+(geologist convention) or horizontaly (climatologist convention)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at.maj</code></td>
+<td>
+<p>the positions at which major tick-marks are to be drawn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ls, le1, le2, lid, lcos</code></td>
+<td>
+<p>lists of parameters to feed lines, for the
+original signal, the upper and lower envelope, the identity tuning, and the
+cosine line in the identity tuning</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ldt, lf, lfc</code></td>
+<td>
+<p>lists of parameters to provide the abline function (makes
+personalised lines for you to have a better grasp of the data).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box</code></td>
+<td>
+<p>whether to draw boxes around the plots</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>the line in the identity tuning plot is a genuine cosine,
+independent from the signal. This is evident when riding waves generate
+dephasing.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n &lt;- 600
+
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 40 * 21
+
+am &lt;- sin(t*2*pi/p2 + 50) + 0.03
+
+xy &lt;- sin(t*2*pi/p1 + 50) * 3 * am
+
+int &lt;- c(rep(1, 99 + 100), seq(1,3,2/100), seq(3,1,-2/100), rep(1,100 + 99))
+
+dt &lt;- cumsum(int)
+
+samp &lt;- approx(dt, xy, xout = seq(1,802, by = 2))
+
+xy &lt;- samp$y
+dt &lt;- samp$x
+
+e &lt;- normalise(m = xy, dt = dt)$a
+
+cond &lt;- dt &lt; 75
+
+xy &lt;- xy[!cond]
+dt &lt;- (dt[!cond] - 75) / 1.2
+e  &lt;- e[!cond]
+
+dq   &lt;- dq.algorithm(xy/e, dt)
+
+pulse &lt;- as.pulse(dt = dt, m = xy, f = dq$f, a = e, idt = dq$idt,
+                  repl = 1)
+
+plot_imf(pulse, fline = 25, dtline = c(222, 489))
+
+</code></pre>
+
+
+</div>

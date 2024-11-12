@@ -1,0 +1,355 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gep_by_nera</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get points on confidence region bounds by Newton-Raphson search</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>gep_by_nera()</code> is a function for finding points that
+ideally sit on specific confidence region bounds (<code class="reqn">\textit{CRB}</code>) by
+aid of the “Method of Lagrange Multipliers” (MLM) and by
+“Newton-Raphson” (nera) optimisation. The multivariate confidence
+interval for profiles with four time points, e.g., is an “ellipse”
+in four dimensions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gep_by_nera(n_p, kk, mean_diff, m_vc, ff_crit, y, max_trial, tol)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n_p</code></td>
+<td>
+<p>A positive integer that specifies the number of (time) points
+<code class="reqn">n_p</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kk</code></td>
+<td>
+<p>A non-negative numeric value that specifies the scaling factor
+<code class="reqn">kk</code> for the calculation of the Hotelling's <code class="reqn">T^2</code> statistic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean_diff</code></td>
+<td>
+<p>A vector of the mean differences between the dissolution
+profiles or model parameters of the reference and the test batch(es) or
+the averages of the model parameters of a specific group of batch(es)
+(reference or test). It must have the length specified by the parameter
+<code class="reqn">n_p</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m_vc</code></td>
+<td>
+<p>The pooled variance-covariance matrix of the dissolution
+profiles or model parameters of the reference and the test batch(es) or
+the variance-covariance matrix of the model parameters of a specific
+group of batch(es) (reference or test). It must have the dimension
+<code class="reqn">n_p \times n_p</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ff_crit</code></td>
+<td>
+<p>The critical <code class="reqn">F</code> value (i.e. a non-negative numeric).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A numeric vector of <code class="reqn">y</code> values that serve as starting points
+for the Newton-Raphson search, i.e. values supposed to lie on or close to
+the confidence interval bounds. It must have a length of <code class="reqn">n_p + 1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_trial</code></td>
+<td>
+<p>A positive integer that specifies the maximum number of
+Newton-Raphson search rounds to be performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>A non-negative numeric that specifies the accepted minimal
+difference between two consecutive search rounds.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>gep_by_nera()</code> determines the points on the
+<code class="reqn">\textit{CRB}</code> for each of the <code class="reqn">n_p</code> time points. It does so by aid
+of the “Method of Lagrange Multipliers” (MLM) and by
+“Newton-Raphson” (nera) optimisation, as proposed by Margaret
+Connolly (Connolly 2000).
+</p>
+<p>For more information, see the sections “Comparison of highly variable
+dissolution profiles” and “Similarity limits in terms of MSD” below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements is returned:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>A matrix with one column and <code class="reqn">n_p + 1</code> rows is returned,
+where rows <code class="reqn">1</code> to <code class="reqn">n_p</code> represent, for each time point or model
+parameter, the points on the <code class="reqn">\textit{CRB}</code>. For symmetry reasons,
+the points on the opposite side are obtained by addition/subtraction.
+The last row in the matrix, with index <code class="reqn">n_p + 1</code>, represents the
+<code class="reqn">\lambda</code> parameter of the MLM, also known as <em>lambda multiplier
+method</em>, that is used to optimise under constraint(s). The variable
+<code class="reqn">\lambda</code> is thus called the <em>Lagrange multiplier</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converged</code></td>
+<td>
+<p>A logical indicating whether the NR algorithm converged
+or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.on.crb</code></td>
+<td>
+<p>A logical indicating whether the points found by the NR
+algorithm sit on the sit on the confidence region bounds (<code>TRUE</code>) or
+not (<code>FALSE</code>). Since it is not know a priori it is <code>NA</code> by
+default. The parameter is set by the <code>check_point_location()</code>
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.trial</code></td>
+<td>
+<p>Number of trials until convergence.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.trial</code></td>
+<td>
+<p>Maximal number of trials.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>A non-negative numeric value that specifies the accepted minimal
+difference between two consecutive search rounds, i.e. the tolerance.</p>
+</td>
+</tr>
+</table>
+<h3>Comparison of highly variable dissolution profiles</h3>
+
+<p>When comparing the dissolution data of a post-approval change product and a
+reference approval product, the goal is to assess the similarity between the
+mean dissolution values at the observed sample time points. A widely used
+method is the <code class="reqn">f_2</code> method that was introduced by Moore &amp; Flanner (1996).
+Similarity testing criteria based on <code class="reqn">f_2</code> can be found in several FDA
+guidelines and in the guideline of the European Medicines Agency (EMA)
+“On the investigation of bioequivalence” (EMA 2010).
+</p>
+<p>In situations where within-batch variation is greater than 15%, FDA
+guidelines recommend use of a multivariate confidence interval as an
+alternative to the <code class="reqn">f_2</code> method. This can be done using the following
+stepwise procedure:
+</p>
+
+<ol>
+<li>
+<p> Establish a similarity limit in terms of “Multivariate
+Statistical Distance” (MSD) based on inter-batch differences in % drug
+release from reference (standard approved) formulations, i.e. the
+so-called “Equivalence Margin” (EM).
+</p>
+</li>
+<li>
+<p> Calculate the MSD between test and reference mean dissolutions.
+</p>
+</li>
+<li>
+<p> Estimate the 90% confidence interval (CI) of the true MSD as
+determined in step 2.
+</p>
+</li>
+<li>
+<p> Compare the upper limit of the 90% CI with the similarity limit
+determined in step 1. The test formulation is declared to be similar to
+the reference formulation if the upper limit of the 90% CI is less than
+or equal to the similarity limit.
+</p>
+</li>
+</ol>
+<h3>Similarity limits in terms of MSD</h3>
+
+<p>For the calculation of the “Multivariate Statistical Distance” (MSD),
+the procedure proposed by Tsong et al. (1996) can be considered as
+well-accepted method that is actually recommended by the FDA. According
+to this method, a multivariate statistical distance, called Mahalanobis
+distance, is used to measure the difference between two multivariate means.
+This distance measure is calculated as
+</p>
+<p style="text-align: center;"><code class="reqn">D_M = \sqrt{ \left( \bm{x}_T - \bm{x}_R \right)^{\top}
+  \bm{S}_{pooled}^{-1} \left( \bm{x}_T - \bm{x}_R \right)} ,</code>
+</p>
+
+<p>where <code class="reqn">\bm{S}_{pooled}</code> is the sample variance-covariance matrix pooled
+across the comparative groups, <code class="reqn">\bm{x}_T</code> and <code class="reqn">\bm{x}_R</code>
+are the vectors of the sample means for the test (<code class="reqn">T</code>) and reference
+(<code class="reqn">R</code>) profiles, and <code class="reqn">\bm{S}_T</code> and <code class="reqn">\bm{S}_R</code> are the
+variance-covariance matrices of the test and reference profiles. The pooled
+variance-covariance matrix <code class="reqn">\bm{S}_{pooled}</code> is calculated
+by
+</p>
+<p style="text-align: center;"><code class="reqn">\bm{S}_{pooled} = \frac{(n_R - 1) \bm{S}_R + (n_T - 1) \bm{S}_T}{%
+  n_R + n_T - 2} .</code>
+</p>
+
+<p>In order to determine the similarity limits in terms of the MSD, i.e. the
+Mahalanobis distance between the two multivariate means of the dissolution
+profiles of the formulations to be compared, Tsong et al. (1996) proposed
+using the equation
+</p>
+<p style="text-align: center;"><code class="reqn">D_M^{max} = \sqrt{ \bm{d}_g^{\top} \bm{S}_{pooled}^{-1} \bm{d}_g} ,</code>
+</p>
+
+<p>where <code class="reqn">\bm{d}_g</code> is a <code class="reqn">1 \times p</code> vector with all
+<code class="reqn">p</code> elements equal to an empirically defined limit <code class="reqn">\bm{d}_g</code>,
+e.g., <code class="reqn">15</code>%, for the maximum tolerable difference at all time points,
+and <code class="reqn">p</code> is the number of sampling points. By assuming that the data
+follow a multivariate normal distribution, the 90% confidence region
+(<code class="reqn">\textit{CR}</code>) bounds for the true difference between the mean vectors,
+<code class="reqn">\bm{\mu}_T - \bm{\mu}_R</code>, can be computed for the
+resultant vector <code class="reqn">\bm{\mu}</code> to satisfy the following condition:
+</p>
+<p style="text-align: center;"><code class="reqn">\bm{\textit{CR}} = K \left( \bm{\mu} - \left( \bm{x}_T -
+  \bm{x}_R \right) \right)^{\top} \bm{S}_{pooled}^{-1} \left( \bm{\mu} -
+  \left( \bm{x}_T - \bm{x}_R \right) \right) \leq
+  F_{p, n_T + n_R - p - 1, 0.9} ,</code>
+</p>
+
+<p>where <code class="reqn">K</code> is the scaling factor that is calculated as
+</p>
+<p style="text-align: center;"><code class="reqn">K = \frac{n_T n_R}{n_T + n_R} \; \frac{n_T + n_R - p - 1}{
+  \left( n_T + n_R - 2 \right) p} ,</code>
+</p>
+
+<p>and <code class="reqn">F_{p, n_T + n_R - p - 1, 0.9}</code> is the <code class="reqn">90^{th}</code> percentile of
+the <code class="reqn">F</code> distribution with degrees of freedom <code class="reqn">p</code> and
+<code class="reqn">n_T + n_R - p - 1</code>, where <code class="reqn">n_T</code> and <code class="reqn">n_R</code> are the number of
+observations of the reference and the test group, respectively, and <code class="reqn">p</code>
+is the number of sampling or time points, as mentioned already. It is
+obvious that <code class="reqn">(n_T + n_R)</code> must be greater than <code class="reqn">(p + 1)</code>. The
+formula for <code class="reqn">\textit{CR}</code> gives a <code class="reqn">p</code>-variate 90% confidence region
+for the possible true differences. <br></p>
+
+
+<h3>References</h3>
+
+<p>United States Food and Drug Administration (FDA). Guidance for industry:
+dissolution testing of immediate release solid oral dosage forms. 1997.<br><a href="https://www.fda.gov/media/70936/download">https://www.fda.gov/media/70936/download</a>
+</p>
+<p>United States Food and Drug Administration (FDA). Guidance for industry:
+immediate release solid oral dosage form: scale-up and post-approval
+changes, chemistry, manufacturing and controls, <em>in vitro</em> dissolution
+testing, and <em>in vivo</em> bioequivalence documentation (SUPAC-IR). 1995.<br><a href="https://www.fda.gov/media/70949/download">https://www.fda.gov/media/70949/download</a>
+</p>
+<p>European Medicines Agency (EMA), Committee for Medicinal Products for
+Human Use (CHMP). Guideline on the Investigation of Bioequivalence. 2010;
+<a href="https://www.ema.europa.eu/en/documents/scientific-guideline/guideline-investigation-bioequivalence-rev1_en.pdf">
+CPMP/EWP/QWP/1401/98 Rev. 1</a>..
+</p>
+<p>Moore, J.W., and Flanner, H.H. Mathematical comparison of curves with an
+emphasis on <em>in-vitro</em> dissolution profiles. <em>Pharm Tech</em>. 1996;
+<strong>20</strong>(6): 64-74.
+</p>
+<p>Tsong, Y., Hammerstrom, T., Sathe, P.M., and Shah, V.P. Statistical
+assessment of mean differences between two dissolution data sets.
+<em>Drug Inf J</em>. 1996; <strong>30</strong>: 1105-1112.<br><a href="https://doi.org/10.1177/009286159603000427">doi:10.1177/009286159603000427</a>
+</p>
+<p>Connolly, M. SAS(R) IML Code to calculate an upper confidence limit for
+multivariate statistical distance; 2000; Wyeth Lederle Vaccines, Pearl River,
+NY.<br><a href="https://analytics.ncsu.edu/sesug/2000/p-902.pdf">https://analytics.ncsu.edu/sesug/2000/p-902.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>check_point_location</code>, <code>mimcr</code>,
+<code>bootstrap_f2</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Collecting the required information
+time_points &lt;- suppressWarnings(as.numeric(gsub("([^0-9])", "",
+                                                colnames(dip1))))
+tcol &lt;- which(!is.na(time_points))
+b1 &lt;- dip1$type == "R"
+
+# Hotelling's T2 statistics
+l_hs &lt;- get_T2_two(m1 = as.matrix(dip1[b1, tcol]),
+                   m2 = as.matrix(dip1[!b1, tcol]),
+                   signif = 0.05)
+
+# Calling gep_by_nera()
+res &lt;- gep_by_nera(n_p = as.numeric(l_hs[["Parameters"]]["df1"]),
+                   kk = as.numeric(l_hs[["Parameters"]]["K"]),
+                   mean_diff = l_hs[["means"]][["mean.diff"]],
+                   m_vc = l_hs[["S.pool"]],
+                   ff_crit = as.numeric(l_hs[["Parameters"]]["F.crit"]),
+                   y = rep(1, times = l_hs[["Parameters"]]["df1"] + 1),
+                   max_trial = 100, tol = 1e-9)
+
+# Expected result in res[["points"]]
+#              [,1]
+# t.5   -15.7600077
+# t.10  -13.6501734
+# t.15  -11.6689469
+# t.20   -9.8429369
+# t.30   -6.6632182
+# t.60   -0.4634318
+# t.90    2.2528551
+# t.120   3.3249569
+#       -17.6619995
+
+# Rows t.5 to t.120 represent the points on the CR bounds.The unnamed last row
+# represents the Lagrange multiplier lambda.
+
+# If 'max_trial' is too small, the Newton-Raphson search may not converge.
+## Not run: 
+  tryCatch(
+    gep_by_nera(n_p = as.numeric(l_hs[["Parameters"]]["df1"]),
+                kk = as.numeric(l_hs[["Parameters"]]["K"]),
+                mean_diff = l_hs[["means"]][["mean.diff"]],
+                m_vc = l_hs[["S.pool"]],
+                ff_crit = as.numeric(l_hs[["Parameters"]]["F.crit"]),
+                y = rep(1, times = l_hs[["Parameters"]]["df1"] + 1),
+                max_trial = 5, tol = 1e-9),
+    warning = function(w) message(w),
+    finally = message("\nMaybe increasing the number of max_trial could help."))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

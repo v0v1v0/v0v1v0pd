@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>PlotTCsRibbon</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+<img src="../help/figures/DiPalm.png" alt="">
+
+Plot multiple averaged time-course expression patterns for a group of genes
+</h2>
+
+<h3>Description</h3>
+
+<p>A plotting function that generates a ribbon plot representing the summarized expression of a set of genes. A separate ribbon is generated for each time-course. The ribbon represents + &amp; - 1 standard deviation from the mean at each point.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">PlotTCsRibbon(TClst, tgenes, main = "", xlab = "Time", ylab = "",
+ xAxsLabs = colnames(TClst[[1]]),scale = TRUE, alpha = 0.1, tcols, tltys,
+ splits = rep(1, length(TClst)))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>TClst</code></td>
+<td>
+
+<p>A named list of time-course matrices. Each element of the list is a time-course expression matrix (Genes as rows and time points as columns).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tgenes</code></td>
+<td>
+
+<p>A vector of gene accessions (found in the row names of one element of TClst).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+
+<p>The main title of the plot, if splits are defined, multiple plots will be generated and a vector of titles may be defined here.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab</code></td>
+<td>
+
+<p>The X-axis label.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ylab</code></td>
+<td>
+
+<p>The Y-axis label.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xAxsLabs</code></td>
+<td>
+
+<p>The time point labels for the x-axis, by default they will be the column names of the first time-course in TClst.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+
+<p>Logical: should the expression values of each time-course be scaled and centered?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>The alpha channel to be used for the ribbons (number from 0 - 1 defining transparency). See <code>adjustcolor</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tcols</code></td>
+<td>
+
+<p>A vector of colors controlling the colors of the lines. Must list one color for each time-course in TClst.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tltys</code></td>
+<td>
+
+<p>A vector of integers controlling the line type (lty) of the lines. Must list one lty for each time-course in TClst.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+
+<p>A vector of integers defining groups to be plotted on separate plots if desired (see examples).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This can be used to plot the summarized expression pattern of an entire cluster of genes and compare between multiple time courses. Line plots are generated representing the mean expression value at each time point for the group. Ribbons are plotted along the lines in semi-transparent colors. The ribbons represent + and - one standard deviation from the mean expression level of the group.
+# 
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function generates multiple line plots representing the average expression of a group of genes with ribbons representing standard deviation. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ryan C. Sartor
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("testData")
+
+# Calculate the module memberships
+kMEsList&lt;-BuildModMembership(MeMat=testData$moduleEigengenes, TCsLst=testData$timeCourseList)
+
+# Build the limma models
+LimmaMods&lt;-lapply(kMEsList, function(x) 
+BuildLimmaLM(dataMat = x, designMat = testData$modelDesign, contrastStr = testData$modelContrast))
+
+# Get the adjusted Pvalues for each gene
+AdjPval_kMEs&lt;-sapply(testData$testResults[rownames(LimmaMods[[1]])],function(x) 
+AdjustPvalue(tVal = x, tVec = testData$testResults, pVec = testData$permutedResults))
+
+# Cluster the genes base on the limma results
+LimmaSums&lt;-do.call(cbind,lapply(LimmaMods,function(x) x$t))
+LimmaModsSig&lt;-LimmaSums[names(AdjPval_kMEs)[which(AdjPval_kMEs&lt;0.01)],]
+patternCor&lt;-cor(t(LimmaModsSig))
+patternTree&lt;-hclust(as.dist(1-patternCor),method = "complete")
+patternClusters&lt;-cutree(tree = patternTree, k = 25)
+patternClusters&lt;-tapply(rownames(patternCor),INDEX = patternClusters,function(x) x)
+
+#Replicates are grouped together (same color + lty values)
+PlotTCsRibbon(TClst = testData$timeCourseList, main="Drought Time-Course", 
+xAxsLabs = c(seq(1,23,4),seq(1,23,4)), xlab="ZT Time (hours)", tgenes = patternClusters[[15]],
+scale = TRUE, tcols = c("red","red","blue","blue"), tltys = c(1,1,1,1))
+
+#Replicates are in different groups (same color but different lty values)
+PlotTCsRibbon(TClst = testData$timeCourseList, main="Drought Time-Course",
+xAxsLabs = c(seq(1,23,4),seq(1,23,4)), xlab="ZT Time (hours)", tgenes = patternClusters[[15]],
+scale = TRUE, tcols = c("red","red","blue","blue"), tltys = c(1,2,1,2))
+
+#Replicates are represented on differnt plots (using the splits argument)
+PlotTCsRibbon(TClst = testData$timeCourseList, main=c("Rep1","Rep2"), 
+xAxsLabs = c(seq(1,23,4),seq(1,23,4)), xlab="ZT Time (hours)", tgenes = patternClusters[[15]],
+scale = TRUE, tcols = c("red","red","blue","blue"), tltys = c(1,2,1,2), splits = c(1,2,1,2))
+</code></pre>
+
+
+</div>

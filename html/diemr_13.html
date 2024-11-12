@@ -1,0 +1,107 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>smoothPolarizedGenotypes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Smooths Polarized Genotype States</h2>
+
+<h3>Description</h3>
+
+<p>This function smooths polarized genotype states using a Laplace kernel density estimation.
+It calculates a smoothed version of the genotype states over specified windows.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">smoothPolarizedGenotypes(
+  genotypes,
+  includedSites,
+  ChosenSites = "all",
+  windows = NULL,
+  windowSize = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>genotypes</code></td>
+<td>
+<p>A character matrix comprising of _012 encodings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>includedSites</code></td>
+<td>
+<p>A character path to a file with columns <code>CHROM</code> and <code>POS</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ChosenSites</code></td>
+<td>
+<p>A logical vector indicating which sites are to be included in the
+analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windows</code></td>
+<td>
+<p>A two-column numeric matrix with indices of start and end positions for
+windows for all markers indicated by <code>ChosenSites</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowSize</code></td>
+<td>
+<p>A numeric window size for metric conversion in base-pairs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters to be passed to rank2map if <code>windows = NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Ensure that <code>ChosenSites</code> is the same as was used to import polarized genotypes.
+</p>
+<p>The function uses a Laplace kernel to weight the genotype states within a window around each marker position,
+based on physical positions of the markers. The smoothing process accounts for chromosome-level scales.
+</p>
+<p>The Laplace kernel density is calculated as:
+</p>
+<p style="text-align: center;"><code class="reqn">\frac{1}{2b} \exp\left(\frac{-|x - \mu|}{b}\right)</code>
+</p>
+
+<p>where <code class="reqn">x</code> is the position, <code class="reqn">\mu</code> is the center of the kernel, and <code class="reqn">b</code> is the scale parameter.
+The scale parameter is <code class="reqn">b = 10^{-4} n</code>, where <code class="reqn">n</code> is the position of the last
+marker on the chromosome.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> ## Not run: 
+ # Run this example in a working directory with write permissions
+ myo &lt;- system.file("extdata", "myotis.vcf", package = "diemr")
+ vcf2diem(myo, "myo")
+ fit &lt;- diem("myo-001.txt", ChosenInds = 1:14)
+ gen &lt;- importPolarized("myo-001.txt", changePolarity = fit$markerPolarity, ChosenInds = 1:14)
+ h &lt;- apply(gen, 1, \(x) pHetErrOnStateCount(sStateCount(x)))[1, ]
+ gen2 &lt;- smoothPolarizedGenotypes(genotypes = gen, 
+    includedSites = "myo-includedSites.txt", windowSize = 50)
+ plotPolarized(gen, h)
+ plotPolarized(gen2, h)
+ 
+## End(Not run)
+</code></pre>
+
+
+</div>

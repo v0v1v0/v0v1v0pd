@@ -1,0 +1,274 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bootdht</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bootstrap uncertainty estimation for distance sampling models</h2>
+
+<h3>Description</h3>
+
+<p>Performs a bootstrap for simple distance sampling models using the same data
+structures as <code>dht</code>. Note that only geographical stratification
+as supported in <code>dht</code> is allowed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bootdht(
+  model,
+  flatfile,
+  resample_strata = FALSE,
+  resample_obs = FALSE,
+  resample_transects = TRUE,
+  nboot = 100,
+  summary_fun = bootdht_Nhat_summarize,
+  convert_units = 1,
+  select_adjustments = FALSE,
+  sample_fraction = 1,
+  multipliers = NULL,
+  progress_bar = "base",
+  cores = 1,
+  convert.units = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a model fitted by <code>ds</code> or a list of models</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flatfile</code></td>
+<td>
+<p>Data provided in the flatfile format. See <code>flatfile</code> for
+details. Please note, it is a current limitation of bootdht that all
+Sample.Label identifiers must be unique across all strata, i.e.transect
+ids must not be re-used from one strata to another. An easy way to achieve
+this is to paste together the stratum names and transect ids.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample_strata</code></td>
+<td>
+<p>should resampling happen at the stratum
+(<code>Region.Label</code>) level? (Default <code>FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample_obs</code></td>
+<td>
+<p>should resampling happen at the observation (<code>object</code>)
+level? (Default <code>FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample_transects</code></td>
+<td>
+<p>should resampling happen at the transect
+(<code>Sample.Label</code>) level? (Default <code>TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nboot</code></td>
+<td>
+<p>number of bootstrap replicates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summary_fun</code></td>
+<td>
+<p>function that is used to obtain summary statistics from
+the bootstrap, see Summary Functions below. By default
+<code>bootdht_Nhat_summarize</code> is used, which just extracts abundance estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convert_units</code></td>
+<td>
+<p>conversion between units for abundance estimation, see
+"Units", below. (Defaults to 1, implying all of the units are "correct"
+already.) This takes precedence over any unit conversion stored in <code>model</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select_adjustments</code></td>
+<td>
+<p>select the number of adjustments in each
+bootstrap, when <code>FALSE</code> the exact detection function specified in <code>model</code> is
+fitted to each replicate. Setting this option to <code>TRUE</code> can significantly
+increase the runtime for the bootstrap. Note that for this to work <code>model</code>
+must have been fitted with <code>adjustment!=NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_fraction</code></td>
+<td>
+<p>what proportion of the transects was covered (e.g.,
+0.5 for one-sided line transects).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multipliers</code></td>
+<td>
+<p><code>list</code> of multipliers. See "Multipliers" below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress_bar</code></td>
+<td>
+<p>which progress bar should be used? Default "base" uses
+<code>txtProgressBar</code>, "none" suppresses output, "progress" uses the
+<code>progress</code> package, if installed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>number of CPU cores to use to compute the estimates. See "Parallelization" below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convert.units</code></td>
+<td>
+<p>deprecated, see same argument with underscore, above.</p>
+</td>
+</tr>
+</table>
+<h3>Summary Functions</h3>
+
+<p>The function <code>summary_fun</code> allows the user to specify what summary
+statistics should be recorded from each bootstrap. The function should take
+two arguments, <code>ests</code> and <code>fit</code>. The former is the output from
+<code>dht2</code>, giving tables of estimates. The latter is the fitted detection
+function object. The function is called once fitting and estimation has been
+performed and should return a <code>data.frame</code>. Those <code>data.frame</code>s
+are then concatenated using <code>rbind</code>. One can make these functions
+return any information within those objects, for example abundance or
+density estimates or the AIC for each model. See Examples below.
+</p>
+
+
+<h3>Multipliers</h3>
+
+<p>It is often the case that we cannot measure distances to individuals or
+groups directly, but instead need to estimate distances to something they
+produce (e.g., for whales, their blows; for elephants their dung) – this is
+referred to as indirect sampling. We may need to use estimates of production
+rate and decay rate for these estimates (in the case of dung or nests) or
+just production rates (in the case of songbird calls or whale blows). We
+refer to these conversions between "number of cues" and "number of animals"
+as "multipliers".
+</p>
+<p>The <code>multipliers</code> argument is a <code>list</code>, with 3 possible elements (<code>creation</code>
+and <code>decay</code>). Each element of which is either:
+</p>
+
+<ul>
+<li> <p><code>data.frame</code> and must have at least a column named <code>rate</code>, which abundance
+estimates will be divided by (the term "multiplier" is a misnomer, but
+kept for compatibility with Distance for Windows). Additional columns can
+be added to give the standard error and degrees of freedom for the rate
+if known as <code>SE</code> and <code>df</code>, respectively. You can use a multirow
+<code>data.frame</code> to have different rates for different geographical areas
+(for example). In this case the rows need to have a column (or columns)
+to <code>merge</code> with the data (for example <code>Region.Label</code>).
+</p>
+</li>
+<li>
+<p> a <code>function</code> which will return a single estimate of the relevant
+multiplier. See <code>make_activity_fn</code> for a helper function for use with the
+<code>activity</code> package.
+</p>
+</li>
+</ul>
+<h3>Model selection</h3>
+
+<p>Model selection can be performed on a per-replicate basis within the
+bootstrap. This has three variations:
+</p>
+
+<ol>
+<li>
+<p> when <code>select_adjustments</code> is <code>TRUE</code> then adjustment terms are selected
+by AIC within each bootstrap replicate (provided that <code>model</code> had the
+<code>order</code> and <code>adjustment</code> options set to non-<code>NULL</code>.
+</p>
+</li>
+<li>
+<p> if <code>model</code> is a list of fitted detection functions, each of these is
+fitted to each replicate and results generated from the one with the
+lowest AIC.
+</p>
+</li>
+<li>
+<p> when <code>select_adjustments</code> is <code>TRUE</code> and <code>model</code> is a list of fitted
+detection functions, each model fitted to each replicate and number of
+adjustments is selected via AIC.
+This last option can be extremely time consuming.
+</p>
+</li>
+</ol>
+<h3>Parallelization</h3>
+
+<p>If <code>cores</code>&gt;1 then the <code>parallel</code>/<code>doParallel</code>/<code>foreach</code>/<code>doRNG</code> packages
+will be used to run the computation over multiple cores of the computer. To
+use this component you need to install those packages using:
+<code>install.packages(c("foreach", "doParallel", "doRNG"))</code> It is advised that
+you do not set <code>cores</code> to be greater than one less than the number of cores
+on your machine. The <code>doRNG</code> package is required to make analyses
+reproducible (<code>set.seed</code> can be used to ensure the same answers).
+</p>
+<p>It is also hard to debug any issues in <code>summary_fun</code> so it is best to run a
+small number of bootstraps first in parallel to check that things work. On
+Windows systems <code>summary_fun</code> does not have access to the global environment
+when running in parallel, so all computations must be made using only its
+<code>ests</code> and <code>fit</code> arguments (i.e., you can not use R objects from elsewhere
+in that function, even if they are available to you from the console).
+</p>
+<p>Another consequence of the global environment being unavailable inside
+parallel bootstraps is that any starting values in the model object passed
+in to <code>bootdht</code> must be hard coded (otherwise you get back 0 successful
+bootstraps). For a worked example showing this, see the camera trap distance
+sampling online example at
+<a href="https://examples.distancesampling.org/Distance-cameratraps/camera-distill.html">https://examples.distancesampling.org/Distance-cameratraps/camera-distill.html</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.dht_bootstrap</code> for how to summarize the results,
+<code>bootdht_Nhat_summarize</code> and <code>bootdht_Dhat_summarize</code> for an examples of
+summary functions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# fit a model to the minke data
+data(minke)
+mod1 &lt;- ds(minke)
+
+# summary function to save the abundance estimate
+Nhat_summarize &lt;- function(ests, fit) {
+  return(data.frame(Nhat=ests$individuals$N$Estimate))
+}
+
+# perform 5 bootstraps
+bootout &lt;- bootdht(mod1, flatfile=minke, summary_fun=Nhat_summarize, nboot=5)
+
+# obtain basic summary information
+summary(bootout)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

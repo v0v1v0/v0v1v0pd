@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>generate_set_hook</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Error displaying a call located at a hook location</h2>
+
+<h3>Description</h3>
+
+<p>When devising complex functions, errors or warnings can be deeply nested in internal
+function calls while the user-relevant call is way up the stack. In such cases, these "hook"
+functions facilitate the creation of error/warnings informative for the user.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">generate_set_hook(namespace)
+
+generate_stop_hook(namespace)
+
+generate_warn_hook(namespace)
+
+set_hook()
+
+generate_get_hook(namespace)
+
+stop_hook(..., msg = NULL, envir = parent.frame(), verbatim = FALSE)
+
+warn_hook(..., envir = parent.frame(), immediate. = FALSE, verbatim = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>namespace</code></td>
+<td>
+<p>Character scalar giving the namespace for which the hooks are valid. Only useful
+when hook functions are used in a package.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Objects that will be coerced to character and will compose the error message.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>msg</code></td>
+<td>
+<p>A character vector, default is <code>NULL</code>. If provided, this message will be displayed right under the error message. This is mostly useful when the text contains formatting because the function <code>stop</code> used to send the error message erases any formatting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>An environment, default is <code>parent.frame()</code>. Only relevant if the error/warning message contains
+interpolation (interpolation is performed with <a href="https://github.com/lrberge/stringmagic">stringmagic</a>). It tells
+where the variables to be interpolated should be found. In general you should not worry about this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbatim</code></td>
+<td>
+<p>Logical scalar, default is <code>FALSE</code>. By default the error/warning message allows variable
+interpolation with <a href="https://github.com/lrberge/stringmagic">stringmagic</a>. To disable interpolation,
+use <code>verbatim = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>immediate.</code></td>
+<td>
+<p>Whether the warning message should be prompted directly. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>These functions are useful when developing complex functions relying on nested internal functions.
+It is important for the user to know where the errors/warnings come from for quick debugging.
+This "_hook" family of functions write the call of the user-level function even if the errors
+happen at the level of the internal functions.
+</p>
+<p>If you need these functions within a package, you need to generate the <code>set_hook</code>, <code>stop_hook</code> and
+<code>warn_hook</code> functions so that they set, and look up for, hooks speficic to your function. This ensures that
+if other functions outside your package also use hooks, there will be no conflict. The only thing to do
+is to write this somewhere in the package files:
+</p>
+<div class="sourceCode R"><pre>set_hook = generate_set_hook("pkg_name")
+stop_hook = generate_stop_hook("pkg_name")
+warn_hook = generate_warn_hook("pkg_name")
+</pre></div>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>generate_set_hook()</code>: Generates a package specific <code>set_hook</code> function
+</p>
+</li>
+<li> <p><code>generate_stop_hook()</code>: Generates a package specific <code>stop_hook</code> function
+</p>
+</li>
+<li> <p><code>generate_warn_hook()</code>: Generates a package specific <code>warn_hook</code> function
+</p>
+</li>
+<li> <p><code>set_hook()</code>: Marks the function as the hook
+</p>
+</li>
+<li> <p><code>generate_get_hook()</code>: Generates the function giving the number of frames we
+need to go up the call stack to find the hooked function
+</p>
+</li>
+<li> <p><code>warn_hook()</code>: Warning with a call located at a hook location
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Laurent Berge
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Regular stop functions with interpolation: <code>stop_up()</code>. Regular argument checking
+with <code>check_arg()</code> and <code>check_set_arg()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# The example needs to be complex since it's about nested functions, sorry
+# Let's say you have an internal function that is dispatched into several 
+# user-level functions
+
+my_mean = function(x, drop_na = FALSE){
+  set_hook()
+  my_mean_internal(x = x, drop_na = drop_na)
+}
+
+my_mean_skip_na = function(x){
+  set_hook()
+  my_mean_internal(x = x, drop_na = TRUE)
+}
+
+my_mean_internal = function(x, drop_na){
+  # simple check
+  if(!is.numeric(x)){
+    # note that we use string interpolation with stringmagic.
+    stop_hook("The argument `x` must be numeric. PROBLEM: it is of class {enum.bq ? class(x)}.")
+  }
+
+  if(drop_na){
+    return(mean(x, na.rm = TRUE))
+  } else {
+    return(mean(x, na.rm = FALSE))
+  }
+}
+
+# Let's run the function with a wrong argument
+x = "five"
+try(my_mean(x))
+
+# =&gt; the error message reports that the error comes from my_mean 
+#    and *not* my_mean_internal
+ 
+
+</code></pre>
+
+
+</div>

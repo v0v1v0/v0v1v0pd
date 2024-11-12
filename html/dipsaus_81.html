@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lapply_async2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply, but in parallel</h2>
+
+<h3>Description</h3>
+
+<p>Apply, but in parallel
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lapply_async2(
+  x,
+  FUN,
+  FUN.args = list(),
+  callback = NULL,
+  plan = TRUE,
+  future.chunk.size = NULL,
+  future.seed = sample.int(1, n = 1e+05 - 1),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>vector, list</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>function to apply on each element of <code>x</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN.args</code></td>
+<td>
+<p>more arguments to feed into <code>FUN</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>callback</code></td>
+<td>
+<p>function to run after each iteration</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plan</code></td>
+<td>
+<p>logical, or character or <code>future</code> plan; see Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>future.chunk.size, future.seed</code></td>
+<td>
+<p>see also <code>future_lapply</code>.
+If you want the callbacks
+to be called immediately after each loop, then set it to <code>1</code>,
+which is not optimal but the only way right now.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>passed to <code>plan</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When <code>plan</code> is logical, <code>FALSE</code> means use current plan.
+If <code>plan=TRUE</code>, then it equals to <code>plan='multicore'</code>. For
+characters, <code>plan</code> can be <code>'multicore'</code>, <code>'callr'</code>,
+<code>'sequential'</code>, <code>'multisession'</code>, <code>'multiprocess'</code>,
+etc. Alternatively, you could pass future <code>plan</code>
+objects.
+</p>
+
+
+<h3>Value</h3>
+
+<p>same as
+<code>with(FUN.args, lapply(x, function(el){eval(body(FUN))}))</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>make_forked_clusters</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(future)
+plan(sequential)
+
+# Use sequential plan
+# 1. Change `plan` to 'multicore', 'multisession', or TRUE to enable
+# multi-core, but still with progress information
+# 2. Change plan=FALSE will use current future plan
+res &lt;- lapply_async2(100:200, function(x){
+  return(x+1)
+}, callback = function(e){
+  sprintf('Input=%d', e)
+}, plan = 'sequential')
+
+# Disable callback message, then the function reduce to
+# normal `future.apply::future_lapply`
+res &lt;- lapply_async2(100:200, function(x){
+  return(x+1)
+}, callback = NULL, plan = FALSE)
+
+if(interactive()) {
+
+  # PID are different, meaning executing in different sessions
+  lapply_async2(1:4, function(x){
+    Sys.getpid()
+  })
+}
+
+</code></pre>
+
+
+</div>

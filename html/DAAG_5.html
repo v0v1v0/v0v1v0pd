@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>align2D</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Function to align points from ordination with known locations
+</h2>
+
+<h3>Description</h3>
+
+<p>Find the linear transformation which, applied to one set of points
+in the ($x$, $y$) plane, gives the best match in a least squares
+sense to a second set of points.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">align2D(lat, long, x1, x2, wts=NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lat</code></td>
+<td>
+
+<p>Latitude or other co-ordinate of point to align to
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>long</code></td>
+<td>
+
+<p>Longitude or other co-ordinate of point to align to
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x1</code></td>
+<td>
+
+<p>First coordinate of point to align
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x2</code></td>
+<td>
+
+<p>First coordinate of point to align
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wts</code></td>
+<td>
+
+<p>If non-NULL, specifies weights for the points.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Achieves the best match, in a least squares sense, between an ordination
+and known locations in two-dimensionaL space.</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fitlat</code></td>
+<td>
+<p>Fitted values of <code>lat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitlong</code></td>
+<td>
+<p>Fitted values of <code>long</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lat</code></td>
+<td>
+<p>Input values of <code>lat</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>long</code></td>
+<td>
+<p>Input values of <code>long</code></p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>An ordination that is designed to reproduce distances between
+points is specified only to within an arbitrary rotation about
+the centroid.  What linear transformation of the points ($x1$, $x2$)
+given by the ordination gives the best match to the known
+co-ordinates?
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>John H Maindonald
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(require(DAAG)&amp;require(oz)){
+aupts &lt;- cmdscale(audists)
+xy &lt;- align2D(lat = aulatlong$latitude, long = aulatlong$longitude,
+              x1 = aupts[, 1], x2 = aupts[, 2], wts = NULL)
+oz()
+fitcoords &lt;- align2D(lat=aulatlong$latitude,
+                      long=aulatlong$longitude,
+                      x1=aupts[,1], x2 = aupts[,2],
+                      wts=NULL)
+x &lt;-with(fitcoords,
+         as.vector(rbind(lat, fitlat, rep(NA,length(lat)))))
+y &lt;-with(fitcoords,
+         as.vector(rbind(long, fitlong, rep(NA,length(long)))))
+points(aulatlong, col="red", pch=16, cex=1.5)
+lines(x, y, col="gray40", lwd=3)
+}
+
+## The function is currently defined as
+function(lat, long, x1, x2, wts=NULL){
+    ## Get best fit in space of (latitude, longitude)
+    if(is.null(wts))wts &lt;- rep(1,length(x1))
+    fitlat &lt;- predict(lm(lat ~ x1+x2, weights=wts))
+    fitlong &lt;- predict(lm(long ~ x1+x2, weights=wts))
+    list(fitlat = fitlat, fitlong=fitlong, lat=lat, long=long)
+}
+</code></pre>
+
+
+</div>

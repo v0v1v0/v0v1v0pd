@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ibdEstM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate Relatedness and a Number of Related Strains</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the number of related pairs of strains between two
+infections along with corresponding relatedness estimates and optional
+inference.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ibdEstM(
+  pair,
+  coi,
+  afreq,
+  Mmax = 6,
+  pval = FALSE,
+  confreg = FALSE,
+  llik = FALSE,
+  rnull = 0,
+  alpha = 0.05,
+  equalr = FALSE,
+  freqlog = FALSE,
+  nrs = c(1000, 100, 32, 16, 12, 10),
+  revals = NULL,
+  tol0 = 1e-09,
+  logrs = NULL,
+  nevals = NULL,
+  nloc = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pair</code></td>
+<td>
+<p>a list of length two containing data for a pair of samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coi</code></td>
+<td>
+<p>a vector containing complexity of infection for each sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>afreq</code></td>
+<td>
+<p>a list of allele frequencies. Each element of the list
+corresponds to a locus.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Mmax</code></td>
+<td>
+<p>a maximum number of related pairs of strains to evaluate over.
+If greater than <code>min(coi)</code>, will be set to <code>min(coi)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval, confreg, llik</code></td>
+<td>
+<p>logical values specifying if p-value, confidence
+region, and log-likelihood for a range of <code class="reqn">r</code> values should be
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rnull</code></td>
+<td>
+<p>a null value of relatedness parameter for hypothesis testing
+(needed if <code>pval = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level for a 1 -
+α confidence region.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equalr</code></td>
+<td>
+<p>a logical value. If <code>TRUE</code>, the same level of relatedness
+is assumed for M pairs of strains
+(r<sub>1</sub> = ... =
+r<sub>M</sub>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>freqlog</code></td>
+<td>
+<p>a logical value indicating if <code>afreq</code> is on the log
+scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrs</code></td>
+<td>
+<p>an integer vector where <code>i</code>'th element correspons to
+M = i and indicates precision of the
+estimate (resolution of a grid of parameter values). Ignored if non-null
+<code>revals</code> is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>revals</code></td>
+<td>
+<p>a list where <code>i</code>'th element corresponds to
+M = i and is a matrix representing a grid
+of parameter values (a matrix where each column represents a single
+(r<sub>1</sub>, ..., r<sub>M</sub>) combination).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol0</code></td>
+<td>
+<p>a tolerance value for an estimate to be considered zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logrs</code></td>
+<td>
+<p>a list where <code>i</code>'th element corresponds to
+M = i and is a list as returned by
+<code>logReval</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nevals</code></td>
+<td>
+<p>a vector where <code>i</code>'th element corresponds to
+M = i and provides the number of
+relatedness values/combinations to evaluate over.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nloc</code></td>
+<td>
+<p>the number of loci.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A named list if multiple output logical values are <code>TRUE</code> - or a
+vector if only <code>rhat = TRUE</code>. The output includes:
+</p>
+
+<ul>
+<li>
+<p> a relatedness estimate (numeric vector of length corresponding to the
+estimated number of related pairs);
+</p>
+</li>
+<li>
+<p> a p-value if <code>pval = TRUE</code>;
+</p>
+</li>
+<li>
+<p> parameter values from the grid in <code>revals</code> that are within the
+confidence region if <code>confreg = TRUE</code>;
+</p>
+</li>
+<li>
+<p> log-likelihood values for the parameter grid in <code>revals</code> if
+<code>llik = TRUE</code>.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>ibdPair</code> for estimates of relatedness between two
+samples and <code>ibdDat</code> for pairwise relatedness estimates within
+a dataset or between two datasets.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">coi   &lt;- getCOI(dsmp, lrank = 2)           # estimate COI
+afreq &lt;- calcAfreq(dsmp, coi, tol = 1e-5)  # estimate allele frequencies
+
+# two samples
+ipair &lt;- c(21, 17)
+# for higher COI: c(33, 5): COI = 5-6; c(37, 20): 4-3, c(41, 50): 5-4
+
+Mmax  &lt;- min(coi[ipair])
+# choose resolution of the grid for different M
+nrs   &lt;- c(1e3, 1e2, 32, 16, 12, 10)[1:Mmax]
+revals &lt;- mapply(generateReval, 1:Mmax, nr = nrs)
+
+(res1 &lt;- ibdEstM(dsmp[ipair], coi[ipair], afreq, Mmax = Mmax, equalr = FALSE,
+                 reval = revals))
+(res2 &lt;- ibdEstM(dsmp[ipair], coi[ipair], afreq, Mmax = Mmax, equalr = TRUE))
+# number of related pairs of strains (M')
+sum(res1 &gt; 0)
+sum(res2 &gt; 0)  # can be 0's
+
+</code></pre>
+
+
+</div>

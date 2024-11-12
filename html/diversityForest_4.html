@@ -1,0 +1,497 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>divfor</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct a basic diversity forest prediction rule that uses univariable, binary splitting.</h2>
+
+<h3>Description</h3>
+
+<p>Implements the most basic form of diversity forests that uses univariable, binary splitting.
+Currently, categorical, metric, and survival outcomes are supported.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">divfor(
+  formula = NULL,
+  data = NULL,
+  num.trees = 500,
+  mtry = NULL,
+  importance = "none",
+  write.forest = TRUE,
+  probability = FALSE,
+  min.node.size = NULL,
+  max.depth = NULL,
+  replace = TRUE,
+  sample.fraction = ifelse(replace, 1, 0.632),
+  case.weights = NULL,
+  class.weights = NULL,
+  splitrule = NULL,
+  num.random.splits = 1,
+  alpha = 0.5,
+  minprop = 0.1,
+  split.select.weights = NULL,
+  always.split.variables = NULL,
+  respect.unordered.factors = NULL,
+  scale.permutation.importance = FALSE,
+  keep.inbag = FALSE,
+  inbag = NULL,
+  holdout = FALSE,
+  quantreg = FALSE,
+  oob.error = TRUE,
+  num.threads = NULL,
+  save.memory = FALSE,
+  verbose = TRUE,
+  seed = NULL,
+  dependent.variable.name = NULL,
+  status.variable.name = NULL,
+  classification = NULL,
+  nsplits = 30,
+  proptry = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Object of class <code>formula</code> or <code>character</code> describing the model to fit. Interaction terms supported only for numerical variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Training data of class <code>data.frame</code>, <code>matrix</code>, <code>dgCMatrix</code> (Matrix) or <code>gwaa.data</code> (GenABEL).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.trees</code></td>
+<td>
+<p>Number of trees. Default is 500.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mtry</code></td>
+<td>
+<p>Artefact from 'ranger'. NOT needed for diversity forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>importance</code></td>
+<td>
+<p>Variable importance mode, one of 'none', 'impurity', 'impurity_corrected', 'permutation'. The 'impurity' measure is the Gini index for classification, the variance of the responses for regression and the sum of test statistics (see <code>splitrule</code>) for survival. NOTE: Currently, only "permutation" (and "none") work for diversity forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>write.forest</code></td>
+<td>
+<p>Save <code>divfor.forest</code> object, required for prediction. Set to <code>FALSE</code> to reduce memory usage if no prediction intended.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probability</code></td>
+<td>
+<p>Grow a probability forest as in Malley et al. (2012). NOTE: Not yet implemented for diversity forests!</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.node.size</code></td>
+<td>
+<p>Minimal node size. Default 1 for classification, 5 for regression, 3 for survival, and 5 for probability.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.depth</code></td>
+<td>
+<p>Maximal tree depth. A value of NULL or 0 (the default) corresponds to unlimited depth, 1 to tree stumps (1 split per tree).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>Sample with replacement.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample.fraction</code></td>
+<td>
+<p>Fraction of observations to sample. Default is 1 for sampling with replacement and 0.632 for sampling without replacement. For classification, this can be a vector of class-specific values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case.weights</code></td>
+<td>
+<p>Weights for sampling of training observations. Observations with larger weights will be selected with higher probability in the bootstrap (or subsampled) samples for the trees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class.weights</code></td>
+<td>
+<p>Weights for the outcome classes (in order of the factor levels) in the splitting rule (cost sensitive learning). Classification and probability prediction only. For classification the weights are also applied in the majority vote in terminal nodes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitrule</code></td>
+<td>
+<p>Splitting rule. For classification and probability estimation "gini" or "extratrees" with default "gini". For regression "variance", "extratrees" or "maxstat" with default "variance". For survival "logrank", "extratrees", "C" or "maxstat" with default "logrank". NOTE: For diversity forests currently only the default splitting rules are supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.random.splits</code></td>
+<td>
+<p>Artefact from 'ranger'. NOT needed for diversity forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>For "maxstat" splitrule: Significance threshold to allow splitting. NOT needed for diversity forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minprop</code></td>
+<td>
+<p>For "maxstat" splitrule: Lower quantile of covariate distribution to be considered for splitting. NOT needed for diversity forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split.select.weights</code></td>
+<td>
+<p>Numeric vector with weights between 0 and 1, representing the probability to select variables for splitting. Alternatively, a list of size num.trees, containing split select weight vectors for each tree can be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>always.split.variables</code></td>
+<td>
+<p>Currently not useable. Character vector with variable names to be always selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>respect.unordered.factors</code></td>
+<td>
+<p>Handling of unordered factor covariates. One of 'ignore' and 'order' (the option 'partition' possible in 'ranger' is not (yet) possible with diversity forests). Default is 'ignore'. Alternatively TRUE (='order') or FALSE (='ignore') can be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale.permutation.importance</code></td>
+<td>
+<p>Scale permutation importance by standard error as in (Breiman 2001). Only applicable if permutation variable importance mode selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.inbag</code></td>
+<td>
+<p>Save how often observations are in-bag in each tree.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inbag</code></td>
+<td>
+<p>Manually set observations per tree. List of size num.trees, containing inbag counts for each observation. Can be used for stratified sampling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>holdout</code></td>
+<td>
+<p>Hold-out mode. Hold-out all samples with case weight 0 and use these for variable importance and prediction error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantreg</code></td>
+<td>
+<p>Prepare quantile prediction as in quantile regression forests (Meinshausen 2006). Regression only. Set <code>keep.inbag = TRUE</code> to prepare out-of-bag quantile prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oob.error</code></td>
+<td>
+<p>Compute OOB prediction error. Set to <code>FALSE</code> to save computation time, e.g. for large survival forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.threads</code></td>
+<td>
+<p>Number of threads. Default is number of CPUs available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.memory</code></td>
+<td>
+<p>Use memory saving (but slower) splitting mode. No effect for survival and GWAS data. Warning: This option slows down the tree growing, use only if you encounter memory problems. NOT needed for diversity forests.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Show computation status and estimated runtime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Random seed. Default is <code>NULL</code>, which generates the seed from <code>R</code>. Set to <code>0</code> to ignore the <code>R</code> seed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dependent.variable.name</code></td>
+<td>
+<p>Name of outcome variable, needed if no formula given. For survival forests this is the time variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>status.variable.name</code></td>
+<td>
+<p>Name of status variable, only applicable to survival data and needed if no formula given. Use 1 for event and 0 for censoring.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classification</code></td>
+<td>
+<p>Only needed if data is a matrix. Set to <code>TRUE</code> to grow a classification forest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsplits</code></td>
+<td>
+<p>Number of candidate splits to sample for each split. Default is 30.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proptry</code></td>
+<td>
+<p>Parameter that restricts the number of candidate splits considered for small nodes. If <code>nsplits</code> is larger than <code>proptry</code> times the number of all possible splits, the number of candidate splits to draw is reduced to the largest integer smaller than <code>proptry</code> times the number of all possible splits. Default is 1, which corresponds to always using <code>nsplits</code> candidate splits.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Object of class <code>divfor</code> with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>forest</code></td>
+<td>
+<p>Saved forest (If write.forest set to TRUE). Note that the variable IDs in the <code>split.varIDs</code> object do not necessarily represent the column number in R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictions</code></td>
+<td>
+<p>Predicted classes/values, based on out-of-bag samples (classification and regression only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable.importance</code></td>
+<td>
+<p>Variable importance for each independent variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prediction.error</code></td>
+<td>
+<p>Overall out-of-bag prediction error. For classification this is the fraction of missclassified samples, for probability estimation the Brier score, for regression the mean squared error and for survival one minus Harrell's C-index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r.squared</code></td>
+<td>
+<p>R squared. Also called explained variance or coefficient of determination (regression only). Computed on out-of-bag data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confusion.matrix</code></td>
+<td>
+<p>Contingency table for classes and predictions based on out-of-bag samples (classification only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unique.death.times</code></td>
+<td>
+<p>Unique death times (survival only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chf</code></td>
+<td>
+<p>Estimated cumulative hazard function for each sample (survival only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>survival</code></td>
+<td>
+<p>Estimated survival function for each sample (survival only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>Function call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.trees</code></td>
+<td>
+<p>Number of trees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.independent.variables</code></td>
+<td>
+<p>Number of independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.node.size</code></td>
+<td>
+<p>Value of minimal node size used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treetype</code></td>
+<td>
+<p>Type of forest/tree. classification, regression or survival.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>importance.mode</code></td>
+<td>
+<p>Importance mode used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.samples</code></td>
+<td>
+<p>Number of samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitrule</code></td>
+<td>
+<p>Splitting rule.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>Sample with replacement.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsplits</code></td>
+<td>
+<p>Value of <code>nsplits</code> used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proptry</code></td>
+<td>
+<p>Value of <code>proptry</code> used.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Roman Hornung, Marvin N. Wright
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Hornung, R. (2022). Diversity forests: Using split sampling to enable innovative complex split procedures in random forests. SN Computer Science 3(2):1, &lt;<a href="https://doi.org/10.1007/s42979-021-00920-1">doi:10.1007/s42979-021-00920-1</a>&gt;.
+</p>
+</li>
+<li>
+<p> Wright, M. N., Ziegler, A. (2017). ranger: A fast implementation of random forests for high dimensional data in C++ and R. Journal of Statistical Software 77:1-17, &lt;<a href="https://doi.org/10.18637/jss.v077.i01">doi:10.18637/jss.v077.i01</a>&gt;.
+</p>
+</li>
+<li>
+<p> Breiman, L. (2001). Random forests. Machine Learning 45:5-32, &lt;<a href="https://doi.org/10.1023/A%3A1010933404324">doi:10.1023/A:1010933404324</a>&gt;.
+</p>
+</li>
+<li>
+<p> Malley, J. D., Kruppa, J., Dasgupta, A., Malley, K. G., &amp; Ziegler, A. (2012). Probability machines: consistent probability estimation using nonparametric learning machines. Methods of Information in Medicine 51:74-81, &lt;<a href="https://doi.org/10.3414/ME00-01-0052">doi:10.3414/ME00-01-0052</a>&gt;.
+</p>
+</li>
+<li>
+<p> Meinshausen (2006). Quantile Regression Forests. Journal of Machine Learning Research 7:983-999.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>predict.divfor</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+## Load package:
+library("diversityForest")
+
+## Set seed to obtain reproducible results:
+set.seed(1234)
+
+## Diversity forest with default settings (NOT recommended)
+# Classification:
+divfor(Species ~ ., data = iris, num.trees = 20)
+# Regression:
+iris2 &lt;- iris; iris2$Species &lt;- NULL; iris2$Y &lt;- rnorm(nrow(iris2))
+divfor(Y ~ ., data = iris2, num.trees = 20)
+# Survival:
+library("survival")
+divfor(Surv(time, status) ~ ., data = veteran, num.trees = 20, respect.unordered.factors = "order")
+# NOTE: num.trees = 20 is specified too small for practical 
+# purposes - the prediction performance of the resulting 
+# forest will be suboptimal!!
+# In practice, num.trees = 500 (default value) or a 
+# larger number should be used.
+
+## Diversity forest with specified values for nsplits and proptry (NOT recommended)
+divfor(Species ~ ., data = iris, nsplits = 10, proptry = 0.4, num.trees = 20)
+# NOTE again: num.trees = 20 is specified too small for practical purposes.
+
+## Applying diversity forest after optimizing the values of nsplits and proptry (recommended)
+tuneres &lt;- tunedivfor(formula = Species ~ ., data = iris, num.trees.pre = 20)
+# NOTE: num.trees.pre = 20 is specified too small for practical 
+# purposes - the out-of-bag error estimates of the forests 
+# constructed during optimization will be much too variable!!
+# In practice, num.trees.pre = 500 (default value) or a 
+# larger number should be used.
+divfor(Species ~ ., data = iris, nsplits = tuneres$nsplitsopt, 
+  proptry = tuneres$proptryopt, num.trees = 20)
+# NOTE again: num.trees = 20 is specified too small for practical purposes.
+
+## Prediction
+train.idx &lt;- sample(nrow(iris), 2/3 * nrow(iris))
+iris.train &lt;- iris[train.idx, ]
+iris.test &lt;- iris[-train.idx, ]
+tuneres &lt;- tunedivfor(formula = Species ~ ., data = iris.train, num.trees.pre = 20)
+# NOTE again: num.trees.pre = 20 is specified too small for practical purposes.
+rg.iris &lt;- divfor(Species ~ ., data = iris.train, nsplits = tuneres$nsplitsopt, 
+  proptry = tuneres$proptryopt, num.trees = 20)
+# NOTE again: num.trees = 20 is specified too small for practical purposes.
+pred.iris &lt;- predict(rg.iris, data = iris.test)
+table(iris.test$Species, pred.iris$predictions)
+
+## Variable importance
+rg.iris &lt;- divfor(Species ~ ., data = iris, importance = "permutation", num.trees = 20)
+# NOTE again: num.trees = 20 is specified too small for practical purposes.
+rg.iris$variable.importance
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

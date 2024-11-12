@@ -1,0 +1,374 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Dopt.design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Function for creating D-optimal designs with or without blocking from package AlgDesign </h2>
+
+<h3>Description</h3>
+
+<p>Function for comfortably creating a D-optimal design with or without blocking 
+based on functions optFederov or optBlock from package AlgDesign;
+this functionality is still somewhat experimental.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Dopt.design(nruns, data=NULL, formula=~., factor.names=NULL, nlevels=NULL, 
+    digits=NULL, constraint=NULL, center=FALSE, nRepeats=5, seed=NULL, randomize=TRUE, 
+    blocks=1, block.name="Blocks", wholeBlockData=NULL, qual=NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nruns</code></td>
+<td>
+<p> number of runs in the requested design </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> data frame or matrix of candidate design points;<br>
+if <code>data</code> is specified, <code>factor.names</code> and <code>levels</code> are ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> a model formula (starting with a tilde), 
+for the estimation of which a D-optimal design is sought;<br>
+it can contain all column names from <code>data</code> 
+or elements or element names from <code>factor.names</code>, respectively;<br>
+usage of the “.”-notation for “all variables” from <code>data</code> or <code>factor.names</code> 
+is possible. <br>
+The default formula linearly includes all main effects for columns of <code>data</code> or factors from 
+<code>factor.names</code> respectively, by using the “.”-notation. 
+Note that the variables from <code>wholeBlockData</code> must be explicitly included into the formula 
+and are not covered by the “.”-notation for “all variables”. (Thus, the default formula 
+does not work, if <code>wholeBlockData</code> is used.)
+For quantitative factors, functions <code>quad()</code> and <code>cubic</code> describe the 
+full quadratic or full cubic model in the listed variables (cf. examples 
+and the <code>expand.formula</code>-function from package <span class="pkg">AlgDesign</span>).  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor.names</code></td>
+<td>
+<p> is used for creating a candidate set (for the within Block factors) 
+with the help of function 
+<code>fac.design</code>, if <code>data</code> is not specified. It is a 
+list of vectors which contain<br>
+- individual levels<br>
+- or (in case of numerical values combined with nlevels) lower and upper scale end values <br>
+for each factor.<br>
+The element names are used as variable names; <br>
+if the list is not named, the variable names are A, B and so forth (from function 
+<code>fac.design</code>).<br><code>factor.names</code> can also be a character vector. 
+In this case, <code>nlevels</code> must be specified, and levels are automatically assigned 
+as integers starting with 1, which implies quantitative factors, 
+unless <code>qual=TRUE</code> is specified.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nlevels</code></td>
+<td>
+<p> can be omitted if the list <code>factor.names</code> explicitly 
+lists all factor levels (which of course defines the number of levels).<br> 
+For numeric factors for which <code>factor.names</code> only specifies the 
+two scale ends, these are filled with equally-spaced intermediate points, 
+using the nlevels entry as the <code>length.out</code> argument to function 
+<code>seq</code>.<br> 
+If <code>factor.names</code> is a character vector of factor names only, 
+<code>nlevels</code> is required, and default levels are created. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p> is used for creating a candidate set if <code>data</code> is not specified.<br> 
+It specifies the digits to which numeric design columns are rounded in case of 
+automatic creation of intermediate values. It can consist of one single value 
+(the same for all such factors) or a numeric vector of the same length 
+as <code>factor.names</code> with integer entries.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint</code></td>
+<td>
+<p> a condition (character string!) used for reducing the candidate 
+set to admissible points only. 
+<code>constraint</code> is evaluated on the specified data set or after automatic creation 
+of a full factorial candidate data set. <br> 
+The variable names from <code>data</code> or <code>factor.names</code> can be used by the constraint.
+The variable names from <code>wholePlotData</code> can NOT be used. <br>
+See <code>Syntax</code> and <code>Logic</code> 
+for an explanation of the syntax of general and especially logical 
+R expressions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p> requests that optimization is run for the centered model; 
+the design is nevertheless output in non-centered coordinates
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nRepeats</code></td>
+<td>
+<p> number of independent repeats of the design optimization process; 
+increasing this number may improve the chance of finding a global optimum, 
+but will also increase search time
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p> seed for generation and randomization of the design (integer number);<br> 
+here, the seed is needed even if the design is not randomized, because the 
+generation process for the optimum design involves random numbers, even if the 
+order of the final design is not randomized;<br>
+if a reproducible design is needed, it is therefore recommended to specify a seed.<br><br>
+In R version 3.6.0 and later, the default behavior of function <code>sample</code>
+has changed. If you work in a new (i.e., &gt;= 3.6.-0) R version and want to reproduce 
+a randomized design from an earlier R version (before 3.6.0), 
+you have to change the RNGkind setting by<br><code>RNGkind(sample.kind="Rounding")</code><br>
+before running function <code>Dopt.design</code>.<br>
+It is recommended to change the setting back to the new recommended way afterwards:<br><code>RNGkind(sample.kind="default")</code><br>
+For an example, see the documentation of the example data set <code>VSGFS</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomize</code></td>
+<td>
+<p> logical deciding whether or not the design should be randomized; 
+if it is <code>TRUE</code>, the design (or the additional portion of the design) returned by the 
+workhorse function <code>optFederov</code> is brought 
+into random order after generation. Note that the generation process 
+itself contains a random element per default; if exact repeatability for the 
+returned design is desired, it is necessary to specify a seed (option <code>seed</code>) 
+if in the case <code>randomize=FALSE</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blocks</code></td>
+<td>
+<p> a single integer giving the number of blocks (default 1, if no blocking is needed)<br> 
+OR<br>
+a vector of block sizes which enable blocks of different sizes;<br> 
+for a scalar value, <code>nruns</code> must be divisible into blocks equally-sized blocks; 
+for a vector value, the block sizes must add up to <code>nruns</code>.<br>
+If blocking is requested, the following two options are potentially important.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.name</code></td>
+<td>
+<p> character string: name of the blocking variable (used only if blocks are requested) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wholeBlockData</code></td>
+<td>
+<p> optional matrix or data frame that specifies the whole block characteristics;<br> 
+can only be used if blocks are requested; if used, it must have as many rows as there are block sizes.<br>
+If this is specified, the resulting design is a split-plot design with the whole-plot 
+factors specified in wholeBlockData, the split-plot factors specified in data. 
+Note that usage of this option makes it necessary to explicitly specify a formula.<br></p>
+<p>Since wholeBlockData must be completely specified by the user, optimization is 
+for the split-plot portion of the design only. The rationale is (assumably) that the 
+characteristics of the available blocks are known. If this is not the case, users 
+may want to try out various possible whole block setups, or to proceed sequentially 
+by first optimizing a whole block design for a model with the whole block factors only 
+and subsequently using this model for adding split-plot factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qual</code></td>
+<td>
+<p>optional logical (length 1 or same as number of factors); ignored, if <code>data</code> 
+is specified; overrides automatic determination of whether or not factors are quantitative;<br> 
+if neither <code>qual</code> nor <code>data</code> are specified, factors are per default quantitative, 
+unless they have non-numeric levels in a list-valued <code>factor.names</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> additional arguments to functions <code>optFederov</code> 
+or <code>optBlock</code> (if blocking is requested) 
+from package <span class="pkg">AlgDesign</span>;<br> 
+interesting arguments for <code>optFederov</code>: <code>maxIteration</code>, 
+<code>nullify</code> (calculate good starting design, especially set to 1, 
+in which case <code>nRepeats</code> is set to 1);<br> 
+arguments <code>criterion</code> and <code>augment</code> are not available, neither 
+are <code>evaluateI</code>, <code>space</code>, or <code>rows</code>, and <code>args</code> 
+does not have an effect. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function <code>Dopt.design</code> creates a D-optimal design, optionally with blocking, 
+and even as a split-plot design. If no blocks are required, calculations are carried 
+out through function <code>optFederov</code> from package <span class="pkg">AlgDesign</span>. 
+In case of blocked designs, function <code>optBlock</code> from package <span class="pkg">AlgDesign</span> 
+is behind the calculations. By specifying <code>wholeBlockData</code>, a blocked design becomes 
+a split-plot design. The model formula can refer to both the within block data (only those 
+are referred to by the “.” notation) and the whole block data and interactions between both. <br>
+In comparison to direct usage of package <span class="pkg">AlgDesign</span>, the function adds the possibility 
+of automatically creating the candidate points on the fly, with or without constraints.
+Furthermore, it embeds the D-optimal designs into the class <code>design</code>. 
+On the other hand, it sacrifices some of <span class="pkg">AlgDesign</span>s flexibility; of course, users 
+can still use <span class="pkg">AlgDesign</span> directly. <br></p>
+<p>The D-optimal designs are particularly useful, if the classical regular designs are too demanding 
+in run size requirements, or if constraints preclude automatic generation of orthogonal designs. 
+Note, however, that the best design in few runs can still be very bad in absolute terms!
+</p>
+<p>When specifying the design without the <code>data</code> option, a full factorial in the 
+requested factors is the default candidate set of design points. For some situations - especially 
+with many factors - it may be better to start from a restricted candidate set. Such a candidate set 
+can be produced with another R function, e.g. <code>oa.design</code> or <code>FrF2</code>, 
+or can be manually created. 
+</p>
+<p>If there are doubts, whether the process has delivered a design close to the absolute optimum, 
+<code>nRepeats</code> can be increased.
+</p>
+<p>For unblocked designs, it is additionally possible to increase <code>maxIteration</code>. 
+Also, improving the starting 
+value by <code>nullify=1</code> or <code>nullify=2</code> may lead to an improved design. 
+These options are handed through to function <code>optFederov</code> 
+from package <span class="pkg">AlgDesign</span> and are documented there.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns a data frame of S3 class <code>design</code> 
+with attributes attached. 
+The data frame contains the experimental settings.
+The matrix <code>desnum</code> attached as attribute <code>desnum</code> contains the 
+model matrix of the design, using the formula as specified in the call. <br>
+Function <code>Dopt.augment</code> preserves additional variables (e.g. responses) that 
+have been added to the design <code>design</code> before augmenting. Note, however, that 
+the response data are NOT used in deciding about which points to augment the design with.
+</p>
+<p>The attribute <code>run.order</code> provides the run number in standard order (as returned from 
+function <code>optFederov</code> in package <span class="pkg">AlgDesign</span>) as well 
+as the randomized actual run order. The third column is always identical to the first.
+</p>
+<p>The attribute <code>design.info</code> is a list of various design properties, with type resolving to “Dopt”, 
+“Dopt.blocked”, “Dopt.splitplot”. 
+In addition to the standard list elements (cf. <code>design</code>), the element 
+<code>quantitative</code> is a vector of <code>nfactor</code> logical values or NAs, 
+and the optional <code>digits</code> elements indicates the number of digits to 
+which the data were rounded. 
+For blocked and splitplot designs, the list contains additional information on numbers and sizes of blocks or plots, 
+as well as the number of whole plot factors (which are always the first few factors) and split-plot factors.<br>
+The list contains a list of optimality criteria as calculated by function <code>optFederov</code>, 
+see documentation there) 
+with elements <code>D</code>, <code>Dea</code>, <code>A</code> and <code>G</code>. 
+</p>
+<p>(Note that <code>replications</code> is always 1 and <code>repeat.only</code> is always FALSE; 
+these elements are only present to fulfill the formal requirements for class <code>design</code>.
+Note however, that blocked designs do in fact repeat experimental runs if <code>nruns</code> and <code>blocks</code>
+imply this.)
+</p>
+
+
+<h3>Warning</h3>
+
+<p>Since R version 3.6.0, the behavior of function <code>sample</code> has changed 
+(correction of a biased previous behavior that should not be relevant for the randomization of designs). 
+For reproducing a design that was produced with an earlier R version, 
+please follow the steps described with the argument <code>seed</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p> This package is still under (slow) development. Reports about bugs and inconveniences are welcome.</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Ulrike Groemping </p>
+
+
+<h3>References</h3>
+
+ 
+<p>Atkinson, A.C. and Donev, A.N. (1992). <em>Optimum experimental designs</em>. Clarendon Press, Oxford. 
+</p>
+<p>Federov, V.V. (1972). <em>Theory of optimal experiments</em>. Academic Press, New York. 
+</p>
+<p>Wheeler, R.E. (2004). <em>Comments on algorithmic design</em>. Vignette accompanying package <span class="pkg">AlgDesign</span>. 
+<a href="../../AlgDesign/doc/AlgDesign.pdf">../../AlgDesign/doc/AlgDesign.pdf</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p> See also <code>optFederov</code>, <code>fac.design</code>, 
+<code>quad</code>, <code>cubic</code>,
+<code>Dopt.augment</code>. Furthermore, unrelated to function <code>Dopt.design</code>, 
+see also function <code>gen_design</code> from package <span class="pkg">skpr</span> 
+for a new general R package for creating D-optimal or other letter optimal designs.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">   ## a full quadratic model with constraint in three quantitative factors 
+   plan &lt;- Dopt.design(36,factor.names=list(eins=c(100,250),zwei=c(10,30),drei=c(-25,25)),
+                          nlevels=c(4,3,6), 
+                          formula=~quad(.), 
+                          constraint="!(eins&gt;=200 &amp; zwei==30 &amp; drei==25)")
+   plan
+   cor(plan)
+   y &lt;- rnorm(36)
+   r.plan &lt;- add.response(plan, y)
+   plan2 &lt;- Dopt.augment(r.plan, m=10)
+   plot(plan2)
+   cor(plan2)
+   
+   ## designs with qualitative factors and blocks for
+   ## an experiment on assessing stories of social situations
+   ## where each subject is a block and receives a deck of 5 stories
+   plan.v &lt;- Dopt.design(480, factor.names=list(cause=c("sick","bad luck","fault"), 
+             consequences=c("alone","children","sick spouse"),
+             gender=c("Female","Male"),
+             Age=c("young","medium","old")),
+             blocks=96,
+             constraint="!(Age==\"young\" &amp; consequences==\"children\")",
+             formula=~.+cause:consequences+gender:consequences+Age:cause)
+   ## an experiment on assessing stories of social situations
+   ## with the whole block (=whole plot) factor gender of the assessor
+   ##    not run for saving test time on CRAN
+   ## Not run: plan.v.splitplot &lt;- Dopt.design(480, factor.names=list(cause=c("sick","bad luck","fault"), 
+             consequences=c("alone","children","sick spouse"),
+             gender.story=c("Female","Male"),
+             Age=c("young","medium","old")),
+             blocks=96,
+             wholeBlockData=cbind(gender=rep(c("Female","Male"),each=48)),
+             constraint="!(Age==\"young\" &amp; consequences==\"children\")",
+             formula=~.+gender+cause:consequences+gender.story:consequences+
+                 gender:consequences+Age:cause+gender:gender.story)
+## End(Not run)
+</code></pre>
+
+
+</div>

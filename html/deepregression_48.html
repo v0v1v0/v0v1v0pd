@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>keras_dr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compile a Deep Distributional Regression Model</h2>
+
+<h3>Description</h3>
+
+<p>Compile a Deep Distributional Regression Model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">keras_dr(
+  list_pred_param,
+  weights = NULL,
+  optimizer = tf$keras$optimizers$Adam(),
+  model_fun = keras_model,
+  monitor_metrics = list(),
+  from_preds_to_output = from_preds_to_dist,
+  loss = from_dist_to_loss(family = list(...)$family, weights = weights),
+  additional_penalty = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>list_pred_param</code></td>
+<td>
+<p>list of input-output(-lists) generated from
+<code>subnetwork_init</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>vector of positive values; optional (default = 1 for all observations)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimizer</code></td>
+<td>
+<p>optimizer used. Per default Adam</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_fun</code></td>
+<td>
+<p>which function to use for model building (default <code>keras_model</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>monitor_metrics</code></td>
+<td>
+<p>Further metrics to monitor</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from_preds_to_output</code></td>
+<td>
+<p>function taking the list_pred_param outputs
+and transforms it into a single network output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss</code></td>
+<td>
+<p>the model's loss function; per default evaluated based on
+the arguments <code>family</code> and <code>weights</code> using <code>from_dist_to_loss</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>additional_penalty</code></td>
+<td>
+<p>a penalty that is added to the negative log-likelihood;
+must be a function of model$trainable_weights with suitable subsetting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to <code>from_preds_to_output</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list with input tensors and output tensors that can be passed
+to, e.g., <code>keras_model</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(24)
+n &lt;- 500
+x &lt;- runif(n) %&gt;% as.matrix()
+z &lt;- runif(n) %&gt;% as.matrix()
+
+y &lt;- x - z
+data &lt;- data.frame(x = x, z = z, y = y)
+
+# change loss to mse and adapt
+# \code{from_preds_to_output} to work
+# only on the first output column
+mod &lt;- deepregression(
+ y = y,
+ data = data,
+ list_of_formulas = list(loc = ~ 1 + x + z, scale = ~ 1),
+ list_of_deep_models = NULL,
+ family = "normal",
+ from_preds_to_output = function(x, ...) x[[1]],
+ loss = "mse"
+)
+
+
+</code></pre>
+
+
+</div>

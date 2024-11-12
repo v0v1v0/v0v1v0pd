@@ -1,0 +1,474 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compare_clusterings</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare different clustering configurations</h2>
+
+<h3>Description</h3>
+
+<p>Compare many different clustering algorithms with support for parallelization.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compare_clusterings(
+  series = NULL,
+  types = c("p", "h", "f", "t"),
+  configs = compare_clusterings_configs(types),
+  seed = NULL,
+  trace = FALSE,
+  ...,
+  score.clus = function(...) stop("No scoring"),
+  pick.clus = function(...) stop("No picking"),
+  shuffle.configs = FALSE,
+  return.objects = FALSE,
+  packages = character(0L),
+  .errorhandling = "stop"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>series</code></td>
+<td>
+<p>A list of series, a numeric matrix or a data frame. Matrices and data frames are
+coerced to a list row-wise (see <code>tslist()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>types</code></td>
+<td>
+<p>Clustering types. It must be any combination of (possibly abbreviated):
+"partitional", "hierarchical", "fuzzy", "tadpole."</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>configs</code></td>
+<td>
+<p>The list of data frames with the desired configurations to run. See
+<code>pdc_configs()</code> and <code>compare_clusterings_configs()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Seed for random reproducibility.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Logical indicating that more output should be printed to screen.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments for <code>tsclust()</code>, <code>score.clus</code> or <code>pick.clus</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>score.clus</code></td>
+<td>
+<p>A function that gets the list of results (and <code>...</code>) and scores each one. It
+may also be a named list of functions, one for each type of clustering. See Scoring section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pick.clus</code></td>
+<td>
+<p>A function to pick the best result. See Picking section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shuffle.configs</code></td>
+<td>
+<p>Randomly shuffle the order of configs, which can be useful to balance load
+when using parallel computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.objects</code></td>
+<td>
+<p>Logical indicating whether the objects returned by <code>tsclust()</code> should be
+given in the result.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>packages</code></td>
+<td>
+<p>A character vector with the names of any packages needed for any functions used
+(distance, centroid, preprocessing, etc.). The name "dtwclust" is added automatically. Relevant
+for parallel computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.errorhandling</code></td>
+<td>
+<p>This will be passed to <code>foreach::foreach()</code>. See Parallel section below.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function calls <code>tsclust()</code> with different configurations and evaluates the results with the
+provided functions. Parallel support is included. See the examples.
+</p>
+<p>Parameters specified in <code>configs</code> whose values are <code>NA</code> will be ignored automatically.
+</p>
+<p>The scoring and picking functions are for convenience, if they are not specified, the <code>scores</code>
+and <code>pick</code> elements of the result will be <code>NULL</code>.
+</p>
+<p>See <code>repeat_clustering()</code> for when <code>return.objects = FALSE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with:
+</p>
+
+<ul>
+<li> <p><code>results</code>: A list of data frames with the flattened configs and the corresponding scores
+returned by <code>score.clus</code>.
+</p>
+</li>
+<li> <p><code>scores</code>: The scores given by <code>score.clus</code>.
+</p>
+</li>
+<li> <p><code>pick</code>: The object returned by <code>pick.clus</code>.
+</p>
+</li>
+<li> <p><code>proc_time</code>: The measured execution time, using <code>base::proc.time()</code>.
+</p>
+</li>
+<li> <p><code>seeds</code>: A list of lists with the random seeds computed for each configuration.
+</p>
+</li>
+</ul>
+<p>The cluster objects are also returned if <code>return.objects</code> <code>=</code> <code>TRUE</code>.
+</p>
+
+
+<h3>Parallel computation</h3>
+
+<p>The configurations for each clustering type can be evaluated in parallel (multi-processing)
+with the <span class="pkg">foreach</span> package. A parallel backend can be registered, e.g., with
+<span class="pkg">doParallel</span>.
+</p>
+<p>If the <code>.errorhandling</code> parameter is changed to "pass" and a custom <code>score.clus</code> function is
+used, said function should be able to deal with possible error objects.
+</p>
+<p>If it is changed to "remove", it might not be possible to attach the scores to the results data
+frame, or it may be inconsistent. Additionally, if <code>return.objects</code> is <code>TRUE</code>, the names given
+to the objects might also be inconsistent.
+</p>
+<p>Parallelization can incur a lot of deep copies of data when returning the cluster objects,
+since each one will contain a copy of <code>datalist</code>. If you want to avoid this, consider
+specifying <code>score.clus</code> and setting <code>return.objects</code> to <code>FALSE</code>, and then using
+<code>repeat_clustering()</code>.
+</p>
+
+
+<h3>Scoring</h3>
+
+<p>The clustering results are organized in a <em>list of lists</em> in the following way (where only
+applicable <code>types</code> exist; first-level list names in bold):
+</p>
+
+<ul>
+<li> <p><strong>partitional</strong> - list with
+</p>
+
+<ul>
+<li>
+<p> Clustering results from first partitional config
+</p>
+</li>
+<li>
+<p> etc.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><strong>hierarchical</strong> - list with
+</p>
+
+<ul>
+<li>
+<p> Clustering results from first hierarchical config
+</p>
+</li>
+<li>
+<p> etc.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><strong>fuzzy</strong> - list with
+</p>
+
+<ul>
+<li>
+<p> Clustering results from first fuzzy config
+</p>
+</li>
+<li>
+<p> etc.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><strong>tadpole</strong> - list with
+</p>
+
+<ul>
+<li>
+<p> Clustering results from first tadpole config
+</p>
+</li>
+<li>
+<p> etc.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>If <code>score.clus</code> is a function, it will be applied to the available partitional, hierarchical,
+fuzzy and/or tadpole results via:
+</p>
+<div class="sourceCode"><pre>scores &lt;- lapply(list_of_lists, score.clus, ...)
+</pre></div>
+<p>Otherwise, <code>score.clus</code> should be a list of functions with the same names as the list above, so
+that <code>score.clus$partitional</code> is used to score <code>list_of_lists$partitional</code> and so on (via
+<code>base::Map()</code>).
+</p>
+<p>Therefore, the scores returned shall always be a list of lists with first-level names as above.
+</p>
+
+
+<h3>Picking</h3>
+
+<p>If <code>return.objects</code> is <code>TRUE</code>, the results' data frames and the list of TSClusters
+objects are given to <code>pick.clus</code> as first and second arguments respectively, followed by <code>...</code>.
+Otherwise, <code>pick.clus</code> will receive only the data frames and the contents of <code>...</code> (since the
+objects will not be returned by the preceding step).
+</p>
+
+
+<h3>Limitations</h3>
+
+<p>Note that the configurations returned by the helper functions assign special names to
+preprocessing/distance/centroid arguments, and these names are used internally to recognize
+them.
+</p>
+<p>If some of these arguments are more complex (e.g. matrices) and should <em>not</em> be expanded,
+consider passing them directly via the ellipsis (<code>...</code>) instead of using <code>pdc_configs()</code>. This
+assumes that said arguments can be passed to all functions without affecting their results.
+</p>
+<p>The distance matrices (if calculated) are not re-used across configurations. Given the way the
+configurations are created, this shouldn't matter, because clusterings with arguments that can
+use the same distance matrix are already grouped together by <code>compare_clusterings_configs()</code>
+and <code>pdc_configs()</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alexis Sarda-Espinosa
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>compare_clusterings_configs()</code>, <code>tsclust()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Fuzzy preprocessing: calculate autocorrelation up to 50th lag
+acf_fun &lt;- function(series, ...) {
+    lapply(series, function(x) {
+        as.numeric(acf(x, lag.max = 50, plot = FALSE)$acf)
+    })
+}
+
+# Define overall configuration
+cfgs &lt;- compare_clusterings_configs(
+    types = c("p", "h", "f", "t"),
+    k = 19L:20L,
+    controls = list(
+        partitional = partitional_control(
+            iter.max = 30L,
+            nrep = 1L
+        ),
+        hierarchical = hierarchical_control(
+            method = "all"
+        ),
+        fuzzy = fuzzy_control(
+            # notice the vector
+            fuzziness = c(2, 2.5),
+            iter.max = 30L
+        ),
+        tadpole = tadpole_control(
+            # notice the vectors
+            dc = c(1.5, 2),
+            window.size = 19L:20L
+        )
+    ),
+    preprocs = pdc_configs(
+        type = "preproc",
+        # shared
+        none = list(),
+        zscore = list(center = c(FALSE)),
+        # only for fuzzy
+        fuzzy = list(
+            acf_fun = list()
+        ),
+        # only for tadpole
+        tadpole = list(
+            reinterpolate = list(new.length = 205L)
+        ),
+        # specify which should consider the shared ones
+        share.config = c("p", "h")
+    ),
+    distances = pdc_configs(
+        type = "distance",
+        sbd = list(),
+        fuzzy = list(
+            L2 = list()
+        ),
+        share.config = c("p", "h")
+    ),
+    centroids = pdc_configs(
+        type = "centroid",
+        partitional = list(
+            pam = list()
+        ),
+        # special name 'default'
+        hierarchical = list(
+            default = list()
+        ),
+        fuzzy = list(
+            fcmdd = list()
+        ),
+        tadpole = list(
+            default = list(),
+            shape_extraction = list(znorm = TRUE)
+        )
+    )
+)
+
+# Number of configurations is returned as attribute
+num_configs &lt;- sapply(cfgs, attr, which = "num.configs")
+cat("\nTotal number of configurations without considering optimizations:",
+    sum(num_configs),
+    "\n\n")
+
+# Define evaluation functions based on CVI: Variation of Information (only crisp partition)
+vi_evaluators &lt;- cvi_evaluators("VI", ground.truth = CharTrajLabels)
+score_fun &lt;- vi_evaluators$score
+pick_fun &lt;- vi_evaluators$pick
+
+# ====================================================================================
+# Short run with only fuzzy clustering
+# ====================================================================================
+
+comparison_short &lt;- compare_clusterings(CharTraj, types = c("f"), configs = cfgs,
+                                        seed = 293L, trace = TRUE,
+                                        score.clus = score_fun, pick.clus = pick_fun,
+                                        return.objects = TRUE)
+
+## Not run: 
+# ====================================================================================
+# Parallel run with all comparisons
+# ====================================================================================
+
+require(doParallel)
+registerDoParallel(cl &lt;- makeCluster(detectCores()))
+
+comparison_long &lt;- compare_clusterings(CharTraj, types = c("p", "h", "f", "t"),
+                                       configs = cfgs,
+                                       seed = 293L, trace = TRUE,
+                                       score.clus = score_fun,
+                                       pick.clus = pick_fun,
+                                       return.objects = TRUE)
+
+# Using all external CVIs and majority vote
+external_evaluators &lt;- cvi_evaluators("external", ground.truth = CharTrajLabels)
+score_external &lt;- external_evaluators$score
+pick_majority &lt;- external_evaluators$pick
+
+comparison_majority &lt;- compare_clusterings(CharTraj, types = c("p", "h", "f", "t"),
+                                           configs = cfgs,
+                                           seed = 84L, trace = TRUE,
+                                           score.clus = score_external,
+                                           pick.clus = pick_majority,
+                                           return.objects = TRUE)
+
+# best results
+plot(comparison_majority$pick$object)
+print(comparison_majority$pick$config)
+
+stopCluster(cl); registerDoSEQ()
+
+# ====================================================================================
+# A run with only partitional clusterings
+# ====================================================================================
+
+p_cfgs &lt;- compare_clusterings_configs(
+    types = "p", k = 19L:21L,
+    controls = list(
+        partitional = partitional_control(
+            iter.max = 20L,
+            nrep = 8L
+        )
+    ),
+    preprocs = pdc_configs(
+        "preproc",
+        none = list(),
+        zscore = list(center = c(FALSE, TRUE))
+    ),
+    distances = pdc_configs(
+        "distance",
+        sbd = list(),
+        dtw_basic = list(window.size = 19L:20L,
+                         norm = c("L1", "L2")),
+        gak = list(window.size = 19L:20L,
+                   sigma = 100)
+    ),
+    centroids = pdc_configs(
+        "centroid",
+        partitional = list(
+            pam = list(),
+            shape = list()
+        )
+    )
+)
+
+# Remove redundant (shape centroid always uses zscore preprocessing)
+id_redundant &lt;- p_cfgs$partitional$preproc == "none" &amp;
+    p_cfgs$partitional$centroid == "shape"
+p_cfgs$partitional &lt;- p_cfgs$partitional[!id_redundant, ]
+
+# LONG! 30 minutes or so, sequentially
+comparison_partitional &lt;- compare_clusterings(CharTraj, types = "p",
+                                              configs = p_cfgs,
+                                              seed = 32903L, trace = TRUE,
+                                              score.clus = score_fun,
+                                              pick.clus = pick_fun,
+                                              shuffle.configs = TRUE,
+                                              return.objects = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

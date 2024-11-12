@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.DNAmixture</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Various probabilities in a fitted DNA mixture model</h2>
+
+<h3>Description</h3>
+
+<p><em>IMPORTANT: This is the <span class="pkg">DNAmixturesLite</span> package, which is intended as a service to enable users to try <span class="pkg">DNAmixtures</span> without purchasing a commercial licence for Hugin. When at all possible, we strongly recommend the use of <span class="pkg">DNAmixtures</span> rather than this lite-version. See <a href="https://dnamixtures.r-forge.r-project.org/">https://dnamixtures.r-forge.r-project.org/</a> for details on both packages.</em>
+</p>
+<p><em>While the lite-version seeks to provide the full functionality of <span class="pkg">DNAmixtures</span>, note that computations are much less efficient and that there are some differences in available functionality. Be aware that the present documentation is copied from <span class="pkg">DNAmixtures</span> and thus may not accurately describe the implementation of this lite-version.</em>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DNAmixture'
+predict(
+  object,
+  pars,
+  dist = c("joint", "conditional", "prequential"),
+  markers = object$markers,
+  by.allele = TRUE,
+  initialize = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A <code>DNAmixture</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p>Array of model parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>One of "joint", "conditional", and "prequential". If
+there are only known contributors, these are all the same since, under the model, peak
+heights are condtionally independent given profiles of the
+contributors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>markers</code></td>
+<td>
+<p>The set of markers of interest</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by.allele</code></td>
+<td>
+<p>If <code>dist = "prequential"</code> then the order in
+which we condition on mixtures and alleles matters. <code>by.allele
+= TRUE</code> will proceed through alleles in increasing repeat number,
+and for each allele condition on one mixture at the time. If <code>FALSE</code>,
+the conditioning is done by mixtures and then alleles within these.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initialize</code></td>
+<td>
+<p>By default <code>predict</code> removes all entered
+evidence from the networks in <code>object</code>. Setting
+<code>initialize = FALSE</code> should be done with care, and it is up
+to the user to ensure that the returned probabilities are meaningful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Not used</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For a mixture with unknown contributors, the
+probabilities are computed with respect to one of three
+distributions. Let <code>height</code> be the matrix of peak heights
+with columns <code>height1, ..., heightR</code>. For a peak at allele <code>a</code> in the mixture <code>r</code>, the three choices of distributions are
+</p>
+
+<dl>
+<dt><code>"joint"</code></dt>
+<dd>
+<p>Default. No conditioning on observed peak heights.</p>
+</dd>
+<dt><code>"conditional"</code></dt>
+<dd>
+<p>Conditional on <code>height[-a, -r]</code>, i.e. on heights for all peaks, except the one under consideration.</p>
+</dd>
+<dt><code>"prequential"</code></dt>
+<dd>
+<p>Conditional on <code>height[1:(a-1), 1:(r-1)]</code>, i.e. on heights for all peaks "before" the peak under consideration (see argument <code>by.allele</code> for details).</p>
+</dd>
+</dl>
+<p>If all contributors are known, the three distributions are the same
+due to independence of the peak heights.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with one data.frame per marker containing various probabilities for
+diagnostics
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>unseen</code></td>
+<td>
+<p>The probability of not seeing a peak, i.e. no peak or a peak falling below the threshold</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seen</code></td>
+<td>
+<p>The probability of seeing the allele</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smaller</code></td>
+<td>
+<p>The probability of seeing a smaller peak than the
+one observed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>larger</code></td>
+<td>
+<p>The probability of seeing a larger
+peak than the one observed</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Therese Graversen
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(MC15, MC18, USCaucasian)
+mix &lt;- DNAmixture(list(MC15, MC18), C = list(50,50), k = 3, K = c("K1", "K3", "K2"),
+database = USCaucasian)
+p &lt;- mixpar(rho = list(30, 30), eta = list(30, 30), xi = list(0.08,0.08),
+            phi = list(c(K2 = 0.1, K3 = 0.2, K1 = 0.7), c(K2 = 0.1, K3 = 0.2, K1 = 0.7)))
+pred &lt;- predict(mix, p)
+pred$VWA
+</code></pre>
+
+
+</div>

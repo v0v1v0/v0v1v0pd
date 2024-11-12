@@ -1,0 +1,237 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatiotemp_pseudoabs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate pseudo-absence record coordinates and dates</h2>
+
+<h3>Description</h3>
+
+<p>Function generates specified number of pseudo-absence record co-ordinates and dates either
+randomly or buffered in space and time.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatiotemp_pseudoabs(
+  spatial.method,
+  temporal.method,
+  occ.data,
+  spatial.ext,
+  temporal.ext,
+  spatial.buffer,
+  temporal.buffer,
+  n.pseudoabs = 100,
+  prj = "+proj=longlat +datum=WGS84"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>spatial.method</code></td>
+<td>
+<p>a character string, the spatial method for pseudo-absence generation. One of
+<code>buffer</code> or <code>random</code>: can be abbreviated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.method</code></td>
+<td>
+<p>a character string, the temporal method for pseudo-absence generation. One
+of <code>buffer</code> or <code>random</code>: can be abbreviated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occ.data</code></td>
+<td>
+<p>optional; a data frame, with columns for occurrence record co-ordinates and dates
+with column names as follows; record longitude as "x", latitude as "y", year as "year", month as
+"month", and day as "day". Required if either <code>temporal.method</code> or <code>spatial.method</code> is <code>buffer</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.ext</code></td>
+<td>
+<p>the spatial extent to randomly generate pseudo-absences
+within. Object from which extent can be extracted of class <code>SpatExtent</code>,
+<code>SpatRaster</code>, an <code>sf</code> polygon or a numeric vector listing xmin, xmax, ymin
+and ymax in order. Required if <code>spatial.method</code> is <code>random</code>, and optionally
+used if <code>buffer</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.ext</code></td>
+<td>
+<p>optional; a character vector, two dates in format "YYYY-MM-DD". The first
+represents the start of the temporal extent and the second represents the end of temporal extent
+to randomly generate pseudo-absences dates within. Required if <code>temporal.method</code> is <code>random</code>,
+and optionally used if <code>buffer</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.buffer</code></td>
+<td>
+<p>optional; a numeric value or vector, the radius/radii in metres to generate
+buffered pseudo-absence coordinates within. Only required if spatial.method is <code>buffer</code>. See
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.buffer</code></td>
+<td>
+<p>optional; a numeric value or vector, the period(s) in days to generate
+buffered pseudo-absence dates within. Only required if temporal.method is <code>buffer</code> . See
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.pseudoabs</code></td>
+<td>
+<p>optional; a numeric value, the number of pseudo-absence records to generate.
+Default; 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prj</code></td>
+<td>
+<p>a character string, the coordinate reference system of input <code>occ.data</code> co-ordinates.
+Default is "+proj=longlat +datum=WGS84".</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Below we outline the various approaches to generating pseudo-absences through space and time
+available in the dynamicSDM package. To select the appropriate pseudo-absence generation
+approach and buffer size, there are many considerations. We recommend seeking the appropritae
+literature to inform your decision when species distribution modelling (Barbet-Massin et al.,
+2012, Phillips et al., 2009, Vanderwal et al., 2009).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns data frame of pseudo-absence coordinates and dates.
+</p>
+
+
+<h3>Spatial buffer</h3>
+
+<p>If <code>spatial.method</code> is <code>buffer</code>, then the pseudo-absence record co-ordinates are randomly
+generated in a buffered area defined either by
+</p>
+
+<ul>
+<li>
+<p> single numeric value for <code>spatial.buffer</code> - anywhere between the occurrence record and the
+circular distance surrounding this point (as specified in metres).
+</p>
+</li>
+<li>
+<p> two numeric values for <code>spatial.buffer</code> - anywhere between the closest radius from the
+occurrence record and the furthest away radius (as specified in metres).
+</p>
+</li>
+</ul>
+<p>For example, if <code>spatial.buffer = c(3000,10000)</code>, then pseudo-absence co-ordinates are randomly
+generated at least 3000m radius away from occurrence record co-ordinate but within 10000m radius.
+Whereas, if <code>spatial.buffer = 10000</code>, then pseudo-absence co-ordinates are randomly generated
+anywhere between 0m and 10000m radius from the occurrence record.
+</p>
+<p>If <code>spatial.ext</code> is given too, then the generated pseudo-absences are not only constrained to the
+buffered area but also to this extent. For instance, if occurrence records are coastal, you may
+want to clip buffers to only terrestrial regions using a country polygon given in <code>spatial.ext</code>.
+</p>
+
+
+<h3>Spatial random</h3>
+
+<p>If <code>spatial.method</code> is <code>random</code>, then the pseudo-absence record co-ordinates are randomly
+generated across <code>spatial.ext</code> object given.
+</p>
+<p>If <code>spatial.ext</code> is a <code>sf</code> polygon or <code>SpatRaster</code> (mask if possible before
+input) then these shapes are used, instead of a simple rectangular
+extent (<code>SpatExtent</code>). Therefore, inputting one of these objects will allow for more specific pseudo-absence
+generation.
+</p>
+<p>For example, inputting an <code>sf</code> polygon of a specific countries will ensure co-ordinates
+are terrestrial, whereas an extent (xmin, xmax, ymin, ymax) that encompasses these countries may
+result in the generation of pseudo-absence records in inappropriate areas, such as oceans or
+non-study-area countries.
+</p>
+
+
+<h3>Temporal buffer</h3>
+
+<p>If <code>temporal.method</code> is <code>buffer</code>, then pseudo-absence record dates are randomly generated between
+in a period defined by:
+</p>
+
+<ul>
+<li>
+<p> single numeric value for temporal.buffer - any date between the occurrence record date and the
+total number of days specified prior or post.
+</p>
+</li>
+<li>
+<p> two numeric values for temporal.buffer - any date between the closest and furthers away number
+of days specified.
+</p>
+</li>
+</ul>
+<p>For example, if <code>temporal.buffer = c(14,30)</code>, then pseudo-absence dates randomly generated at
+least 14 days from occurrence record dates but within 30 days. Whereas if <code>temporal.buffer = 30</code>,
+pseudo-absence dates are randomly generated anywhere between 0 and 30 days prior or post the
+occurrence record date.
+</p>
+<p>If <code>temporal.ext</code> is given too, then the generated pseudo-absence dates are not only constrained
+to the buffer period but also to this temporal extent. For instance, an occurrence record recorded
+at the start of <code>temporal.ext</code> with 7 day buffer, may result in generated pseudo-absences outside
+of the temporal extent of the study.
+</p>
+
+
+<h3>Temporal random</h3>
+
+<p>If <code>temporal.method</code> is <code>random</code>, then pseudo-absence record dates are randomly
+generated within the two <code>temporal.ext</code> dates given.
+</p>
+
+
+<h3>References</h3>
+
+<p>Barbet-Massin, M., Jiguet, F., Albert, C. H., Thuiller, W. J. M. I. E. &amp; Evolution 2012. Selecting
+Pseudo-Absences For Species Distribution Models: How, Where And How Many? 3, 327-338.
+</p>
+<p>Phillips, S. J., Dudik, M., Elith, J., Graham, C. H., Lehmann, A., Leathwick, J. &amp; Ferrier, S.
+2009. Sample Selection Bias And Presence-Only Distribution Models: Implications For Background And
+Pseudo-Absence Data. 19, 181-197.
+</p>
+<p>Vanderwal, J., Shoo, L. P., Graham, C. &amp; Williams, S. E. 2009. Selecting Pseudo-Absence Data For
+Presence-Only Distribution Modeling: How Far Should You Stray From What You Know? Ecological
+Modelling, 220, 589-594.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("sample_filt_data")
+
+
+spatiotemp_pseudoabs(
+ sample_filt_data,
+ spatial.method = "random",
+ temporal.method = "random",
+ spatial.ext = c(20, 36, -35, -12),
+ temporal.ext = c("2011-01-01", "2017-01-01")
+)
+
+</code></pre>
+
+
+</div>

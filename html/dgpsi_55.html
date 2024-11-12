@@ -1,0 +1,347 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>validate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Validate a constructed GP, DGP, or linked (D)GP emulator</h2>
+
+<h3>Description</h3>
+
+<p>This function validate a constructed GP, DGP, or linked (D)GP emulator via the Leave-One-Out (LOO)
+cross validation or Out-Of-Sample (OOS) validation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">validate(object, x_test, y_test, method, verb, force, cores, ...)
+
+## S3 method for class 'gp'
+validate(
+  object,
+  x_test = NULL,
+  y_test = NULL,
+  method = "mean_var",
+  verb = TRUE,
+  force = FALSE,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'dgp'
+validate(
+  object,
+  x_test = NULL,
+  y_test = NULL,
+  method = "mean_var",
+  verb = TRUE,
+  force = FALSE,
+  cores = 1,
+  threading = FALSE,
+  ...
+)
+
+## S3 method for class 'lgp'
+validate(
+  object,
+  x_test = NULL,
+  y_test = NULL,
+  method = "mean_var",
+  verb = TRUE,
+  force = FALSE,
+  cores = 1,
+  threading = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>can be one of the following:
+</p>
+
+<ul>
+<li>
+<p> the S3 class <code>gp</code>.
+</p>
+</li>
+<li>
+<p> the S3 class <code>dgp</code>.
+</p>
+</li>
+<li>
+<p> the S3 class <code>lgp</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_test</code></td>
+<td>
+<p>the OOS testing input data:
+</p>
+
+<ul>
+<li>
+<p> if <code>x</code> is an instance of the <code>gp</code> or <code>dgp</code> class, <code>x_test</code> is a matrix where each row is an input testing data point and each column is an input dimension.
+</p>
+</li>
+<li>
+<p> if <code>x</code> is an instance of the <code>lgp</code> class, <code>x_test</code> can be a matrix or a list:
+</p>
+
+<ul>
+<li>
+<p> if <code>x_test</code> is a matrix, it is the global testing input data that feed into the emulators in the first layer of a system.
+The rows of <code>x_test</code> represent different input data points and the columns represent input dimensions across all emulators in
+the first layer of the system. In this case, it is assumed that the only global input to the system is the input to the
+emulators in the first layer and there is no global input to emulators in other layers.
+</p>
+</li>
+<li>
+<p> if <code>x_test</code> is a list, it should have <em>L</em> (the number of layers in an emulator system) elements. The first element
+is a matrix that represents the global testing input data that feed into the emulators in the first layer of the system. The
+remaining <em>L-1</em> elements are <em>L-1</em> sub-lists, each of which contains a number (the same number of emulators in
+the corresponding layer) of matrices (rows being testing input data points and columns being input dimensions) that represent the
+global testing input data to the emulators in the corresponding layer. The matrices must be placed in the sub-lists based on how
+their corresponding emulators are placed in <code>struc</code> argument of <code>lgp()</code>. If there is no global input data to a certain emulator,
+set <code>NULL</code> in the corresponding sub-list of <code>x_test</code>.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><code>x_test</code> must be provided for the validation if <code>x</code> is an instance of the <code>lgp</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_test</code></td>
+<td>
+<p>the OOS testing output data that correspond to <code>x_test</code>:
+</p>
+
+<ul>
+<li>
+<p> if <code>x</code> is an instance of the <code>gp</code> class, <code>y_test</code> is a matrix with only one column and each row being an testing output data point.
+</p>
+</li>
+<li>
+<p> if <code>x</code> is an instance of the <code>dgp</code> class, <code>y_test</code> is a matrix with its rows being testing output data points and columns being
+output dimensions.
+</p>
+</li>
+<li>
+<p> if <code>x</code> is an instance of the <code>lgp</code> class, <code>y_test</code> can be a single matrix or a list of matrices:
+</p>
+
+<ul>
+<li>
+<p> if <code>y_test</code> is a single matrix, then there is only one emulator in the final layer of the linked emulator system and <code>y_test</code>
+represents the emulator's output with rows being testing positions and columns being output dimensions.
+</p>
+</li>
+<li>
+<p> if <code>y_test</code> is a list, then <code>y_test</code> should have <em>M</em> number (the same number of emulators in the final layer of the system) of matrices.
+Each matrix has its rows corresponding to testing positions and columns corresponding to output dimensions of the associated emulator
+in the final layer.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><code>y_test</code> must be provided for the validation if <code>x</code> is an instance of the <code>lgp</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the prediction approach in validations: mean-variance (<code>"mean_var"</code>) or sampling (<code>"sampling"</code>) approach. Defaults to <code>"mean_var"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>a bool indicating if the trace information on validations will be printed during the function execution.
+Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force</code></td>
+<td>
+<p>a bool indicating whether to force the LOO or OOS re-evaluation when <code>loo</code> or <code>oos</code> slot already exists in <code>object</code>. When <code>force = FALSE</code>,
+<code>validate()</code> will try to determine automatically if the LOO or OOS re-evaluation is needed. Set <code>force</code> to <code>TRUE</code> when LOO or OOS re-evaluation
+is required. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>the number of cores/workers to be used for the LOO or OOS validation. If set to <code>NULL</code>,
+the number of cores is set to <code style="white-space: pre;">⁠(max physical cores available - 1)⁠</code>. Defaults to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>N/A.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threading</code></td>
+<td>
+<p>a bool indicating whether to use the multi-threading to accelerate the LOO or OOS.
+Turning this option on could improve the speed of validations when the emulator is built with a moderately large number of
+training data points and the Matérn-2.5 kernel.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> If <code>object</code> is an instance of the <code>gp</code> class, an updated <code>object</code> is returned with an additional slot called <code>loo</code> (for LOO cross validation) or
+<code>oos</code> (for OOS validation) that contains:
+</p>
+
+<ul>
+<li>
+<p> two slots called <code>x_train</code> (or <code>x_test</code>) and <code>y_train</code> (or <code>y_test</code>) that contain the validation data points for LOO (or OOS).
+</p>
+</li>
+<li>
+<p> a column matrix called <code>mean</code>, if <code>method = "mean_var"</code>, or <code>median</code>, if <code>method = "sampling"</code>, that contains the predictive means or medians of the
+GP emulator at validation positions.
+</p>
+</li>
+<li>
+<p> three column matrices called <code>std</code>, <code>lower</code>, and <code>upper</code> that contain the predictive standard deviations and credible intervals of the
+GP emulator at validation positions. If <code>method = "mean_var"</code>, the upper and lower bounds of a credible interval are two standard deviations above
+and below the predictive mean. If <code>method = "sampling"</code>, the upper and lower bounds of a credible interval are 2.5th and 97.5th percentiles.
+</p>
+</li>
+<li>
+<p> a numeric value called <code>rmse</code> that contains the root mean/median squared error of the GP emulator.
+</p>
+</li>
+<li>
+<p> a numeric value called <code>nrmse</code> that contains the (min-max) normalized root mean/median squared error of the GP emulator. The min-max normalization
+is based on the maximum and minimum values of the validation outputs contained in <code>y_train</code> (or <code>y_test</code>).
+</p>
+</li>
+</ul>
+<p>The rows of matrices (<code>mean</code>, <code>median</code>, <code>std</code>, <code>lower</code>, and <code>upper</code>) correspond to the validation positions.
+</p>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>dgp</code> class, an updated <code>object</code> is returned with an additional slot called <code>loo</code> (for LOO cross validation) or
+<code>oos</code> (for OOS validation) that contains:
+</p>
+
+<ul>
+<li>
+<p> two slots called <code>x_train</code> (or <code>x_test</code>) and <code>y_train</code> (or <code>y_test</code>) that contain the validation data points for LOO (or OOS).
+</p>
+</li>
+<li>
+<p> a matrix called <code>mean</code>, if <code>method = "mean_var"</code>, or <code>median</code>, if <code>method = "sampling"</code>, that contains the predictive means or medians of the
+DGP emulator at validation positions.
+</p>
+</li>
+<li>
+<p> three matrices called <code>std</code>, <code>lower</code>, and <code>upper</code> that contain the predictive standard deviations and credible intervals of the
+DGP emulator at validation positions. If <code>method = "mean_var"</code>, the upper and lower bounds of a credible interval are two standard deviations above
+and below the predictive mean. If <code>method = "sampling"</code>, the upper and lower bounds of a credible interval are 2.5th and 97.5th percentiles.
+</p>
+</li>
+<li>
+<p> a vector called <code>rmse</code> that contains the root mean/median squared errors of the DGP emulator across different output
+dimensions.
+</p>
+</li>
+<li>
+<p> a vector called <code>nrmse</code> that contains the (min-max) normalized root mean/median squared errors of the DGP emulator across different output
+dimensions. The min-max normalization is based on the maximum and minimum values of the validation outputs contained in <code>y_train</code> (or <code>y_test</code>).
+</p>
+</li>
+</ul>
+<p>The rows and columns of matrices (<code>mean</code>, <code>median</code>, <code>std</code>, <code>lower</code>, and <code>upper</code>) correspond to the validation positions and DGP emulator output
+dimensions, respectively.
+</p>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>lgp</code> class, an updated <code>object</code> is returned with an additional slot called <code>oos</code> (for OOS validation) that contains:
+</p>
+
+<ul>
+<li>
+<p> two slots called <code>x_test</code> and <code>y_test</code> that contain the validation data points for OOS.
+</p>
+</li>
+<li>
+<p> a list called <code>mean</code>, if <code>method = "mean_var"</code>, or <code>median</code>, if <code>method = "sampling"</code>, that contains the predictive means or medians of
+the linked (D)GP emulator at validation positions.
+</p>
+</li>
+<li>
+<p> three lists called <code>std</code>, <code>lower</code>, and <code>upper</code> that contain the predictive standard deviations and credible intervals of
+the linked (D)GP emulator at validation positions. If <code>method = "mean_var"</code>, the upper and lower bounds of a credible interval are two standard
+deviations above and below the predictive mean. If <code>method = "sampling"</code>, the upper and lower bounds of a credible interval are 2.5th and 97.5th percentiles.
+</p>
+</li>
+<li>
+<p> a list called <code>rmse</code> that contains the root mean/median squared errors of the linked (D)GP emulator.
+</p>
+</li>
+<li>
+<p> a list called <code>nrmse</code> that contains the (min-max) normalized root mean/median squared errors of the linked (D)GP emulator. The min-max normalization
+is based on the maximum and minimum values of the validation outputs contained in <code>y_test</code>.
+</p>
+</li>
+</ul>
+<p>Each element in <code>mean</code>, <code>median</code>, <code>std</code>, <code>lower</code>, <code>upper</code>, <code>rmse</code>, and <code>nrmse</code> corresponds to a (D)GP emulator in the final layer of the linked (D)GP
+emulator.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+
+<ul>
+<li>
+<p> When both <code>x_test</code> and <code>y_test</code> are <code>NULL</code>, the LOO cross validation will be implemented. Otherwise, OOS validation will
+be implemented. The LOO validation is only applicable to a GP or DGP emulator (i.e., <code>x</code> is an instance of the <code>gp</code> or <code>dgp</code>
+class). If a linked (D)GP emulator (i.e., <code>x</code> is an instance of the <code>lgp</code> class) is provided, <code>x_test</code> and <code>y_test</code> must
+also be provided for OOS validation.
+</p>
+</li>
+<li>
+<p> Any R vector detected in <code>x_test</code> and <code>y_test</code> will be treated as a column vector and automatically converted into a single-column
+R matrix. Thus, if <code>x_test</code> or <code>y_test</code> is a single testing data point with multiple dimensions, it must be given as a matrix.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# See gp(), dgp(), or lgp() for an example.
+
+## End(Not run)
+</code></pre>
+
+
+</div>

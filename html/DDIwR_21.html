@@ -1,0 +1,242 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>convert</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Converts a dataset from one statistical software to another</h2>
+
+<h3>Description</h3>
+
+<p>This function converts (or transfers) between R, Stata, SPSS, SAS, Excel and
+DDI XML files. Unlike the regular import / export functions from packages
+<b><span class="pkg">haven</span></b> or <b><span class="pkg">rio</span></b>, this function uses the DDI standard
+as an exchange platform and facilitates a consistent conversion of the
+missing values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">convert(
+  from,
+  to = NULL,
+  declared = TRUE,
+  chartonum = FALSE,
+  recode = TRUE,
+  encoding = "UTF-8",
+  csv = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>A path to a file, or a data.frame object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>Character, the name of a software package or a path to a specific
+file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>declared</code></td>
+<td>
+<p>Logical, return the resulting dataset as a declared object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chartonum</code></td>
+<td>
+<p>Logical, recode character categorical variables to numerical
+categorical variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recode</code></td>
+<td>
+<p>Logical, recode missing values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encoding</code></td>
+<td>
+<p>The character encoding used to read a file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>csv</code></td>
+<td>
+<p>Path to the CSV file, if not embedded in XML file containing the
+DDI Codebook</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters passed to other functions, see the
+Details section</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When the argument <strong><code>to</code></strong> specifies a certain statistical package
+(<code>"R"</code>, <code>"Stata"</code>, <code>"SPSS"</code>, <code>"SAS"</code>, <code>"XPT"</code>) or <code>"Excel"</code>, the name of the
+destination file will be identical to the one in the argument <strong><code>from</code></strong>,
+with an automatically added software specific extension.
+</p>
+<p>SPSS portable file (with the extension <code>".por"</code>) can only be read, but not
+written.
+</p>
+<p>The argument <strong><code>to</code></strong> can also be specified as a path to a specific file,
+in which case the software package is determined from its file extension.
+The following extentions are currently recognized: <code>.xml</code> for DDI,
+<code>.rds</code> for R, <code>.dta</code> for Stata, <code>.sav</code> for SPSS, <code>.xpt</code> for SAS, and
+<code>.xlsx</code> for Excel.
+</p>
+<p>Additional parameters can be specified via the three dots argument
+<strong><code>...</code></strong>, that are passed to the respective functions from packages
+<b><span class="pkg">haven</span></b> and <b><span class="pkg">readxl</span></b>. For instance the function
+<b><code>write_dta()</code></b> has an additional argument called
+<strong><code>version</code></strong> when writing a Stata file.
+</p>
+<p>The most important argument to consider is called <strong><code>user_na</code></strong>, part of
+the function <b><code>read_sav()</code></b>. Defaulted to <code>FALSE</code> in
+package <b><span class="pkg">haven</span></b>, in package <b><span class="pkg">DDIwR</span></b> it is used as
+having the value of <code>TRUE</code>, and it can be deactivated by explicitly
+specifying <code>user_na = FALSE</code> in function <strong><code>convert()</code></strong>.
+</p>
+<p>The same three dots argument is used to pass additional parameters to other
+functions in this package, for instance <strong><code>exportDDI()</code></strong> when converting to
+a DDI file. One of its argument <strong><code>embed</code></strong> (activated by default) can be
+used to control embedding the data in the XML file. Deactivating it will
+create a CSV file in the same directory, using the same file name as the
+XML file.
+</p>
+<p>When converting from DDI, if the dataset is not embedded in the XML file, the
+CSV file is expected to be found in the same directory as the DDI Codebook,
+and it should have the same file name as the XML file. Alternatively, the
+path to the CSV file can be provided via the <strong><code>csv</code></strong> argument. Additional
+formal parameters of the function <b><code>read.csv()</code></b> can
+be passed via the same three dots <strong><code>...</code></strong> argument.
+</p>
+<p>The DDI .xml file generates unique IDs for all variables, if not already
+present in the attributes. These IDs are useful for newer versions of the DDI
+Codebook, for referencing purposes.
+</p>
+<p>The argument <strong><code>chartonum</code></strong> signals recoding character categorical
+variables, and employs the function <b><code>recodeCharcat()</code></b>.
+This only makes sense when recoding to Stata, which does not allow allocating
+labels for anything but integer variables.
+</p>
+<p>If the argument <strong><code>to</code></strong> is left to <code>NULL</code>, the data is (invisibly) returned
+to the R enviroment. Conversion to R, either in the working space or as
+a data file, will result (by default) in a data frame containing declared
+labelled variables, as defined in package <b><span class="pkg">declared</span></b>.
+</p>
+<p>The current version reads and creates DDI Codebook version 2.6, with future
+versions to extend the functionality for DDI Lifecycle versions 3.x and link
+to the future package <b>DDI4R</b> for the UML model based version 4. It
+extends the standard DDI Codebook by offering the possibility to embed a
+serialized version of the R dataset into the XML file containing the
+Codebook, within a <code>notes</code> child of the <code>fileDscr</code> component. This type of
+generated codebook is unique to this package and automatically detected when
+converting to another statistical software. This will likely be replaced with
+a time insensitive text version.
+</p>
+<p>Converting to SAS is experimental, and it relies on the same package
+<b><span class="pkg">haven</span></b> that uses the ReadStat C library. The safest way to
+convert, which at the same time consistently converts the missing values, is
+to export the data to a CSV file and create a setup file produced by function
+<b><code>setupfile()</code></b> and run the commands manually.
+</p>
+<p>Converting data from SAS is possible, however reading the metadata is also
+experimental (the current version of <b>haven</b> only partially imports the
+metadata). Either specify the path to the catalog file using the argument
+<strong><code>catalog_file</code></strong> from the function <b><code>read_sas()</code></b>,
+or have the catalog file in the same directory as the data set, with the same
+file name and the extension <code>.sas7bcat</code>
+</p>
+<p>The argument <strong><code>recode</code></strong> controls how missing values are treated. If the
+input file has SPSS like numeric codes, they will be recoded to extended
+(a-z) missing types when converting to Stata or SAS. If the input has Stata
+like extended codes, they will be recoded to SPSS like numeric codes.
+</p>
+<p>The character <strong><code>encoding</code></strong> is usually passed to the corresponding functions
+from package <b><span class="pkg">haven</span></b>. It can be set to <code>NULL</code> to reset at the
+default in that package.
+</p>
+<p>Converting to SPSS works with numerical and character labelled vectors, with
+or without labels. Date/Time variables are partially supported by package
+<strong>haven</strong>: either having such a variable with no labels and missing values,
+or if labels and missing values are declared the variable is automatically
+coerced to numeric, and users may have to make the proper settings in SPSS.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An invisible R data frame, when the argument <strong><code>to</code></strong> is NULL.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Adrian Dusa
+</p>
+
+
+<h3>References</h3>
+
+<p>DDI - Data Documentation Initiative, see the
+<a href="https://ddialliance.org/">DDI Alliance</a> website.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>setupfile</code>,
+<code>getMetadata</code>,
+<code>declared</code>,
+<code>labelled</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Assuming an SPSS file called test.sav is located in the working directory
+# The following command imports the file into the R environment:
+test &lt;- convert("test.sav")
+
+# The following command will extract the metadata in a DDI Codebook and
+# produce a test.xml file in the same directory
+convert("test.sav", to = "DDI")
+
+# The data may be saved separately from the DDI file, using:
+convert("test.sav", to = "DDI", embed = FALSE)
+
+# To produce a Stata file:
+convert("test.sav", to = "Stata")
+
+# To produce an R file:
+convert("test.sav", to = "R")
+
+# To produce an Excel file:
+convert("test.sav", to = "Excel")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

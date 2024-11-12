@@ -1,0 +1,596 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DWSurv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DTR estimation and inference for time-to-event data using DWSurv</h2>
+
+<h3>Description</h3>
+
+<p>Dynamic treatment regimen estimation and inference via dynamic weighted 
+survival modeling (DWSurv).  Inference for the blip estimators with single- 
+and multi-stage data.
+</p>
+<p>The function <code>DWSurv()</code> allows estimating an optimal dynamic treatment regime
+from multi-stage trials or observational data when the outcome of interest
+is survival time subject to right-censoringg. The dynamic weighted survival 
+modeling (DWSurv) algorithm is implemented.  The method focuses on 
+estimating the parameters of the blip: a model of the difference in 
+expected outcome under the observed treatment and some reference treatment 
+(usually a control) at a given stage, assuming identical histories and 
+optimal treatment thereafter.
+</p>
+<p>The method requires the specification of four models for each stage of the 
+analysis: a treatment model (conditional mean of the treatment variable), 
+a censoring model, a treatment-free model (conditional mean of outcome 
+assuming only reference treatments are used), and a blip model.  Only the 
+blip model must be correctly specified (or over-specified), with consistent 
+parameter estimates obtainable if at least one of the treatment-free or the 
+treatment and censoring models are correctly specified.  Note that all of 
+these must be specified as lists of formula objects, even if only one stage
+of treatment is considered.
+</p>
+<p>Note that as is conventional, it is assumed a larger survival time is 
+preferred (which can be easily achieved via transformation of your data if 
+necessary).
+</p>
+<p>Several treatment weight function options have been implemented within the 
+package:
+</p>
+ 
+<ul>
+<li>
+<p> "none": No treatment weights applied. If <code>method = "dWOLS"</code>, this 
+selection results in the implementation of Q-learning, modified 
+slightly to use the dWOLS style pseudo-outcome 
+(computed using the observed outcome modified by the estimated 
+treatment effect) rather than the traditional Q-learning outcome 
+(predicted based on model only, rather than observed outcome with 
+treatment effect).  
+</p>
+</li>
+<li>
+<p> "ipw": weights based on the inverse probability of 
+treatment. For binary treatments, a logistic regression is used.
+For multinomial, a multinomial log-linear model is fit using 
+<code>multinom</code>. For continuous treatments, a GLM with the specified 
+family and link function provided in the <code>treat.fam</code> argument is used.
+</p>
+</li>
+<li>
+<p> "cipw": inverse probability of treatment weights as described for
+"ipw" and capped at the 99th percentile of the observed weights.
+</p>
+</li>
+<li>
+<p> "qpom": weights based on the stabilized inverse 
+probability of treatment applied to the categorized (into n.bins bins) 
+continuous doses or multinomial treatments; probabilities are 
+calculated using a proportional odds model.
+This weight is appropriate only for continuous and multinomial treatments.
+</p>
+</li>
+<li>
+<p> "wo": overlap weights for the categorized continuous doses 
+or multinomial treatments (Li and Li, 2019).
+This weight is appropriate only for continuous treatments.
+</p>
+</li>
+<li>
+<p> "abs": Absolute difference <code class="reqn">|A - E[A|...]|</code>. 
+appropriate only for binary treatments.
+</p>
+</li>
+<li>
+<p> "manual": User provides treatment weights through input 
+<code>treat.wgt.man</code>.
+</p>
+</li>
+<li>
+<p> "manual.with.censor": User provides combined treatment * censoring
+weights through input <code>treat.wgt.man</code>. Note that 'cens.mod' should
+be specified with the event indicator on the right-hand side of the 
+formula (e.g., <code>~ status</code>).
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">DWSurv(
+  time,
+  blip.mod,
+  treat.mod,
+  tf.mod,
+  cens.mod,
+  data = NULL,
+  method = c("dwols", "qlearn"),
+  interactive = FALSE,
+  treat.type = c("bin", "multi", "cont"),
+  treat.fam = gaussian(link = "identity"),
+  weight = c("abs", "ipw", "cipw", "qpom", "wo", "none", "manual", "manual.with.censor"),
+  n.bins = 3L,
+  treat.range = NULL,
+  treat.wgt.man = NULL,
+  var.estim = c("none", "bootstrap", "sandwich"),
+  bootstrap.controls = list(B = 100L, M = 0L, type = "standard", truncate = 0, verbose =
+    FALSE, interrupt = FALSE),
+  dtr = TRUE,
+  full.cov = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>A list of formula specifying the survival time variable for each 
+stage in order. The time variable should be specified on the right hand 
+side of the formula. No dependent variable should be specified. The list 
+should be as long as the number of stages.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>blip.mod</code></td>
+<td>
+<p>A list of formula objects specifying covariates of the
+blip function for each stage in order. No dependent variable should be 
+specified. Note that this input should include the treatment variable 
+ONLY if the blip model is quadratic in treatment. See Details for further 
+clarification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.mod</code></td>
+<td>
+<p>A list of formula objects specifying the treatment model for
+each stage in order. Treatment variable should be included as the dependent
+variable. If treatment is binary <code>glm(family = binomial)</code>
+will be 
+used to obtain parameter estimates; if treatment is multi-nomial, 
+<code>multinom()</code> will be used to obtain parameter estimates; and if 
+treatment is continuous, <code>lm()</code> will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tf.mod</code></td>
+<td>
+<p>A list of formula objects specifying covariates of the
+treatment-free model for each stage in order. No dependent variable should 
+be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cens.mod</code></td>
+<td>
+<p>A list of formula objects specifying the censoring
+model for each stage in order. The event indicator, which takes value 1 if
+an event was observed and 0 otherwise, should be included as the dependent
+variable and should be the same across stages. In the absence of censoring
+or if censoring weights are provided by the user through 'treat.wgt.man', 
+(i.e., <code>weight = 'manual.with.censor'</code>)
+one still needs to specify an event indicator on the right-hand
+side of the formula and leave the left-hand side empty (see example below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame containing all necessary covariates and treatments
+contained in the models. Missing data should be coded as <code>NA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The DTR method to be used, choose "dwols" for dynamic WOLS, 
+or "qlearn" for Q-learning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interactive</code></td>
+<td>
+<p>If <code>TRUE</code> on-screen prompts will guide the user through 
+the specification of blip, treatment, and treatment-free models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.type</code></td>
+<td>
+<p>A character object. Must be one of {"bin", "multi", "cont"}
+indicating that the treatments at each stage are binary, multinomial,
+or continuous, respectively. Each stage must have the same treatment type.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.fam</code></td>
+<td>
+<p>A character or family object. 
+The description of the dose distribution along with the link 
+function to be used in the treatment model for computing weights; should be 
+specified in a similar format as that used in <code>glm()</code>. 
+If character object, must be one of {"gaussian", "Gamma"}, for which
+<code>gaussian(link = "identity")</code> or 
+<code>Gamma(link = "log")</code> 
+will be used,
+respectively. Input is ignored for <code>treat.type = "bin"</code> and 
+<code>treat.type = "multi"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>The form of the treatment weight. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.bins</code></td>
+<td>
+<p>An integer object. The number of bins (levels) to be used for 
+categorizing continuous doses. This input is required only when
+<code>treat.type = "cont"</code> and <code>weight = "wo"</code> or <code>weight = "qpom"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.range</code></td>
+<td>
+<p>For continuous treatments. Specify the maximum/minimum 
+value that treatments can be take. If unspecified then the minimum/maximum 
+value of observed treatments is used. If you wish to have unrestricted 
+treatments set this option to <code>c(-Inf, +Inf)</code>. If each stage has its own
+range, provide as a list, the ith element providing the min and max
+for the ith stage treatment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treat.wgt.man</code></td>
+<td>
+<p>NULL or a list of vectors of known treatment 
+(or treatment * censoring) weights can be 
+specified to be used instead of hard-coded treatment weight options.
+The <code class="reqn">i^{th}</code> element of the list contains the multiplicative weights 
+for the <code class="reqn">i^{th}</code> stage. Each vector must be of length <code class="reqn">n</code>, 
+the number of participants. Used only for <code>method = "dwols"</code>. If
+providing the treatment * censoring weights, <code>cens.mod = NA</code> must
+be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.estim</code></td>
+<td>
+<p>Covariance matrix estimation method, either "bootstrap"
+or "sandwich" for sandwich estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap.controls</code></td>
+<td>
+<p>A named list specifying control parameters of the
+bootstrap if <code>var.estim = "bootstrap"</code>. Available controls are:
+</p>
+
+<dl>
+<dt>B: </dt>
+<dd>
+<p>The number of bootstrap samples.</p>
+</dd> 
+<dt>M: </dt>
+<dd>
+<p>The subsample size for m out of n bootstrap.</p>
+</dd>
+<dt>type: </dt>
+<dd>
+<p>The type of bootstrap. Must be one of {"standard", 
+"empirical", "normal"}. The last two are parametric bootstraps.</p>
+</dd>
+<dt>truncate: </dt>
+<dd>
+<p>A number between 0 and 0.5. The lowest and highest 
+specified proportion of parameter estimates will be replaced by the
+relevant quantiles affording some robustness to extreme values 
+when estimating covariance.</p>
+</dd>
+<dt>verbose: </dt>
+<dd>
+<p>If TRUE, estimated time to completion will be printed 
+to the console every ~30 seconds.</p>
+</dd>
+<dt>interrupt: </dt>
+<dd>
+<p>If TRUE then user will be given the option 
+to abort the bootstrap without error if estimated time to completion
+exceeds 10 minutes.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtr</code></td>
+<td>
+<p>A logical object. If <code>TRUE</code>, use the DTR estimation approach, which
+estimates the stage pseudo-outcome by adding a regret function. If <code>FALSE</code>,
+use an 'effect estimation' approach, which treats the observed outcome
+as being equal to an outcome assuming no treatment is received at any
+stage, plus a blip component at each stage; each stage pseudo-outcome is 
+generated by subtracting a blip function. Note that most of the 
+DTR-specific output will either be suppressed or irrelevant.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>full.cov</code></td>
+<td>
+<p>A logical. If <code>TRUE</code>, the full covariance matrix will be
+returned. If <code>FALSE</code>, only the terms pertaining to the blip parameters
+are returned.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>DWSurv</code>, a list including elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>K: </code></td>
+<td>
+<p>The number of decision points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta: </code></td>
+<td>
+<p>A list. The ith element contains the parameter estimates of
+the ith stage treatment-free model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>psi: </code></td>
+<td>
+<p>A list. The ith element contains the parameter estimates of
+the ith stage blip model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covmat: </code></td>
+<td>
+<p>A list. The ith element contains covariance matrix of 
+the ith stage blip parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nonreg: </code></td>
+<td>
+<p>Non-regularity estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>setup: </code></td>
+<td>
+<p>A list detailing the input parameter settings used for the
+analysis</p>
+</td>
+</tr>
+</table>
+<ul>
+<li>
+<p> models: A list of the models used for the analysis.
+</p>
+</li>
+<li>
+<p> method: The parameter estimation method.
+</p>
+</li>
+<li>
+<p> var.estim: The variance estimation method.
+</p>
+</li>
+<li>
+<p> cc.modeled: If TRUE, missing data was modeled. If FALSE, cases
+with missing data were removed from the analysis.
+</p>
+</li>
+<li>
+<p> tx.weight: The treatment weighting used for the analysis.
+</p>
+</li>
+<li>
+<p> tx.type: Treatment was binary, multinomial, or continuous.
+</p>
+</li>
+<li>
+<p> n.bins: The number of bins (levels) used for categorizing
+continuous doses when <code>tx.weight = "wo"</code> or 
+<code>tx.weight = "qpom"</code>.
+</p>
+</li>
+<li>
+<p> tx.wgt.man: Any user provided treatment weights.
+</p>
+</li>
+<li>
+<p> tx.range: For continuous treatments, the range of allowed
+treatment values.
+</p>
+</li>
+<li>
+<p> tx.family: The description of the dose distribution along 
+with the link function used in the continuous treatment model.
+</p>
+</li>
+<li>
+<p> boot.controls: A list of the bootstrap controls.
+</p>
+</li>
+<li>
+<p> type: The type of effect. Dynamic treatment regime or treatment
+effect.
+</p>
+</li>
+</ul>
+<table><tr style="vertical-align: top;">
+<td><code>training_data: </code></td>
+<td>
+<p>A list containing the training data.</p>
+</td>
+</tr></table>
+<ul>
+<li>
+<p> data: The covariates and treatment data.
+</p>
+</li>
+<li>
+<p> outcome: The outcome of interest.
+</p>
+</li>
+<li>
+<p> A: The treatment variables, possibly recoded to adhere to internal
+code requirements.
+</p>
+</li>
+</ul>
+<table><tr style="vertical-align: top;">
+<td><code>analysis: </code></td>
+<td>
+<p>A list containing the primary results of each stage analysis.</p>
+</td>
+</tr></table>
+<ul>
+<li>
+<p> n: The number of participants included in the stage analysis.
+</p>
+</li>
+<li>
+<p> last.stage: The last stage each participant was included in 
+the analysis.
+</p>
+</li>
+<li>
+<p> prob.cens: The complete case probabilities.
+</p>
+</li>
+<li>
+<p> cens.mod.fitted: The regression objects returned for estimating
+the complete case probabilities.
+</p>
+</li>
+<li>
+<p> cens.wgt: The complete case weights.
+</p>
+</li>
+<li>
+<p> cts: The treatment type at each stage.
+</p>
+</li>
+<li>
+<p> tx.mod.fitted: The regression objects returned for estimating
+the treatment probabilities.
+</p>
+</li>
+<li>
+<p> A.hat: The estimated or provided treatment probabilities.
+</p>
+</li>
+<li>
+<p> tx.wgt: The treatment weights.
+</p>
+</li>
+<li>
+<p> outcome.fit: The regression objects returned for each stage outcome
+regression.
+</p>
+</li>
+<li>
+<p> Y: The pseudo-outcomes.
+</p>
+</li>
+<li>
+<p> regret: Estimates of the regret for each subject based on observed 
+treatment and blip parameter estimates.
+</p>
+</li>
+<li>
+<p> opt.treat: Optimal treatment decisions for each subject at each 
+stage of treatment.
+</p>
+</li>
+<li>
+<p> opt.Y: Predicted optimal outcome under recommended regimen.
+</p>
+</li>
+</ul>
+<table><tr style="vertical-align: top;">
+<td><code>call: </code></td>
+<td>
+<p>The original function call.</p>
+</td>
+</tr></table>
+<p>The functions <code>coef()</code>, <code>predict()</code> and 
+<code>confint()</code> may be used with such 
+model objects. The first two have specific help files for their 
+implementation, while <code>confint()</code> is used in the same way as 
+the standard 
+<code>confint()</code> command, with the exception of the <code>parm</code> 
+option, which is not available.
+</p>
+
+
+<h3>References</h3>
+
+<p>Simoneau, G., Moodie, E. E. M., Wallace, M.P., Platt, R. W. (2020) Optimal 
+Dynamic Treatment Regimes with Survival Endpoints: Introducing DWSurv in the 
+R package DTRreg. <em>Journal of Statistical Computation and Simulation</em>.
+<b>90</b>, 2991-3008. (doi:10.1080/00949655.2020.1793341)
+</p>
+<p>Simoneau, G., Moodie, E. E. M., Nijjar, J. S., Platt, R. W. (2019) Estimating 
+Optimal Dynamic Treatment with Survival Outcomes. <em>Journal of the 
+American Statistical Association</em>, <b>115</b>, 1531-1539 
+(doi:10.1080/01621459.2019.1629939).
+</p>
+<p>Wallace, M. P., Moodie, E. E. M., Stephens, D. A. (2017) Dynamic Treatment 
+Regimen Estimation via Regression-Based Techniques: Introducing R Package 
+DTRreg. <em>Journal of Statistical Software</em> <b>80</b>(2), 1–20 
+(doi:10.18637/jss.v080.i02).
+</p>
+<p>Simoneau, G., Moodie, E. E. M., Nijjar, J. S., and Platt, R. W. (2020)
+Finite Sample Variance Estimation for Optimal Dynamic Treatment
+Regimes of Survival Outcomes. <em>Statistics in Medicine</em> <b>39</b>,
+4466-4479.
+</p>
+<p>Efron, B., and Tibshirani, R. (1986)
+Bootstrap Methods for Standard Errors, Confidence Intervals, and Other 
+Measures of Statistical Accuracy <em>Source: Statistical Science</em> <b>1</b>
+54-75.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#### example single run of a 2-stage DWSurv analysis
+data(twoStageCens)
+mod &lt;- DWSurv(time = list(~ T1, ~ T2), 
+              blip.mod = list(~ X11, ~ X21), 
+              treat.mod = list(A1 ~ X11, A2 ~ 1), 
+              tf.mod = list(~ X11 + X12, ~ X21 + X22 + X11), 
+              cens.mod = list(delta ~ 1, delta ~ X11), 
+              var.estim = "sandwich", 
+              data = twoStageCens)
+mod
+  
+#### example in the absence of censoring
+data(twoStageSurv)
+mod_nocensoring &lt;- DWSurv(time = list(~ T1, ~ T2), 
+                          blip.mod = list(~ X11, ~ X21), 
+                          treat.mod = list(A1 ~ X11, A2 ~ 1), 
+                          tf.mod = list(~ X11 + X12, ~ X21 + X22 + X11), 
+                          cens.mod = list(~ delta, ~ delta), 
+                          var.estim = "sandwich", 
+                          data = twoStageSurv)
+mod_nocensoring
+
+</code></pre>
+
+
+</div>

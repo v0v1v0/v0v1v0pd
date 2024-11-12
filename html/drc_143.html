@@ -1,0 +1,265 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EDcomp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Comparison of relative potencies between dose-response curves</h2>
+
+<h3>Description</h3>
+
+<p>Relative potencies (also called selectivity indices) for arbitrary doses are compared between
+fitted dose-response curves.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  EDcomp(object, percVec, percMat = NULL, compMatch = NULL, od = FALSE, vcov. = vcov, 
+  reverse = FALSE, 
+  interval = c("none", "delta", "fieller", "fls"), 
+  level = ifelse(!(interval == "none"), 0.95, NULL),
+  reference = c("control", "upper"),  
+  type = c("relative", "absolute"),
+  display = TRUE, pool = TRUE, logBase = NULL, 
+  multcomp = FALSE, ...)
+  
+  relpot(object, plotit = TRUE, compMatch = NULL, percVec = NULL, interval = "none", 
+  type = c("relative", "absolute"), 
+  scale = c("original", "percent", "unconstrained"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of class 'drc'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percVec</code></td>
+<td>
+<p>a numeric vector of dosage values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>percMat</code></td>
+<td>
+<p>a matrix with 2 columns providing the pairs of indices <code>percVec</code> to be compared. 
+By default all pairs are compared.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compMatch</code></td>
+<td>
+<p>an optional character vector of names of assays to be compared. If not specified all comparisons are supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>od</code></td>
+<td>
+<p>logical. If TRUE adjustment for over-dispersion is used. This argument only makes a difference for
+binomial data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov.</code></td>
+<td>
+<p>function providing the variance-covariance matrix. <code>vcov</code> is the default, 
+but <code>sandwich</code> is also an option (for obtaining robust standard errors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reverse</code></td>
+<td>
+<p>logical. If TRUE the order of comparison of two curves is reversed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+<p>character string specifying the type of confidence intervals to be supplied. The default is "none". 
+Use "delta" for asymptotics-based confidence intervals (using the delta method and the t-distribution).
+Use "fieller" for confidence intervals based on Fieller's theorem (with help from the delta method).
+Use "fls" for confidence interval back-transformed from logarithm scale (in case the parameter in the model fit is 
+log(ED50) as is the case for the <code>logistic</code> or <code>llogistic2</code> models); currently
+the argument <code>logBase</code> then also needs to be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>numeric. The level for the confidence intervals. Default is 0.95.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>character string. Is the upper limit or the control level the reference?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character string specifying whether absolute or relative response levels are supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logBase</code></td>
+<td>
+<p>numeric. The base of the logarithm in case logarithm transformed dose values are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>display</code></td>
+<td>
+<p>logical. If TRUE results are displayed. Otherwise they are not (useful in simulations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pool</code></td>
+<td>
+<p>logical. If TRUE curves are pooled. Otherwise they are not. This argument only works for models with
+independently fitted curves as specified in <code>drm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multcomp</code></td>
+<td>
+<p>logical to switch on output for use with the package multcomp (which needs to be activated first). Default is FALSE (corresponding to the original output).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>In <code>SI</code>: additional arguments to the function doing the calculations. 
+For instance the upper limit for the bisection method 
+needs to be larger than the ED values used in the required relative pontency.
+In <code>relpot</code>: additional graphical parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plotit</code></td>
+<td>
+<p>logical. If TRUE the relative potencies are plotted as a function of the response level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>character string indicating the scale to be used on the x axis: original or percent response level
+(only having an effect for type="relative").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>relpot</code> is a convenience function, which is useful for assessing how the relative potency
+changes as a function of the response level (e.g., for plotting as outlined by Ritz <em>et al</em> (2006)).
+</p>
+<p>Fieller's theorem is incorporated using the formulas provided by Kotz and Johnson (1983) and Finney (1978).
+</p>
+<p>For objects of class 'braincousens' or 'mlogistic' the additional argument may be the 'upper' argument
+or the 'interval' argument. The 'upper' argument specifies the upper limit of the bisection method. 
+The upper limits needs to be larger than the EDx level to be calculated. The default limit is 1000.
+The 'interval' argument should specify a rough interval in which the dose
+yielding the maximum hormetical response lies. The default interval is 'c(0.001, 1000)'. 
+Notice that the lower limit should not be set to 0 (use something like 1e-3, 1e-6, ...).
+</p>
+
+
+<h3>Value</h3>
+
+  
+<p>An invisible matrix containing the shown matrix with two or more columns, containing the estimates 
+and the corresponding estimated standard errors and possibly lower and upper confidence limits.
+Or, alternatively, a list with elements that may be plugged directly into <code>parm</code> 
+in the package <em>multcomp</em> (in case the argument <code>multcomp</code> is TRUE).
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function only works for the following built-in functions available in the package <em>drc</em>: 
+<code>braincousens</code>, <code>cedergreen</code>, <code>ucedergreen</code>, <code>llogistic</code>,
+and <code>weibull1</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Christian Ritz</p>
+
+
+<h3>References</h3>
+
+<p>Finney, D. J. (1978) <em>Statistical method in Biological Assay</em>, London: Charles Griffin House, 
+3rd edition (pp. 80–82).
+</p>
+<p>Kotz, S. and Johnson, N. L. (1983) <em>Encyclopedia of Statistical Sciences Volume 3</em>, 
+New York: Wiley \&amp; Sons (pp. 86–87).
+</p>
+<p>Ritz, C. and Cedergreen, N. and Jensen, J. E. and Streibig, J. C. (2006) 
+Relative potency in nonsimilar dose-response curves, <em>Weed Science</em>, <b>54</b>, 407–412.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>A related function is <code>ED.drc</code> (used for calculating effective doses).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+spinach.LL.4 &lt;- drm(SLOPE~DOSE, CURVE, data = spinach, fct = LL.4())
+
+EDcomp(spinach.LL.4, c(50,50))
+EDcomp(spinach.LL.4, c(10,50))
+EDcomp(spinach.LL.4, c(10,50), reverse = TRUE)
+
+## Using the package multcomp
+#sires &lt;- SI(spinach.LL.4, c(25, 50, 75))
+#library(multcomp)
+#summary(glht(parm(sires[[2]][[1]], sires[[2]][[2]]), rhs = 1))
+
+## Comparing specific ratios: 25/25, 50/50, 75/75
+#sires2 &lt;- SI(spinach.LL.4, c(25, 50, 75), matrix(c(1, 1, 2, 2, 3, 3), 3, 2, byrow = TRUE))
+#library(multcomp)
+#summary(glht(parm(sires2[[2]][[1]], sires2[[2]][[2]]), rhs = 1))
+
+
+## Relative potency of two herbicides
+m2 &lt;- drm(DryMatter~Dose, Herbicide, 
+data = S.alba, fct = LL.3())
+
+EDcomp(m2, c(50, 50))  
+EDcomp(m2, c(50, 50), interval = "delta")
+EDcomp(m2, c(50, 50), interval = "fieller")
+
+## Comparison based on an absolute
+##  response level
+
+m3 &lt;- drm(SLOPE~DOSE, CURVE,
+data = spinach, fct = LL.4())
+
+EDcomp(m3, c(0.5,0.5), compMatch = c(2,4), type = "absolute", interval = "fieller")
+
+EDcomp(m3, c(55,80), compMatch = c(2,4))  
+# same comparison using a relative response level
+
+
+## Relative potency transformed from log scale
+m4 &lt;- drm(drymatter~log(dose), treatment, data=G.aparine[-c(1:40), ], 
+pmodels = data.frame(treatment,treatment,1,treatment), fct = LL2.4())
+
+EDcomp(m4, c(50,50), interval = "fls", logBase = exp(1))
+
+</code></pre>
+
+
+</div>

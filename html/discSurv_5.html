@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cIndexCompRisks</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Discrete concordance index for competing risks</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the discrete concordance index in the case of competing risks.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cIndexCompRisks(markers, testTime, testEvents, trainTime, trainEvents)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>markers</code></td>
+<td>
+<p>Predictions on the test data with model fitted on training data ("numeric matrix").
+Predictions are stored in the rows and the number of columns equal to the number of events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testTime</code></td>
+<td>
+<p>New time intervals in the test data ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testEvents</code></td>
+<td>
+<p>New event indicators (0 or 1) in the test data ("binary matrix"). Number of columns are
+equal to the number of events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainTime</code></td>
+<td>
+<p>Time intervals in the training data ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainEvents</code></td>
+<td>
+<p>Event indicators (0 or 1) in the training data ("binary matrix"). Number of columns are
+equal to the number of events.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Value of discrete concordance index between zero and one ("numeric vector").
+</p>
+
+
+<h3>Note</h3>
+
+<p>It is assumed that all time points up to the last observed interval
+[a_q-1, a_q) are available.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Moritz Berger <a href="mailto:moritz.berger@imbie.uni-bonn.de">moritz.berger@imbie.uni-bonn.de</a> <br><a href="https://www.imbie.uni-bonn.de/personen/dr-moritz-berger/">https://www.imbie.uni-bonn.de/personen/dr-moritz-berger/</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Heyard R, Timsit J, Held L, COMBACTE-MAGNET,consortium (2019).
+“Validation of discrete time-to-event prediction models in the presence of competing risks.”
+<em>Biometrical Journal</em>, <b>62</b>, 643-657.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cIndex</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##################################################
+# Example with unemployment data and prior fitting
+
+library(Ecdat)
+data(UnempDur)
+summary(UnempDur$spell)
+# Extract subset of data
+set.seed(635)
+IDsample &lt;- sample(1:dim(UnempDur)[1], 100)
+UnempDurSubset &lt;- UnempDur [IDsample, ]
+set.seed(-570)
+TrainingSample &lt;- sample(1:100, 75)
+UnempDurSubsetTrain &lt;- UnempDurSubset [TrainingSample, ]
+UnempDurSubsetTest &lt;- UnempDurSubset [-TrainingSample, ]
+
+# Convert to long format
+UnempDurSubsetTrainLong &lt;- dataLongCompRisks(dataShort = UnempDurSubsetTrain, timeColumn = "spell", 
+eventColumns = c("censor1", "censor4"), timeAsFactor = TRUE)
+
+# Estimate continuation ratio model with logit link
+vglmFit &lt;- VGAM::vglm(formula = cbind(e0, e1, e2) ~ timeInt + age + logwage, 
+data = UnempDurSubsetTrainLong, family=VGAM::multinomial(refLevel = "e0"))
+
+gamFitPreds &lt;- VGAM::predictvglm(vglmFit , newdata = cbind(UnempDurSubsetTest, 
+timeInt = as.factor(UnempDurSubsetTest$spell)))
+
+# Evaluate C-Index based on short data format
+cIndexCompRisks(markers = gamFitPreds, 
+testTime = UnempDurSubsetTest$spell, 
+testEvents = UnempDurSubsetTest[, c("censor1", "censor4")], 
+trainTime = UnempDurSubsetTrain$spell, 
+trainEvents = UnempDurSubsetTrain[, c("censor1", "censor4")])
+
+</code></pre>
+
+
+</div>

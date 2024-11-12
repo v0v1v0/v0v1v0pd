@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>QAIC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tools for model selection when distance sampling data are overdispersed</h2>
+
+<h3>Description</h3>
+
+<p>Overdispersion causes AIC to select overly-complex models, so analysts
+should specify the number/order of adjustment terms manually when fitting
+distance sampling models to data from camera traps, rather than allowing
+automated selection using AIC. Howe et al (2019) described a two-step method
+for selecting among models of the detection function in the face of
+overdispersion.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">QAIC(object, ..., chat = NULL, k = 2)
+
+chi2_select(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a fitted detection function object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional fitted model objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chat</code></td>
+<td>
+<p>a value of <code class="reqn">\hat{c}</code> to be used in QAIC calculation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>penalty per parameter to be used; default 2</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In step 1, and overdispersion factor (<code class="reqn">\hat{c}</code>) is computed
+either (1) for each key function family, from the most complex model in each
+family, as the chi-square goodness of fit test statistic divided by its
+degrees of freedom (<code class="reqn">\hat{c}_1</code>), or (2) for all models in the
+candidate set, from the raw data (<code class="reqn">\hat{c}_1</code>). In camera trap
+surveys of solitary animals, <code class="reqn">\hat{c}_1</code> would be the mean number
+of distance observations recorded during a single pass by an animal in front
+of a trap. In surveys of social animals employing human observers,
+<code class="reqn">\hat{c}_1</code> would be the mean number of detected animals per
+detected group, and in camera trap surveys of social animals
+<code class="reqn">\hat{c}_1</code> the mean number of distance observations recorded
+during an encounter between a group of animals and a CT.  In step two, the
+chi-square goodness of fit statistic divided by its degrees of freedom is
+calculated for the QAIC-minimizing model within each key function, and the
+model with the lowest value is selected for estimation.
+</p>
+<p>The <code>QAIC()</code> function should only be used select among models with the same
+key function (step 1). <code>QAIC()</code> uses <code class="reqn">\hat{c}_1</code> by default,
+computing it from the model with the most parameters. Alternatively,
+<code class="reqn">\hat{c}_1</code> can be calculated from the raw data and included in
+the call to <code>QAIC()</code>. Users must identify the QAIC-minimizing model within
+key functions from the resulting <code>data.frame</code>, and provide these models as
+arguments in <code>ch2_select()</code>. <code>chi2_select()</code> then computes and reports the
+chi-square goodness of fit statistic divided by its degrees of freedom for
+each of those models. The model with the lowest value is recommended for
+estimation.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a <code>data.frame</code> with one row per model supplied, in the same order as
+given
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>David L Miller, based on code from Eric Rexstad and explanation from
+Eric Howe.
+</p>
+
+
+<h3>References</h3>
+
+<p>Howe, E. J., Buckland, S. T., Després-Einspenner, M.-L., &amp; Kühl, H. S. (2019). Model selection with overdispersed distance sampling data. Methods in Ecology and Evolution, 10(1), 38–47. <a href="https://doi.org/10.1111/2041-210X.13082">doi:10.1111/2041-210X.13082</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(Distance)
+data("wren_cuecount")
+
+# fit hazard-rate key models
+w3.hr0 &lt;- ds(wren_cuecount, transect="point", key="hr", adjustment=NULL,
+             truncation=92.5)
+w3.hr1 &lt;- ds(wren_cuecount, transect="point", key="hr", adjustment="cos",
+             order=2, truncation=92.5)
+w3.hr2 &lt;- ds(wren_cuecount, transect="point", key="hr", adjustment="cos",
+             order=c(2, 4), truncation=92.5)
+
+# fit unform key models
+w3.u1 &lt;- ds(wren_cuecount, transect="point", key="unif", adjustment="cos",
+            order=1, truncation=92.5)
+w3.u2 &lt;- ds(wren_cuecount, transect="point", key="unif", adjustment="cos",
+            order=c(1,2), monotonicity="none",  truncation=92.5)
+w3.u3 &lt;- ds(wren_cuecount, transect="point", key="unif", adjustment="cos",
+            order=c(1,2,3), monotonicity="none", truncation=92.5)
+
+# fit half-normal key functions
+w3.hn0 &lt;- ds(wren_cuecount, transect="point", key="hn", adjustment=NULL,
+             truncation=92.5)
+w3.hn1 &lt;- ds(wren_cuecount, transect="point", key="hn", adjustment="herm",
+             order=2, truncation=92.5)
+
+# stage 1: calculate QAIC per model set
+QAIC(w3.hr0, w3.hr1, w3.hr2)  # no adjustments smallest
+QAIC(w3.u1, w3.u2, w3.u3)     # 2 adjustment terms (by 0.07)
+QAIC(w3.hn0, w3.hn1)  # no adjustments smallest
+
+# stage 2: select using chi^2/degrees of freedom between sets
+chi2_select(w3.hr0, w3.u2, w3.hn0)
+
+# example using a pre-calculated chat
+chat &lt;- attr(QAIC(w3.hr0, w3.hr1, w3.hr2), "chat")
+QAIC(w3.hr0, chat=chat)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

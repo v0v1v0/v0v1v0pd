@@ -1,0 +1,129 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lof</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Local Outlier Factor Score</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the Local Outlier Factor (LOF) score for each data point using a
+kd-tree to speed up kNN search.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lof(x, minPts = 5, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data matrix or a dist object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minPts</code></td>
+<td>
+<p>number of nearest neighbors used in defining the local
+neighborhood of a point (includes the point itself).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments are passed on to <code>kNN()</code>.
+Note: <code>sort</code> cannot be specified here since <code>lof()</code>
+uses always <code>sort = TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>LOF compares the local readability density (lrd) of an point to the lrd of
+its neighbors. A LOF score of approximately 1 indicates that the lrd around
+the point is comparable to the lrd of its neighbors and that the point is
+not an outlier. Points that have a substantially lower lrd than their
+neighbors are considered outliers and produce scores significantly larger
+than 1.
+</p>
+<p>If a data matrix is specified, then Euclidean distances and fast nearest
+neighbor search using a kd-tree is used.
+</p>
+<p><strong>Note on duplicate points:</strong> If there are more than <code>minPts</code>
+duplicates of a point in the data, then LOF the local readability distance
+will be 0 resulting in an undefined LOF score of 0/0. We set LOF in this
+case to 1 since there is already enough density from the points in the same
+location to make them not outliers. The original paper by Breunig et al
+(2000) assumes that the points are real duplicates and suggests to remove
+the duplicates before computing LOF. If duplicate points are removed first,
+then this LOF implementation in <span class="pkg">dbscan</span> behaves like the one described
+by Breunig et al.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of length <code>ncol(x)</code> containing LOF values for
+all data points.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Hahsler
+</p>
+
+
+<h3>References</h3>
+
+<p>Breunig, M., Kriegel, H., Ng, R., and Sander, J. (2000). LOF:
+identifying density-based local outliers. In <em>ACM Int. Conf. on
+Management of Data,</em> pages 93-104.
+<a href="https://doi.org/10.1145/335191.335388">doi:10.1145/335191.335388</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other Outlier Detection Functions: 
+<code>glosh()</code>,
+<code>kNNdist()</code>,
+<code>pointdensity()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(665544)
+n &lt;- 100
+x &lt;- cbind(
+  x=runif(10, 0, 5) + rnorm(n, sd = 0.4),
+  y=runif(10, 0, 5) + rnorm(n, sd = 0.4)
+  )
+
+### calculate LOF score with a neighborhood of 3 points
+lof &lt;- lof(x, minPts = 3)
+
+### distribution of outlier factors
+summary(lof)
+hist(lof, breaks = 10, main = "LOF (minPts = 3)")
+
+### plot sorted lof. Looks like outliers start arounf a LOF of 2.
+plot(sort(lof), type = "l",  main = "LOF (minPts = 3)",
+  xlab = "Points sorted by LOF", ylab = "LOF")
+
+### point size is proportional to LOF and mark points with a LOF &gt; 2
+plot(x, pch = ".", main = "LOF (minPts = 3)", asp = 1)
+points(x, cex = (lof - 1) * 2, pch = 1, col = "red")
+text(x[lof &gt; 2,], labels = round(lof, 1)[lof &gt; 2], pos = 3)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,422 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gl.spatial.autoCorr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Spatial autocorrelation following Smouse and Peakall 1999</h2>
+
+<h3>Description</h3>
+
+<p>Global spatial autocorrelation is a multivariate approach
+combining all loci into a single analysis. The autocorrelation coefficient
+"r" is calculated for each pair of individuals in each specified distance
+class. For more information see Smouse and Peakall 1999, Peakall et al. 2003
+and Smouse et al. 2008.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gl.spatial.autoCorr(
+  x = NULL,
+  Dgeo = NULL,
+  Dgen = NULL,
+  coordinates = "latlon",
+  Dgen_method = "Euclidean",
+  Dgeo_trans = "Dgeo",
+  Dgen_trans = "Dgen",
+  bins = 5,
+  reps = 100,
+  plot.pops.together = FALSE,
+  permutation = TRUE,
+  bootstrap = TRUE,
+  plot_theme = NULL,
+  plot_colors_pop = NULL,
+  CI_color = "red",
+  plot.out = TRUE,
+  save2tmp = FALSE,
+  verbose = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Genlight object [default NULL].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dgeo</code></td>
+<td>
+<p>Geographic distance matrix if no genlight object is provided.
+This is typically an Euclidean distance but it can be any meaningful 
+(geographical) distance metrics [default NULL].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dgen</code></td>
+<td>
+<p>Genetic distance matrix if no genlight object is provided
+[default NULL].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coordinates</code></td>
+<td>
+<p>Can be either 'latlon', 'xy' or a two column data.frame
+with column names 'lat','lon', 'x', 'y')  Coordinates are provided via
+<code>gl@other$latlon</code> ['latlon'] or via <code>gl@other$xy</code> ['xy']. If latlon
+data will be projected to meters using Mercator system [google maps] or if
+xy then distance is directly calculated on the coordinates [default "latlon"].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dgen_method</code></td>
+<td>
+<p>Method to calculate genetic distances. See details
+[default "Euclidean"].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dgeo_trans</code></td>
+<td>
+<p>Transformation to be used on the geographic distances. See
+Dgen_trans [default "Dgeo"].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Dgen_trans</code></td>
+<td>
+<p>You can provide a formula to transform the genetic
+distance. The transformation can be applied as a formula using Dgen as the
+variable to be transformed. For example: <code>Dgen_trans = 'Dgen/(1-Dgen)'.
+  Any valid R expression can be used here 
+  [default 'Dgen', which is the identity function.]</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bins</code></td>
+<td>
+<p>The number of bins for the distance classes
+(i.e. <code>length(bins) == 1)</code> or a vectors with the break points. See 
+details [default 5].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reps</code></td>
+<td>
+<p>The number to be used for permutation and bootstrap analyses
+[default 100].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.pops.together</code></td>
+<td>
+<p>Plot all the populations in one plot. Confidence 
+intervals from permutations are not shown [default FALSE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permutation</code></td>
+<td>
+<p>Whether permutation calculations for the null hypothesis 
+of no spatial structure should be carried out [default TRUE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>Whether bootstrap calculations to compute the 95% 
+confidence intervals around r should be carried out [default TRUE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_theme</code></td>
+<td>
+<p>Theme for the plot. See details [default NULL].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot_colors_pop</code></td>
+<td>
+<p>A color palette for populations or a list with
+as many colors as there are populations in the dataset [default NULL].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CI_color</code></td>
+<td>
+<p>Color for the shade of the 95% confidence intervals around 
+the r estimates [default "red"].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.out</code></td>
+<td>
+<p>Specify if plot is to be produced [default TRUE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save2tmp</code></td>
+<td>
+<p>If TRUE, saves any ggplots and listings to the session
+temporary directory (tempdir) [default FALSE].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Verbosity: 0, silent or fatal errors; 1, begin and end; 2,
+progress log ; 3, progress and results summary; 5, full report [default
+NULL, unless specified using gl.set.verbosity].</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function executes a modified version
+of <code>spautocorr</code> from the package <code>PopGenReport</code>. Differently 
+from <code>PopGenReport</code>, this function also computes the 95% confidence 
+intervals around the r via bootstraps, the 95
+null hypothesis of no spatial structure and the one-tail test via permutation, 
+and the correction factor described by Peakall et al 2003.
+</p>
+<p>The input can be i) a genlight object (which has to have the latlon slot 
+populated), ii) a pair of <code>Dgeo</code> and <code>Dgen</code>, which have to be
+either
+<code>matrix</code> or <code>dist</code> objects, or iii) a <code>list</code> of the 
+<code>matrix</code> or <code>dist</code> objects if the 
+analysis needs to be carried out for multiple populations (in this case, 
+all the elements of the <code>list</code> have to be of the same class (i.e. 
+<code>matrix</code> or <code>dist</code>) and the population order in the two lists has 
+to be the same. 
+</p>
+<p>If the input is a genlight object, the function calculates the linear 
+distance
+for <code>Dgeo</code> and the relevant <code>Dgen</code> matrix (see <code>Dgen_method</code>) 
+for each population. 
+When the method selected is a genetic similarity matrix (e.g. "simple" 
+distance), the matrix is internally transformed with <code>1 - Dgen</code> so that 
+positive values of autocorrelation coefficients indicates more related 
+individuals similarly as implemented in GenAlEx. If the user provide the 
+distance matrices, care must be taken in interpreting the results because
+similarity matrix will generate negative values for closely related 
+individuals.
+</p>
+<p>If <code>max(Dgeo)&gt;1000</code> (e.g. the geographic distances are in thousands of 
+metres), values are divided by 1000 (in the example before these would then 
+become km) to facilitate readability of the plots.
+</p>
+<p>If <code>bins</code> is of length = 1 it is interpreted as the number of (even)
+bins to use. In this case the starting point is always the minimum value in 
+the distance matrix, and the last is the maximum. If it is a numeric vector 
+of length&gt;1, it is interpreted as the breaking points. In this case, the 
+first has to be the lowest value, and the last has to be the highest. There 
+are no internal checks for this and it is user responsibility to ensure that
+distance classes are properly set up. If that is not the case, data that fall
+outside the range provided will be dropped. The number of bins will be 
+<code>length(bins) - 1</code>.
+</p>
+<p>The permutation constructs the 95% confidence intervals around the null
+hypothesis of no spatial structure (this is a two-tail test). The same data
+are also used to calculate the probability of the one-tail test (See 
+references below for details).
+</p>
+<p>Bootstrap calculations are skipped and <code>NA</code> is returned when the number 
+of possible combinations given the sample size of any given distance class is
+&lt; <code>reps</code>.
+</p>
+<p>Methods available to calculate genetic distances for SNP data:
+</p>
+
+<ul>
+<li>
+<p> "propShared" using the function <code>gl.propShared</code>.
+</p>
+</li>
+<li>
+<p> "grm" using the function <code>gl.grm</code>.
+</p>
+</li>
+<li>
+<p> "Euclidean" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+<li>
+<p> "Simple" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+<li>
+<p> "Absolute" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+<li>
+<p> "Manhattan" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+</ul>
+<p>Methods available to calculate genetic distances for SilicoDArT data:
+</p>
+
+<ul>
+<li>
+<p> "Euclidean" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+<li>
+<p> "Simple" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+<li>
+<p> "Jaccard" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+<li>
+<p> "Bray-Curtis" using the function <code>gl.dist.ind</code>.
+</p>
+</li>
+</ul>
+<p>Plots and table are saved to the temporal directory (tempdir) and can be
+accessed with the function <code>gl.print.reports</code> and listed with
+the function <code>gl.list.reports</code>. Note that they can be accessed
+only in the current R session because tempdir is cleared each time that the
+R session is closed.
+</p>
+<p>Examples of other themes that can be used can be consulted in </p>
+
+<ul>
+<li> <p><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">https://ggplot2.tidyverse.org/reference/ggtheme.html</a> and </p>
+</li>
+<li>
+<p><a href="https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/">https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/</a>
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Returns a data frame with the following columns:
+</p>
+
+<ol>
+<li>
+<p> Bin  The distance classes
+</p>
+</li>
+<li>
+<p> N The number of pairwise comparisons within each distance class
+</p>
+</li>
+<li>
+<p> r.uc The uncorrected autocorrelation coefficient
+</p>
+</li>
+<li>
+<p> Correction the correction
+</p>
+</li>
+<li>
+<p> r The corrected autocorrelation coefficient
+</p>
+</li>
+<li>
+<p> L.r The corrected autocorrelation coefficient lower limit
+(if <code>bootstap = TRUE</code>)
+</p>
+</li>
+<li>
+<p> U.r The corrected autocorrelation coefficient upper limit
+(if <code>bootstap = TRUE</code>)
+</p>
+</li>
+<li>
+<p> L.r.null.uc The uncorrected lower limit for the null hypothesis of no 
+spatial autocorrelation (if <code>permutation = TRUE</code>)
+</p>
+</li>
+<li>
+<p> U.r.null.uc  The uncorrected upper limit for the null hypothesis of no 
+spatial autocorrelation (if <code>permutation = TRUE</code>)
+</p>
+</li>
+<li>
+<p> L.r.null The corrected lower limit for the null hypothesis of no 
+spatial autocorrelation (if <code>permutation = TRUE</code>)
+</p>
+</li>
+<li>
+<p> U.r.null The corrected upper limit for the null hypothesis of no 
+spatial autocorrelation (if <code>permutation = TRUE</code>)
+</p>
+</li>
+<li>
+<p> p.one.tail The p value of the one tail statistical test
+</p>
+</li>
+</ol>
+<h3>Author(s)</h3>
+
+<p>Carlo Pacioni, Bernd Gruber &amp; Luis Mijangos 
+(Post to <a href="https://groups.google.com/d/forum/dartr">https://groups.google.com/d/forum/dartr</a>)
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Smouse PE, Peakall R. 1999. Spatial autocorrelation analysis of
+individual multiallele and multilocus genetic structure. Heredity 82:
+561-573.
+</p>
+</li>
+<li>
+<p> Double, MC, et al. 2005. Dispersal, philopatry and infidelity: 
+dissecting local genetic structure in superb fairy-wrens (Malurus cyaneus). 
+Evolution 59, 625-635.
+</p>
+</li>
+<li>
+<p> Peakall, R, et al. 2003. Spatial autocorrelation analysis offers new
+insights into gene flow in the Australian bush rat, Rattus fuscipes.
+Evolution 57, 1182-1195.
+</p>
+</li>
+<li>
+<p> Smouse, PE, et al. 2008. A heterogeneity test for fine-scale genetic
+structure. Molecular Ecology 17, 3389-3400.
+</p>
+</li>
+<li>
+<p> Gonzales, E, et al. 2010. The impact of landscape disturbance on 
+spatial genetic structure in the Guanacaste tree, Enterolobium
+cyclocarpum (Fabaceae). Journal of Heredity 101, 133-143.
+</p>
+</li>
+<li>
+<p> Beck, N, et al. 2008. Social constraint and an absence of sex-biased
+dispersal drive fine-scale genetic structure in white-winged choughs.
+Molecular Ecology 17, 4346-4358.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+require("dartR.data")
+res &lt;- gl.spatial.autoCorr(platypus.gl, bins=seq(0,10000,2000))
+# using one population, showing sample size
+test &lt;- gl.keep.pop(platypus.gl,pop.list = "TENTERFIELD")
+res &lt;- gl.spatial.autoCorr(test, bins=seq(0,10000,2000),CI_color = "green")
+
+test &lt;- gl.keep.pop(platypus.gl,pop.list = "TENTERFIELD")
+res &lt;- gl.spatial.autoCorr(test, bins=seq(0,10000,2000),CI_color = "green")
+</code></pre>
+
+
+</div>

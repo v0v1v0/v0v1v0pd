@@ -1,0 +1,70 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>setExport</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Manually add symbol names to the worker environment export list.</h2>
+
+<h3>Description</h3>
+
+<p>The setExport function lets users manually declare symbol names
+of corresponding objects that should be exported to workers.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">setExport(names = c())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>A character vector of symbol names to export.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>The <code>foreach</code> function includes a similar <code>.export</code> parameter.
+</p>
+<p>We provide this supplemental export option for users without direct access
+to the <code>foreach</code> function, for example, when <code>foreach</code> is used
+inside another package.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The value of <code>names</code> is invisibly returned (this function is used ofr its side effect).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+registerDoRedis("work queue")
+startLocalWorkers(n=1, queue="work queue", linger=1)
+
+f &lt;- function() pi
+
+(foreach(1) %dopar% tryCatch(eval(call("f")), error = as.character))
+# Returns the error converted to a message:
+# Error in eval(call("f")) : task 1 failed - could not find function "f"
+
+# Manually export the symbol f:
+setExport("f")
+(foreach(1) %dopar% eval(call("f")))
+# Now f is found.
+
+removeQueue("work queue")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

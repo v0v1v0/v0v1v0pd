@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cv_resmooth</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>K-fold cross-validation for resmoothing bandwidth.</h2>
+
+<h3>Description</h3>
+
+<p>Picks the largest resmoothing bandwidth achieving a cross-validation score within some specified tolerance of the original regression.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cv_resmooth(
+  X,
+  y,
+  d = 1,
+  regression,
+  tol = 2,
+  prefit = FALSE,
+  foldid = NULL,
+  bw = exp(seq(-5, 2, 0.2))/(2 * sqrt(3)) * stats::sd(X[, d]),
+  nfolds = 5L,
+  n_points = 101,
+  sd_trim = 5
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>matrix of covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>vector of responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>integer index of covariate to be smoothed along.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regression</code></td>
+<td>
+<p>If prefit = FALSE this is a function which takes input data of the form (X,y),
+and returns a prediction function. This prediction function
+itself accepts matrix input same width as X,
+and returns a vector of y-predictions,
+and optionally a vector of derivative predictions.
+If prefit = TRUE then this is a list of length nfolds with each entry containing a component "fit" consisting
+of a prediction function taking matrix input and returning a vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>vector of tolerances controlling the degree of permissible cross-validation error increase.
+Larger values lead to a larger amount of smoothing being selected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefit</code></td>
+<td>
+<p>boolean signifying if the regressions are already fit to the training data for each fold.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>foldid</code></td>
+<td>
+<p>optional vector with components in 1:nfolds indicating the folds in which
+each observation fell. Overwrites nfolds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>vector of bandwidths for the Gaussian resmoothing kernel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfolds</code></td>
+<td>
+<p>integer number of cross-validation folds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_points</code></td>
+<td>
+<p>integer number of gridpoints to be used for convolution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd_trim</code></td>
+<td>
+<p>float number of standard deviations at which to trim the
+Gaussian distribution.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list. Vector "bw" of bandwidths used. Vectors "cv" of
+cross-validation scores and numeric "cv_unsm" for the cross-validation
+without any smoothing. Vector "bw_opt_inds" for the indices of the selected bandwidths
+under various tolerances. Vector "bw_opt" for the corresponding bandwidths.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X &lt;- matrix(stats::rnorm(200), ncol=2)
+y &lt;- X[,1] + sin(X[,2]) + 0.5 * stats::rnorm(nrow(X))
+reg &lt;- function(X,y){
+    df &lt;- data.frame(y,X)
+    colnames(df) &lt;- c("y", "X1", "X2")
+    lm1 &lt;- stats::lm(y~X1+sin(X2), data=df)
+    fit &lt;- function(newX){
+        newdf = data.frame(newX)
+        colnames(newdf) &lt;- c("X1", "X2")
+        return(as.vector(stats::predict(lm1, newdata=newdf)))}
+    return(list("fit"=fit))
+}
+cv_resmooth(X=X, y=y, d=2, regression=reg, tol = c(0.5, 1, 2))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dissCqN</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Multiple Assemblage Dissimilarity</h2>
+
+<h3>Description</h3>
+
+<p>Multiple assemblage dissimilarity for orders <em>q</em> = 0-<em>N</em>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dissCqN(
+  mat,
+  q = 0:2,
+  pairwise = FALSE,
+  compare.sub = NULL,
+  shared.spp = FALSE,
+  parallel = "no",
+  ncpus = NULL,
+  cl = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mat</code></td>
+<td>
+<p>A matrix with assemblages in rows and species or species
+interactions in columns. Alternatively, a list of matrices, which will be
+interpreted as interaction networks and used to construct an assemblage x
+interaction matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>Integer, the order(s) of <em>q</em> for which to calculate dissimilarity.
+Can be any set of integers between 0 and <em>N</em> (the number of assemblages in
+<code>mat</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pairwise</code></td>
+<td>
+<p>Logical, whether to calculate pairwise, rather than multiple
+assemblage, dissimilarity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compare.sub</code></td>
+<td>
+<p>Subsets of assemblages to compare pairwise. These should
+be supplied as a list of two sets of assemblage names or indices. If only
+one set is supplied, this is compared to all other assemblages in <code>mat</code>. If
+more than two sets are supplied, only the first two are used. If <code>NULL</code>
+(default), all assemblages are compared.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shared.spp</code></td>
+<td>
+<p>Logical, whether to compare networks of shared species only
+(if <code>mat</code> is a list of networks).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>The type of parallel processing to use, if any. Can be one of
+<code>"snow"</code>, <code>"multicore"</code>, or <code>"no"</code> (for none – the default). Passed to
+<code>pSapply()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncpus</code></td>
+<td>
+<p>Number of system cores to use for parallel processing. If <code>NULL</code>
+(default), all available cores are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>Optional cluster to use if <code>parallel = "snow"</code>. If <code>NULL</code>
+(default), a local cluster is created using the specified number of cores.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Dissimilarity is calculated here for multiple species assemblages
+(or interaction networks) via the <em>CqN</em> generalisation of similarity
+indices (Chao <em>et al.</em> 2008, Jost <em>et al.</em> 2011). Increasing the value of
+<code>q</code> increases the 'depth' of the measure, that is, how much emphasis is
+placed on changes in relative abundance of the most common species. Setting
+<code>q = 0</code> represents the qualitative Sørensen index (Sørensen 1948), where
+rare and common species are treated equally. <code>q</code> &gt; 0 is more sensitive to
+common species, with <code>q = 1</code> representing the Shannon-based Horn index
+(Horn 1966) and <code>q = 2</code> the Simpson-based Morisita-Horn index (Morisita
+1959, Horn 1966). For <em>N</em> &gt; 2, indices are generalised to consider species
+shared across multiple assemblages (Diserud &amp; Ødegaard 2007, eqns. 6.3-6.5
+in Jost <em>et al.</em> 2011). For <code>q</code> &gt;= 2 &lt;= <em>N</em>, common species increasingly
+dominate the measure, and it can then be interpreted as the ratio of two
+probabilities of randomly sampling <code>q</code> individuals of the same species from
+the <em>N</em> assemblages, where 1) the individuals came from at least one
+different assemblage (<code class="reqn">^{q}G_{D}</code>) and 2) they all came from the
+same assemblage (<code class="reqn">^{q}G_{S}</code>) (Jost <em>et al.</em> 2011). Dissimilarity
+is thus:
+</p>
+<p style="text-align: center;"><code class="reqn">1 - ^{q}G_{D} / ^{q}G_{S}</code>
+</p>
+
+<p>Pairwise dissimilarity can be calculated for all or a subset of the
+assemblages (or networks) in <code>mat</code>, in which case a dissimilarity matrix is
+returned (one for each value of <code>q</code>). If comparing subsets, the names or
+indices of assemblages to compare should be supplied to <code>compare.sub</code>. Note
+that pairwise calculation may take a long time if <em>N</em> is large, in which
+case parallel processing may speed up results (e.g. <code>parallel = "snow"</code>).
+</p>
+<p>If <code>shared.spp = TRUE</code> and <code>mat</code> is a list of interaction networks (as
+matrices), multiple or pairwise interaction dissimilarity will be
+calculated for networks of shared species only (see <code>netShared()</code>). This
+can be useful to help partition the different components of network
+dissimilarity, e.g. dissimilarity due to interaction 'rewiring' among
+shared species vs. that due to species turnover (Poisot <em>et al.</em> 2012).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of dissimilarities, or a pairwise dissimilarity
+matrix (or list of matrices), for the orders of <code>q</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Chao, A., Jost, L., Chiang, S. C., Jiang, Y.-H., &amp; Chazdon, R. L.
+(2008). A Two-Stage Probabilistic Approach to Multiple-Community Similarity
+Indices. <em>Biometrics</em>, <strong>64</strong>(4), 1178–1186. doi: <a href="https://doi.org/10/fcvn63">10/fcvn63</a>
+</p>
+<p>Diserud, O. H., &amp; Ødegaard, F. (2007). A multiple-site similarity measure.
+<em>Biology Letters</em>, <strong>3</strong>(1), 20–22. doi: <a href="https://doi.org/10/bwhfx6">10/bwhfx6</a>
+</p>
+<p>Horn, H. S. (1966). Measurement of “Overlap” in Comparative Ecological
+Studies. <em>The American Naturalist</em>, <strong>100</strong>(914), 419–424.
+doi: <a href="https://doi.org/10/b62ct5">10/b62ct5</a>
+</p>
+<p>Jost, L., Chao, A., &amp; Chazdon, R. L. (2011). Compositional similarity and
+beta diversity. In A. E. Magurran &amp; B. J. McGill (Eds.), <em>Biological
+Diversity: Frontiers in Measurement and Assessment</em> (pp. 66–84). Oxford
+University Press.
+</p>
+<p>Morisita, M. (1959). Measuring of interspecific association and similarity
+between communities. <em>Memoirs of the Faculty of Science, Kyushu Univ.,
+Series E (Biology)</em>, <strong>3</strong>, 65–80.
+</p>
+<p>Poisot, T., Canard, E., Mouillot, D., Mouquet, N., &amp; Gravel, D. (2012). The
+dissimilarity of species interaction networks. <em>Ecology Letters</em>,
+<strong>15</strong>(12), 1353–1361. doi: <a href="https://doi.org/10/f4dv37">10/f4dv37</a>
+</p>
+<p>Sørensen, T. (1948). A method of establishing groups of equal amplitude in
+plant sociology based on similarity of species and its application to
+analyses of the vegetation on Danish commons. <em>Kongelige Danske
+Videnskabernes Selskabs Biologiske Skrifter</em>, <strong>5</strong>, 1–34.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Sample community data from SpadeR package (three assemblages, 120 species)
+data(SimilarityMultData, package = "SpadeR")
+d &lt;- SimilarityMultData$Abu
+
+# Multiple-assemblage dissimilarity for q = 0:2
+(CqN &lt;- dissCqN::dissCqN(t(d)))
+
+# Compare to empirical CqN values from SpadeR::SimilarityMult()
+sim &lt;- SpadeR::SimilarityMult(d, datatype = "abundance", nboot = 1)
+CqN_2 &lt;- 1 - c(
+  "C0N" = sim$Empirical_richness["C0N(q=0,Sorensen)", "Estimate"],
+  "C1N" = sim$Empirical_relative["C1N=U1N(q=1,Horn)", "Estimate"],
+  "C2N" = sim$Empirical_relative["C2N(q=2,Morisita)", "Estimate"]
+)
+stopifnot(all.equal(CqN, CqN_2))
+
+# Pairwise dissimilarity matrices
+dissCqN::dissCqN(t(d), pairwise = TRUE)
+</code></pre>
+
+
+</div>

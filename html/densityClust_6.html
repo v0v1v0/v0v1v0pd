@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>densityClust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate clustering attributes based on the densityClust algorithm</h2>
+
+<h3>Description</h3>
+
+<p>This function takes a distance matrix and optionally a distance cutoff and
+calculates the values necessary for clustering based on the algorithm
+proposed by Alex Rodrigues and Alessandro Laio (see references). The actual
+assignment to clusters are done in a later step, based on user defined
+threshold values. If a distance matrix is passed into <code>distance</code> the
+original algorithm described in the paper is used. If a matrix or data.frame
+is passed instead it is interpretted as point coordinates and rho will be
+estimated based on k-nearest neighbors of each point (rho is estimated as
+<code>exp(-mean(x))</code> where <code>x</code> is the distance to the nearest
+neighbors). This can be useful when data is so large that calculating the
+full distance matrix can be prohibitive.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">densityClust(distance, dc, gaussian = FALSE, verbose = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+<p>A distance matrix or a matrix (or data.frame) for the
+coordinates of the data. If a matrix or data.frame is used the distances and
+local density will be estimated using a fast k-nearest neighbor approach.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dc</code></td>
+<td>
+<p>A distance cutoff for calculating the local density. If missing it
+will be estimated with <code>estimateDc(distance)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gaussian</code></td>
+<td>
+<p>Logical. Should a gaussian kernel be used to estimate the
+density (defaults to FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical. Should the running details be reported</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters passed on to get.knn</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function calculates rho and delta for the observations in the provided
+distance matrix. If a distance cutoff is not provided this is first estimated
+using <code>estimateDc()</code> with default values.
+</p>
+<p>The information kept in the densityCluster object is:
+</p>
+
+<dl>
+<dt><code>rho</code></dt>
+<dd>
+<p>A vector of local density values</p>
+</dd>
+<dt><code>delta</code></dt>
+<dd>
+<p>A vector of minimum distances to observations of higher density</p>
+</dd>
+<dt><code>distance</code></dt>
+<dd>
+<p>The initial distance matrix</p>
+</dd>
+<dt><code>dc</code></dt>
+<dd>
+<p>The distance cutoff used to calculate rho</p>
+</dd>
+<dt><code>threshold</code></dt>
+<dd>
+<p>A named vector specifying the threshold values for rho and delta used for cluster detection</p>
+</dd>
+<dt><code>peaks</code></dt>
+<dd>
+<p>A vector of indexes specifying the cluster center for each cluster</p>
+</dd>
+<dt><code>clusters</code></dt>
+<dd>
+<p>A vector of cluster affiliations for each observation. The clusters are referenced as indexes in the peaks vector</p>
+</dd>
+<dt><code>halo</code></dt>
+<dd>
+<p>A logical vector specifying for each observation if it is considered part of the halo</p>
+</dd>
+<dt><code>knn_graph</code></dt>
+<dd>
+<p>kNN graph constructed. It is only applicable to the case where coordinates are used as input. Currently it is set as NA.</p>
+</dd>
+<dt><code>nearest_higher_density_neighbor</code></dt>
+<dd>
+<p>index for the nearest sample with higher density. It is only applicable to the case where coordinates are used as input.</p>
+</dd>
+<dt><code>nn.index</code></dt>
+<dd>
+<p>indices for each cell's k-nearest neighbors. It is only applicable for the case where coordinates are used as input.</p>
+</dd>
+<dt><code>nn.dist</code></dt>
+<dd>
+<p>distance to each cell's k-nearest neighbors. It is only applicable for the case where coordinates are used as input.</p>
+</dd>
+</dl>
+<p>Before running findClusters the threshold, peaks, clusters and halo data is
+<code>NA</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A densityCluster object. See details for a description.
+</p>
+
+
+<h3>References</h3>
+
+<p>Rodriguez, A., &amp; Laio, A. (2014). <em>Clustering by fast search and find of density peaks.</em> Science, <strong>344</strong>(6191), 1492-1496. doi:10.1126/science.1242072
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>estimateDc()</code>, <code>findClusters()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">irisDist &lt;- dist(iris[,1:4])
+irisClust &lt;- densityClust(irisDist, gaussian=TRUE)
+plot(irisClust) # Inspect clustering attributes to define thresholds
+
+irisClust &lt;- findClusters(irisClust, rho=2, delta=2)
+plotMDS(irisClust)
+split(iris[,5], irisClust$clusters)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pnormAsymp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymptotic Approxmation of (Extreme Tail) 'pnorm()'</h2>
+
+<h3>Description</h3>
+
+<p>Provide the first few terms of the asymptotic series approximation to
+<code>pnorm()</code>'s (extreme) tail, from Abramawitz and Stegun's
+26.2.13 (p.932).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+pnormAsymp(x, k, lower.tail = FALSE, log.p = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>positive (at least non-negative) numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail, log.p</code></td>
+<td>
+<p>logical, see, e.g., <code>pnorm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>integer <code class="reqn">\ge 0</code> indicating how many terms the approximation
+should use; currently <code class="reqn">k \le 5</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a numeric vector “as” <code>x</code>; see the examples, on how to use it
+with arbitrary precise <code>mpfr</code>-numbers from package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Abramowitz, M. and Stegun, I. A. (1972)
+<em>Handbook of Mathematical Functions</em>. New York: Dover.
+<a href="https://en.wikipedia.org/wiki/Abramowitz_and_Stegun">https://en.wikipedia.org/wiki/Abramowitz_and_Stegun</a> provides
+links to the full text which is in public domain.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pnormU_S53</code> for (also asymptotic) upper and lower bounds.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- c((2:10)*2, 25, (3:9)*10, (1:9)*100, (1:8)*1000, (2:4)*5000)
+Px &lt;- pnorm(x, lower.tail = FALSE, log.p=TRUE)
+PxA &lt;- sapply(setNames(0:5, paste("k =",0:5)),
+              pnormAsymp, x=x, lower.tail = FALSE, log.p=TRUE)
+## rel.errors :
+signif(head( cbind(x, 1 - PxA/Px) , 20))
+
+## Look more closely with high precision computations
+if(requireNamespace("Rmpfr")) {
+  ## ensure our function uses Rmpfr's dnorm(), etc:
+  environment(pnormAsymp) &lt;- asNamespace("Rmpfr")
+  environment(pnormU_S53) &lt;- asNamespace("Rmpfr")
+  x. &lt;- Rmpfr::mpfr(x, precBits=256)
+  Px. &lt;- Rmpfr::pnorm(x., lower.tail = FALSE, log.p=TRUE)
+  ## manual, better sapplyMpfr():
+  PxA. &lt;- sapply(setNames(0:5, paste("k =",0:5)),
+                 pnormAsymp, x=x., lower.tail = FALSE, log.p=TRUE)
+  PxA. &lt;- new("mpfrMatrix", unlist(PxA.), Dim=dim(PxA.), Dimnames=dimnames(PxA.))
+  PxA2 &lt;- Rmpfr::cbind(pn_dbl = Px, PxA.,
+                       pnormU_S53 = pnormU_S53(x=x., lower.tail = FALSE, log.p=TRUE))
+  ## rel.errors : note that pnormU_S53() is very slightly better than "k=2":
+  print( Rmpfr::roundMpfr(Rmpfr::cbind(x., 1 - PxA2/Px.), precBits = 13), width = 111)
+  pch &lt;- c("R", 0:5, "U")
+  matplot(x, abs(1 -PxA2/Px.), type="o", log="xy", pch=pch,
+          main="pnorm(&lt;tail&gt;) approximations' relative errors - pnormAsymp(*, k=k)")
+  legend("bottomleft", colnames(PxA2), col=1:6, pch=pch, lty=1:5, bty="n", inset=.01)
+  at1 &lt;- axTicks(1, axp = c(par("xaxp")[1:2], 3))
+  axis(1, at=at1)
+  abline(h = 1:2* 2^-53, v = at1, lty=3, col=adjustcolor("gray20", 1/2))
+  axis(4, las=2, at= 2^-53, label = quote(epsilon[C]), col="gray20")
+}
+
+</code></pre>
+
+
+</div>

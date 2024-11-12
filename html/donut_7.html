@@ -1,0 +1,236 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nnt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Nearest Neighbour Search with Variables on a Torus</h2>
+
+<h3>Description</h3>
+
+<p>Uses a user-supplied function to find the <code>k</code> nearest neighbours of
+specified points in a dataset, adding the option to wrap certain variables
+on a torus.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nnt(
+  data,
+  query = data,
+  k = min(10, nrow(data)),
+  fn = RANN::nn2,
+  torus,
+  ranges,
+  method = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An <code class="reqn">M</code> by <code class="reqn">d</code> numeric matrix or data frame.  Each of the
+<code class="reqn">M</code> rows contains a <code class="reqn">d</code>-dimensional observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>query</code></td>
+<td>
+<p>An <code class="reqn">N</code> by <code class="reqn">d</code> numeric matrix or data frame.  Each row
+contains an <code class="reqn">d</code>-dimensional point that will be queried against
+<code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>An integer scalar.  The number of nearest neighbours, of the
+points in the rows of <code>query</code>, to find.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fn</code></td>
+<td>
+<p>The function with which to calculate the nearest neighbours.
+The syntax of this function must be <code>fn(data, query, k, ...)</code>.
+The default is <code>RANN::nn2</code>.  Another possibility is
+<code>nabor::knn</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>torus</code></td>
+<td>
+<p>An integer vector with element(s) in
+{1, ..., <code>ncol(data)</code>}.  The corresponding variables are wrapped
+on the corresponding range gives in <code>ranges</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ranges</code></td>
+<td>
+<p>A <code>length(torus)</code> by <code>2</code> numeric matrix.
+Row <code>i</code> gives the range of variation of the variable indexed by
+<code>torus[i]</code>. <code>ranges[i, 1]</code> and <code>ranges[i, 2]</code>
+are equivalent values of the variable, such as 0 degrees and 360 degrees.
+If <code>length(torus)</code> = 1 then <code>ranges</code> may be a vector of length
+2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>An integer scalar, equal to 1 or 2.  See <strong>Details</strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to be passed to <code>fn</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>method = 1</code> then the data are partially replicated, arranged
+around the original data in a way that wraps the variables in <code>torus</code> on their respective
+ranges in <code>ranges</code>.  Then <code>fn</code> is called using this replicated
+dataset as the argument <code>data</code>.  If <code>k</code> is large and/or
+<code>data</code> is a sparse dataset then it is possible that a single
+observation contributes more than once to a set of nearest neighbours,
+which is incorrect. If this occurs then <code>nnt</code> uses method 2 to
+correct the offending rows in <code>nn.idx</code> and <code>nn.dists</code> in the
+returned list object.
+</p>
+<p>If <code>method = 2</code> then the
+following approach is used for the point in each row in <code>query</code>.
+The data indexed by <code>torus</code> are shifted (and wrapped) so that the
+point is located at the respective midpoints of <code>ranges</code>.
+Method 2 is efficient only if the number of points in <code>query</code> is
+small.
+</p>
+<p>If <code>torus</code> is missing then <code>fn</code> is called using
+<code>fn(data = data, query = query, k = k, ...)</code>, so that a call to
+<code>nnt</code> is equivalent to a call to the function chosen by <code>fn</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object (a list) of class <code>c("nnt", "donut")</code> containing the
+following components.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>nn.idx</code></td>
+<td>
+<p>An <code class="reqn">N</code> by <code class="reqn">d</code> integer matrix of the <code>k</code>
+nearest neighbour indices, i.e. the rows of <code>data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nn.dists</code></td>
+<td>
+<p>An <code class="reqn">N</code> by <code class="reqn">d</code> numeric matrix of the <code>k</code>
+nearest neighbour distances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data, query, k, fn</code></td>
+<td>
+<p>The arguments <code>data</code>, <code>query</code>,
+<code>k</code> and <code>fn</code> (in fact <code>substitute(fn)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>torus, ranges, method</code></td>
+<td>
+<p>If <code>torus</code> is supplied, the
+arguments <code>torus</code>, <code>ranges</code> and <code>method</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call to <code>spm</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Arya, S., Mount, D., Kemp, S. E. and Jefferis, G. (2019)
+RANN: Fast Nearest Neighbour Search (Wraps ANN Library) Using L2
+Metric. R package version 2.6.1.
+<a href="https://CRAN.R-project.org/package=RANN">https://CRAN.R-project.org/package=RANN</a>
+</p>
+<p>Elseberg J., Magnenat S., Siegwart R., Nuchter, A. (2012)
+Comparison of nearest-neighbor-search strategies and implementations for
+efficient shape registration. <em>Journal of Software Engineering for
+Robotics (JOSER)</em>, <strong>3</strong>(1), 2-12
+<a href="https://CRAN.R-project.org/package=nabor">https://CRAN.R-project.org/package=nabor</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>RANN::nn2</code>,
+<code>nabor::knn</code>: nearest neighbour searches.
+</p>
+<p><code>plot.nnt</code> plot method for objects returned from
+<code>nnt</code> (1 and 2 dimensional data only).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">got_RANN &lt;- requireNamespace("RANN", quietly = TRUE)
+got_nabor &lt;- requireNamespace("nabor", quietly = TRUE)
+
+set.seed(20092019)
+# 2D example from the RANN:nn2 documentation (L2 metric)
+x1 &lt;- runif(100, 0, 2 * pi)
+x2 &lt;- runif(100, 0, 3)
+DATA &lt;- data.frame(x1, x2)
+if (got_RANN) {
+  nearest &lt;- nnt(DATA, DATA)
+}
+
+# Suppose that x1 should be wrapped
+ranges1 &lt;- c(0, 2 * pi)
+query1 &lt;- rbind(c(6, 1.3), c(2 * pi, 3), c(3, 1.5), c(4, 0))
+if (got_RANN) {
+  res1 &lt;- nnt(DATA, query1, k = 8, torus = 1, ranges = ranges1)
+  plot(res1, ylim = c(0, 3))
+}
+
+# Suppose that x1 and x2 should be wrapped
+ranges2 &lt;- rbind(c(0, 2 * pi), c(0, 3))
+query2 &lt;- rbind(c(6, 1.3), c(2 * pi, 3), c(3, 1.5), c(4, 0))
+if (got_RANN) {
+  res2 &lt;- nnt(DATA, query2, k = 8, torus = 1:2, ranges = ranges2)
+  plot(res2)
+}
+
+# Use nabor::knn (L2 metric) instead of RANN::nn2
+if (got_nabor) {
+  res3 &lt;- nnt(DATA, query2, k = 8, fn = nabor::knn, torus = 1:2,
+              ranges = ranges2)
+  plot(res3)
+}
+
+# 1D example
+ranges &lt;- c(0, 2 * pi)
+query &lt;- c(4, 0.1)
+if (got_RANN) {
+  res &lt;- nnt(x1, query, torus = 1, ranges = ranges, method = 1)
+  plot(res)
+}
+</code></pre>
+
+
+</div>

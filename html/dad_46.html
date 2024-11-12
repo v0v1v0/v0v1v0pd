@@ -1,0 +1,247 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fdiscd.predict</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Predicting the class of a group of individuals with discriminant analysis of probability densities.
+</h2>
+
+<h3>Description</h3>
+
+<p>Assigns several groups of individuals, one group after another, to the class of groups (among <code class="reqn">K</code> classes of groups) which achieves the minimum of the distances or divergences between the density function associated to the group to assign and the <code class="reqn">K</code> density functions associated to the <code class="reqn">K</code> classes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fdiscd.predict(xf, class.var, gaussiand = TRUE,
+           distance =  c("jeffreys", "hellinger", "wasserstein", "l2", "l2norm"),
+           crit = 1, windowh = NULL, misclass.ratio = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xf</code></td>
+<td>
+
+<p>object of class <code>folderh</code> with two data frames:
+</p>
+
+<ul>
+<li>
+<p> The first one has at least two columns. One column contains the names of the <code class="reqn">T</code> groups (all the names must be different). An other column is a factor with <code class="reqn">K</code> levels partitionning the T groups into K classes..
+</p>
+</li>
+<li>
+<p> The second one has <code class="reqn">(p+1)</code> columns. The first <code class="reqn">p</code> columns are numeric (otherwise, there is an error). The last column is a factor with <code class="reqn">T</code> levels defining <code class="reqn">T</code> groups. Each group, say <code class="reqn">t</code>, consists of <code class="reqn">n_t</code> individuals.
+</p>
+</li>
+</ul>
+<p>Notice that for the versions earlier than 2.0, fdiscd.predict applied to two data frames.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class.var</code></td>
+<td>
+
+<p>string. The name of the class variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+
+<p>The distance or divergence used to compute the distance matrix between the densities.
+It can be:
+</p>
+
+<ul>
+<li> <p><code>"jeffreys"</code> (default) Jeffreys measure (symmetrised Kullback-Leibler divergence),
+</p>
+</li>
+<li> <p><code>"hellinger"</code> the Hellinger (Matusita) distance,
+</p>
+</li>
+<li> <p><code>"wasserstein"</code> the Wasserstein distance,
+</p>
+</li>
+<li> <p><code>"l2"</code> the <code class="reqn">L^2</code> distance,
+</p>
+</li>
+<li> <p><code>"l2norm"</code> the densities are normed and the <code class="reqn">L^2</code> distance between these normed densities is used;
+</p>
+</li>
+</ul>
+<p>If <code>gaussiand = FALSE</code>, the densities are estimated by the Gaussian kernel method and the distance is <code>"l2"</code> or <code>"l2norm"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+
+<p>1, 2 or 3. In order to select the densities associated to the classes. See Details.
+</p>
+<p>If <code>distance</code> is <code>"hellinger"</code>, <code>"jeffreys"</code> or <code>"wasserstein"</code>, <code>crit</code> is necessarily <code>1</code> (see Details).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gaussiand</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default), the probability densities are supposed Gaussian. If <code>FALSE</code>, densities are estimated using the Gaussian kernel method.
+</p>
+<p>If <code>distance</code> is <code>"hellinger"</code>, <code>"jeffreys"</code> or <code>"wasserstein"</code>, <code>gaussiand</code> is necessarily <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowh</code></td>
+<td>
+
+<p>strictly positive number. If <code>windowh = NULL</code> (default), the bandwidths are computed using the <code>bandwidth.parameter</code> function.
+</p>
+<p>Omitted when <code>distance</code> is <code>"hellinger"</code>, <code>"jeffreys"</code> or <code>"wasserstein"</code> (see Details).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>misclass.ratio</code></td>
+<td>
+
+<p>logical (default <code>FALSE</code>). If <code>TRUE</code>, the confusion matrix and misclassification ratio are computed on the groups whose prior class is known. In order to compute the misclassification ratio by the one-leave-out method, use the <code>fdiscd.misclass</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To the group <code class="reqn">t</code> is associated the density denoted <code class="reqn">f_t</code>. To the class <code class="reqn">k</code> consisting of <code class="reqn">T_k</code> groups is associated the density denoted <code class="reqn">g_k</code>. The <code>crit</code> argument selects the estimation method of the <code class="reqn">K</code> densities <code class="reqn">g_k</code>.
+
+</p>
+
+<ol>
+<li>
+<p>The density <code class="reqn">g_k</code> is estimated using the whole data of this class, that is the rows of <code>x</code> corresponding to the <code class="reqn">T_k</code> groups of the class <code class="reqn">k</code>. 
+</p>
+</li>
+<li> 
+<p>The <code class="reqn">T_k</code> densities <code class="reqn">f_t</code> are estimated using the corresponding data from <code>x</code>. Then they are averaged to obtain an estimation of the density <code class="reqn">g_k</code>, that is <code class="reqn">g_k = (1/T_k)\sum{f_t}</code>.
+</p>
+</li>
+<li> 
+<p>Each previous density <code class="reqn">f_t</code> is weighted by <code class="reqn">n_t</code> (the number of rows of <code class="reqn">x</code> corresponding to <code class="reqn">f_t</code>). Then they are averaged, that is <code class="reqn">g_k = (1/\sum n_t) \sum n_t f_t</code>.
+</p>
+</li>
+</ol>
+<p>The last two methods are available only for the <code class="reqn">L^2</code>-distance. If the divergences between densities are computed using the Hellinger or Wasserstein distance or Jeffreys measure, only the first of these methods is available.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class <code>fdiscd.predict</code>, that is a list including:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>prediction </code></td>
+<td>
+<p>data frame with 3 columns:
+</p>
+
+<ul>
+<li>
+<p> factor giving the group name. The column name is the same as that of the column (<code class="reqn">p+1</code>) of <code>x</code>,
+</p>
+</li>
+<li> <p><code>class.known</code>: the prior class of the group if it is available, or NA if not,  
+</p>
+</li>
+<li> <p><code>class.predict</code>: the class allocation predicted by the discriminant analysis method. If <code>misclass.ratio = TRUE</code>, the class allocations are computed for all groups. Otherwise (default), they are computed only for the groups whose class is unknown.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distances </code></td>
+<td>
+<p>matrix with <code class="reqn">T</code> rows and <code class="reqn">K</code> columns, of the distances (<code class="reqn">d_{tk}</code>): <code class="reqn">d_{tk}</code> is the distance between the group <code class="reqn">t</code> and the class <code class="reqn">k</code>, computed with the measure given by argument <code>distance</code> (<code class="reqn">L^2</code>-distance, Hellinger distance or jeffreys measure),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proximities </code></td>
+<td>
+<p>matrix of the proximities (in percents). The proximity of a group <code class="reqn">t</code> to the class <code class="reqn">k</code> is computed as so: <code class="reqn">(1/d_{tk})/\sum_{l=1}^{l=K}(1/d_{tl})</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confusion.mat </code></td>
+<td>
+<p>the confusion matrix (if <code>misclass.ratio = TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>misclassed </code></td>
+<td>
+<p>the misclassification ratio (if <code>misclass.ratio = TRUE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Rachid Boumaza,  Pierre Santagostini, Smail Yousfi, Gilles Hunault, Sabine Demotes-Mainard
+</p>
+
+
+<h3>References</h3>
+
+<p>Boumaza, R. (2004). Discriminant analysis with independently repeated multivariate measurements: an <code class="reqn">L^2</code> approach. Computational Statistics &amp; Data Analysis, 47, 823-843.
+</p>
+<p>Rudrauf, J.M., Boumaza, R. (2001). Contribution à l'étude de l'architecture médiévale: les caractéristiques des pierres à bossage des châteaux forts alsaciens. Centre de Recherches Archéologiques Médiévales de Saverne, 5, 5-38.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(castles.dated)
+data(castles.nondated)
+castles.stones &lt;- rbind(castles.dated$stones, castles.nondated$stones)
+castles.periods &lt;- rbind(castles.dated$periods, castles.nondated$periods)
+castlesfh &lt;- folderh(castles.periods, "castle", castles.stones)
+
+# With the L^2-distance
+
+# - crit=1
+resultl2.1 &lt;- fdiscd.predict(castlesfh, "period", distance="l2", crit=1)
+print(resultl2.1)
+
+# - crit=2
+## Not run: 
+resultl2.2 &lt;- fdiscd.predict(castlesfh, "period", distance="l2", crit=2)
+print(resultl2.2)
+
+## End(Not run)
+
+# - crit=3
+resultl2.3 &lt;- fdiscd.predict(castlesfh, "period", distance="l2", crit=3)
+print(resultl2.3)
+
+# With the Hellinger distance
+resulthelling &lt;- fdiscd.predict(castlesfh, "period", distance="hellinger")
+print(resulthelling)
+
+# With jeffreys measure
+resultjeff &lt;- fdiscd.predict(castlesfh, "period", distance="jeffreys")
+print(resultjeff)
+</code></pre>
+
+
+</div>

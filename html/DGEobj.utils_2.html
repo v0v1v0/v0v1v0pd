@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>convertCounts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert count matrix to CPM, FPKM, FPK, or TPM</h2>
+
+<h3>Description</h3>
+
+<p>Takes a count matrix as input and converts to other desired units.  Supported
+units include CPM, FPKM, FPK, and TPM.  Output units can be logged and/or
+normalized.  Calculations are performed using edgeR functions except for the
+conversion to TPM which is converted from FPKM using the formula provided by
+<a href="https://haroldpimentel.wordpress.com/2014/05/08/what-the-fpkm-a-review-rna-seq-expression-units/">Harold Pimental</a>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">convertCounts(
+  countsMatrix,
+  unit,
+  geneLength,
+  log = FALSE,
+  normalize = "none",
+  prior.count = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>countsMatrix</code></td>
+<td>
+<p>A numeric matrix or dataframe of N genes x M Samples.  All columns must be numeric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unit</code></td>
+<td>
+<p>Required. One of CPM, FPKM, FPK or TPM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>geneLength</code></td>
+<td>
+<p>A vector or matrix of gene lengths. Required for length-normalized units (TPM, FPKM or FPK).
+If geneLength is a matrix, the rowMeans are calculated and used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>Default = FALSE.  Set TRUE to return Log2 values.
+Employs edgeR functions which use an prior.count of 0.25 scaled by the library size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p>Default = "none". Invokes edgeR's calcNormFactors() for normalization.
+Other options are: "TMM", "RLE", "upperquartile" (uses 75th percentile), "TMMwzp" and are case-insensitive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior.count</code></td>
+<td>
+<p>Average count to be added to each observation to avoid taking log of zero.
+Used only if log = TRUE. (Default dependent on method; 0 for TPM, 0.25 for CPM and FPKM)
+The prior.count is passed to edgeR cpm and rpkm functions and applies to logTPM, logCPM, and logFPKM calculations.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>geneLength is a vector where length(geneLength) == nrow(countsMatrix). If a
+RSEM effectiveLength matrix is passed as input, rowMeans(effectiveLength) is
+used (because edgeR functions only accept a vector for effectiveLength).
+</p>
+<p>Note that log2 values for CPM, TPM, and FPKM employ edgeR's prior.count handling to avoid divide by zero.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix in the new unit space
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+  # NOTE: Requires the edgeR package
+
+  # Simulate some data
+  counts &lt;- trunc(matrix(runif(6000, min=0, max=2000), ncol=6))
+  geneLength &lt;- rowMeans(counts)
+
+  # TMM normalized Log2FPKM
+  Log2FPKM &lt;- convertCounts(counts,
+                            unit       = "fpkm",
+                            geneLength = geneLength,
+                            log        = TRUE,
+                            normalize  = "tmm")
+
+  # Non-normalized CPM (not logged)
+  RawCPM &lt;- convertCounts(counts,
+                          unit      = "CPM",
+                          log       = FALSE,
+                          normalize = "none")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

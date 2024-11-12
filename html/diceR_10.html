@@ -1,0 +1,282 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dice</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Diverse Clustering Ensemble</h2>
+
+<h3>Description</h3>
+
+<p>Runs consensus clustering across subsamples, algorithms, and number of
+clusters (k).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dice(
+  data,
+  nk,
+  p.item = 0.8,
+  reps = 10,
+  algorithms = NULL,
+  k.method = NULL,
+  nmf.method = c("brunet", "lee"),
+  hc.method = "average",
+  distance = "euclidean",
+  cons.funs = c("kmodes", "majority", "CSPA", "LCE", "LCA"),
+  sim.mat = c("cts", "srs", "asrs"),
+  prep.data = c("none", "full", "sampled"),
+  min.var = 1,
+  seed = 1,
+  seed.data = 1,
+  trim = FALSE,
+  reweigh = FALSE,
+  n = 5,
+  evaluate = TRUE,
+  plot = FALSE,
+  ref.cl = NULL,
+  progress = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data matrix with rows as samples and columns as variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nk</code></td>
+<td>
+<p>number of clusters (k) requested; can specify a single integer or a
+range of integers to compute multiple k</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.item</code></td>
+<td>
+<p>proportion of items to be used in subsampling within an
+algorithm</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reps</code></td>
+<td>
+<p>number of subsamples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algorithms</code></td>
+<td>
+<p>vector of clustering algorithms for performing consensus
+clustering. Must be any number of the following: "nmf", "hc", "diana",
+"km", "pam", "ap", "sc", "gmm", "block", "som", "cmeans", "hdbscan". A
+custom clustering algorithm can be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k.method</code></td>
+<td>
+<p>determines the method to choose k when no reference class is
+given. When <code>ref.cl</code> is not <code>NULL</code>, k is the number of distinct classes of
+<code>ref.cl</code>. Otherwise the input from <code>k.method</code> chooses k. The default is to
+use the PAC to choose the best k(s). Specifying an integer as a
+user-desired k will override the best k chosen by PAC. Finally, specifying
+"all" will produce consensus results for all k. The "all" method is
+implicitly performed when there is only one k used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nmf.method</code></td>
+<td>
+<p>specify NMF-based algorithms to run. By default the
+"brunet" and "lee" algorithms are called. See <code>NMF::nmf()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hc.method</code></td>
+<td>
+<p>agglomeration method for hierarchical clustering. The
+the "average" method is used by default. See<code>stats::hclust()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+<p>a vector of distance functions. Defaults to "euclidean".
+Other options are given in <code>stats::dist()</code>. A custom distance function can
+be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cons.funs</code></td>
+<td>
+<p>consensus functions to use. Current options are "kmodes"
+(k-modes), "majority" (majority voting), "CSPA" (Cluster-based Similarity
+Partitioning Algorithm), "LCE" (linkage clustering ensemble), "LCA" (latent
+class analysis)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sim.mat</code></td>
+<td>
+<p>similarity matrix; choices are "cts", "srs", "asrs".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prep.data</code></td>
+<td>
+<p>Prepare the data on the "full" dataset, the "sampled"
+dataset, or "none" (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.var</code></td>
+<td>
+<p>minimum variability measure threshold used to filter the
+feature space for only highly variable features. Only features with a
+minimum variability measure across all samples greater than <code>min.var</code> will
+be used. If <code>type = "conventional"</code>, the standard deviation is the measure
+used, and if <code>type = "robust"</code>, the MAD is the measure used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>random seed for knn imputation reproducibility</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed.data</code></td>
+<td>
+<p>seed to use to ensure each algorithm operates on the same
+set of subsamples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, algorithms that score low on internal indices
+will be trimmed out</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reweigh</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, after trimming out poor performing
+algorithms, each algorithm is reweighed depending on its internal indices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>an integer specifying the top <code>n</code> algorithms to keep after trimming
+off the poor performing ones using Rank Aggregation. If the total number of
+algorithms is less than <code>n</code> no trimming is done.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>evaluate</code></td>
+<td>
+<p>logical; if <code>TRUE</code> (default), validity indices are returned.
+Internal validity indices are always computed. If <code>ref.cl</code> is not <code>NULL</code>,
+then external validity indices will also be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, <code>graph_all</code> is called and a summary
+evaluation heatmap of ranked algorithms vs. internal validity indices is
+plotted as well.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.cl</code></td>
+<td>
+<p>reference class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>logical; should a progress bar be displayed?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>There are three ways to handle the input data before clustering via argument
+<code>prep.data</code>. The default is to use the raw data as-is ("none"). Or, we can
+enact <code>prepare_data()</code> on the full dataset ("full"), or the bootstrap sampled
+datasets ("sampled").
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>raw clustering ensemble object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Eknn</code></td>
+<td>
+<p>clustering ensemble object with knn imputation used on <code>E</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ecomp</code></td>
+<td>
+<p>flattened ensemble object with remaining missing entries imputed
+by majority voting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>final clustering assignment from the diverse clustering
+ensemble method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indices</code></td>
+<td>
+<p>if <code>evaluate = TRUE</code>, shows cluster evaluation indices;
+otherwise <code>NULL</code></p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Aline Talhouk, Derek Chiu
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+data(hgsc)
+dat &lt;- hgsc[1:100, 1:50]
+ref.cl &lt;- strsplit(rownames(dat), "_") %&gt;%
+  purrr::map_chr(2) %&gt;%
+  factor() %&gt;%
+  as.integer()
+dice.obj &lt;- dice(dat, nk = 4, reps = 5, algorithms = "hc", cons.funs =
+"kmodes", ref.cl = ref.cl, progress = FALSE)
+str(dice.obj, max.level = 2)
+</code></pre>
+
+
+</div>

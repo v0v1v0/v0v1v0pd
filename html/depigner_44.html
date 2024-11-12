@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tidy_summary</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>tidy_summary</h2>
+
+<h3>Description</h3>
+
+<p>Converts a <code>summary()</code> object produced by <code>Hmisc</code> or
+by <code>rms</code> packages to a tidy data frame ready to be
+'pander'ed (e.g. printed on a word document after
+<code>knit</code>ting the source (with 'knitr').
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tidy_summary(x, ..., digits = 3L)
+
+## S3 method for class 'summary.formula.reverse'
+tidy_summary(x, ..., digits = 3L)
+
+## S3 method for class 'summary.rms'
+tidy_summary(x, ..., digits = 3L)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object used to select a method, output of some summary
+by <code>Hmisc</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>number of significant digits to use (default 3L).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a [tibble][tibble::tibble-package]
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>tidy_summary(summary.formula.reverse)</code>: Tidies a summary reverse output from the
+<code>summary.formula</code> called with
+<code>method = "reverse"</code>.
+</p>
+</li>
+<li> <p><code>tidy_summary(summary.rms)</code>: Convert the output of the
+<code>summary.rms</code> into a data frame,
+reporting only the Hazard Ratio with the .95 CI and the
+incremental step (for continuous variables) reference
+(for categorical variables) for which the Hazard is
+referred to (i.e. without <code class="reqn">\beta</code>s, Low, High, S.E.
+and Type).
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>The output is supposed to be used as input to
+[pander][pander::pander], and contains few otherwise messy
+characters included for an optimal (pander) formatting.
+</p>
+<p>to see the options you can pass to <code>...</code> for a custom
+print, see the print section in <code>summary.formula</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+  library(Hmisc)
+  my_summary &lt;- summary(Species ~ ., data = iris, method = "reverse")
+  tidy_summary(my_summary)
+
+
+  library(rms)
+  options(datadist = "dd")
+  n &lt;- 1000L
+  set.seed(731L)
+  age &lt;- 50L + 12L * rnorm(n)
+  sex &lt;- factor(sample(c("Male", "Female"), n,
+    rep = TRUE,
+    prob = c(.6, .4)
+  ))
+  cens &lt;- 15L * runif(n)
+  h &lt;- .02 * exp(.04 * (age - 50L) + .8 * (sex == "Female"))
+  dt &lt;- -log(runif(n)) / h
+  e &lt;- ifelse(dt &lt;= cens, 1L, 0L)
+  dt &lt;- pmin(dt, cens)
+
+  dd &lt;- datadist(age, sex)
+
+  S &lt;- survival::Surv(dt, e)
+  f &lt;- rms::cph(S ~ age + sex)
+
+
+  my_summary &lt;- summary(f)
+  tidy_summary(my_summary)
+
+</code></pre>
+
+
+</div>

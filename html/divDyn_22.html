@@ -1,0 +1,103 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>repmatch</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Replicate matching and merging</h2>
+
+<h3>Description</h3>
+
+<p>This pseudo-generic function iterates a function on the subelements of a list of objects that have the same class and matching dimensions/names and reorganizes the result to match the structure of the replicates or a prototype template.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">repmatch(x, FUN = NULL, proto = NULL, direct = c("dim", "name"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>(<code>list</code>): A <code>list</code> of replicates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>(<code>function</code>): A function to merge with and to be applied to the values of identical positions in different replicates. This function must have a single output value, <code>vectors</code> are not allowed. The default <code>NULL</code> option returns an element-wise reorganization of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proto</code></td>
+<td>
+<p>(<code>same as x[[1]]</code>): The prototype for matching/merging. The prototype is used as a check (<code>"dim"</code>) or a template (<code>"name"</code>) during the matching process, depending on the used directive (<code>direct</code> argument).  It is an object with the same class as the replicates, and have the same dimensions and/or overlapping names. If the <code>"name"</code> directive is used and a <code>prototype</code> is provided, the funtion will force the output to have the same structure as the prototype, by omitting unnecessary information and inserting missing values (<code>NAs</code>). The prototype is expected to be an object that has more or equal elements than the replicates, otherwise the call will result in a warning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direct</code></td>
+<td>
+<p>(<code>character</code>): Matching directive(s). Can either be dimension-based (<code>"dim"</code>) and/or name-based (<code>name</code>). Dimension-based directive matches the replicates if they have the same dimesions. The <code>"name"</code> directive requires named input (for <code>matrices</code> and <code>data.frames</code> <code>colnames</code> and <code>rownames</code> attributes). Replicates will be matched if the values have the same names. In case both directives are specified (default), dimension-based directive takes higher priority, if matching is unsuccessful with dimensions, names will be tried after.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to <code>FUN</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function is designed to unify/merge objects that result from the same function applied to different source data (e.g. the results of <code>subsample()</code>). In its current form, the function supports <code>vectors</code> (including one-dimensional <code>tables</code> and <code>arrays</code>), <code>matrix</code> and <code>data.frame</code> objects.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>FUN</code> is a <code>function</code>, the output is <code>vector</code> for <code>vector</code>-like replicates, <code>matrix</code> when <code>x</code> is a <code>list</code> of <code>matrix</code> objects, and <code>data.frame</code>s for <code>data.frame</code> replicates. In case <code>FUN=NULL</code>: if <code>x</code> is a list of <code>vectors</code>, the function will return a <code>matrix</code>; an <code>array</code> is returned, if <code>x</code> is a <code>list</code> of <code>matrix</code> class obejcts; if <code>x</code> is a list of <code>data.frame</code> objects, the function returns a <code>data.frame</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># basic example
+vect &lt;- rnorm(100)
+# make 50 replicates
+repl &lt;- rep(list(vect), 50)
+repmatch(repl, FUN=mean, direct="dim")
+
+# named input
+  # two vectors
+    # a
+    a&lt;- 1:10
+    names(a) &lt;- letters[1:length(a)]
+    a[c(3,5,8)] &lt;- NA
+    a &lt;- a[!is.na(a)]
+  
+    #b
+    b&lt;- 10:1
+    names(b) &lt;- letters[length(b):1]
+    b[c(1, 3,6, length(b))]&lt;- NA
+    b &lt;- b[!is.na(b)]
+
+  # list
+  x2 &lt;- rep(c(list(a),list(b)), 3)
+
+# simple match - falling through "dim" to "name" directive
+repmatch(x2, FUN=NULL)
+
+# prototyped
+prot &lt;- 1:10
+names(prot) &lt;-letters[1:10]
+
+repmatch(x2, FUN=mean, proto=prot, na.rm=TRUE)
+</code></pre>
+
+
+</div>

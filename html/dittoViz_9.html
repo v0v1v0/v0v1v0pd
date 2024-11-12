@@ -1,0 +1,656 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>scatterHex</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>scatter plot where observations are grouped into hexagonal bins and then summarized</h2>
+
+<h3>Description</h3>
+
+<p>scatter plot where observations are grouped into hexagonal bins and then summarized
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">scatterHex(
+  data_frame,
+  x.by,
+  y.by,
+  color.by = NULL,
+  bins = 30,
+  color.method = NULL,
+  split.by = NULL,
+  rows.use = NULL,
+  color.panel = dittoColors(),
+  colors = seq_along(color.panel),
+  x.adjustment = NULL,
+  y.adjustment = NULL,
+  color.adjustment = NULL,
+  x.adj.fxn = NULL,
+  y.adj.fxn = NULL,
+  color.adj.fxn = NULL,
+  multivar.split.dir = c("col", "row"),
+  split.nrow = NULL,
+  split.ncol = NULL,
+  split.adjust = list(),
+  min.density = NA,
+  max.density = NA,
+  min.color = "#F0E442",
+  max.color = "#0072B2",
+  min.opacity = 0.2,
+  max.opacity = 1,
+  min = NA,
+  max = NA,
+  rename.color.groups = NULL,
+  xlab = x.by,
+  ylab = y.by,
+  main = "make",
+  sub = NULL,
+  theme = theme_bw(),
+  do.contour = FALSE,
+  contour.color = "black",
+  contour.linetype = 1,
+  do.ellipse = FALSE,
+  do.label = FALSE,
+  labels.size = 5,
+  labels.highlight = TRUE,
+  labels.repel = TRUE,
+  labels.split.by = split.by,
+  labels.repel.adjust = list(),
+  add.trajectory.by.groups = NULL,
+  add.trajectory.curves = NULL,
+  trajectory.group.by,
+  trajectory.arrow.size = 0.15,
+  add.xline = NULL,
+  xline.linetype = "dashed",
+  xline.color = "black",
+  add.yline = NULL,
+  yline.linetype = "dashed",
+  yline.color = "black",
+  legend.show = TRUE,
+  legend.color.title = "make",
+  legend.color.breaks = waiver(),
+  legend.color.breaks.labels = waiver(),
+  legend.density.title = "Observations",
+  legend.density.breaks = waiver(),
+  legend.density.breaks.labels = waiver(),
+  show.grid.lines = TRUE,
+  data.out = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_frame</code></td>
+<td>
+<p>A data_frame where columns are features and rows are observations you might wish to visualize.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.by, y.by</code></td>
+<td>
+<p>Single strings denoting the name of a column of <code>data_frame</code> containing numeric data to use for the x- and y-axis of the scatterplot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>color.by</code></td>
+<td>
+<p>Single string denoting the name of a column of <code>data_frame</code> to use, instead of point density, for setting the color of plotted hexagons.
+Alternatively, a string vector naming multiple such columns of data to plot at once.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bins</code></td>
+<td>
+<p>Numeric or numeric vector giving the number of hexagonal bins in the x and y directions. Set to 30 by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>color.method</code></td>
+<td>
+<p>Single string that specifies how <code>color.by</code> data should be summarized per each hexagonal bin.
+Options, and the default, depend on whether the <code>color.by</code>-data is continuous versus discrete:
+</p>
+<p><strong>Continuous</strong>: String naming a function for how target data should be summarized for each bin.
+Can be any function that inputs (summarizes) a numeric vector and outputs a single numeric value.
+Default is <code>median</code>.
+Other useful options are <code>sum</code>, <code>mean</code>, <code>sd</code>, or <code>max</code>.
+You can also use a custom function as long as you give it a name; e.g. first run <code>logsum &lt;- function(x) { log(sum(x)) }</code> externally, then give <code>color.method = "logsum"</code>
+</p>
+<p><strong>Discrete</strong>: A string signifying whether the color should (default) be simply based on the "max" grouping of the bin,
+or based on the "max.prop"ortion of observations belonging to any grouping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split.by</code></td>
+<td>
+<p>1 or 2 strings denoting the name(s) of column(s) of <code>data_frame</code> containing discrete data to use for faceting / separating data points into separate plots.
+</p>
+<p>When 2 columns are named, c(row,col), the first is used as rows and the second is used for columns of the resulting facet grid.
+</p>
+<p>When 1 column is named, shape control can be achieved with <code>split.nrow</code> and <code>split.ncol</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rows.use</code></td>
+<td>
+<p>String vector of rownames of <code>data_frame</code> OR an integer vector specifying the row-indices of data points which should be plotted.
+</p>
+<p>Alternatively, a Logical vector, the same length as the number of rows in <code>data_frame</code>, where <code>TRUE</code> values indicate which rows to plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>color.panel</code></td>
+<td>
+<p>String vector which sets the colors to draw from when <code>color.by</code> indicates discrete data.
+<code>dittoColors()</code> by default, see <code>dittoColors</code> for contents.
+</p>
+<p>A named vector can be used if names are matched to the distinct values of the <code>color.by</code> data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colors</code></td>
+<td>
+<p>Integer vector, the indexes / order, of colors from <code>color.panel</code> to actually use.
+</p>
+<p>Useful for quickly swapping around colors of the default set (when not using names for color matching).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.adjustment, y.adjustment, color.adjustment</code></td>
+<td>
+<p>A recognized string indicating whether numeric <code>x.by</code>, <code>y.by</code>, and <code>color.by</code> data should be used directly (default) or should be adjusted to be
+</p>
+
+<ul>
+<li>
+<p>"z-score": scaled with the scale() function to produce a relative-to-mean z-score representation
+</p>
+</li>
+<li>
+<p>"relative.to.max": divided by the maximum value to give percent of max values between [0,1]
+</p>
+</li>
+</ul>
+<p>Ignored if the target data is not numeric as these known adjustments target numeric data only.
+</p>
+<p>In order to leave the unedited data available for use in other features, the adjusted data are put in a new column and that new column is used for plotting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.adj.fxn, y.adj.fxn, color.adj.fxn</code></td>
+<td>
+<p>If you wish to apply a function to edit the <code>x.by</code>, <code>y.by</code>, or <code>color.by</code> data before use, in a way not possible with the <code>color.adjustment</code> input,
+this input can be given a function which takes in a vector of values as input and returns a vector of values of the same length as output.
+</p>
+<p>For example, <code>function(x) {log2(x)}</code> or <code>as.factor</code>.
+</p>
+<p>In order to leave the unedited data available for use in other features, the adjusted data are put in a new column and that new column is used for plotting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multivar.split.dir</code></td>
+<td>
+<p>"row" or "col", sets the direction of faceting used for 'var' values when: </p>
+
+<ul>
+<li> <p><code>var</code> is given multiple column names
+</p>
+</li>
+<li>
+<p> AND <code>split.by</code> is used to provide an additional feature to facet by
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split.nrow, split.ncol</code></td>
+<td>
+<p>Integers which set the dimensions of faceting/splitting when faceting by a single feature.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split.adjust</code></td>
+<td>
+<p>A named list which allows extra parameters to be pushed through to the faceting function call.
+List elements should be valid inputs to the faceting functions, e.g. 'list(scales = "free")'.
+</p>
+<p>For options, when giving 1 column to <code>split.by</code>, see <code>facet_wrap</code>,
+OR when giving 2 columns to <code>split.by</code>, see <code>facet_grid</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.density, max.density</code></td>
+<td>
+<p>Number which sets the min/max values used for the density scale.
+Used no matter whether density is represented through opacity or color.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.color, max.color</code></td>
+<td>
+<p>color for the min/max values of the color scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.opacity, max.opacity</code></td>
+<td>
+<p>Scalar between [0,1] which sets the minimum or maximum opacity used for the density legend (when color is used for <code>color.by</code> data and density is shown via opacity).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min, max</code></td>
+<td>
+<p>Number which sets the values associated with the minimum or maximum color for <code>color.by</code> data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rename.color.groups</code></td>
+<td>
+<p>String vector which sets new names for the identities of <code>color.by</code> groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab</code></td>
+<td>
+<p>Strings which set the labels for the axes. To remove, set to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+<p>String, sets the plot title. The default title is either "Density", <code>color.by</code>, or NULL, depending on the identity of <code>color.by</code>.
+To remove, set to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sub</code></td>
+<td>
+<p>String, sets the plot subtitle.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theme</code></td>
+<td>
+<p>A ggplot theme which will be applied before internal adjustments.
+Default = <code>theme_bw()</code>.
+See <a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">https://ggplot2.tidyverse.org/reference/ggtheme.html</a> for other options and ideas.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.contour</code></td>
+<td>
+<p>Logical. Whether density-based contours should be displayed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contour.color</code></td>
+<td>
+<p>String that sets the color of the <code>do.contour</code> contours.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contour.linetype</code></td>
+<td>
+<p>String or numeric which sets the type of line used for <code>do.contour</code> contours.
+Defaults to "solid", but see <code>linetype</code> for other options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.ellipse</code></td>
+<td>
+<p>Logical. Whether <code>color.by</code> groups should be surrounded by median-centered ellipses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>do.label</code></td>
+<td>
+<p>Logical. Whether to add text labels near the center (median) of <code>color.by</code> groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels.size</code></td>
+<td>
+<p>Number which sets the size of labels text when <code>do.label = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels.highlight</code></td>
+<td>
+<p>Logical. Whether labels should have a box behind them when <code>do.label = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels.repel</code></td>
+<td>
+<p>Logical, that sets whether the labels' placements will be adjusted with ggrepel to avoid intersections between labels and plot bounds when <code>do.label = TRUE</code>.
+TRUE by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels.split.by</code></td>
+<td>
+<p>String of one or two column names which controls the facet-split calculations for label placements.
+Defaults to <code>split.by</code>, so generally there is no need to adjust this except when if you plan to apply faceting externally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels.repel.adjust</code></td>
+<td>
+<p>A named list which allows extra parameters to be pushed through to ggrepel function calls.
+List elements should be valid inputs to the <code>geom_label_repel</code> by default, or <code>geom_text_repel</code> when <code>labels.highlight = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.trajectory.by.groups</code></td>
+<td>
+<p>List of vectors representing trajectory paths, each from start-group to end-group, where vector contents are the group-names indicated by the <code>trajectory.group.by</code> column of <code>data_frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.trajectory.curves</code></td>
+<td>
+<p>List of matrices, each representing coordinates for a trajectory path, from start to end, where matrix columns represent x and y coordinates of the paths.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trajectory.group.by</code></td>
+<td>
+<p>String denoting the name of a column of <code>data_frame</code> to use for generating trajectories from data point groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trajectory.arrow.size</code></td>
+<td>
+<p>Number representing the size of trajectory arrows, in inches.  Default = 0.15.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.xline</code></td>
+<td>
+<p>numeric value(s) where one or multiple vertical line(s) should be added.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xline.linetype</code></td>
+<td>
+<p>String which sets the type of line for <code>add.xline</code>.
+Defaults to "dashed", but any ggplot linetype will work.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xline.color</code></td>
+<td>
+<p>String that sets the color(s) of the <code>add.xline</code> line(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.yline</code></td>
+<td>
+<p>numeric value(s) where one or multiple vertical line(s) should be added.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yline.linetype</code></td>
+<td>
+<p>String which sets the type of line for <code>add.yline</code>.
+Defaults to "dashed", but any ggplot linetype will work.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yline.color</code></td>
+<td>
+<p>String that sets the color(s) of the <code>add.yline</code> line(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend.show</code></td>
+<td>
+<p>Logical. Whether any legend should be displayed. Default = <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend.density.title, legend.color.title</code></td>
+<td>
+<p>Strings which set the title for the legends.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend.density.breaks, legend.color.breaks</code></td>
+<td>
+<p>Numeric vector which sets the discrete values to label in the density and color.by legends.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend.density.breaks.labels, legend.color.breaks.labels</code></td>
+<td>
+<p>String vector, with same length as <code>legend.*.breaks</code>, which sets the labels for the tick marks or hex icons of the associated legend.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show.grid.lines</code></td>
+<td>
+<p>Logical which sets whether grid lines should be shown within the plot space.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.out</code></td>
+<td>
+<p>Logical. When set to <code>TRUE</code>, changes the output from the plot alone to a list containing the plot ("plot"),
+and data.frame of the underlying data for target observations ("data"),
+and the ultimately used mapping of columns to given aesthetic sets, because modification of newly made columns is required for many features ("cols_used").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function first makes any requested adjustments to data in the given <code>data_frame</code>, internally only, such as scaling the <code>color.by</code>-column if <code>color.adjustment</code> was given <code>"z-score"</code>.
+</p>
+<p>Next, data_frame is then subset to only target rows based on the <code>rows.use</code> input.
+</p>
+<p>Finally, a hex plot is created using this dataframe:
+</p>
+<p>If <code>color.by</code> is not rovided, coloring is based on the density of observations within each hex bin.
+When <code>color.by</code> is provided, density is represented through opacity while coloring is based on a summarization, chosen with the <code>color.method</code> input, of the target <code>color.by</code> data.
+</p>
+<p>If <code>split.by</code> was used, the plot will be split into a matrix of panels based on the associated groupings.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A ggplot object where colored hexagonal bins are used to summarize observations in a scatter plot.
+</p>
+<p>Alternatively, if <code>data.out=TRUE</code>, a list containing three slots is output:
+the plot (named 'plot'),
+a data.table containing the updated underlying data for target rows (named 'data'),
+and a list providing mappings of final column names in 'data' to given plot aesthetics (named 'cols_used'), because modification of newly made columns is required for many features.
+</p>
+
+
+<h3>Many characteristics of the plot can be adjusted using discrete inputs</h3>
+
+
+<ul>
+<li>
+<p> Colors: <code>min.color</code> and <code>max.color</code> adjust the colors for continuous data.
+</p>
+</li>
+<li>
+<p> For discrete <code>color.by</code> plotting with <code>color.method = "max"</code>, colors are instead adjusted with <code>color.panel</code> and/or <code>colors</code> &amp; the labels of the groupings can be changed using <code>rename.color.groups</code>.
+</p>
+</li>
+<li>
+<p> Titles and axes labels can be adjusted with <code>main</code>, <code>sub</code>, <code>xlab</code>, <code>ylab</code>, and <code>legend.color.title</code> and <code>legend.density.title</code> arguments.
+</p>
+</li>
+<li>
+<p> Legends can also be adjusted in other ways, using variables that all start with "<code>legend.</code>" for easy tab completion lookup.
+</p>
+</li>
+</ul>
+<h3>Additional Features</h3>
+
+<p>Other tweaks and features can be added as well.
+Each is accessible through 'tab' autocompletion starting with "<code>do.</code>"<code>---</code> or "<code>add.</code>"<code>---</code>,
+and if additional inputs are involved in implementing or tweaking these, the associated inputs will start with the "<code>---.</code>":
+</p>
+
+<ul>
+<li>
+<p> If <code>do.contour</code> is provided, density gradient contour lines will be overlaid with color and linetype adjustable via <code>contour.color</code> and <code>contour.linetype</code>.
+</p>
+</li>
+<li>
+<p> If <code>add.trajectory.by.groups</code> is provided a list of vectors (each vector being group names from start-group-name to end-group-name), and a column name pointing to the relevant grouping information is provided to <code>trajectory.group.by</code>,
+then median centers of the groups will be calculated and arrows will be overlayed to show trajectory inference paths.
+</p>
+</li>
+<li>
+<p> If <code>add.trajectory.curves</code> is provided a list of matrices (each matrix containing x, y coordinates from start to end), paths and arrows will be overlayed to show trajectory inference curves.
+Arrow size is controlled with the <code>trajectory.arrow.size</code> input.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Daniel Bunis with some code adapted from Giuseppe D'Agostino
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>scatterPlot</code> for making non-hex-binned scatter plots showing each individual data point.
+It is often best to investigate your data with both the individual and hex-bin methods, then pick whichever is the best representation for your particular goal.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">example("dittoExampleData", echo = FALSE)
+
+# The minimal inputs for scatterHex are the 'data_frame', and 2 column names,
+#   given to 'x.by' and 'y.by', indicating which data to use for the x and y
+#   axes, respectively.
+scatterHex(
+    example_df, x.by = "PC1", y.by = "PC2")
+
+# 'color.by' can also be given a column name in order to represent that
+#   column's data in the color of the hexes.
+# Note: This capability requires the suggested package 'ggplot.multistats'.
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(
+        example_df, x.by = "PC1", y.by = "PC2",
+        color.by = "groups")
+}
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(
+        example_df, x.by = "PC1", y.by = "PC2",
+        color.by = "gene1")
+}
+
+# Data can be "split" or faceted by a discrete variable as well.
+scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    split.by = "timepoint") # single split.by element
+scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    split.by = c("groups","SNP")) # row and col split.by elements
+
+# Modify the look with intuitive inputs
+scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    show.grid.lines = FALSE,
+    ylab = NULL, xlab = "PC2 by PC1",
+    main = "Plot Title",
+    sub = "subtitle",
+    legend.density.title = "Items")
+# 'max.density' is one of these intuitively named inputs that can be
+#   extremely useful for saying "I only can for opacity to be decreased
+#   in regions with exceptionally low observation numbers."
+# (A good value for this in "real" data might be 10 or 50 or higher, but for
+#   our sparse example data, we need to do a lot to show this off at all!)
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(
+        example_df, x.by = "PC1", y.by = "PC2",
+        color.by = "gene1", bins = 10,
+        sub = "Default density scale")
+}
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(
+        example_df, x.by = "PC1", y.by = "PC2",
+        color.by = "gene1", bins = 10,
+        sub = "Density capped low for ignoring sparse regions",
+        max.density = 2)
+}
+
+# You can restrict to only certain data points using the 'rows.use' input.
+#   The input can be given rownames, indexes, or a logical vector
+scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    sub = "show only first 40 observations, by index",
+    rows.use = 1:40)
+scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    sub = "show only 3 obs, by name (plotting gets a bit wonky for few points)",
+    rows.use = c("obs1", "obs2", "obs25"))
+scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    sub = "show groups A,B,D only, by logical",
+    rows.use = example_df$groups!="C")
+
+# Many extra features are easy to add as well:
+#   Each is started via an input starting with 'do.FEATURE*' or 'add.FEATURE*'
+#   And when tweaks for that feature are possible, those inputs will start be
+#   named starting with 'FEATURE*'. For example, color.by groups can be labeled
+#   with 'do.label = TRUE' and the tweaks for this feature are given with inputs
+#   'labels.size', 'labels.highlight', and 'labels.repel':
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(example_df, x.by = "PC1", y.by = "PC2", color.by = "groups",
+        sub = "default labeling",
+        do.label = TRUE)          # Turns on the labeling feature
+}
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(example_df, x.by = "PC1", y.by = "PC2", color.by = "groups",
+        sub = "tweaked labeling",
+        do.label = TRUE,          # Turns on the labeling feature
+        labels.size = 8,          # Adjust the text size of labels
+        labels.highlight = FALSE, # Removes white background behind labels
+        labels.repel = FALSE)     # Turns off anti-overlap location adjustments
+}
+
+# Faceting can also be used to show multiple continuous variables side-by-side
+#   by giving a vector of column names to 'color.by'.
+#   This can also be combined with 1 'split.by' variable, with direction then
+#   controlled via 'multivar.split.dir':
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(example_df, x.by = "PC1", y.by = "PC2", bins = 10,
+        color.by = c("gene1", "gene2"))
+}
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(example_df, x.by = "PC1", y.by = "PC2", bins = 10,
+        color.by = c("gene1", "gene2"),
+        split.by = "groups")
+}
+if (requireNamespace("ggplot.multistats", quietly = TRUE)) {
+    scatterHex(example_df, x.by = "PC1", y.by = "PC2", bins = 10,
+        color.by = c("gene1", "gene2"),
+        split.by = "groups",
+        multivar.split.dir = "row")
+}
+
+# Sometimes, it can be useful for external editing or troubleshooting purposes
+#   to see the underlying data that was directly used for plotting.
+# 'data.out = TRUE' can be provided in order to obtain not just plot ("plot"),
+#   but also the "data" and "cols_used" returned as a list.
+out &lt;- scatterHex(example_df, x.by = "PC1", y.by = "PC2",
+    rows.use = 1:40,
+    data.out = TRUE)
+out$plot
+summary(out$data)
+out$cols_use
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>write_define</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creates a define XML document</h2>
+
+<h3>Description</h3>
+
+<p>The <code>write_define</code> function inputs an SDTM or ADAM
+metadata file and outputs a define.xml and associated files to a specified
+directory. Possible associated files are the HTML transformation of
+the define.xml and a check report. By default, the check report will
+also be shown in the viewer.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">write_define(
+  path,
+  dir,
+  type = "sdtm",
+  ver = NULL,
+  check = TRUE,
+  html = TRUE,
+  view = TRUE,
+  report_type = "PDF",
+  end_char = ""
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>The path to the metadata file.  Currently only Excel metadata
+files are supported.  Other metadata sources may be added if there is sufficient
+interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>The output directory to create the define.xml and associated files.
+If the directory does not exist, the function will attempt to create it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>The type of define.xml to create.  Valid values are
+"sdtm" and "adam".  Default is "sdtm".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ver</code></td>
+<td>
+<p>The version of the define XML to produce. Currently only
+version "2.0.0" is supported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check</code></td>
+<td>
+<p>Whether or not to perform consistency checks.  If so,
+a check report will be produced in the output directory. Valid values
+are TRUE and FALSE.  Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>html</code></td>
+<td>
+<p>Whether or not to produce the HTML output associated with the
+define.xml.  Valid values are TRUE and FALSE.  Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>view</code></td>
+<td>
+<p>Whether or not to show the check report in the viewer.  Valid
+values are TRUE and FALSE.  Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>report_type</code></td>
+<td>
+<p>The output type of the check report, if requested.
+Valid values are "TXT", "RTF", "PDF", "HTML" and "DOCX".  Default is
+"PDF".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>end_char</code></td>
+<td>
+<p>The end character to use on computational method blocks.
+These blocks often contain code samples that include line feeds or other
+line ending characters.  This parameter can be used to control how
+these characters are emitted to the XML parser.  Default is an empty
+string ("").  If the line feeds in your computational methods are not working,
+trying using a return ("\r") or new line ("\n").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The define.xml document is used by the FDA (and others) to review
+study data. All datasets used in the study are listed, along with
+variable and value metadata, where clauses, and more.  The define.xml
+can be used along with an XSLT style sheet to transform the XML into
+an HTML report.  This HTML report has links that allow you to easily
+navigate the data structures.
+</p>
+<p>The <code>write_define</code> function
+creates both the define XML and the define HTML. The <code>path</code>
+parameter identifies the location of the Excel metadata, and the
+<code>dir</code> parameter specifies an output directory.  You can create
+both SDTM and ADAM metadata by passing the appropriate value on the
+<code>type</code> parameter.
+</p>
+<p>Importantly, the function also produces a check report.  This report
+will compare the define.xml file against the XSD schema supplied by
+CDISC.  Any discrepancies will be written to the check report.  By default,
+the check report is also shown in the viewer, and returned as a vector of
+strings by the function.  This discrepancy list allows you to verify
+that the metadata has been filled out correctly.
+</p>
+<p>For instance, the
+conformance check will ensure that each object ID (OID) is unique within
+the document.  Any non-unique IDs will be identified and written to the
+check report. The check report may therefore be used iteratively to
+fix the metadata.
+</p>
+<p>Any errors that prevent proper functioning of the procedure will stop
+execution, and be displayed in the console.  All other errors and
+warnings will be sent to the check report, and will not stop execution.
+</p>
+<p>Note that the <code>check</code> parameter can be used to turn off the
+conformance check mechanism, and just create the XML.
+</p>
+<p>The XSD schema and XSLT transformation documents were created by CDISC,
+and are included in the <strong>defineR</strong> package for convenience. To
+specify another version of the documents, use the options "defineR.xsd"
+and "defineR.xslt".  For example:
+<code>options("defineR.xsd" = "c:/myproject/define2-1-0.xsd")</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The define.xml file and any associated files will be written
+to the directory specified on the <code>dir</code> parameter.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>write_metadata</code> to create a metadata template.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Get temp directory
+tmp &lt;- tempdir()
+
+# Create demo metadata
+pth &lt;- write_metadata(tmp, demo = TRUE)
+
+# Generate define files
+res &lt;- write_define(pth, tmp, view = FALSE)
+
+# View check results
+res
+# NULL
+
+# View XML
+# file.show(file.path(tmp, "define.sdtm.xml"))
+
+# View check report
+# file.show(file.path(tmp, "check.sdtm.pdf"))
+
+# View HTML
+# file.show(file.path(tmp, "define.sdtm.html"))
+</code></pre>
+
+
+</div>

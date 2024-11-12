@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatiotemp_thin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Thin species occurrence records by spatial and temporal proximity.</h2>
+
+<h3>Description</h3>
+
+<p>Thins species occurrence records that are within minimum spatial and temporal distance apart.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatiotemp_thin(
+  occ.data,
+  temporal.method,
+  temporal.dist,
+  spatial.split.degrees,
+  spatial.dist = 0,
+  iterations = 100,
+  prj = "+proj=longlat +datum=WGS84"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>occ.data</code></td>
+<td>
+<p>a data frame, with columns for occurrence record co-ordinates and dates with
+column names as follows; record longitude as "x", latitude as "y", year as "year", month as
+"month", and day as "day".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.method</code></td>
+<td>
+<p>a character string, the method to calculate temporal distance between
+records. One of <code>DOY</code> or <code>day.</code> See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.dist</code></td>
+<td>
+<p>a numeric value, the temporal buffer in days to thin records by.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.split.degrees</code></td>
+<td>
+<p>a numeric value, the grid cell resolution in degrees to split
+occurrence records by before temporal thinning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.dist</code></td>
+<td>
+<p>a numeric value, the spatial buffer distances in metres to thin records by.
+Default no spatial thinning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>a numeric value, the number of iterations to randomly thin occurrence records
+by. Default; 100.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prj</code></td>
+<td>
+<p>a character string, the coordinate reference system of occ.data co-ordinates. Default
+is "+proj=longlat +datum=WGS84".</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns data frame of occurrence records thinned by specified temporal and spatial
+distance.
+</p>
+
+
+<h3>Overview</h3>
+
+<p><code>spatiotemp_thin()</code> calculates the temporal distance between occurrence records in given area
+and excludes records below minimum temporal distance apart. Then calculates the spatial distance
+between all occurrence records and filters records below the minimum spatial distance apart using
+the <code>spThin</code> package function for spatial thinning (Aiello-Lammens et al., 2015). This approach
+has been shown to improve species distribution model performance (Boria et al., 2014).
+</p>
+
+
+<h3>Temporal thinning methods</h3>
+
+<p>For temporal thinning, the function first splits occurrence records into grid cells of given size
+in degrees (set by <code>spatial.split.degrees</code>). This is to prevent spatially distant but temporally
+close records from being excluded. For each grid cell, all records within the cell are temporally
+thinned. This process works by removing records that are within given temporal distance
+(<code>temporal.dist</code>) from each other by randomly selecting one of the two. This iterates through
+until no records are within the given temporal distance of each other in each grid cell, following
+a similar algorithm to <code>spThin</code> (Aiello-Lammens et al., 2015).
+</p>
+<p>Two methods exist for measuring the temporal distance between occurrence records.
+</p>
+
+<ul>
+<li> 
+
+<ol><li> <p><code>doy</code> - calculates the minimum days apart within the annual cycle
+</p>
+</li></ol>
+</li>
+<li> 
+
+<ol><li> <p><code>day</code> - uses the absolute number of days.
+</p>
+</li></ol>
+</li>
+</ul>
+<p>For instance, two dates “2010-01-05” and “2012-12-05” can be calculated as either 1065 absolute
+days apart, or within the annual cycle these dates represent day 5 and day 339 of the year, and
+are 31 days apart. Therefore, thinning by 40 days using the <code>DOY</code> method would remove one of these
+records, but using the <code>day</code> method would not. The chosen <code>temporal.method</code> will depend upon
+whether bias towards a point within the annual cycle or a point in linear time.
+</p>
+
+
+<h3>Spatial thinning</h3>
+
+<p>Following temporal thinning, spatial thinning occurs across entire dataset. The spatial distance
+between each record is calculated, and records within the given spatial distance (<code>spatial.dist</code>)
+from each other are excluded by randomly selecting one of these. This iterates through until no
+records are with the given spatial distances of each other across entire dataset using the package
+<code>spThin</code> (Aiello-Lammens et al., 2015).
+</p>
+<p>As random selection could alter the total number of occurrence records remaining in the occurrence
+record dataset, this process is iterated through a specified number of times (<code>iterations</code>) and
+the thinned data frame with the highest number of records remaining is returned.
+</p>
+
+
+<h3>References</h3>
+
+<p>Aiello-Lammens, M. E., Boria, R. A., Radosavljevic, A., Vilela, B. &amp; Anderson, R. P.
+2015. spThin: an R package for spatial thinning of species occurrence records for use in
+ecological niche models. Ecography, 38, 541-545.
+</p>
+<p>Boria, R. A., Olson, L. E., Goodman, S. M. &amp; Anderson, R. P. 2014. Spatial Filtering To Reduce
+Sampling Bias Can Improve The Performance Of Ecological Niche Models. Ecological Modelling, 275,
+73-77.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data("sample_filt_data")
+
+n.iterations &lt;- 500
+
+spatiotemp_thin(
+ occ.data = sample_filt_data,
+ temporal.method = "day",
+ temporal.dist = 100,
+ spatial.split.degrees = 3,
+ spatial.dist = 100000,
+ iterations = n.iterations
+)
+
+</code></pre>
+
+
+</div>

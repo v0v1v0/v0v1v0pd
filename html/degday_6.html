@@ -1,0 +1,256 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dd_calc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate degree days from daily data</h2>
+
+<h3>Description</h3>
+
+<p>Estimate degree days from daily min and max temperature
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dd_calc(
+  daily_min,
+  daily_max,
+  nextday_min = daily_min,
+  thresh_low = NULL,
+  thresh_up = NULL,
+  method = c("sng_tri", "dbl_tri", "sng_sine", "dbl_sine", "simp_avg")[0],
+  cutoff = c("horizontal", "vertical", "intermediate")[1],
+  digits = 2,
+  cumulative = FALSE,
+  no_neg = TRUE,
+  simp_avg_zero_method = 1,
+  interpolate_na = FALSE,
+  quiet = FALSE,
+  debug = FALSE
+)
+
+dd_simp_avg(
+  daily_min,
+  daily_max,
+  thresh_low,
+  thresh_up = NULL,
+  simp_avg_zero_method = 1,
+  digits = 2,
+  cumulative = FALSE,
+  quiet = FALSE
+)
+
+dd_sng_tri(
+  daily_min,
+  daily_max,
+  thresh_low = NULL,
+  thresh_up = NULL,
+  cutoff = c("horizontal", "vertical", "intermediate")[1],
+  digits = 2,
+  cumulative = FALSE,
+  quiet = FALSE
+)
+
+dd_sng_sine(
+  daily_min,
+  daily_max,
+  thresh_low = NULL,
+  thresh_up = NULL,
+  cutoff = c("horizontal", "vertical", "intermediate")[1],
+  digits = 2,
+  cumulative = FALSE,
+  quiet = FALSE
+)
+
+dd_dbl_tri(
+  daily_min,
+  daily_max,
+  nextday_min = daily_min,
+  thresh_low = NULL,
+  thresh_up = NULL,
+  cutoff = c("horizontal", "vertical", "intermediate")[1],
+  digits = 2,
+  cumulative = FALSE,
+  quiet = FALSE
+)
+
+dd_dbl_sine(
+  daily_min,
+  daily_max,
+  nextday_min = daily_min,
+  thresh_low = NULL,
+  thresh_up = NULL,
+  cutoff = c("horizontal", "vertical", "intermediate")[1],
+  digits = 2,
+  cumulative = FALSE,
+  quiet = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>daily_min</code></td>
+<td>
+<p>Daily minimum temperature</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>daily_max</code></td>
+<td>
+<p>Daily maximum temperature</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nextday_min</code></td>
+<td>
+<p>Minimum temp the day after</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresh_low</code></td>
+<td>
+<p>Lower development threshold temperature</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresh_up</code></td>
+<td>
+<p>Upper development threshold temperature</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Estimation method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff</code></td>
+<td>
+<p>Estimation cutoff method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>Number of decimal places to round results to</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cumulative</code></td>
+<td>
+<p>Return cumulative values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>no_neg</code></td>
+<td>
+<p>Set negative values to zero</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simp_avg_zero_method</code></td>
+<td>
+<p>How to handle temperatures in the simple average method that fall outside the upper and lower thresholds (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpolate_na</code></td>
+<td>
+<p>Interpolate missing values, logical</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>Suppress messages, logical</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>Show additional messages</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Units for <code>daily_min</code>, <code>daily_max</code>, <code>thresh_low</code>, and <code>thresh_up</code> should all be the same
+(i.e., all Fahrenheit or all Celsius). The function does not check for unit consistency.
+</p>
+<p><code>nextday_min</code> is required for the double-triangle and the double-sine methods. These methods use the minimum temperature
+of the following day to model temperatures in the 2nd half of the day. If omitted or NA, the daily minimum temperature will be
+substituted.
+</p>
+<p><code>no_neg = TRUE</code> sets negative values to zero. This is generally preferred when using degree days to predict the timing of
+development milestones, if one assumes that growth can not go backwards.
+</p>
+<p>The simple average method is taken from McMaster and Wilhelm (<a href="https://digitalcommons.unl.edu/cgi/viewcontent.cgi?article=1086&amp;context=usdaarsfacpub">1997</a>). This method requires passing a lower threshold (also called the base temp). There are two ways of handling temperatures that fall below the base temperature. Most studies and applications use the default method (<code>simp_avg_zero_method = 1</code>) which simply 'zeroes out' average daily temperatures that fall below the base temp. Some studies (notably corn) use method 2, which truncates the daily minimum and maximum temperature before computing the simple average. Method 2 also allows you to pass an upper threshold. For details, see McMaster and Wilhelm.
+</p>
+<p>Missing values (NAs) in the temperatures will result in NA degree days. If <code>interpolate_na = TRUE</code>, missing degree days will
+be interpolated. NAs in the middle of the series will be linearly interpolated, and NAs at the ends will be filled with the
+adjacent values.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of estimated degree day values (either daily or cumulative, depending on the value of <code>cumulative</code>)
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>dd_simp_avg()</code>: Estimate degree days using the simple avg method
+</p>
+</li>
+<li> <p><code>dd_sng_tri()</code>: Estimate degree days using the single-triangle method
+</p>
+</li>
+<li> <p><code>dd_sng_sine()</code>: Estimate degree days using the single-sine method
+</p>
+</li>
+<li> <p><code>dd_dbl_tri()</code>: Estimate degree days using the double-triangle method
+</p>
+</li>
+<li> <p><code>dd_dbl_sine()</code>: Estimate degree days using the double-sine method
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">daily_temps &lt;- system.file("extdata/espartoa-weather-2020.csv", package = "degday") %&gt;%
+  read.csv() %&gt;%
+    dplyr::mutate(date = as.Date(date)) %&gt;%
+    dplyr::slice(1:10)
+daily_temps
+## Simple average method
+dd_simp_avg(daily_min = daily_temps$tmin,
+            daily_max = daily_temps$tmax,
+            thresh_low = 55)
+## Single sine method
+dd_sng_sine(daily_min = daily_temps$tmin, daily_max = daily_temps$tmax,
+            thresh_low = 55, thresh_up = 93.9)
+## Single triangle method
+dd_sng_tri(daily_min = daily_temps$tmin, daily_max = daily_temps$tmax,
+           thresh_low = 55, thresh_up = 93.9)
+## Add next day min temp as an additional column
+daily_temps_plus_tmin_next &lt;- daily_temps %&gt;% dplyr::mutate(tmin_next = dplyr::lead(tmin, n = 1))
+daily_temps_plus_tmin_next
+## Double-triangle method
+dd_dbl_tri(daily_min = daily_temps_plus_tmin_next$tmin,
+           daily_max = daily_temps_plus_tmin_next$tmax,
+           nextday_min = daily_temps_plus_tmin_next$tmin_next,
+           thresh_low = 55, thresh_up = 93.9)
+
+</code></pre>
+
+
+</div>

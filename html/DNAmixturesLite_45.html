@@ -1,0 +1,254 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>varEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimated asymptotic variance matrix for MLE</h2>
+
+<h3>Description</h3>
+
+<p>Provided that the user specifies the MLE as well as the
+constraints used in the maximisation, this function computes an
+estimate of the variance of the MLE based on the observed
+information. The observed information is obtained by numerically
+deriving the Hessian of the log-likelihood function.
+</p>
+<p><em>IMPORTANT: This is the <span class="pkg">DNAmixturesLite</span> package, which
+is intended as a service to enable users to try <span class="pkg">DNAmixtures</span>
+without purchasing a commercial licence for Hugin. When at all
+possible, we strongly recommend the use of <span class="pkg">DNAmixtures</span>
+rather than this lite-version. See
+<a href="https://dnamixtures.r-forge.r-project.org/">https://dnamixtures.r-forge.r-project.org/</a> for details on
+both packages.</em>
+</p>
+<p><em>While the lite-version seeks to provide the full functionality of
+<span class="pkg">DNAmixtures</span>, note that computations are much less efficient
+and that there are some differences in available functionality. Be
+aware that the present documentation is copied from
+<span class="pkg">DNAmixtures</span> and thus may not accurately describe the
+implementation of this lite-version.</em>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">varEst(mixture, mle, npars, method = "Richardson", ...)
+
+## S3 method for class 'mixVarEst'
+summary(object, transform = FALSE, ...)
+
+## S3 method for class 'summary.mixVarEst'
+print(
+  x,
+  digits = max(3, getOption("digits") - 3),
+  scientific = FALSE,
+  print.gap = 3L,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mixture</code></td>
+<td>
+<p>A <code>DNAmixture</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mle</code></td>
+<td>
+<p>A <code>mixpar</code>, typically obtained by <code>mixML</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npars</code></td>
+<td>
+<p>A list of integers specifying the number of each of the four
+parameters <code>rho</code>, <code>eta</code>, <code>xi</code> and <code>phi</code>. Allowed values are
+</p>
+
+<dl>
+<dt><code>0</code></dt>
+<dd>
+<p>The parameter is fixed, but might differ across mixtures.</p>
+</dd>
+<dt><code>1</code></dt>
+<dd>
+<p>The parameter is equal across mixtures.</p>
+</dd>
+<dt><code>N</code></dt>
+<dd>
+<p>There is one parameter for each of the <code>N</code> mixtures in the model.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Method for numeric differentiation used in <code>hessian</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to be passed on to other methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>mixVarEst</code>, typically obtained by a call to <code>varEst</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transform</code></td>
+<td>
+<p>Should the parameterisation <code class="reqn">(\mu, \sigma)</code> be used? Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>"summary.mixVarEst"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>Number of significant digits to print</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scientific</code></td>
+<td>
+<p>Should scientific notation be used?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print.gap</code></td>
+<td>
+<p>Distance between columns in the printing of the summary.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>As the user can apply highly customized constraints to the model
+parameters when maximising with <code>mixML</code>, it is a
+complicated matter to write a generic function for computing the
+asymptotic variance matrix. We have thus restricted attention to
+the case where each of the (multi-dimensional) parameters <code>rho</code>,
+<code>eta</code>, <code>xi</code> and <code>phi</code> can be either
+</p>
+
+<ul>
+<li>
+<p> fixed at known values
+</p>
+</li>
+<li>
+<p> unknown, but common across traces
+</p>
+</li>
+<li>
+<p> unconstrained
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>The mle and the estimated covariance matrix in different parametrisations
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td>
+<code>cov</code> and <code>mle</code>
+</td>
+<td>
+<p><code class="reqn">\rho, \eta, \xi, \phi</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td>
+<code>cov.trans</code> and <code>mle.trans</code>
+</td>
+<td>
+<p><code class="reqn">\mu, \sigma, \xi, \phi</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.res</code></td>
+<td>
+<p>A non-singular covariance matrix for a
+reparametrisation of <code class="reqn">\rho, \eta, \xi, \phi</code>, collapsing the
+parameters according to the specified constrains and removing one
+contributor from <code class="reqn">\phi</code>.</p>
+</td>
+</tr>
+</table>
+<p>An integer suffix is used to indicate which mixture the parameter
+is associated with. In the restricted covariance matrix, all fixed
+parameters are left out. If parameters are equal accross mixtures,
+the suffix for this parameter will be <code>.1</code>. If parameters are
+unconstrained and there are <code>N</code> mixtures in the model,
+suffixes are <code>.1, ..., .N</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(MC18, USCaucasian)
+mixHp &lt;- DNAmixture(list(MC18), k = 3, K = c("K1", "K2", "K3"), C = list(50),
+                    database = USCaucasian)
+p &lt;- mixpar(rho = list(30), eta = list(34), xi = list(0.08),
+            phi = list(c(K1 = 0.71, K3 = 0.1, K2 = 0.19)))
+mlHp &lt;- mixML(mixHp, pars = p)
+## Find the estimated covariance matrix of the MLE
+V.Hp &lt;- varEst(mixHp, mlHp$mle, npars = list(rho=1,eta=1,xi=1,phi=1))
+V.Hp$cov ## using (rho, eta)
+V.Hp$cov.trans ## using (mu, sigma)
+## The summary is a table containing the MLE and their standard errors
+summary(V.Hp)
+
+
+data(MC18, USCaucasian)
+mixmult &lt;- DNAmixture(list(MC18), C = list(50), k = 3, K = c("K1", "K2"), database = USCaucasian)
+startpar &lt;- mixpar(rho = list(30), eta = list(28), xi = list(0.08),
+                   phi = list(c(U1 = 0.2, K1 = 0.7, K2 = 0.1)))
+ml.mult &lt;- mixML(mixmult, startpar)
+Vmult &lt;- varEst(mixmult, ml.mult$mle, list(rho=1,eta=1,xi=1,phi=1))
+summary(Vmult)
+
+
+
+## Be aware that the following two advanced examples are computationally demanding and
+## typically have a runtime of several minutes with the lite-version of DNAmixtures.
+
+data(MC15, MC18, USCaucasian)
+mix &lt;- DNAmixture(list(MC15, MC18), C = list(50, 38), k = 3, K = c("K1", "K2"),
+database = USCaucasian)
+startpar &lt;- mixpar(rho = list(30, 30), eta = list(28, 35), xi = list(0.08, 0.1),
+                   phi = list(c(U1 = 0.05, K1 = 0.7, K2 = 0.25),
+                                c(K1 = 0.7, K2 = 0.1, U1 = 0.2)))
+eqxis &lt;- function(x){ diff(unlist(x[,"xi"])) }
+## Here we set stutter equal for all traces
+ml.diff &lt;- mixML(mix, startpar, eqxis, val = 0, phi.eq = FALSE)
+V.diff &lt;- varEst(mix, ml.diff$mle, list(rho=2,eta=2,xi=1,phi=2))
+summary(V.diff)
+
+## Fixing stutter to 0.07
+xival &lt;- function(x){unlist(x[,"xi"])}
+ml.eq &lt;- mixML(mix, startpar, xival, val = c(0.07, 0.07), phi.eq = FALSE)
+V.eq &lt;- varEst(mix, ml.eq$mle, list(rho=2,eta=2,xi=0,phi=2))
+summary(V.eq)
+
+</code></pre>
+
+
+</div>

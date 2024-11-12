@@ -1,0 +1,244 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EvaluateRule</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluate a Treatment Rule</h2>
+
+<h3>Description</h3>
+
+<p>Perform principled evaluation of a treatment rule (using the IPW approach to account for potential confounding) on a dataset that is independent of the development dataset on which the rule was developed, either to perform model selection (with a validation dataset) or to obtain trustworthy estimates of performance for a pre-specified treatment rule (with an evaluation dataset).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EvaluateRule(
+  evaluation.data,
+  BuildRule.object = NULL,
+  B = NULL,
+  study.design,
+  name.outcome,
+  type.outcome,
+  desirable.outcome,
+  separate.propensity.estimation = TRUE,
+  clinical.threshold = 0,
+  name.treatment,
+  names.influencing.treatment,
+  names.influencing.rule,
+  propensity.method = NULL,
+  show.treat.all = TRUE,
+  show.treat.none = TRUE,
+  truncate.propensity.score = TRUE,
+  truncate.propensity.score.threshold = 0.05,
+  observation.weights = NULL,
+  additional.weights = rep(1, nrow(evaluation.data)),
+  lambda.choice = c("min", "1se"),
+  propensity.k.cv.folds = 10,
+  bootstrap.CI = FALSE,
+  bootstrap.CI.replications = 1000,
+  bootstrap.type = "basic"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>evaluation.data</code></td>
+<td>
+<p>A data frame representing the *validation* or *evaluation* dataset used to estimate the performance of a rule that was developed on an independent development dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BuildRule.object</code></td>
+<td>
+<p>The object returned by the <code>BuildRule()</code> function. Defaults to NULL but is required if a treatment rule is not provided in the <code>B</code> argument. Only one of <code>BuildRule.object</code> and <code>B</code> should be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>A numeric vector representing a pre-specified treatment rule, which must have length equal to the number of rows in <code>evaluation.data</code> and elements equal to <code>0/FALSE</code> indicating no treatment and <code>1/TRUE</code> indicating treatment. Defaults to <code>NULL</code> but is required if <code>BuildRule.object</code> is not specified.  Only one of <code>BuildRule.object</code> and <code>B</code> should be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study.design</code></td>
+<td>
+<p>Either ‘observational’, ‘RCT’, or ‘naive’. For the <code>observational</code> design, the function will use inverse-probability-of-treatment observation weights (IPW) based on estimated propensity scores with predictors <code>names.influencing.treatment</code>; for the <code>RCT</code> design, the function will use IPW based on propensity scores equal to the observed sample proportions; for the <code>naive</code> design, all observation weights will be uniformly equal to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name.outcome</code></td>
+<td>
+<p>A character indicating the name of the outcome variable in <code>evaluation.data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.outcome</code></td>
+<td>
+<p>Either ‘binary’ or ‘continuous’, the form of <code>name.outcome</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>desirable.outcome</code></td>
+<td>
+<p>A logical equal to <code>TRUE</code> if higher values of the outcome are considered desirable (e.g. for a binary outcome, 1 is more desirable than 0). The <code>OWL.framework</code> and <code>OWL</code> approaches to treatment rule estimation require a desirable outcome.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separate.propensity.estimation</code></td>
+<td>
+<p>A logical equal to <code>TRUE</code> if propensity scores should be estimated separately in the test-positives and test-negatives subpopulations and equal to <code>FALSE</code> if propensity scores should be estimated in the combined sample. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clinical.threshold</code></td>
+<td>
+<p>A numeric equal to a positive number above which the predicted outcome under treatment must be superior to the predicted outcome under control for treatment to be recommended. Only used when <code>BuildRuleObject</code> was specified and derived from the split-regression or direct-interactions approach. Default is 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name.treatment</code></td>
+<td>
+<p>A character indicating the name of the treatment variable in <code>evaluation.data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names.influencing.treatment</code></td>
+<td>
+<p>A character vector (or element) indicating the names of the variables in <code>evaluation.data</code> that are expected to influence treatment assignment in the current dataset. Required for <code>study.design=</code>‘observational’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names.influencing.rule</code></td>
+<td>
+<p>A character vector (or element) indicating the names of the variables in <code>evaluation.data</code> that may influence response to treatment and are expected to be observed in future clinical settings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>propensity.method</code></td>
+<td>
+<p>One of‘logistic.regression’, ‘lasso’, or ‘ridge’. This is the underlying regression model used to estimate propensity scores (for <code>study.design=</code>‘observational’. If <code>bootstrap.CI=TRUE</code>, then <code>propensity.method</code> must be ‘logistic.regression’. Defaults to NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show.treat.all</code></td>
+<td>
+<p>A logical variable dictating whether summaries for the naive rule that assigns treatment to all observations are reported, which help put the performance of the estimated treatment rule in context. Default is TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show.treat.none</code></td>
+<td>
+<p>A logical variable dictating whether summaries for the naive rule that assigns treatment to no observations are reported, which help put the performance of the estimated treatment rule in context. Default is TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate.propensity.score</code></td>
+<td>
+<p>A logical variable dictating whether estimated propensity scores less than <code>truncate.propensity.score.threshold</code> away from 0 or 1 should be truncated to be <code>truncate.propensity.score.threshold</code> away from 0 or 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate.propensity.score.threshold</code></td>
+<td>
+<p>A numeric value between 0 and 0.25.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observation.weights</code></td>
+<td>
+<p>A numeric vector equal to the number of rows in <code>evaluation.data</code> that provides observation weights to be used in place of the IPW weights estimated with <code>propensity.method</code>. Defaults to NULL. Only one of the <code>propensity.method</code> and <code>observation.weights</code> should be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>additional.weights</code></td>
+<td>
+<p>A numeric vector of observation weights that will be multiplied by IPW weights in the rule evaluation stage, with length equal to the number of rows in <code>evaluation.data</code>.. This can be used, for example, to account for a non-representative sampling design or to apply an IPW adjustment for missingness. The default is a vector of 1s.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda.choice</code></td>
+<td>
+<p>Either ‘min’ or ‘1se’, corresponding to the <code>s</code> argument in <code>predict.cv.glmnet()</code> from the <code>glmnet</code> package; only used when <code>propensity.method</code> or <code>rule.method</code> is ‘lasso’ or ‘ridge’. Default is ‘min’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>propensity.k.cv.folds</code></td>
+<td>
+<p>An integer dictating how many folds to use for K-fold cross-validation that chooses the tuning parameter when <code>propensity.method</code> is ‘lasso’ or ‘ridge’. Default is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap.CI</code></td>
+<td>
+<p>Logical indicating whether the ATE/ABR estimates returned by <code>EvaluateRule()</code> should be accompanied by 95% confidence intervals based on the bootstrap. Default is <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap.CI.replications</code></td>
+<td>
+<p>An integer specifying how many bootstrap replications should underlie the computed CIs. Default is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap.type</code></td>
+<td>
+<p>One character element specifying the type of bootstrap CI that should be computed. Currently the only supported option is <code>bootstrap.type=</code>‘basic’, but this may be expanded in the future.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with the following components
+</p>
+
+<ul>
+<li> <p><code>recommended.treatment</code>: A numeric vector of 0s and 1s, with length equal to the number of rows in <code>evaluation.data</code>, where a 0 indicates treatment is not recommended and a 1 indicates treatment is recommended for the corresponding observation in <code>evaluation.data</code>.
+</p>
+</li>
+<li> <p><code>fit.object</code>: A list consisting of one of the following: the propensity scores estimated in the test-positives and in the test-negatives (if <code>separate.propensity.estimation=TRUE</code>, <code>study.design=</code>‘observational’, and <code>observation.weights=NULL</code>); the propensity scores estimated in the combined sample (if <code>separate.propensity.estimation=FALSE</code>, <code>study.design=</code>‘observational’, and <code>observation.weights=NULL</code>); and simply is simply null if <code>study.design=</code>‘RCT’ (in which case propensity score would just be the inverse of the sample proportion receiving treatment)
+</p>
+</li>
+<li> <p><code>summaries</code>: a matrix with columns reporting the following summaries of treatment rule performance: the number of observations in <code>evaluation.data</code> recommended to receive treatment. (<code>n.positives</code>); the estimated average treatment effect among those recommended to receive treatment (<code>ATE.positives</code>); the number of observations in <code>evaluation.data</code> recommended to not receive treatment (<code>n.negatives</code>); the estimated average treatment effect among those recommended to not receive treatment (<code>ATE.negatives</code>); the estimated average benefit of using the rule, with the weighted average of ATE.positives and -1 * ATE.negatives where weights are the proportions of test-positives and test-negatives (<code>ABR</code>). If <code>bootstrap.CI=TRUE</code>, then 4 additional columns are included, showing the lower bound (LB) and upper bound (UB) of the 95% CIs for <code>ATE.positives</code> and <code>ATE.negatives</code>.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(123)
+example.split &lt;- SplitData(data=obsStudyGeneExpressions,
+                                     n.sets=3, split.proportions=c(0.5, 0.25, 0.25))
+development.data &lt;- example.split[example.split$partition == "development",]
+validation.data &lt;- example.split[example.split$partition == "validation",]
+one.rule &lt;- BuildRule(development.data=development.data,
+                     study.design="observational",
+                     prediction.approach="split.regression",
+                     name.outcome="no_relapse",
+                     type.outcome="binary",
+                     desirable.outcome=TRUE,
+                     name.treatment="intervention",
+                     names.influencing.treatment=c("prognosis", "clinic", "age"),
+                     names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                     propensity.method="logistic.regression",
+                     rule.method="glm.regression")
+split.validation &lt;- EvaluateRule(evaluation.data=validation.data,
+                          BuildRule.object=one.rule,
+                          study.design="observational",
+                          name.outcome="no_relapse",
+                          type.outcome="binary",
+                          desirable.outcome=TRUE,
+                          name.treatment="intervention",
+                          names.influencing.treatment=c("prognosis", "clinic", "age"),
+                          names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                          propensity.method="logistic.regression",
+                          bootstrap.CI=FALSE)
+split.validation[c("n.positives", "n.negatives",
+                       "ATE.positives", "ATE.negatives", "ABR")]
+</code></pre>
+
+
+</div>

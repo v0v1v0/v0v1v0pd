@@ -1,0 +1,121 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>check_point_location</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Check point location</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>check_point_location()</code> checks if points that were found
+by the <code>gep_by_nera()</code> function sit on specified confidence
+region bounds (<code class="reqn">\textit{CRB}</code>) or not. This is necessary because the
+points found by aid of the “Method of Lagrange Multipliers” (MLM)
+and “Newton-Raphson” (nera) optimisation may not sit on the
+<code class="reqn">\textit{CRB}</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">check_point_location(lpt, lhs)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lpt</code></td>
+<td>
+<p>A list returned by the <code>gep_by_nera()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lhs</code></td>
+<td>
+<p>A list of the estimates of Hotelling's two-sample <code class="reqn">T^2</code>
+statistic for small samples as returned by the function
+<code>get_T2_two()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>check_point_location()</code> checks if points that
+were found by the <code>gep_by_nera()</code> function sit on specified
+confidence region bounds (<code class="reqn">\textit{CRB}</code>) or not. The
+<code>gep_by_nera()</code> function determines the points on the
+<code class="reqn">\textit{CRB}</code> for each of the <code class="reqn">n_p</code> time points or model parameters
+by aid of the “Method of Lagrange Multipliers” (MLM) and by
+“Newton-Raphson” (nera) optimisation, as proposed by Margaret
+Connolly (Connolly 2000). However, since the points found may not sit on
+the specified <code class="reqn">\textit{CRB}</code>, it must be checked if the points returned
+by the <code>gep_by_nera()</code> function do sit on the <code class="reqn">\textit{CRB}</code>
+or not.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns the list that was passed in via the <code>lpt</code>
+parameter with a modified <code>points.on.crb</code> element, i.e. set as
+<code>TRUE</code> if the points sit on the <code class="reqn">\textit{CRB}</code> or <code>FALSE</code> if
+they do not sit on the <code class="reqn">\textit{CRB}</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Tsong, Y., Hammerstrom, T., Sathe, P.M., and Shah, V.P. Statistical
+assessment of mean differences between two dissolution data sets.
+<em>Drug Inf J</em>. 1996; <strong>30</strong>: 1105-1112.<br><a href="https://doi.org/10.1177/009286159603000427">doi:10.1177/009286159603000427</a>
+</p>
+<p>Connolly, M. SAS(R) IML Code to calculate an upper confidence limit for
+multivariate statistical distance; 2000; Wyeth Lederle Vaccines, Pearl River,
+NY.<br><a href="https://analytics.ncsu.edu/sesug/2000/p-902.pdf">https://analytics.ncsu.edu/sesug/2000/p-902.pdf</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mimcr</code>, <code>gep_by_nera</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Collecting the required information
+time_points &lt;- suppressWarnings(as.numeric(gsub("([^0-9])", "",
+                                                colnames(dip1))))
+tcol &lt;- which(!is.na(time_points))
+b1 &lt;- dip1$type == "R"
+tol &lt;- 1e-9
+
+# Hotelling's T2 statistics
+l_hs &lt;- get_T2_two(m1 = as.matrix(dip1[b1, tcol]),
+                   m2 = as.matrix(dip1[!b1, tcol]),
+                   signif = 0.05)
+
+# Calling gep_by_nera()
+res &lt;- gep_by_nera(n_p = as.numeric(l_hs[["Parameters"]]["df1"]),
+                   kk = as.numeric(l_hs[["Parameters"]]["K"]),
+                   mean_diff = l_hs[["means"]][["mean.diff"]],
+                   m_vc = l_hs[["S.pool"]],
+                   ff_crit = as.numeric(l_hs[["Parameters"]]["F.crit"]),
+                   y = rep(1, times = l_hs[["Parameters"]]["df1"] + 1),
+                   max_trial = 100, tol = tol)
+
+# Expected result in res[["points.on.crb"]]
+# [1] NA
+
+# Check if points lie on the confidence region bounds (CRB)
+check_point_location(lpt = res, lhs = l_hs)
+
+# Expected result in res[["points.on.crb"]]
+# [1] TRUE
+</code></pre>
+
+
+</div>

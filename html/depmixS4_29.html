@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>em.control</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Control parameters for the EM algorithm</h2>
+
+<h3>Description</h3>
+
+<p>Set control parameters for the EM algorithm.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	
+	em.control(maxit = 500, tol = 1e-08, crit = c("relative","absolute"), 
+	random.start = TRUE, classification = c("soft","hard"))
+	
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>The maximum number of iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>The tolerance level for convergence. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+<p>Sets the convergence criterion to "relative" or "absolute" 
+change of the log-likelihood. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random.start</code></td>
+<td>
+<p>This is used for a (limited) random
+initialization of the parameters. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>classification</code></td>
+<td>
+<p>Type of classification to states
+used. See Details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The argument <code>crit</code> sets the convergence criterion to either the
+relative change in the log-likelihood or the absolute change in the
+log-likelihood.  The relative likelihood criterion (the default) assumes
+convergence on iteration <code class="reqn">i</code> when 
+<code class="reqn">\frac{\log L(i) - \log L(i-1)}{\log L(i-1)} &lt; tol</code>.  
+The absolute likelihood criterion assumes convergence on iteration
+<code class="reqn">i</code> when <code class="reqn">\log L(i) - \log L(i-1) &lt; tol</code>.  
+Use <code>crit="absolute"</code> to invoke the latter
+convergence criterion.  Note that in that case, optimal values of the 
+tolerance parameter <code>tol</code> scale with the value of the log-likelihood
+(and these are not changed automagically). 
+</p>
+<p>Argument <code>random.start</code> This is used for a (limited) random
+initialization of the parameters.  In particular, if
+<code>random.start=TRUE</code>, the (posterior) state probabilities are
+randomized at iteration 0 (using a uniform distribution), i.e. the 
+<code class="reqn">\gamma</code> variables (Rabiner, 1989) are sampled from the Dirichlet
+distribution with a (currently fixed) value of
+<code class="reqn">\alpha=0.1</code>; this results in values for each row of <code class="reqn">\gamma</code>
+that are quite close to zero and one; note that when these values are
+chosen at zero and one, the initialization is similar to that used in
+<code>kmeans</code>.  Random initialization is useful when no initial parameters can be
+given to distinguish between the states.  It is also useful for repeated
+estimation from different starting values.
+</p>
+<p>Argument <code>classification</code> is used to choose either soft (default) or
+hard classification of observations to states. When using soft classification, observations
+are assigned to states with a weight equal to the posterior probability of
+the state. When using hard classification, observations are assigned to states
+according to the maximum a posteriori (MAP) states (i.e., each observation
+is assigned to one state, which is determined by the Viterbi algorithm in the
+case of <code>depmix</code> models). As a result, the EM algorithm will find a local
+maximum of the classification likelihood (Celeux &amp; Govaert, 1992). 
+Warning: hard classification is an experimental feature, 
+especially for hidden Markov models, and its use is currently not advised.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>em.control</code> returns a list of the control parameters. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Maarten Speekenbrink &amp; Ingmar Visser</p>
+
+
+<h3>References</h3>
+
+<p>Lawrence R. Rabiner (1989).  A tutorial on hidden Markov models and
+selected applications in speech recognition.  <em>Proceedings of
+IEEE</em>, 77-2, p.  267-295.
+</p>
+<p>Gilles Celeux and Gerard Govaert (1992). A classification EM algorithm 
+for clustering and two stochastic versions. <em>Computational
+Statistics and Data Analysis, 14</em>, p. 315-332.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># using "hard" assignment of observations to the states, we can maximise the
+# classification likelihood instead of the usual marginal likelihood
+data(speed)  
+mod &lt;- depmix(list(rt~1,corr~1),data=speed,nstates=2,
+    family=list(gaussian(),multinomial("identity")),ntimes=c(168,134,137))
+set.seed(1)
+# fit the model by calling fit
+fmod &lt;- fit(mod,emcontrol=em.control(classification="hard"))
+# can get rather different solutions with different starting values...
+set.seed(3)
+fmod2 &lt;- fit(mod,emcontrol=em.control(classification="hard"))
+</code></pre>
+
+
+</div>

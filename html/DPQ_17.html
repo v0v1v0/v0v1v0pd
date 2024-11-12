@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dot-D-utils</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distribution Utilities "dpq"</h2>
+
+<h3>Description</h3>
+
+<p>Utility functions for "dpq"-computations, parelling those in R's own
+C source ‘<span class="file">&lt;Rsource&gt;/src/nmath/dpq.h</span>’,
+(“dpq” := <b>d</b>ensity–<b>p</b>robability–<b>q</b>uantile).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">.D_0(log.p) # prob/density == 0   (for log.p=FALSE)
+.D_1(log.p) # prob         == 1     "       "
+
+.DT_0(lower.tail, log.p) # == 0  when (lower.tail=TRUE, log.p=FALSE)
+.DT_1(lower.tail, log.p) # == 1  when     "                "
+
+.D_Lval(p, lower.tail) # p    {L}ower
+.D_Cval(p, lower.tail) # 1-p  {C}omplementary
+
+.D_val (x, log.p)  #     x  in pF(x,..)
+.D_qIv (p, log.p)  #     p  in qF(p,..)
+.D_exp (x, log.p)  # exp(x)        unless log.p where it's  x
+.D_log (p, log.p)  #     p           "      "     "    "   log(p)
+.D_Clog(p, log.p)  #   1-p           "      "     "    "   log(1-p) == log1p(-)
+
+.D_LExp(x, log.p)  ## [log](1 - exp(-x))     == log1p(- .D_qIv(x))) even more stable
+
+.DT_val (x, lower.tail, log.p) # := .D_val(.D_Lval(x, lower.tail), log.p) ==    x  in pF
+.DT_Cval(x, lower.tail, log.p) # := .D_val(.D_Cval(x, lower.tail), log.p) ==  1-x  in pF
+
+.DT_qIv (p, lower.tail, log.p) # := .D_Lval(.D_qIv(p))	==    p	 in qF
+.DT_CIv (p, lower.tail, log.p) # := .D_Cval(.D_qIv(p))	==  1-p  in qF
+
+.DT_exp (x, lower.tail, log.p) #  exp( x )
+.DT_Cexp(x, lower.tail, log.p) #  exp(1-x)
+
+.DT_log (p, lower.tail, log.p) # log ( p )  in qF
+.DT_Clog(p, lower.tail, log.p) # log (1-p)  in qF
+.DT_Log (p, lower.tail)        # log ( p )  in qF(p,..,log.p=TRUE)
+
+
+
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>(log) probability–like numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if true, probabilities are <code class="reqn">P[X \le x]</code>,
+otherwise upper tail probabilities, <code class="reqn">P[X &gt; x]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.p</code></td>
+<td>
+<p>logical; if true, probabilities <code class="reqn">p</code> are given as
+<code class="reqn">\log(p)</code> in argument <code>p</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Typically a numeric vector “as” <code>x</code> or <code>p</code>, respectively.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>log1mexp()</code> which is called from <code>.D_LExp()</code> and <code>.DT_Log()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">FT &lt;- c(FALSE, TRUE)
+stopifnot(exprs = {
+    .D_0(log.p = FALSE) ==    (0)
+    .D_0(log.p = TRUE ) == log(0)
+    identical(c(1,0), vapply(FT, .D_1, double(1)))
+})
+
+## all such functions in package DPQ:
+eDPQ &lt;- as.environment("package:DPQ")
+ls.str(envir=eDPQ, pattern = "^[.]D", all.names=TRUE)
+(nD &lt;- local({ n &lt;- names(eDPQ); n[startsWith(n, ".D")] }))
+trimW &lt;- function(ch) sub(" +$","", sub("^ +","", ch))
+writeLines(vapply(sort(nD), function(nm) {
+    B &lt;- deparse(eDPQ[[nm]])
+    sprintf("%31s := %s", trimW(sub("function ", nm, B[[1]])),
+            paste(trimW(B[-1]), collapse=" "))
+                  }, ""))
+
+do.lowlog &lt;- function(Fn, ...) {
+    stopifnot(is.function(Fn),
+              all(c("lower.tail", "log.p") %in% names(formals(Fn)))) 
+    FT &lt;- c(FALSE, TRUE) ; cFT &lt;- c("F", "T")
+    L &lt;- lapply(FT, function(lo) sapply(FT, function(lg) Fn(..., lower.tail=lo, log.p=lg)))
+    r &lt;- simplify2array(L)
+    `dimnames&lt;-`(r, c(rep(list(NULL), length(dim(r)) - 2L),
+                      list(log.p = cFT, lower.tail = cFT)))
+}
+do.lowlog(.DT_0)
+do.lowlog(.DT_1)
+do.lowlog(.DT_exp, x = 1/4) ; do.lowlog(.DT_exp, x = 3/4)
+do.lowlog(.DT_val, x = 1/4) ; do.lowlog(.DT_val, x = 3/4)
+do.lowlog(.DT_Cexp, x = 1/4) ; do.lowlog(.DT_Cexp, x = 3/4)
+do.lowlog(.DT_Cval, x = 1/4) ; do.lowlog(.DT_Cval, x = 3/4)
+do.lowlog(.DT_Clog, p = (1:3)/4) # w/ warn
+do.lowlog(.DT_log,  p = (1:3)/4) # w/ warn
+do.lowlog(.DT_qIv,  p = (1:3)/4)
+
+## unfinished: FIXME, the above is *not* really checking
+stopifnot(exprs = {
+
+})
+
+</code></pre>
+
+
+</div>

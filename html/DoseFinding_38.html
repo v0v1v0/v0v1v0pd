@@ -1,0 +1,121 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>MCTpval</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate multiplicity adjusted p-values for multiple contrast test</h2>
+
+<h3>Description</h3>
+
+<p>Calculate multiplicity adjusted p-values for a maximum contrast test corresponding to a set of contrasts and given a
+set of observed test statistics. This function is exported as it may be a useful building block and used in more
+complex testing situations that are not covered by <code>MCTtest</code>. Most users probably don't need to use this
+function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">MCTpval(
+  contMat,
+  corMat,
+  df,
+  tStat,
+  alternative = c("one.sided", "two.sided"),
+  control = mvtnorm.control()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contMat</code></td>
+<td>
+<p>Contrast matrix to use. The individual contrasts should be saved in the columns of the matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corMat</code></td>
+<td>
+<p>Correlation matrix of contrasts</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Degrees of freedom to use for calculation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tStat</code></td>
+<td>
+<p>Vector of contrast test statistics</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>Character determining the alternative for the multiple contrast trend test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list specifying additional control parameters for the ‘<span class="samp">⁠qmvt⁠</span>’ and ‘<span class="samp">⁠pmvt⁠</span>’ calls in the code,
+see also <code>mvtnorm.control</code> for details.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Numeric containing the calculated p-values.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>References</h3>
+
+<p>Pinheiro, J. C., Bornkamp, B., and Bretz, F. (2006). Design and analysis of dose finding studies
+combining multiple comparisons and modeling procedures, <em>Journal of Biopharmaceutical Statistics</em>, <b>16</b>,
+639–656
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>MCTtest</code>, <code>optContr</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(biom)
+## define shapes for which to calculate optimal contrasts
+modlist &lt;- Mods(emax = 0.05, linear = NULL, logistic = c(0.5, 0.1),
+                linInt = c(0, 1, 1, 1), doses = c(0, 0.05, 0.2, 0.6, 1))
+contMat &lt;- optContr(modlist, w=1)$contMat
+## calculate inputs needed for MCTpval
+fit &lt;- lm(resp~factor(dose)-1, data=biom)
+est &lt;- coef(fit)
+vc &lt;- vcov(fit)
+ct &lt;- as.vector(est %*% contMat)
+covMat &lt;- t(contMat) %*% vc %*% contMat
+den &lt;- sqrt(diag(covMat))
+tStat &lt;- ct/den
+corMat &lt;- cov2cor(t(contMat) %*% vc %*% contMat)
+MCTpval(contMat, corMat, df=100-5, tStat)
+## compare to
+test &lt;- MCTtest(dose, resp, biom, models=modlist)
+attr(test$tStat, "pVal")
+</code></pre>
+
+
+</div>

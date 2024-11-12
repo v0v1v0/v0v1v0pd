@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>transform_plan</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Transform a plan
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Evaluate the <code>map()</code>, <code>cross()</code>, <code>split()</code> and
+<code>combine()</code> operations in the <code>transform</code> column of a
+<code>drake</code> plan.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">transform_plan(
+  plan,
+  envir = parent.frame(),
+  trace = FALSE,
+  max_expand = NULL,
+  tidy_eval = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>plan</code></td>
+<td>
+<p>A <code>drake</code> plan with a <code>transform</code> column</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>Environment for tidy evaluation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Logical, whether to add columns to show
+what happens during target transformations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_expand</code></td>
+<td>
+<p>Positive integer, optional.
+<code>max_expand</code> is the maximum number of targets to generate in each
+<code>map()</code>, <code>split()</code>, or <code>cross()</code> transform.
+Useful if you have a massive plan and you want to
+test and visualize a strategic subset of targets
+before scaling up.
+Note: the <code>max_expand</code> argument of <code>drake_plan()</code> and
+<code>transform_plan()</code> is for static branching only.
+The dynamic branching <code>max_expand</code>
+is an argument of <code>make()</code> and <code>drake_config()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tidy_eval</code></td>
+<td>
+<p>Logical, whether to use tidy evaluation
+(e.g. unquoting/<code style="white-space: pre;">⁠!!⁠</code>) when resolving commands.
+Tidy evaluation in transformations is always turned on
+regardless of the value you supply to this argument.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#large-plans⁠</code> # nolint
+</p>
+
+
+<h3>See Also</h3>
+
+<p>drake_plan, map, split, cross, combine
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">plan1 &lt;- drake_plan(
+  y = target(
+    f(x),
+    transform = map(x = c(1, 2))
+  ),
+  transform = FALSE
+)
+plan2 &lt;- drake_plan(
+  z = target(
+    g(y),
+    transform = map(y, .id = x)
+  ),
+  transform = FALSE
+)
+plan &lt;- bind_plans(plan1, plan2)
+transform_plan(plan)
+models &lt;- c("glm", "hierarchical")
+plan &lt;- drake_plan(
+  data = target(
+    get_data(x),
+    transform = map(x = c("simulated", "survey"))
+  ),
+  analysis = target(
+    analyze_data(data, model),
+    transform = cross(data, model = !!models, .id = c(x, model))
+  ),
+  summary = target(
+    summarize_analysis(analysis),
+    transform = map(analysis, .id = c(x, model))
+  ),
+  results = target(
+    bind_rows(summary),
+    transform = combine(summary, .by = data)
+  )
+)
+plan
+if (requireNamespace("styler", quietly = TRUE)) {
+  print(drake_plan_source(plan))
+}
+# Tags:
+drake_plan(
+  x = target(
+    command,
+    transform = map(y = c(1, 2), .tag_in = from, .tag_out = c(to, out))
+  ),
+  trace = TRUE
+)
+plan &lt;- drake_plan(
+  survey = target(
+    survey_data(x),
+    transform = map(x = c(1, 2), .tag_in = source, .tag_out = dataset)
+  ),
+  download = target(
+    download_data(),
+    transform = map(y = c(5, 6), .tag_in = source, .tag_out = dataset)
+  ),
+  analysis = target(
+    analyze(dataset),
+    transform = map(dataset)
+  ),
+  results = target(
+    bind_rows(analysis),
+    transform = combine(analysis, .by = source)
+  )
+)
+plan
+if (requireNamespace("styler", quietly = TRUE)) {
+  print(drake_plan_source(plan))
+}
+</code></pre>
+
+
+</div>

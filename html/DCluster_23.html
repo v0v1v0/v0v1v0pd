@@ -1,0 +1,147 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kn.iscluster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Clustering Function for Kulldorff and Nagarwalla's Statistic</h2>
+
+<h3>Description</h3>
+
+<p><em>kn.iscluster</em> is called from <em>opgam</em> when studying the whole
+area. At every point of the grid, which may be all the centroids, this
+function is called to determine whether it is a cluster or not by
+calculating Kulldorff and Nagarwalla's statistic.
+</p>
+<p>See <em>opgam.iscluster.default</em> for more details. <em>kn.gumbel.iscluster</em>
+uses a Gumbel distribution to compute the p-values ofr each possible
+cluster.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">kn.iscluster(data, idx, idxorder, alpha, fractpop, use.poisson=TRUE,
+ model="poisson", R, mle, ...)
+kn.gumbel.iscluster(data, idx, idxorder, alpha, fractpop, use.poisson=TRUE,
+ model="poisson", R, mle)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe with the data as explained in <em>DCluster</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idx</code></td>
+<td>
+<p>A boolean vector to know the areas in the current circle.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idxorder</code></td>
+<td>
+<p>A permutation of the rows of data to order the regions
+according to their distance to the current center.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Test signifiance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fractpop</code></td>
+<td>
+<p>Maximum fraction of the total population used when
+creating the balls.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.poisson</code></td>
+<td>
+<p>Use the statistic for Poisson (default) or Bernouilli case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Thge model used to generate random observations. It can be
+'permutation', 'multinomial', 'poisson' or 'negbin'. See <em>observed.sim</em> manual page for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>The number of bootstrap replicates to generate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mle</code></td>
+<td>
+<p>Parameters need by the bootstrap procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Extra arguments to be passed to kullnagar.stat().</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A vector of four elements, as describe in <em>iscluster</em> manual page.
+</p>
+
+
+<h3>References</h3>
+
+<p>Kulldorff, Martin and Nagarwalla, Neville (1995). Spatial Disease Clusters: 
+Detection and Inference. Statistics in Medicine 14, 799-810.
+Abrams A, Kleinman K, Kulldorff M (2010). Gumbel based p-value approximations
+for spatial scan statistics. International Journal of Health Geographics, 9:61.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>DCluster, kullnagar, kullnagar.stat, kullnagar.boot, kullnagar.pboot
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(boot)
+library(spdep)
+
+data(nc.sids)
+
+sids&lt;-data.frame(Observed=nc.sids$SID74)
+sids&lt;-cbind(sids, Expected=nc.sids$BIR74*sum(nc.sids$SID74)/sum(nc.sids$BIR74))
+sids&lt;-cbind(sids, Population=nc.sids$BIR74, x=nc.sids$x, y=nc.sids$y)
+
+#K&amp;N's method over the centroids
+mle&lt;-calculate.mle(sids, model="poisson")
+knresults&lt;-opgam(data=sids, thegrid=sids[,c("x","y")], alpha=.05, 
+  iscluster=kn.iscluster, fractpop=.5, R=100, model="poisson", mle=mle)
+
+kngumbelres&lt;-opgam(data=sids, thegrid=sids[,c("x","y")], alpha=.05, 
+  iscluster=kn.gumbel.iscluster, fractpop=.5, R=100, model="poisson", 
+  mle=mle)
+
+#Plot all centroids and significant ones in red
+plot(sids$x, sids$y, main="Kulldorff and Nagarwalla's method")
+points(knresults$x, knresults$y, col="red", pch=19)
+points(knresults$x, knresults$y, col="blue", pch=20)
+</code></pre>
+
+
+</div>

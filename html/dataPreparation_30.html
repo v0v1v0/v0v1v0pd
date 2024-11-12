@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prepare_set</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Preparation pipeline</h2>
+
+<h3>Description</h3>
+
+<p>Full pipeline for preparing your data_set set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prepare_set(data_set, final_form = "data.table", verbose = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_set</code></td>
+<td>
+<p>Matrix, data.frame or data.table</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>final_form</code></td>
+<td>
+<p>"data.table" or "numerical_matrix" (default to data.table)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Should the algorithm talk? (logical, default to TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters to tune pipeline (see details)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Additional arguments are available to tune pipeline:
+</p>
+
+<ul>
+<li> <p><code>key</code> Name of a column of data_set according to which data_set should be aggregated
+(character)
+</p>
+</li>
+<li> <p><code>analysis_date</code> A date at which the data_set should be aggregated
+(differences between every date and analysis_date will be computed) (Date)
+</p>
+</li>
+<li> <p><code>n_unfactor</code> Number of max value in a factor, set it to -1 to disable
+<code>un_factor</code> function.  (numeric, default to 53)
+</p>
+</li>
+<li> <p><code>digits</code> The number of digits after comma (optional, numeric, if set will perform
+<code>fast_round</code>)
+</p>
+</li>
+<li> <p><code>dateFormats</code> List of format of Dates in data_set (list of characters)
+</p>
+</li>
+<li> <p><code>name_separator</code> character to separate parts of new column names (character, default to ".")
+</p>
+</li>
+<li> <p><code>functions</code>  Aggregation functions for numeric columns, see <code>aggregate_by_key</code>
+(list of functions names (character))
+</p>
+</li>
+<li> <p><code>factor_date_type</code> Aggregation level to factorize date (see
+<code>generate_factor_from_date</code>) (character, default to "yearmonth")
+</p>
+</li>
+<li> <p><code>target_col</code> A target column to perform target encoding, see <code>target_encode</code>
+(character)
+</p>
+</li>
+<li> <p><code>target_encoding_functions</code> Functions to perform target encoding, see
+<code>build_target_encoding</code>,
+if <code>target_col</code> is not given will not do anything, (list, default to <code>"mean"</code>)
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A data.table or a numerical matrix (according to <code>final_form</code>). <br>
+It will perform the following steps:
+</p>
+
+<ul>
+<li>
+<p> Correct set: unfactor factor with many values, id dates and numeric that are hiden in character
+</p>
+</li>
+<li>
+<p> Transform set: compute differences between every date, transform dates into factors, generate
+features from character..., if <code>key</code> is provided, will perform aggregate according to this <code>key</code>
+</p>
+</li>
+<li>
+<p> Filter set: filter constant, in double or bijection variables. If 'digits' is provided,
+will round numeric
+</p>
+</li>
+<li>
+<p> Handle NA: will perform <code>fast_handle_na</code>)
+</p>
+</li>
+<li>
+<p> Shape set: will put the result in asked shape (<code>final_form</code>) with acceptable columns format.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load ugly set
+## Not run: 
+data(tiny_messy_adult)
+
+# Have a look to set
+head(tiny_messy_adult)
+
+# Compute full pipeline
+clean_adult &lt;- prepare_set(tiny_messy_adult)
+
+# With a reference date
+adult_agg &lt;- prepare_set(tiny_messy_adult, analysis_date = as.Date("2017-01-01"))
+
+# Add aggregation by country
+adult_agg &lt;- prepare_set(tiny_messy_adult, analysis_date = as.Date("2017-01-01"), key = "country")
+
+# With some new aggregation functions
+power &lt;- function(x) {sum(x^2)}
+adult_agg &lt;- prepare_set(tiny_messy_adult, analysis_date = as.Date("2017-01-01"), key = "country",
+                        functions = c("min", "max", "mean", "power"))
+
+## End(Not run)
+# "##NOT RUN:" mean that this example hasn't been run on CRAN since its long. But you can run it!
+</code></pre>
+
+
+</div>

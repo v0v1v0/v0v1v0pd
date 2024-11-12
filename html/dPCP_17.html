@@ -1,0 +1,117 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>replicates_quant</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculation of targets concentration, pooling the sample replicates</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates the concentration of the targets, combining the
+results of the replicates of each sample.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">replicates_quant(raw.results, sample.table)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>raw.results</code></td>
+<td>
+<p>an object of class <code>target_quant</code>, inherited
+from <code>target_quant</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample.table</code></td>
+<td>
+<p>object of class <code>sample_table</code>, inherited from
+<code>read_sampleTable</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>replicates_quant</code> containing a sublist for
+every sample. Each sublist has the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>quality</code></td>
+<td>
+<p>quality threshold used in <code>read_sample</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>reference ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw results</code></td>
+<td>
+<p>a data frame with the results of quantification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replicates results</code></td>
+<td>
+<p>a data frame with the results of quantification
+of pooled replicates.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(dPCP)
+
+#Find path of sample table and location of reference and input files
+sampleTable &lt;- system.file("extdata", "Template_sampleTable.csv",
+                     package = "dPCP")
+
+fileLoc &lt;- system.file("extdata", package = "dPCP")
+
+#Read sample table file
+sample.table &lt;- read_sampleTable(sampleTable, system = "bio-rad",
+                                 file.location = fileLoc)
+
+#Read reference files
+ref &lt;- read_reference(sample.table, system = "bio-rad",
+                      file.location = fileLoc)
+
+#Read samples files
+samp &lt;- read_sample(sample.table, system = "bio-rad",
+                   file.location = fileLoc)
+
+#Reference DBSCAN clustering
+dbref &lt;- reference_dbscan(ref, sample.table, save.template = FALSE)
+
+#Predict position of clusters centroid from reference DBSCAN results
+cent &lt;- centers_data(samp, sample.table,dbref)
+
+#Fuzzy c-means clustering
+cmclus &lt;- cmeans_clus(cent)
+
+#Rain classification.
+rainclus &lt;- rain_reclus(cmclus)
+
+#Quantification
+quantcm &lt;- target_quant(cmclus, sample.table)
+quant &lt;- target_quant(rainclus, sample.table)
+
+#Replicates pooling
+rep.quant &lt;- replicates_quant(quant, sample.table)
+
+</code></pre>
+
+
+</div>

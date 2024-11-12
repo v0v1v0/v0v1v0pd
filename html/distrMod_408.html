@@ -1,0 +1,89 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trafoEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Function trafoEst in Package ‘distrMod’ </h2>
+
+<h3>Description</h3>
+
+<p><code>trafoEst</code> takes a <code class="reqn">\tau</code> like function (compare 
+<code>trafo-methods</code>) and transforms an existing estimator by means 
+of this transformation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trafoEst(fct, estimator)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fct</code></td>
+<td>
+<p>a <code class="reqn">\tau</code> like function, i.e., a function
+in the main part <code class="reqn">\theta</code> of the parameter returning a list <code>list(fval, mat)</code>
+where  <code>fval</code> is the function value <code class="reqn">\tau(\theta)</code>
+of the transformation, and <code>mat</code>, its derivative matrix at
+<code class="reqn">\theta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimator</code></td>
+<td>
+<p>an object of class <code>Estimator</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The disadvantage of this proceeding is that the transformation is
+not accounted for in determining the estimate (e.g. in a corresponding
+optimality); it simply transforms an existing estimator, without
+reapplying it to data. This becomes important in optimally robust
+estimation.
+</p>
+
+
+<h3>Value</h3>
+
+<p>exactly the argument <code>estimator</code>, but with modified slots
+<code>estimate</code>,   <code>asvar</code>, and   <code>trafo</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Gaussian location and scale
+NS &lt;- NormLocationScaleFamily(mean=2, sd=3)
+## generate data out of this situation
+x &lt;- r(distribution(NS))(30)
+
+## want to estimate mu/sigma, sigma^2
+## -&gt; without new trafo slot:
+mtrafo &lt;- function(param){
+  mu &lt;- param["mean"]
+  sd &lt;- param["sd"]
+  fval &lt;- c(mu/sd, sd^2)
+  nfval &lt;- c("mu/sig", "sig^2")
+  names(fval) &lt;- nfval
+  mat &lt;- matrix(c(1/sd,0,-mu/sd^2,2*sd),2,2)
+  dimnames(mat) &lt;- list(nfval,c("mean","sd"))
+  return(list(fval=fval, mat=mat))
+}
+
+## Maximum likelihood estimator in the original problem
+res0 &lt;- MLEstimator(x = x, ParamFamily = NS)
+## transformation
+res &lt;- trafoEst(mtrafo, res0)
+## confidence interval
+ confint(res)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict_parts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Instance Level Parts of the Model Predictions</h2>
+
+<h3>Description</h3>
+
+<p>Instance Level Variable Attributions as Break Down, SHAP, aggregated SHAP or Oscillations explanations.
+Model prediction is decomposed into parts that are attributed for particular variables.
+From DALEX version 1.0 this function calls the <code>break_down</code> or
+<code>shap</code> functions from the <code>iBreakDown</code> package or
+<code>ceteris_paribus</code> from the <code>ingredients</code> package.
+Find information how to use the <code>break_down</code> method here: <a href="https://ema.drwhy.ai/breakDown.html">https://ema.drwhy.ai/breakDown.html</a>.
+Find information how to use the <code>shap</code> method here: <a href="https://ema.drwhy.ai/shapley.html">https://ema.drwhy.ai/shapley.html</a>.
+Find information how to use the <code>oscillations</code> method here: <a href="https://ema.drwhy.ai/ceterisParibusOscillations.html">https://ema.drwhy.ai/ceterisParibusOscillations.html</a>.
+aSHAP method provides explanations for a set of observations based on SHAP.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predict_parts(
+  explainer,
+  new_observation,
+  ...,
+  N = if (substr(type, 1, 4) == "osci") 500 else NULL,
+  type = "break_down"
+)
+
+predict_parts_oscillations(explainer, new_observation, ...)
+
+predict_parts_oscillations_uni(
+  explainer,
+  new_observation,
+  variable_splits_type = "uniform",
+  ...
+)
+
+predict_parts_oscillations_emp(
+  explainer,
+  new_observation,
+  variable_splits = NULL,
+  variables = colnames(explainer$data),
+  ...
+)
+
+predict_parts_break_down(explainer, new_observation, ...)
+
+predict_parts_break_down_interactions(explainer, new_observation, ...)
+
+predict_parts_shap(explainer, new_observation, ...)
+
+predict_parts_shap_aggregated(explainer, new_observation, ...)
+
+variable_attribution(
+  explainer,
+  new_observation,
+  ...,
+  N = if (substr(type, 1, 4) == "osci") 500 else NULL,
+  type = "break_down"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>explainer</code></td>
+<td>
+<p>a model to be explained, preprocessed by the <code>explain</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_observation</code></td>
+<td>
+<p>a new observation for which predictions need to be explained</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters that will be passed to <code>iBreakDown::break_down</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>the maximum number of observations used for calculation of attributions. By default NULL (use all) or 500 (for oscillations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>the type of variable attributions. Either <code>shap</code>, <code>aggregated_shap</code>, <code>oscillations</code>, <code>oscillations_uni</code>,
+<code>oscillations_emp</code>, <code>break_down</code> or <code>break_down_interactions</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable_splits_type</code></td>
+<td>
+<p>how variable grids shall be calculated? Will be passed to <code>ceteris_paribus</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variable_splits</code></td>
+<td>
+<p>named list of splits for variables. It is used by oscillations based measures. Will be passed to <code>ceteris_paribus</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variables</code></td>
+<td>
+<p>names of variables for which splits shall be calculated. Will be passed to <code>ceteris_paribus</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Depending on the <code>type</code> there are different classes of the resulting object.
+It's a data frame with calculated average response.
+</p>
+
+
+<h3>References</h3>
+
+<p>Explanatory Model Analysis. Explore, Explain, and Examine Predictive Models. <a href="https://ema.drwhy.ai/">https://ema.drwhy.ai/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DALEX)
+
+new_dragon &lt;- data.frame(
+    year_of_birth = 200,
+    height = 80,
+    weight = 12.5,
+    scars = 0,
+    number_of_lost_teeth  = 5
+)
+
+model_lm &lt;- lm(life_length ~ year_of_birth + height +
+               weight + scars + number_of_lost_teeth,
+               data = dragons)
+
+explainer_lm &lt;- explain(model_lm,
+                        data = dragons,
+                        y = dragons$year_of_birth,
+                        label = "model_lm")
+
+bd_lm &lt;- predict_parts_break_down(explainer_lm, new_observation = new_dragon)
+head(bd_lm)
+plot(bd_lm)
+
+
+library("ranger")
+model_ranger &lt;- ranger(life_length ~ year_of_birth + height +
+                       weight + scars + number_of_lost_teeth,
+                       data = dragons, num.trees = 50)
+
+explainer_ranger &lt;- explain(model_ranger,
+                            data = dragons,
+                            y = dragons$year_of_birth,
+                            label = "model_ranger")
+
+bd_ranger &lt;- predict_parts_break_down(explainer_ranger, new_observation = new_dragon)
+head(bd_ranger)
+plot(bd_ranger)
+
+
+</code></pre>
+
+
+</div>

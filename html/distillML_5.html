@@ -1,0 +1,249 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Interpreter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Interpreter class description</h2>
+
+<h3>Description</h3>
+
+<p>A wrapper class based on a predictor object for examining the
+predictions of the model with respect to one or two features.
+The two methods for interpreting a model based on one or two features are partial
+dependence plots (PDP), which averages over the marginal distribution
+of the predictions of the model, and accumulated local effects (ALE) functions
+which averages over the conditional distribution of the predictions of the model.
+</p>
+<p>The only necessary argument is the Predictor object. The other arguments are
+optional, but it may be useful to specify the number of samples or the specific
+data points (data.points) if the training data is very large.
+This can greatly reduce the time for computation.
+</p>
+<p>For the output, the model returns an interpreter object with two lists of
+functions: one for interpreting a single feature's role in the black-box
+model, and the other for intepreting a pair of features' role in the
+black-box model. These interpretability functions are built for each
+possible feature (or pair of features). Each of these functions return
+a vector of averaged predictions equal in length to the number of
+values (or number of rows) input into the function.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>predictor</code></dt>
+<dd>
+<p>The Predictor object that contains the model that the user wants
+to query. This is the only parameter that is required to initialize an
+Interpreter object. All entries in the vector must
+match column names from the 'data' parameter of the Predictor object.</p>
+</dd>
+<dt><code>features</code></dt>
+<dd>
+<p>An optional list of single features that we want to create PDP functions for.</p>
+</dd>
+<dt><code>features.2d</code></dt>
+<dd>
+<p>A two column data frame that contains pairs of names that we
+want to create 2D PDP functions for. All entries in the data frame must
+match column names from the 'data' parameter of the Predictor object.</p>
+</dd>
+<dt><code>data.points</code></dt>
+<dd>
+<p>A vector of indices of data points in the training
+data frame to be used as the observations for creating the PDP/ICE/ALE plots.
+When the training data is large, it can greatly reduce the required computation
+to pass only a downsampled subset of the training data to the pdp
+function construction. Alternatively, if one is only interested understanding
+the model predictions for a specific subgroup, the indices of the observations
+in the given subgroup can be passed here.</p>
+</dd>
+<dt><code>pdp.1d</code></dt>
+<dd>
+<p>A List of functions giving single feature PDP interpretations of the model.</p>
+</dd>
+<dt><code>pdp.2d</code></dt>
+<dd>
+<p>A List of functions giving two-feature PDP interpretations of the model</p>
+</dd>
+<dt><code>feat.class</code></dt>
+<dd>
+<p>A vector that contains the class for each feature (categorical or continuous)</p>
+</dd>
+<dt><code>center.at</code></dt>
+<dd>
+<p>The value(s) to center the feature plots at. A list of equal length
+to the length of the features.</p>
+</dd>
+<dt><code>grid.points</code></dt>
+<dd>
+<p>A list of vectors containing the grid points to use for
+the predictions for PDP and ICE plots. For ALE plots, we
+use quantile-based methods that depend on the distribution of
+the training data.</p>
+</dd>
+<dt><code>grid.size</code></dt>
+<dd>
+<p>The number of grid points to plot for a continuous feature. This
+parameter sets the number of grid points for PDP, ICE, and ALE plots.</p>
+</dd>
+<dt><code>saved</code></dt>
+<dd>
+<p>A list that caches the previous calculations for the 1-D ICE plots,
+1-D PDP plots, 2-D PDP plots, and grid points for building the distilled model.
+This saves the uncentered calculations.</p>
+</dd>
+<dt><code>ale.grid</code></dt>
+<dd>
+<p>A list that caches the saved predictions for the ALE plots</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-Interpreter-new"><code>Interpreter$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Interpreter-clone"><code>Interpreter$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-Interpreter-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Interpreter$new(
+  predictor = NULL,
+  samples = 1000,
+  data.points = NULL,
+  grid.size = 50
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>predictor</code></dt>
+<dd>
+<p>The Predictor object that contains the model that the user wants
+to query. This is the only parameter that is required to initialize an
+Interpreter object. All entries in the vector must
+match column names from the 'data' parameter of the Predictor object.</p>
+</dd>
+<dt><code>samples</code></dt>
+<dd>
+<p>The number of observations used for the interpretability
+method. If no number is given, the default set is the
+minimum between 1000 and the number of rows in the
+training data set. Rows with missing values are excluded from
+being sampled.</p>
+</dd>
+<dt><code>data.points</code></dt>
+<dd>
+<p>The indices of the data points used for the PDP/ALE. This
+overwrites the "samples" parameter above.</p>
+</dd>
+<dt><code>grid.size</code></dt>
+<dd>
+<p>The number of grid points used to create for the PDP, ICE, and ALE
+plots for each feature.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>An 'Interpreter' object.
+</p>
+
+
+<hr>
+<a id="method-Interpreter-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Interpreter$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Note</h3>
+
+<p>The class that wraps a Predictor object for application of different
+interpretability methods. For usage examples, please refer to the README
+document.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(distillML)
+library(Rforestry)
+set.seed(491)
+data &lt;- iris
+
+test_ind &lt;- sample(1:nrow(data), nrow(data)%/%5)
+train_reg &lt;- data[-test_ind,]
+test_reg &lt;- data[test_ind,]
+
+
+forest &lt;- forestry(x=data[,-1],
+                   y=data[,1])
+
+forest_predictor &lt;- Predictor$new(model = forest, data=train_reg,
+                                  y="Sepal.Length", task = "regression")
+
+forest_interpret &lt;- Interpreter$new(predictor = forest_predictor)
+
+</code></pre>
+
+
+</div>

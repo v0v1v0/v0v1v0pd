@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>kernel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Initialize a Gaussian process node</h2>
+
+<h3>Description</h3>
+
+<p>This function constructs a kernel object to represent properties of a
+Gaussian process node.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">kernel(
+  length,
+  scale = 1,
+  nugget = 1e-06,
+  name = "sexp",
+  prior_name = "ga",
+  prior_coef = NULL,
+  bounds = NULL,
+  nugget_est = FALSE,
+  scale_est = FALSE,
+  input_dim = NULL,
+  connect = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>length</code></td>
+<td>
+<p>a vector of lengthscales. The length of the vector equals to:
+</p>
+
+<ol>
+<li>
+<p> either one if the lengthscales in the kernel function are assumed same across input dimensions; or
+</p>
+</li>
+<li>
+<p> the total number of input dimensions, which is the sum of the number of feeding GP nodes
+in the last layer (defined by the argument <code>input_dim</code>) and the number of connected global
+input dimensions (defined by the argument <code>connect</code>), if the lengthscales in the kernel function
+are assumed different across input dimensions.
+</p>
+</li>
+</ol>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>the variance of a GP node. Defaults to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nugget</code></td>
+<td>
+<p>the nugget term of a GP node. Defaults to <code>1e-6</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>kernel function to be used. Either <code>"sexp"</code> for squared exponential kernel or
+<code>"matern2.5"</code> for Matérn-2.5 kernel. Defaults to <code>"sexp"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_name</code></td>
+<td>
+<p>prior options for the lengthscales and nugget term: gamma prior (<code>"ga"</code>), inverse gamma prior (<code>"inv_ga"</code>),
+or jointly robust prior (<code>"ref"</code>) for the lengthscales and nugget term. Set <code>NULL</code> to disable the prior. Defaults to <code>"ga"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_coef</code></td>
+<td>
+<p>a vector that contains the coefficients for different priors:
+</p>
+
+<ul>
+<li>
+<p> for the gamma prior, it is a vector of two values specifying the shape and rate parameters of the gamma distribution. Set to <code>NULL</code> for the
+default value <code>c(1.6,0.3)</code>.
+</p>
+</li>
+<li>
+<p> for the inverse gamma prior, it is a vector of two values specifying the shape and scale parameters of the inverse gamma distribution. Set
+to <code>NULL</code> for the default value <code>c(1.6,0.3)</code>.
+</p>
+</li>
+<li>
+<p> for the jointly robust prior, it is a vector of a single value specifying the <code>a</code> parameter in the prior. Set to <code>NULL</code> for the
+default value <code>c(0.2)</code>. See the reference below for the jointly robust prior.
+</p>
+</li>
+</ul>
+<p>Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bounds</code></td>
+<td>
+<p>a vector of length two that gives the lower bound (the first element of the vector) and the upper bound (the second element of the
+vector) of all lengthscales of the GP node. Defaults to <code>NULL</code> where no bounds are specified for the lengthscales.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nugget_est</code></td>
+<td>
+<p>set to <code>TRUE</code> to estimate the nugget term or to <code>FALSE</code> to fix the nugget term as specified
+by the argument <code>nugget</code>. If set to <code>TRUE</code>, the value set to the argument <code>nugget</code> is used as the initial
+value. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale_est</code></td>
+<td>
+<p>set to <code>TRUE</code> to estimate the variance (i.e., scale) or to <code>FALSE</code> to fix the variance (i.e., scale) as specified
+by the argument <code>scale</code>. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input_dim</code></td>
+<td>
+<p>a vector that contains either
+</p>
+
+<ol>
+<li>
+<p> the indices of GP nodes in the feeding layer whose outputs feed into this GP node; or
+</p>
+</li>
+<li>
+<p> the indices of global input dimensions that are linked to the outputs of some feeding emulators,
+if this GP node is in the first layer of a GP or DGP, which will be used for the linked emulation.
+</p>
+</li>
+</ol>
+<p>When set to <code>NULL</code>,
+</p>
+
+<ol>
+<li>
+<p> all outputs from the GP nodes in the feeding layer feed into this GP node; or
+</p>
+</li>
+<li>
+<p> all global input dimensions feed into this GP node.
+</p>
+</li>
+</ol>
+<p>Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>connect</code></td>
+<td>
+<p>a vector that contains the indices of dimensions in the global
+input connecting to this GP node as additional input dimensions. When set to <code>NULL</code>, no global input
+connection is implemented. Defaults to <code>NULL</code>. When this GP node is in the first layer of a GP or DGP emulator,
+which will consequently be used for linked emulation, <code>connect</code> gives the indices of global input dimensions
+that are not connected to some feeding emulators. In such a case, set <code>input_dim</code> to a vector of indices of
+the remaining input dimensions that are connected to the feeding emulators.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A 'python' object to represent a GP node.
+</p>
+
+
+<h3>References</h3>
+
+<p>Gu, M. (2019). Jointly robust prior for Gaussian stochastic process in emulation, calibration and variable selection. <em>Bayesian Analysis</em>, <strong>14(3)</strong>, 857-885.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# Check https://mingdeyu.github.io/dgpsi-R/ for examples
+# on how to customize DGP structures using kernel().
+
+## End(Not run)
+</code></pre>
+
+
+</div>

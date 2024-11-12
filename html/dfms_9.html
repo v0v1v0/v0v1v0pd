@@ -1,0 +1,619 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DFM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate a Dynamic Factor Model</h2>
+
+<h3>Description</h3>
+
+<p>Efficient estimation of a Dynamic Factor Model via the EM Algorithm - on stationary data
+with time-invariant system matrices and classical assumptions, while permitting missing data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DFM(
+  X,
+  r,
+  p = 1L,
+  ...,
+  idio.ar1 = FALSE,
+  rQ = c("none", "diagonal", "identity"),
+  rR = c("diagonal", "identity", "none"),
+  em.method = c("auto", "DGR", "BM", "none"),
+  min.iter = 25L,
+  max.iter = 100L,
+  tol = 1e-04,
+  pos.corr = TRUE,
+  check.increased = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a <code>T x n</code> numeric data matrix or frame of stationary time series. May contain missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>integer. number of factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>integer. number of lags in factor VAR.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>(optional) arguments to <code>tsnarmimp</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idio.ar1</code></td>
+<td>
+<p>logical. Model observation errors as AR(1) processes: <code class="reqn">e_t = \rho e_{t-1} + v_t</code>. <em>Note</em> that this substantially increases computation time, and is generaly not needed if <code>n</code> is large (&gt;30). See theoretical vignette for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rQ</code></td>
+<td>
+<p>character. restrictions on the state (transition) covariance matrix (Q).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rR</code></td>
+<td>
+<p>character. restrictions on the observation (measurement) covariance matrix (R).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>em.method</code></td>
+<td>
+<p>character. The implementation of the Expectation Maximization Algorithm used. The options are:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>"auto"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> Automatic selection: <code>"BM"</code> if <code>anyNA(X)</code>, else <code>"DGR"</code>. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"DGR"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The classical EM implementation of Doz, Giannone and Reichlin (2012). This implementation is efficient and quite robust, missing values are removed on a casewise basis in the Kalman Filter and Smoother, but not explicitly accounted for in EM iterations. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"BM"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> The modified EM algorithm of Banbura and Modugno (2014) which also accounts for missing data in the EM iterations. Optimal for datasets with systematically missing data e.g. datasets with ragged edges or series at different frequencies.  </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"none"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> Performs no EM iterations and just returns the Two-Step estimates from running the data through the Kalman Filter and Smoother once as in
+Doz, Giannone and Reichlin (2011) (the Kalman Filter is Initialized with system matrices obtained from a regression and VAR on PCA factor estimates).
+This yields significant performance gains over the iterative methods. Final system matrices are estimated by running a regression and a VAR on the smoothed factors.  </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.iter</code></td>
+<td>
+<p>integer. Minimum number of EM iterations (to ensure a convergence path).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+<p>integer. Maximum number of EM iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>numeric. EM convergence tolerance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos.corr</code></td>
+<td>
+<p>logical. Increase the likelihood that factors correlate positively with the data, by scaling the eigenvectors such that the principal components (used to initialize the Kalman Filter) co-vary positively with the row-means of the standardized data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check.increased</code></td>
+<td>
+<p>logical. Check if likelihood has increased. Passed to <code>em_converged</code>. If <code>TRUE</code>, the algorithm only terminates if convergence was reached with decreasing likelihood.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function efficiently estimates a Dynamic Factor Model with the following classical assumptions:
+</p>
+
+<ol>
+<li>
+<p> Linearity
+</p>
+</li>
+<li>
+<p> Idiosynchratic measurement (observation) errors (<em>R</em> is diagonal)
+</p>
+</li>
+<li>
+<p> No direct relationship between series and lagged factors (<em>ceteris paribus</em> contemporaneous factors)
+</p>
+</li>
+<li>
+<p> No relationship between lagged error terms in the either measurement or transition equation (no serial correlation), unless explicitly modeled as AR(1) processes using <code>idio.ar1 = TRUE</code>.
+</p>
+</li>
+</ol>
+<p>Factors are allowed to evolve in a <code class="reqn">VAR(p)</code> process, and data is internally standardized (scaled and centered) before estimation (removing the need of intercept terms).
+By assumptions 1-4, this translates into the following dynamic form:
+</p>
+<p style="text-align: center;"><code class="reqn">\textbf{x}_t = \textbf{C}_0 \textbf{f}_t + \textbf{e}_t \ \sim\  N(\textbf{0}, \textbf{R})</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\textbf{f}_t = \sum_{j=1}^p \textbf{A}_j \textbf{f}_{t-j} + \textbf{u}_t \ \sim\  N(\textbf{0}, \textbf{Q}_0)</code>
+</p>
+
+<p>where the first equation is called the measurement or observation equation and the second equation is called transition, state or process equation, and
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">n</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> number of series in <code class="reqn">\textbf{x}_t</code> (<code class="reqn">r</code> and <code class="reqn">p</code> as the arguments to <code>DFM</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{x}_t</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">n \times 1</code> vector of observed series at time <code class="reqn">t</code>: <code class="reqn">(x_{1t}, \dots, x_{nt})'</code>. Some observations can be missing.  </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{f}_t</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">r \times 1</code> vector of factors at time <code class="reqn">t</code>: <code class="reqn">(f_{1t}, \dots, f_{rt})'</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{C}_0</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">n \times r</code> measurement (observation) matrix.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{A}_j</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">r \times r</code> state transition matrix at lag <code class="reqn">j</code>. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{Q}_0</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">r \times r</code> state covariance matrix.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{R}</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">n \times n</code> measurement (observation) covariance matrix. It is diagonal by assumption 2 that <code class="reqn">E[\textbf{x}_{it}|\textbf{x}_{-i,t},\textbf{x}_{i,t-1}, \dots, \textbf{f}_t, \textbf{f}_{t-1}, \dots] = \textbf{Cf}_t \forall i</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>This model can be estimated using a classical form of the Kalman Filter and the Expectation Maximization (EM) algorithm, after transforming it to State-Space (stacked, VAR(1)) form:
+</p>
+<p style="text-align: center;"><code class="reqn">\textbf{x}_t = \textbf{C} \textbf{F}_t + \textbf{e}_t \ \sim\  N(\textbf{0}, \textbf{R})</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\textbf{F}_t = \textbf{A F}_{t-1} + \textbf{u}_t \ \sim\  N(\textbf{0}, \textbf{Q})</code>
+</p>
+
+<p>where
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">n</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> number of series in <code class="reqn">\textbf{x}_t</code> (<code class="reqn">r</code> and <code class="reqn">p</code> as the arguments to <code>DFM</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{x}_t</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">n \times 1</code> vector of observed series at time <code class="reqn">t</code>: <code class="reqn">(x_{1t}, \dots, x_{nt})'</code>. Some observations can be missing.  </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{F}_t</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">rp \times 1</code> vector of stacked factors at time <code class="reqn">t</code>: <code class="reqn">(f_{1t}, \dots, f_{rt}, f_{1,t-1}, \dots, f_{r,t-1}, \dots, f_{1,t-p}, \dots, f_{r,t-p})'</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{C}</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">n \times rp</code> observation matrix. Only the first <code class="reqn">n \times r</code> terms are non-zero, by assumption 3 that <code class="reqn">E[\textbf{x}_t|\textbf{F}_t] = E[\textbf{x}_t|\textbf{f}_t]</code> (no relationship of observed series with lagged factors given contemporaneous factors).</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{A}</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> stacked <code class="reqn">rp \times rp</code> state transition matrix consisting of 3 parts: the top <code class="reqn">r \times rp</code> part provides the dynamic relationships captured by <code class="reqn">(\textbf{A}_1, \dots, \textbf{A}_p)</code> in the dynamic form, the terms <code>A[(r+1):rp, 1:(rp-r)]</code> constitute an <code class="reqn">(rp-r) \times (rp-r)</code> identity matrix mapping all lagged factors to their known values at times t. The remaining part <code>A[(rp-r+1):rp, (rp-r+1):rp]</code> is an <code class="reqn">r \times r</code> matrix of zeros. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{Q}</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">rp \times rp</code> state covariance matrix. The top <code class="reqn">r \times r</code> part gives the contemporaneous relationships, the rest are zeros by assumption 4.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code class="reqn">\textbf{R}</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> <code class="reqn">n \times n</code> observation covariance matrix. It is diagonal by assumption 2 and identical to <code class="reqn">\textbf{R}</code> as stated in the dynamic form.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list-like object of class 'dfm' with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>X_imp</code></td>
+<td>
+<p><code class="reqn">T \times n</code> matrix with the imputed and standardized (scaled and centered) data - with attributes attached allowing reconstruction of the original data:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>"stats"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> is a <code class="reqn">n \times 5</code> matrix of summary statistics of class <code>"qsu"</code> (see <code>qsu</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"missing"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> is a <code class="reqn">T \times n</code> logical matrix indicating missing or infinite values in the original data (which are imputed in <code>X_imp</code>).</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"attributes"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> contains the <code>attributes</code> of the original data input.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"is.list"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> is a logical value indicating whether the original data input was a list / data frame. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;"> </td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eigen</code></td>
+<td>
+<p><code>eigen(cov(X_imp))</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F_pca</code></td>
+<td>
+<p><code class="reqn">T \times r</code> matrix of principal component factor estimates - <code>X_imp %*% eigen$vectors</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P_0</code></td>
+<td>
+<p><code class="reqn">r \times r</code> initial factor covariance matrix estimate based on PCA results. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F_2s</code></td>
+<td>
+<p><code class="reqn">T \times r</code> matrix two-step factor estimates as in Doz, Giannone and Reichlin (2011) - obtained from running the data through the Kalman Filter and Smoother once, where the Filter is initialized with results from PCA. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P_2s</code></td>
+<td>
+<p><code class="reqn">r \times r \times T</code> covariance matrices of two-step factor estimates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F_qml</code></td>
+<td>
+<p><code class="reqn">T \times r</code> matrix of quasi-maximum likelihood factor estimates - obtained by iteratively Kalman Filtering and Smoothing the factor estimates until EM convergence. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P_qml</code></td>
+<td>
+<p><code class="reqn">r \times r \times T</code> covariance matrices of QML factor estimates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p><code class="reqn">r \times rp</code> factor transition matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p><code class="reqn">n \times r</code> observation matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p><code class="reqn">r \times r</code> state (error) covariance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p><code class="reqn">n \times n</code> observation (error) covariance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>e</code></td>
+<td>
+<p><code class="reqn">T \times n</code> estimates of observation errors <code class="reqn">\textbf{e}_t</code>. Only available if <code>idio.ar1 = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho</code></td>
+<td>
+<p><code class="reqn">n \times 1</code> estimates of AR(1) coefficients (<code class="reqn">\rho</code>) in observation errors: <code class="reqn">e_t = \rho e_{t-1} + v_t</code>. Only available if <code>idio.ar1 = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>vector of log-likelihoods - one for each EM iteration. The final value corresponds to the log-likelihood of the reported model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>The numeric convergence tolerance used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converged</code></td>
+<td>
+<p>single logical valued indicating whether the EM algorithm converged (within <code>max.iter</code> iterations subject to <code>tol</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anyNA</code></td>
+<td>
+<p>single logical valued indicating whether there were any (internal) missing values in the data (determined after removal of rows with too many missing values). If <code>FALSE</code>, <code>X_imp</code> is simply the original data in matrix form, and does not have the <code>"missing"</code> attribute attached.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rm.rows</code></td>
+<td>
+<p>vector of any cases (rows) that were removed beforehand (subject to <code>max.missing</code> and <code>na.rm.method</code>). If no cases were removed the slot is <code>NULL</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>em.method</code></td>
+<td>
+<p>The EM method used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>call object obtained from <code>match.call()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Doz, C., Giannone, D., &amp; Reichlin, L. (2011). A two-step estimator for large approximate dynamic factor models based on Kalman filtering. <em>Journal of Econometrics, 164</em>(1), 188-205.
+</p>
+<p>Doz, C., Giannone, D., &amp; Reichlin, L. (2012). A quasi-maximum likelihood approach for large, approximate dynamic factor models. <em>Review of Economics and Statistics, 94</em>(4), 1014-1024.
+</p>
+<p>Banbura, M., &amp; Modugno, M. (2014). Maximum likelihood estimation of factor models on datasets with arbitrary pattern of missing data. <em>Journal of Applied Econometrics, 29</em>(1), 133-160.
+</p>
+<p>Stock, J. H., &amp; Watson, M. W. (2016). Dynamic Factor Models, Factor-Augmented Vector Autoregressions, and Structural Vector Autoregressions in Macroeconomics. <em>Handbook of Macroeconomics, 2</em>, 415–525. https://doi.org/10.1016/bs.hesmac.2016.04.002
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(magrittr)
+library(xts)
+library(vars)
+
+# BM14 Replication Data. Constructing the database:
+BM14 = merge(BM14_M, BM14_Q)
+BM14[, BM14_Models$log_trans] %&lt;&gt;% log()
+BM14[, BM14_Models$freq == "M"] %&lt;&gt;% diff()
+BM14[, BM14_Models$freq == "Q"] %&lt;&gt;% diff(3)
+
+
+### Small Model ---------------------------------------
+
+# IC for number of factors
+IC_small = ICr(BM14[, BM14_Models$small], max.r = 5)
+plot(IC_small)
+screeplot(IC_small)
+
+# I take 2 factors. Now number of lags
+VARselect(IC_small$F_pca[, 1:2])
+
+# Estimating the model with 2 factors and 3 lags
+dfm_small = DFM(BM14[, BM14_Models$small], 2, 3)
+
+# Inspecting the model
+summary(dfm_small)
+plot(dfm_small)  # Factors and data
+plot(dfm_small, method = "all", type = "individual") # Factor estimates
+plot(dfm_small, type = "residual") # Residuals from factor predictions
+
+# 10 periods ahead forecast
+plot(predict(dfm_small), xlim = c(300, 370))
+
+
+### Medium-Sized Model ---------------------------------
+
+# IC for number of factors
+IC_medium = ICr(BM14[, BM14_Models$medium])
+plot(IC_medium)
+screeplot(IC_medium)
+
+# I take 3 factors. Now number of lags
+VARselect(IC_medium$F_pca[, 1:3])
+
+# Estimating the model with 3 factors and 3 lags
+dfm_medium = DFM(BM14[, BM14_Models$medium], 3, 3)
+
+# Inspecting the model
+summary(dfm_medium)
+plot(dfm_medium)  # Factors and data
+plot(dfm_medium, method = "all", type = "individual") # Factor estimates
+plot(dfm_medium, type = "residual") # Residuals from factor predictions
+
+# 10 periods ahead forecast
+plot(predict(dfm_medium), xlim = c(300, 370))
+
+
+### Large Model ---------------------------------
+
+# IC for number of factors
+IC_large = ICr(BM14)
+plot(IC_large)
+screeplot(IC_large)
+
+# I take 6 factors. Now number of lags
+VARselect(IC_large$F_pca[, 1:6])
+
+# Estimating the model with 6 factors and 3 lags
+dfm_large = DFM(BM14, 6, 3)
+
+# Inspecting the model
+summary(dfm_large)
+plot(dfm_large)  # Factors and data
+# plot(dfm_large, method = "all", type = "individual") # Factor estimates
+plot(dfm_large, type = "residual") # Residuals from factor predictions
+
+# 10 periods ahead forecast
+plot(predict(dfm_large), xlim = c(300, 370))
+
+</code></pre>
+
+
+</div>

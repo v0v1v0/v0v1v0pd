@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>diffusionKmeans</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Diffusion K-means</h2>
+
+<h3>Description</h3>
+
+<p>Clusters a data set based on its diffusion coordinates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">diffusionKmeans(dmap, K, params = c(), Niter = 10, epsilon = 0.001)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dmap</code></td>
+<td>
+<p>a '"dmap"' object, computed by diffuse()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>number of clusters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>optional parameters for each data point.  Entry can be a
+vector of length n, or a matrix with n rows. If this argument is given,
+cluster centroid parameters are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Niter</code></td>
+<td>
+<p>number of K-means iterations performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>stopping criterion for relative change in distortion for each
+K-means iteration</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A '"dmap"' object computed by diffuse() is the input, so diffuse() must be
+performed first.  Function is written this way so the K-means parameters may
+be varied without having to recompute the diffusion map coordinates in each
+run.
+</p>
+<p>Diffusion K-means is a special form of spectral clustering.  It is a unique
+algorithm because the eigenvectors of the symmetric Laplacian are weighted
+in such a way to guarantee that Euclidean distance in diffusion space will
+be approximately equal to the diffusion distance between objects.
+Clustering by Euclidean distance in diffusion space exploits this fact.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The returned value is a list with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>part</code></td>
+<td>
+<p>final labelling of data from K-means. n-dimensional vector with
+integers between 1 and K</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cent</code></td>
+<td>
+<p> K geometric centroids found by
+K-means</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>minimum of total distortion (loss function of K-means)
+found across K-means runs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DK</code></td>
+<td>
+<p>n by k matrix of squared (Euclidean)
+distances from each point to every centroid for the optimal K-means run</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centparams</code></td>
+<td>
+<p>optional parameters for each centroid.  Only returned if
+params is specified in the function call.  Is a matrix with k rows.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Lafon, S., &amp; Lee, A., (2006), IEEE Trans. Pattern Anal. and
+Mach. Intel., 28, 1393
+</p>
+<p>Richards, J. W., Freeman, P. E., Lee, A. B., and Schafer, C. M., (2009),
+ApJ, 691, 32
+</p>
+<p>Richards, J. W., Freeman, P. E., Lee, A. B., Schafer, C. M., (2009), MNRAS,
+Volume 399, Issue 2, pp. 1044-1057
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>diffuse()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(scatterplot3d)
+
+## example with annulus data set
+data(annulus)
+par(mfrow=c(2,1))
+plot(annulus,main="Annulus Data",pch=20,cex=.7)
+D = dist(annulus) # use Euclidean distance
+dmap = diffuse(D,eps.val=0.05) # compute diffusion map
+k=2  # number of clusters
+dkmeans = diffusionKmeans(dmap, k)
+plot(annulus,main="Colored by diffusion K-means clustering",pch=20,
+   cex=.7,col=dkmeans$part)
+table(dkmeans$part,c(rep(1,500),rep(2,500)))
+
+
+## example with Chainlink data set
+data(Chainlink)
+lab.col = c(rep("red",500),rep("blue",500)); n=1000
+scatterplot3d(Chainlink$C1,Chainlink$C2,Chainlink$C3,color=lab.col,
+   main="Chainlink Data") # plot Chainlink data
+D = dist(Chainlink) # use Euclidean distance
+dmap = diffuse(D,neigen=3,eps.val=.01) # compute diffusion map &amp; plot
+plot(dmap)
+dkmeans = diffusionKmeans(dmap, K=2)
+col.dkmeans=ifelse(dkmeans$part==1,"red","blue")
+scatterplot3d(Chainlink,color=col.dkmeans,
+   main="Chainlink Data, colored by diff. K-means class")
+table(dkmeans$part,lab.col)
+</code></pre>
+
+
+</div>

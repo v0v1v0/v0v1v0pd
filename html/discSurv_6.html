@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>compRisksGEE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>GEE model for discrete competing risks</h2>
+
+<h3>Description</h3>
+
+<p>Estimates generalized estimation equation model for each competing event separately. 
+Dependence within person IDs is accounted for by assuming a working covariance structure.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">compRisksGEE(
+  datShort,
+  dataTransform = "dataLongCompRisks",
+  corstr = "independence",
+  formulaVariable = ~timeInt,
+  ...
+)
+
+## S3 method for class 'dCRGEE'
+predict(object, newdata, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>datShort</code></td>
+<td>
+<p>Original data set in short format with each row corresponding to one independent 
+observation("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataTransform</code></td>
+<td>
+<p>Specification of the data transformation function from short to long format("character vector"). 
+There are two available options: Without time dependent covariates ("dataLongCompRisks") and with 
+time dependent covariates ("dataLongCompRisksTimeDep"). The default is set to the former.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corstr</code></td>
+<td>
+<p>Assumption of correlation structure ("character vector"). The following are 
+permitted: '"independence"', '"exchangeable"', '"ar1"', '"unstructured"' and '"userdefined".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formulaVariable</code></td>
+<td>
+<p>Specifies the right hand side of the regression formula ("class formula").
+The default is to use the discrete time variable, which corresponds to a covariate free hazard. 
+It is recommended to always include the discrete time variable "timeInt".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to data transformation (compRisksGEE) or prediction function (predict).
+Preprocessing function argument responseAsFactor has to be set to FALSE (Default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>Discrete time competing risks GEE model prediction model ("class dCRGEE").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>("class data.set") New data set to be used for prediction (class data.frame).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Variables in argument <em>formulaVariable</em> need to be separated by "+ ". 
+For example if the two variables <em>timeInt</em> and <em>X1</em> should be included the formula would be
+"~ timeInt + X1". The variable <em>timeInt</em> is constructed before estimation of the model.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class "geeglm".
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Lee M, Feuer EJ, Fine JP (2018).
+“On the analysis of discrete time competing risks data.”
+<em>Biometrics</em>, <b>74</b>, 1468-1481.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>covarGEE</code>, <code>dataLongCompRisks</code>, <code>dataLongCompRisksTimeDep</code>, 
+<code>geeglm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Select subsample
+SubUnempDur &lt;- UnempDur [1:100, ]
+
+# Estimate GEE models for all events
+estGEE &lt;- compRisksGEE(datShort = SubUnempDur, dataTransform = "dataLongCompRisks", 
+corstr = "independence", formulaVariable =~ timeInt + age + ui + logwage * ui, 
+eventColumns = c("censor1", "censor2", "censor3", "censor4"), timeColumn = "spell")
+names(estGEE)
+estGEE[[1]]
+
+# Predictions
+SubUnempDurLong &lt;- dataLongCompRisks(dataShort = SubUnempDur, 
+eventColumns = c("censor1", "censor2", "censor3", "censor4"), timeColumn = "spell")
+preds &lt;- predict(estGEE, newdata = SubUnempDurLong)
+head(preds)
+
+</code></pre>
+
+
+</div>

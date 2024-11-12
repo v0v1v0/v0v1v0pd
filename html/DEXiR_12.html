@@ -1,0 +1,188 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>convert_alternatives</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>convert_alternatives</h2>
+
+<h3>Description</h3>
+
+<p>Converts a <code>data.frame</code> of alternatives' data to another <code>data.frame</code>. The conversion
+generally involves: aggregating DEXi values originally represented by sets or distributions,
+scaling aggregated values to a given interval and/or reversing values assigned to "descending"
+DexiScales.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">convert_alternatives(
+  model,
+  alternatives = NULL,
+  interpret = c("set", "distribution", "none"),
+  aggregate = min,
+  omin = 0,
+  omax = 1,
+  map_values = TRUE,
+  reverse_descending = TRUE,
+  verbatim = "name",
+  skip = NULL,
+  continuous = convert_data_continuous,
+  discrete = convert_data_discrete
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A DexiModel object. Required.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternatives</code></td>
+<td>
+<p>A <code>data.frame</code> of alternatives (normally an output of <code>evaluate()</code>) or
+indices to <code>model$alternatives</code>. The default value <code>NULL</code> selects <code>model$alternatives</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpret</code></td>
+<td>
+<p><code>character(1)</code>. Determines how the original values in <code>alternatives</code> are
+interpreted, i.e., converted prior to submitting them to <code>aggregate()</code>:
+</p>
+
+<dl>
+<dt><code>"set"</code></dt>
+<dd>
+<p>As a set of values. Any distribution-type value is converted to a set,
+thus discarding the numeric membership information.</p>
+</dd>
+<dt><code>"distribution"</code></dt>
+<dd>
+<p>As a value distribution, i.e., a numeric vector of membership values.</p>
+</dd>
+<dt><code>"none"</code></dt>
+<dd>
+<p>No conversion.</p>
+</dd>
+</dl>
+<p>Values corresponding to continuous attributes are not converted nor affected by these settings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregate</code></td>
+<td>
+<p>A function accepting the interpreted DEXi value (see <code>interpret</code>) and converting
+it to become part of the output data frame. Normally, this function is assumed to accept
+a numeric vector argument and aggregate it in a single numeric value.
+The default aggregation function is <code>min()</code>. Typical alternatives include <code>max()</code> and <code>mean()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omin</code></td>
+<td>
+<p><code>numeric(1)</code>. Lower bound of the output value interval (see <code>map_values</code>). Default: <code>0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omax</code></td>
+<td>
+<p><code>numeric(1)</code>. Upper bound of the output value interval (see <code>map_values</code>). Default: <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>map_values</code></td>
+<td>
+<p><code style="white-space: pre;">⁠logical(1).⁠</code> When <code>TRUE</code>, values produced by <code>aggregate()</code> are further scaled
+to the interval <code style="white-space: pre;">⁠[omin:omax]⁠</code>. Input bounds are determined from
+the corresponding attribute scales (for discrete attributes) or
+as minimum/maximum values from <code>alternatives</code> (for continuous attributes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reverse_descending</code></td>
+<td>
+<p><code style="white-space: pre;">⁠logical(1).⁠</code> Whether or not to reverse the values of attributes
+whose scales are of a "descending" preference order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbatim</code></td>
+<td>
+<p><code>character()</code>. Names of <code>alternatives</code>' data columns
+that are included in the output without conversion. Default: <code>"name"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip</code></td>
+<td>
+<p><code>character()</code>. Names of <code>alternatives</code>' data columns
+that are ignored in the process. Default: <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>continuous</code></td>
+<td>
+<p>A function converting a data column that corresponds to a continuous attribute.
+Default: <code>convert_data_continuous()</code>.
+Setting <code>continuous</code> to <code>NULL</code> excludes all continuous attributes from conversion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>discrete</code></td>
+<td>
+<p>A function converting a data column that corresponds to a discrete attribute.
+Default: <code>convert_data_discrete()</code>.
+Setting <code>discrete</code> to <code>NULL</code> excludes all discrete attributes from conversion.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The rationale for <code>convert_alternatives()</code> is that data frames representing alternatives,
+particularly those produced by <code>evaluate()</code>, generally contain DEXi values of various
+and mixed data types, such as numbers and numeric vectors (sets and distributions).
+As such, this data is difficult to work with in R,
+as most R functions expect simpler and more uniform data structures.
+<code>convert_alternatives()</code> produces data frames that are more suitable for standard R data analysis
+and graph drawing. However, as the conversion generally involves aggregation and mapping
+of DEXi values, it may distort or lose information along the way.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A converted <code>data.frame</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>convert_data_continuous()</code>, <code>convert_data_discrete()</code>, <code>scale_alternatives()</code>,
+DEXiR-package notes on values in DEXi models.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load "Car.dxi"
+CarDxi &lt;- system.file("extdata", "Car.dxi", package = "DEXiR")
+Car &lt;- read_dexi(CarDxi)
+
+# Map Car$alternatives' values to the [0, 1] interval.
+convert_alternatives(Car)
+
+#  name     CAR.1 PRICE BUY.PRICE MAINT.PRICE TECH.CHAR. COMFORT X.PERS   X.DOORS LUGGAGE SAFETY
+# 1 Car1 1.0000000   1.0       0.5         1.0  1.0000000       1      1 0.6666667       1    1.0
+# 2 Car2 0.6666667   0.5       0.5         0.5  0.6666667       1      1 0.6666667       1    0.5
+
+</code></pre>
+
+
+</div>

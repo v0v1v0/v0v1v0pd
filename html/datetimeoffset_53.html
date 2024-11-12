@@ -1,0 +1,82 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fill_tz</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fill in missing time zones and/or UTC offsets</h2>
+
+<h3>Description</h3>
+
+<p><code>fill_tz()</code> fills in missing time zones.
+<code>fill_utc_offsets()</code> fills in missing UTC offsets.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fill_tz(x, tz = "")
+
+fill_utc_offsets(x, ambiguous = "NA")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A datetime object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz</code></td>
+<td>
+<p>Timezone used to fill in missing time zones</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ambiguous</code></td>
+<td>
+<p>What to do when the "clock time" in the new time zone is ambiguous.
+See <code>clock::as_zoned_time.clock_naive_time()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A datetime object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dts &lt;- as_datetimeoffset(c("2020-01-01T01:01:01", "2020-01-01T01:01:01Z"))
+fill_tz(dts, "UTC")
+fill_tz(dts, Sys.timezone())
+clock::as_sys_time(dts)
+clock::as_sys_time(fill_tz(dts, "UTC"))
+clock::as_zoned_time(dts)
+clock::as_zoned_time(fill_tz(dts, ""))
+
+if ("America/New_York" %in% OlsonNames()) {
+  # non-ambiguous UTC offsets
+  dt &lt;- as_datetimeoffset("2020-11-01T12:30:00[America/New_York]")
+  cat("unfilled: ", get_utc_offsets(dt), "\n")
+  dt &lt;- fill_utc_offsets(dt)
+  cat("filled: ", get_utc_offsets(dt), "\n")
+
+  # ambiguous UTC offsets due to DST
+  dt0 &lt;- as_datetimeoffset("2020-11-01T01:30:00[America/New_York]")
+  dt &lt;- fill_utc_offsets(dt0)
+  cat('`ambiguous = "NA"` (default): ', get_utc_offsets(dt), "\n")
+  dt &lt;- fill_utc_offsets(dt0, ambiguous = "earliest")
+  cat('`ambiguous = "earliest"`: ', get_utc_offsets(dt), "\n")
+  dt &lt;- fill_utc_offsets(dt0, ambiguous = "latest")
+  cat('`ambiguos = "latest"`: ', get_utc_offsets(dt), "\n")
+}
+</code></pre>
+
+
+</div>

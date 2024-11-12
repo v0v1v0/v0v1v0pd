@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mstrust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Non-Linear Optimization, multi start</h2>
+
+<h3>Description</h3>
+
+<p>Wrapper around <code>trust</code> allowing for multiple fits 
+from randomly chosen initial values.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mstrust(
+  objfun,
+  center,
+  studyname,
+  rinit = 0.1,
+  rmax = 10,
+  fits = 20,
+  cores = 1,
+  samplefun = "rnorm",
+  resultPath = ".",
+  stats = FALSE,
+  output = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>objfun</code></td>
+<td>
+<p>Objective function, see <code>trust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>Parameter values around which the initial values for each fit 
+are randomly sampled. The initial values handed to trust are the sum
+of center and the output of <span class="option">samplefun</span>, center + 
+<span class="option">samplefun</span>. See <code>trust</code>, parinit.
+<code>center</code> Can also be a parframe, then the parameter values are taken 
+from the parframe. In this case, the <code>fits</code> argument is overwritten.
+To use a reproducible set of initial guesses, generate center with 
+<code>msParframe</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>studyname</code></td>
+<td>
+<p>The names of the study or fit. This name is used to 
+determine filenames for interim and final results. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rinit</code></td>
+<td>
+<p>Starting trust region radius, see <code>trust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rmax</code></td>
+<td>
+<p>Maximum allowed trust region radius, see <code>trust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fits</code></td>
+<td>
+<p>Number of fits (jobs).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>Number of cores for job parallelization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samplefun</code></td>
+<td>
+<p>Function to sample random initial values. It is assumed, 
+that <span class="option">samplefun</span> has a named parameter "n" which defines how many 
+random numbers are to be returned, such as for <code>rnorm</code> or 
+<code>runif</code>. By default <code>rnorm</code> is used. Parameteres 
+for samplefun are simply appended as named parameters to the mstrust call 
+and automatically handed to samplefun by matching parameter names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resultPath</code></td>
+<td>
+<p>character indicating the folder where the results should 
+be stored. Defaults to ".".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats</code></td>
+<td>
+<p>If true, the same summary statistic as written to the logfile is
+printed to command line on mstrust completion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>logical. If true, writes output to the disc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional parameters handed to trust(), samplefun(), or the 
+objective function by matching parameter names. All unmatched parameters 
+are handed to the objective function objfun(). The log file starts with a 
+table telling which parameter was assigend to which function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>By running multiple fits starting at randomly chosen inital 
+parameters, the chisquare landscape can be explored using a deterministic 
+optimizer. Here, <code>trust</code> is used for optimization. The standard
+procedure to obtain random initial values is to sample random variables 
+from a uniform distribution (<code>rnorm</code>) and adding these to 
+<span class="option">center</span>. It is, however, possible, to employ any other sampling 
+strategy by handing the respective function to mstrust(), 
+<span class="option">samplefun</span>.
+</p>
+<p>In case a special sampling is required, a customized sampling function can 
+be used. If, e.g., inital values leading to a non-physical systems are to 
+be discarded upfront, the objective function can be addapted accordingly.
+</p>
+<p>All started fits either lead to an error or complete converged or
+unconverged. A statistics about the return status of fits can be shown by
+setting <span class="option">stats</span> to TRUE.
+</p>
+<p>Fit final and intermediat results are stored under <span class="option">studyname</span>. For
+each run of mstrust for the same study name, a folder under
+<span class="option">studyname</span> of the form "trial-x-date" is created. "x" is the number
+of the trial, date is the current time stamp. In this folder, the
+intermediate results are stored. These intermediate results can be loaded
+by <code>load.parlist</code>. These are removed on successfull completion
+of mstrust. In this case, the final list of fit parameters
+(parameterList.Rda) and the fit log (mstrust.log) are found instead.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A parlist holding errored and converged fits.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Wolfgang Mader, <a href="mailto:Wolfgang.Mader@fdm.uni-freiburg.de">Wolfgang.Mader@fdm.uni-freiburg.de</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>1. <code>trust</code>, for the used optimizer,
+2. <code>rnorm</code>, <code>runif</code> for two common sampling functions,
+3. <code>msParframe</code> for passing a reproducible set of random initial 
+guesses to mstrust,
+4. <code>as.parframe</code> for formatting the output to a handy table
+</p>
+
+
+</div>

@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>clean</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Invalidate and deregister targets.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Force targets to be out of date and remove target names
+from the data in the cache. Be careful and run <code>which_clean()</code> before
+<code>clean()</code>. That way, you know beforehand which targets will be
+compromised.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">clean(
+  ...,
+  list = character(0),
+  destroy = FALSE,
+  path = NULL,
+  search = NULL,
+  cache = drake::drake_cache(path = path),
+  verbose = NULL,
+  jobs = NULL,
+  force = FALSE,
+  garbage_collection = FALSE,
+  purge = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Symbols, individual targets to remove.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>list</code></td>
+<td>
+<p>Character vector of individual targets to remove.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>destroy</code></td>
+<td>
+<p>Logical, whether to totally remove the drake cache.
+If <code>destroy</code> is <code>FALSE</code>, only the targets
+from <code>make()</code>
+are removed. If <code>TRUE</code>, the whole cache is removed, including
+session metadata, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>Path to a <code>drake</code> cache
+(usually a hidden <code style="white-space: pre;">⁠.drake/⁠</code> folder) or <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>search</code></td>
+<td>
+<p>Deprecated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache</code></td>
+<td>
+<p>drake cache. See <code>new_cache()</code>.
+If supplied, <code>path</code> is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Deprecated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jobs</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force</code></td>
+<td>
+<p>Logical, whether to try to clean the cache
+even though the project may not be back compatible with the
+current version of drake.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>garbage_collection</code></td>
+<td>
+<p>Logical, whether to call
+<code>cache$gc()</code> to do garbage collection.
+If <code>TRUE</code>, cached data with no remaining references
+will be removed.
+This will slow down <code>clean()</code>, but the cache
+could take up far less space afterwards.
+See the <code>gc()</code> method for <code>storr</code> caches.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purge</code></td>
+<td>
+<p>Logical, whether to remove objects from
+metadata namespaces such as "meta", "build_times", and "errors".</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>By default, <code>clean()</code> invalidates <strong>all</strong> targets,
+so be careful. <code>clean()</code> always:
+</p>
+
+<ol>
+<li>
+<p> Forces targets to be out of date so the next <code>make()</code>
+does not skip them.
+</p>
+</li>
+<li>
+<p> Deregisters targets so <code>loadd(your_target)</code> and <code>readd(your_target)</code>
+no longer work.
+</p>
+</li>
+</ol>
+<p>By default, <code>clean()</code> does not actually remove the underlying data.
+Even old targets from the distant past are still in the cache
+and recoverable via <code>drake_history()</code> and <code>make(recover = TRUE)</code>.
+To actually remove target data from the cache, as well as any
+<code>file_out()</code> files from any targets you are currently cleaning,
+run <code>clean(garbage_collection = TRUE)</code>.
+Garbage collection is slow, but it reduces the storage burden of the cache.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Invisibly return <code>NULL</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>which_clean()</code>, <code>drake_gc()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("Quarantine side effects.", {
+if (suppressWarnings(require("knitr"))) {
+load_mtcars_example() # Get the code with drake_example("mtcars").
+make(my_plan) # Run the project, build the targets.
+# Show all registered targets in the cache.
+cached()
+# Deregister 'summ_regression1_large' and 'small' in the cache.
+clean(summ_regression1_large, small)
+# Those objects are no longer registered as targets.
+cached()
+# Rebuild the invalidated/outdated targets.
+make(my_plan)
+# Clean everything.
+clean()
+# But the data objects and files are not actually gone!
+file.exists("report.md")
+drake_history()
+make(my_plan, recover = TRUE)
+# You need garbage collection to actually remove the data
+# and any file_out() files of any uncleaned targets.
+clean(garbage_collection = TRUE)
+drake_history()
+make(my_plan, recover = TRUE)
+}
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

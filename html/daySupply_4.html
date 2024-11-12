@@ -1,0 +1,190 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>REWarDS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>REWarDS</h2>
+
+<h3>Description</h3>
+
+<p>Estimates patients' individualized average daily dose and subsequently, days' supply,
+by fitting a random effects linear regression model to patients' cumulative dose over time.
+Model parameters include a minimal universally-available set of variables from prescription
+records.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">REWarDS(
+  data,
+  dspd_qty,
+  strength,
+  id,
+  gap_handling = "none",
+  permissible_gap = NULL,
+  serv_date,
+  tot_dose_disp = NULL,
+  Pt_level = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Sample simulated data.
+Data may have multiple rows per person (one row per prescription fill).
+Required columns include:
+1. ID: Patient's unique identification number
+2. ServDate: Date on which each prescription was filled.
+3. DSPD_QTY: Dispensed quantity: Number of tablets dispensed to patient at each prescription fill.
+4. strength: Strength of the tablets dispensed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dspd_qty</code></td>
+<td>
+<p>Dispensed quantity: Number of tablets dispensed to the patient in
+at each prescription fill.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strength</code></td>
+<td>
+<p>Strength of the dispensed tablets in milligrams.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Unique patient identification number.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gap_handling</code></td>
+<td>
+<p>Method to handle gaps between prescription fills that are more than
+the permissible gap. Currently, gaps can be handled in three ways:
+1) The “None” method: This is the default and it ignores gaps
+2)The “Initial consecutive Rx” method: Starting from the first
+prescription fill, patients' prescription refills are considered
+until the permissible gap is exceeded. REWarDS uses these initial
+prescription refills to estimates patient's individualized daily
+dose. If the permissible gap is exceeded after the first fill,
+there will only be one prescription for REWaRDS to use, and as of
+now, REWarDS is unable to provide estimates of daily dose based on
+a single prescription.
+3) The “Longest consecutive Rx” method: Looks at all periods with
+consecutive.
+prescription refills with gaps between them that do not exceed the
+permissible gap) during the follow up, it then counts the number of
+prescription fills in each period, and picks the period with the
+highest number of prescription fills and estimates the patient's
+average daily dose during that period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permissible_gap</code></td>
+<td>
+<p>Gap (in days) allowed between prescription fills.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>serv_date</code></td>
+<td>
+<p>Date of the prescription fill.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tot_dose_disp</code></td>
+<td>
+<p>Total dose dispensed:
+dispensed quantity x strength of the tablets dispensed for
+each prescription fill.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Pt_level</code></td>
+<td>
+<p>When TRUE, the estimated dose and days' supply are averaged
+for the patient.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>REWarDS (Random Effects Warfarin Days' Supply) has been validated for warfarin. It
+demonstrated excellent performance that was superior to all current alternative methods
+for estimating days' supply of warfarin. REWarDS could potentially be used for other
+medications with variable dosing regimens (e.g. tacrolimus), or in populations with
+high inter-individual variability in drug clearance (e.g. elderly patients). Validation
+with cohorts of such patients, or medications other than warfarin, has yet to be done.
+</p>
+
+
+<h3>Value</h3>
+
+<p>REWarDS returns a dataset called "REWarDS_result". This data set includes all the
+variables originally in the data, plus the following:
+</p>
+<p>tot_dose_disp:            Total dose dispensed at prescription fill:
+dispensed quantity x strength of the tablet dispensed.
+</p>
+<p>REWarDS_avg_daily_dose:   Patient's individualized average daily dose.
+</p>
+<p>REWarDS_Rx_DS:            Days' supply for prescription.
+</p>
+<p>REWarDS_Pt_DS:            Average days' supply for patient.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Patient collects 100 tablets of 5 mg warfarin  on January 3rd,
+#and 100 tablets of 7 mg warfarin on February 1st.
+
+#' #Generate a simulated dataset
+
+library(dplyr)
+n_patients &lt;- 10
+n_records &lt;- 80
+data &lt;- data.frame(ID = rep(c(1 : n_patients), each = n_records))
+data %&gt;%
+  group_by(ID) %&gt;%
+  mutate(ServDate = as.Date('2020/01/01') + abs(round(rnorm(n = 80, 700, 330))),
+         DSPD_QTY = abs(round(rnorm(n = 80, 43, 28))),
+         strength = abs(round(rnorm(n = 80, 4, 1))))  -&gt; data
+data &lt;- as.data.frame(data)
+
+
+data_new &lt;- REWarDS(data, id = "ID", dspd_qty = "DSPD_QTY",
+                    strength = "strength", serv_date = "ServDate",
+                    tot_dose_disp =  NULL, Pt_level = FALSE,
+                    gap_handling = "none", permissible_gap = NULL)
+
+#tot_dose_disp: 500mg on January 3rd and 700mg for February 1st.
+#REWarDS_avg_daily_dose: patient's individualized average daily dose obtained
+#                        from regression analysis
+#REWarDS_Rx_DS: 500mg/ patient's individualized average daily dose, for Jan 3rd
+#               700mg/patient's individualized average daily dose , for Feb 1st
+
+#Pt_level can be set as TRUE to get mean values for each patient
+#REWarDS_Pt_DS: average of days' supply on Jan 3rd and Feb 1st
+
+#Gap handling method can be specified
+data_new &lt;- REWarDS(data, id = "ID", dspd_qty = "DSPD_QTY",
+                    strength = "strength", serv_date = "ServDate",
+                    tot_dose_disp =  NULL, Pt_level = TRUE,
+                    gap_handling = "Longest consecutive Rx", permissible_gap = 30)
+#gap: Gap in number of days between each prescription and the prescription preceding it
+#Rx_count: Number of prescriptions in each period of consecutive prescriptions until
+#          the permissible gap is exceeded.
+</code></pre>
+
+
+</div>

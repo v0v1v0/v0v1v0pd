@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>onebasis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Generate a Basis Matrix for Different Functions </h2>
+
+<h3>Description</h3>
+
+<p>The function generates the basis matrix for a predictor vector. The function operates as a wrapper to existing or user-defined functions. Amongst other options, main choices include splines, polynomials, strata and linear threshold functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">onebasis(x, fun="ns", ...)
+
+## S3 method for class 'onebasis'
+summary(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x </code></td>
+<td>
+<p> the predictor variable. Missing values are allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun </code></td>
+<td>
+<p> character scalar with the name of the function to be called. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>... </code></td>
+<td>
+<p> additional arguments to be passed to the function specified by <code>fun</code> or to <code>summary</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object </code></td>
+<td>
+<p> a object of class <code>"onebasis"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>onebasis</code> is a wrapper to existing functions which are called internally to produce different types of basis matrices in a pre-defined format. Its main use in the package <span class="pkg">dlnm</span> is to be called by <code>crossbasis</code> to generate cross-basis matrices for modelling bi-dimensional exposure-lag-response associations in distributed lag linear (DLMs) and non-linear (DLNMs) models. However, it can be used also for simplifying the modelling and plotting of uni-dimensional exposure-response relationships.
+</p>
+<p>The function to be called is chosen through the argument <code>fun</code>. Standard choices are:
+</p>
+
+<ul>
+<li> <p><b><code>"ns"</code></b> and <b><code>"bs"</code></b>: natural cubic B-splines or B-splines of various degree. Performed through a call to functions <code>ns</code> or <code>bs</code> from package <span class="pkg">splines</span>. Arguments passed through <code>...</code> may include <code>df</code>, <code>knots</code>, <code>intercept</code>, and <code>Boundary.knots</code>.
+</p>
+</li>
+<li> <p><b><code>"ps"</code></b> and <b><code>"cr"</code></b>: penalized splines with different parameterizations and penalties. Performed through a call to functions <code>ps</code> or <code>cr</code>. Arguments passed through <code>...</code> may include <code>df</code>, <code>knots</code>, <code>degree</code>, <code>intercept</code>, <code>fx</code>, <code>S</code>, and <code>diff</code>.
+</p>
+</li>
+<li> <p><b><code>"poly"</code></b>: polynomials functions. Performed through a call to the internal function <code>poly</code> (be aware that this is different from <code>poly</code> in the package <span class="pkg">stats</span>). Arguments passed through <code>...</code> may include <code>degree</code>, <code>scale</code> and <code>intercept</code>.
+</p>
+</li>
+<li> <p><b><code>"strata"</code></b>: indicator variables defining strata. Performed through a call to the function <code>strata</code>. Arguments passed through <code>...</code> may include <code>df</code>, <code>breaks</code>, <code>ref</code> and <code>intercept</code>.
+</p>
+</li>
+<li> <p><b><code>"thr"</code></b>: high, low or double linear threshold functions. Performed through a call to the function <code>thr</code>. Arguments passed through <code>...</code> may include <code>thr.value</code>, <code>side</code> and <code>intercept</code>.
+</p>
+</li>
+<li> <p><b><code>"integer"</code></b>: indicator variables for each integer value. Performed through a call to the internal function <code>integer</code> (be aware that this is different from the function <code>integer</code> in the package <span class="pkg">base</span>). Arguments passed through <code>...</code> may include <code>intercept</code>.
+</p>
+</li>
+<li> <p><b><code>"lin"</code></b>: linear functions. Performed through a call to the internal function <code>lin</code>. Arguments passed through <code>...</code> may include <code>intercept</code>.
+</p>
+</li>
+</ul>
+<p>The help pages of the called functions provides additional information. In particular, the option <code>"lin"</code> and <code>"integer"</code> are usually applied for defining constrained and unconstrained DLMs.
+</p>
+<p>In addition, any other existing or user-defined function can be potentially called through <code>onebasis</code>. The function should have a first argument <code>x</code> defining the vector to be transformed. It also should return a vector or matrix of transformed variables, with attributes including the arguments of the function itself which define the transformations univocally.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix object of class <code>"onebasis"</code> which can be included in a model formula in order to estimate the association. It contains the attributes <code>fun</code>, <code>range</code> (range of the original vector of observations) and additional attributes specific to the chosen function. The method <code>summary.onebasis</code> returns a summary of the basis matrix and the related attributes.
+</p>
+
+
+<h3>Warnings</h3>
+
+<p>Meaningless combinations of arguments could lead to collinear variables, with identifiability problems in the model. The function <code>onebasis</code> does not perform many checks on the arguments provided. The user is expected to provide valid arguments.
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function offers a wide range of options about modelling the shape of the exposure-response relationships, also simplifying or extending the use of existing functions. The function <code>crosspred</code> can be called on objects of class <code>"onebasis"</code> in order to obtain predictions and plotting of such uni-dimensional associations. If more than one variable is transformed through <code>onebasis</code> in the same model, different names must be specified. 
+</p>
+<p>Before version 2.2.0 of <span class="pkg">dlnm</span>, <code>onebasis</code> could include a <code>cen</code> argument for centering the basis. This step is now moved to the prediction stage, with a <code>cen</code> argument in <code>crosspred</code> or <code>crossreduce</code> (see the related help pages). For backward compatibility, the use of <code>cen</code> in <code>onebasis</code> is still allowed (with a warning), but may be discontinued in the future.
+</p>
+<p>This function has replaced the two old functions <code>mkbasis</code> and <code>mklagbasis</code> since version 1.5.0.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Antonio Gasparrini &lt;<a href="mailto:antonio.gasparrini@lshtm.ac.uk">antonio.gasparrini@lshtm.ac.uk</a>&gt;</p>
+
+
+<h3>References</h3>
+
+<p>Gasparrini A. Distributed lag linear and non-linear models in R: the package dlnm. <em>Journal of Statistical Software</em>. 2011;<b>43</b>(8):1-20. [freely available <a href="http://www.ag-myresearch.com/2011_gasparrini_jss.html">here</a>].
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>crossbasis</code> to generate cross-basis matrices. <code>crosspred</code> to obtain predictions after model fitting. The method function <code>plot</code> to plot several type of graphs.
+</p>
+<p>See <code>dlnm-package</code> for an introduction to the package and for links to package vignettes providing more detailed information.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### a polynomial transformation of a simple vector
+onebasis(1:5, "poly", degree=3)
+
+### a low linear threshold parameterization, with and without intercept
+onebasis(1:5, "thr", thr=3, side="l")
+onebasis(1:5, "thr", thr=3, side="l", intercept=TRUE)
+
+### relationship between PM10 and mortality estimated by a step function
+b &lt;- onebasis(chicagoNMMAPS$pm10, "strata", breaks=c(20,40))
+summary(b)
+model &lt;- glm(death ~ b, family=quasipoisson(), chicagoNMMAPS)
+pred &lt;- crosspred(b, model, at=0:60)
+plot(pred, xlab="PM10", ylab="RR", main="RR for PM10")
+
+### changing the reference in prediction (alternative to argument ref in strata)
+pred &lt;- crosspred(b, model, cen=30, at=0:60)
+plot(pred, xlab="PM10", ylab="RR", main="RR for PM10, alternative reference")
+
+### relationship between temperature and mortality: double threshold
+b &lt;- onebasis(chicagoNMMAPS$temp, "thr", thr=c(10,25))
+summary(b)
+model &lt;- glm(death ~ b, family=quasipoisson(), chicagoNMMAPS)
+pred &lt;- crosspred(b, model, by=1)
+plot(pred, xlab="Temperature (C)", ylab="RR", main="RR for temperature")
+
+### extending the example for the 'ns' function in package splines
+b &lt;- onebasis(women$height, df=5)
+summary(b)
+model &lt;- lm(weight ~ b, data=women)
+pred &lt;- crosspred(b, model, cen=65)
+plot(pred, xlab="Height (in)", ylab="Weight (lb) difference",
+  main="Association between weight and height")
+  
+### use with a user-defined function with proper attributes
+mylog &lt;- function(x, scale=min(x, na.rm=TRUE)) {
+  basis &lt;- log(x-scale+1)
+  attributes(basis)$scale &lt;- scale
+  return(basis)
+}
+mylog(-2:5)
+onebasis(-2:5,"mylog")
+</code></pre>
+
+
+</div>

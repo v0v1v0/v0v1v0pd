@@ -1,0 +1,209 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot.dbw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Summarize and plot covariate balance</h2>
+
+<h3>Description</h3>
+
+<p>Summarizes and plots covariate balance between treatment and control groups
+before and after the distribution balancing weighting.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dbw'
+plot(
+  x,
+  addcov = NULL,
+  standardize = TRUE,
+  plot = TRUE,
+  absolute = TRUE,
+  threshold = 0,
+  sort = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of class “dbw”, usually, a result of a call to <code>dbw</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addcov</code></td>
+<td>
+<p>a one-sided formula specifying additional covariates whose
+balance is checked. Covariates containing NAs are automatically dropped.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardize</code></td>
+<td>
+<p>a logical value indicating whether weighted mean
+differences are standardized or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>a logical value indicating whether a covariate balance plot is
+displayed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>absolute</code></td>
+<td>
+<p>a logical value indicating whether the absolute values of
+differences in weighted means are used in the covariate balance plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>an optional numeric vector used as threshold markers in the
+covariate balance plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sort</code></td>
+<td>
+<p>a logical value indicating whether covariates in the covariate
+balance plot are sorted by the values of differences in the weighted means
+before the distribution balancing weighting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other graphical parameters (see <code>par</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Estimated weights are normalized to sum to one. Position of the legend is
+determined internally. Set <code>absolute = TRUE</code> and <code>sort = TRUE</code> for choosing
+a better location automatically.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix whose rows are the covariates and columns are the
+differences in the (un)standardized weighted mean between the treatment and
+control groups before (<code>diff.un</code>) and after (<code>diff.adj</code>) the
+distribution balancing weighting. The standardized weighted mean is the
+weighted mean divided by the standard deviation of the covariate for the
+target population (the treatment group for the average treatment effects on
+the treated estimation, the control group for the average treatment effects
+on the controlled estimation and the whole population for the other
+quantity of interest). The differences in the categorical variables are not
+standardized.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Hiroto Katsumata
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Simulation from Kang and Shafer (2007) and Imai and Ratkovic (2014)
+# ATE estimation
+# True ATE is 10
+tau &lt;- 10
+set.seed(12345)
+n &lt;- 1000
+X &lt;- matrix(stats::rnorm(n * 4, mean = 0, sd = 1), nrow = n, ncol = 4)
+prop &lt;- 1 / (1 + exp(X[, 1] - 0.5 * X[, 2] + 
+                     0.25 * X[, 3] + 0.1 * X[, 4]))
+treat &lt;- rbinom(n, 1, prop)
+y &lt;- 210 + 
+     27.4 * X[, 1] + 13.7 * X[, 2] + 13.7 * X[, 3] + 13.7 * X[, 4] + 
+     tau * treat + stats::rnorm(n = n, mean = 0, sd = 1)
+ybinom &lt;- (y &gt; 210) + 0
+df0 &lt;- data.frame(X, treat, y, ybinom)
+colnames(df0) &lt;- c("x1", "x2", "x3", "x4", "treat", "y", "ybinom")
+
+# Variables for a misspecified model
+Xmis &lt;- data.frame(x1mis = exp(X[, 1] / 2), 
+                   x2mis = X[, 2] * (1 + exp(X[, 1]))^(-1) + 10,
+                   x3mis = (X[, 1] * X[, 3] / 25 + 0.6)^3, 
+                   x4mis = (X[, 2] + X[, 4] + 20)^2)
+
+# Data frame and formulas for propensity score estimation
+df &lt;- data.frame(df0, Xmis)
+formula_ps_c &lt;- stats::as.formula(treat ~ x1 + x2 + x3 + x4)
+formula_ps_m &lt;- stats::as.formula(treat ~ x1mis + x2mis + 
+                                          x3mis + x4mis)
+
+# Formula for a misspecified outcome model
+formula_y &lt;- stats::as.formula(y ~ x1mis + x2mis + x3mis + x4mis)
+
+# Set plot margins
+oldpar &lt;- par(no.readonly = TRUE) # Just for adjusting plot margins
+par(mar = c(5.1, 5.1, 4.1, 2.1)) # Just for adjusting plot margins
+
+# Misspecified propensity score model
+
+# Distribution balancing weighting without regularization
+fitdbwm &lt;- dbw(formula_y = formula_y, formula_ps = formula_ps_m,
+               estimand = "ATE", method = "dbw",
+               method_y = "wls", data = df, normalize = TRUE,
+               vcov = TRUE, lambda = 0, weights = NULL,
+               clevel = 0.95)
+plot(fitdbwm, addcov = ~ x1 + x2 + x3 + x4, threshold = c(0.1, 0.2))
+
+# Non-absolute values
+plot(fitdbwm, addcov = ~ x1 + x2 + x3 + x4, absolute = FALSE, 
+     threshold = c(0.1, 0.2))
+
+# No sorting
+plot(fitdbwm, addcov = ~ x1 + x2 + x3 + x4, 
+     threshold = c(0.1, 0.2), sort = FALSE)
+
+
+# Covariate balancing weighting function without regularization
+fitcbwm &lt;- dbw(formula_y = formula_y, formula_ps = formula_ps_m,
+               estimand = "ATE", method = "cb",
+               method_y = "wls", data = df, normalize = TRUE,
+               vcov = TRUE, lambda = 0, weights = NULL,
+               clevel = 0.95)
+plot(fitcbwm, addcov = ~ x1 + x2 + x3 + x4, threshold = c(0.1, 0.2))
+
+# Entropy balancing weighting function without regularization
+fitebwm &lt;- dbw(formula_y = formula_y, formula_ps = formula_ps_m,
+               estimand = "ATE", method = "eb",
+               method_y = "wls", data = df, normalize = TRUE,
+               vcov = TRUE, lambda = 0, weights = NULL,
+               clevel = 0.95)
+plot(fitebwm, addcov = ~ x1 + x2 + x3 + x4, threshold = c(0.1, 0.2))
+
+# Standard logistic regression
+fitmlem &lt;- dbw(formula_y = formula_y, formula_ps = formula_ps_m,
+               estimand = "ATE", method = "mle",
+               method_y = "wls", data = df, normalize = FALSE,
+               vcov = TRUE, lambda = 0, weights = NULL,
+               clevel = 0.95)
+plot(fitmlem, addcov = ~ x1 + x2 + x3 + x4, threshold = c(0.1, 0.2))
+
+par(oldpar)
+
+# Display the covariate balance matrix
+cb &lt;- plot(fitdbwm, addcov = ~ x1 + x2 + x3 + x4, plot = FALSE)
+cb
+</code></pre>
+
+
+</div>

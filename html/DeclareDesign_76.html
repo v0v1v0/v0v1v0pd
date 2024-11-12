@@ -1,0 +1,127 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>post_design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Explore your design</h2>
+
+<h3>Description</h3>
+
+<p>Explore your design
+</p>
+<p>Print code to recreate a design
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">print_code(design)
+
+## S3 method for class 'design'
+print(x, verbose = FALSE, ...)
+
+## S3 method for class 'design'
+summary(object, verbose = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>A design object, typically created using the + operator</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a design object, typically created using the + operator</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>an indicator for printing a long summary of the design, defaults to <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional arguments to be sent to summary function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a design object created using the + operator</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Two-arm randomized experiment
+design &lt;-
+  declare_model(
+    N = 500,
+    gender = rbinom(N, 1, 0.5),
+    X = rep(c(0, 1), each = N / 2),
+    U = rnorm(N, sd = 0.25),
+    potential_outcomes(Y ~ 0.2 * Z + X + U)
+  ) +
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) +
+  declare_sampling(S = complete_rs(N = N, n = 200)) +
+  declare_assignment(Z = complete_ra(N = N, m = 100)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) +
+  declare_estimator(Y ~ Z, inquiry = "ATE")
+
+# Use draw_data to create a dataset using a design
+dat &lt;- draw_data(design)
+
+draw_data(design, data = dat, start = 2)
+
+# Apply get_estimates
+get_estimates(design, data = dat)
+
+
+# Two-arm randomized experiment
+design &lt;-
+  declare_model(
+    N = 500,
+    gender = rbinom(N, 1, 0.5),
+    X = rep(c(0, 1), each = N / 2),
+    U = rnorm(N, sd = 0.25),
+    potential_outcomes(Y ~ 0.2 * Z + X + U)
+  ) +
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) +
+  declare_sampling(S = complete_rs(N = N, n = 200)) +
+  declare_assignment(Z = complete_ra(N = N, m = 100)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) +
+  declare_estimator(Y ~ Z, inquiry = "ATE")
+
+print_code(design)
+
+summary(design)
+
+
+design &lt;- 
+  declare_model(
+    N = 500, 
+    noise = rnorm(N),
+    Y_Z_0 = noise, 
+    Y_Z_1 = noise + rnorm(N, mean = 2, sd = 2)
+  ) + 
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) + 
+  declare_sampling(S = complete_rs(N, n = 250)) + 
+  declare_assignment(Z = complete_ra(N, m = 25)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) + 
+  declare_estimator(Y ~ Z, inquiry = "ATE") 
+
+summary(design)
+</code></pre>
+
+
+</div>

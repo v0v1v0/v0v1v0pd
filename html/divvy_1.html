@@ -1,0 +1,226 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bandit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Rarefy localities within latitudinal bands</h2>
+
+<h3>Description</h3>
+
+<p><code>bandit</code> subsamples spatial point data to a specified number of sites
+within bins of equal latitude
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bandit(
+  dat,
+  xy,
+  iter,
+  nSite,
+  bin,
+  centr = FALSE,
+  absLat = FALSE,
+  maxN = 90,
+  maxS = -90,
+  crs = "epsg:4326",
+  output = "locs"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>A <code>data.frame</code> or <code>matrix</code> containing the coordinate
+columns <code>xy</code> and any associated variables, e.g. taxon names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>A vector of two elements, specifying the name or numeric position
+of columns in <code>dat</code> containing coordinates, e.g. longitude and latitude.
+Coordinates for any shared sampling sites should be identical, and where sites
+are raster cells, coordinates are usually expected to be cell centroids.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>The number of times to subsample localities within <strong>each</strong>
+latitudinal band.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nSite</code></td>
+<td>
+<p>The quota of unique locations to include in each subsample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin</code></td>
+<td>
+<p>A positive numeric value for latitudinal band width, in degrees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centr</code></td>
+<td>
+<p>Logical: should a bin center on and cover the equator
+(<code>TRUE</code>) or should the equator mark the boundary between the
+lowest-latitude northern and southern bins (<code>FALSE</code>, default)?
+Ignored if <code>absLat = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>absLat</code></td>
+<td>
+<p>Logical: should only the absolute values of latitude be
+evaluated? If <code>absLat = TRUE</code>, <code>centr</code> argument is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxN</code></td>
+<td>
+<p>Optional argument to specify the northmost limit for subsampling,
+if less than 90 degrees.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxS</code></td>
+<td>
+<p>Optional argument to specify the southmost limit for subsampling,
+if not -90 degrees. Should be a negative value if in the southern hemisphere.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>Coordinate reference system as a GDAL text string, EPSG code,
+or object of class <code>crs</code>. Default is latitude-longitude (<code>EPSG:4326</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Whether the returned data should be two columns of
+subsample site coordinates (<code>output = 'locs'</code>) or the subset of rows
+from <code>dat</code> associated with those coordinates (<code>output = 'full'</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>bandit()</code> rarefies the number of spatial sites within latitudinal ranges
+of specified bin width. (Compare with <code>cookies()</code> and <code>clustr()</code>, which spatially
+subsample to a specified extent without regard to latitudinal position.)
+Cases where it could be appropriate to control for latitudinal spread of localities
+include characterisations of latitudinal diversity gradients (e.g. Marcot 2016)
+or comparisons of ecosystem parameters that covary strongly with
+latitude (e.g. diversity in reefal vs. non-reefal habitats). Note that
+the total surface area of the Earth within equal-latitudinal increments
+decreases from the equator towards the poles; <code>bandit()</code> standardises only
+the amount of sites/area encompassed by each subsample, not the total area
+that could have been available for species to inhabit.
+</p>
+<p>As with all <code>divvy</code> subsampling functions, sites within a given
+regional/latitudinal subsample are selected without replacement.
+</p>
+<p>To calculate an integer number of degrees into which a given latitudinal
+range divides evenly, the <code>palaeoverse</code> package (v 1.2.1) provides the
+<code>palaeoverse::lat_bins()</code> function with argument <code>fit = TRUE</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of subsamples, each a <code>data.frame</code> containing
+coordinates of subsampled localities (if <code>output = 'locs'</code>)
+or the subset of occurrences from <code>dat</code> associated with those coordinates
+(if <code>output = 'full'</code>). The latitudinal bounds of each subsample
+are specified by its name in the list. If there are too few localities
+in a given interval to draw a subsample, that interval is omitted from output.
+</p>
+
+
+<h3>References</h3>
+
+<p>Allen BJ, Wignall PB, Hill DJ, Saupe EE, Dunhill AM (2020).
+“The latitudinal diversity gradient of tetrapods across the Permo–Triassic mass extinction and recovery interval.”
+<em>Proceedings of the Royal Society B</em>, <b>287</b>(1929), 20201125.
+<a href="https://doi.org/10.1098/rspb.2020.1125">doi:10.1098/rspb.2020.1125</a>.
+</p>
+<p>Marcot JD, Fox DL, Niebuhr SR (2016).
+“Late Cenozoic onset of the latitudinal diversity gradient of North American mammals.”
+<em>Proceedings of the National Academy of Sciences</em>, <b>113</b>(26), 7189-7194.
+<a href="https://doi.org/10.1073/pnas.1524750113">doi:10.1073/pnas.1524750113</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cookies()</code>
+</p>
+<p><code>clustr()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load bivalve occurrences to rasterise
+library(terra)
+data(bivalves)
+
+# initialise Equal Earth projected coordinates
+rWorld &lt;- rast()
+prj &lt;- 'EPSG:8857'
+rPrj &lt;- project(rWorld, prj, res = 200000) # 200,000m is approximately 2 degrees
+
+# coordinate column names for the current and target coordinate reference system
+xyCartes &lt;- c('paleolng','paleolat')
+xyCell   &lt;- c('centroidX','centroidY')
+
+# project occurrences and retrieve cell centroids in new coordinate system
+llOccs &lt;- vect(bivalves, geom = xyCartes, crs = 'epsg:4326')
+prjOccs &lt;- project(llOccs, prj)
+cellIds &lt;- cells(rPrj, prjOccs)[,'cell']
+bivalves[, xyCell] &lt;- xyFromCell(rPrj, cellIds)
+
+# subsample 20 equal-area sites within 10-degree bands of absolute latitude
+n &lt;- 20
+reps &lt;- 100
+set.seed(11)
+bandAbs &lt;- bandit(dat = bivalves, xy = xyCell,
+                  iter = reps, nSite = n, output = 'full',
+                  bin = 10, absLat = TRUE,
+                  crs = prj
+)
+head(bandAbs[[1]]) # inspect first subsample
+names(bandAbs)[1] # degree interval (absolute value) of first subsample
+#&gt; [1] "[10,20)"
+unique(names(bandAbs)) # all intervals containing sufficient data
+#&gt; [1] "[10,20)" "[20,30)" "[30,40)" "[40,50)"
+# note insufficient coverage to subsample at equator or above 50 degrees
+
+# subsample 20-degree bands, where central band spans the equator
+# (-10 S to 10 N latitude), as in Allen et al. (2020)
+# (An alternative, finer-grain way to divide 180 degrees evenly into an
+# odd number of bands would be to set 'bin' = 4.)
+bandCent &lt;- bandit(dat = bivalves, xy = xyCell,
+                   iter = reps, nSite = n, output = 'full',
+                   bin = 20, centr = TRUE, absLat = FALSE,
+                   crs = prj
+)
+unique(names(bandCent)) # all intervals containing sufficient data
+#&gt; [1] "[-50,-30)" "[10,30)" "[30,50)"
+
+</code></pre>
+
+
+</div>

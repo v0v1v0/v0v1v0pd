@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>binomial_to_bernoulli_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert binomial data to bernoulli data</h2>
+
+<h3>Description</h3>
+
+<p>Convert binomial data to bernoulli data by expanding dataset.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">binomial_to_bernoulli_data(
+  data.,
+  y,
+  size,
+  type = c("rest", "total"),
+  response_name = "response",
+  rest_name = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data.</code></td>
+<td>
+<p>A dataframe</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Column with 'successes' in binomial distribution <code>y~bin(size, p)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>Column with 'failures', i.e. size-y or 'total', i.e. size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Whether <code>size</code> is rest (i.e. 'failures') or 'total'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_name</code></td>
+<td>
+<p>Name of response variable in output dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rest_name</code></td>
+<td>
+<p>Name of 'failures' in column <code>response_name</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+dat &lt;- budworm
+dat &lt;- dat[dat$dose %in% c(1,2), ]
+dat$ntotal &lt;- 5
+dat
+dat.a &lt;- dat |&gt;
+  binomial_to_bernoulli_data(ndead, ntotal, type="total")
+dat.b &lt;- dat |&gt;
+  dplyr::mutate(nalive=ntotal-ndead) |&gt; dplyr::select(-ntotal) |&gt;
+  binomial_to_bernoulli_data(ndead, nalive, type="rest")
+
+m0 &lt;- glm(cbind(ndead, ntotal-ndead) ~ dose + sex, data=dat, family=binomial())
+m1 &lt;- glm(ndead / ntotal ~ dose + sex, data=dat, weight=ntotal, family=binomial())
+ma &lt;- glm(response ~ dose + sex, data=dat.a, family=binomial())
+mb &lt;- glm(response ~ dose + sex, data=dat.b, family=binomial())
+
+dat.a$response
+dat.b$response ## Not same and therefore the following do not match
+
+all.equal(coef(m0), coef(ma))
+all.equal(coef(m0), coef(mb))
+all.equal(coef(m1), coef(ma))
+all.equal(coef(m1), coef(mb))
+</code></pre>
+
+
+</div>

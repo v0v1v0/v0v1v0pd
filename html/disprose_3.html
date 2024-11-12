@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>annotate_probes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Annotate probes</h2>
+
+<h3>Description</h3>
+
+<p>Get genome annotation for oligonucleotide sequence
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">annotate_probes(
+  source = "data.frame",
+  ann.data = NULL,
+  gff.path = NULL,
+  org.name,
+  db = "refseq",
+  refs = TRUE,
+  probe.id.var,
+  probe.start.var,
+  probe.stop.var,
+  file.annot = NULL,
+  save.format = "txt",
+  sep = ";",
+  return = "add.resume",
+  priority = c("CDS", "gene", "region"),
+  data,
+  data.probe.id.var,
+  delete.downloads = FALSE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p>character; genome annotation source. Possible values are:
+<code>"data.frame"</code> (from data frame), <code>"giff"</code> (from GIFF file),
+<code>"load"</code> (download from NCBI with getGFF function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ann.data</code></td>
+<td>
+<p>genome annotation data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gff.path</code></td>
+<td>
+<p>character; .gff file name and path</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>org.name</code></td>
+<td>
+<p>character; the scientific name of the organism of interest</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>db</code></td>
+<td>
+<p>character; database from which the genome shall be retrieved; possible values are <code>"refseq", "genbank", "ensembl"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refs</code></td>
+<td>
+<p>logical; download genome if it isn't marked in the database as either a reference or a representative genome</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probe.id.var</code></td>
+<td>
+<p>vector of probes' identification numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probe.start.var, probe.stop.var</code></td>
+<td>
+<p>integer; vector of probes' start and end coordinates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file.annot</code></td>
+<td>
+<p>character; resulting annotation file name and path</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.format</code></td>
+<td>
+<p>character; format of resulting annotation file; possible values are <code>"txt", "csv"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>character;  field separator string</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return</code></td>
+<td>
+<p>character; returned object; possible values are: <code>"annotation"</code> (annotation data frame),
+<code>"resume"</code> (annotation attributes only), <code>"add.resume"</code> (user's data frame with added annotation attributes)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priority</code></td>
+<td>
+<p>character; vector of sequence ontology types that should be returned in resume in the first place</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data, data.probe.id.var</code></td>
+<td>
+<p>users data frame and probes' identification variable in it (used if <code>return = "add.resume"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.downloads</code></td>
+<td>
+<p>logical; delete files that were downloaded from NCBI</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function uses <code>boimartr</code> genome annotation retrieval instruments. See getGFF for details.
+If retrieval is not available, GFF file may be used.
+</p>
+<p>This function creates annotation ".txt" or ".csv" file. By default file is created in working directory.
+Optionally function returns annotation resume, i.e. annotation attribute for specified sequence ontology (SO).
+Priorities of SOs are set by user in <code>priopity</code> parameter.
+For example, if <code>priopity = c("CDS", "gene", "region")</code>, the function returns resume for "CDS" SO, if there are none - for
+"gene" CO etc.
+If there are several attributes meet <code>priority</code>, the first annotation attribute is returned.
+If none of <code>priority</code> COs found, the first annotation attribute is returned.
+</p>
+<p>Number of found annotations are indicated in returned data (<code>"ann.n" column</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Annotation data frame, or annotation attributes, or user's data frame with added annotation attributes. Also annotation file is created.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">path&lt;-tempdir()
+dir.create(path) # create temporal directory
+data(ann.data) # load genome annotation data frame
+annotation&lt;-annotate_probes(source = "data.frame", ann.data = ann.data,
+                probe.id.var = 1:5,
+                probe.start.var = c (1, 100, 200, 300, 400),
+                probe.stop.var = c (99, 199, 299, 399, 499),
+                file.annot = paste0(path, "/annotation.txt"), save.format = "txt",
+                return = "resume")
+file.remove(paste0(path, "/annotation.txt")) # delete files
+unlink(path, recursive = TRUE)
+
+</code></pre>
+
+
+</div>

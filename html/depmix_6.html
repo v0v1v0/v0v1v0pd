@@ -1,0 +1,493 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitdmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting Dependent Mixture Models</h2>
+
+<h3>Description</h3>
+
+<p><code>fitdmm</code> fits mixtures of hidden/latent Markov
+models on arbitrary length time series of mixed categorical and
+continuous data.  This includes latent class models and finite mixture
+models (for time series of length 1), which are in effect independent
+mixture models.
+</p>
+<p><code>posterior</code> computes the most likely
+latent state sequence for a given dataset and model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	fitdmm(dat, dmm, printlevel = 1, poster = TRUE, tdcov = 0,
+                 ses = TRUE, method = "optim", vfactor=15, der = 1, iterlim = 100,
+                 kmst = !dmm$st, kmrep = 5, postst = FALSE)
+	loglike(dat, dmm, tdcov = 0, grad = FALSE, hess = FALSE, set
+                 = TRUE, grInd = 0, sca = 1, printlevel = 1)
+	posterior(dat,dmm,tdcov=0,printlevel=1)
+	computeSes(dat,dmm) 
+	bootstrap(object,dat,samples=100, pvalonly=0,...)
+	## S3 method for class 'fit'
+summary(object, precision=3, fd=1, ...)
+	oneliner(object,precision=3)
+	
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p> An object (or list of objects) of class <code>md</code>, see
+markovdata.  If dat is a list of objects of class <code>md</code> a
+multigroup model is fitted on these data sets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dmm</code></td>
+<td>
+<p> An object (or a list of objects) of class <code>dmm</code>, see
+dmm.  If dmm is a list of objects of class <code>dmm</code>, these are taken
+to components of a mixture of dmm's model and will be coerced to class
+<code>mixdmm</code>.  In any case, the model that is fitted a multigroup
+mixture of dmm's with default ngroups=1 and number of components=1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>printlevel</code></td>
+<td>
+<p><code>printlevel</code> controls the output provided by the
+C-routines that are called to optimize the parameters.  The default of
+1 provides minmal output: just the initial and final loglikelihood of
+the model.  Setting higher values will provide more output on the
+progress the iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>poster</code></td>
+<td>
+<p>By default posteriors are computed, the result of which
+can be found in fit\$post.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>This is the optimization algorithm that is used.  donlp2
+from the Rdonlp2 package is the default method.  There is optional
+support for NPSOL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>der</code></td>
+<td>
+<p>Specifies whether derivatives are to be used in optimization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vfactor</code></td>
+<td>
+<p>vfactor controls optimization in optim and nlm. Since in 
+those routines there is no possibility for enforcing constraints, 
+constraints are enforced by adding a penalty term to the loglikelihood. 
+The penalty term is printed at the end of optimization if it is not close
+enough to zero. This may have several reasons. When parameters are 
+estimated at bounds for example. This can be solved by fixing those 
+parameters on their boundary values. When this is not acceptable vfactor 
+may be increased such that the penalty is larger and the probability that 
+they actually hold in the fitted model is correspondingly higher.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdcov</code></td>
+<td>
+<p>Logical, when set to TRUE, given that the model and data have 
+covariates, the corresponding parameters will be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ses</code></td>
+<td>
+<p>Logical, determines whether standard errors are computed after
+optimization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterlim</code></td>
+<td>
+<p>The iteration limit for npsol, defaults to 100, which may
+be too low for large models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grad</code></td>
+<td>
+<p>logical; if TRUE the gradients are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hess</code></td>
+<td>
+<p>logical; if TRUE the hessian is returned; it is not
+implemented currently and hence setting it to true will produce a 
+warning.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set</code></td>
+<td>
+<p>Whith the default value TRUE, the data and models parameters
+are sent to the C/C++ routines before computing the loglikelihood.
+When set is FALSE, this is not done.  If an incorrect model was set
+earlier in the C-routines this may cause serious errors and/or
+crashes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sca</code></td>
+<td>
+<p>If set to -1.0 the negative loglikelihood, gradients and
+hessian are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>fit</code>, ie the return value of 
+fitdmm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kmst,postst</code></td>
+<td>
+<p>These arguments control the generation of starting
+values by kmeans and posterior estimates respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kmrep</code></td>
+<td>
+<p>If no starting values are provided, <code>kmrep</code> sets of
+starting values are generated using kmeans in appropriate cases. The
+best resulting set of starting values is optimized further.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grInd</code></td>
+<td>
+<p>Logical argument; if TRUE, individual contributions of
+each independent realization to the gradient vector will be returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fd</code></td>
+<td>
+<p>Print the finite difference based standard errors in the summary
+if both those and bootstrapped standard errors are available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>The number of samples to be used in bootstrapping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalonly</code></td>
+<td>
+<p>Logical, if 1 only a bootstrapped pvalue is returned and not 
+fitted paramaters to compute standard errors, optimization is truncated
+when the loglikelihood is better than the original loglikelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precision</code></td>
+<td>
+<p>Precision sets the number of digits to be printed in the
+summary functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Used in summary.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>fitdmm</code> optimizes the parameters of a mixture of
+<code>dmm</code>s using a general purpose optimization routine subject to linear
+constraints on the parameters. 
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>fitdmm</code> returns an object of class <code>fit</code> which has a summary
+method that prints the summary of the fitted model, and the following fields:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>date,timeUsed,totMem</code></td>
+<td>
+<p>The date that the model was fitted, the
+time it took to so and the memory usage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglike</code></td>
+<td>
+<p>The loglikelihood of the fitted model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aic</code></td>
+<td>
+<p>The AIC of the fitted model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bic</code></td>
+<td>
+<p>The BIC of the fitted model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>The fitted model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post</code></td>
+<td>
+<p>See function posterior for details.</p>
+</td>
+</tr>
+</table>
+<p><code>loglike</code> returns a list of the following: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>logl</code></td>
+<td>
+<p>The loglikelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gr,grset</code></td>
+<td>
+<p><code>gr</code> contains the gradients. <code>grset</code> is a logical vector
+giving information as to which gradients are set, currently all gradients are set 
+except the gradients for the mixing proportions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hs,hsset</code></td>
+<td>
+<p><code>hs</code> contains the hessian. <code>hsset</code> is a logical giving 
+information as to which elements are computed.</p>
+</td>
+</tr>
+</table>
+<p><code>posterior</code> returns lists of the following: 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>A matrix of dimension 2+sum(nstates) by
+sum(length(ntimes)) containing in the first column the a posteriori
+component, in the second column the a posteriori state and in the
+remaining column the posterior probabilities of all states.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>comp</code></td>
+<td>
+<p>Contains the posterior component number for each
+independent realization; all ones for a single component model.</p>
+</td>
+</tr>
+</table>
+<p><code>computeSes</code> returns a vector of length <code>npars</code> with the standard
+errors and a matrix <code>hs</code> with the hessian used to compute them.  The
+routine is not fail safe and can produce errors, ie when the (corrected)
+hessian is singular; a warning is issued when the hessian is close to being
+singular.
+</p>
+<p><code>bootstrap</code> returns an object of class <code>fit</code> with three extra
+fields, the bootstrapped standard errors, bse, a matrix with
+goodness-of-fit measures of the bootstrap samples, ie logl, AIC and BIC and
+pbetter, which is the proportion of bootstrap samples that resulted in
+better fits than the original model.
+</p>
+<p><code>summary.fit</code> pretty-prints the outputs.
+</p>
+<p><code>oneliner</code> returns a vector of loglike, aic, bic, mod$npars,
+mod$freepars, date.
+</p>
+
+
+<h3>Note</h3>
+
+<p><code>fitdmm</code> fits time series of arbitrary length and mixtures of
+<code>dmm</code>s, where, to the best of my knowledge, other packages are limited
+due to the different optimization routines that are commonly used for these
+types of models.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ingmar Visser <a href="mailto:i.visser@uva.nl">i.visser@uva.nl</a>, Development of this pacakge
+was supported by European Commission grant 51652 (NEST) and by a VENI grant
+from the Dutch Organization for Scientific Research (NWO).</p>
+
+
+<h3>References</h3>
+
+<p>Lawrence R. Rabiner (1989).  A tutorial on hidden Markov models and
+selected applications in speech recognition.  <em>Proceedings of
+IEEE</em>, 77-2, p.  267-295.
+</p>
+<p>Theodore C. Lystig and James P. Hughes (2002).  Exact computation of
+the observed information matrix for hidden Markov models.
+<em>Journal of Computational and Graphical Statistics</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dmm</code>,<code>markovdata</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# COMBINED RT AND CORRECT/INCORRECT SCORES from a 'switching' experiment
+
+data(speed)
+mod &lt;- dmm(nsta=2,itemt=c(1,2)) # gaussian and binary items
+ll &lt;- loglike(speed,mod)
+fit1 &lt;- fitdmm(dat=speed,dmm=mod)
+summary(fit1)
+ll &lt;- loglike(speed,fit1)
+
+# bootstrap
+## Not run: 
+pst &lt;- posterior(dat=speed,dmm=fit1)
+bs &lt;- bootstrap(fit1,speed,samples=50)
+
+## End(Not run) # end not run
+
+
+# add some constraints using conpat
+conpat=rep(1,15)
+conpat[1]=0
+conpat[14:15]=0
+conpat[8:9]=0
+# use starting values from the previous model fit, except for the guessing 
+# parameters which should really be 0.5
+stv=c(1,.896,.104,.084,.916,5.52,.20,.5,.5,6.39,.24,.098,.90,0,1)
+mod=dmm(nstates=2,itemt=c("n",2),stval=stv,conpat=conpat)
+
+fit2 &lt;- fitdmm(dat=speed,dmm=mod)
+summary(fit2)
+
+
+# add covariates to the model to incorporate the fact the accuracy pay off changes per trial
+# 2-state model with covariates + other constraints
+
+## Not run: 
+
+conpat=rep(1,15)
+conpat[1]=0
+conpat[8:9]=0
+conpat[14:15]=0
+conpat[2]=2
+conpat[5]=2
+stv=c(1,0.9,0.1,0.1,0.9,5.5,0.2,0.5,0.5,6.4,0.25,0.9,0.1,0,1)
+tdfix=rep(0,15)
+tdfix[2:5]=1
+stcov=rep(0,15)
+stcov[2:5]=c(-0.4,0.4,0.15,-0.15)
+
+mod&lt;-dmm(nstates=2,itemt=c("n",2),stval=stv,conpat=conpat,tdfix=tdfix,tdst=stcov,
+modname="twoboth+cov")
+
+fit3 &lt;- fitdmm(dat=speed,dmm=mod,tdcov=1,der=0,ses=0,vfa=80)
+summary(fit3)
+
+# split the data into three time series
+data(speed)
+r1=markovdata(dat=speed[1:168,],item=itemtypes(speed))
+r2=markovdata(dat=speed[169:302,],item=itemtypes(speed))
+r3=markovdata(dat=speed[303:439,],item=itemtypes(speed))
+
+# define 2-state model with constraints
+conpat=rep(1,15)
+conpat[1]=0
+conpat[8:9]=0
+conpat[14:15]=0
+stv=c(1,0.9,0.1,0.1,0.9,5.5,0.2,0.5,0.5,6.4,0.25,0.9,0.1,0,1)
+mod&lt;-dmm(nstates=2,itemt=c("n",2),stval=stv,conpat=conpat)
+
+# define 3-group model with equal transition parameters, and no 
+# equalities between the obser parameters
+mgr &lt;-mgdmm(dmm=mod,ng=3,trans=TRUE,obser=FALSE)
+
+fitmg &lt;- fitdmm(dat=list(r1,r2,r3),dmm=mgr)
+summary(fitmg)
+
+
+## End(Not run) # end not run
+
+# LEARNING DATA AND MODELS (with absorbing states)
+
+## Not run: 
+
+data(discrimination)
+
+# all or none model with error prob in the learned state
+fixed = c(0,0,0,1,1,1,1,0,0,0,0)
+stv = c(1,1,0,0.03,0.97,0.1,0.9,0.5,0.5,0,1)
+allor &lt;- dmm(nstates=2,itemtypes=2,fixed=fixed,stval=stv,modname="All-or-none")
+
+# Concept identification model: learning only after an error
+st=c(1,1,0,0,0,0.5,0.5,0.5,0.25,0.25,0.05,0.95,0,1,1,0,0.25,0.375,0.375)
+# fix some parameters
+fx=rep(0,19)
+fx[8:12]=1
+fx[17:19]=1
+# add a couple of constraints
+conr1 &lt;- rep(0,19)
+conr1[9]=1
+conr1[10]=-1
+conr2 &lt;- rep(0,19)
+conr2[18]=1
+conr2[19]=-1
+conr3 &lt;- rep(0,19)
+conr3[8]=1
+conr3[17]=-2
+conr=c(conr1,conr2,conr3)
+cim &lt;- dmm(nstates=3,itemtypes=2,fixed=fx,conrows=conr,stval=st,modname="CIM")
+
+# define a mixture of the above models ...
+mix &lt;- mixdmm(dmm=list(allor,cim),modname="MixAllCim")
+
+# ... and fit it on the combined data discrimination
+fitmix &lt;- fitdmm(discrimination,mix)
+summary(fitmix)
+
+
+## End(Not run) # end not run
+
+</code></pre>
+
+
+</div>

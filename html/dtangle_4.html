@@ -1,0 +1,273 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtangle2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Deconvolve cell type mixing proportions from gene expression data.</h2>
+
+<h3>Description</h3>
+
+<p>Deconvolve cell type mixing proportions from gene expression data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtangle2(Y, references = NULL, pure_samples = NULL, n_markers = NULL,
+  markers = NULL, marker_method = "ratio", weights = NULL,
+  sto = TRUE, inv_scale = function(x) 2^x, fit_scale = log,
+  loss_smry = "var", dtangle_init = TRUE, seed = NULL,
+  verbose = FALSE, optim_opts = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>Expression matrix.
+</p>
+<p>(Required) Two-dimensional numeric. Must implement <code>as.matrix</code>.
+</p>
+<p>Each row contains expression measurements for a particular sample. Each columm contains the measurements of the same gene over all individuals. Can either contain just the mixture samples to be deconvolved or both the mixture samples and the reference samples. See <code>pure_samples</code> and <code>references</code> for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>references</code></td>
+<td>
+<p>Cell-type reference expression matrix.
+</p>
+<p>(Optional) Two-dimensional numeric. Must implement <code>as.matrix</code>. Must have same number of columns as <code>Y</code>. Columns must correspond to columns of <code>Y</code>.
+</p>
+<p>Each row contains expression measurements for a reference profile of a particular cell type. Columns contain measurements of reference profiles of a gene. Optionally may merge this matrix with <code>Y</code> and use <code>pure_samples</code> to indicate which rows of <code>Y</code> are pure samples. If <code>pure_samples</code> is not specified <code>references</code> must be specified. In this case each row of <code>references</code> is assumed to be a distinct cell-type. If both <code>pure_samples</code> and <code>references</code> are specified then <code>pure_samples</code> specifies to which cell-type each row of <code>references</code> corresponds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pure_samples</code></td>
+<td>
+<p>The pure sample indicies.
+</p>
+<p>(Optional) List of one-dimensional integer. Must implement <code>as.list</code>.
+</p>
+<p>The i-th element of the top-level list is a vector of indicies (rows of <code>Y</code> or <code>references</code>) that are pure samples of type i. If <code>references</code> is not specified then this argument identifies which rows of <code>Y</code> correspond to pure reference samples of which cell-types. If <code>references</code> is specified then this makes same idenficiation but for the <code>references</code> matrix instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_markers</code></td>
+<td>
+<p>Number of marker genes.
+</p>
+<p>(Optional) One-dimensional numeric.
+</p>
+<p>How many markers genes to use for deconvolution. Can either be a single integer, vector of integers (one for each cell type), or single or vector of percentages (numeric in 0 to 1). If a single integer then all cell types use that number of markers. If a vector then the i-th element determines how many marker genes are used for the i-th cell type. If single percentage (in 0 to 1) then that percentage of markers are used for all types. If vector of percentages then that percentage used for each type, respectively. If not specified then top 10% of genes are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>markers</code></td>
+<td>
+<p>Marker gene indices.
+</p>
+<p>(Optional) List of one-dimensional integer.
+</p>
+<p>Top-level list should be same length as <code>pure_samples</code>, i.e. one element for each cell type. Each element of the top-level list is a vector of indicies (columns of <code>Y</code>) that will be considered markers of that particular type. If not supplied then <code>dtangle</code> finds markers internally using <code>find_markers</code>. Alternatively, one can supply the output of <code>find_markers</code> to the markers argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>marker_method</code></td>
+<td>
+<p>Method used to rank marker genes.
+</p>
+<p>(Optional) One-dimensional string.
+</p>
+<p>The method used to rank genes as markers. If not supplied defaults to “ratio”. Only used if markers are not provided to argument “markers”. Options are
+</p>
+
+<ul>
+<li>
+<p>'ratio' selects and ranks markers by the ratio of the mean expression of each gene in each cell type to the mean of that gene in all other cell types.
+</p>
+</li>
+<li>
+<p>'regression ' selects and ranks markers by estimated regression coefficients in a series of regressions with single covariate that is indicator of each type.
+</p>
+</li>
+<li>
+<p>'diff' selects and ranks markers based upon the difference, for each cell type, between the median expression of a gene by each cell type and the median expression of that gene by the second most highly expressed cell type.
+</p>
+</li>
+<li>
+<p>'p.value' selects and ranks markers based upon the p-value of a t-test between the median expression of a gene by each cell type and the median expression of that gene by the second most highly expressed cell type.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>Weights for the genes.
+</p>
+<p>(Optional) String or one-dimensional numeric vector. 
+</p>
+<p>Weights for the genes in the optimization. If NULL (default) then does not weight genes differently. If 'variance' then inversely weights with the variance of the references. This only works if there is more than one reference per cell type so that the variance can be estimated. If a numeric then this uses whatever is specified as weights. They must be non-negative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sto</code></td>
+<td>
+<p>Sum-to-one constraint.
+</p>
+<p>(Optional) Boolean.
+</p>
+<p>Re-normalize the estimates so that the cell-type proportions sum to one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inv_scale</code></td>
+<td>
+<p>Inverse scale transformation.
+</p>
+<p>(Optional) Function. 
+</p>
+<p>Defaults to 2^x. This is equivalent to assuming that the data has been log2-transformed. If another transformation has been applied to the data then this function should be used to specify the inverse of that transformation needed to put gene expressions on the linear scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit_scale</code></td>
+<td>
+<p>Transformation to used as part of optimization.
+</p>
+<p>(Optional) Function.
+</p>
+<p>Function to apply to gene expressions as part of optimization. Defaults to log.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss_smry</code></td>
+<td>
+<p>Loss summary function minimized to find estimated proportions.
+</p>
+<p>(Optional) String.
+</p>
+<p>Either 'var' (default) to minimze the (weighted) variance of the residuals or 'L2' to minimize the (weighted) sums of squares of the residuals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtangle_init</code></td>
+<td>
+<p>Optimization initialization.
+</p>
+<p>(Optional) Boolean.
+</p>
+<p>Boolean controlling if dtangle2 optimization should be initialized using dtangle1 estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>(Optional) Integer.
+</p>
+<p>Value at which to seed the random seed before estimating. Optimization initialization might change if this value is not specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>(Optional) Boolean.
+</p>
+<p>Controls if optimization output is printed or not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim_opts</code></td>
+<td>
+<p>(Optional) List.
+</p>
+<p>Optimization options passed to DEoptimR controlling optimization. Options that may be set are
+</p>
+
+<ul>
+<li>
+<p>'constr' constraint to enforce. Either 'box' for 0-1 box constraints that proportions are between zero and one, 'ineq' for constraints that proportions sum to less than one, 'eq' for equality constraints that proportions sum to one, or 'eq_solve' to solve for one of the parameters in terms of the other and enfoce equality constraints using inequality on remaining parameters. Default and recommended is 'box'.
+</p>
+</li>
+<li>
+<p>'ninit' number of randomly initalized points as part of the DEoptimR initial population.
+</p>
+</li>
+<li>
+<p>'tritter' how often to print results if 'verbose=TRUE'.
+</p>
+</li>
+<li>
+<p>'maxiter' maximum number of optimization iterations to use before exiting.
+</p>
+</li>
+<li>
+<p>'convtol' tolerance for convergence tolerance stopping criterion. 
+</p>
+</li>
+<li>
+<p>'constrtol' tolerance for constraint enforcement.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List.
+</p>
+
+<ul>
+<li>
+<p>'estimates' a matrix estimated mixing proportions. One row for each sample, one column for each cell type.
+</p>
+</li>
+<li>
+<p>'markers' list of vectors of marker used for each cell type. Each element of list is vector of columns of <code>Y</code> used as a marker for the i-th cell type.
+</p>
+</li>
+<li>
+<p>'n_markers' vector of number of markers used for each cell type.
+</p>
+</li>
+<li>
+<p>'weights' the weights used as part of the optimization.
+</p>
+</li>
+<li>
+<p>'diag' diagnostic values for the estimated proportions.
+<code>resids_hat</code>,<code>loss_hat</code>, and <code>p_hat</code> are the residuals, loss, and estimates for the proportions returned by dtangle2. Similarly, <code>resids_opt</code>,<code>loss_opt</code> and <code>p_opt</code> are these values for the optimized value not re-scaled to enforce the STO constraint. 
+
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>find_markers</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+truth = shen_orr_ex$annotation$mixture
+pure_samples &lt;- lapply(1:3, function(i) {
+   which(truth[, i] == 1)
+})
+Y &lt;- shen_orr_ex$data$log
+n_markers = 20
+
+dtangle2(Y, pure_samples = pure_samples,
+n_markers=n_markers)
+
+
+</code></pre>
+
+
+</div>

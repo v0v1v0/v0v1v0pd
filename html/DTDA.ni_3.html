@@ -1,0 +1,180 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DTDAni</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Doubly Truncated Data Analysis, Non Iterative</h2>
+
+<h3>Description</h3>
+
+<p>This function computes a non-iterative estimator for the cumulative distribution of a doubly truncated variable, see de Uña-Álvarez (2018).
+The function is restricted to interval sampling.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DTDAni(x, u, tau)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Numeric vector corresponding the variable of ultimate interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>Numeric vector corresponding to the left truncation variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau</code></td>
+<td>
+<p>Sampling interval width. The right truncation values will be internally calculated as v = u + tau.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function DTDAni is adapted to the presence of ties.
+It can be used to compute the direct <code class="reqn">(Fd)</code> and the reverse <code class="reqn">(Fr)</code> estimators;
+see the example below. Both curves are valid estimators for the cumulative
+distribution (F) of the doubly truncated variable. Weighted estimators
+<code class="reqn">Fw = w*Fd + (1-w)*Fr</code> with <code class="reqn">0&lt;w&lt;1</code> are valid too, the choice <code class="reqn">w=1/2</code> being
+recommended in practice (de Uña-Álvarez, 2018).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The distinct values of the variable of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nx</code></td>
+<td>
+<p>The absloute frequency of each x value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cumprob</code></td>
+<td>
+<p>The estimated cumulative probability for each x value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p>The auxiliary Pi used in the calculation of the estimator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>L</code></td>
+<td>
+<p>The auxiliary Li used in the calculation of the estimator.</p>
+</td>
+</tr>
+</table>
+<h3>Acknowledgements</h3>
+
+
+<ul>
+<li>
+<p>Jacobo de Uña-Álvarez was supported by Grant MTM2014-55966-P, Spanish Ministry of Economy and Competitiveness.
+</p>
+</li>
+<li>
+<p>José Carlos Soage was supported by Red Tecnológica de Matemática Industrial (Red TMATI), Cons. de Cultura, Educación e OU, Xunta de Galicia (ED341D R2016/051) and by Grupos de Referencia Competitiva, Consolidación y Estructuración de Unidades de Investigación Competitivas del SUG, Cons. de Cultura, Educación e OU, Xunta de Galicia (GRC ED431C 2016/040).
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+
+<ul>
+<li>
+<p>de Uña-Álvarez, Jacobo.
+</p>
+</li>
+<li>
+<p>Soage González, José Carlos.
+</p>
+</li>
+<li>
+<p>Maintainer: José Carlos Soage González. <a href="mailto:jsoage@uvigo.es">jsoage@uvigo.es</a>
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>de Uña-Álvarez J. (2018) A Non-iterative Estimator for Interval Sampling and
+Doubly Truncated Data. In: Gil E., Gil E., Gil J., Gil M. (eds)
+The Mathematics of the Uncertain. Studies in Systems, Decision and Control,
+vol 142. Springer, Cham
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Generating data which are doubly truncated:
+N &lt;- 250
+x0 &lt;- runif(N)             # Original data
+u0 &lt;- runif(N, -0.25, 0.5) # Left-truncation times
+tau &lt;- 0.75                # Interval width
+v0 &lt;- u0 + tau
+
+x &lt;- x0[u0 &lt;= x0 &amp; x0 &lt;= v0]
+u &lt;- u0[u0 &lt;= x0 &amp; x0 &lt;= v0]
+v &lt;- v0[u0 &lt;= x0 &amp; x0 &lt;= v0]
+n &lt;- length(x)  # Final sample size after the interval sampling
+
+# Create an object with DTDAni function
+res &lt;- DTDAni(x, u, tau)
+plot(res)
+
+abline(a = 0, b = 1, col = "green")  #the true cumulative distribution
+
+# Calculating the reverse estimator:
+res2 &lt;- DTDAni(-x, -u - tau, tau)
+lines(-res2$x, 1 - res2$cumprob, type = "s", col = "blue", lty = 2)
+
+# Weigthed estimator (recommended):
+
+w &lt;- 1/2
+
+k &lt;- length(res$x)
+
+Fw &lt;- w * res$cumprob + (1 - w) * (1 - res2$cumprob[k:1])
+lines(res$x, Fw, type = "s", col = 2)
+
+
+# Using res$P and res$L to compute the estimator:
+
+k &lt;- length(res$x)
+F &lt;- rep(1, k)
+for (i in 2:k){
+  F[i] &lt;- (F[i - 1] - res$P[i - 1]) / res$L[i - 1] + res$P[i - 1]
+}
+
+F0 &lt;- F/max(F)  # This is equal to res$cumprob
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

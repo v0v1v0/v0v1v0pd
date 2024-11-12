@@ -1,0 +1,284 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gof</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Goodness of fit test for db and beta binomial distributions.
+</h2>
+
+<h3>Description</h3>
+
+<p>Either a chi-squared or a Monte Carlo test of goodness
+of fit of a db distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gof(object, obsd, ...)
+## S3 method for class 'mleDb'
+gof(object,obsd,...,test=TRUE,MC=FALSE,seed=NULL,
+                    nsim=99,maxit=1000,verb=FALSE)
+## S3 method for class 'mleBb'
+gof(object,obsd,...,test=TRUE,MC=FALSE,seed=NULL,
+                    nsim=99,maxit=1000,verb=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>An object of class <code>"mleDb"</code> or <code>"mleBb"</code> as returned by the function
+<code>mleDb()</code> or by <code>mleBb()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obsd</code></td>
+<td>
+
+<p>The data to which <code>object</code> was fitted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Not used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+
+<p>Logical scalar.  Should a hypothesis test be carried out?  If <code>test</code>
+is <code>FALSE</code> then only the test statistic is returned.  This argument
+is present so as to facilitate the calculations used in effecting a
+Monte Carlo test, by allowing <code>gof()</code> to recursively call itself.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MC</code></td>
+<td>
+
+<p>Logical scalar.  Should a Monte Carlo test be used rather than a
+chi squared test?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Integer scalar.  The seed for the random number generator used
+when <code>MC</code> is <code>TRUE</code>.  If not supplied, <code>seed</code> is
+created by sampling one integer from <code>1:1e5</code>.  This argument
+is ignored if <code>MC</code> is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+
+<p>The number of simulated replicates on which the Monte Carlo test is
+to be based.  Ignored if <code>MC</code> is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Integer scalar.  The maximum number of iterations to be undertaken
+by <code>optim()</code> when fitting models to the simulated data.
+Ignored if <code>MC</code> is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>Logical scalar.  Should rudimentary “progress reports” be
+issued during the course of the simulations invoked by the Monte
+Carlo test procedure?  Ignored if <code>MC</code> is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>gof()</code> is a generic function with two methods,
+<code>gof.mleDb()</code> and <code>gof.mleBb()</code>.
+</p>
+<p>The test statistic is calculated as </p>
+<p style="text-align: center;"><code class="reqn">\sum((O-E)^2/E)</code>
+</p>
+
+<p>where <code class="reqn">O</code> means “observed” and <code class="reqn">E</code> means “expected”.
+If the mean of <code class="reqn">E</code> is less than 5 or if any of the entries of <code class="reqn">E</code>
+is less than 1, then the chi squared test is invalid and a warning to this
+effect is issued.  In this case the expected values are returned as an
+attribute of the value returned by <code>gof()</code>.  The foregoing applies
+of course only if a chi squared test (as opposed to a Monte Carlo test)
+is being used.
+</p>
+<p>The degrees of freedom for the chi squared test are <code>length(E) - 3</code>.
+The value 3 is equal to 2 (for the number of parameters estimated) plus
+1 (for the costraint that the probabilities of the values sum to 1).
+</p>
+<p>If it were actually true that, under the null hypothesis, the
+observed test statistic and those calculated from simulated
+data are <em>exchangeable</em>, the Monte Carlo test would
+be <em>exact</em>.  However the real data are distributed as
+<code class="reqn">f(x,\theta)</code> whereas the simulated data
+are distributed as <code class="reqn">f(x,\hat{\theta})</code>
+where <code class="reqn">\hat{\theta}</code> is the estimate of
+<code class="reqn">\theta</code> based on the observed data.  Consequently the
+observed test statistic and simulated test statistics are
+“not quite” exchangeable.  Nevertheless it appears that
+in practice the Monte Carlo test is very close to being exact.
+</p>
+<p>The meaning of “exact” here is that if the null hypothesis
+is true then, over the set of instances of collecting the data
+<b>and</b> simulating the required replicates, the <code class="reqn">p</code>-value
+is uniformly distributed on the set <code class="reqn">\{1/N, 2/N, \ldots,
+  (N-1)/N, 1\}</code> where <code class="reqn">N</code> is equal to <code>nsim</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+<p>The test statistic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>The p-value of the test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degFree</code></td>
+<td>
+<p>The degrees of freedom of the chi squared test.</p>
+</td>
+</tr>
+</table>
+<p>The last component is present only if a chi squared test (rather
+than a Monte Carlo test) is used.
+</p>
+<p>If a chi squared test is used and turns out to be invalid, then
+the returned value has an attribute <code>"expVals"</code>, consisting
+of the (problematic) expected values.
+</p>
+<p>If a Monte Carlo test is used the returned value has an attribute
+<code>"seed"</code> which is equal to the <code>seed</code> argument or to the
+random value selected to replace it if the <code>seed</code> argument was
+not supplied.
+</p>
+
+
+<h3>Notes</h3>
+
+<p>The Monte Carlo <code class="reqn">p</code>-value is calculated as
+<code>(m+1)/(nsim+1)</code> where <code>m</code> is the number of simulated
+statistics which greater than or equal to the observed statistic
+(computed from the “real” data.
+</p>
+<p>The <em>smallest</em> that the Monte Carlo
+<code class="reqn">p</code>-value can be is <code>1/(nsim + 1)</code>, e.g. 0.01 when
+<code>nsim</code> is 99.  For “finer distinctions” you must use
+larger values of <code>nsim</code>, such as 999 or 9999.
+</p>
+<p>The <code class="reqn">p</code>-value is <em>random</em>; if you repeat the test (with
+the same data) you may well get a different <code class="reqn">p</code>-value.
+Resist the temptation to repeat the test until you get a
+<code class="reqn">p</code>-value that you like!!!  This invalidates your inference!
+</p>
+
+
+<h3>Remark on the Examples</h3>
+
+<p>In the <b>Examples</b>, db and beta binomial distributions are
+fitted to the <em>Parsonnet scores</em> from the <code>cardiacsurgery</code>
+data set which comes from the <code>spcadjust</code> package.  It is not
+completely clear what the value of <code>ntop</code> (db distribution)
+or <code>size</code> (beta binomial distribution) should be.  The data
+are not actually counts, and in particular they are not counts
+of successes out of a given number (“<code>size</code>”) of trials.
+In the event I chose to use the value 71, the maximium value of the
+Parsonnet scores, for the value of both <code>ntop</code> and <code>size</code>.
+This was the value chosen for use as <code>size</code> by Wittenberg
+(2021) when he fitted a beta binomial distribution to these data.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Philipp Wittenberg (2021). Modeling the patient mix for
+risk-adjusted CUSUM charts.  To appear in <em>Statistical
+Methods in Medical Research</em>.
+</p>
+<p>Axel Gandy and Jan Terje Kvaloy (2013). Guaranteed
+conditional performance of control charts via bootstrap
+methods. <em>Scandinavian Journal of Statistics</em> <b>40</b>,
+pp. 647–668.  (Reference for <code>spcadjust</code> package.)
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mleDb()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X &lt;- hmm.discnp::Downloads
+f &lt;- mleDb(X,15,TRUE)
+tst1 &lt;- gof(f,X) # Gives warning that the chi squared test is invalid.
+tst2 &lt;- gof(f,X,MC=TRUE,seed=42)
+# The p-value is 0.03 so we reject the adequacy of the fit at the 0.05
+# significance level.  Note that the p-value that we get, when the
+# random number generator seed is set equal to 42, is very similar in
+# value to the p-value (0.0347) from the "invalid" chi squared test.
+#
+## Not run:  # Takes too long.
+if(requireNamespace("spcadjust")) {
+    data("cardiacsurgery", package = "spcadjust")
+    xxx  &lt;- cardiacsurgery$Parsonnet
+    fit1 &lt;- mleDb(xxx,ntop=71,zeta=TRUE)
+    g1   &lt;- gof(fit1,obsd=xxx,MC=TRUE,verb=TRUE,seed=42)
+    fit2 &lt;- mleBb(xxx,size=71)
+    g2   &lt;- gof(fit2,obsd=xxx,MC=TRUE,verb=TRUE,seed=17)
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

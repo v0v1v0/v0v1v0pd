@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fill_blast_result</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Complement BLAST result</h2>
+
+<h3>Description</h3>
+
+<p>Provides subjects' GenInfo Identifiers if BLAST alignment result does not contain one.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fill_blast_results(
+  blast.result,
+  AcNum.column.name = "Racc",
+  GI.column.name = "Rgi",
+  delete.version = FALSE,
+  version.sep = ".",
+  add.gi = "DB",
+  add.gi.df,
+  temp.db = NULL,
+  delete.temp = FALSE,
+  add.gi.db = NULL,
+  add.gi.table = NULL,
+  add.gi.ac.column.name = "AC",
+  add.gi.gi.column.name = "GI",
+  mc.cores = 1,
+  verbose = TRUE
+)
+
+delete_AcNum_version(ac.num.var, version.sep = ".", mc.cores = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>blast.result</code></td>
+<td>
+<p>data frame; BLAST alignment result</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AcNum.column.name, GI.column.name</code></td>
+<td>
+<p>character; name of column with subject
+accession numbers and GenInfo Identifier numbers from BLAST result data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.version</code></td>
+<td>
+<p>logical; remove version suffix from subject accession number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>version.sep</code></td>
+<td>
+<p>character; accession number and version suffix separator (a dot for NCBI accession numbers)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.gi</code></td>
+<td>
+<p>character; table with linked accession and GI numbers is taken from
+SQLite database (<code>"DB"</code>) or data frame (<code>"DF"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.gi.df</code></td>
+<td>
+<p>data frame with table (used if <code>add.gi = "DF"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temp.db</code></td>
+<td>
+<p>character; temporal SQLite database name and path</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.temp</code></td>
+<td>
+<p>logical; delete created temporal SQLite database</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.gi.db, add.gi.table, add.gi.ac.column.name, add.gi.gi.column.name</code></td>
+<td>
+<p>SQLite database name and path,
+table name and name of columns with accession and GI numbers (used if <code>add.gi = "DB"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc.cores</code></td>
+<td>
+<p>integer; number of processors for parallel computation (not supported on Windows)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ac.num.var</code></td>
+<td>
+<p>vector of accession numbers</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>BLAST alignment, performed with local database, may not contain subject GI information. Also subject accession may contain version suffix.
+This can make it difficult to analyze the results further. This function adds subject GI and removes subject accession version suffix.
+</p>
+<p>To add GI GenInfo Identifiers table with them linked to accession numbers must be provided as data frame or SQLite database table.
+<code>add.gi.df</code> must be a data frame with column one - accession numbers, column two - GenInfo Identifier numbers.
+If <code>add.gi = "DF"</code> temporal SQLite database is created.
+</p>
+<p>SQLite database table with accession and GI numbers should not contain duplicated rows.
+It is also highly recommended to index accession numbers' variable in database.
+</p>
+<p><code>delete.version</code> executes in the first step, so if you use this option accession numbers
+in <code>add.gi</code> table must not contain version suffix.
+</p>
+<p><code>AcNum.column.name</code>, <code>GI.column.name</code>, <code>add.gi.ac.column.name</code> and <code>dd.gi.gi.column.name</code>
+must be column names exactly as in data frame.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>blast.result</code> data frame with added GI and deleted accession version suffix.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>fill_blast_results</code>: Provides subjects' Genbank Identifiers if BALST alignment result does not contain one
+</p>
+</li>
+<li> <p><code>delete_AcNum_version</code>: Remove accession version suffix
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">path &lt;- tempdir()
+dir.create (path)
+# load raw blast results
+data (blast.raw)
+#load meta.target with result (targets' sequences) GI and Acc.nums
+data (meta.target)
+blast.fill &lt;- fill_blast_results(blast.result = blast.raw, delete.version = TRUE,
+                                 add.gi = "DF", add.gi.df = meta.target[, c("GB_AcNum", "gi")],
+                                 temp.db = paste0 (path, "/temp.db"), delete.temp = TRUE)
+
+</code></pre>
+
+
+</div>

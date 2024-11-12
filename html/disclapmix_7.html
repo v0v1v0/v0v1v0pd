@@ -1,0 +1,312 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>disclapmix</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Discrete Laplace mixture inference using the EM algorithm</h2>
+
+<h3>Description</h3>
+
+<p><code>disclapmix</code> makes inference in a mixture of Discrete Laplace
+distributions using the EM algorithm. After the EM algorithm has converged,
+the centers are moved if the marginal likelihood increases by doing so. And
+then the EM algorithm is run again. This continues until the centers are not
+moved.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">disclapmix(
+  x,
+  clusters,
+  init_y = NULL,
+  iterations = 100L,
+  eps = 0.001,
+  verbose = 0L,
+  glm_method = "internal_coef",
+  glm_control_maxit = 50L,
+  glm_control_eps = 1e-06,
+  init_y_method = "pam",
+  init_v = NULL,
+  ret_x = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusters</code></td>
+<td>
+<p>The number of clusters/components to fit the model for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_y</code></td>
+<td>
+<p>Initial central haplotypes, if NULL, these will be estimated
+as described under the <code>init_y_method</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>Maximum number of iterations in the EM-algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Convergence stop criteria in the EM algorithm which is compared
+to <code class="reqn">\frac{\max \{ v_{new} - v_{old} \}}{\max \{ v_{old} \}}</code>, where <code>v</code> is a matrix of each
+observation's probability of belonging to a certain center.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>from 0 to 2 (both including): 0 for silent, 2 for extra
+verbose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_method</code></td>
+<td>
+<p><code>internal_coef</code>, <code>internal_dev</code> or
+<code>glm.fit</code>. Please see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_control_maxit</code></td>
+<td>
+<p>Integer giving the maximal number of IWLS
+iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_control_eps</code></td>
+<td>
+<p>Positive convergence tolerance epsilon; the
+iterations converge when <code>|x - x_{old}|/(|x| + 0.1) &lt; epsilon</code>, where
+<code>x = beta_correction</code> for <code>internal_coef</code> and <code>x = deviance</code>
+otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_y_method</code></td>
+<td>
+<p>Which cluster method to use for finding initial central
+haplotypes, y: <code>pam</code> (recommended) or <code>clara</code>. Ignored if
+<code>init_y</code> is supplied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_v</code></td>
+<td>
+<p>Matrix with 'nrow(x)' rows and 'clusters' columns specifying 
+initial posterior probabilities to get EM started, if
+none specified, then 'matrix(1/clusters, nrow = nrow(x), ncol = clusters)' is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ret_x</code></td>
+<td>
+<p>Return data 'x'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Used to detect obsolete usage (when using parameters
+<code>centers</code>, <code>use.parallel</code>, <code>calculate.logLs</code> or
+<code>plots.prefix</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>glm_method</code>: <code>internal_coef</code> is the fastest as it uses the
+relative changes in the coefficients as a stopping criterium, hence it does
+not need to compute the deviance until the very end. In normal situations,
+it would not be a problem to use this method. <code>internal_dev</code> is the
+reasonably fast method that uses the deviance as a stopping criterium (like
+<code>glm.fit</code>). <code>glm.fit</code> to use the traditional <code>glm.fit</code> IWLS
+implementation and is slow compared to the other two methods.
+</p>
+<p><code>init_y_method</code>: For <code>init_y_method = 'clara'</code>, the sampling
+parameters are: <code>samples = 100</code>, <code>sampsize =
+min(ceiling(nrow(x)/2), 100 + 2*clusters)</code> and the random number generator
+in R is used.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>disclapmixfit</code> object: </p>
+
+<dl>
+<dt>list("glm_method")</dt>
+<dd>
+<p>The supplied GLM method.</p>
+</dd>
+<dt>list("init_y")</dt>
+<dd>
+<p>The supplied initial central haplotypes,
+<code>init_y</code>.</p>
+</dd> 
+<dt>list("init_y_method")</dt>
+<dd>
+<p>The supplied method for
+choosing initial central haplotypes (only used if <code>init_y</code> is
+<code>NULL</code>).</p>
+</dd>
+<dt>list("converged")</dt>
+<dd>
+<p>Whether the estimation converged or not.</p>
+</dd>
+<dt>list("x")</dt>
+<dd>
+<p>Dataset used to fit the model if 'ret_x' is 'TRUE', else 'NULL'.</p>
+</dd> 
+<dt>list("y")</dt>
+<dd>
+<p>The
+central haplotypes, <code>y</code>.</p>
+</dd> <dt>list("tau")</dt>
+<dd>
+<p>The prior probabilities of
+belonging to a cluster, <code>tau</code>.</p>
+</dd> <dt>list("v_matrix")</dt>
+<dd>
+<p>The matrix
+<code>v</code> of each observation's probability of belonging to a certain
+cluster. The rows are in the same order as the observations in <code>x</code> used
+to generate this fit.</p>
+</dd> <dt>list("disclap_parameters")</dt>
+<dd>
+<p>A matrix with the
+estimated dicrete Laplace parameters.</p>
+</dd> <dt>list("glm_coef")</dt>
+<dd>
+<p>The
+coefficients from the last GLM fit (used to calculate
+<code>disclap_parameters</code>).</p>
+</dd>
+<dt>list("model_observations")</dt>
+<dd>
+<p>Number of observations.</p>
+</dd>
+<dt>list("model_parameters")</dt>
+<dd>
+<p>Number of parameters in the model.</p>
+</dd>
+<dt>list("iterations")</dt>
+<dd>
+<p>Number of iterations performed in total (including
+moving centers and re-estimating using the EM algorithm).</p>
+</dd>
+<dt>list("logL_full")</dt>
+<dd>
+<p>Full log likelihood of the final model.</p>
+</dd>
+<dt>list("logL_marginal")</dt>
+<dd>
+<p>Marginal log likelihood of the final model.</p>
+</dd>
+<dt>list("BIC_full")</dt>
+<dd>
+<p>BIC based on the full log likelihood of the final
+model.</p>
+</dd> 
+<dt>list("BIC_marginal")</dt>
+<dd>
+<p>BIC based on the marginal log likelihood
+of the final model.</p>
+</dd>
+<dt>list("v_gain_iterations")</dt>
+<dd>
+<p>The gain <code class="reqn">\frac{\max \{ v_{new} -
+v_{old} \}}{\max \{ v_{old} \}}</code>,
+where <code>v</code> is <code>vic_matrix</code> mentioned above, during the iterations.</p>
+</dd>
+<dt>list("tau_iterations")</dt>
+<dd>
+<p>The prior probability of belonging to the
+centers during the iterations.</p>
+</dd>
+<dt>list("logL_full_iterations")</dt>
+<dd>
+<p>Full log likelihood of the models during
+the iterations (only calculated when <code>verbose = 2L</code>).</p>
+</dd>
+<dt>list("logL_marginal_iterations")</dt>
+<dd>
+<p>Marginal log likelihood of the
+models during the iterations (only calculated when <code>verbose = 2L</code>).</p>
+</dd>
+<dt>list("BIC_full_iterations")</dt>
+<dd>
+<p>BIC based on full log likelihood of the
+models during the iterations (only calculated when <code>verbose = 2L</code>).</p>
+</dd>
+<dt>list("BIC_marginal_iterations")</dt>
+<dd>
+<p>BIC based on marginal log likelihood
+of the models during the iterations (only calculated when <code>verbose =
+2L</code>).</p>
+</dd> </dl>
+<h3>See Also</h3>
+
+<p><code>disclapmix-package</code> <code>disclapmix</code>
+<code>disclapmixfit</code> <code>predict.disclapmixfit</code>
+<code>print.disclapmixfit</code> <code>summary.disclapmixfit</code>
+<code>simulate.disclapmixfit</code> 
+<code>clusterdist</code> <code>clusterprob</code> <code>glm.fit</code>
+<code>disclap</code> <code>pam</code>
+<code>clara</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Generate sample database
+db &lt;- matrix(disclap::rdisclap(1000, 0.3), nrow = 250, ncol = 4)
+
+# Add location parameters
+db &lt;- sapply(1:ncol(db), function(i) as.integer(db[, i]+13+i))
+
+head(db)
+
+fit1 &lt;- disclapmix(db, clusters = 1L, verbose = 1L, glm_method = "glm.fit")
+fit1$disclap_parameters
+fit1$y
+
+fit1b &lt;- disclapmix(db, clusters = 1L, verbose = 1L, glm_method = "internal_coef")
+fit1b$disclap_parameters
+fit1b$y
+
+max(abs(fit1$disclap_parameters - fit1b$disclap_parameters))
+
+# Generate another type of database
+db2 &lt;- matrix(disclap::rdisclap(2000, 0.1), nrow = 500, ncol = 4)
+db2 &lt;- sapply(1:ncol(db2), function(i) as.integer(db2[, i]+14+i))
+fit2 &lt;- disclapmix(rbind(db, db2), clusters = 2L, verbose = 1L)
+fit2$disclap_parameters
+fit2$y
+fit2$tau
+
+</code></pre>
+
+
+</div>

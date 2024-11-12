@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tango.stat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute Tango's Statistic for General Clustering</h2>
+
+<h3>Description</h3>
+
+<p>Compute Tango's statistic for general clustering. See <em>tango</em> manual
+page for details.
+</p>
+<p>tango.stat computes the test statistic and the test using a hi-square
+distribution whilst tango.test performs a bootstrap test.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tango.stat(data, listw, zero.policy)
+tango.test(formula, data, model, R, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Formula that specifies the underlying model. The observed
+cases are the response and the expected number of cases must be specified
+as an offset in the log scale (see example below).  Note that now it
+is not necessary to use Observed and Expected and that any other
+names can be used to specify the observed and expected cases.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Parametric model to be used in the bootstrap test. One of
+"param", "multinom", "poisson" or "negbin". See the <b>DCluster</b> manpage for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>The remaining arguments in 'tango.stat' not included in
+'tango.test'. This is done so because tango.test calls tango.stat in order to perform the test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>Number of replicates used in the test to compute the significance of
+the observed value of the test statistic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe containing the data, as specified in the
+<b>DCluster</b> manpage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>listw</code></td>
+<td>
+<p>Neighbours list with spatial weights created, for example,
+by 'nb2listw' (package <em>spdep</em>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zero.policy</code></td>
+<td>
+<p>See <em>nb2listw</em> in package <em>spdep</em>.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Tango, Toshiro (1995). A Class of Tests for Detecting 'General' and 'Focused' Clustering of Rare Diseases. Statistics in Medicine 14, 2323-2334.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>DCluster, tango, tango.boot, tango.pboot
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(spdep)
+data(nc.sids)
+
+sids&lt;-data.frame(Observed=nc.sids$SID74)
+sids&lt;-cbind(sids, Expected=nc.sids$BIR74*sum(nc.sids$SID74)/sum(nc.sids$BIR74) )
+sids&lt;-cbind(sids, x=nc.sids$x, y=nc.sids$y)
+
+#Calculate neighbours based on distance
+coords&lt;-as.matrix(sids[,c("x", "y")])
+
+dlist&lt;-dnearneigh(coords, 0, Inf)
+dlist&lt;-include.self(dlist)
+dlist.d&lt;-nbdists(dlist, coords)
+
+#Calculate weights. They are globally standardised but it doesn't
+#change significance.
+col.W.tango&lt;-nb2listw(dlist, glist=lapply(dlist.d, function(x) {exp(-x)}),
+        style="C")
+
+#use exp(-D) as closeness matrix
+tango.stat(sids, col.W.tango, zero.policy=TRUE)
+
+tango.test(Observed~offset(log(Expected)), sids, model="poisson", R=99, 
+   list=col.W.tango, zero.policy=TRUE)
+</code></pre>
+
+
+</div>

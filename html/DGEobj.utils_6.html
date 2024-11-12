@@ -1,0 +1,197 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>runContrasts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build contrast matrix and calculate contrast fits</h2>
+
+<h3>Description</h3>
+
+<p>Takes a DGEobj and a named list of contrasts to build. The DGEobj must
+contain a limma Fit object and associated designMatrix. Returns the DGEobj with
+contrast fit(s), contrast matrix, and topTable/topTreat dataframes added.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">runContrasts(
+  dgeObj,
+  designMatrixName,
+  contrastList,
+  contrastSetName = NULL,
+  runTopTable = TRUE,
+  runTopTreat = FALSE,
+  foldChangeThreshold = 1.5,
+  runEBayes = TRUE,
+  robust = TRUE,
+  proportion = 0.01,
+  qValue = FALSE,
+  IHW = FALSE,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dgeObj</code></td>
+<td>
+<p>A DGEobj object containing a Fit object and design matrix. (Required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>designMatrixName</code></td>
+<td>
+<p>The name of the design matrix within dgeObj to use for
+contrast analysis. (Required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrastList</code></td>
+<td>
+<p>A named list of contrasts. (Required)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrastSetName</code></td>
+<td>
+<p>Name for the set of contrasts specified in
+contrastList.  Defaults to "&lt;fitName&gt;_cf". Only needed to create 2 or more
+contrast sets from the same initial fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runTopTable</code></td>
+<td>
+<p>Runs topTable on the specified contrasts. (Default = TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runTopTreat</code></td>
+<td>
+<p>Runs topTreat on the specified contrasts. (Default = FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>foldChangeThreshold</code></td>
+<td>
+<p>Only applies to topTreat (Default = 1.5)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>runEBayes</code></td>
+<td>
+<p>Runs eBayes after contrast.fit (Default = TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>robust</code></td>
+<td>
+<p>eBayes robust option. 'statmod' package must be installed to perform required
+calculations if robust = TRUE (Default = TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proportion</code></td>
+<td>
+<p>Proportion of genes expected to be differentially expressed.
+(used by eBayes) (Default = 0.01)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qValue</code></td>
+<td>
+<p>Set TRUE to include Q-values in topTable output. (Default = FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IHW</code></td>
+<td>
+<p>Set TRUE to add FDR values from the IHW package. (Default = FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Set TRUE to print some information during processing. (Default = FALSE)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The contrastList is a named list.  The values are composed of column names
+from the designMatrix of the DGEobj.  Each contrast is named to give it a
+short, recognizable name to be used for display purposes.
+</p>
+<p>Example contrastList <br></p>
+<p>contrastList = list( <br>
+T1 = "treatment1 - control", <br>
+T2 = "treatment2 - control" <br>
+) <br></p>
+<p>where treatment1, treatment2, and control are column names in the designMatrix.
+</p>
+<p>The returned DGEobj list contains the new items:
+</p>
+
+<ul>
+<li>
+<p>"contrastMatrix" a matrix
+</p>
+</li>
+<li>
+<p>"Fit.Contrasts" a Fit object
+</p>
+</li>
+<li>
+<p>"topTableList" a List of dataframes
+</p>
+</li>
+<li>
+<p>"topTreatList" a List of dataframes: if enabled
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>The DGEobj with contrast matrix, fit and topTable/topTreat dataframes added.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+  # NOTE: Requires the limma and statmod packages
+
+   myDGEobj &lt;- readRDS(system.file("exampleObj.RDS", package = "DGEobj"))
+
+   # Name the design matrix to be used (see inventory(myDGEobj))
+   designMatrixName &lt;- "ReplicateGroupDesign"
+
+   # Define the named contrasts from design matrix column names
+   contrastList  &lt;- list(BDL_v_Sham = "ReplicateGroupBDL - ReplicateGroupSham",
+                         EXT1024_v_BDL = "ReplicateGroupBDL_EXT.1024  - ReplicateGroupBDL",
+                         Nint_v_BDL = "ReplicateGroupBDL_Nint - ReplicateGroupBDL",
+                         Sora_v_BDL = "ReplicateGroupBDL_Sora - ReplicateGroupBDL")
+
+
+   myDGEobj &lt;- runContrasts(myDGEobj,
+                            designMatrixName=designMatrixName,
+                            contrastList=contrastList,
+                            contrastSetName = "SecondContrastSet",
+                            qValue = TRUE,
+                            IHW = FALSE,
+                            runTopTable = TRUE,
+                            runTopTreat = TRUE,
+                            foldChangeThreshold = 1.25)
+   DGEobj::inventory(myDGEobj)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

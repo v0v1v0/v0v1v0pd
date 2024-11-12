@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dotprofile-ui</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>User interface of dotprofile</h2>
+
+<h3>Description</h3>
+
+<p>These functions are used to construct the command-line interface of
+<span class="pkg">dotprofile</span>. They are inspired from <span class="pkg">usethis</span> for consistency,
+but their implementation is different and relies on wrapper functions
+to other functions of <span class="pkg">cli</span>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## ---
+## Print messages to the console
+## ---
+
+ui_todo(..., .envir = parent.frame())
+
+ui_info(..., .envir = parent.frame())
+
+ui_done(..., .envir = parent.frame())
+
+ui_nope(..., .envir = parent.frame())
+
+ui_ask(..., .envir = parent.frame())
+
+## ---
+## Ask for inputs interactively
+## ---
+
+ui_input(..., .envir = parent.frame())
+
+ui_menu(..., answers = c("yes", "no"), .envir = parent.frame())
+
+## ---
+## Signal conditions
+## ---
+
+ui_warn(warning, ..., .envir = parent.frame())
+
+ui_stop(error, ..., .envir = parent.frame())
+
+## ---
+## Cheatsheet for inline markup
+## ---
+
+ui_theme()
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p><code style="white-space: pre;">⁠[any]⁠</code>
+</p>
+<p>Passed to <code>cli::format_inline()</code>, unless stated otherwise below.
+Use <span class="pkg">cli</span> inline markup for inline formatting.
+</p>
+
+
+<h4>Functions <code>ui_warn()</code> and <code>ui_stop()</code>
+</h4>
+
+<p><code>...</code> is an optional sequence of further calls executed after returning a
+message via <code>base::warning()</code> and <code>base::stop()</code> respectively. You should
+only pass calls to other user interface functions. See examples below.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.envir</code></td>
+<td>
+<p><code style="white-space: pre;">⁠[environment]⁠</code>
+</p>
+<p>Passed to <code>cli::format_inline()</code>, <code>cli::format_warning()</code>
+or <code>cli::format_error()</code>. This argument is <strong>not</strong> validated by
+<span class="pkg">dotprofile</span> and is reserved for expert use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>answers</code></td>
+<td>
+<p><code style="white-space: pre;">⁠[atomic]⁠</code>
+</p>
+<p>Non-empty atomic vector passed to argument
+<code>choices</code> of <code>utils::menu()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warning</code></td>
+<td>
+<p><code style="white-space: pre;">⁠[character(1)]⁠</code>
+</p>
+<p>Passed to <code>cli::format_warning()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error</code></td>
+<td>
+<p><code style="white-space: pre;">⁠[character(1)]⁠</code>
+</p>
+<p>Passed to <code>cli::format_error()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The user interface functions of <span class="pkg">dotprofile</span> can be divided
+into three groups.
+</p>
+
+<ol>
+<li>
+<p> Print messages with <code>ui_todo()</code>, <code>ui_info()</code>, <code>ui_done()</code>,
+<code>ui_warn()</code>, <code>ui_ask()</code> and <code>ui_nope()</code>.
+</p>
+</li>
+<li>
+<p> Seek <em>answers</em> from the user with <code>ui_input()</code> and <code>ui_menu()</code>.
+The former expects an input to be typed in the terminal, while the
+latter expects a value to be chosen interactively from a menu. These
+functions can only be used in an interactive session.
+</p>
+</li>
+<li>
+<p> Signal conditions with <code>ui_warn()</code> and <code>ui_stop()</code>. They are
+designed to play nicely with <code style="white-space: pre;">⁠ui_*()⁠</code> functions of the first group,
+and can be used to craft beautiful and meaningful error messages.
+</p>
+</li>
+</ol>
+<p>All functions support string interpolation.
+</p>
+
+
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> Functions <code>ui_todo()</code>, <code>ui_info()</code>, <code>ui_done()</code>, <code>ui_nope()</code>,
+<code>ui_ask()</code>, and <code>ui_theme()</code> return <code>NULL</code> invisibly.
+</p>
+</li>
+<li>
+<p> Function <code>ui_input()</code> returns a <code>character(1)</code>. It returns an
+empty <code>character(1)</code> in non-interactive sessions.
+</p>
+</li>
+<li>
+<p> Function <code>ui_menu()</code> returns the <em>chosen</em> value taken from argument
+<code>answers</code>. In non-interactive sessions, or if the user aborts the process,
+it returns <code>NA</code>. Its actual type matches the type of the value passed to
+argument <code>answers</code>.
+</p>
+</li>
+<li>
+<p> Function <code>ui_warn()</code> throws a warning, but <strong>does not stop</strong> execution
+of the current expression. It returns <code>NULL</code> invisibly.
+</p>
+</li>
+<li>
+<p> Function <code>ui_stop()</code> throws an error message and <strong>stops</strong> execution
+of the current expression.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Use dotprofile's UI functions to convey messages to the user.
+ui_examples &lt;- function()
+{
+    ui_todo("This is a {.strong to-be-completed} task.")
+    ui_info("This is an information.")
+    ui_done("This a {.strong completed} task.")
+    ui_nope("Something's {.strong wrong}, but this is not an error.")
+    ui_ask("This is a question.")
+}
+
+ui_examples()
+
+## Use cli's inline classes to easily style messages passed to `...`
+ui_theme()
+
+## Construct beautiful warnings and errors with ui_warn() and ui_stop().
+## Not run: 
+  ui_warn("this is a warning message generated with {.fn ui_warn}.")
+  ui_warn("this is a {.emph super custom} warning message.",
+      ui_info("You can pass other {.fn ui_*} calls to it."),
+      ui_info("They are printed after the warning message, like {.pkg rlang} does."),
+      ui_nope("Only use functions that has side-effects here.")
+  )
+
+  ui_stop("this is an error message generated with {.fn ui_stop}.")
+  ui_stop("this is a {.emph super custom} error message.",
+      ui_info("You can pass other {.fn ui_*} calls to it."),
+      ui_info("They are printed after the error message, like {.pkg rlang} does."),
+      ui_nope("Only use functions that has side-effects here.")
+  )
+## End(Not run)
+
+</code></pre>
+
+
+</div>

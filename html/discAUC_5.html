@@ -1,0 +1,113 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prep_AUC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>AUC data peperation helper function</h2>
+
+<h3>Description</h3>
+
+<p>Helper function to take AUC tibble and preprocess for other AUC
+calculations
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prep_AUC(dat, indiff = NULL, x_axis, groupings = NULL, prob_disc = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>Discounting data tibble</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indiff</code></td>
+<td>
+<p>Indifference points Variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_axis</code></td>
+<td>
+<p>Delays/probabilities/social distance variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groupings</code></td>
+<td>
+<p>Variables for grouping (e.g., subject, expeirmental group)
+as a character or vector of characters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob_disc</code></td>
+<td>
+<p>Boolean for probability discounting (MAYBE NOT NECESSARY
+PULLED OUT ODDS AGAINST TO DIFFERENT FUNCTION)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Tibble that is grouped and arranged by <code>groupings</code>
+and <code>x_axis</code> (or <code>x_axis_against</code>, if probability
+discounting)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+# Prep single set of data
+DD &lt;- tibble(
+  delay = c(1 / 7, 1, 2, 4, 26, 52),
+  indiff = c(95, 75, 50, 20, 5, 1)
+) %&gt;%
+  arrange(delay)
+
+prep_AUC(dat = DD, indiff = "indiff", x_axis = "delay")
+# Prep multiple subject data
+
+# Create DD data disorganize by delay
+DD &lt;- tibble(
+  delay = rep(c(1 / 7, 1, 2, 4, 26, 52), 2),
+  indiff = c(c(95, 75, 50, 20, 5, 1), c(95, 75, 50, 20, 5, 1) + .25),
+  sub = c(rep(1, 6), rep(2, 6))
+) %&gt;%
+  arrange(delay)
+
+# Group by subject and organize by subject and delay
+prep_AUC(dat = DD, indiff = "indiff", x_axis = "delay", groupings = "sub")
+
+
+# Probability discounting with subjects and different outcomes
+
+# Create PD data and disorganize by probability
+PD &lt;- tibble(
+  prob = rep(c(.1, 1 / 100, 1 / 300, 1 / 750, 1 / 1000, 1 / 3000), 4),
+  value = rep(c(c(95, 75, 50, 20, 5, 1), c(95, 75, 50, 20, 5, 1) + .25), 2),
+  sub = rep(c(rep(1, 6), rep(2, 6)), 2),
+  outcome = c(rep("money", 12), rep("cigarettes", 12))
+) %&gt;%
+  arrange(prob)
+
+# Calculate odds against, organize by subject, outcome, odds against
+prep_AUC(PD,
+  indiff = "value",
+  x_axis = "prob",
+  groupings = c("sub", "outcome"),
+  prob_disc = TRUE
+)
+</code></pre>
+
+
+</div>

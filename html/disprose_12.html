@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cut_probes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cut probes</h2>
+
+<h3>Description</h3>
+
+<p>Generate probes from nucleotide reference sequences
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cut_probes(
+  ref.seq.from.file = FALSE,
+  ref.seq.id,
+  ref.seq.db,
+  fasta.file = NULL,
+  delete.fasta = FALSE,
+  start = 1,
+  stop = NULL,
+  start.correction = FALSE,
+  size = 24:32,
+  delete.incomplete = FALSE,
+  delete.identical = FALSE,
+  give.probes.id = FALSE,
+  mc.cores = 1,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>ref.seq.from.file</code></td>
+<td>
+<p>logical; read reference sequences from file (<code>TRUE</code>) or download them from NCBI data base (<code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.seq.id</code></td>
+<td>
+<p>identification number of reference nucleotide sequences. Only used when <code>ref.seq.from.file = FALSE</code>.
+GenBank accession numbers, GenInfo identifiers (GI) or Entrez unique identifiers (UID) may be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.seq.db</code></td>
+<td>
+<p>character; NCBI database for search. See entrez_dbs for possible values.
+Only used when <code>ref.seq.from.file = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fasta.file</code></td>
+<td>
+<p>character; FASTA file name and path, only used when <code>ref.seq.from.file = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.fasta</code></td>
+<td>
+<p>logical; delete FASTA file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start, stop</code></td>
+<td>
+<p>integer; number of first and last nucleotide of the reference sequence's segment that should be cut into probes.
+All sequence is used by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start.correction</code></td>
+<td>
+<p>logical; count probes' start and stop nucleotides relatively to the specified segment (<code>FALSE</code>)
+or to the whole sequence (<code>TRUE</code>). Only used if <code>start&gt;1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>integer; vector of probe size</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.incomplete</code></td>
+<td>
+<p>logical; remove probes that contain undeciphered nucleotides</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.identical</code></td>
+<td>
+<p>logical; remove identical (duplicated) probes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>give.probes.id</code></td>
+<td>
+<p>logical; add probes' identification numbers</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc.cores</code></td>
+<td>
+<p>integer; number of processors for parallel computation (not supported on Windows)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function takes nucleotide sequences and cut them on segments (probes) of given size.
+Sequences might be downloaded from given FASTA file or from NCBI data bases.
+In the latter case, FASTA file is created.
+If desired, FASTA file can be deleted after.
+</p>
+<p>Not all sequence must be cut on probes, you may define needed segment by <code>start</code> and <code>stop</code> parameters.
+Note that in this case probes' start and stop nucleotides would be counted relatively to the specified segment (<code>start.correction = FALSE</code>)
+or to the whole sequence (<code>start.correction = TRUE</code>).
+</p>
+<p>Undeciphered nucleotides are the one that are indicated by "rywsmkhbvdn" symbols.
+</p>
+<p>Probes' identification numbers are created by adding numeric indexes to reference sequence's identification number.
+</p>
+<p>See cut_string, delete_duplicates_DF and make_ids for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Data frame with probe id (optionally), sequence id, probe size, start and stop nucleotide, sequence.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">path &lt;- tempdir()
+dir.create (path)
+# download and save as FASTA "Chlamydia pneumoniae B21 contig00001,
+# whole genome shotgun sequence" (GI = 737435910)
+if (!requireNamespace("rentrez", quietly = TRUE)) {
+stop("Package \"rentrez\" needed for this function to work. Please install it.", call. = FALSE)}
+reference.string &lt;- rentrez::entrez_fetch(db = "nucleotide", id = 737435910,
+                                         rettype="fasta")
+write( x= reference.string, file = paste0 (path, "/fasta"))
+probes &lt;- cut_probes (ref.seq.from.file = TRUE, fasta.file = paste0(path, "/fasta"),
+                     delete.fasta = TRUE, start = 1000, stop = 1500,
+                     start.correction = FALSE, size = c(400, 500),
+                     delete.incomplete = FALSE,
+                     delete.identical = FALSE, give.probes.id = TRUE, mc.cores = 1)
+unlink (path, recursive = TRUE)
+
+</code></pre>
+
+
+</div>

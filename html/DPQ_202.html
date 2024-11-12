@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qbinomR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pure R Implementation of R's qbinom()  with Tuning Parameters</h2>
+
+<h3>Description</h3>
+
+
+<p>A pure R implementation, including many tuning parameter arguments, of
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own Rmathlib C code algorithm, but with more flexibility.
+</p>
+<p>It is using <code>Vectorize(qbinomR1, *)</code> where the hidden
+<code>qbinomR1</code> works for numbers (aka ‘scalar’, length one)
+arguments only, the same as the C code.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qbinomR(p, size, prob, lower.tail = TRUE, log.p = FALSE,
+        yLarge = 4096, # was hard wired to 1e5
+        incF = 1/64,   # was hard wired to .001
+        iShrink = 8,   # was hard wired to 100
+        relTol = 1e-15,# was hard wired to 1e-15
+        pfEps.n = 8,   # was hard wired to 64: "fuzz to ensure left continuity"
+        pfEps.L = 2,   # was hard wired to 64:   "   "   ..
+        fpf = 4, # *MUST* be &gt;= 1 (did not exist previously)
+        trace = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>p, size, prob, lower.tail, log.p</code></td>
+<td>
+<p><code>qbinom()</code> standard
+argument, see its help page.</p>
+</td>
+</tr></table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>yLarge</code></td>
+<td>
+<p>when <code class="reqn">y &gt;= y_L, y_L =</code> <code>yLarge</code>, the binary root
+finding search is made  “cleverer”, taking larger increments,
+determined by <code>incF</code> and <code>iShrink</code>:</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>incF</code></td>
+<td>
+<p>a positive “increment factor” (originally hardwired to
+0.001), used only when <code>y &gt;= yLarge</code>; defines the initial increment in
+the search algorithm as <code>incr &lt;- floor(incF * y)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iShrink</code></td>
+<td>
+<p>a positive increment shrinking factor, used only when
+<code>y &gt;= yLarge</code> to define the new increment from the old one as
+<code>incr &lt;- max(1, floor(incr/iShrink))</code> where the LHS was hardired
+original to <code>(incr/100)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relTol</code></td>
+<td>
+<p>relative tolerance, <code class="reqn"> &gt; 0</code>; the search terminates when
+the (integer!) increment is less than <code>relTol * y</code> or the previous
+increment was not larger than 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pfEps.n</code></td>
+<td>
+<p>fuzz factor to ensure left continuity in the <b>n</b>ormal
+case <code>log.p=FALSE</code>; used to be hardwired to 64 (in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> up to 2021-05-08).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pfEps.L</code></td>
+<td>
+<p>fuzz factor to ensure left continuity in case
+<code>log.p=TRUE</code>; used to be hardwired to 64 (in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> up to 2021-05-08).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fpf</code></td>
+<td>
+<p>factor <code class="reqn">f \ge 1</code> for the <b>n</b>ormal upper tail case
+(<code>log.p=FALSE, lower.tail=FALSE</code>): <code>p</code> is only “fuzz-corrected”,
+i.e., multiplied by <code class="reqn">1+e</code> when <code>1 - p &gt; fpf*e</code> for
+<code>e &lt;- pfEps.n * c_e</code> and <code class="reqn">c_e = 2^{-52}</code>, the <code>.Machine$double_epsilon</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>logical (or integer) specifying if (and how much) output
+should be produced from the algorithm.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>as mentioned on <code>qbinom</code> help page, 
+<code>qbinom</code> uses the Cornish–Fisher Expansion to include a skewness
+correction to a normal approximation, thus defining <code>y := Fn(p, size, prob, ..)</code>.
+</p>
+<p>The following (root finding) binary search is tweaked by the
+<code>yLarge, ..., fpf</code> arguments.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector like <code>p</code> recycled to the common lengths of
+<code>p</code>, <code>size</code>, and <code>prob</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>qbinom</code>, <code>qpois</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(12)
+pr &lt;- (0:16)/16 # supposedly recycled
+x10 &lt;- rbinom(500, prob=pr, size =  10); p10 &lt;- pbinom(x10, prob=pr, size= 10)
+x1c &lt;- rbinom(500, prob=pr, size = 100); p1c &lt;- pbinom(x1c, prob=pr, size=100)
+## stopifnot(exprs = {
+table( x10  == (qp10  &lt;- qbinom (p10, prob=pr, size= 10) ))
+table( qp10 == (qp10R &lt;- qbinomR(p10, prob=pr, size= 10) )); summary(warnings()) # 30 x NaN
+table( x1c  == (qp1c  &lt;- qbinom (p1c, prob=pr, size=100) ))
+table( qp1c == (qp1cR &lt;- qbinomR(p1c, prob=pr, size=100) )); summary(warnings()) # 30 x NaN
+## })
+</code></pre>
+
+
+</div>

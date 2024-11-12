@@ -1,0 +1,316 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>target</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Customize a target in <code>drake_plan()</code>.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>The <code>target()</code> function is a way to
+configure individual targets in a <code>drake</code> plan.
+Its most common use is to invoke static branching
+and dynamic branching, and it can also set the values
+of custom columns such as <code>format</code>, <code>elapsed</code>, <code>retries</code>,
+and <code>max_expand</code>. Details are at
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#special-columns⁠</code>.
+Note: <code>drake_plan(my_target = my_command())</code>
+is equivalent to
+<code style="white-space: pre;">⁠drake_plan(my_target = target(my_command())⁠</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">target(command = NULL, transform = NULL, dynamic = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>command</code></td>
+<td>
+<p>The command to build the target.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transform</code></td>
+<td>
+<p>A call to <code>map()</code>, <code>split()</code>, <code>cross()</code>, or <code>combine()</code>
+to apply a <em>static</em> transformation. Details:
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/static.html⁠</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dynamic</code></td>
+<td>
+<p>A call to <code>map()</code>, <code>cross()</code>, or <code>group()</code>
+to apply a <em>dynamic</em> transformation. Details:
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/dynamic.html⁠</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional columns of the plan for a given target.
+See the Columns section of this help file for a selection
+of special columns that <code>drake</code> understands.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>target()</code> must be called inside <code>drake_plan()</code>.
+It is invalid otherwise.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A one-row workflow plan data frame with the named
+arguments as columns.
+</p>
+
+
+<h3>Columns</h3>
+
+<p><code>drake_plan()</code> creates a special data frame. At minimum, that data frame
+must have columns <code>target</code> and <code>command</code> with the target names and the
+R code chunks to build them, respectively.
+</p>
+<p>You can add custom columns yourself, either with <code>target()</code> (e.g.
+<code>drake_plan(y = target(f(x), transform = map(c(1, 2)), format = "fst"))</code>)
+or by appending columns post-hoc (e.g. <code>plan$col &lt;- vals</code>).
+</p>
+<p>Some of these custom columns are special. They are optional,
+but <code>drake</code> looks for them at various points in the workflow.
+</p>
+
+<ul>
+<li> <p><code>transform</code>: a call to <code>map()</code>, <code>split()</code>, <code>cross()</code>, or
+<code>combine()</code> to create and manipulate large collections of targets.
+Details: (<code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#large-plans⁠</code>). # nolint
+</p>
+</li>
+<li> <p><code>format</code>: set a storage format to save big targets more efficiently.
+See the "Formats" section of this help file for more details.
+</p>
+</li>
+<li> <p><code>trigger</code>: rule to decide whether a target needs to run.
+It is recommended that you define this one with <code>target()</code>.
+Details: <code style="white-space: pre;">⁠https://books.ropensci.org/drake/triggers.html⁠</code>.
+</p>
+</li>
+<li> <p><code>hpc</code>: logical values (<code>TRUE</code>/<code>FALSE</code>/<code>NA</code>) whether to send each target
+to parallel workers.
+Visit <code style="white-space: pre;">⁠https://books.ropensci.org/drake/hpc.html#selectivity⁠</code>
+to learn more.
+</p>
+</li>
+<li> <p><code>resources</code>: target-specific lists of resources for a computing cluster.
+See
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/hpc.html#advanced-options⁠</code>
+for details.
+</p>
+</li>
+<li> <p><code>caching</code>: overrides the <code>caching</code> argument of <code>make()</code> for each target
+individually. Possible values:
+</p>
+
+<ul>
+<li>
+<p> "main": tell the main process to store the target in the cache.
+</p>
+</li>
+<li>
+<p> "worker": tell the HPC worker to store the target in the cache.
+</p>
+</li>
+<li>
+<p> NA: default to the <code>caching</code> argument of <code>make()</code>.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>elapsed</code> and <code>cpu</code>: number of seconds to wait for the target to build
+before timing out (<code>elapsed</code> for elapsed time and <code>cpu</code> for CPU time).
+</p>
+</li>
+<li> <p><code>retries</code>: number of times to retry building a target
+in the event of an error.
+</p>
+</li>
+<li> <p><code>seed</code>: an optional pseudo-random number generator (RNG)
+seed for each target. <code>drake</code> usually comes up with its own
+unique reproducible target-specific seeds using the global seed
+(the <code>seed</code> argument to <code>make()</code> and <code>drake_config()</code>)
+and the target names, but you can overwrite these automatic seeds.
+<code>NA</code> entries default back to <code>drake</code>'s automatic seeds.
+</p>
+</li>
+<li> <p><code>max_expand</code>: for dynamic branching only. Same as the <code>max_expand</code>
+argument of <code>make()</code>, but on a target-by-target basis.
+Limits the number of sub-targets created for a given target.
+</p>
+</li>
+</ul>
+<h3>Keywords</h3>
+
+<p><code>drake_plan()</code> understands special keyword functions for your commands.
+With the exception of <code>target()</code>, each one is a proper function
+with its own help file.
+</p>
+
+<ul>
+<li> <p><code>target()</code>: give the target more than just a command.
+Using <code>target()</code>, you can apply a transformation
+(examples: <code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#large-plans⁠</code>), # nolint
+supply a trigger (<code style="white-space: pre;">⁠https://books.ropensci.org/drake/triggers.html⁠</code>), # nolint
+or set any number of custom columns.
+</p>
+</li>
+<li> <p><code>file_in()</code>: declare an input file dependency.
+</p>
+</li>
+<li> <p><code>file_out()</code>: declare an output file to be produced
+when the target is built.
+</p>
+</li>
+<li> <p><code>knitr_in()</code>: declare a <code>knitr</code> file dependency such as an
+R Markdown (<code style="white-space: pre;">⁠*.Rmd⁠</code>) or R LaTeX (<code style="white-space: pre;">⁠*.Rnw⁠</code>) file.
+</p>
+</li>
+<li> <p><code>ignore()</code>: force <code>drake</code> to entirely ignore a piece of code:
+do not track it for changes and do not analyze it for dependencies.
+</p>
+</li>
+<li> <p><code>no_deps()</code>: tell <code>drake</code> to not track the dependencies
+of a piece of code. <code>drake</code> still tracks the code itself for changes.
+</p>
+</li>
+<li> <p><code>id_chr()</code>: Get the name of the current target.
+</p>
+</li>
+<li> <p><code>drake_envir()</code>: get the environment where drake builds targets.
+Intended for advanced custom memory management.
+</p>
+</li>
+</ul>
+<h3>Formats</h3>
+
+<p>Specialized target formats increase efficiency and flexibility.
+Some allow you to save specialized objects like <code>keras</code> models,
+while others increase the speed while conserving storage and memory.
+You can declare target-specific formats in the plan
+(e.g. <code>drake_plan(x = target(big_data_frame, format = "fst"))</code>)
+or supply a global default <code>format</code> for all targets in <code>make()</code>.
+Either way, most formats have specialized installation requirements
+(e.g. R packages) that are not installed with <code>drake</code> by default.
+You will need to install them separately yourself.
+Available formats:
+</p>
+
+<ul>
+<li> <p><code>"file"</code>: Dynamic files. To use this format, simply create
+local files and directories yourself and then return
+a character vector of paths as the target's value.
+Then, <code>drake</code> will watch for changes to those files in
+subsequent calls to <code>make()</code>. This is a more flexible
+alternative to <code>file_in()</code> and <code>file_out()</code>, and it is
+compatible with dynamic branching.
+See <code style="white-space: pre;">⁠https://github.com/ropensci/drake/pull/1178⁠</code> for an example.
+</p>
+</li>
+<li> <p><code>"fst"</code>: save big data frames fast. Requires the <code>fst</code> package.
+Note: this format strips non-data-frame attributes such as the
+</p>
+</li>
+<li> <p><code>"fst_tbl"</code>: Like <code>"fst"</code>, but for <code>tibble</code> objects.
+Requires the <code>fst</code> and <code>tibble</code> packages.
+Strips away non-data-frame non-tibble attributes.
+</p>
+</li>
+<li> <p><code>"fst_dt"</code>: Like <code>"fst"</code> format, but for <code>data.table</code> objects.
+Requires the <code>fst</code> and <code>data.table</code> packages.
+Strips away non-data-frame non-data-table attributes.
+</p>
+</li>
+<li> <p><code>"diskframe"</code>:
+Stores <code>disk.frame</code> objects, which could potentially be
+larger than memory. Requires the <code>fst</code> and <code>disk.frame</code> packages.
+Coerces objects to <code>disk.frame</code>s.
+Note: <code>disk.frame</code> objects get moved to the <code>drake</code> cache
+(a subfolder of <code style="white-space: pre;">⁠.drake/⁠</code> for most workflows).
+To ensure this data transfer is fast, it is best to
+save your <code>disk.frame</code> objects to the same physical storage
+drive as the <code>drake</code> cache,
+<code>as.disk.frame(your_dataset, outdir = drake_tempfile())</code>.
+</p>
+</li>
+<li> <p><code>"keras"</code>: save Keras models as HDF5 files.
+Requires the <code>keras</code> package.
+</p>
+</li>
+<li> <p><code>"qs"</code>: save any R object that can be properly serialized
+with the <code>qs</code> package. Requires the <code>qs</code> package.
+Uses <code>qsave()</code> and <code>qread()</code>.
+Uses the default settings in <code>qs</code> version 0.20.2.
+</p>
+</li>
+<li> <p><code>"rds"</code>: save any R object that can be properly serialized.
+Requires R version &gt;= 3.5.0 due to ALTREP.
+Note: the <code>"rds"</code> format uses gzip compression, which is slow.
+<code>"qs"</code> is a superior format.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>drake_plan()</code>, <code>make()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Use target() to create your own custom columns in a drake plan.
+# See ?triggers for more on triggers.
+drake_plan(
+  website_data = target(
+    download_data("www.your_url.com"),
+    trigger = "always",
+    custom_column = 5
+  ),
+  analysis = analyze(website_data)
+)
+models &lt;- c("glm", "hierarchical")
+plan &lt;- drake_plan(
+  data = target(
+    get_data(x),
+    transform = map(x = c("simulated", "survey"))
+  ),
+  analysis = target(
+    analyze_data(data, model),
+    transform = cross(data, model = !!models, .id = c(x, model))
+  ),
+  summary = target(
+    summarize_analysis(analysis),
+    transform = map(analysis, .id = c(x, model))
+  ),
+  results = target(
+    bind_rows(summary),
+    transform = combine(summary, .by = data)
+  )
+)
+plan
+if (requireNamespace("styler", quietly = TRUE)) {
+  print(drake_plan_source(plan))
+}
+</code></pre>
+
+
+</div>

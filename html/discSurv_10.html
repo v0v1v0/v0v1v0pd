@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataCensoring</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data Censoring Transformation for short formats</h2>
+
+<h3>Description</h3>
+
+<p>Function for transformation of discrete survival times in censoring
+encoding. The original data is expanded to include the censoring process. 
+Alternatively the long data format can also be augmented. With the new 
+generated variable "yCens", the discrete censoring process can be analyzed 
+instead of the discrete survival process. In discrete survival analysis this 
+information is used to constructs weights for predictive evaluation measures. 
+It is applicable in single event survival analysis.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataCensoring(dataShort, eventColumns, timeColumn, shortFormat = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataShort</code></td>
+<td>
+<p>Original data set in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumns</code></td>
+<td>
+<p>Name of event columns ("character vector"). The
+event columns have to be in binary format. If the sum of all events equals
+zero in a row, then this observation is interpreted as censored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Name of column with discrete time intervals ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shortFormat</code></td>
+<td>
+<p>Is the supplied data set <em>dataShort</em> not preprocessed 
+with function dataLong() ("logical vector")? Default is TRUE. If shortFormat=FALSE 
+then it is assumed that the data set was augmented with function dataLong().</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Original data set as argument <em>dataShort</em>, but with added censoring
+process as first variable in column "yCens".
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Fahrmeir L (2005).
+“Discrete Survival-Time Models.”
+In <em>Encyclopedia of Biostatistics</em>, chapter Survival Analysis.
+John Wiley \&amp; Sons. <br><br>
+Thompson Jr. WA (1977).
+“On the Treatment of Grouped Observations in Life Studies.”
+<em>Biometrics</em>, <b>33</b>, 463-470.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contToDisc</code>,
+<code>dataLong</code>, <code>dataLongTimeDep</code>,
+<code>dataLongCompRisks</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(pec)
+data(cost)
+head(cost)
+IntBorders &lt;- 1:ceiling(max(cost$time)/30)*30
+subCost &lt;- cost [1:100, ]
+
+# Convert from days to months
+CostMonths &lt;- contToDisc(dataShort=subCost, timeColumn="time", intervalLimits=IntBorders)
+head(CostMonths)
+
+# Generate censoring process variable in short format
+CostMonthsCensorShort &lt;- dataCensoring (dataShort = CostMonths, 
+eventColumns = "status", timeColumn = "time", shortFormat = TRUE)
+head(CostMonthsCensorShort)
+
+################################
+# Example with long data format
+library(pec)
+data(cost)
+head(cost)
+IntBorders &lt;- 1:ceiling(max(cost$time)/30)*30
+subCost &lt;- cost [1:100, ]
+
+# Convert from days to months
+CostMonths &lt;- contToDisc(dataShort = subCost, timeColumn = "time", intervalLimits = IntBorders)
+head(CostMonths)
+
+# Convert to long format based on months
+CostMonthsLong &lt;- dataLong(dataShort = CostMonths, timeColumn = "timeDisc", eventColumn = "status")
+head(CostMonthsLong, 20)
+
+# Generate censoring process variable
+CostMonthsCensor &lt;- dataCensoring (dataShort = CostMonthsLong, timeColumn = "timeInt", 
+shortFormat = FALSE)
+head(CostMonthsCensor)
+tail(CostMonthsCensor [CostMonthsCensor$obj==1, ], 10)
+tail(CostMonthsCensor [CostMonthsCensor$obj==3, ], 10)
+
+</code></pre>
+
+
+</div>

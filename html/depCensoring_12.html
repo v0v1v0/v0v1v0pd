@@ -1,0 +1,220 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimate.cmprsk</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the competing risks model of Rutten, Willems et al. (20XX).</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the parameters in the competing risks
+model described in Willems et al. (2024+). Note that this model
+extends the model of Crommen, Beyhum and Van Keilegom (2024) and as such, this
+function also implements their methodology.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimate.cmprsk(
+  data,
+  admin,
+  conf,
+  eoi.indicator.names = NULL,
+  Zbin = NULL,
+  inst = "cf",
+  realV = NULL,
+  eps = 0.001
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame, adhering to the following formatting rules:
+</p>
+
+<ul>
+<li>
+<p> The first column, named <code>"y"</code>, contains the observed times.
+</p>
+</li>
+<li>
+<p> The next columns, named <code>"delta1"</code>, <code>delta2</code>, etc. contain
+the indicators for each of the competing risks.
+</p>
+</li>
+<li>
+<p> The next column, named <code>da</code>, contains the censoring indicator
+(independent censoring).
+</p>
+</li>
+<li>
+<p> The next column should be a column of all ones (representing the
+intercept), names <code>x0</code>.
+</p>
+</li>
+<li>
+<p> The subsequent columns should contain the values of the covariates,
+named <code>x1</code>, <code>x2</code>, etc.
+</p>
+</li>
+<li>
+<p> When applicable, the next column should contain the values of the
+endogenous variable. This column should be named <code>z</code>.
+</p>
+</li>
+<li>
+<p> When <code>z</code> is provided and an instrument for <code>z</code> is
+available, the next column, named <code>w</code>, should contain the values for
+the instrument.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>admin</code></td>
+<td>
+<p>Boolean value indicating whether the data contains
+administrative censoring.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf</code></td>
+<td>
+<p>Boolean value indicating whether the data contains confounding
+and hence indicating the presence of <code>z</code> and, possibly, <code>w</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eoi.indicator.names</code></td>
+<td>
+<p>Vector of names of the censoring indicator columns
+pertaining to events of interest. Events of interest will be modeled allowing
+dependence between them, whereas all censoring events (corresponding to
+indicator columns not listed in <code>eoi.indicator.names</code>) will be treated
+as independent of every other event. If <code>eoi.indicator.names == NULL</code>,
+all events will be modeled dependently.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Zbin</code></td>
+<td>
+<p>Indicator value indicating whether (<code>Zbin = TRUE</code>) or not
+<code>Zbin = FALSE</code> the endogenous covariate is binary. Default is
+<code>Zbin = NULL</code>, corresponding to the case when <code>conf == FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inst</code></td>
+<td>
+<p>Variable encoding which approach should be used for dealing with
+the confounding. <code>inst = "cf"</code> indicates that the control function
+approach should be used. <code>inst = "W"</code> indicates that the instrumental
+variable should be used 'as is'. <code>inst = "None"</code> indicates that Z will
+be treated as an exogenous covariate. Finally, when <code>inst = "oracle"</code>,
+this function will access the argument <code>realV</code> and use it as the values
+for the control function. Default is <code>inst = "cf"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>realV</code></td>
+<td>
+<p>Vector of numerics with length equal to the number of rows in
+<code>data</code>. Used to provide the true values of the instrumental function
+to the estimation procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Value that will be added to the diagonal of the covariance matrix
+during estimation in order to ensure strictly positive variances.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list of parameter estimates in the second stage of the estimation
+algorithm (hence omitting the estimates for the control function), as well
+as an estimate of their variance and confidence intervals.
+</p>
+
+
+<h3>References</h3>
+
+<p>Willems et al. (2024+). Flexible control function approach under competing risks (in preparation).
+</p>
+<p>Crommen, G., Beyhum, J., and Van Keilegom, I. (2024). An instrumental variable approach under dependent censoring. Test, 33(2), 473-495.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+n &lt;- 200
+
+# Set parameters
+gamma &lt;- c(1, 2, 1.5, -1)
+theta &lt;- c(0.5, 1.5)
+eta1 &lt;- c(1, -1, 2, -1.5, 0.5)
+eta2 &lt;- c(0.5, 1, 1, 3, 0)
+
+# Generate exogenous covariates
+x0 &lt;- rep(1, n)
+x1 &lt;- rnorm(n)
+x2 &lt;- rbinom(n, 1, 0.5)
+
+# Generate confounder and instrument
+w &lt;- rnorm(n)
+V &lt;- rnorm(n, 0, 2)
+z &lt;- cbind(x0, x1, x2, w) %*% gamma + V
+realV &lt;- z - (cbind(x0, x1, x2, w) %*% gamma)
+
+# Generate event times
+err &lt;- MASS::mvrnorm(n, mu = c(0, 0), Sigma =
+matrix(c(3, 1, 1, 2), nrow = 2, byrow = TRUE))
+bn &lt;- cbind(x0, x1, x2, z, realV) %*% cbind(eta1, eta2) + err
+Lambda_T1 &lt;- bn[,1]; Lambda_T2 &lt;- bn[,2]
+x.ind = (Lambda_T1&gt;0)
+y.ind &lt;- (Lambda_T2&gt;0)
+T1 &lt;- rep(0,length(Lambda_T1))
+T2 &lt;- rep(0,length(Lambda_T2))
+T1[x.ind] = ((theta[1]*Lambda_T1[x.ind]+1)^(1/theta[1])-1)
+T1[!x.ind] = 1-(1-(2-theta[1])*Lambda_T1[!x.ind])^(1/(2-theta[1]))
+T2[y.ind] = ((theta[2]*Lambda_T2[y.ind]+1)^(1/theta[2])-1)
+T2[!y.ind] = 1-(1-(2-theta[2])*Lambda_T2[!y.ind])^(1/(2-theta[2]))
+# Generate adminstrative censoring time
+C &lt;- runif(n, 0, 40)
+
+# Create observed data set
+y &lt;- pmin(T1, T2, C)
+delta1 &lt;- as.numeric(T1 == y)
+delta2 &lt;- as.numeric(T2 == y)
+da &lt;- as.numeric(C == y)
+data &lt;- data.frame(cbind(y, delta1, delta2, da, x0, x1, x2, z, w))
+colnames(data) &lt;- c("y", "delta1", "delta2", "da", "x0", "x1", "x2", "z", "w")
+
+# Estimate the model
+admin &lt;- TRUE                # There is administrative censoring in the data.
+conf &lt;- TRUE                 # There is confounding in the data (z)
+eoi.indicator.names &lt;- NULL  # We will not impose that T1 and T2 are independent
+Zbin &lt;- FALSE                # The confounding variable z is not binary
+inst &lt;- "cf"                 # Use the control function approach
+# Since we don't use the oracle estimator, this argument is ignored anyway
+realV &lt;- NULL
+estimate.cmprsk(data, admin, conf, eoi.indicator.names, Zbin, inst, realV)
+
+
+
+</code></pre>
+
+
+</div>

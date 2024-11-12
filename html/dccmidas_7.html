@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cov_eval</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Var-cov matrix evaluation</h2>
+
+<h3>Description</h3>
+
+<p>Evaluates the estimated var-cov matrix H_t with respect to a covariance proxy, under different robust loss functions
+(Laurent et al. 2013). The losses considered are also used in Amendola et al. (2020).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cov_eval(H_t, cov_proxy = NULL, r_t = NULL, loss = "FROB")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>H_t</code></td>
+<td>
+<p>Estimated covariance matrix, formatted as array</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov_proxy</code></td>
+<td>
+<p><strong>optional</strong> Covariance matrix, formatted as array</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_t</code></td>
+<td>
+<p><strong>optional</strong> List of daily returns used to calculate H_t. If parameter 'cov_proxy' is not provided, then
+r_t must be included. In this case, a (noise) proxy will be automatically used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss</code></td>
+<td>
+<p>Robust loss function to use. Valid choices are: "FROB" for Frobenius (by default), "SFROB" for Squared Frobenius,
+"EUCL" for Euclidean, "QLIKE" for QLIKE and "RMSE" for Root Mean Squared Errors</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The value of the loss for each <code class="reqn">t</code>
+</p>
+
+
+<h3>References</h3>
+
+<p>Amendola A, Braione M, Candila V, Storti G (2020).
+“A Model Confidence Set approach to the combination of multivariate volatility forecasts.”
+<em>International Journal of Forecasting</em>, <b>36</b>(3), 873 - 891.
+<a href="https://doi.org/10.1016/j.ijforecast.2019.10.001">doi:10.1016/j.ijforecast.2019.10.001</a>.<br><br> Laurent S, Rombouts JV, Violante F (2013).
+“On loss functions and ranking forecasting performances of multivariate volatility models.”
+<em>Journal of Econometrics</em>, <b>173</b>(1), 1–10.
+<a href="https://doi.org/10.1016/j.jeconom.2012.08.004">doi:10.1016/j.jeconom.2012.08.004</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+require(xts)
+# close to close daily log-returns
+r_t_s&lt;-diff(log(sp500['2010/2019'][,3]))
+r_t_s[1]&lt;-0
+r_t_n&lt;-diff(log(nasdaq['2010/2019'][,3]))
+r_t_n[1]&lt;-0
+r_t_f&lt;-diff(log(ftse100['2010/2019'][,3]))
+r_t_f[1]&lt;-0
+db_m&lt;-merge.xts(r_t_s,r_t_n,r_t_f)
+db_m&lt;-db_m[complete.cases(db_m),]
+colnames(db_m)&lt;-c("S&amp;P500","NASDAQ","FTSE100")
+# list of returns
+r_t&lt;-list(db_m[,1],db_m[,2],db_m[,3])
+# estimation
+K_c&lt;-144
+N_c&lt;-36
+cdcc_est&lt;-dcc_fit(r_t,univ_model="sGARCH",distribution="norm",
+corr_model="DCCMIDAS",N_c=N_c,K_c=K_c)
+cov_eval(cdcc_est$H_t,r_t=r_t)[(K_c+1):dim(cdcc_est$H_t)[3]]
+
+</code></pre>
+
+
+</div>

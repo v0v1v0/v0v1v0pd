@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plotSimScat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Simulate scatterplots, from <code>lm</code> object with a single explanatory variable.
+</h2>
+
+<h3>Description</h3>
+
+<p>This plots simulated y-values, or residuals from such simulations,
+against x-values
+.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plotSimScat(obj, sigma = NULL, layout = c(4, 1), type = c("p", "r"),
+show = c("points", "residuals"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+
+<p>An <code>lm</code> object with a single explanatory variable.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+
+<p>Standard deviation, if different from that for the supplied <code>lm</code>
+object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layout</code></td>
+<td>
+
+<p>Columns by Rows layout for plots from the simulations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>See <code>type</code> as in <code>plot.lm</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show</code></td>
+<td>
+
+<p>Specify <code>points</code> or <code>residuals</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other parameters to be passed to plotting functions</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A lattice graphics object is returned.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>J H Maindonald
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plotSimDiags</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">nihills.lm &lt;- lm(timef~time, data=nihills)
+plotSimDiags(nihills.lm)
+
+## The function is currently defined as
+function (obj, sigma = NULL, layout = c(4, 1), type = c("p",
+    "r"), show = c("points", "residuals"))
+{
+    nsim &lt;- prod(layout)
+    if (is.null(sigma))
+        sigma &lt;- summary(obj)[["sigma"]]
+    hat &lt;- fitted(obj)
+    xnam &lt;- all.vars(formula(obj))[2]
+    ynam &lt;- all.vars(formula(obj))[1]
+    df &lt;- data.frame(sapply(1:nsim, function(x) rnorm(length(hat),
+        sd = sigma)))
+    if (show[1] == "points")
+        df &lt;- df + hat
+    simnam &lt;- names(df) &lt;- paste("Simulation", 1:nsim, sep = "")
+    df[, c(xnam, ynam)] &lt;- model.frame(obj)[, c(xnam, ynam)]
+    if (show[1] != "points") {
+        df[, "Residuals"] &lt;- df[, ynam] - hat
+        ynam &lt;- "Residuals"
+        legadd &lt;- "residuals"
+    }
+    else legadd &lt;- "data"
+    leg &lt;- list(text = paste(c("Simulated", "Actual"), legadd),
+        columns = 2)
+    formula &lt;- formula(paste(paste(simnam, collapse = "+"), "~",
+        xnam))
+    parset &lt;- simpleTheme(pch = c(16, 16), lty = 2, col = c("black",
+        "gray"))
+    gph &lt;- xyplot(formula, data = df, outer = TRUE, par.settings = parset,
+        auto.key = leg, lty = 2, layout = layout, type = type)
+    formxy &lt;- formula(paste(ynam, "~", xnam))
+    addgph &lt;- xyplot(formxy, data = df, pch = 16, col = "gray")
+    gph + as.layer(addgph, under = TRUE)
+  }
+</code></pre>
+
+
+</div>

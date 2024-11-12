@@ -1,0 +1,97 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>geomorph.ordination</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Imports data from geomorph</h2>
+
+<h3>Description</h3>
+
+<p>Takes geomorph Procrustes object or a geomorph.data.frame object and ordinates it.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">geomorph.ordination(data, ordinate = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An array (p x k x n) typically obtained from a Procrustes superimposition <code>geomorph::gpagen</code> or a <code>geomorph::geomorph.data.frame</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ordinate</code></td>
+<td>
+<p>Logical, whether to ordinate the data using <code>prcomp</code> (<code>TRUE</code>; default) or not (<code>FALSE</code>; the code then returns the raw coordinates matrix).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any optional arguments to be passed to <code>prcomp</code> (is ignored if <code>ordinate = FALSE</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>data</code> is a <code>geomorph.data.frame</code> object containing factors, directly performs a <code>custom.subsets</code> using these factors.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>matrix</code> or a <code>dispRity</code> object.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>geomorph::gpagen</code>, <code>geomorph::morphol.disparity</code>, <code>prcomp</code>, <code>custom.subsets</code>, <code>chrono.subsets</code>, <code>boot.matrix</code>, <code>dispRity</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+require(geomorph)
+## Loading the plethodon dataset
+data(plethodon)
+
+## Performing a Procrustes transform
+procrustes &lt;- geomorph::gpagen(plethodon$land, PrinAxes = FALSE)
+
+## Obtaining the ordination matrix
+geomorph.ordination(procrustes)
+
+## Using a geomorph.data.frame
+geomorph_df &lt;- geomorph.data.frame(procrustes, species = plethodon$species)
+
+geomorph.ordination(geomorph_df)
+
+## Calculating disparity from dispRity or geomorph::morphol.disparity
+geomorph_disparity &lt;- geomorph::morphol.disparity(coords ~ 1,
+                      groups= ~ species, data = geomorph_df)
+dispRity_disparity &lt;- dispRity(geomorph.ordination(geomorph_df),
+                      metric = function(X) return(sum(X^2)/nrow(X)))
+
+## Extracting the raw disparity values
+geomorph_val &lt;- round(as.numeric(geomorph_disparity$Procrustes.var), 15)
+dispRity_val &lt;- as.vector(summary(dispRity_disparity, digits = 15)$obs)
+
+## Comparing the values (to the 15th decimal!)
+geomorph_val == dispRity_val # all TRUE
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

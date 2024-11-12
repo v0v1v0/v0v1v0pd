@@ -1,0 +1,458 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drtmle</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>TMLE estimate of the average treatment effect with doubly-robust inference</h2>
+
+<h3>Description</h3>
+
+<p>TMLE estimate of the average treatment effect with doubly-robust inference
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drtmle(Y, A, W, DeltaA = as.numeric(!is.na(A)),
+  DeltaY = as.numeric(!is.na(Y)), a_0 = unique(A[!is.na(A)]), family = if
+  (all(Y %in% c(0, 1))) {     stats::binomial() } else {    
+  stats::gaussian() }, stratify = FALSE, SL_Q = NULL, SL_g = NULL,
+  SL_Qr = NULL, SL_gr = NULL, n_SL = 1, avg_over = "drtmle",
+  se_cv = "none", se_cvFolds = ifelse(se_cv == "partial", 10, 1),
+  targeted_se = se_cv != "partial", glm_Q = NULL, glm_g = NULL,
+  glm_Qr = NULL, glm_gr = NULL, adapt_g = FALSE, guard = c("Q", "g"),
+  reduction = "univariate", returnModels = FALSE, returnNuisance = TRUE,
+  cvFolds = 1, maxIter = 3, tolIC = 1/length(Y), tolg = 0.01,
+  verbose = FALSE, Qsteps = 2, Qn = NULL, gn = NULL,
+  use_future = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>A <code>numeric</code> continuous or binary outcomes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>A <code>numeric</code> vector of discrete-valued treatment assignment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>A <code>data.frame</code> of named covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DeltaA</code></td>
+<td>
+<p>A <code>numeric</code> vector of missing treatment indicator (assumed
+to be equal to 0 if missing 1 if observed).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DeltaY</code></td>
+<td>
+<p>A <code>numeric</code> vector of missing outcome indicator (assumed
+to be equal to 0 if missing 1 if observed).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_0</code></td>
+<td>
+<p>A <code>numeric</code> vector of fixed treatment values at which to
+return marginal mean estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>A <code>family</code> object equal to either <code>binomial()</code> or
+<code>gaussian()</code>, to be passed to the <code>SuperLearner</code> or <code>glm</code>
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stratify</code></td>
+<td>
+<p>A <code>boolean</code> indicating whether to estimate the outcome
+regression separately for different values of <code>A</code> (if <code>TRUE</code>) or
+to pool across <code>A</code> (if <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SL_Q</code></td>
+<td>
+<p>A vector of characters or a list describing the Super Learner
+library to be used for the outcome regression. See
+<code>SuperLearner</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SL_g</code></td>
+<td>
+<p>A vector of characters describing the super learner library to be
+used for each of the propensity score regressions (<code>DeltaA</code>, <code>A</code>,
+and <code>DeltaY</code>). To use the same library for each of the regressions (or
+if there is no missing data in <code>A</code> nor <code>Y</code>), a single library may
+be input. See <code>SuperLearner</code> for details on how
+super learner libraries can be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SL_Qr</code></td>
+<td>
+<p>A vector of characters or a list describing the Super Learner
+library to be used for the reduced-dimension outcome regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SL_gr</code></td>
+<td>
+<p>A vector of characters or a list describing the Super Learner
+library to be used for the reduced-dimension propensity score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_SL</code></td>
+<td>
+<p>Number of repeated Super Learners to run (default 1) for the
+each nuisance parameter. Repeat Super Learners more times to obtain more stable
+inference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>avg_over</code></td>
+<td>
+<p>If multiple Super Learners are run, on which scale should the
+results be aggregated. Options include: <code>"SL"</code> =
+repeated nuisance parameter estimates are averaged before subsequently
+generating a single vector of point estimates based on the averaged models;
+<code>"drtmle"</code> = repeated vectors of point estimates are generated and
+averaged. Both can be specified, recognizing that this adds considerable
+computational expense. In this case, the final estimates are the average
+of <code>n_SL</code> point estimates where each is built by averaging <code>n_SL</code>
+fits. If <code>NULL</code>, no averaging is performed (in which case <code>n_SL</code>
+should be set equal to 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_cv</code></td>
+<td>
+<p>Should cross-validated nuisance parameter estimates be used
+for computing standard errors?
+Options are <code>"none"</code> = no cross-validation is performed; <code>"partial"</code> =
+only applicable if Super Learner is used for nuisance parameter estimates;
+<code>"full"</code> = full cross-validation is performed. See vignette for further
+details. Ignored if <code>cvFolds &gt; 1</code>, since then
+cross-validated nuisance parameter estimates are used by default and it is
+assumed that you want full cross-validated standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_cvFolds</code></td>
+<td>
+<p>If cross-validated nuisance parameter estimates are used
+to compute standard errors, how many folds should be used in this computation.
+If <code>se_cv = "partial"</code>, then this option sets the number of folds used
+by the <code>SuperLearner</code> fitting procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>targeted_se</code></td>
+<td>
+<p>A boolean indicating whether the targeted nuisance
+parameters should be used in standard error computation or the initial
+estimators. If <code>se_cv</code> is not set to <code>"none"</code>, this option is
+ignored and standard errors are computed based on non-targeted, cross-validated
+nuisance parameter fits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_Q</code></td>
+<td>
+<p>A character describing a formula to be used in the call to
+<code>glm</code> for the outcome regression. Ignored if <code>SL_Q!=NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_g</code></td>
+<td>
+<p>A list of characters describing the formulas to be used
+for each of the propensity score regressions (<code>DeltaA</code>, <code>A</code>, and
+<code>DeltaY</code>). To use the same formula for each of the regressions (or if
+there are no missing data in <code>A</code> nor <code>Y</code>), a single character
+formula may be input. In general the formulas can reference any variable in
+<code>colnames(W)</code>, unless <code>adapt_g = TRUE</code> in which case the formulas
+should reference variables <code>QaW</code> where <code>a</code> takes values in <code>a_0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_Qr</code></td>
+<td>
+<p>A character describing a formula to be used in the call to
+<code>glm</code> for reduced-dimension outcome regression. Ignored if
+<code>SL_Qr!=NULL</code>. The formula should use the variable name <code>'gn'</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_gr</code></td>
+<td>
+<p>A character describing a formula to be used in the call to
+<code>glm</code> for the reduced-dimension propensity score. Ignored if
+<code>SL_gr!=NULL</code>. The formula should use the variable name <code>'Qn'</code> and
+<code>'gn'</code> if <code>reduction='bivariate'</code> and <code>'Qn'</code> otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adapt_g</code></td>
+<td>
+<p>A boolean indicating whether the propensity score should be
+outcome adaptive. If <code>TRUE</code> then the propensity score is estimated as the
+regression of <code>A</code> onto covariates <code>QaW</code> for <code>a</code> in each value
+contained in <code>a_0</code>. See vignette for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>guard</code></td>
+<td>
+<p>A character vector indicating what pattern of misspecifications
+to guard against. If <code>guard</code> contains <code>"Q"</code>, then the TMLE guards
+against misspecification of the outcome regression by estimating the
+reduced-dimension outcome regression specified by <code>glm_Qr</code> or
+<code>SL_Qr</code>. If <code>guard</code> contains <code>"g"</code> then the TMLE
+(additionally) guards against misspecification of the propensity score by
+estimating the reduced-dimension propensity score specified by <code>glm_gr</code>
+or <code>SL_gr</code>. If <code>guard</code> is set to <code>NULL</code>, then only standard TMLE
+and one-step estimators are computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reduction</code></td>
+<td>
+<p>A character equal to <code>"univariate"</code> for a univariate
+misspecification correction (default) or <code>"bivariate"</code> for the
+bivariate version.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnModels</code></td>
+<td>
+<p>A boolean indicating whether to return model fits for the
+outcome regression, propensity score, and reduced-dimension regressions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnNuisance</code></td>
+<td>
+<p>A boolean indicating whether to return the estimated
+nuisance regressions evaluated on the observed data. Defaults to <code>TRUE</code>.
+If <code>n_SL</code> is large and <code>"drtmle"</code> is in <code>avg_over</code>, then
+consider setting to <code>FALSE</code> in order to reduce size of resultant object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cvFolds</code></td>
+<td>
+<p>A numeric equal to the number of folds to be used in
+cross-validated fitting of nuisance parameters. If <code>cvFolds = 1</code>, no
+cross-validation is used. Alternatively, <code>cvFolds</code> may be entered as a
+vector of fold assignments for observations, in which case its length should
+be the same length as <code>Y</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+<p>A numeric that sets the maximum number of iterations the TMLE
+can perform in its fluctuation step.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolIC</code></td>
+<td>
+<p>A numeric that defines the stopping criteria based on the
+empirical mean of the influence function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolg</code></td>
+<td>
+<p>A numeric indicating the minimum value for estimates of the
+propensity score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A boolean indicating whether to print status updates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Qsteps</code></td>
+<td>
+<p>A numeric equal to 1 or 2 indicating whether the fluctuation
+submodel for the outcome regression should be fit using a single
+minimization (<code>Qsteps = 1</code>) or a backfitting-type minimization
+(<code>Qsteps=2</code>). The latter was found to be more stable in simulations and
+is the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Qn</code></td>
+<td>
+<p>An optional list of outcome regression estimates. If specified, the
+function will ignore the nuisance parameter estimation specified by
+<code>SL_Q</code> and <code>glm_Q</code>. The entries in the list should correspond to
+the outcome regression evaluated at <code>A</code> and the observed values of
+<code>W</code>, with order determined by the input to <code>a_0</code> (e.g., if
+<code>a_0 = c(0, 1)</code> then <code>Qn[[1]]</code> should be outcome regression at
+<code>A</code> = 0 and <code>Qn[[2]]</code> should be outcome regression at
+<code>A</code> = 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gn</code></td>
+<td>
+<p>An optional list of propensity score estimates. If specified, the
+function will ignore the nuisance parameter estimation specified by
+<code>SL_g</code> and <code>glm_g</code>. The entries in the list should correspond to
+the propensity for the observed values of <code>W</code>, with order determined by
+the input to <code>a_0</code> (e.g., if <code>a_0 = c(0,1)</code> then <code>gn[[1]]</code>
+should be propensity of <code>A</code> = 0 and <code>gn[[2]]</code> should be propensity
+of <code>A</code> = 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_future</code></td>
+<td>
+<p>Boolean indicating whether to use <code>future_lapply</code> or
+instead to just use lapply. The latter can be easier to run down errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other options (not currently used).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"drtmle"</code>.
+</p>
+
+<dl>
+<dt><code>drtmle</code></dt>
+<dd>
+<p>A <code>list</code> of doubly-robust point estimates and
+a doubly-robust covariance matrix</p>
+</dd>
+<dt><code>nuisance_drtmle</code></dt>
+<dd>
+<p>A <code>list</code> of the final TMLE estimates of
+the outcome regression (<code>$QnStar</code>), propensity score
+(<code>$gnStar</code>), and reduced-dimension regressions (<code>$QrnStar</code>,
+<code>$grnStar</code>) evaluated at the observed data values.</p>
+</dd>
+<dt><code>ic_drtmle</code></dt>
+<dd>
+<p>A <code>list</code> of the empirical mean of the efficient
+influence function (<code>$eif</code>) and the extra pieces of the influence
+function resulting from misspecification. All should be smaller than
+<code>tolIC</code> (unless <code>maxIter</code> was reached first). Also includes
+a matrix of the influence function values at the estimated nuisance
+parameters evaluated at the observed data.</p>
+</dd>
+<dt><code>aiptw_c</code></dt>
+<dd>
+<p>A <code>list</code> of doubly-robust point estimates and
+a non-doubly-robust covariance matrix. Theory does not guarantee
+performance of inference for these estimators, but simulation studies
+showed they often perform adequately.</p>
+</dd>
+<dt><code>nuisance_aiptw</code></dt>
+<dd>
+<p>A <code>list</code> of the initial estimates of the
+outcome regression, propensity score, and reduced-dimension
+regressions evaluated at the observed data values.</p>
+</dd>
+<dt><code>tmle</code></dt>
+<dd>
+<p>A <code>list</code> of doubly-robust point estimates and
+non-doubly-robust covariance for the standard TMLE estimator.</p>
+</dd>
+<dt><code>aiptw</code></dt>
+<dd>
+<p>A <code>list</code> of doubly-robust point estimates and
+non-doubly-robust covariance matrix for the standard AIPTW estimator.</p>
+</dd>
+<dt><code>gcomp</code></dt>
+<dd>
+<p>A <code>list</code> of non-doubly-robust point estimates and
+non-doubly-robust covariance matrix for the standard G-computation
+estimator. If super learner is used there is no guarantee of correct
+inference for this estimator.</p>
+</dd>
+<dt><code>QnMod</code></dt>
+<dd>
+<p>The fitted object for the outcome regression. Returns
+<code>NULL</code> if <code>returnModels = FALSE</code>.</p>
+</dd>
+<dt><code>gnMod</code></dt>
+<dd>
+<p>The fitted object for the propensity score. Returns
+<code>NULL</code> if <code>returnModels = FALSE</code>.</p>
+</dd>
+<dt><code>QrnMod</code></dt>
+<dd>
+<p>The fitted object for the reduced-dimension regression
+that guards against misspecification of the outcome regression.
+Returns <code>NULL</code> if <code>returnModels = FALSE</code>.</p>
+</dd>
+<dt><code>grnMod</code></dt>
+<dd>
+<p>The fitted object for the reduced-dimension regression
+that guards against misspecification of the propensity score. Returns
+<code>NULL</code> if <code>returnModels = FALSE</code>.</p>
+</dd>
+<dt><code>a_0</code></dt>
+<dd>
+<p>The treatment levels that were requested for computation
+of covariate-adjusted means.</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load super learner
+library(SuperLearner)
+# simulate data
+set.seed(123456)
+n &lt;- 100
+W &lt;- data.frame(W1 = runif(n), W2 = rnorm(n))
+A &lt;- rbinom(n, 1, plogis(W$W1 - W$W2))
+Y &lt;- rbinom(n, 1, plogis(W$W1 * W$W2 * A))
+# A quick example of drtmle:
+# We note that more flexible super learner libraries
+# are available, and that we recommend the user use more flexible
+# libraries for SL_Qr and SL_gr for general use.
+fit1 &lt;- drtmle(
+  W = W, A = A, Y = Y, a_0 = c(1, 0),
+  family = binomial(),
+  stratify = FALSE,
+  SL_Q = c("SL.glm", "SL.mean", "SL.glm.interaction"),
+  SL_g = c("SL.glm", "SL.mean", "SL.glm.interaction"),
+  SL_Qr = "SL.glm",
+  SL_gr = "SL.glm", maxIter = 1
+)
+</code></pre>
+
+
+</div>

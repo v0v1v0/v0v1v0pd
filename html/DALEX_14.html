@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model_parts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dataset Level Variable Importance as Change in Loss Function after Variable Permutations</h2>
+
+<h3>Description</h3>
+
+<p>From DALEX version 1.0 this function calls the <code>feature_importance</code>
+Find information how to use this function here: <a href="https://ema.drwhy.ai/featureImportance.html">https://ema.drwhy.ai/featureImportance.html</a>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">model_parts(
+  explainer,
+  loss_function = loss_default(explainer$model_info$type),
+  ...,
+  type = "variable_importance",
+  N = n_sample,
+  n_sample = 1000
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>explainer</code></td>
+<td>
+<p>a model to be explained, preprocessed by the <code>explain</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss_function</code></td>
+<td>
+<p>a function that will be used to assess variable importance. By default it is 1-AUC for classification, cross entropy for multilabel classification and RMSE for regression. Custom, user-made loss function should accept two obligatory parameters (observed, predicted), where <code>observed</code> states for actual values of the target, while <code>predicted</code> for predicted values. If attribute "loss_accuracy" is associated with function object, then it will be plotted as name of the loss function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character, type of transformation that should be applied for dropout loss. <code>variable_importance</code> and <code>raw</code> results raw drop lossess, <code>ratio</code> returns <code>drop_loss/drop_loss_full_model</code> while <code>difference</code> returns <code>drop_loss - drop_loss_full_model</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>number of observations that should be sampled for calculation of variable importance. If <code>NULL</code> then variable importance will be calculated on whole dataset (no sampling).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_sample</code></td>
+<td>
+<p>alias for <code>N</code> held for backwards compatibility. number of observations that should be sampled for calculation of variable importance.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class <code>feature_importance</code>.
+It's a data frame with calculated average response.
+</p>
+
+
+<h3>References</h3>
+
+<p>Explanatory Model Analysis. Explore, Explain and Examine Predictive Models. <a href="https://ema.drwhy.ai/">https://ema.drwhy.ai/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# regression
+
+library("ranger")
+apartments_ranger_model &lt;- ranger(m2.price~., data = apartments, num.trees = 50)
+explainer_ranger  &lt;- explain(apartments_ranger_model, data = apartments[,-1],
+                             y = apartments$m2.price, label = "Ranger Apartments")
+model_parts_ranger_aps &lt;- model_parts(explainer_ranger, type = "raw")
+head(model_parts_ranger_aps, 8)
+plot(model_parts_ranger_aps)
+
+# binary classification
+
+titanic_glm_model &lt;- glm(survived~., data = titanic_imputed, family = "binomial")
+explainer_glm_titanic &lt;- explain(titanic_glm_model, data = titanic_imputed[,-8],
+                         y = titanic_imputed$survived)
+logit &lt;- function(x) exp(x)/(1+exp(x))
+custom_loss &lt;- function(observed, predicted){
+   sum((observed - logit(predicted))^2)
+}
+attr(custom_loss, "loss_name") &lt;- "Logit residuals"
+model_parts_glm_titanic &lt;- model_parts(explainer_glm_titanic, type = "raw",
+                                       loss_function = custom_loss)
+head(model_parts_glm_titanic, 8)
+plot(model_parts_glm_titanic)
+
+# multilabel classification
+
+HR_ranger_model_HR &lt;- ranger(status~., data = HR, num.trees = 50,
+                               probability = TRUE)
+explainer_ranger_HR  &lt;- explain(HR_ranger_model_HR, data = HR[,-6],
+                             y = HR$status, label = "Ranger HR")
+model_parts_ranger_HR &lt;- model_parts(explainer_ranger_HR, type = "raw")
+head(model_parts_ranger_HR, 8)
+plot(model_parts_ranger_HR)
+
+
+
+</code></pre>
+
+
+</div>

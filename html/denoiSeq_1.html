@@ -1,0 +1,95 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>denoiseq</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Differential expression analysis using a bottom-up model</h2>
+
+<h3>Description</h3>
+
+<p>The denoiseq function perfoms default analysis by first normalising the
+counts and then estimating the model parameters using Bayesian inference.
+Size factors are estimated from count matrix and used for the normalisation.
+The  Gibb's sampling algorithm is then used to sample from the joint
+posterior  distribution of the model parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">denoiseq(RDobject, steps, tuningSteps = floor(steps/3))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>RDobject</code></td>
+<td>
+<p>A readsData object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steps</code></td>
+<td>
+<p>An integer representing the number of iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tuningSteps</code></td>
+<td>
+<p>An integer representing the number of iterations to be
+used for tuning the step sizes. Defaulted to a third of steps.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The denoiSeq package is based on a bottom-up model for PCR sequencing
+developed by Ndifon et al. (2012). The model generates, in a bottom-up
+manner, a probability distribution for the final copy number of a gene, that
+is  a superposition of the negative binomial and the binomial distributions.
+The derived distribution has three main parameters, i.e <em>N, p</em> and
+<em>f</em>, which represent the initial gene amount before amplification,
+the amplification efficiency and the dilution rate, respectively.
+</p>
+<p>Bayesian inference is used to estimate the model parameters. The counts in
+each column are used to estimate the size factors (Anders and Huber, 2010)
+which are in turn used to normalise the counts. For an <code class="reqn">m</code>  by <code class="reqn">n</code>
+matrix, inference aims at estimating the three sets of parameters, i.e
+<code class="reqn">p, f</code> and <code class="reqn">N_i</code> ’s (2m in total because we are considering 2
+conditions with the same <em>m</em> genes in each). denoiseq  uses the rows in
+each condition to estimate parameter <code class="reqn">N_i</code> for each gene in that
+condition, and uses the entire dataset, combined from both conditions,
+to estimate <code class="reqn">p</code> and <code class="reqn">f</code>.
+</p>
+<p>For differential expression analysis, the primary parameters of interest are
+<code class="reqn">N_{iA}</code> and <code class="reqn">N_{iB}</code> (from conditions A and B respectively), for
+each gene <code class="reqn">i</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The same readsData object but with a filled output slot. The output
+slot now contains  2 lists, i.e <strong>samples</strong> which contains
+posterior  samples  for each of the parameters  <code class="reqn">N_i</code>, <code class="reqn">p</code> and
+<code class="reqn">f</code>, and  <strong>stepsize</strong> which  contains the tuned step sizes.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#pre -filtering to remove lowly expressed genes
+ERCC &lt;- ERCC[rowSums(ERCC)&gt;0, ]
+RD &lt;- new('readsData', counts = ERCC)
+steps &lt;- 30
+#30 steps are used for illustration here. Atleast 5000 steps are adequate.
+BI &lt;- denoiseq(RD, steps)
+
+</code></pre>
+
+
+</div>

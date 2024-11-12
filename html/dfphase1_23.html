@@ -1,0 +1,65 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Student</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A simulated dataset</h2>
+
+<h3>Description</h3>
+
+<p>This simulated data set consists in 50 subgroups, each with 5 observations,
+on 4 variables.
+</p>
+<p>There is an isolated location shift involving
+only the first variable at time <code class="reqn">t=10</code> and
+a step shift, involving the third and fourth variables,
+starting from <code class="reqn">t=31</code>. The in-control distribution
+is Student's t with 3 degrees of freedom, zero mean
+and such that <code class="reqn">cov(X_i,X_j)=0.8^{|i-j|}</code>.
+</p>
+<p>See the example for the exact code used to simulate the data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(Student)</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A 4x5x50 array.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(Student)
+mphase1(Student)
+#
+# Replication of the simulation
+#
+# Generation of the in-control observations
+set.seed(1)
+m &lt;- 50
+n &lt;- 5
+p &lt;- 4
+df &lt;- 3
+Sigma &lt;- outer(1:p,1:p,function(i,j) 0.8^abs(i-j))
+Sigma
+xnorm &lt;- crossprod(chol(Sigma),matrix(rnorm(p*n*m),p))
+xchisq &lt;- sqrt(rchisq(n*m,df)/(df-2))
+x &lt;- array(sweep(xnorm,2,xchisq,"/"),c(p,n,m))
+# Then, we add an isolated shift at time 10
+# (only for the first variable)
+x[1,,10] &lt;- x[1,,10]+1
+# and, a step shift starting at time 31
+# (only for the third and fourth variable)
+x[3:4,,31:50] &lt;- x[3:4,,31:50] + c(0.50,-0.25)
+dimnames(x)&lt;-list(paste("X",1:4,sep=""),NULL,NULL)
+identical(x,Student)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,223 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Surrogate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Surrogate class description</h2>
+
+<h3>Description</h3>
+
+<p>The class for distilled surrogate models.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>interpreter</code></dt>
+<dd>
+<p>The interpreter object to use as a standardized wrapper for the model</p>
+</dd>
+<dt><code>features</code></dt>
+<dd>
+<p>The indices of the features in the data used in the surrogate model</p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>The weights used to recombine the PDPs into a surrogate for the original model</p>
+</dd>
+<dt><code>intercept</code></dt>
+<dd>
+<p>The intercept term we use for our predictions</p>
+</dd>
+<dt><code>feature.centers</code></dt>
+<dd>
+<p>The center value for the features determined in the model</p>
+</dd>
+<dt><code>center.mean</code></dt>
+<dd>
+<p>Boolean value that determines whether we use the mean-centered
+data for our predictions</p>
+</dd>
+<dt><code>grid</code></dt>
+<dd>
+<p>A list of PDPS that determine our prediction.</p>
+</dd>
+<dt><code>snap.grid</code></dt>
+<dd>
+<p>Boolean that determines whether we use grid.points</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-Surrogate-new"><code>Surrogate$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Surrogate-clone"><code>Surrogate$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-Surrogate-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Surrogate$new(
+  interpreter,
+  features,
+  weights,
+  intercept,
+  feature.centers,
+  center.mean,
+  grid,
+  snap.grid
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>interpreter</code></dt>
+<dd>
+<p>The interpreter object we want to build a surrogate model for.</p>
+</dd>
+<dt><code>features</code></dt>
+<dd>
+<p>The indices of features in the training data used for the surrogate model</p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>The weights for each given feature after the surrogate model is fit.</p>
+</dd>
+<dt><code>intercept</code></dt>
+<dd>
+<p>The baseline value. If uncentered, this is 0, and if centered,
+this will be the mean of the predictions of the original model
+on the training data.</p>
+</dd>
+<dt><code>feature.centers</code></dt>
+<dd>
+<p>The baseline value for the effect of each feature. If uncentered, this is 0.</p>
+</dd>
+<dt><code>center.mean</code></dt>
+<dd>
+<p>A boolean value that shows whether this model is a centered or uncentered model</p>
+</dd>
+<dt><code>grid</code></dt>
+<dd>
+<p>A list of dataframes containing the pre-calculated values used to generate predictions
+if snap.grid is TRUE</p>
+</dd>
+<dt><code>snap.grid</code></dt>
+<dd>
+<p>Boolean that determines if we use previously calculated values
+or re-predict using the functions.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A surrogate model object that we can use for predictions
+</p>
+
+
+<hr>
+<a id="method-Surrogate-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Surrogate$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Note</h3>
+
+<p>Do not initalize this class on its own. It is automatically created
+by the distill function for the interpreter class.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(distillML)
+library(Rforestry)
+set.seed(491)
+data &lt;- iris
+
+test_ind &lt;- sample(1:nrow(data), nrow(data)%/%5)
+train_reg &lt;- data[-test_ind,]
+test_reg &lt;- data[test_ind,]
+
+
+forest &lt;- forestry(x=data[,-1],
+                   y=data[,1])
+
+forest_predictor &lt;- Predictor$new(model = forest, data=train_reg,
+                                  y="Sepal.Length", task = "regression")
+
+forest_interpret &lt;- Interpreter$new(predictor = forest_predictor)
+
+# Both initializations of a surrogate class result in the same surrogate model
+surrogate.model &lt;- distill(forest_interpret)
+surrogate.model &lt;- distill(forest_interpret,
+                           center.mean = TRUE,
+                           features = 1:length(forest_interpret$features),
+                           cv = FALSE,
+                           snap.grid = TRUE,
+                           snap.train = TRUE)
+
+
+</code></pre>
+
+
+</div>

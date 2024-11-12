@@ -1,0 +1,335 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>readWQPdata</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>General Data Import from Water Quality Portal</h2>
+
+<h3>Description</h3>
+
+<p>Imports data from Water Quality Portal web service. This function gets the data from here:
+<a href="https://www.waterqualitydata.us">https://www.waterqualitydata.us</a>.
+because it allows for other agencies rather than the USGS.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">readWQPdata(
+  ...,
+  querySummary = FALSE,
+  tz = "UTC",
+  ignore_attributes = FALSE,
+  convertType = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>see <a href="https://www.waterqualitydata.us/webservices_documentation">https://www.waterqualitydata.us/webservices_documentation</a> for a complete list of options.
+A list of arguments can also be supplied. For more information see the above 
+description for this help file. If no "service" argument is supplied, it
+will default to "Result". One way to figure out how to construct a WQP query is to go to the "Advanced" 
+form in the Water Quality Portal:
+<a href="https://www.waterqualitydata.us/#mimeType=csv&amp;providers=NWIS&amp;providers=STORET">https://www.waterqualitydata.us/#mimeType=csv&amp;providers=NWIS&amp;providers=STORET</a>
+Use the form to discover what parameters are available. Once the query is 
+set in the form, scroll down to the "Query URL". You will see the parameters
+after "https://www.waterqualitydata.us/#". For example, if you chose "Nutrient"
+in the Characteristic Group dropdown, you will see characteristicType=Nutrient
+in the Query URL. The corresponding argument for dataRetrieval is
+characteristicType = "Nutrient". dataRetrieval users do not need to include
+mimeType, zip, and providers is optional (these arguments are picked automatically).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>querySummary</code></td>
+<td>
+<p>logical to only return the number of records and unique sites that
+will be returned from this query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz</code></td>
+<td>
+<p>character to set timezone attribute of dateTime. Default is "UTC", and converts the
+date times to UTC, properly accounting for daylight savings times based on the
+data's provided tz_cd column.
+Possible values to provide are "America/New_York","America/Chicago",
+"America/Denver","America/Los_Angeles",
+"America/Anchorage", as well as the following which do not use daylight savings
+time: "America/Honolulu",
+"America/Jamaica","America/Managua","America/Phoenix", and "America/Metlakatla".
+See also  <code>OlsonNames()</code>
+for more information on time zones.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore_attributes</code></td>
+<td>
+<p>logical to choose to ignore fetching site and parameter
+attributes. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convertType</code></td>
+<td>
+<p>logical, defaults to <code>TRUE</code>. If <code>TRUE</code>, the function
+will convert the data to dates, datetimes,
+numerics based on a standard algorithm. If false, everything is returned as a character.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function uses ... as a query input, which can be very flexible, but also 
+has a steeper learning curve. For a quick overview, scroll down to the Examples
+in this help file to see many query options. 
+</p>
+<p>There are currently 10 "services" provided by the Water Quality Portal:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Base URL </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+Result (default) </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/Result/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+Station </td>
+<td style="text-align: left;">  "https://www.waterqualitydata.us/data/Station/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+Activity </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/Activity/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ActivityMetric </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/ActivityMetric/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+SiteSummary </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/summary/monitoringLocation/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+Project </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/Project/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ProjectMonitoringLocationWeighting </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/ProjectMonitoringLocationWeighting/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ResultDetectionQuantitationLimit </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/ResultDetectionQuantitationLimit/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+BiologicalMetric </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/BiologicalMetric/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+Organization </td>
+<td style="text-align: left;"> "https://www.waterqualitydata.us/data/Organization/search" </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame, the specific columns will depend on the "service" and/or "dataProfile".
+</p>
+<p>There are also several useful attributes attached to the data frame:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+Name </td>
+<td style="text-align: left;"> Type </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+url </td>
+<td style="text-align: left;"> character </td>
+<td style="text-align: left;"> The url used to generate the data </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+siteInfo </td>
+<td style="text-align: left;"> data.frame </td>
+<td style="text-align: left;"> A data frame containing information on the requested sites </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+variableInfo </td>
+<td style="text-align: left;"> data.frame </td>
+<td style="text-align: left;"> A data frame containing information on the requested parameters </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+queryTime </td>
+<td style="text-align: left;"> POSIXct </td>
+<td style="text-align: left;"> The time the data was returned </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+nameToUse &lt;- "pH"
+pHData &lt;- readWQPdata(siteid = "USGS-04024315", characteristicName = nameToUse)
+pHData_summary &lt;- readWQPdata(
+  bBox = c(-90.10, 42.67, -88.64, 43.35),
+  characteristicName = nameToUse, querySummary = TRUE
+)
+startDate &lt;- as.Date("2013-01-01")
+secchi.names &lt;- c(
+  "Depth, Secchi disk depth",
+  "Depth, Secchi disk depth (choice list)",
+  "Secchi Reading Condition (choice list)",
+  "Water transparency, Secchi disc"
+)
+args &lt;- list(
+  "startDateLo" = startDate,
+  "startDateHi" = "2013-12-31",
+  statecode = "WI",
+  characteristicName = secchi.names
+)
+
+wqp.data &lt;- readWQPdata(args)
+
+args_2 &lt;- list(
+  "startDateLo" = startDate,
+  "startDateHi" = "2013-12-31",
+  statecode = "WI",
+  characteristicName = secchi.names,
+  querySummary = TRUE
+)
+
+wqp.summary &lt;- readWQPdata(args_2)
+
+arg_3 &lt;- list(
+  "startDateLo" = startDate,
+  "startDateHi" = "2013-12-31"
+)
+arg_4 &lt;- list(
+  statecode = "WI",
+  characteristicName = secchi.names
+)
+wqp.summary &lt;- readWQPdata(arg_3, arg_4, querySummary = TRUE)
+wqp.summary_WI &lt;- readWQPdata(arg_3,
+  statecode = "WI",
+  characteristicName = secchi.names,
+  querySummary = TRUE
+)
+
+# querying by county
+DeWitt &lt;- readWQPdata(
+  statecode = "Illinois",
+  countycode = "DeWitt",
+  characteristicName = "Nitrogen"
+)
+
+# Data profiles: "Organization Data"
+org_data &lt;- readWQPdata(
+  statecode = "WI",
+  countycode = "Dane",
+  service = "Organization"
+)
+
+# Data profiles: "Site Data Only"
+site_data &lt;- readWQPdata(
+  statecode = "WI",
+  countycode = "Dane",
+  service = "Station"
+)
+
+# Data profiles: "Project Data"
+project_data &lt;- readWQPdata(
+  statecode = "WI",
+  countycode = "Dane",
+  service = "Project"
+)
+
+# Data profiles: "Project Monitoring Location Weighting Data"
+proj_mlwd &lt;- readWQPdata(
+  statecode = "WI",
+  countycode = "Dane",
+  service = "ProjectMonitoringLocationWeighting"
+)
+
+# Data profiles: "Sample Results (physical/chemical metadata)":
+samp_data &lt;- readWQPdata(
+  siteid = "USGS-04024315",
+  dataProfile = "resultPhysChem"
+)
+
+# Data profiles: "Sample Results (biological metadata)"
+samp_bio &lt;- readWQPdata(
+  siteid = "USGS-04024315",
+  dataProfile = "biological"
+)
+
+# Data profiles: "Sample Results (narrow)"
+samp_narrow &lt;- readWQPdata(
+  siteid = "USGS-04024315",
+  dataProfile = "narrowResult"
+)
+
+# Data profiles: "Sampling Activity"
+samp_activity &lt;- readWQPdata(
+  siteid = "USGS-04024315",
+  dataProfile = "activityAll"
+)
+
+# Data profile: "Sampling Activity Metrics"
+act_metrics &lt;- readWQPdata(
+  statecode = "WI",
+  countycode = "Dane",
+  service = "ActivityMetric"
+)
+
+# Data profile: "Result Detection Quantitation Limit Data"
+dl_data &lt;- readWQPdata(
+  siteid = "USGS-04024315",
+  service = "ResultDetectionQuantitationLimit"
+)
+
+Phosphorus &lt;- readWQPdata(
+  statecode = "WI", countycode = "Dane", 
+  characteristicName = "Phosphorus",
+  startDateLo = "2020-01-01",
+  convertType = FALSE
+)
+
+
+</code></pre>
+
+
+</div>

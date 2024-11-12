@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_nodes_attr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get attributes of dendrogram's nodes</h2>
+
+<h3>Description</h3>
+
+<p>Allows easy access to attributes of branches and/or leaves, with option
+of returning a vector with/withough NA's (for marking the missing attr value)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_nodes_attr(
+  dend,
+  attribute,
+  id,
+  include_leaves = TRUE,
+  include_branches = TRUE,
+  simplify = TRUE,
+  na.rm = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dend</code></td>
+<td>
+<p>a dendrogram object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attribute</code></td>
+<td>
+<p>character scalar of the attribute (<code>attr</code>)
+we wish to get from the nodes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>integer vector. If given - only the attr of these nodes id will be returned (via depth first search)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_leaves</code></td>
+<td>
+<p>logical. Should leaves attributes be included as well?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_branches</code></td>
+<td>
+<p>logical. Should non-leaf (branch node)
+attributes be included as well?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify</code></td>
+<td>
+<p>logical (default is TRUE). should the result be simplified
+to a vector (using simplify2array ) if possible? If it is not possible
+it will return a matrix. When FALSE, a list is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>logical. Should NA attributes be REMOVED from the resulting vector?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>not used</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A vector with the dendrogram's nodes attribute. If an attribute is missing
+from some nodes, it will return NA in that vector.
+</p>
+
+
+<h3>Source</h3>
+
+<p>Heavily inspired by the code in the
+function <code>labels.dendrogram</code>,
+so credit should go to Martin Maechler.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>get_leaves_attr, nnodes, nleaves
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># define dendrogram object to play with:
+hc &lt;- hclust(dist(USArrests[1:3, ]), "ave")
+dend &lt;- as.dendrogram(hc)
+
+# get_leaves_attr(dend) # error :)
+get_leaves_attr(dend, "label")
+labels(dend, "label")
+get_leaves_attr(dend, "height") # should be 0's
+get_nodes_attr(dend, "height")
+
+
+get_leaves_attr(dend, "leaf") # should be TRUE's
+get_nodes_attr(dend, "leaf") # conatins NA's
+
+
+get_leaves_attr(dend, "members") # should be 1's
+get_nodes_attr(dend, "members", include_branches = FALSE, na.rm = TRUE) #
+get_nodes_attr(dend, "members") #
+get_nodes_attr(dend, "members", simplify = FALSE)
+get_nodes_attr(dend, "members", include_leaves = FALSE, na.rm = TRUE) #
+
+get_nodes_attr(dend, "members", id = c(1, 3), simplify = FALSE)
+get_nodes_attr(dend, "members", id = c(1, 3)) #
+
+
+hang_dend &lt;- hang.dendrogram(dend)
+get_leaves_attr(hang_dend, "height") # no longer 0!
+get_nodes_attr(hang_dend, "height") # does not include any 0s!
+
+# does not include leaves values:
+get_nodes_attr(hang_dend, "height", include_leaves = FALSE)
+# remove leaves values all together:
+get_nodes_attr(hang_dend, "height", include_leaves = FALSE, na.rm = TRUE)
+## Not run: 
+library(microbenchmark)
+# get_leaves_attr is twice faster than get_nodes_attr
+microbenchmark(
+  get_leaves_attr(dend, "members"), # should be 1's
+  get_nodes_attr(dend, "members", include_branches = FALSE, na.rm = TRUE)
+)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

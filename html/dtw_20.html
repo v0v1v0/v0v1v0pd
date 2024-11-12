@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtwPlotTwoWay</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plotting of dynamic time warp results: pointwise comparison</h2>
+
+<h3>Description</h3>
+
+<p>Display the query and reference time series and their alignment, arranged
+for visual inspection.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtwPlotTwoWay(
+  d,
+  xts = NULL,
+  yts = NULL,
+  offset = 0,
+  ts.type = "l",
+  pch = 21,
+  match.indices = NULL,
+  match.col = "gray70",
+  match.lty = 3,
+  xlab = "Index",
+  ylab = "Query value",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>an alignment result, object of class <code>dtw</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xts</code></td>
+<td>
+<p>query vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yts</code></td>
+<td>
+<p>reference vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>displacement between the timeseries, summed to reference</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ts.type, pch</code></td>
+<td>
+<p>graphical parameters for timeseries plotting, passed to
+<code>matplot</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match.indices</code></td>
+<td>
+<p>indices for which to draw a visual guide</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match.col, match.lty</code></td>
+<td>
+<p>color and line type of the match guide lines</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab</code></td>
+<td>
+<p>axis labels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments, passed to <code>matplot</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The two vectors are displayed via the <code>matplot()</code> functions; their
+appearance can be customized via the <code>type</code> and <code>pch</code> arguments
+(constants or vectors of two elements).  If <code>offset</code> is set, the
+reference is shifted vertically by the given amount; this will be reflected
+by the <em>right-hand</em> axis.
+</p>
+<p>Argument <code>match.indices</code> is used to draw a visual guide to matches; if
+a vector is given, guides are drawn for the corresponding indices in the
+warping curve (match lines). If integer, it is used as the number of guides
+to be plotted. The corresponding style is customized via the
+<code>match.col</code> and <code>match.lty</code> arguments.
+</p>
+<p>If <code>xts</code> and <code>yts</code> are not supplied, they will be recovered from
+<code>d</code>, as long as it was created with the two-argument call of
+<code>dtw()</code> with <code>keep.internals=TRUE</code>.  Only single-variate time
+series can be plotted this way.
+</p>
+
+
+<h3>Warning</h3>
+
+<p>The function is incompatible with mechanisms for arranging
+plots on a device: <code>par(mfrow)</code>, <code>layout</code> and <code>split.screen</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>When <code>offset</code> is set values on the left axis only apply to the
+query.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Toni Giorgino
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dtwPlot()</code> for other dtw plotting functions,
+<code>matplot()</code> for graphical parameters.
+</p>
+<p>Other plot: 
+<code>dtwPlotDensity()</code>,
+<code>dtwPlotThreeWay()</code>,
+<code>dtwPlot()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+## A noisy sine wave as query
+## A cosine is for reference; sin and cos are offset by 25 samples
+
+idx&lt;-seq(0,6.28,len=100);
+query&lt;-sin(idx)+runif(100)/10;
+reference&lt;-cos(idx)
+dtw(query,reference,step=asymmetricP1,keep=TRUE)-&gt;alignment;
+
+
+## Equivalent to plot(alignment,type="two");
+dtwPlotTwoWay(alignment);
+
+
+## Highlight matches of chosen QUERY indices. We will do some index
+## arithmetics to recover the corresponding indices along the warping
+## curve
+
+hq &lt;- (0:8)/8              
+hq &lt;- round(hq*100)      #  indices in query for  pi/4 .. 7/4 pi
+
+hw &lt;- (alignment$index1 %in% hq)   # where are they on the w. curve?
+hi &lt;- (1:length(alignment$index1))[hw];   # get the indices of TRUE elems
+
+
+## Beware of the reference's y axis, may be confusing
+plot(alignment,offset=-2,type="two", lwd=3, match.col="grey50",
+     match.indices=hi,main="Match lines shown every pi/4 on query");
+
+legend("topright",c("Query","Reference (rt. axis)"), pch=21, col=1:6)
+
+
+
+</code></pre>
+
+
+</div>

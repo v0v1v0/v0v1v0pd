@@ -1,0 +1,180 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DImodels-package</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+
+Diversity-Interactions (DI) Models
+</h2>
+
+<h3>Description</h3>
+
+
+<p>The 'DImodels' package is suitable for analysing data from biodiversity and ecosystem function studies using the Diversity-Interactions (DI) modelling approach introduced by Kirwan et al. (2009) &lt;doi:10.1890/08-1684.1&gt;. Suitable data will contain proportions for each species and a community-level response variable, and may also include additional factors, such as blocks or treatments. The package can perform data manipulation tasks, such as computing pairwise interactions (the DI_data() function), can perform an automated model selection process (the autoDI() function) and has the flexibility to fit a wide range of user-defined DI models (the DI() function).
+</p>
+
+
+<h3>Details</h3>
+
+<p><strong>Introduction to Diversity-Interactions models</strong>
+</p>
+<p>Diversity-Interactions (DI) models (Kirwan et al 2009) are a set of tools for analysing and interpreting data from experiments that explore the effects of species diversity on community-level responses; for example, the effect of increasing community diversity on biomass production in a grassland ecosystem. Most analyses of diversity experiments quantify community diversity in terms of species richness, the number of species present. The DI method modifies this presence/absence approach in mixed communities by taking species relative abundance in the community into account. So, instead of ignoring differences in community responses across communities with the same species but with different species relative abundances, the DI approach aims to understand and explain these differences.
+</p>
+<p><strong>What variables will a suitable dataset contain?</strong>
+</p>
+<p>The DI approach assesses the effect of species diversity on a community response over a period of time. For data from a biodiversity study with <em>S</em> species to be suited to the DI approach, the variables that are required on each experimental unit are:
+</p>
+
+<ol>
+<li>
+<p> A set of proportions <code class="reqn">p1, p2, ... , pS</code> that characterise the proportions of each species at a defined starting point in time. These proportions (or relative abundances) of species in the community (<code class="reqn">pi</code> for the ith species) range between 0 (absence) and 1 (monoculture - the only species present) and the sum of all the <code class="reqn">pi</code> values for a community is always 1.   
+</p>
+</li>
+<li>
+<p> A community-level response variable, recorded a period of time after the initial species proportions were recorded.
+</p>
+</li>
+</ol>
+<p>The dataset may also contain other variables such as a block, density or treatments.
+</p>
+<p><strong>What are Diversity-Interactions models?</strong>
+</p>
+<p>A DI model typically has three components and takes the form:
+</p>
+<p style="text-align: center;"><code class="reqn">y = Identities + Interactions + Structures + \epsilon</code>
+</p>
+
+<p>where <em>y</em> is a community-level response, the <em>Identities</em> are the effects of species identities and enter the model as individual species proportions at the beginning of the time period, the <em>Interactions</em> are the interactions among the species proportions, while <em>Structures</em> include other experimental structures such as blocks, treatments or density. In a three species system, with an experimental blocking structure, a possible DI model is:
+</p>
+<p style="text-align: center;"><code class="reqn">y = \beta_1p1 + \beta_2p2 + \beta_3p3 + \delta_{12}p1p2 + \delta_{13}p1p3 + \delta_{23}p2p3 + \alpha_k + \epsilon</code>
+</p>
+
+<p>Where <em>p1</em>, <em>p2</em> and <em>p3</em> are the species proportions of species 1, 2 and 3 respectively, and <code class="reqn">\alpha_k</code> is the effect of block <em>k</em>. The error term <code class="reqn">\epsilon</code> is usually assumed to be normally distributed with mean 0 and constant variance (and assumed independent and identically distributed). 
+</p>
+<p>In a monoculture of the ith species, the expected performance of <em>y</em> in block <em>k</em> is <code class="reqn">\beta_i</code>. In mixture, the <em>Identities</em> component provides the expected performance as a weighted average of monoculture responses, and the <em>Interactions</em> component is added to it to give the overall expected performance of the mixed community. The <em>Interactions</em> component addresses the question: do mixed communities perform differently from what might be expected from the weighted averaging of monoculture performances? Note that in Kirwan et al 2009 the <em>Interactions</em> component is referred to as the diversity effect, however, here we use the more general term "<em>Interactions</em>", since the interpretation of how species diversity affects the response is a combination of both the <em>Identities</em> and <em>Interactions</em> components. The community with the best overall performance may depend on both the <em>Identities</em> and <em>Interactions</em> and will rarely be the community with the largest net interactions effect. The equation above provides an example of a DI model where there is a unique interaction term for each pair of species. It is possible to test various constraints among interactions, some of which may be motivated by the context of the data (Kirwan et al 2009). 
+</p>
+<p>The <em>Interactions</em> component may also include an non-linear exponent parameter <code class="reqn">\theta</code> on each <code class="reqn">pipj</code> term, where a value different to one allows the importance and impact of interaction terms to be altered (Connolly et al 2013). 
+</p>
+<p><strong>What can the <code>DImodels</code> package do?</strong>
+</p>
+<p>The DI approach is a full regression method where the response of the community is characterised by the effects of diversity variables such as  <em>Identities</em> and <em>Interactions</em> components, and by experimental structural variables such as blocks, density and treatments. All of these may be important determinants of response and so should be included in the analysis of community responses. The <code>DImodels</code> package aims to make it easier to analyse data using DI models. 
+</p>
+<p>Currently, the <code>DImodels</code> package contains three main functions: <code>autoDI</code>, <code>DI</code> and <code>DI_data</code>. Here we give a brief overview of each, and link to the respective help files for further information. 
+</p>
+<p><code>auto_DI</code>: This function gives a simple overview of the successive contribution of the <em>Structures</em>, <em>Identities</em> and <em>Interactions</em> components to the model via an automated model selection process. It will identify the 'best' model from a (limited) subset of all possible DI models. However, <code>autoDI</code> may need to be supplemented by more refined analysis, for example, <code>auto_DI</code> does not test for interactions between the terms in the <em>Structures</em> and <em>Identities</em> components. It can also only facilitate one block, one density and one treatment variable. However, it is a very useful starting point for DI model exploration. Further information at: <code>autoDI</code>.  
+</p>
+<p><code>DI</code>: This function can fit a wide range of DI models and includes the flexibility to test for multiple treatments or additional interactions, for example, between terms in the <em>Identities</em> and <em>Structures</em> components. The DI function fits one user-defined DI model at a time, and it allows for flexibility in the form of the model through a combination of in-built argument options and additional user-defined options. Further information at: <code>DI</code>. 
+</p>
+<p><code>DI_data</code>: This function can compute various forms of interactions among the <code class="reqn">pi</code> variables. This function is not required when using <code>autoDI</code>, or for the in-built argument options in <code>DI</code>, but may be needed when specifying additional user-defined options in <code>DI</code>. Further information at: <code>DI_data</code> and for examples of when it is required see <code>DI</code>.  
+</p>
+<p>There are three other functions:
+</p>
+
+<ol>
+<li> <p><code>theta_CI</code> can fit a confidence interval to the parameter theta, when it has been estimated using either <code>autoDI</code> or <code>DI</code>,
+</p>
+</li>
+<li> <p><code>DI_compare</code> that can compare a fitted DI model to the 'reference' model (see <code>autoDI</code>) for details about the reference model), and
+</p>
+</li>
+<li> <p><code>update_DI</code> that can update a fitted DI model passing different values to one or more arguments (see <code>update_DI</code>) for details).
+</p>
+</li>
+</ol>
+<p><strong>Challenges with fitting and interpreting Diversity-Interactions models</strong>
+</p>
+<p>Analysing data using DI methods can be tricky for people familiar with ordinary regression models and the <code>DImodels</code> package aims to make analysis easier. The difficulties lie in:
+</p>
+
+<ol>
+<li>
+<p> The lack of familiarity in dealing with the <em>Identities</em> component variables <code class="reqn">pi</code>, which must sum to 1. This constraint can lead to interpretative issues, and estimation problems with some widely used R software.
+</p>
+</li>
+<li>
+<p> The novelty of specifying the <em>Interactions</em> components in terms of many pairwise interaction terms whose numbers may greatly increase with <em>S</em>. The number of pairwise terms can often be reduced by identifying biologically meaningful patterns among them, for example, through functional grouping of species. This may greatly reduce the number of coefficients to be estimated and interpreted in the model (Kirwan et al, 2009). 
+</p>
+</li>
+<li>
+<p> The introduction of a power coefficient theta (<code class="reqn">\theta</code>) for all pairwise interaction terms (Connolly et al, 2013). This parameter can be very useful in describing the effect of community evenness on community response, i.e., whether response changes rapidly or slowly across communities where the relative abundance of species changes from being equal for all species to dominance by one or more species. 
+</p>
+</li>
+</ol>
+<p><strong>Limitations of the <code>DImodels</code> package</strong>
+</p>
+<p>Currently, the <code>DImodels</code> package does not support multivariate responses or repeated measurements on the same experimental unit. It also does not currently support the random effects approach to modelling pairwise interactions that was developed by Brophy et al 2017.
+</p>
+
+
+<h3>Author(s)</h3>
+
+
+<p>Rafael de Andrade Moral [aut, cre], John Connolly [aut], Rishabh Vishwakarma [ctb], Caroline Brophy [aut]
+</p>
+
+<p>Maintainer: Rafael de Andrade Moral &lt;rafael.deandrademoral@mu.ie&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Brophy C, A Dooley, L Kirwan, JA Finn, J McDonnell, T Bell, MW Cadotte and J Connolly. (2017) Biodiversity and ecosystem function: Making sense of numerous species interactions in multi-species communities. Ecology 98, 1771-1778.
+</p>
+<p>Connolly J, T Bell, T Bolger, C Brophy, T Carnus, JA Finn, L Kirwan, F Isbell, J Levine, A Lüscher, V Picasso, C Roscher, MT Sebastia, M Suter and A Weigelt (2013) An improved model to predict the effects of changing biodiversity levels on ecosystem function. Journal of Ecology, 101, 344-355.
+</p>
+<p>Kirwan L, J Connolly, JA Finn, C Brophy, A Lüscher, D Nyfeler and MT Sebastia (2009) Diversity-interaction modelling - estimating contributions of species identities and interactions to ecosystem function. Ecology, 90, 2032-2038.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>autoDI</code>
+<code>DI</code>
+<code>DI_data</code>
+<code>theta_CI</code>
+</p>
+<p>Example datasets:
+The <code>Bell</code> dataset.
+The <code>sim1</code> dataset.
+The <code>sim2</code> dataset.
+The <code>sim3</code> dataset.
+The <code>sim4</code> dataset.
+The <code>sim5</code> dataset.
+The <code>Switzerland</code> dataset.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Load the Switzerland data
+  data(Switzerland)
+  
+## Check that the proportions sum to 1 (required for DI models)
+## p1 to p4 are in the 4th to 7th columns in Switzerland
+  Switzerlandsums &lt;- rowSums(Switzerland[4:7])
+  summary(Switzerlandsums)
+  
+## Example of autoDI
+  auto1 &lt;- autoDI(y = "yield", density = "density", prop = c("p1","p2","p3","p4"), 
+                  treat = "nitrogen", FG = c("G","G","L","L"), data = Switzerland, 
+                  selection = "Ftest")
+  summary(auto1)
+  
+## Example of DI
+  m1 &lt;- DI(y = "yield", density = "density", prop = 4:7, treat = "nitrogen", 
+           FG = c("G","G","L","L"), DImodel = "FG", data = Switzerland)
+  summary(m1)
+  
+## Example of DI_data.
+## Create interaction variables and incorporate them into a new data frame Switzerland2.
+## Switzerland2 will contain the new variables:  AV, E, p1_add, p2_add, p3_add, p4_add, 
+##  bfg_G_L, wfg_G, wfg_L.
+  FG_matrix &lt;- DI_data(prop = c("p1","p2","p3","p4"), FG = c("G","G","L","L"),  
+                       data = Switzerland, what = "FG")
+  Switzerland2 &lt;- data.frame(Switzerland, FG_matrix)
+</code></pre>
+
+
+</div>

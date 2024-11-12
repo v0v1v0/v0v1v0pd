@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>consecutiveRUNS.run</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Main function to detect genomic RUNS (ROHom/ROHet) using the consecutive method</h2>
+
+<h3>Description</h3>
+
+<p>This is the main detectRUNS function to scan the genome for runs (of homozygosity or heterozygosity)
+using the consecutive method (Marras et al. 2015, Animal Genetics 46(2):110-121).
+All parameters to detect runs (e.g. minimum n. of SNP, max n. of missing genotypes,
+max n. of opposite genotypes etc.) are specified here.
+Input data are in the ped/map
+Plink format (https://www.cog-genomics.org/plink/1.9/input#ped)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">consecutiveRUNS.run(genotypeFile, mapFile, ROHet = FALSE,
+  maxOppRun = 0, maxMissRun = 0, minSNP = 15, minLengthBps = 1000,
+  maxGap = 10^6)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>genotypeFile</code></td>
+<td>
+<p>genotype (.ped) file path</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mapFile</code></td>
+<td>
+<p>map file (.map) file path</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ROHet</code></td>
+<td>
+<p>should we look for ROHet or ROHom? (default = FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxOppRun</code></td>
+<td>
+<p>max n. of opposite genotype SNPs in the run (default = 0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxMissRun</code></td>
+<td>
+<p>max n. of missing SNPs in the run (default = 0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minSNP</code></td>
+<td>
+<p>minimum n. of SNP in a RUN (default = 15)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minLengthBps</code></td>
+<td>
+<p>minimum length of run in bps (defaults to 1000 bps = 1 kbps)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxGap</code></td>
+<td>
+<p>max distance between consecutive SNP in a window to be still considered a potential run (defaults to 10^6)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function scans the genome (diploid) for runs using the consecutive method.
+This is a wrapper function for many component functions that handle the input data (ped/map files), performs internal conversions,
+accepts parameters specifications, selects the statistical method to detect runs (sliding windows, consecutive loci) and whether
+runs of homozygosity (RoHom) or of heterozygosity (RoHet) are looked for.
+</p>
+<p>In the ped file, the groups samples belong to can be specified (first column). This is important if comparisons between
+human ethnic groups or between animal breeds or plant varieties or biological populations are to be performed.
+Also, if cases and controls are to be compared, this is the place where this information needs to be specified.
+</p>
+<p>This function returns a data frame with all runs detected in the dataset. This data frame can then be written out to a csv file.
+The data frame is, in turn, the input for other functions of the detectRUNS package that create plots and produce statistics
+of the results (see plot and statistic functions in this manual, and/or refer to the vignette of detectRUNS).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dataframe with RUNs of Homozygosity or Heterozygosity in the analysed dataset.
+The returned dataframe contains the following seven columns: "group", "id", "chrom",
+"nSNP", "from", "to", "lengthBps" (group: population, breed, case/control etc.;
+id: individual identifier; chrom: chromosome on which the run is located;
+nSNP: number of SNPs in the run; from: starting position of the run, in bps;
+to: end position of the run, in bps; lengthBps: size of the run)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># getting map and ped paths
+genotypeFile &lt;- system.file("extdata", "Kijas2016_Sheep_subset.ped", package = "detectRUNS")
+mapFile &lt;- system.file("extdata", "Kijas2016_Sheep_subset.map", package = "detectRUNS")
+# calculating runs with consecutive run approach
+## Not run: 
+# skipping runs calculation
+runs &lt;- consecutiveRUNS.run(genotypeFile, mapFile, minSNP = 15, ROHet = FALSE,
+maxOppRun = 0, maxMissRun = 0, maxGap=10^6,
+minLengthBps = 100000)
+
+## End(Not run)
+# loading pre-calculated data
+runsFile &lt;- system.file("extdata", "Kijas2016_Sheep_subset.consecutive.csv", package="detectRUNS")
+colClasses &lt;- c(rep("character", 3), rep("numeric", 4)  )
+runs &lt;- read.csv2(runsFile, header = TRUE, stringsAsFactors = FALSE,
+colClasses = colClasses)
+
+</code></pre>
+
+
+</div>

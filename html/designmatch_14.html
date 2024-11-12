@@ -1,0 +1,277 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nmatch</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Optimal nonbipartite matching in randomized experiments and observational studies
+</h2>
+
+<h3>Description</h3>
+
+<p>Function for optimal nonbipartite matching in randomized experiments and observational studies that directly balances the observed covariates.  <code>nmatch</code> allows the user to enforce different forms of covariate balance in the matched samples, such as moment balance (e.g., of means, variances, and correlations), distributional balance (e.g., fine balance, near-fine balance, strength-<em>k</em> balancing), and exact matching.  Among others, <code>nmatch</code> can be used in the design of randomized experiments for matching before randomization (Greevy et al. 2004, Zou and Zubizarreta 2016), and in observational studies for matching with doses and strengthening an instrumental variable (Baiocchi et al. 2010, Lu et al. 2011).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	nmatch(dist_mat, subset_weight = NULL, total_pairs = NULL, mom = NULL,
+	       exact = NULL, near_exact = NULL, fine = NULL, near_fine = NULL,
+	       near = NULL, far = NULL, solver = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dist_mat</code></td>
+<td>
+<p>distance matrix: a matrix of positive distances between units.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset_weight</code></td>
+<td>
+<p>subset matching weight: a scalar that regulates the trade-off between the total sum of distances between matched pairs and the total number of matched pairs.  The larger <code>subset_weight</code>, the more importance will be given to the the total number of matched pairs relative to the total sum of distances between matched pairs.  See Rosenbaum (2012) and Zubizarreta et al. (2013) for a discussion of this parameter.  If <code>subset_weight = NULL</code>, then <code>nmatch</code> will match all the available units, provided it exists a feasible solution exists.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>total_pairs</code></td>
+<td>
+<p>total number of matched pairs: a scalar specifying the number of matched pairs to be obtained.  If <code>total_pairs = NULL</code> then no specific number of matched pairs is required before matching.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mom</code></td>
+<td>
+<p>moment balance parameters: a list with three arguments, 
+</p>
+<p><code>mom = list(covs = mom_covs, tols = mom_tols, targets = mom_targets)</code>.
+</p>
+<p><code>mom_covs</code> is a matrix where each column is a covariate whose mean is to be balanced.  <code>mom_tols</code> is a vector of tolerances for the maximum difference in means for the covariates in <code>mom_covs</code>.  <code>mom_targets</code> is a vector of target moments (e.g., means) of a distribution to be approximated by matching.  <code>mom_targets</code> is optional, but if <code>mom_covs</code> is specified then <code>mom_tols</code> needs to be specified too.  If <code>mom_targets</code> is <code>NULL</code>, then <code>nmatch</code> will match treated and control units so that covariates in <code>mom_covs</code> differ at most by <code>mom_tols</code>.  If <code>mom_targets</code> is specified, then <code>nmatch</code> will match treated and control units so that each matched group differs at most by <code>mom_tols</code> units from the respective moments in <code>mom_targets</code>.  As a result, the matched groups will differ at most <code>mom_tols * 2</code> from each other.  Under certain assumptions, <code>mom_targets</code> can be used for constructing a representative matched sample.  The lengths of <code>mom_tols</code> and <code>mom_target</code> have to be equal to the number of columns of <code>mom_covs</code>.  Note that the columns of <code>mom_covs</code> can be transformations of the original covariates to balance higher order single-dimensional moments like variances and skewness, and multidimensional moments such as correlations (Zubizarreta 2012).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact</code></td>
+<td>
+<p>Exact matching parameters: a list with one argument, 
+</p>
+<p><code>exact = list(covs = exact_covs)</code>, 
+</p>
+<p>where <code>exact_covs</code> is a matrix where each column is a nominal covariate for exact matching.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>near_exact</code></td>
+<td>
+<p>Near-exact matching parameters: a list with two arguments, 
+</p>
+<p><code>near_exact = list(covs = near_exact_covs, devs = near_exact_devs)</code>. 
+</p>
+<p><code>near_exact_covs</code> are the near-exact matching covariates; specifically, a matrix where each column is a nominal covariate for near-exact matching.  <code>near_exact_devs</code> are the maximum deviations from near-exact matching: a vector of scalars defining the maximum deviation allowed from exact matching for the covariates defined in <code>near_exact_covs</code>.  Note that the length of <code>near_exact_devs</code> has to be equal to the number of columns of <code>near_exact_covs</code>.  For detailed expositions of near-exact matching in the context of bipartite matching, see section 9.2 of Rosenbaum (2010) and Zubizarreta et al. (2011).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fine</code></td>
+<td>
+<p>Fine balance parameters: a list with one argument, 
+</p>
+<p><code>fine = list(covs = fine_covs)</code>, 
+</p>
+<p>where <code>fine_covs</code> is a matrix where each column is a nominal covariate for fine balance.  Fine balance enforces exact distributional balance on nominal covariates, but without constraining treated and control units to be matched within each category of each nominal covariate as in exact matching.  See chapter 10 of Rosenbaum (2010) for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>near_fine</code></td>
+<td>
+<p>Near-fine balance parameters: a list with two arguments, 
+</p>
+<p><code>near_fine = list(covs = near_fine_covs, devs = near_fine_devs)</code>.
+</p>
+<p><code>near_fine_covs</code> is a matrix where each column is a nominal covariate for near-fine matching.  <code>near_fine_devs</code> is a vector of scalars defining the maximum deviation allowed from fine balance for the covariates in <code>near_fine_covs</code>.  Note that the length of <code>near_fine_devs</code> has to be equal to the number of columns of <code>near_fine_covs</code>.  See Yang et al. (2012) for a description of near-fine balance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>near</code></td>
+<td>
+<p>Near matching parameters: a list with three arguments, 
+</p>
+<p><code>near = list(covs = near_covs, pairs = near_pairs, groups = near_groups)</code>.
+</p>
+<p><code>near_covs</code> is a matrix where each column is a variable for near matching.  <code>near_pairs</code> is a vector determining the maximum distance between individual matched pairs for each variable in <code>near_covs</code>.  <code>near_groups</code> is a vector defining the maximum average distance (in aggregate) between matched groups for each covariate in <code>near_covs</code>.  If <code>near_covs</code> is specified, then either <code>near_pairs</code>, <code>near_covs</code>, or both must be specified as well, and the length of <code>near_pairs</code> and/or <code>near_groups</code> has to be equal to the number of columns of <code>near_covs</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>far</code></td>
+<td>
+<p>Far matching parameters: a list with three arguments, 
+</p>
+<p><code>far = list(covs = far_covs, pairs = far_pairs, groups = far_groups)</code>.
+</p>
+<p><code>far_covs</code> is a matrix where each column is a variable (a covariate or an instrumental variable) for far matching.  <code>far_pairs</code> is a vector determining the minimum distance between units in a matched pair for each variable in <code>far_covs</code>, and <code>far_groups</code> is a vector defining the minimum average (aggregate) distance between matched groups for each variable in <code>far_covs</code>.  If <code>far_covs</code> is specified, then either <code>far_pairs</code>, <code>far_covs</code>, or both, must be specified, and the length of <code>far_pairs</code> and/or <code>far_groups</code> has to be equal to the number of columns of <code>far_covs</code>.  See Zubizarreta et al. (2013) for strengthening an instrumental variable with integer programming.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solver</code></td>
+<td>
+<p>Optimization solver parameters: a list with four objects, 
+</p>
+<p><code>solver = list(name = name, t_max = t_max, approximate = 1, round_cplex = 0,</code><br><code>    trace_cplex = 0)</code>.
+</p>
+<p><code>solver</code> is a string that determines the optimization solver to be used.  The options are: <code>cplex</code>, <code>glpk</code>, <code>gurobi</code>, <code>highs</code>, and <code>symphony</code>.  The default solver is <code>highs</code> with <code>approximate = 1</code>, so that by default an approximate solution is found (see <code>approximate</code> below).  For an exact solution, we strongly recommend using <code>cplex</code> or <code>gurobi</code> as they are much faster than the other solvers, but they do require a license (free for academics, but not for people outside universities).  Between <code>cplex</code> and <code>gurobi</code>, note that the installation of the <code>gurobi</code> interface for R is much simpler.
+</p>
+<p><code>t_max</code> is a scalar with the maximum time limit for finding the matches.  This option is specific to <code>cplex</code> and <code>gurobi</code>.  If the optimal matches are not found within this time limit, a partial, suboptimal solution is given.  
+</p>
+<p><code>approximate</code> is a scalar that determines the method of solution.  If <code>approximate = 1</code> (the default), an approximate solution is found via a relaxation of the original integer program.  This method of solution is faster than <code>approximate = 0</code>, but some balancing constraints may be violated to some extent.
+</p>
+<p><code>round_cplex</code> is binary specific to <code>cplex</code>.  <code>round_cplex = 1</code> ensures that the solution found is integral by rounding and all the constraints are exactly statisfied; <code>round_cplex = 0</code> (the default) encodes there is no rounding which may return slightly infeasible integer solutions.  
+</p>
+<p><code>trace</code> is a binary specific to <code>cplex</code> and <code>gurobi</code>.  <code>trace = 1</code> turns the optimizer output on.  The default is <code>trace = 0</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing the optimal solution, with the following objects:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj_total</code></td>
+<td>
+<p>value of the objective function at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj_dist_mat</code></td>
+<td>
+<p>value of the total sum of distances term of the objective function at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_1</code></td>
+<td>
+<p>indexes of the matched units in group 1 at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_2</code></td>
+<td>
+<p>indexes of the matched units in group 2 at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_id</code></td>
+<td>
+<p>matched pairs at the optimum;</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>time elapsed to find the optimal solution.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Jose R. Zubizarreta &lt;zubizarreta@hcp.med.harvard.edu&gt;, Cinar Kilcioglu &lt;ckilcioglu16@gsb.columbia.edu&gt;.
+</p>
+
+
+<h3>References</h3>
+
+<p>Baiocchi, M., Small, D., Lorch, S. and Rosenbaum, P. R. (2010), "Building a Stronger Instrument in an Observational Study of Perinatal Care for Premature Infants," <em>Journal of the American Statistical Association</em>, 105, 1285-1296.
+</p>
+<p>Greevy, R., Lu, B., Silber, J. H., and Rosenbaum, P. R. (2004), "Optimal Multivariate
+Matching Before Randomization," <em>Biostatistics</em>, 5, 263-275.
+</p>
+<p>Lu, B., Greevy, R., Xu, X., and Beck C. (2011), "Optimal Nonbipartite Matching and its Statistical Applications," <em>The American Statistician</em>, 65, 21-30.
+</p>
+<p>Rosenbaum, P. R. (2010), <em>Design of Observational Studies</em>, Springer.
+</p>
+<p>Rosenbaum, P. R. (2012), "Optimal Matching of an Optimally Chosen Subset in Observa-
+tional studies," <em>Journal of Computational and Graphical Statistics</em>, 21, 57-71.
+</p>
+<p>Yang. F., Zubizarreta, J. R., Small, D. S., Lorch, S. A., and Rosenbaum, P. R. (2014), "Dissonant Conclusions When Testing the Validity of an Instrumental Variable," <em>The American Statistician</em>, 68, 253-263.
+</p>
+<p>Zou, J., and Zubizarreta, J. R. (2016), "Covariate Balanced Restricted Randomization: Optimal Designs, Exact Tests, and Asymptotic Results," working paper.
+</p>
+<p>Zubizarreta, J. R., Reinke, C. E., Kelz, R. R., Silber, J. H., and Rosenbaum, P. R. (2011), "Matching for Several Sparse Nominal Variables in a Case-Control Study of Readmission Following Surgery," <em>The American Statistician</em>, 65, 229-238.
+</p>
+<p>Zubizarreta, J. R. (2012), "Using Mixed Integer Programming for Matching in an Observational Study of Kidney Failure after Surgery," <em>Journal of the American Statistical Association</em>, 107, 1360-1371.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">    
+
+## Uncomment the following example
+## Load and attach data
+#data(lalonde)
+#attach(lalonde)
+
+################################# 
+## Example: optimal subset matching
+################################# 
+
+## Optimal subset matching pursues two competing goals at 
+## the same time: to minimize the total of distances while 
+## matching as many observations as possible.  The trade-off 
+## between these two is regulated by the parameter subset_weight 
+## (see Rosenbaum 2012 and Zubizarreta et al. 2013 for a discussion).
+## Here the balance requirements are mean and fine balance for 
+## different covariates.  We require 50 pairs to be matched.
+## Again, the solver used is HiGHS with the approximate option.
+
+## Matrix of covariates
+#X_mat = cbind(age, education, black, hispanic, married, nodegree, re74, re75)
+
+## Distance matrix
+#dist_mat_covs = round(dist(X_mat, diag = TRUE, upper = TRUE), 1)
+#dist_mat = as.matrix(dist_mat_covs)
+
+## Subset matching weight
+#subset_weight = 1
+
+## Total pairs to be matched
+#total_pairs = 50
+
+## Moment balance: constrain differences in means to be at most .1 standard deviations apart
+#mom_covs = cbind(age, education)
+#mom_tols = apply(mom_covs, 2, sd)*.1
+#mom = list(covs = mom_covs, tols = mom_tols)
+
+## Solver options
+#t_max = 60*5
+#solver = "highs"
+#approximate = 1
+#solver = list(name = solver, t_max = t_max, approximate = approximate, round_cplex = 0, 
+#trace_cplex = 0)
+
+## Match                  
+#out = nmatch(dist_mat = dist_mat, subset_weight = subset_weight, total_pairs = total_pairs, 
+#mom = mom, solver = solver)              
+              
+## Indices of the treated units and matched controls
+#id_1 = out$id_1  
+#id_2 = out$id_2	
+
+## Assess mean balance
+#a = apply(mom_covs[id_1, ], 2, mean)
+#b = apply(mom_covs[id_2, ], 2, mean)
+#tab = round(cbind(a, b, a-b, mom_tols), 2)
+#colnames(tab) = c("Mean 1", "Mean 2", "Diffs", "Tols")
+#tab
+
+## Assess fine balance (note here we are getting an approximate solution)
+#for (i in 1:ncol(fine_covs)) {		
+#	print(finetab(fine_covs[, i], id_1, id_2))
+#}
+</code></pre>
+
+
+</div>

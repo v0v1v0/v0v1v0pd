@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>filter_scoped_df</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Filter / Subset data <code>dplyr</code>-groupwise</h2>
+
+<h3>Description</h3>
+
+<p><code>filter_scoped_df</code> subsets rows of a data frame based on grouping structure
+(see <code>group_by</code>). Filtering statements are provided in a separate <code>tibble</code>
+where each row represents a combination of a logical expression and a list of groups
+to which the expression should be applied to corresponding to see indices from
+<code>cur_group_id</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">filter_scoped_df(dframe, condition_df)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dframe</code></td>
+<td>
+<p>A grouped or ungrouped <code>tibble</code> or <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition_df</code></td>
+<td>
+<p>A <code>tibble</code> with two columns; <code>condition_df[ ,1]</code> with
+<code>character</code> strings which evaluate to valid logical expressions applicable in
+<code>subset</code> or <code>filter</code>, and <code>condition_df[ ,2]</code>,
+a list-column with group scoping levels (<code>numeric</code>) or <code>NULL</code> for
+unscoped filtering. If all groups are given for a statement, the operation is
+the same as for a grouped <code>data.frame</code> in <code>filter</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is applied in the "Filtering" tab of the <code>datacleanr</code> app,
+and applied in the reproducible code recipe in the "Extract" tab.
+Note, that multiple checks for valid statements are performed in the app (and only valid operations
+printed in the "Extract" tab). It is therefore not advisable to manually alter this code or use
+this function interactively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of the same type as <code>dframe</code>. The output is a subset of
+the input, with groups and rows appearing in the same order, and an additional column
+<code>.dcrindex</code> representing the group indices.
+The output may have less groups as the input, depending on subsetting.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># set-up condition_df
+cdf &lt;- dplyr::tibble(
+  statement = c(
+    "Sepal.Width &gt; quantile(Sepal.Width, 0.1)",
+    "Petal.Width &gt; quantile(Petal.Width, 0.1)",
+    "Petal.Length &gt; quantile(Petal.Length, 0.8)"
+  ),
+  scope_at = list(NULL, NULL, c(1, 2))
+)
+
+
+fdf &lt;- filter_scoped_df(
+  dplyr::group_by(
+    iris,
+    Species
+  ),
+  condition_df = cdf
+)
+
+# Example of invalid expression:
+# column 'Spec' does not exist in iris
+# "Spec == 'setosa'"
+</code></pre>
+
+
+</div>

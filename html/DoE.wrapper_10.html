@@ -1,0 +1,253 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Dopt.augment</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Function for augmenting a design with D-optimal additional points using optFederov from package AlgDesign </h2>
+
+<h3>Description</h3>
+
+<p>Function for comfortably augmenting a design with D-optimal additional points;
+this functionality is still somewhat experimental.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Dopt.augment(design, m=1, formula=NULL, candidates=NULL, constraint=NULL, 
+    center=FALSE, nRepeats=5, 
+    seed=NULL, randomize=TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>an experimental design of class <code>design</code>, 
+which may not be a blocked, split-plot, neither 
+crossed or parameter design; it also must not be replicated with repeat.only replications. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>integer number of additional points to add to design <code>design</code> </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> a model formula (starting with a tilde), for the estimation of which a D-optimal design is sought;<br>
+it can contain all column names from <code>data</code> 
+or elements or element names from <code>factor.names</code>, respectively;<br>
+usage of the “.”-notation for “all variables” from <code>data</code> or <code>factor.names</code> 
+is possible. <br>
+The default formula (if the value <code>NULL</code> is not changed) is the formula associated with 
+the design (by function <code>formula.design</code>). 
+</p>
+<p>For quantitative factors, functions <code>quad()</code> and <code>cubic</code> describe the 
+full quadratic or full cubic model in the listed variables (cf. examples 
+and the <code>expand.formula</code>-function from package <span class="pkg">AlgDesign</span>).  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>candidates</code></td>
+<td>
+<p>data frame of candidate points; if not specified, candidates 
+are constructed as a full factorial from the 
+<code>factor.names</code> element of the <code>design.info</code> attribute of <code>design</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraint</code></td>
+<td>
+<p> a condition (character string!) used for reducing the candidate 
+set to admissible points only. <br><code>constraint</code> is evaluated on the specified data set or after automatic creation 
+of a full factorial candidate data set.<br> 
+The variable names from <code>data</code> or <code>factor.names</code> can be used by the constraint.<br>
+Per default (i.e. if the constraint is <code>NULL</code>), the constraint attribute from 
+<code>design</code> is used. <br>
+If a previously-applied constraint is to be removed, specify <code>constraint = ""</code>.<br>
+It is not possible to apply a constraint that is already violated by the 
+design that is to be augmented.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p> requests that optimization is run for the centered model; 
+the design is nevertheless output in non-centered coordinates
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nRepeats</code></td>
+<td>
+<p> number of independent repeats of the design optimization process; 
+increasing this number may improve the chance of finding a global optimum, 
+but will also increase search time
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p> seed for generation and randomization of the design (integer number);<br> 
+here, the seed is needed even if the design is not randomized, because the 
+generation process for the optimum design involves random numbers, even if the 
+order of the final design is not randomized;<br>
+if a reproducible design is needed, it is therefore recommended to specify a seed<br><br> 
+In R version 3.6.0 and later, the default behavior of function <code>sample</code>
+has changed. If you work in a new (i.e., &gt;= 3.6.-0) R version and want to reproduce 
+a randomized design from an earlier R version (before 3.6.0), 
+you have to change the RNGkind setting by<br><code>RNGkind(sample.kind="Rounding")</code><br>
+before running function <code>Dopt.augment</code>.<br>
+It is recommended to change the setting back to the new recommended way afterwards:<br><code>RNGkind(sample.kind="default")</code><br>
+For an example, see the documentation of the example data set <code>VSGFS</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomize</code></td>
+<td>
+<p> logical deciding whether or not the design should be randomized; 
+if it is <code>TRUE</code>, the design (or the additional portion of the design) returned by the 
+workhorse function <code>optFederov</code> is brought 
+into random order after generation. Note that the generation process 
+itself contains a random element per default; if exact repeatability for the 
+returned design is desired, it is necessary to specify a seed (option <code>seed</code>) 
+if in the case <code>randomize=FALSE</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> additional arguments to function <code>optFederov</code> 
+from package <span class="pkg">AlgDesign</span>;<br> 
+interesting arguments: <code>maxIteration</code>, 
+<code>nullify</code> (calculate good starting design, especially set to 1, 
+in which case <code>nRepeats</code> is set to 1;<br> 
+arguments <code>criterion</code> and <code>augment</code> are not available, neither 
+are <code>evaluateI</code>, <code>space</code>, or <code>rows</code>, and <code>args</code> 
+does not have an effect. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function <code>Dopt.augment</code> augments an existing design by <code>m</code> D-optimal 
+additional points (unblocked designs, no split-plot, no parameter or crossed design, 
+no repeat.only replications), i.e. by points that make the design particularly efficient 
+for the intended model. 
+</p>
+<p>Option <code>center</code>, which is available for both blocked and unblocked designs as part of the ... argument, 
+requests optimization for the centered model; the design that is created is nevertheless an uncentered design.
+</p>
+<p>NULL entries in the arguments are filled with automatic values that are determined 
+from <code>design</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns a data frame of S3 class <code>design</code> 
+with attributes attached. 
+The data frame contains the experimental settings.
+The matrix <code>desnum</code> attached as attribute <code>desnum</code> contains the 
+model matrix of the design, using the formula as specified in the call. <br>
+Function <code>Dopt.augment</code> preserves additional variables (e.g. responses) that 
+have been added to the design <code>design</code> before augmenting. Note, however, that 
+the response data are NOT used in deciding about which points to augment the design with.
+</p>
+<p>The attribute <code>run.order</code> provides the run number in standard order (as returned from 
+function <code>optFederov</code> in package <span class="pkg">AlgDesign</span>) as well 
+as the randomized actual run order. The third column is always identical to the first. 
+Note that the first n runs (the ones that are already present before augmentation) 
+have run numbers in standard order from 1 to n (i.e. their original run numbers 
+in standard order, if they were also generated by <code>Dopt.design</code> are lost).
+</p>
+<p>The attribute <code>design.info</code> is a list of various design properties, with type resolving to “Dopt.augment”. 
+In addition to the standard list elements (cf. <code>design</code>), the element 
+<code>quantitative</code> is a vector of <code>nfactor</code> logical values or NAs, 
+and the optional <code>digits</code> elements indicates the number of digits to 
+which the data were rounded. 
+The list contains further entries regarding the optimality that has been achieved 
+(<code>D</code>, <code>Dea</code> and <code>A</code>). 
+</p>
+<p>Note that the original design is contained in the first rows of the new data set. 
+The original design also contains columns that are not directly part of the 
+design, e.g. comment columns. <br>
+Note that <code>replications</code> is always set to 1, even if the original design was 
+replicated, and <code>repeat.only</code> is always FALSE. 
+These elements are only present to fulfill the formal requirements for class <code>design</code>.)
+</p>
+
+
+<h3>Warning</h3>
+
+<p>Since R version 3.6.0, the behavior of function <code>sample</code> has changed 
+(correction of a biased previous behavior that should not be relevant for the randomization of designs). 
+For reproducing a design that was produced with an earlier R version, 
+please follow the steps described with the argument <code>seed</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p> This package is still under (slow) development. Reports about bugs and inconveniences are welcome.</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Ulrike Groemping </p>
+
+
+<h3>References</h3>
+
+ 
+<p>Atkinson, A.C. and Donev, A.N. (1992). <em>Optimum experimental designs</em>. Clarendon Press, Oxford. 
+</p>
+<p>Federov, V.V. (1972). <em>Theory of optimal experiments</em>. Academic Press, New York. 
+</p>
+<p>Wheeler, R.E. (2004). <em>Comments on algorithmic design</em>. Vignette accompanying package <span class="pkg">AlgDesign</span>. 
+<a href="../../AlgDesign/doc/AlgDesign.pdf">../../AlgDesign/doc/AlgDesign.pdf</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p> See also <code>optFederov</code>, <code>fac.design</code>, 
+<code>quad</code>, <code>cubic</code>, 
+<code>Dopt.design</code>. Furthermore, unrelated to function <code>Dopt.augment</code>, 
+see also function <code>gen_design</code> from package <span class="pkg">skpr</span> 
+for a new general R package for creating D-optimal or other letter optimal designs.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">   ## a full quadratic model with constraint in three quantitative factors 
+   plan &lt;- Dopt.design(36,factor.names=list(eins=c(100,250),zwei=c(10,30),drei=c(-25,25)),
+                          nlevels=c(4,3,6), 
+                          formula=~quad(.), 
+                          constraint="!(eins&gt;=200 &amp; zwei==30 &amp; drei==25)")
+   summary(plan)
+   y &lt;- rnorm(36)
+   r.plan &lt;- add.response(plan, y)
+   plan2 &lt;- Dopt.augment(r.plan, m=10)
+   summary(plan2)
+   ## add the new response values after conducting additional experiments
+   y &lt;- c(y, rnorm(10))
+   r.plan2 &lt;- add.response(plan2,y, replace=TRUE)
+   summary(r.plan2, brief=FALSE)
+   
+</code></pre>
+
+
+</div>

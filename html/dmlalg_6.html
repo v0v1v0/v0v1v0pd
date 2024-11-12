@@ -1,0 +1,466 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mmdml</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimating linear coefficients in partially linear mixed-effects models with repeated measurements using double machine learning.</h2>
+
+<h3>Description</h3>
+
+<p>Our goal is to perform inference for the linear parameter in partially
+linear mixed-effects models (PLMMs) with
+repeated measurements using double machine learning (DML).
+</p>
+<p>The function <code>mmdml</code> estimates the linear parameter <code class="reqn">\beta_0</code>
+in the PLMM
+</p>
+<p style="text-align: center;"><code class="reqn">Y_i = X_i\beta_0 + g(W_i) + Z_ib_i + \epsilon_{Y_i},
+    (i = 1, \ldots, N)</code>
+</p>
+
+<p>for the continuous response <code class="reqn">Y_i</code>
+with linear covariates
+<code class="reqn">X_i</code>, nonlinear covariates <code class="reqn">W_i</code>,  unobserved random effects
+<code class="reqn">b_i</code>, and the error term <code class="reqn">\epsilon_{Y_i}</code>.
+For each <code class="reqn">i</code>, there are <code class="reqn">n_i</code> repeated observations available.
+That is, <code class="reqn">Y_i</code> is an <code class="reqn">n_i</code>-dimensional vector.
+The matrix <code class="reqn">Z_i</code> is fixed. The random effects <code class="reqn">b_i</code> and the
+error terms <code class="reqn">\epsilon_{Y_i}</code> are Gaussian distributed, independent,
+and independent of <code class="reqn">b_j</code> and <code class="reqn">\epsilon_{Y_j}</code>, respectively,
+for <code class="reqn">i\neq j</code>. The linear and nonlineare covariates <code class="reqn">X_i</code> and
+<code class="reqn">W_i</code> are random and independent of all random effects and error terms.
+</p>
+<p>The linear parameter <code class="reqn">\beta_0</code> can be estimated with
+a linear mixed-effects modeling approach with maximum likelihood
+after regressing out <code class="reqn">W_i</code>
+nonparametrically from <code class="reqn">Y_i</code> and <code class="reqn">X_i</code> using machine learning
+algorithms.
+A linear mixed-effects model is estimated on the partialled-out data
+</p>
+<p style="text-align: center;"><code class="reqn">Y_i - E[Y_i|W_i] = (X_i - E[X_i|W_i])\beta_0 + Z_ib_i
+    + \epsilon_{Y_i}.</code>
+</p>
+
+<p>The conditional expectations are estimated with machine learning algorithms
+and sample splitting, and cross-fitting is used to regain full efficiency
+of the estimator of <code class="reqn">beta_0</code>. This estimator
+is asymptotically Gaussian distributed and efficient.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mmdml(
+  w, x, y, z, data = NULL,
+  z_formula = NULL, group = "group",
+  K = 2L, S = 100L,
+  cond_method = rep("forest", 2),
+  params = NULL,
+  parallel = c("no", "multicore", "snow"),
+  ncpus = 1L, cl = NULL,
+  nr_random_eff = if (S &gt; 5) 1L else S,
+  nr_res = nr_random_eff
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>A vector, matrix, or data frame. Its columns contain observations
+of the nonlinear predictors. Alternatively, if the data is
+provided in the data frame <code>data</code>, <code>w</code> is a character vector
+whose entries specify the columns of <code>data</code> acting as <code class="reqn">W</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A vector, matrix, or data frame. This is the linear predictor.
+Alternatively, if the data is provided in the data frame
+<code>data</code>, <code>x</code> is a character vector whose entries specify
+the columns of <code>data</code> acting as <code class="reqn">X</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A vector, matrix, or data frame. This is the response.
+Alternatively, if the data is provided in the data frame
+<code>data</code>, <code>y</code> is a character vector whose entries specify
+the columns of <code>data</code> acting as <code class="reqn">Y</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>A vector, matrix, or data frame. It acts as the fixed matrix
+assigning the random effects.
+Alternatively, if the data is
+provided in the data frame <code>data</code>, <code>z</code> is a character vector
+whose entries specify the columns of <code>data</code> acting as <code class="reqn">Z</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z_formula</code></td>
+<td>
+<p>A string specifying the structure of the random effect
+using the notation as in <code>lmer</code>
+from package <a href="https://CRAN.R-project.org/package=lme4"><span class="pkg">lme4</span></a>, e.g.,
+<code>(1|id) + (1|cask:id)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>A string containing the name of the grouping variable in
+<code>zz</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>An optional data frame. If it is specified, its column names
+need to coincide with the character vectors specified in <code>a</code>,
+<code>w</code>, <code>x</code>, and <code>y</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>The number of sample splits used for cross-fitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>Number of replications to correct for the random
+splitting of the sample. It is set to <code>100L</code> by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cond_method</code></td>
+<td>
+<p>A character vector of length 2 specifying the estimation
+methods used to fit the conditional
+expectations <code class="reqn">E[X|W]</code> and <code class="reqn">E[Y|W]</code>.
+Its components are from
+from <code>"spline"</code>, <code>"forest"</code>,
+<code>"ols"</code>, <code>"lasso"</code>, <code>"ridge"</code>, and <code>"elasticnet"</code>,
+or it is a list of length 2 with components from <code>"spline"</code>,
+<code>"forest"</code>,
+<code>"ols"</code>, <code>"lasso"</code>, <code>"ridge"</code>, and <code>"elasticnet"</code>,
+and where some components of the list are functions to estimate
+the conditional expectations.
+These functions have the input arguments
+<code>(yy_fit, ww_fit, ww_predict, params = NULL)</code> and output the
+conditional expectation of <code class="reqn">E[Y|W]</code> estimated with <code>yy_fit</code>
+and <code>ww_fit</code> and predicted with <code>ww_predict</code>.
+The argument <code>params</code> is described below. The functions
+return a matrix where the columns correspond to the component-wise
+estimated conditional expectations.
+Here, <code>yy</code> symbolically stands for either
+<code>x</code> or <code>y</code>.
+Please see below for the default arguments
+of the <code>"spline"</code>, <code>"forest"</code>, <code>"ols"</code>, <code>"lasso"</code>,
+<code>"ridge"</code>, and <code>"elasticnet"</code> methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>An optional list of length 2. The 2 elements of this list
+are lists themselves. These lists specify additional input arguments for
+estimating the conditional expectations <code class="reqn">E[X|W]</code>
+and <code class="reqn">E[Y|W]</code>, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>One out of <code>"no"</code>, <code>"multicore"</code>, or <code>"snow"</code>
+specifying the parallelization method used to compute the <code>S</code>
+replications. The default is <code>"no"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncpus</code></td>
+<td>
+<p>An integer specifying the number of cores used if
+<code>parallel</code> is not set to <code>"no"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>An optional parallel or snow cluster if <code>parallel = "snow"</code>.
+The argument <code>ncpus</code> does not have to be specified if the
+argument <code>cl</code>
+is specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nr_random_eff</code></td>
+<td>
+<p>An integer specifying the number of unaggregated sets
+of random effect estimates among the <code>S</code> repetitions that should be
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nr_res</code></td>
+<td>
+<p>An integer specifying the number of unaggregated sets
+of residual estimates among the <code>S</code> repetitions that should be
+returned.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The estimator of <code class="reqn">\beta_0</code> is computed using sample splitting and
+cross-fitting.
+The subject-specific data (over <code class="reqn">i = 1, \ldots, N</code>) is split
+into <code>K</code> sets that are equally large
+if possible. For each such set, the nuisance parameters
+(that is, the conditional expectations <code class="reqn">E[Y_i|W_i]</code> and
+<code class="reqn">E[X_i|W_i]</code>) are estimated on its complement and evaluated on the
+set itself.
+Estimators of <code class="reqn">\beta_0</code> and the variance parameters are computed
+for each
+of the <code>K</code> data sets and are then averaged.
+If <code>K = 1</code>, no sample splitting
+is performed. In this case, the nuisance parameters are estimated and
+predicted on the full sample.
+</p>
+<p>The whole estimation procedure is repeated <code>S</code> times to
+account for the randomness introduced by the random sample splits.
+The <code>S</code> repetitions can be run in parallel by specifying the
+arguments <code>parallel</code> and <code>ncpus</code>.
+The <code>S</code> estimators of <code class="reqn">\beta_0</code> and the variance components
+are aggregated by taking the
+median of them. The <code>S</code> variance-covariance matrices of the estimator
+of <code class="reqn">\beta_0</code> are aggregated
+by first adding a correction term to them that accounts for the random
+splitting and by afterwards taking the median of the corrected
+variance-covariance matrices. If <code class="reqn">d &gt; 1</code>, it can happen that this
+final matrix is not positive definite anymore, in which case the mean
+is considered instead.
+Estimates of the conditional random effects and the residuals are computed
+in each of the <code>S</code> repetitions. A total number of <code>nr_random_eff</code>
+and <code>nr_res</code> of them, respectively, is returned.
+Additionally, the random effects estimates from all <code>S</code> repetitions
+are aggregated using the mean and returned.
+</p>
+<p>If the design in at least <code>0.5 * S</code> of the <code>S</code> repetitions is
+singular, an error message is displayed.
+If the designs in some but less than <code>0.5 * S</code> of the <code>S</code>
+repetitions are singular, another <code>S</code> repetitions are performed.
+If, in total, at least <code>S</code> repetitions result in a nonsingular design,
+the results are returned together with a warning message.
+</p>
+<p>The default options of the <code>"spline"</code>, <code>"forest"</code>,
+<code>"ols"</code>, <code>"lasso"</code>, <code>"ridge"</code>, and <code>"elasticnet"</code>
+methods are as follows. With the <code>"spline"</code> method,
+the function <code>bs</code> from the package <code>splines</code> is employed
+with <code>degree = 3</code> and <code>df = ceiling(N ^ (1 / 5)) + 2</code> if
+<code>N</code> satisfies <code>(df + 1) * v + 1 &gt; N</code>, where <code>v</code> denotes
+the number of columns of <code>w</code> and <code>N</code> denotes the sample size.
+Otherwise, <code>df</code> is consecutively
+reduced by <code>1</code> until this condition is satisfied.
+The splines are fitted and predicted on different data sets.
+If they are extrapolated, a warning message is displayed.
+With the <code>"forest"</code> method, the function <code>randomForest</code> from
+the package <code>randomForest</code> is employed with <code>nodesize = 5</code>,
+<code>ntree = 500</code>, <code>na.action = na.omit</code>, and <code>replace = TRUE</code>.
+With the <code>"ols"</code> method, the default arguments are used and no
+additional arguments are specified.
+With the <code>"lasso"</code> and <code>"ridge"</code> methods,
+the function <code>cv.glmnet</code> from the package <code>glmnet</code> performs
+10-fold cross validation by default (argument <code>nfolds</code>)
+to find the one-standard-error-rule <code class="reqn">\lambda</code>-parameter.
+With the <code>"elasticnet"</code> method, the function <code>cv.glmnet</code> from
+the package <code>glmnet</code> performs 10-fold cross validation
+(argument <code>nfolds</code>) with <code>alpha = 0.5</code> by default
+to find the one-standard-error-rule <code class="reqn">\lambda</code>-parameter.
+All default values of the mentioned parameters can be adapted by
+specifying the argument <code>params</code>.
+</p>
+<p>There are three possibilities to set the argument <code>parallel</code>, namely
+<code>"no"</code> for serial evaluation (default),
+<code>"multicore"</code> for parallel evaluation using forking,
+and <code>"snow"</code> for parallel evaluation using a parallel
+socket cluster. It is recommended to select <code>RNGkind</code>
+(<code>"L'Ecuyer-CMRG"</code>) and to set a seed to ensure that the parallel
+computing of the package <code>dmlalg</code> is reproducible.
+This ensures that each processor receives a different substream of the
+pseudo random number generator stream.
+Thus, the results reproducible if the arguments remain unchanged.
+There is an optional argument <code>cl</code> to specify a custom cluster
+if <code>parallel = "snow"</code>.
+</p>
+<p>The response <code>y</code> needs to be continuous.
+The covariate <code>w</code> may contain factor variables in its columns.
+If the variable <code>x</code> contains factor variables,
+the factors should not be included as factor columns of <code>x</code>.
+Instead, dummy encoding should be used for all individual levels of the
+factor.
+That is, a factor with 4 levels should be encoded with 4 columns where each
+column consists of 1 and 0 entries indicating the presence of the
+respective level of the factor.
+</p>
+<p>There are <code>confint</code>, <code>fixef</code>, <code>print</code>, <code>ranef</code>,
+<code>residuals</code>, <code>sigma</code>, <code>summary</code>, <code>vcov</code>,
+and <code>VarCorr</code> methods available
+for objects fitted with <code>mmdml</code>. They are called
+<code>confint.mmdml</code>,
+<code>fixef.mmdml</code>,
+<code>print.mmdml</code>,
+<code>ranef.mmdml</code>,
+<code>residuals.mmdml</code>,
+<code>sigma.mmdml</code>,
+<code>summary.mmdml</code>,
+<code>vcov.mmdml</code>, and
+<code>VarCorr.mmdml</code>, respectively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list similar to the output of <code>lmer</code>
+from package <a href="https://CRAN.R-project.org/package=lme4"><span class="pkg">lme4</span></a> containing
+the following entries.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>Estimator of the linear coefficient <code class="reqn">\beta_0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>Variance-covariance matrix of <code>beta</code>.
+Also see <code>lmer</code>. The <code>S</code> individual variance-covariance
+matrices are aggregated by first adding a correction term to them
+correcting for the randomness of the sample splits and by subsequently
+taking the median of the corrected variance-covariance matrices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>Please see <code>lmer</code> for its meaning.
+It is computed by averaging over the <code>K</code> sample splits and by
+aggregating the <code>S</code> repetitions using the median.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta</code></td>
+<td>
+<p>Please see <code>lmer</code> for its meaning.
+It is computed by averaging over the <code>K</code> sample splits and by
+aggregating the <code>S</code> repetitions using the median.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varcor</code></td>
+<td>
+<p>Variance correlation components computed with
+<code>theta</code>. Please also see <code>lmer</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random_eff</code></td>
+<td>
+<p>Conditional estimates of the random effects
+similarly to <code>lmer</code>.
+The individual sets of <code>S</code> random effects estimates are aggregated
+using the mean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random_eff_all</code></td>
+<td>
+<p>The first <code>nr_random_eff</code> sets of the
+<code>S</code> sets of random effects estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residuals</code></td>
+<td>
+<p>The first <code>nr_res</code> sets of the
+<code>S</code> sets of residuals.
+Each set of residuals is computed with parameters and data that is
+aggregated over the <code>K</code> sample splits.</p>
+</td>
+</tr>
+</table>
+<p>The other elements <code>ngrps</code>, <code>nobs</code>, <code>fitMsgs</code>, <code>cnms</code>,
+<code>nc</code>, <code>nms</code>, <code>useSc</code>, <code>optinfo</code>, and <code>methTitle</code>
+are as in <code>lmer</code>.
+The gradient and Hessian information of <code>optinfo</code> is computed
+by aggregating the respective information over the <code>S</code> repetitions
+with the median.
+</p>
+
+
+<h3>References</h3>
+
+<p>C. Emmenegger and P. Bühlmann.
+Double Machine Learning for Partially Linear Mixed-Effects Models with Repeated Measurements. Preprint arXiv:2108.13657.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>confint</code>,
+<code>fixef</code>,
+<code>print</code>,
+<code>ranef</code>,
+<code>residuals</code>,
+<code>sigma</code>,
+<code>summary</code>,
+<code>vcov</code>,
+<code>VarCorr</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## generate data
+RNGkind("L'Ecuyer-CMRG")
+set.seed(19)
+data1 &lt;- example_data_mmdml(beta0 = 0.2)
+data2 &lt;- example_data_mmdml(beta0 = c(0.2, 0.2))
+
+## fit models
+## Caveat: Warning messages are displayed because the small number of
+## observations results in a singular random effects model
+fit1 &lt;-
+  mmdml(w = c("w1", "w2", "w3"), x = "x1", y = "resp", z = c("id", "cask"),
+        data = data1, z_formula = "(1|id) + (1|cask:id)", group = "id", S = 3)
+
+fit2 &lt;-
+  mmdml(w = c("w1", "w2", "w3"), x = c("x1", "x2"), y = "resp", z = c("id", "cask"),
+        data = data2, z_formula = "(1|id) + (1|cask:id)", group = "id", S = 3)
+
+## apply methods
+confint(fit2)
+fixef(fit2)
+print(fit2)
+ranef(fit2)
+residuals(fit2)
+sigma(fit2)
+summary(fit2)
+vcov(fit2)
+VarCorr(fit2)
+</code></pre>
+
+
+</div>

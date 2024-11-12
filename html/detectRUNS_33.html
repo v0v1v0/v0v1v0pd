@@ -1,0 +1,84 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>snpInsideRuns</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function to count number of times a SNP is in a RUN</h2>
+
+<h3>Description</h3>
+
+<p>Function to count number of times a SNP is in a RUN
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">snpInsideRuns(runsChrom, mapChrom, genotypeFile)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>runsChrom</code></td>
+<td>
+<p>R object (dataframe) with results per chromosome (column names:"POPULATION","IND","CHROMOSOME","COUNT","START","END","LENGTH")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mapChrom</code></td>
+<td>
+<p>R object (dataframe) with SNP name and position per chromosome (map file) (column names: "CHR","SNP_NAME","x","POSITION")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>genotypeFile</code></td>
+<td>
+<p>genotype (.ped) file location</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>dataframe with counts per SNP in runs (per population)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># getting map and ped paths
+genotypeFile &lt;- system.file("extdata", "Kijas2016_Sheep_subset.ped", package = "detectRUNS")
+mapFile &lt;- system.file("extdata", "Kijas2016_Sheep_subset.map", package = "detectRUNS")
+
+# defining mapChrom
+mappa &lt;- data.table::fread(mapFile, header = FALSE)
+names(mappa) &lt;- c("CHR","SNP_NAME","x","POSITION")
+mappa$x &lt;- NULL
+chrom &lt;- "24"
+mapChrom &lt;- mappa[mappa$CHR==chrom, ]
+
+# calculating runs of Homozygosity
+## Not run: 
+# skipping runs calculation
+runs &lt;- slidingRUNS.run(genotypeFile, mapFile, windowSize = 15, threshold = 0.1,  minSNP = 15,
+ROHet = FALSE,  maxOppositeGenotype = 1, maxMiss = 1,  minLengthBps = 100000,  minDensity = 1/10000)
+
+## End(Not run)
+# loading pre-calculated data
+runsFile &lt;- system.file("extdata", "Kijas2016_Sheep_subset.sliding.csv", package="detectRUNS")
+colClasses &lt;- c(rep("character", 3), rep("numeric", 4)  )
+runs &lt;- read.csv2(runsFile, header = TRUE, stringsAsFactors = FALSE,
+colClasses = colClasses)
+
+# fix column names and define runsChrom
+names(runs) &lt;- c("POPULATION","IND","CHROMOSOME","COUNT","START","END","LENGTH")
+runsChrom &lt;- runs[runs$CHROMOSOME==chrom, ]
+
+snpInsideRuns(runsChrom, mapChrom, genotypeFile)
+
+</code></pre>
+
+
+</div>

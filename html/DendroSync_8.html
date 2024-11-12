@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dendro.varcov</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit variance-covariance mixed models on tree-ring chronologies</h2>
+
+<h3>Description</h3>
+
+<p>The function calculates variance-covariance (VCOV) mixed models from a <code>data.frame</code> with tree-ring width index and years for each chronology following the methodology described in Shestakova et al. (2014). 
+The mixed models relate tree-ring width (<code>Y</code>) against specific names of tree-ring width chronologies (<code>A</code>), using years and grouping variable as random factors to characterize the strength of the common signal across the grouping variable.
+First, a linear mixed-effect model with null positive-definite matrix structure or broad evaluation is fitted and the subsequent models are consequently derived from it using the function <code>update</code>.
+When a <code>data.frame</code> with tree-ring width index has NAs the models are fitted with <code>na.action</code> = <code>na.omit</code>. Simultaneously, <code>complete.cases</code> is applied to guarantee that rows have no missing values across the entire <code>data.frame</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dendro.varcov(formula, varTime = "", varGroup = "", data, 
+                      homoscedastic = TRUE, null.mod = FALSE, all.mod = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a model <code>formula</code> such as <code>Y ~ A</code>, where <code>Y</code> is usually tree-ring width and <code>A</code> will be a factor variable such as the specific names of tree-ring width chronologies (<code>conifersIP</code>) or <code>~1</code> for a null model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varTime</code></td>
+<td>
+<p>a <code>character</code> specifying the time variable to consider in calculating synchrony estimates. Models with varTime variable with less than 10 different time-points produce unreliable results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varGroup</code></td>
+<td>
+<p>a <code>character</code> grouping variable. In dendrochronological studies different grouping strategies can be used. We used here two strategies following taxonomic (i.e. species) or geographic (i.e. region) criteria.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a <code>data.frame</code> with tree-ring chronologies, years and grouping variables as columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>homoscedastic</code></td>
+<td>
+<p><code>logical</code> if <code>TRUE</code> models do not included an optional <code>varFunc</code> object. If <code>FALSE</code> models will include a one-sided formula describing the within-group heteroscedasticity structure (<code>varIdent</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null.mod</code></td>
+<td>
+<p><code>logical</code> if <code>TRUE</code> only broad evaluation model will be fitted. Default <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all.mod</code></td>
+<td>
+<p><code>logical</code> if <code>TRUE</code> all homoscedastic and heteroscedastic model types will be fitted. Default <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function fits a set of variance-covariance mixed models following Shestakova et al. (2014). A total of 7 different variance-covariance mixed models can be fitted: a null positive-definite matrix structure (mBE), and the homoscedastic and heteroscedastic versions of a diagonal positive-definite matrix structure (mNE, mHeNE), a positive-definite matrix with compound symmetry structure (mCS, mHeCS) and a general positive-definite matrix structure (mUN, mHeUN). Note that if null.mod is <code>TRUE</code> the function only fits broad evaluation model (mBE), this is set to <code>FALSE</code> by default. If all.mod is <code>TRUE</code> the function fits heteroscedastic and homoscesdastic versions of all models. This is set to <code>FALSE</code> by default, because for large-datasets it may take a long time to converge.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns a <code>list</code> containing the following components:
+</p>
+<ul><li>
+<p>for <code>null.mod = TRUE</code>:</p>
+</li></ul>
+<table><tr style="vertical-align: top;">
+<td><code>mBE</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of null positive-definite matrix structure or broad evaluation. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr></table>
+<ul><li>
+<p>for <code>homoscedastic = TRUE</code>:</p>
+</li></ul>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mNE</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of a diagonal positive-definite matrix structure or narrow evaluation. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mCS</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of a positive-definite matrix with compound symmetry structure. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mUN</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of a general positive-definite matrix structure or unstructured. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr>
+</table>
+<ul><li>
+<p>for <code>homoscedastic = FALSE</code>:</p>
+</li></ul>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mHeNE</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of the heteroscedastic variant of a diagonal positive-definite matrix structure or narrow evaluation. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mHeCS</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of the heteroscedastic variant of a positive-definite matrix with compound symmetry structure. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mHeUN</code></td>
+<td>
+<p> an object of class "lme" representing the linear mixed-effects model fit of the heteroscedastic variant of a general positive-definite matrix structure or unstructured. See <code>lmeObject</code> for the components of the fit.</p>
+</td>
+</tr>
+</table>
+<ul><li>
+<p>for <code>all.mod = TRUE</code>:</p>
+</li></ul>
+<table><tr style="vertical-align: top;">
+<td><code>all.mod</code></td>
+<td>
+<p> The function returns the homoscedastic and heteroscedastic versions of all fitted models.</p>
+</td>
+</tr></table>
+<h3>Author(s)</h3>
+
+<p>Josu G. Alday, Tatiana A. Shestakova, Victor Resco de Dios, Jordi Voltas
+</p>
+
+
+<h3>References</h3>
+
+<p>Shestakova, T.A., Aguilera, M., Ferrio, J.P., Gutierrez, E. &amp; Voltas, J. (2014). Unravelling spatiotemporal tree-ring signals in Mediterranean oaks: a variance-covariance modelling approach of carbon and oxygen isotope ratios. <em>Tree Physiology</em> 34: 819-838.
+</p>
+<p>Shestakova, T.A., Gutierrez, E., Kirdyanov, A.V., Camarero, J.J., Genova, M., Knorre, A.A., Linares, J.C., Resco de Dios, V., Sanchez-Salguero, R. &amp; Voltas, J. (2016). Forests synchronize their growth in contrasting Eurasian regions in response to climate warming. <em>Proceedings of the National Academy of Sciences of the United States of America</em> 113: 662-667.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lmeObject</code>, <code>na.action</code>, <code>complete.cases</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Calculate variance-covariance models on Iberian Peninsula conifers
+ # chronologies using two different grouping strategies.
+ # Tree-ring width chronologies are grouped according to taxonomic (i.e. Species)
+ # or geographic (i.e. Region) criteria.
+ #User-defined homoscedastic or heteroscedastic variances can be fitted.
+ data(conifersIP)
+ 
+ #Chop the data from 1960 to 1989.
+ conif.30 &lt;- conifersIP[conifersIP$Year&gt;1959 &amp; conifersIP$Year&lt;1990,]
+ summary(conif.30$Year)
+ 
+ ##Fit the homoscedastic set of varcov models (mBE, mNE, mCS, mUN)
+ # using taxonomic grouping criteria (ie. Species)
+ ModHm &lt;- dendro.varcov(TRW ~ Code, varTime = "Year", varGroup = "Species", 
+                        data = conif.30, homoscedastic = TRUE)
+ 
+ summary(ModHm)# Class and length of list elements
+ ModHm
+ ModHm[2]#mNE fitted model results
+ 
+ ##Fit the heteroscedastic set of varcov models (mBE, mHeNE, mHeCS, mHeUN) 
+ # using geographic grouping criteria (ie. Region)
+ ModHt &lt;- dendro.varcov(TRW ~ Code, varTime = "Year", varGroup = "Region", 
+                        data = conif.30, homoscedastic = FALSE)
+ 
+ summary(ModHt)# Class and length of list elements
+ ModHt
+ ModHt[3]#mHeCS fitted model results
+       
+                   
+</code></pre>
+
+
+</div>

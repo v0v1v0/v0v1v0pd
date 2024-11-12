@@ -1,0 +1,490 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ob_decompose</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Oaxaca-Blinder decomposition</h2>
+
+<h3>Description</h3>
+
+<p><code>ob_decompose</code> implements the Oaxaca-Blinder decomposition that
+divides differences in the mean outcome between two groups into one part explained
+by different covariate means (composition effect) and into another part due to
+differences in linear regression coefficients linking covariates to the outcome
+variable (structure effect).
+</p>
+<p>The function allows for 'doubly robust' decompositions where the sample of one
+group is reweighted such that it matches the covariates distribution of the
+other group before the regression coefficients are estimated.
+</p>
+<p>For distributional statistics beyond the mean, the function performs the RIF
+regression decomposition proposed by Firpo, Fortin, and Lemieux (2018).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ob_decompose(
+  formula,
+  data,
+  group,
+  weights = NULL,
+  reweighting = FALSE,
+  normalize_factors = FALSE,
+  reference_0 = TRUE,
+  subtract_1_from_0 = FALSE,
+  reweighting_method = "logit",
+  trimming = FALSE,
+  trimming_threshold = NULL,
+  rifreg_statistic = NULL,
+  rifreg_probs = c(1:9)/10,
+  custom_rif_function = NULL,
+  na.action = na.omit,
+  bootstrap = FALSE,
+  bootstrap_iterations = 100,
+  bootstrap_robust = FALSE,
+  cluster = NULL,
+  cores = 1,
+  vcov = stats::vcov,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a <code>formula</code> object with an outcome variable Y on the left-hand side
+and the covariates X on the right-hand side. If <code>reweighting = TRUE</code>, the same
+covariates are used to estimate the conditional probabilities for the reweighting factor.
+A different model for estimating the conditional probabilities can be defined
+after a <code>|</code> operator on the right-hand side.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing the variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>name of the a binary variable (numeric or factor)
+identifying the two groups that will be compared. The group identified by the
+lower ranked value in 'group' (i.e., 0 in the case of a dummy variable or the
+first level of factor variable) is defined as group 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>numeric vector of non-negative observation weights, hence of same length as <code>dep_var</code>.
+The default (<code>NULL</code>) is equivalent to <code>weights = rep(1, length(dep_var))</code>.
+If no weights are used, make sure you do not define this parameter (e.g. with <code>weights = NULL</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reweighting</code></td>
+<td>
+<p>boolean: if 'TRUE', then the decomposition is performed with
+with respect to reweighted reference group yielding either a 'doubly robust'
+Oaxaca-Blinder decomposition or a reweighted RIF decomposition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize_factors</code></td>
+<td>
+<p>boolean: If 'TRUE', then factor variables are normalized as
+proposed by Gardeazabal/Ugidos (2004) and results are not dependent on the factor's
+reference group. Per default (<code>normalize_factors  = FALSE</code>) and factors are not
+normalized.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_0</code></td>
+<td>
+<p>boolean: if 'TRUE' (default), then the group 0 – i.e.,
+the group identified by the lower ranked value in 'group' – will be defined
+as reference group. The reference group will be reweighted to match the
+covariates distribution of the counterfactual sample.
+By default, the composition effect is computed as <code>(X1 - X0) * b0</code> and
+the structure effect as <code>X1 * (b1 - b0)</code>. Putting <code>reference_0 = FALSE</code> changes
+the reference structure. Hence, the composition effect is computed as <code>(X1 - X0) * b1</code> and
+the structure effect as <code>X0 * (b1 - b0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subtract_1_from_0</code></td>
+<td>
+<p>boolean: By default ('FALSE'), X0 is subtracted from X1 and beta0 from beta1 (X1b1 - X0b0)
+to compute the overall difference. Setting 'subtract_1_from_0' to 'TRUE' merely changes the sign of the decomposition results.
+This means the composition effect is computed as <code>(X0 - X1) * b1</code> and
+the structure effect as <code>X0 * (b0 - b1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reweighting_method</code></td>
+<td>
+<p>specifies the method fit and predict conditional probabilities
+used to derive the reweighting factor. Currently, <code>"logit"</code>, <code>"fastglm"</code>,
+and <code>"random_forest"</code> are available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trimming</code></td>
+<td>
+<p>boolean: If <code>TRUE</code>, observations with dominant reweighting factor
+values are trimmend according to rule of Huber, Lechner, and Wunsch (2013). Per
+default, trimming is set to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trimming_threshold</code></td>
+<td>
+<p>numeric: threshold defining the maximal accepted
+relative weight of the reweighting factor value (i.e., inverse probability weight)
+of a single observation. If <code>NULL</code>, the threshold is set to <code class="reqn">sqrt(N)/N</code>,
+where <code class="reqn">N</code> is the number of observations in the reference group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rifreg_statistic</code></td>
+<td>
+<p>string containing the distributional statistic for which to compute the RIF.
+If 'NULL' (default), no RIF regression decomposition is computed.
+If an available statistic is selected, 'ob_decompose' estimates a RIF regression decomposition.
+The 'rifreg_statistic' can be one of
+"quantiles", "mean", "variance", "gini", "interquantile_range", "interquantile_ratio", or "custom".
+If "custom" is selected, a <code>custom_rif_function</code> needs to be provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rifreg_probs</code></td>
+<td>
+<p>a vector of length 1 or more with probabilities of quantiles. Each quantile is indicated with a value between 0 and 1.
+Default is <code>c(1:9)/10</code>. If <code>statistic = "quantiles"</code>, a single RIF regression for every quantile in <code>probs</code>
+is estimated. An interquantile ratio (range) is defined by the ratio (difference) between the <code>max(probs)</code>-quantile and
+the <code>min(probs)</code>-quantile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_rif_function</code></td>
+<td>
+<p>the RIF function to compute the RIF of the custom distributional statistic.
+Default is NULL. Only needs to be provided if <code>statistic = "custom"</code>.
+Every custom_rif_function needs the parameters <code>dep_var</code>, <code>weights</code> and <code>probs</code>.
+If they are not needed, they must be set to NULL in the function definition (e.g. <code>probs = NULL</code>).
+A custom function must return a data frame containing at least a "rif" and "weights" column.
+See <code>examples</code> for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>generic function that defines how NAs in the data should be handled.
+Default is <code>na.omit</code>, leading to exclusion of observations that contain one or more missings.
+See na.action for further details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>boolean: If 'FALSE' (default), then no bootstrapped standard
+errors are calculated and, in the case of a standard Oaxaca-Blinder decomposition,
+analytical standard errors are estimated (assuming independence between groups).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap_iterations</code></td>
+<td>
+<p>positive integer indicating the number of bootstrap
+iterations to execute. Only required if <code>bootstrap = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap_robust</code></td>
+<td>
+<p>boolean: if 'FALSE' (default), then bootstrapped standard
+errors are estimated as the standard deviations of the bootstrapp estimates.
+Otherwise, the function uses the bootstrap interquartile range rescaled by the
+interquantile range of the standard distribution to estimate standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>numeric vector of same length as <code>dep_var</code> indicating the
+clustering of observations. If <code>cluster = NULL</code> (default), no clustering
+is a assumend and bootstrap procedure resamples individual observations. Otherwise
+bootstrap procedure resamples clusters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>positive integer indicating the number of cores to use when
+computing bootstrap standard errors. Only required if <code>bootstrap = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov</code></td>
+<td>
+<p>function estimating covariance matrix of regression coefficients if
+standard errors are not bootstrapped (i.e., <code>bootstrap = FALSE</code>). By default,
+vcov is used assuming homoscedastic errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters passed to the custom_rif_function.
+Apart from dep_var, weights and probs they must have a different name than the the ones in rifreg.
+For instance, if you want to pass a parameter statistic to the custom_rif_function, name it custom_statistic.
+Additional parameters can also be passed to the density function used
+to estimate the RIF of quantiles.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>ob_decompose()</code> contains for four different decomposition methods of
+observed group differences.
+</p>
+<p>1. The original Oaxaca-Blinder decomposition (default)
+2. A 'doubly robust Oaxaca-Blinder decomposition (<code>reweighting=TRUE</code>)
+3. A RIF Regression decomposition. (e.g., <code>rifreg_statistic="quantiles"</code>)
+4. A reweighted RIF regression decomposition. (<code>reweighting=TRUE</code> and <code>rifreg_statistic="quantiles"</code>)
+</p>
+<p>The doubly robust OB decomposition is a robust and path independent alternative
+for detailed decompositions at the mean. is to combine reweighting with the linear Oaxaca-Blinder method (see
+Fortin et al., 2011: 48-51). This approach has the valuable side effect of
+accounting for potential errors introduced by an incomplete inverse probability
+weighting and the linear model specification, respectively.
+</p>
+<p>A path independent method that goes beyond the mean is the RIF decomposition
+of Firpo, Fortin, and Lemieux (2018). The approach approximates the expected value
+of the 'recentered influence function' (RIF) of the distributional statistic
+(e.g., quantile, variance, or Gini coefficient) of an outcome variable
+conditional on covariates with linear regressions. RIF regression coefficients can
+be consistent estimates of the marginal effect
+of a small change in the expected value of a covariate to the distributional statistics of
+an outcome variable (see documentation of the companion package <code>rifreg</code>).
+Thus, they can be used to decompose between-group difference in distributional statistics.
+Firpo et al. (2018) combine the RIF regressions again with the reweighting estimator to avoid specification errors.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class <code>ob_decompose</code> containing a data.frame with the
+decomposition results for the quantiles and for the other distributional
+statistics, respectively, a data.frame with the estimated reweighting factor
+for every observation, a data.frame with sample quantiles of the reweighting
+factors and a list with standard errors for the decomposition terms, the
+quantiles of the reweighting factor, the bootstrapped
+Kolmogorov-Smirnov distribution to construct uniform confidence bands for
+quantiles, as well as a list with the normalized differences between the
+covariate means of the comparison group and the reweighted reference group.
+</p>
+<p>A list object of class 'ob_decompose' containing the following components:
+</p>
+<p>- 'ob_decompose': A list containing the decomposition results, covariance matrix, model fits and more detailed result information.
+- 'group_variable_name': A string indicating the name of the group variable.
+- 'group_variable_levels': A string indicating the levels of the group variable.
+- 'reference_group': A string indicating the which level of the group variable was used as reference group.
+- 'reweighting_estimates': A list containing the reweighting estimates if <code>reweighting=TRUE</code>, else (<code>NA</code>)
+- 'input_parameters': A list of input parameters used for the estimation.
+</p>
+
+
+<h3>References</h3>
+
+<p>Firpo, Sergio, Nicole M. Fortin, and Thomas Lemieux. 2018.
+"Decomposing Wage Distributions Using Recentered Influence Function Regressions." <em>Econometrics</em>, 6(2):28.
+</p>
+<p>Fortin, Nicole, Thomas Lemieux, and Sergio Firpo. 2011. "Decomposition methods in economics."
+In Orley Ashenfelter and David Card, eds., <em>Handbook of labor economics</em>. Vol. 4. Elsevier, 1-102.
+</p>
+<p>Gardeazabal, Javier, and Arantza Ugidos. 2004. "More on identification in detailed wage decompositions."
+<em>Review of Economics and Statistics</em>, 86(4): 1034-1036.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Oaxaca-Blinder decomposition of gender wage gap
+## with NLYS79 data like in Fortin, Lemieux, &amp; Firpo (2011: 41)
+
+data("nlys00")
+
+mod1 &lt;- log(wage) ~ age + central_city + msa + region + black +
+  hispanic + education + afqt + family_responsibility + years_worked_civilian +
+  years_worked_military + part_time + industry
+
+# Using female coefficients (reference_0 = TRUE) to estimate counterfactual mean
+decompose_female_as_reference &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  reference_0 = TRUE
+)
+decompose_female_as_reference
+
+# Using male coefficients (reference_0 = FALSE)
+decompose_male_as_reference &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  reference_0 = FALSE
+)
+decompose_male_as_reference
+
+# Replicate first and third column in Table 3 in Fortin, Lemieux, &amp; Firpo (2011: 41)
+# Define aggregation of decomposition terms
+custom_aggregation &lt;- list(
+  `Age, race, region, etc.` = c(
+    "age",
+    "blackyes",
+    "hispanicyes",
+    "regionNorth-central",
+    "regionSouth",
+    "regionWest",
+    "central_cityyes",
+    "msayes"
+  ),
+  `Education` = c(
+    "education&lt;10 yrs",
+    "educationHS grad (diploma)",
+    "educationHS grad (GED)",
+    "educationSome college",
+    "educationBA or equiv. degree",
+    "educationMA or equiv. degree",
+    "educationPh.D or prof. degree"
+  ),
+  `AFTQ` = "afqt",
+  `L.T. withdrawal due to family` = "family_responsibility",
+  `Life-time work experience` = c(
+    "years_worked_civilian",
+    "years_worked_military",
+    "part_time"
+  ),
+  `Industrial sectors` = c(
+    "industryManufacturing",
+    "industryEducation, Health, Public Admin.",
+    "industryOther services"
+  )
+)
+
+# First column
+summary(decompose_male_as_reference, custom_aggregation = custom_aggregation)
+
+# Third column
+summary(decompose_female_as_reference, custom_aggregation = custom_aggregation)
+
+## Compare bootstrapped standard errors...
+decompose_female_as_reference_bs &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  bootstrap = TRUE,
+  bootstrap_iterations = 100
+)
+summary(decompose_female_as_reference_bs, custom_aggregation = custom_aggregation)
+
+# ... to analytical standard errors (assuming independence between groups and
+# homoscedasticity)
+decompose_female_as_reference &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  reference_0 = TRUE
+)
+summary(decompose_female_as_reference, custom_aggregation = custom_aggregation)
+
+# Return standard errors for all detailed terms
+summary(decompose_female_as_reference, aggregate_factors = FALSE)
+
+
+## 'Doubly robust' Oaxaca-Blinder decomposition of gender wage gap
+mod2 &lt;- log(wage) ~ age + central_city + msa + region + black +
+  hispanic + education + afqt + family_responsibility + years_worked_civilian +
+  years_worked_military + part_time + industry | age + (central_city + msa) * region + (black +
+  hispanic) * (education + afqt) + family_responsibility * (years_worked_civilian +
+  years_worked_military) + part_time * industry
+decompose_male_as_reference_robust &lt;- ob_decompose(
+  formula = mod2,
+  data = nlys00,
+  group = female,
+  reference_0 = FALSE,
+  reweighting = TRUE
+)
+
+# ... using random forests instead of logit to estimate weights
+decompose_male_as_reference_robust_rf &lt;- ob_decompose(
+  formula = mod1,
+  data = nlys00,
+  group = female,
+  reference_0 = FALSE,
+  reweighting = TRUE,
+  method = "random_forest"
+)
+
+
+# Reweighted RIF Regression Decomposition
+data("men8305")
+
+model_rifreg &lt;- log(wage) ~  union + education + experience |
+  union * (education + experience) + education * experience
+
+# Variance
+variance_decomposition &lt;- ob_decompose(
+  formula = model_rifreg,
+  data = men8305,
+  group = year,
+  reweighting = TRUE,
+  rifreg_statistic = "variance"
+)
+
+# Deciles
+deciles_decomposition &lt;- ob_decompose(
+  formula = model_rifreg,
+  data = men8305,
+  group = year,
+  reweighting = TRUE,
+  rifreg_statistic = "quantiles",
+  rifreg_probs = c(1:9) / 10
+)
+
+# plot(deciles_decomposition)
+
+# RIF regression decomposition with custom function
+
+# custom function
+custom_variance_function &lt;- function(dep_var, weights, probs = NULL) {
+  weighted_mean &lt;- weighted.mean(x = dep_var, w = weights)
+  rif &lt;- (dep_var - weighted_mean)^2
+  rif &lt;- data.frame(rif, weights)
+  names(rif) &lt;- c("rif_variance", "weights")
+  return(rif)
+}
+
+ custom_decomposition &lt;-
+   ob_decompose(
+    formula = model_rifreg,
+    data = men8305,
+    group = year,
+    reweighting = TRUE,
+    rifreg_statistic = "custom",
+    custom_rif_function = custom_variance_function
+  )
+
+</code></pre>
+
+
+</div>

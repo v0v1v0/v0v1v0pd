@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plausible_values</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Draw plausible values</h2>
+
+<h3>Description</h3>
+
+<p>Draws plausible values based on test scores
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plausible_values(
+  dataSrc,
+  parms = NULL,
+  predicate = NULL,
+  covariates = NULL,
+  nPV = 1,
+  parms_draw = c("sample", "average"),
+  prior_dist = c("normal", "mixture"),
+  merge_within_persons = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataSrc</code></td>
+<td>
+<p>a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms</code></td>
+<td>
+<p>An object returned by function <code>fit_enorm</code> containing parameter estimates. If parms are provided, item parameters are considered known. 
+If parms = NULL, they will be estimated Bayesianly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predicate</code></td>
+<td>
+<p>an expression to filter data. If missing, the function will use 
+all data in dataSrc</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>name or a vector of names of the variables to group the populations used to improve the prior.
+A covariate must be a discrete person property (e.g. not a float) that indicates nominal categories, e.g. gender or school.
+If dataSrc is a data.frame, it must contain the covariate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nPV</code></td>
+<td>
+<p>Number of plausible values to draw per person.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms_draw</code></td>
+<td>
+<p>when the item parameters are estimated with method "Bayes" (see: <code>fit_enorm</code>), 
+parms_draw specifies whether to use a sample (a different item parameter draw for each plausible values draw) or the posterior mean
+of the item draws. Alternatively, it can be an integer specifying a specific draw. It is ignored when parms is not estimated Bayesianly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior_dist</code></td>
+<td>
+<p>use a normal prior for the plausible values or a mixture of two normals. 
+A mixture is only possible when there are no covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>merge_within_persons</code></td>
+<td>
+<p>If a person took multiple booklets, this indicates
+whether plausible values are generated per person (TRUE) or per booklet (FALSE)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When the item parameters are estimated using <code>fit_enorm(..., method='Bayes')</code> and parms_draw = 'sample', the uncertainty 
+of the item parameters estimates is taken into account when drawing multiple plausible values. 
+</p>
+<p>In there are covariates, the prior distribution is a hierarchical normal with equal variances across groups. When there is only
+one group this becomes a regular normal distribution. When there are no covariates and prior_dist = "mixture", the prior is a mixture
+distribution of two normal distributions which gives a little more flexibility than a normal prior.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.frame with columns booklet_id, person_id, booklet_score, any covariate columns, and nPV plausible values
+named PV1...PVn.
+</p>
+
+
+<h3>References</h3>
+
+<p>Marsman, M., Maris, G., Bechger, T. M., and Glas, C.A.C. (2016) What can we learn from plausible values? 
+Psychometrika. 2016; 81: 274-289. See also the vignette.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+db = start_new_project(verbAggrRules, ":memory:", 
+   person_properties=list(gender="&lt;unknown&gt;"))
+add_booklet(db, verbAggrData, "agg")
+add_item_properties(db, verbAggrProperties)
+
+f=fit_enorm(db)
+pv_M=plausible_values(db,f,(mode=="Do")&amp;(gender=="Male"))
+pv_F=plausible_values(db,f,(mode=="Do")&amp;(gender=="Female"))
+
+par(mfrow=c(1,2))
+
+plot(ecdf(pv_M$PV1), 
+   main="Do: males versus females", xlab="Ability", col="red")
+lines(ecdf(pv_F$PV1), col="green")
+legend(-2.2,0.9, c("female", "male") , 
+   lty=1, col=c('green', 'red'), bty='n', cex=.75)
+
+pv_M=plausible_values(db,f,(mode=="Want")&amp;(gender=="Male"))
+pv_F=plausible_values(db,f,(mode=="Want")&amp;(gender=="Female"))
+
+plot(ecdf(pv_M$PV1), 
+   main="Want: males versus females", xlab=" Ability", col="red")
+lines(ecdf(pv_F$PV1),col="green")
+legend(-2.2,0.9, c("female", "male") , 
+   lty=1, col=c('green', 'red'), bty='n', cex=.75)
+   
+   
+close_project(db)    
+
+
+
+</code></pre>
+
+
+</div>

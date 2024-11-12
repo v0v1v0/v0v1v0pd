@@ -1,0 +1,131 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>handler_dipsaus_progress</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Progress-bar Handler</h2>
+
+<h3>Description</h3>
+
+<p>Handler for <code>progress2</code> to support
+<code>progressr::handlers</code>. See examples for detailed use case
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">handler_dipsaus_progress(
+  title = getOption("dipsaus.progressr.title", "Progress"),
+  intrusiveness = getOption("progressr.intrusiveness.gui", 1),
+  target = if (is.null(shiny::getDefaultReactiveDomain())) "terminal" else "gui",
+  enable = interactive() || shiny_is_running(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>default title of <code>progress2</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intrusiveness</code></td>
+<td>
+<p>A non-negative scalar on how intrusive
+(disruptive) the reporter to the user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>where progression updates are rendered</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>enable</code></td>
+<td>
+<p>whether the progress should be reported</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>passed to <code>make_progression_handler</code></p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(progressr)
+library(shiny)
+library(future)
+
+## ------------------------------ Setup! -------------------------------
+handlers(handler_dipsaus_progress())
+
+# ------------------------------ A simple usage ------------------------
+xs &lt;- 1:5
+handlers(handler_dipsaus_progress())
+with_progress({
+  p &lt;- progressor(along = xs)
+  y &lt;- lapply(xs, function(x) {
+    p(sprintf("x=%g", x))
+    Sys.sleep(0.1)
+    sqrt(x)
+  })
+})
+
+# ------------------------ A future.apply case -------------------------
+plan(sequential)
+# test it yourself with plan(multisession)
+
+handlers(handler_dipsaus_progress())
+with_progress({
+  p &lt;- progressor(along = xs)
+  y &lt;- future.apply::future_lapply(xs, function(x) {
+    p(sprintf("x=%g", x))
+    Sys.sleep(0.1)
+    sqrt(x)
+  })
+})
+
+# ------------------------ A shiny case --------------------------------
+
+ui &lt;- fluidPage(
+  actionButton('ok', 'Run Demo')
+)
+
+server &lt;- function(input, output, session) {
+  handlers(handler_dipsaus_progress())
+  make_forked_clusters()
+
+  observeEvent(input$ok, {
+    with_progress({
+      p &lt;- progressor(along = 1:100)
+      y &lt;- future.apply::future_lapply(1:100, function(x) {
+        p(sprintf("Input %d|Result %d", x, x+1))
+        Sys.sleep(1)
+        x+1
+      })
+    })
+  })
+}
+
+if(interactive()){
+  shinyApp(ui, server)
+}
+
+
+
+</code></pre>
+
+
+</div>

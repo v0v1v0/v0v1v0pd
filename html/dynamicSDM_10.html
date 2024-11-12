@@ -1,0 +1,348 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extract_buffered_coords</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract spatially buffered and temporally dynamic explanatory variable data for occurrence
+records.</h2>
+
+<h3>Description</h3>
+
+<p>For each species occurrence record co-ordinate and date, spatially buffered and temporally dynamic
+explanatory data are extracted using Google Earth Engine.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extract_buffered_coords(
+  occ.data,
+  datasetname,
+  bandname,
+  spatial.res.metres,
+  GEE.math.fun,
+  moving.window.matrix,
+  user.email,
+  save.method,
+  varname,
+  temporal.res,
+  temporal.level,
+  temporal.direction,
+  categories,
+  save.directory,
+  agg.factor,
+  prj = "+proj=longlat +datum=WGS84",
+  resume = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>occ.data</code></td>
+<td>
+<p>a data frame, with columns for occurrence record co-ordinates and dates with
+column names as follows; record longitude as "x", latitude as "y", year as "year", month as
+"month", and day as "day".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datasetname</code></td>
+<td>
+<p>a character string, the Google Earth Engine dataset to extract data from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandname</code></td>
+<td>
+<p>a character string, the Google Earth Engine dataset bandname to extract data for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.res.metres</code></td>
+<td>
+<p>a numeric value, the spatial resolution in metres for data extraction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GEE.math.fun</code></td>
+<td>
+<p>a character string, the mathematical function to compute across the specified
+spatial matrix and period for each record.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moving.window.matrix</code></td>
+<td>
+<p>a matrix of weights with an odd number of sides, representing the
+spatial neighbourhood of cells (“moving window”) to calculate <code>GEE.math.fun</code> across from record
+co-ordinate. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user.email</code></td>
+<td>
+<p>a character string, user email for initialising Google Drive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.method</code></td>
+<td>
+<p>a character string, the method used to save extracted variable data. One of
+<code>split</code> or <code>combined</code>: can be abbreviated. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varname</code></td>
+<td>
+<p>optional; a character string, a unique name for the explanatory variable. Default
+varname is “bandname_temporal.res_temporal.direction_GEE.math.fun_buffered".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.res</code></td>
+<td>
+<p>optional; a numeric value, the temporal resolution in days to extract data and
+calculate <code>GEE.math.fun</code> across from occurrence record date.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.level</code></td>
+<td>
+<p>a character string, the temporal resolution of the explanatory variable
+data. One of <code>day</code>, <code>month</code> or <code>year</code>: can be abbreviated. Default; <code>day.</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.direction</code></td>
+<td>
+<p>optional; a character string, the temporal direction for extracting data
+across relative to the record date. One of <code>prior</code> or <code>post</code>: can be abbreviated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>categories</code></td>
+<td>
+<p>optional; a character string, the categories to use in calculation if data are
+categorical. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.directory</code></td>
+<td>
+<p>a character string, path to a local directory to save extracted variable
+data to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>agg.factor</code></td>
+<td>
+<p>optional;a postive integer, the aggregation factor expressed as number of cells
+in each direction. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prj</code></td>
+<td>
+<p>a character string, the coordinate reference system of <code>occ.data</code> coordinates.Default
+is "+proj=longlat +datum=WGS84".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resume</code></td>
+<td>
+<p>a logical indicating whether to search <code>save.directory</code> and return to previous
+progress. Only possible if save.method = <code>split</code> has previously and currently been employed.
+Default = TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each individual species occurrence record co-ordinate and date, this function
+extracts data for a given band within a Google Earth Engine dataset across a user-specified
+spatial buffer and temporal period and calculates a mathematical function on such data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns details of successful explanatory variable extractions.
+</p>
+
+
+<h3>Temporal dimension</h3>
+
+<p>If <code>temporal.res</code> and <code>temporal.direction</code> are not given, the function
+extracts explanatory variable data for all of the cells surrounding and including the cell
+containing the occurrence record co-ordinates.
+</p>
+<p>If <code>temporal.res</code> and <code>temporal.direction</code> is given, the function extracts explanatory variable
+data for which <code>GEE.math.fun</code> has been first calculated over this period in relation to the
+occurrence record date.
+</p>
+
+
+<h3>Spatial dimension</h3>
+
+<p>Using the <code>focal</code> function from <code>terra</code> R package (Hijmans et al., 2022), <code>GEE.math.fun</code> is
+calculated across the spatial buffer area from the record co-ordinate. The spatial buffer area
+used is specified by the argument <code>moving.window.matrix</code>, which dictates the neighbourhood of
+cells surrounding the cell containing the occurrence record to include in this calculation.
+</p>
+<p>See function <code>get_moving_window()</code> to generate appropriate <code>moving.window.matrix</code>.
+</p>
+
+
+<h3>Mathematical function</h3>
+
+<p><code>GEE.math.fun</code> specifies the mathematical function to be calculated over the spatial buffered
+area and temporal period. Options are limited to Google Earth Engine ImageCollection Reducer
+functions (<a href="https://developers.google.com/earth-engine/apidocs/">https://developers.google.com/earth-engine/apidocs/</a>) for which an analogous R
+function is available. This includes: "allNonZero","anyNonZero", "count",
+"first","firstNonNull", "last", "lastNonNull", "max","mean", "median","min", "mode","product",
+"sampleStdDev", "sampleVariance", "stdDev", "sum" and "variance".
+</p>
+
+
+<h3>Categorical data</h3>
+
+<p>When explanatory variable data are categorical (e.g. land cover classes), argument <code>categories</code>
+can be used to specify the categories of importance to the calculation. The category or
+categories given will be converted in a binary representation, with “1” for those listed, and
+“0” for all others in the dataset. Ensure that the <code>GEE.math.fun</code> given is appropriate for such
+data. For example, the sum of suitable land cover classified cells across the “moving window”
+from the species occurrence record co-ordinates.
+</p>
+
+
+<h3>Categorical data and temporally dynamic variables</h3>
+
+<p>Please be aware, if specific categories are given (argument <code>categories</code>) when extracting
+categorical data, then temporal buffering cannot be completed. The most recent categorical data
+to the occurrence record date will be used for spatial buffering.
+</p>
+<p>If specific categories are not given when extracting from categorical datasets, be careful to
+choose appropriate mathematical functions for such data. For instance, "first" or "last" may be
+more relevant that "sum" of land cover classification numbers.
+</p>
+
+
+<h3>Temporal level to extract data at:</h3>
+
+<p><code>temporal.level</code> states the temporal resolution of the explanatory variable data and improves
+the speed of <code>extract_buffered_coords()</code> extraction. For example, if the explanatory data
+represents an annual variable, then all record co-ordinates from the same year can be extracted
+from the same buffered raster, saving computation time. However, if the explanatory data
+represents a daily variable, then only records from the exact same day can be extracted from the
+same raster. For the former, <code>temporal.level</code> argument should be <code>year</code> and for the latter,
+<code>temporal.level</code> should be <code>day</code>.
+</p>
+
+
+<h3>Aggregation factor</h3>
+
+<p><code>agg.factor</code> given represents the factor to aggregate <code>RasterLayer</code> data with function
+<code>aggregate</code> in <code>terra</code> R package (Hijmans et al., 2022). Aggregation uses the <code>GEE.math.fun</code> as
+the function. Following aggregation spatial buffering using the moving window matrix occurs.
+This is included to minimise computing time if data are of high spatial resolution and a large
+spatial buffer is needed. Ensure to calculate <code>get_moving_window()</code> with the spatial resolution
+of the data post-aggregation by this factor.
+</p>
+
+
+<h3>Google Earth Engine</h3>
+
+<p><code>extract_buffered_coords()</code> requires users to have installed R package <code>rgee</code> (Aybar et al.,
+2020) and initialised Google Earth Engine with valid log-in credentials. Please follow
+instructions on the following website <a href="https://cran.r-project.org/package=rgee">https://cran.r-project.org/package=rgee</a>
+</p>
+
+<ul>
+<li> <p><code>datasetname</code> must be in the accepted Google Earth Engine catalogue layout (e.g.
+“MODIS/006/MCD12Q1” or “UCSB-CHG/CHIRPS/DAILY”)
+</p>
+</li>
+<li> <p><code>bandname</code> must be as specified under the
+dataset in the Google Earth Engine catalogue (e.g. “LC_Type5”, “precipitation”). For datasets
+and band names, see <a href="https://developers.google.com/earth-engine/datasets">https://developers.google.com/earth-engine/datasets</a>.
+</p>
+</li>
+</ul>
+<h3>Google Drive</h3>
+
+<p><code>extract_buffered_coords()</code> also requires users to have installed the R package
+<code>googledrive</code>(D'Agostino McGowan and Bryan, 2022) and initialised Google Drive with valid log-in
+credentials, which must be stated using argument <code>user.email</code>. Please follow instructions on
+<a href="https://googledrive.tidyverse.org/">https://googledrive.tidyverse.org/</a> for initialising the <code>googledrive</code> package.
+</p>
+<p>Note: When running this function a folder labelled "dynamicSDM_download_bucket" will be created
+in your Google Drive. This will be emptied once the function has finished running and output
+rasters will be found in the save.drive.folder or save.directory specified.
+</p>
+
+
+<h3>Exporting extracted data</h3>
+
+<p>For <code>save.method</code> = <code>combined</code>, the function with save “csv” files containing all occurrence
+records and associated values for the explanatory variable.
+</p>
+<p>For <code>save.method</code> = <code>split</code>, the function will save individual “csv” files for each record with
+each unique period of the given temporal.level (e.g. each year, each year and month combination
+or each unique date).
+</p>
+<p><code>split</code> protects users if internet connection is lost when extracting data for large occurrence
+datasets. The argument <code>resume</code> can be used to resume to previous progress if connection is
+lost.
+</p>
+
+
+<h3>References</h3>
+
+<p>Aybar, C., Wu, Q., Bautista, L., Yali, R. and Barja, A., 2020. rgee: An R package for
+interacting with Google Earth Engine. Journal of Open Source Software, 5(51), p.2272.
+</p>
+<p>D'Agostino McGowan L., and Bryan J., 2022. googledrive: An Interface to Google Drive.
+<a href="https://googledrive.tidyverse.org">https://googledrive.tidyverse.org</a>, <a href="https://github.com/tidyverse/googledrive">https://github.com/tidyverse/googledrive</a>.
+</p>
+<p>Hijmans, R.J., Bivand, R., Forner, K., Ooms, J., Pebesma, E. and Sumner, M.D.,
+2022. Package 'terra'. Maintainer: Vienna, Austria.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data(sample_filt_data)
+
+
+
+user.email&lt;-as.character(gargle::gargle_oauth_sitrep()$email)
+
+matrix&lt;-get_moving_window(radial.distance = 10000,
+                            spatial.res.degrees = 0.05,
+                            spatial.ext = sample_extent_data)
+
+extract_buffered_coords(occ.data = sample_filt_data,
+                      datasetname = "MODIS/006/MCD12Q1",
+                      bandname = "LC_Type5",
+                      spatial.res.metres = 500,
+                      GEE.math.fun = "sum",
+                      moving.window.matrix=matrix,
+                      user.email = user.email,
+                      save.method ="split",
+                      temporal.level = "year",
+                      categories = c(6,7),
+                      agg.factor = 12,
+                      varname = "total_grass_crop_lc",
+                      save.directory = tempdir()
+)
+
+</code></pre>
+
+
+</div>

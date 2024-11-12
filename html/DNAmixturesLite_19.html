@@ -1,0 +1,205 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mixML</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximisation of the likelihood for one or more mixed traces of DNA</h2>
+
+<h3>Description</h3>
+
+<p><em>IMPORTANT: This is the <span class="pkg">DNAmixturesLite</span> package, which
+is intended as a service to enable users to try <span class="pkg">DNAmixtures</span>
+without purchasing a commercial licence for Hugin. When at all
+possible, we strongly recommend the use of <span class="pkg">DNAmixtures</span>
+rather than this lite-version. See
+<a href="https://dnamixtures.r-forge.r-project.org/">https://dnamixtures.r-forge.r-project.org/</a> for details on
+both packages.</em>
+</p>
+<p><em>While the lite-version seeks to provide the full functionality of
+<span class="pkg">DNAmixtures</span>, note that computations are much less efficient
+and that there are some differences in available functionality. Be
+aware that the present documentation is copied from
+<span class="pkg">DNAmixtures</span> and thus may not accurately describe the
+implementation of this lite-version.</em>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mixML(
+  mixture,
+  pars,
+  constraints = NULL,
+  phi.eq = FALSE,
+  val = NULL,
+  trace = FALSE,
+  order.unknowns = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mixture</code></td>
+<td>
+<p>A <code>DNAmixture</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p>A <code>mixpar</code> parameter used as a starting value for the optimisation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constraints</code></td>
+<td>
+<p>Equality constraint function as function of an array of parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi.eq</code></td>
+<td>
+<p>Should the mixture proportions be the same for all
+traces? Defaults to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>val</code></td>
+<td>
+<p>Vector of values to be satisfied for the equality constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Print the evaluations of the likelihood-function during optimisation?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order.unknowns</code></td>
+<td>
+<p>Should unknown contributors be ordered
+according to decreasing contributions? Defaults to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to be passed on to <code>solnp</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The pre-specified constraints for the model parameter <code>pars</code> are for each mixture <code>r</code>
+</p>
+
+<ul>
+<li> <p><code>0 &lt;= pars[[r, "rho"]] &lt; Inf</code>
+</p>
+</li>
+<li> <p><code>0 &lt;= pars[[r, "eta"]] &lt; Inf</code>
+</p>
+</li>
+<li> <p><code>0 &lt;= pars[[r, "xi"]] &lt;= 1</code>
+</p>
+</li>
+<li> <p><code>0 &lt;= pars[[r, "phi"]][i] &lt;= 1</code>
+</p>
+</li>
+<li> <p><code>sum(pars[[r, "phi"]]) == 1</code>.
+</p>
+</li>
+<li>
+<p> If there are 2 or more unknown contributors, then the mixture
+proportions for the unknown contributors are ordered decreasingly
+with the first DNA mixture determining the order.
+</p>
+</li>
+</ul>
+<p>Further constraints can be specified by the user; for this see examples below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mle</code></td>
+<td>
+<p>The (suggested) MLE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lik</code></td>
+<td>
+<p>The log of the likelihood (log e).</p>
+</td>
+</tr>
+</table>
+<p>as well as the output from the optimisation.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Therese Graversen
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DNAmixture</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(MC15, USCaucasian)
+mix &lt;- DNAmixture(list(MC15), C = list(50), k = 3, K = c("K1", "K2", "K3"), database = USCaucasian)
+startpar &lt;- mixpar(rho = list(24), eta = list(37), xi = list(0.08),
+                   phi = list(c(K3 = 0.15, K1 = 0.8, K2 = 0.05)))
+ml &lt;- mixML(mix, startpar)
+ml$mle
+
+
+data(MC15, USCaucasian)
+mix &lt;- DNAmixture(list(MC15), C = list(50), k = 3, K = "K1", database = USCaucasian)
+startpar &lt;- mixpar(rho = list(24), eta = list(37), xi = list(0.08),
+phi = list(c(U1 = 0.05, K1 = 0.8, U2 = 0.15)))
+ml &lt;- mixML(mix, startpar)
+ml$mle
+
+
+
+## The following advanced example has a model with two DNA samples
+## and various parameter restrictions.
+## Be aware that the computation is rather demanding and takes
+## a long time to run with this lite-version of DNAmixtures.
+## With DNAmixtures (based on HUGIN), it takes only about one minute.
+data(MC15, MC18, USCaucasian)
+mix &lt;- DNAmixture(list(MC15, MC18), C = list(50, 38), k = 3, K = "K1", database = USCaucasian)
+startpar &lt;- mixpar(rho = list(24, 25), eta = list(37, 40), xi = list(0.08, 0.1),
+                   phi = list(c(U1 = 0.05, K1 = 0.7, U2 = 0.25),
+                                c(K1 = 0.7, U2 = 0.1, U1 = 0.2)))
+eqxis &lt;- function(x){ diff(unlist(x[,"xi"])) }
+## Note that for these two traces, we do not expect phi to be equal.
+## Here we set stutter equal for all traces
+ml.diff &lt;- mixML(mix, startpar, eqxis, val = 0, phi.eq = FALSE)
+## Equal mixture proportions across traces
+ml.eqphi &lt;- mixML(mix, startpar, eqxis, val = 0, phi.eq = TRUE)
+## Likelihood ratio test for equal mixture proportions
+pchisq(-2*(ml.eqphi$lik - ml.diff$lik), df = 1, lower.tail = FALSE)
+
+</code></pre>
+
+
+</div>

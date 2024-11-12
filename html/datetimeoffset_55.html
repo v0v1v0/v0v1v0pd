@@ -1,0 +1,181 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>format</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert datetime objects to character</h2>
+
+<h3>Description</h3>
+
+<p><code>format()</code> returns a datetime string
+with as much <strong>known</strong> information possible (RFC 3339 with de facto standard time zone extension).
+<code>format_iso8601()</code> returns an ISO 8601 datetime string.
+<code>format_pdfmark()</code> returns a pdfmark datetime string with as much <strong>known</strong> information possible.
+<code>format_strftime()</code> allows <code>base::strftime()</code> style formatting.
+<code>format_nanotime()</code> allows CCTZ style formatting.
+<code>format_edtf()</code> returns an Extended Date Time Format (EDTF) string.
+<code>format_exiftool()</code> returns the date/time string expected by <code>exiftool</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'datetimeoffset'
+format(x, ...)
+
+format_iso8601(
+  x,
+  offsets = TRUE,
+  precision = NULL,
+  sep = ":",
+  mode = c("normal", "xmp"),
+  ...
+)
+
+format_pdfmark(x, prefix = "D:")
+
+format_edtf(x, offsets = TRUE, precision = NULL, usetz = FALSE, ...)
+
+format_exiftool(x, mode = c("normal", "xmp", "pdf"), ...)
+
+format_strftime(
+  x,
+  format = "%Y-%m-%d %H:%M:%S",
+  tz = get_tz(x),
+  usetz = FALSE,
+  fill = mode_tz(x)
+)
+
+format_nanotime(
+  x,
+  format = "%Y-%m-%dT%H:%M:%E9S%Ez",
+  tz = get_tz(x),
+  fill = ""
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>datetimeoffset()</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offsets</code></td>
+<td>
+<p>Include the UTC offsets in the formatting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precision</code></td>
+<td>
+<p>The amount of precision: either "year", "month", "day", "hour", "minute", "second",
+"decisecond", "centisecond", "millisecond",
+"hundred microseconds", "ten microseconds", "microsecond",
+"hundred nanoseconds", "ten nanoseconds", or "nanosecond".
+If <code>NULL</code> then full precision for the object is shown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>UTC offset separator.  Either ":" or "".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>If <code>mode = "xmp"</code> only output valid XMP metadata datetime values.
+If <code>mode = "pdf"</code> only output supported PDF docinfo datetime values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prefix</code></td>
+<td>
+<p>Prefix to use.  Either <code>"D:"</code> (default) or <code>""</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>usetz</code></td>
+<td>
+<p>Include the time zone in the formatting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>For <code>format_strftime()</code> see <code>base::strftime()</code>.
+For <code>format_nanotime()</code> see <a href="https://github.com/google/cctz/blob/6e09ceb/include/time_zone.h#L197">https://github.com/google/cctz/blob/6e09ceb/include/time_zone.h#L197</a>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz</code></td>
+<td>
+<p>A character string specifying the time zone to be used for the conversion.
+Can be a length greater than one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fill</code></td>
+<td>
+<p>If timezone and UTC offset info is missing what
+timezone to assume.  See <code>fill_tz()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A character vector
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  # ISO 8601 datetimes
+  format_iso8601(as_datetimeoffset("2020-05"))
+  format_iso8601(as_datetimeoffset("2020-05-10 20:15"))
+  format_iso8601(as_datetimeoffset("2020-05-10 20:15:05-07"))
+  if (requireNamespace("lubridate"))
+    lubridate::format_ISO8601(as_datetimeoffset("2020-05-10 20:15:05-07"))
+
+  # pdfmark datetimes
+  format_pdfmark(as_datetimeoffset("2020-05"))
+  format_pdfmark(as_datetimeoffset("2020-05-10 20:15"))
+  format_pdfmark(as_datetimeoffset("2020-05-10 20:15:05-07"))
+
+  # strftime style formatting
+  dt &lt;- as_datetimeoffset("2020-05-10 20:15")
+  format_strftime(dt)
+  format_strftime(dt, format = "%c")
+
+  # CCTZ style formatting
+  if (requireNamespace("nanotime")) {
+    dt &lt;- as_datetimeoffset(Sys.time())
+    format_nanotime(dt, format = "%F %H:%M:%E7S %Ez") # SQL Server datetimeoffset
+  }
+
+  # EDTF style formatting
+  format_edtf(as_datetimeoffset("2020-05"))
+  format_edtf(as_datetimeoffset("2020-05-10T20:15:05-07"))
+  dt &lt;- datetimeoffset(2020, NA_integer_, 10)
+  format_edtf(dt)
+
+  # `exiftool` formatting
+  format_exiftool(as_datetimeoffset("2020:05:10"))
+  format_exiftool(as_datetimeoffset("2020:05:10 20:15"))
+  format_exiftool(as_datetimeoffset("2020:05:10 20:15:05-07:00"))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dcr_app</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Interactive and reproducible data cleaning</h2>
+
+<h3>Description</h3>
+
+<p>Launches the <code>datacleanr</code> app for interactive and reproducible cleaning.
+See Details for more information.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dcr_app(dframe, browser = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dframe</code></td>
+<td>
+<p>Character, a string naming a <code>data.frame</code>, <code>tbl</code> or <code>data.table</code> in the environment
+or a path to a <code>.Rds</code> file. <strong>Note, that <code>data.table</code>s are converted to tibbles internally.</strong>'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>browser</code></td>
+<td>
+<p>logical, should app start in OS's default browser? (default <code>TRUE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>datacleanr</code> provides an interactive data overview, and allows
+reproducible filtering and (manual, interactive) visual outlier detection and annotation across multiple app tabs:
+</p>
+
+<ul>
+<li> <p><strong>Overview and Set-up</strong>: set groups (see below) and generate a exploratory summary of <code>dframe</code>
+</p>
+</li>
+<li> <p><strong>Filtering</strong>: Provide and apply filter statements (groupwise, see below and <code>filter_scoped_df</code>)
+</p>
+</li>
+<li> <p><strong>Visualization and Annotating</strong>: interactive visualization allowing outlier highlighting, annotating and before/after histograms of displayed (numeric) variables
+</p>
+</li>
+<li> <p><strong>Extraction</strong>: generates <em>Reproducible Recipe</em> and outputs
+</p>
+</li>
+</ul>
+<p>For data sets exceeding 1.5 million rows, we suggest splitting the data, if possible, by a grouping factor.
+This is because at this volume interactive visualizations using <code>plotly</code> stretch the limits of what modern web browsers can handle.
+A simple example using <code>iris</code> is:</p>
+<pre>iris_split &lt;- split(iris, iris$Species)
+dcr_app(iris_split[[1]])
+# or
+lapply(iris_split, dcr_app)
+
+</pre>
+<p>Extensive documentation is provided on each of the tabs for individual procedures in help links.
+<code>datacleanr</code> relies on 1) generating a column of unique IDs (<code>.dcrkey</code>) and subsetting <code>dframe</code> into sub-groups (generated in-app,
+added as column <code>.dcrindex</code>) for filtering and visualization.
+These groups are composed of unique combinations of columns in the data set (must be <code>factor</code>) and are passed to <code>group_by</code>,
+and are carried through the app for exploratory analyses (tab <strong>Overview and Set-up</strong>), filtering (tab <strong>Filtering</strong>) and plotting
+(tab <strong>Visualization</strong>).
+These groups should ideally be chosen to facilitate a convenient filtering and viewing/cleaning process.
+For example, a data set with time series of multiple sensors could be grouped by sensor and/or additional columns,
+such that periods of interest can be visualized and cleaned simultaneously in the interactive plot.
+</p>
+<p>Filtering is achieved by providing expressions that evaluate to <code>TRUE</code> \ <code>FALSE</code>, and can be applied to the entire
+data set, or individual/all groups via scoped filtering (see <code>filter_scoped_df</code>).
+</p>
+<p>The interactive visualization allows selecting and deselecting points with lasso and box select tools,
+as well as interactive zooming (toolbar or clicking on legend items or group overview table, see tab in-app)
+as well as panning (toolbar and hover over plot's axes).
+Data formats supported are
+</p>
+
+<ol>
+<li>
+<p> Observational (numeric), timeseries (<code>POSIXct</code>) and categorical data in <code>x</code> and <code>y</code> dimensions/axis
+</p>
+</li>
+<li>
+<p> Observational (numeric) data in <code>z</code> dimension (point size)
+</p>
+</li>
+<li>
+<p> Spatial data, when <code>lon</code> and <code>lat</code> in decimal degrees are present in <code>x</code> and <code>y</code>.
+</p>
+</li>
+</ol>
+<p>Displaying spatial data requires a <a href="https://www.mapbox.com/">Mapbox</a> account, from which an access token needs
+to be copied into your <code>.Renviron</code> (e.g. <code>MAPBOX_TOKEN=your_copied_token</code>).
+</p>
+<p>Note, that when a column <code>.dcrflag</code> (logical, <code>TRUE</code> \ <code>FALSE</code>) is present in <code>dframe</code>,
+respective observations are given contrasting
+symbols (<code>FALSE</code> = circle, <code>TRUE</code> = star-triangle).
+This column is employed as a cross-referencing tool for e.g.other outlier detection or data-processing algorithms
+that were applied prior.
+</p>
+<p>The tab <strong>Extraction</strong> provides code to reproduce the entire procedure (a <em>Reproducible Recipe</em>), which
+</p>
+
+<ol>
+<li>
+<p> can be copied, or sent directly to an active <code>RStudio</code> script when used interactively (i.e. when <code>dframe</code> is an object in <code>R</code>'s
+environment),
+</p>
+</li>
+<li>
+<p> can be saved to disk with intermediate outputs (filter statements and selected outliers),
+where file names are based on the input file and configurable suffixes when <code>dframe</code> is a path.
+</p>
+</li>
+</ol>
+<h3>Value</h3>
+
+<p>When <code>datacleanr</code> is ended by clicking on <code>Close</code> in the app's navigation bar, a list is <strong>invisibly</strong> returned
+with the following items:
+</p>
+
+<ol>
+<li> <p><strong>df_name</strong>: character, object name/file path passed into <code>dcr_app</code>
+</p>
+</li>
+<li> <p><strong>dcr_df</strong>: tibble, filtered data set <strong>with</strong> additional columns <code>.dcrkey</code>, <code>.dcrindex</code>, <code>.annotation</code> - the latter is <code>NA</code> for non-outliers, an empty string for outliers without annotation, and a custom string for annotated outliers
+</p>
+</li>
+<li> <p><strong>dcr_selected_outliers</strong>: data.frame, contains the outlier <code>.dcrkey</code>, the <code>.annotation</code> and a <code>selection_count</code> (integer, count incrementer) column
+</p>
+</li>
+<li> <p><strong>dcr_groups</strong>: character, a vector defining the groups (via <code>group_by</code>) used throughout <code>datacleanr</code>
+</p>
+</li>
+<li> <p><strong>dcr_condition_df</strong>: tibble, with columns <code>filter</code> (character, statement used for filtering) and <code>group</code> (list, of integers), defining groups that correspond to <code>.dcrindex</code>
+</p>
+</li>
+<li> <p><strong>dcr_code</strong>: character string, containing <em>Reproducible Recipe</em>
+</p>
+</li>
+</ol>
+</div>

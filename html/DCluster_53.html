@@ -1,0 +1,88 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sp2WB</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Export SpatialPolygons object as S-Plus map for WinBUGS</h2>
+
+<h3>Description</h3>
+
+<p>The function exports an sp SpatialPolygons object into a S-Plus map
+format to be import by WinBUGS.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sp2WB(map, filename, Xscale = 1, Yscale = Xscale, plotorder = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>map</code></td>
+<td>
+<p>a SpatialPolygons object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>file where output is written</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xscale, Yscale</code></td>
+<td>
+<p>scales to be written in the output file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plotorder</code></td>
+<td>
+<p>default=FALSE, if TRUE, export polygons in plotting order</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Virgilio Gómez Rubio, partly derived from earlier code by Thomas Jagger</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/geobugs12manual.pdf">https://www.mrc-bsu.cam.ac.uk/wp-content/uploads/geobugs12manual.pdf</a></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">run &lt;- FALSE
+if (require("sp", quietly=TRUE) &amp;&amp; require("sf", quietly=TRUE)) run &lt;- TRUE
+if (run) {
+xx &lt;- as(st_read(system.file("shape/nc.shp", package="sf")[1], quiet=TRUE), "Spatial")
+plot(xx, border="blue", axes=TRUE, las=1)
+}
+if (run) {
+tf &lt;- tempfile()
+sp2WB(as(xx, "SpatialPolygons"), filename=tf)
+xxx &lt;- readSplus(tf, proj4string="+proj=longlat +ellps=clrk66")
+all.equal(xxx, as(xx, "SpatialPolygons"), tolerance=.Machine$double.eps^(1/4),
+ check.attributes=FALSE)
+}
+if (run) {
+x &lt;- GridTopology(c(178420, 329420), c(40, 40), c(80, 115))
+xp &lt;- as(SpatialGrid(x), "SpatialPixels")
+pp &lt;- as(xp, "SpatialPolygons")
+td &lt;- tempdir()
+sp2WB(pp, filename=file.path(td, "test.map"))
+xxx &lt;- readSplus(file.path(td, "test.map"))
+all.equal(xxx, pp, tolerance=.Machine$double.eps^(1/4),
+ check.attributes=FALSE)
+}
+</code></pre>
+
+
+</div>

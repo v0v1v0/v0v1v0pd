@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dsm_var_movblk</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Variance estimation via parametric moving block bootstrap</h2>
+
+<h3>Description</h3>
+
+<p>Estimate the variance in abundance over an area using a moving block
+bootstrap. Two procedures are implemented, one incorporating detection
+function uncertainty, one not.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dsm_var_movblk(
+  dsm.object,
+  pred.data,
+  n.boot,
+  block.size,
+  off.set,
+  ds.uncertainty = FALSE,
+  samp.unit.name = "Transect.Label",
+  progress.file = NULL,
+  bs.file = NULL,
+  bar = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dsm.object</code></td>
+<td>
+<p>object returned from <code>dsm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred.data</code></td>
+<td>
+<p>either: a single prediction grid or list of prediction
+grids. Each grid should be a <code>data.frame</code> with the same columns as the
+original data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.boot</code></td>
+<td>
+<p>number of bootstrap resamples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.size</code></td>
+<td>
+<p>number of segments in each block.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>off.set</code></td>
+<td>
+<p>a a vector or list of vectors with as many elements as there
+are in <code>pred.data</code>. Each vector is as long as the number of rows in the
+corresponding element of <code>pred.data</code>. These give the area associated with
+each prediction cell. If a single number is supplied it will be replicated
+for the length of <code>pred.data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ds.uncertainty</code></td>
+<td>
+<p>incorporate uncertainty in the detection function? See
+Details, below. Note that this feature is EXPERIMENTAL at the moment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samp.unit.name</code></td>
+<td>
+<p>name sampling unit to resample (default
+'Transect.Label').</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress.file</code></td>
+<td>
+<p>path to a file to be used (usually by Distance) to
+generate a progress bar (default <code>NULL</code> – no file written).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bs.file</code></td>
+<td>
+<p>path to a file to store each bootstrap round. This stores all
+of the bootstrap results rather than just the summaries, enabling
+outliers to be detected and removed. (Default <code>NULL</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bar</code></td>
+<td>
+<p>should a progress bar be printed to screen? (Default <code>TRUE</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Setting <code>ds.uncertainty=TRUE</code> will incorporate detection function
+uncertainty directly into the bootstrap. This is done by generating
+observations from the fitted detection function and then re-fitting a new
+detection function (of the same form), then calculating a new effective
+strip width. Rejection sampling is used to generate the observations
+(except in the half-normal case) so the procedure can be rather slow. Note
+that this is currently not supported with covariates in the detection
+function.
+</p>
+<p>Setting <code>ds.uncertainty=FALSE</code> will incorporate detection function
+uncertainty using the delta method. This assumes that the detection
+function and the spatial model are INDEPENDENT. This is probably not
+reasonable.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(Distance)
+library(dsm)
+
+# load the Gulf of Mexico dolphin data (see ?mexdolphins)
+data(mexdolphins)
+
+# fit a detection function and look at the summary
+hr.model &lt;- ds(distdata, truncation=6000,
+               key = "hr", adjustment = NULL)
+summary(hr.model)
+
+# fit a simple smooth of x and y
+mod1 &lt;- dsm(count~s(x, y), hr.model, segdata, obsdata)
+summary(mod1)
+
+# calculate the variance by 500 moving block bootstraps
+mod1.movblk &lt;- dsm_var_movblk(mod1, preddata, n.boot = 500,
+   block.size = 3, samp.unit.name = "Transect.Label",
+   off.set = preddata$area,
+   bar = TRUE, bs.file = "mexico-bs.csv", ds.uncertainty = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,93 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>shuffle_with_constraints</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Shuffling proposal function with constraints.</h2>
+
+<h3>Description</h3>
+
+<p>Can be used with <code>optimize_design</code> to improve convergence speed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">shuffle_with_constraints(src = TRUE, dst = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>src</code></td>
+<td>
+<p>Expression to define possible source locations in the samples/locations
+table. Usually evaluated based on
+<code>BatchContainer$get_samples(include_id = TRUE, as_tibble = FALSE)</code> as an environment
+(see also <code>with()</code>). A single source location is selected from rows where the
+expression evaluates to<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dst</code></td>
+<td>
+<p>Expression to define possible destination locations in the
+samples/locations table. Usually evaluated based on <code>BatchContainer$get_samples()</code> as an
+environment.
+Additionally a special variable <code>.src</code> is available in this environment which
+describes the selected source row from the table.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a function which accepts a <code>BatchContainer</code> and an iteration
+number (<code>i</code>). This function returns a list with two names: <code>src</code> vector of length
+2 and <code>dst</code> vector of length two. See <code>BatchContainer$move_samples()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(43)
+
+samples &lt;- data.frame(
+  id = 1:100,
+  sex = sample(c("F", "M"), 100, replace = TRUE),
+  group = sample(c("treatment", "control"), 100, replace = TRUE)
+)
+
+bc &lt;- BatchContainer$new(
+  dimensions = c("plate" = 5, "position" = 25)
+)
+
+scoring_f &lt;- function(samples) {
+  osat_score(
+    samples,
+    "plate",
+    c("sex", "group")
+  )$score
+}
+
+# in this example we treat all the positions in the plate as equal.
+# when shuffling we enforce that source location is non-empty,
+# and destination location has a different plate number
+bc &lt;- optimize_design(
+  bc,
+  scoring = scoring_f,
+  samples,
+  shuffle_proposal = shuffle_with_constraints(
+    # source is non-empty location
+    !is.na(.sample_id),
+    # destination has a different plate
+    plate != .src$plate
+  ),
+  max_iter = 10
+)
+</code></pre>
+
+
+</div>

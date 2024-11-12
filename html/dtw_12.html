@@ -1,0 +1,409 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dynamic Time Warp</h2>
+
+<h3>Description</h3>
+
+<p>Compute Dynamic Time Warp and find optimal alignment between two time
+series.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtw(
+  x,
+  y = NULL,
+  dist.method = "Euclidean",
+  step.pattern = symmetric2,
+  window.type = "none",
+  keep.internals = FALSE,
+  distance.only = FALSE,
+  open.end = FALSE,
+  open.begin = FALSE,
+  ...
+)
+
+is.dtw(d)
+
+## S3 method for class 'dtw'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>query vector <em>or</em> local cost matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>reference vector, or NULL if <code>x</code> given as a local cost matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.method</code></td>
+<td>
+<p>pointwise (local) distance function to use. See
+<code>proxy::dist()</code> in package <a href="https://CRAN.R-project.org/package=proxy"><span class="pkg">proxy</span></a></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step.pattern</code></td>
+<td>
+<p>a stepPattern object describing the local warping steps
+allowed with their cost (see <code>stepPattern()</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window.type</code></td>
+<td>
+<p>windowing function. Character: "none", "itakura",
+"sakoechiba", "slantedband", or a function (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.internals</code></td>
+<td>
+<p>preserve the cumulative cost matrix, inputs, and other
+internal structures</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance.only</code></td>
+<td>
+<p>only compute distance (no backtrack, faster)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>open.begin, open.end</code></td>
+<td>
+<p>perform open-ended alignments</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments, passed to <code>window.type</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>an arbitrary R object</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function performs Dynamic Time Warp (DTW) and computes the optimal
+alignment between two time series <code>x</code> and <code>y</code>, given as numeric
+vectors.  The "optimal" alignment minimizes the sum of distances between
+aligned elements. Lengths of <code>x</code> and <code>y</code> may differ.
+</p>
+<p>The local distance between elements of <code>x</code> (query) and <code>y</code>
+(reference) can be computed in one of the following ways:
+</p>
+
+<ol>
+<li>
+<p> if <code>dist.method</code> is a string, <code>x</code> and <code>y</code> are passed to the <code>proxy::dist()</code> function in package <a href="https://CRAN.R-project.org/package=proxy"><span class="pkg">proxy</span></a> with the method given;
+</p>
+</li>
+<li>
+<p> if <code>dist.method</code> is a function of two arguments, it invoked repeatedly on all pairs <code style="white-space: pre;">⁠x[i],y[j]⁠</code> to build the local cost matrix;
+</p>
+</li>
+<li>
+<p> multivariate time series and arbitrary distance metrics can be handled by supplying a precomputed local cost matrix. Element <code style="white-space: pre;">⁠[i,j]⁠</code> of the local cost matrix is understood as the distance between element <code>x[i]</code> and <code>y[j]</code>. The distance matrix has therefore <code>n=length(x)</code> rows and <code>m=length(y)</code> columns (see note below).
+</p>
+</li>
+</ol>
+<p>Several common variants of the DTW recursion are supported via the
+<code>step.pattern</code> argument, which defaults to <code>symmetric2</code>. Step
+patterns are commonly used to <em>locally</em> constrain the slope of the
+alignment function. See <code>stepPattern()</code> for details.
+</p>
+<p>Windowing enforces a <em>global</em> constraint on the envelope of the warping
+path. It is selected by passing a string or function to the
+<code>window.type</code> argument. Commonly used windows are (abbreviations
+allowed):
+</p>
+
+<ul>
+<li> <p><code>"none"</code> No windowing (default)
+</p>
+</li>
+<li> <p><code>"sakoechiba"</code> A band around main diagonal
+</p>
+</li>
+<li> <p><code>"slantedband"</code> A band around slanted diagonal
+</p>
+</li>
+<li> <p><code>"itakura"</code> So-called Itakura parallelogram
+</p>
+</li>
+</ul>
+<p><code>window.type</code> can also be an user-defined windowing function.  See
+<code>dtwWindowingFunctions()</code> for all available windowing functions,
+details on user-defined windowing, and a discussion of the (mis)naming of
+the "Itakura" parallelogram as a global constraint.  Some windowing
+functions may require parameters, such as the <code>window.size</code> argument.
+</p>
+<p>Open-ended alignment, i.e. semi-unconstrained alignment, can be selected via
+the <code>open.end</code> switch.  Open-end DTW computes the alignment which best
+matches all of the query with a <em>leading part</em> of the reference. This
+is proposed e.g. by Mori (2006), Sakoe (1979) and others. Similarly,
+open-begin is enabled via <code>open.begin</code>; it makes sense when
+<code>open.end</code> is also enabled (subsequence finding). Subsequence
+alignments are similar e.g. to UE2-1 algorithm by Rabiner (1978) and others.
+Please find a review in Tormene et al. (2009).
+</p>
+<p>If the warping function is not required, computation can be sped up enabling
+the <code>distance.only=TRUE</code> switch, which skips the backtracking step. The
+output object will then lack the <code style="white-space: pre;">⁠index{1,2,1s,2s}⁠</code> and
+<code>stepsTaken</code> fields.
+</p>
+<p><code>is.dtw</code> tests whether the argument is of class <code>dtw</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>dtw</code> with
+the following items:
+</p>
+
+<ul>
+<li> <p><code>distance</code> the minimum global distance computed, <em>not</em> normalized.
+</p>
+</li>
+<li> <p><code>normalizedDistance</code> distance computed, <em>normalized</em> for path length, if normalization is known for chosen step pattern.
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠N,M⁠</code> query and reference length
+</p>
+</li>
+<li> <p><code>call</code> the function call that created the object
+</p>
+</li>
+<li> <p><code>index1</code> matched elements: indices in <code>x</code>
+</p>
+</li>
+<li> <p><code>index2</code> corresponding mapped indices in <code>y</code>
+</p>
+</li>
+<li> <p><code>stepPattern</code> the <code>stepPattern</code> object used for the computation
+</p>
+</li>
+<li> <p><code>jmin</code> last element of reference matched, if <code>open.end=TRUE</code>
+</p>
+</li>
+<li> <p><code>directionMatrix</code> if <code>keep.internals=TRUE</code>, the directions of steps that would be taken at each alignment pair (integers indexing  production rules in the chosen step pattern)
+</p>
+</li>
+<li> <p><code>stepsTaken</code> the list of steps taken from the beginning to the end of the alignment (integers indexing chosen step pattern)
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠index1s, index2s⁠</code> same as <code>index1/2</code>, excluding intermediate steps for multi-step patterns like <code>asymmetricP05()</code>
+</p>
+</li>
+<li> <p><code>costMatrix</code> if <code>keep.internals=TRUE</code>, the cumulative cost matrix
+</p>
+</li>
+<li> <p><code style="white-space: pre;">⁠query, reference⁠</code> if <code>keep.internals=TRUE</code> and passed as the <code>x</code> and <code>y</code> arguments, the query and reference timeseries.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>Cost matrices (both input and output) have query elements arranged
+row-wise (first index), and reference elements column-wise (second index).
+They print according to the usual convention, with indexes increasing down-
+and rightwards.  Many DTW papers and tutorials show matrices according to
+plot-like conventions, i.e.  reference index growing upwards. This may be
+confusing.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Toni Giorgino
+</p>
+
+
+<h3>References</h3>
+
+
+<ol>
+<li>
+<p> Toni Giorgino. <em>Computing and Visualizing Dynamic Time
+Warping Alignments in R: The dtw Package.</em> Journal of Statistical Software,
+31(7), 1-24.  <a href="https://doi.org/10.18637/jss.v031.i07">doi:10.18637/jss.v031.i07</a>
+</p>
+</li>
+<li>
+<p> Tormene, P.;
+Giorgino, T.; Quaglini, S. &amp; Stefanelli, M. <em>Matching incomplete time
+series with dynamic time warping: an algorithm and an application to
+post-stroke rehabilitation.</em> Artif Intell Med, 2009, 45, 11-34.
+<a href="https://doi.org/10.1016/j.artmed.2008.11.007">doi:10.1016/j.artmed.2008.11.007</a>
+</p>
+</li>
+<li>
+<p> Sakoe, H.;
+Chiba, S., <em>Dynamic programming algorithm optimization for spoken word
+recognition,</em> Acoustics, Speech, and Signal Processing,
+IEEE Transactions on , vol.26, no.1, pp. 43-49, Feb 1978.
+<a href="https://doi.org/10.1109/TASSP.1978.1163055">doi:10.1109/TASSP.1978.1163055</a>
+</p>
+</li>
+<li>
+<p> Mori, A.; Uchida, S.; Kurazume, R.; Taniguchi, R.; Hasegawa, T. &amp; Sakoe, H.
+<em>Early Recognition and Prediction of Gestures</em> Proc. 18th International
+Conference on Pattern Recognition ICPR 2006, 2006, 3, 560-563 <a href="https://doi.org/10.1109/ICPR.2006.467">doi:10.1109/ICPR.2006.467</a>
+</p>
+</li>
+<li>
+<p> Sakoe,
+H. <em>Two-level DP-matching–A dynamic programming-based pattern matching
+algorithm for connected word recognition</em> Acoustics, Speech, and Signal
+Processing, IEEE Transactions on, 1979, 27, 588-595 <a href="https://doi.org/10.1109/TASSP.1979.1163310">doi:10.1109/TASSP.1979.1163310</a>
+</p>
+</li>
+<li>
+<p> Rabiner L, Rosenberg A, Levinson
+S (1978). <em>Considerations in dynamic time warping algorithms for
+discrete word recognition.</em> IEEE Trans. Acoust., Speech, Signal Process.,
+26(6), 575-582.  <a href="https://doi.org/10.1109/TASSP.1978.1163164">doi:10.1109/TASSP.1978.1163164</a>
+</p>
+</li>
+<li>
+<p> Muller M. <em>Dynamic Time
+Warping</em> in <em>Information Retrieval for Music and Motion</em>. Springer
+Berlin Heidelberg; 2007. p. 69-84. <a href="https://doi.org/10.1007/978-3-540-74048-3_4">doi:10.1007/978-3-540-74048-3_4</a>
+</p>
+</li>
+</ol>
+<h3>See Also</h3>
+
+<p><code>dtwDist()</code>, for iterating dtw over a set of timeseries;
+<code>dtwWindowingFunctions()</code>, for windowing and global constraints;
+<code>stepPattern()</code>, step patterns and local constraints;
+<code>plot.dtw()</code>, plot methods for DTW objects.  To generate a local
+cost matrix, the functions <code>proxy::dist()</code>,
+<code>analogue::distance()</code>, <code>vegan::vegdist()</code>, or <code>outer()</code> may come handy.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+## A noisy sine wave as query
+idx&lt;-seq(0,6.28,len=100);
+query&lt;-sin(idx)+runif(100)/10;
+
+## A cosine is for reference; sin and cos are offset by 25 samples
+reference&lt;-cos(idx)
+plot(reference); lines(query,col="blue");
+
+## Find the best match
+alignment&lt;-dtw(query,reference);
+
+
+## Display the mapping, AKA warping function - may be multiple-valued
+## Equivalent to: plot(alignment,type="alignment")
+plot(alignment$index1,alignment$index2,main="Warping function");
+
+## Confirm: 25 samples off-diagonal alignment
+lines(1:100-25,col="red")
+
+
+
+
+#########
+##
+## Partial alignments are allowed.
+##
+
+alignmentOBE &lt;-
+  dtw(query[44:88],reference,
+      keep=TRUE,step=asymmetric,
+      open.end=TRUE,open.begin=TRUE);
+plot(alignmentOBE,type="two",off=1);
+
+
+#########
+##
+## Subsetting allows warping and unwarping of
+## timeseries according to the warping curve. 
+## See first example below.
+##
+
+## Most useful: plot the warped query along with reference 
+plot(reference)
+lines(query[alignment$index1]~alignment$index2,col="blue")
+
+## Plot the (unwarped) query and the inverse-warped reference
+plot(query,type="l",col="blue")
+points(reference[alignment$index2]~alignment$index1)
+
+
+
+#########
+##
+## Contour plots of the cumulative cost matrix
+##    similar to: plot(alignment,type="density") or
+##                dtwPlotDensity(alignment)
+## See more plots in ?plot.dtw 
+##
+
+## keep = TRUE so we can look into the cost matrix
+
+alignment&lt;-dtw(query,reference,keep=TRUE);
+
+contour(alignment$costMatrix,col=terrain.colors(100),x=1:100,y=1:100,
+	xlab="Query (noisy sine)",ylab="Reference (cosine)");
+
+lines(alignment$index1,alignment$index2,col="red",lwd=2);
+
+
+
+
+#########
+##
+## An hand-checkable example
+##
+
+ldist&lt;-matrix(1,nrow=6,ncol=6);  # Matrix of ones
+ldist[2,]&lt;-0; ldist[,5]&lt;-0;      # Mark a clear path of zeroes
+ldist[2,5]&lt;-.01;		 # Forcely cut the corner
+
+ds&lt;-dtw(ldist);			 # DTW with user-supplied local
+                                 #   cost matrix
+da&lt;-dtw(ldist,step=asymmetric);	 # Also compute the asymmetric 
+plot(ds$index1,ds$index2,pch=3); # Symmetric: alignment follows
+                                 #   the low-distance marked path
+points(da$index1,da$index2,col="red");  # Asymmetric: visiting
+                                        #   1 is required twice
+
+ds$distance;
+da$distance;
+
+
+
+
+</code></pre>
+
+
+</div>

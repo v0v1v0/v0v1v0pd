@@ -1,0 +1,402 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fpcat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Functional PCA of probability densities among time
+</h2>
+
+<h3>Description</h3>
+
+<p>Performs functional principal component analysis of probability densities in order to describe a data “foldert”, consisting of individuals on which are observed <code class="reqn">p</code> variables on <code class="reqn">T</code> times. It returns an object of class <code>fpcat</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fpcat(xf, group.name="time", method = 1, ind = 1, nvar = NULL, gaussiand = TRUE,
+    windowh = NULL, normed=TRUE, centered=TRUE, data.centered = FALSE,
+    data.scaled = FALSE, common.variance = FALSE, nb.factors = 3, nb.values = 10,
+    sub.title = "", plot.eigen = TRUE, plot.score = FALSE, nscore = 1:3,
+    filename = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xf</code></td>
+<td>
+
+<p>object of class <code>"foldert"</code> or data.frame.
+</p>
+
+<ul>
+<li>
+<p> An object of class <code>"foldert"</code> is a list of data frames with the same column names, each of them corresponding to a time of observation. Its elements are data frames with <code class="reqn">p</code> numeric columns.
+If there are non numeric columns, there is an error.
+The <code class="reqn">t^{th}</code> element (<code class="reqn">t = 1, \ldots, T</code>) matches with the <code class="reqn">t^{th}</code> time of observation.             
+</p>
+</li>
+<li>
+<p> If it is a data frame:
+</p>
+
+<ul>
+<li>
+<p> If <code>method=1</code>: the column with name given by the <code>group.name</code> argument is a factor giving the groups.
+The other columns are all numeric; otherwise, there is an error.
+</p>
+</li>
+<li>
+<p> If <code>method=2</code>: the column named after the <code>ind</code> argument contains the identifiers of the measured objects, and the observations are organized as follows:
+</p>
+<p>Given <code>timecol</code> the number of the column named by the <code>group.name</code> argument,
+</p>
+<p>the observations corresponding to the 1st time are on columns <code>timecol : (timecol + nvar - 1)</code>
+</p>
+<p>the observations corresponding to the 2nd time are on columns <code>(timecol + nvar) : (timecol + 2 * nvar - 1)</code>
+</p>
+<p>and so on.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.name</code></td>
+<td>
+
+<p>string or numeric.
+</p>
+
+<ul>
+<li>
+<p> If <code>xf</code> is an object of class <code>"foldert"</code>, string.
+Name of the grouping variable, that is the observation times.
+The default is <code>groupname  = "time"</code>.
+</p>
+</li>
+<li>
+<p> If <code>xf</code> is a data frame, string or numeric,
+as the <code>ind</code> argument of <code>as.foldert.data.frame</code>.
+</p>
+
+<ul>
+<li>
+<p>If <code>method = 1</code>, <code>timecol</code> is the name or the number of the column of x containing the times of observation, or the number of this column. <code>x[, timecol]</code> must be of class <code>"numeric"</code>, <code>"ordered"</code>, <code>"Date"</code>, <code>"POSIXlt"</code> or <code>"POSIXct"</code>, otherwise, there is an error.
+
+</p>
+</li>
+<li>
+<p>If <code>method=2</code>, <code>timecol</code> is the name or the number of the first column corresponding to the first observation. If there are duplicated column names and several columns are named by <code>timecol</code>, the first one is considered.
+
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>if <code>xf</code> is a data frame, 1 or 2. Omitted if <code>xf</code> is an object of class <code>"foldert"</code>.
+</p>
+<p>If <code>xf</code> is a data frame, <code>method</code> indicates the layout of this data frame and, therefore, the method used to extract the data and build the foldert.
+</p>
+
+<ul>
+<li>
+<p>If <code>method = 1</code>, there is a column containing the identifiers of the measured objects and a column containing the times. The other columns contain the observations.
+</p>
+</li>
+<li>
+<p>If <code>method = 2</code>, there is a column containing the identifiers of the measured objects, and the observations are organized as follows:
+</p>
+
+<ul>
+<li>
+<p>the observations corresponding to the 1st time are on columns <code>timecol : (timecol + nvar - 1)</code>
+</p>
+</li>
+<li>
+<p>the observations corresponding to the 2nd time are on columns <code>(timecol + nvar) : (timecol + 2 * nvar - 1)</code>
+</p>
+</li>
+<li>
+<p>and so on.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ind</code></td>
+<td>
+
+<p>if <code>xf</code> is a data frame, string or numeric. Omitted if <code>xf</code> is an object of class <code>"foldert"</code>.
+</p>
+<p>The name of the column of x containing the indentifiers of the measured objects, or the number of this column.
+See the <code>ind</code> argument of <code>as.foldert.data.frame</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nvar</code></td>
+<td>
+
+<p>if <code>xf</code> is a data frame and <code>mathod=2</code>, string or numeric. Omitted if <code>xf</code> is an object of class <code>"foldert"</code> or if <code>method=1</code>.
+</p>
+<p>The number of variable measured at each observation time.
+See the <code>ind</code> argument of <code>as.foldert.data.frame</code>.
+</p>
+</td>
+</tr>
+</table>
+<p>All other arguments are the same as for <code>fpcad</code>.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>gaussiand</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default), the probability densities are supposed Gaussian. If <code>FALSE</code>, densities are estimated using the Gaussian kernel method (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windowh</code></td>
+<td>
+
+<p>either a list of <code class="reqn">T</code> bandwidths (one per density associated to a group), or a strictly positive number. If <code>windowh = NULL</code> (default), the bandwidths are automatically computed (as <code>fpcad</code>). See Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normed</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default), the densities are normed before computing the distances (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centered</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default), the densities are centered (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.centered</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default is <code>FALSE</code>), the data of each group are centered (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.scaled</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default is <code>FALSE</code>), the data of each group are centered (even if <code>data.centered = FALSE</code>) and scaled (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>common.variance</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default is <code>FALSE</code>), a common covariance matrix (or correlation matrix if <code>data.scaled = TRUE</code>), computed on the whole data, is used. If <code>FALSE</code> (default), a covariance (or correlation) matrix per group is used (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nb.factors</code></td>
+<td>
+
+<p>numeric. Number of returned principal scores (default <code>nb.factors = 3</code>) (as <code>fpcad</code>).
+</p>
+<p>Warning: The <code>plot.fpcad</code> and <code>interpret.fpcad</code> functions cannot take into account more than <code>nb.factors</code>  principal factors (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nb.values</code></td>
+<td>
+
+<p>numerical. Number of returned eigenvalues (default <code>nb.values = 10</code>) (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sub.title</code></td>
+<td>
+
+<p>string. Subtitle for the graphs (default <code>NULL</code>) (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.eigen</code></td>
+<td>
+
+<p>logical. If <code>TRUE</code> (default), the barplot of the eigenvalues is plotted (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.score</code></td>
+<td>
+
+<p>logical.  If <code>TRUE</code>, the graphs of principal scores are plotted. A new graphic device is opened for each pair of principal scores defined by <code>nscore</code> argument (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nscore</code></td>
+<td>
+
+<p>numeric vector. If <code>plot.score = TRUE</code>, the numbers of the principal scores which are plotted. By default it is equal to <code>nscore = 1:3</code>. Its components cannot be greater than <code>nb.factors</code> (as <code>fpcad</code>). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+
+<p>string. Name of the file in which the results are saved. By default (<code>filename  = NULL</code>) the results are not saved (as <code>fpcad</code>).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+ 
+<p>The <code class="reqn">T</code> probability densities <code class="reqn">f_t</code> corresponding to the <code class="reqn">T</code> times of observation are either parametrically estimated or estimated using the Gaussian kernel method (see <code>fpcad</code> for the use of the arguments indicating the method used to estimate these densities).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of class <code>fpcat</code>, that is a list including:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>vector of the times of observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inertia </code></td>
+<td>
+<p>data frame of the eigenvalues and percentages of inertia.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contributions </code></td>
+<td>
+<p>data frame of the contributions to the first <code>nb.factors</code> principal components.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qualities </code></td>
+<td>
+<p>data frame of the qualities on the first <code>nb.factors</code> principal factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scores </code></td>
+<td>
+<p>data frame of the first <code>nb.factors</code> principal scores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm </code></td>
+<td>
+<p>vector of the <code class="reqn">L^2</code> norms of the densities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>means </code></td>
+<td>
+<p>list of the means.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variances </code></td>
+<td>
+<p>list of the covariance matrices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correlations </code></td>
+<td>
+<p>list of the correlation matrices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skewness </code></td>
+<td>
+<p>list of the skewness coefficients.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kurtosis </code></td>
+<td>
+<p>list of the kurtosis coefficients.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Rachid Boumaza,  Pierre Santagostini, Smail Yousfi, Gilles Hunault, Sabine Demotes-Mainard
+</p>
+
+
+<h3>References</h3>
+
+<p>Boumaza, R. (1998). Analyse en composantes principales de distributions gaussiennes multidimensionnelles. Revue de Statistique Appliqu?e, XLVI (2), 5-20.
+</p>
+<p>Boumaza, R., Yousfi, S., Demotes-Mainard, S. (2015). Interpreting the principal component analysis of multivariate density functions. Communications in Statistics - Theory and Methods, 44 (16), 3321-3339.
+</p>
+<p>Delicado, P. (2011). Dimensionality reduction when data are density functions. Computational Statistics &amp; Data Analysis, 55, 401-420.
+</p>
+<p>Yousfi, S., Boumaza, R., Aissani, D., Adjabi, S. (2014). Optimal bandwith matrices in functional principal component analysis of density functions. Journal of Statistical Computation and Simulation, 85 (11), 2315-2330.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>print.fpcat, plot.fpcat, 
+bandwidth.parameter
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">times &lt;- as.Date(c("2017-03-01", "2017-04-01", "2017-05-01", "2017-06-01"))
+x1 &lt;- data.frame(z1=rnorm(6,1,5), z2=rnorm(6,3,3))
+x2 &lt;- data.frame(z1=rnorm(6,4,6), z2=rnorm(6,5,2))
+x3 &lt;- data.frame(z1=rnorm(6,7,2), z2=rnorm(6,8,4))
+x4 &lt;- data.frame(z1=rnorm(6,9,3), z2=rnorm(6,10,2))
+ft &lt;- foldert(x1, x2, x3, x4, times = times, rows.select="intersect")
+print(ft)
+result &lt;- fpcat(ft)
+print(result)
+plot(result)
+</code></pre>
+
+
+</div>

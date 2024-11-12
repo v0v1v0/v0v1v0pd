@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>depthLocal</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Local depth</h2>
+
+<h3>Description</h3>
+
+<p>Computes local version of depth according to proposals of Paindaveine and Van Bever — see referencess.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">depthLocal(
+  u,
+  X,
+  beta = 0.5,
+  depth_params1 = list(method = "Projection"),
+  depth_params2 = depth_params1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>Numerical vector or matrix whose depth is to be calculated. Dimension has to be the same as that of the observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>The data as a matrix, data frame. If it is a matrix or data frame, then each row is viewed as one multivariate observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>cutoff value for neighbourhood</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depth_params1</code></td>
+<td>
+<p>list of parameters for function depth (method, threads, ndir, la, lb, pdim, mean, cov, exact).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>depth_params2</code></td>
+<td>
+<p>as above — default is depth_params1.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A successful concept of local depth was proposed by Paindaveine and Van Bever (2012). For defining a neighbourhood of a point authors proposed using idea of symmetrisation of a distribution (a sample) with respect to a point in which depth is calculated. In their approach instead of a distribution <code class="reqn"> {P} ^ {X} </code>, a distribution <code class="reqn"> {{P}_{x}} = \frac{ 1 }{ 2 }{{P} ^ {X}} + \frac{ 1 }{ 2 }{{P} ^ {2x - X}} </code> is used. For any <code class="reqn"> \beta \in [0, 1] </code>, let us introduce the smallest depth region bigger or equal to <code class="reqn"> \beta </code>, </p>
+<p style="text-align: center;"><code class="reqn"> {R} ^ {\beta}(F) = \bigcap\limits_{\alpha \in A(\beta)} {{{D}_{\alpha}}}(F), </code>
+</p>
+<p> where <code class="reqn"> A(\beta) = \left\{ \alpha \ge 0:P\left[ {{D}_{\alpha}}(F)\right] \ge \beta\right\} </code>. Then for a locality parameter <code class="reqn"> \beta </code> we can take a neighbourhood of a point <code class="reqn"> x </code> as <code class="reqn"> R_{x} ^ {\beta}(P) </code>.
+</p>
+<p>Formally, let <code class="reqn"> D(\cdot, P) </code> be a depth function. Then the local depth with the locality parameter <code class="reqn"> \beta </code> and w.r.t. a point <code class="reqn"> x </code> is defined as </p>
+<p style="text-align: center;"><code class="reqn"> L{{D} ^ {\beta}}(z, P):z \to D(z, P_{x} ^ {\beta}), </code>
+</p>
+<p> where <code class="reqn"> P_{x} ^ {\beta}(\cdot) = P\left( \cdot |R_{x} ^ {\beta}(P)\right) </code> is cond. distr. of <code class="reqn"> P </code> conditioned on <code class="reqn"> R_{x} ^ {\beta}(P) </code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Paindaveine, D., Van Bever, G. (2013) From depth to local depth : a focus on centrality. Journal of the American Statistical Association 105, 1105–1119.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+# EXAMPLE 1
+data &lt;- mvrnorm(100, c(0, 5), diag(2) * 5)
+# By default depth_params2 = depth_params1
+depthLocal(data, data, depth_params1 = list(method = "LP"))
+depthLocal(data, data, depth_params1 = list(method = "LP"),
+           depth_params2 = list(method = "Projection"))
+# Depth contour
+depthContour(data, depth_params = list(method = "Local", depth_params1 = list(method = "LP")))
+
+# EXAMPLE 2
+data(inf.mort, maesles.imm)
+data1990 &lt;- na.omit(cbind(inf.mort[, 1], maesles.imm[, 1]))
+depthContour(data1990,
+             depth_params = list(
+               method = "Local",
+               depth_params1 = list(method = "LP"),
+               beta = 0.3
+             ))
+
+# EXAMPLE 3
+Sigma1 &lt;- matrix(c(10, 3, 3, 2), 2, 2)
+X1 &lt;- mvrnorm(n = 8500, mu = c(0, 0), Sigma1)
+Sigma2 &lt;- matrix(c(10, 0, 0, 2), 2, 2)
+X2 &lt;- mvrnorm(n = 1500, mu = c(-10, 6), Sigma2)
+BALLOT &lt;- rbind(X1, X2)
+
+train &lt;- sample(1:10000, 100)
+data &lt;- BALLOT[train, ]
+depthContour(data,
+            depth_params = list(
+              method = "Local",
+              beta = 0.3,
+              depth_params1 = list(method = "Projection")
+            ))
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

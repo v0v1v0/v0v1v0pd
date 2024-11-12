@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Decorrelation by Orthogonal Transformation (DOT)</h2>
+
+<h3>Description</h3>
+
+<p><code>dot()</code>  decorrelates   genetic  association  test  statistics   by  special
+symmetric orthogonal transformation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dot(Z, C, tol.cor = NULL, tol.egv = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>vector of association test statistics (i.e., Z-scores).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>correlation matrix among the association test statistics, as
+obtained by <code>cst()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol.cor</code></td>
+<td>
+<p>tolerance threshold for the largest correlation absolute value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol.egv</code></td>
+<td>
+<p>tolerance threshold for the smallest eigenvalue.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Genetic  association studies  typically provide  per-variant test  statistics
+that can be  converted to asymptotically normal, signed  Z-scores. Once those
+Z-scores are transformed to independent random variables, various methods can
+be applied to combine them and obtain SNP-set overall association.
+</p>
+<p><code>dot()</code>  uses  per-variant  genetic  association  test  statistics  and  the
+correlation among them to decorrelate Z-scores.
+</p>
+<p>To estimate the  correlation among genetic association  test statistics, use
+<code>cst()</code>.  If  P-values and  estimated effects  (i.e, beta  coefficients) are
+given instead  of test statistics, <code>zsc()</code>  can be used to  recover the test
+statistics (i.e., Z-scores).
+</p>
+<p><code>tol.cor</code>: variants  with correlation too close  to 1 in absolute  value are
+considered to be collinear  and only one of them will  be retained to ensure
+that  the  LD  matrix  is   full-rank.   The  maximum  value  for  tolerable
+correlation  is  1   -  <code>tol.cor</code>.  The  default  value   for  <code>tol.cor</code>  is
+<code>sqrt(.Machine$double.eps)</code>.
+</p>
+<p><code>tol.egv</code>: negative and close to  zero eigenvalues are truncated from matrix
+<code>D</code> in <code style="white-space: pre;">⁠H = EDE'⁠</code>. The corresponding  columns of <code>E</code> are also deleted. Note
+the  the dimention  of the  square matrix  <code>H</code> does  not change  after this
+truncation. See DOT publication in the  reference below for more details on
+definitions  of <code>E</code>  and <code>D</code>  matrices.  The  default eigenvalue  tolerance
+value is <code>sqrt(.Machine$double.eps)</code>.
+</p>
+<p>A number of methods are available for combining de-correlated P-values,
+see dot_sst for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a  list with
+</p>
+
+<ul>
+<li>
+<p><code>X</code>: association test statistics, de-correlated.
+</p>
+</li>
+<li>
+<p><code>H</code>: orthogonal transformation, such that <code>X = H %*% Z</code>.
+</p>
+</li>
+<li>
+<p><code>M</code>: effective number of variants after de-correlation.
+</p>
+</li>
+<li>
+<p><code>L</code>: effective number of eigenvalues after truncation.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p><a href="https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007819">
+Vsevolozhskaya, O. A., Shi, M., Hu, F., &amp; Zaykin, D. V. (2020). DOT: Gene-set
+analysis by combining decorrelated association statistics. PLOS Computational
+Biology, 16(4), e1007819.</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cst()</code>, <code>zsc()</code>, dot_sst
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## get genotype and covariate matrices
+gno &lt;- readRDS(system.file("extdata", 'rs208294_gno.rds', package="dotgen"))
+cvr &lt;- readRDS(system.file("extdata", 'rs208294_cvr.rds', package="dotgen"))
+
+## estimate the correlation among association test statistics
+sgm &lt;- cst(gno, cvr)
+
+## get the result of genetic association analysis (P-values and effects)
+res &lt;- readRDS(system.file("extdata", 'rs208294_res.rds', package="dotgen"))
+
+## recover Z-score statistics
+stt &lt;- with(res, zsc(P, BETA))
+
+## decorrelate Z-scores by DOT
+result &lt;- dot(stt, sgm)
+print(result$X)          # decorrelated statistics
+print(result$H)          # orthogonal transformation
+
+## sum of squares of decorrelated statistics is a chi-square
+ssq &lt;- sum(result$X^2)
+pvl &lt;- 1 - pchisq(ssq, df=result$L)
+
+print(ssq)            # sum of squares = 35.76306
+print(pvl)            # chisq P-value =  0.001132132
+</code></pre>
+
+
+</div>

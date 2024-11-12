@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>randtest.dispRity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Random (permutation) test</h2>
+
+<h3>Description</h3>
+
+<p>Performs a random test (aka permutation test) on a <code>matrix</code> or a <code>dispRity</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dispRity'
+randtest(
+  xtest,
+  subsets,
+  metric,
+  replicates = 100,
+  resample = TRUE,
+  alter = "two-sided",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xtest</code></td>
+<td>
+<p>The <code>matrix</code> or a <code>dispRity</code> object to draw from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subsets</code></td>
+<td>
+<p>A <code>vector</code> of elements to test (or a <code>list</code> of <code>vectors</code> - see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>A <code>function</code> to be the statistic to apply to the subset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replicates</code></td>
+<td>
+<p>A <code>numeric</code> value for the number of replicates (<code>default = 100</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample</code></td>
+<td>
+<p><code>logical</code> whether to resample the full distribution (<code>TRUE</code>; default) or the distribution without the subset (<code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alter</code></td>
+<td>
+<p>The alternative hypothesis. Can be <code>"two-sided"</code> (default), <code>"greater"</code> or <code>"lesser"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional arguments to be passed to <code>metric</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This test checks whether the metric calculated on a given subset of the data is significantly different from the metric calculated on any random subset of the same size.
+In other words: does the given subset have a clearly different disparity value than the rest of the data?
+</p>
+<p>First, the <code>metric</code> (statistic) is applied to the <code>subset</code> sampled from the <code>data</code> (population).
+Second, the <code>metric</code> is applied to random equally sized subsets from the <code>data</code>.
+If the observed difference falls out of the random differences distribution, the differences are significant.
+This algorithm is based on a similar procedure than in <code>link[ade4]{rantest}</code>.
+</p>
+<p>If <code>data</code> is a <code>dispRity</code> object, the <code>subsets</code>, <code>metric</code> and <code>replicates</code> can be left missing and are automatically inherited from the <code>dispRity</code> if it contains respectively subsets (from <code>chrono.subsets</code> or <code>custom.subsets</code>) a <code>metric</code> (from <code>dispRity</code>) and bootstrap draws (from <code>boot.matrix</code>).
+</p>
+<p>If <code>data</code> is a <code>dispRity</code> object subsets can be a list of subsets to compare for example <code>list(c("A", "B"), c("B", "A"))</code> will run two tests comparing respectively sample A to B and B to A. <em>Note</em> that it will only compare these two samples and use their combined size as the population size, if you want to compare a subset to all the subsets you can use <code>list(c("A")</code> or write down the specific subsets to be used.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function returns a <code>"randtest"</code> object that can be passed to the generic S3 functions <code>print.randtest</code> or <code>plot.randtest</code>.
+The output also contains to extra elements <code>output$observed</code> and <code>output$random</code> containing the raw results of respectively the observed and random tests.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>randtest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Simple example
+dummy_matrix &lt;- matrix(rnorm(500), 100, 5)
+
+## Testing whether the mean of a random subset
+## is different than the means of 100 subsets
+dummy_test &lt;- randtest.dispRity(dummy_matrix,
+                                subset = sample(1:100, 20),
+                                metric = mean)
+dummy_test ; plot(dummy_test)
+
+## Applying this on dispRity objects
+data(disparity)
+test_disparity &lt;- test.dispRity(disparity,
+                                test = randtest.dispRity)
+
+## The summarised results
+summary(test_disparity)
+
+## Plotting the results
+plot(test_disparity)
+
+## Applying this on a dispRity object with specific subset comparisons
+test_disparity2 &lt;- randtest.dispRity(disparity, subsets = list(
+     ## Comparing subset 90 to the whole population (traitspace)
+     c(observed = "90"),
+     ## Comparing subset "70" to "90", "70" and "30"
+     c(observed = "70", random = c("90", "70", "30"))))
+
+## Summarising and plotting the results
+summary(test_disparity2)
+plot(test_disparity2)
+
+</code></pre>
+
+
+</div>

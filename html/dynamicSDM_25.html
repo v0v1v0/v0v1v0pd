@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>spatiotemp_block</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Split occurrence records into spatial and temporal blocks for model fitting.</h2>
+
+<h3>Description</h3>
+
+<p>Splits occurrence records into spatial and temporal sampling units and groups sampling units into
+multiple blocks that have similar mean and range of environmental explanatory variables and sample
+size.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">spatiotemp_block(
+  occ.data,
+  vars.to.block.by,
+  spatial.layer,
+  spatial.split.degrees,
+  temporal.block,
+  n.blocks = 10,
+  iterations = 5000
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>occ.data</code></td>
+<td>
+<p>a data frame, with columns for occurrence record co-ordinates and dates with
+column names as follows; record longitude as "x", latitude as "y", year as "year", month as
+"month", and day as "day", and associated explanatory variable data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars.to.block.by</code></td>
+<td>
+<p>a character string or vector, the explanatory variable column names to
+group sampling units based upon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.layer</code></td>
+<td>
+<p>optional; a <code>SpatRaster</code> object, a categorical spatial layer for sample
+unit splitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.split.degrees</code></td>
+<td>
+<p>a numeric value, the grid cell resolution in degrees to split
+<code>spatial.layer</code> by. Required if <code>spatial.layer</code> given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.block</code></td>
+<td>
+<p>optional; a character string or vector, the time step for sampling unit
+splitting. Any combination of <code>day</code>, <code>month</code>, <code>year</code> or <code>quarter.</code> See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.blocks</code></td>
+<td>
+<p>optional; a numeric value of two or more, the number of blocks to group
+occurrence records into. Default; 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>optional; a numeric value, the number of random block groupings to trial before
+selecting the optimal grouping. Default; 5000.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns occurrence data frame with column "BLOCK.CATS", assigning each record to a
+spatiotemporal block.
+</p>
+
+
+<h3>Blocking for autocorrelation</h3>
+
+<p>Blocking is an established method to account for spatial autocorrelation in SDMs. Following Bagchi
+et al., (2013), the blocking method involves splitting occurrence data into sampling units based
+upon non-contiguous ecoregions, which are then grouped into spatially disaggregated blocks of
+approximately equal sample size, within which the mean and range of explanatory variable data are
+similar. When species distribution model fitting, blocks are left out in-turn in a jack-knife
+approach for model training and testing.
+</p>
+<p>We adapt this approach to account for temporal autocorrelation by enabling users to split records
+into sampling units based upon spatial and temporal characteristic before blocking occurs.
+</p>
+
+
+<h3>Spatial splitting</h3>
+
+<p>If the <code>spatial.layer</code> has categories that take up large contiguous areas,
+<code>spatiotemp_block()</code> will split categories into smaller units using grid cells at specified
+resolution (<code>spatial.split.degrees</code>).
+</p>
+
+
+<h3>Temporal splitting</h3>
+
+<p>If <code>temporal.block</code> is given, then occurrence records with unique values for the given level are
+considered unique sampling unit. For instance, if <code>temporal.block</code> = <code>year</code>, then records from the
+same year are considered a sampling unit to be grouped into blocks.
+</p>
+<p>Note: If spatial splitting is also used, then spatial characteristics may split these further into
+separate sampling units.
+</p>
+<p>The <code>temporal.block</code> option <code>quarter</code> splits occurrence records into sampling units based on which
+quarter of the year the record month belongs to: (1) January-March, (2) April-June, (3)
+July-September and (4) October-December. This could be employed if seasonal biases in occurrence
+record collection are driving autocorrelation.
+</p>
+
+
+<h3>Block generation</h3>
+
+<p>Once split into sampling units based upon temporal and spatial characteristics, these units are
+then assigned into given number of blocks (<code>n.blocks</code>), so that the mean and range of explanatory
+variables (<code>vars.to.block.by</code>) and total sample size are similar across each. The number of
+<code>iterations</code> specifies how many random shuffles are used to optimise block equalisation.
+</p>
+
+
+<h3>References</h3>
+
+<p>Bagchi, R., Crosby, M., Huntley, B., Hole, D. G., Butchart, S. H. M., Collingham, Y.,
+Kalra, M., Rajkumar, J., Rahmani, A. &amp; Pandey, M. 2013. Evaluating the effectiveness of
+conservation site networks under climate change: accounting for uncertainty. Global Change
+Biology, 19, 1236-1248.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data("sample_explan_data")
+data("sample_extent_data")
+random_cat_layer &lt;- terra::rast(sample_extent_data)
+random_cat_layer &lt;- terra::setValues(random_cat_layer,
+                                    sample(0:10, terra::ncell(random_cat_layer),
+                                           replace = TRUE))
+
+spatiotemp_block(
+ occ.data = sample_explan_data,
+ spatial.layer = random_cat_layer,
+ spatial.split.degrees = 3,
+ temporal.block = c("month"),
+ vars.to.block.by = colnames(sample_explan_data)[14:16],
+ n.blocks = 3,
+ iterations = 30
+)
+
+</code></pre>
+
+
+</div>

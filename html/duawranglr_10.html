@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>write_dua_df</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Write DUA approved data set</h2>
+
+<h3>Description</h3>
+
+<p>This function is a wrapper for a variety of write functions that
+also checks whether the data set has been cleared for writing based
+on the DUA level restrictions chosen by the user. If restricted
+variables remain in the data set, the function will return an error
+and will not write the data set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">write_dua_df(
+  df,
+  file_name,
+  output_type = c("rds", "rdata", "csv", "tsv", "delimited", "stata", "sas", "spss"),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Data frame object to save.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file_name</code></td>
+<td>
+<p>Name and path for saved file, with or without file
+type ending.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_type</code></td>
+<td>
+<p>Output data file type; options include
+<code>rds</code> (DEFAULT), <code>rdata</code>, <code>csv</code>, <code>tsv</code>,
+<code>delimited</code>, <code>stata</code>, <code>sas</code>, and <code>spss</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to write function based on the
+selected <code>output_type</code>; see details for more information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The following output types are supported (with the underlying write
+function and default arguments accompanying):
+</p>
+
+<ul>
+<li> <p><b>rds</b>: <code>saveRDS()</code>
+</p>
+</li>
+<li> <p><b>rdata</b>: <code>save()</code>
+</p>
+</li>
+<li> <p><b>csv</b>: <code>write.table(...,row.names = FALSE, sep = ,)</code>
+</p>
+</li>
+<li> <p><b>tsv</b>: <code>write.table(...,row.names = FALSE, sep = '\t')</code>
+</p>
+</li>
+<li> <p><b>delimited</b>: <code>write.table(...,row.names = FALSE)</code>
+</p>
+</li>
+<li> <p><b>stata</b>: <code>haven::write_dta()</code>
+</p>
+</li>
+<li> <p><b>sas</b>: <code>haven::write_sas()</code>
+</p>
+</li>
+<li> <p><b>spss</b>: <code>haven::write_sav()</code>
+</p>
+</li>
+</ul>
+<p>All arguments for these internal write functions, including those
+with default values, can be modified by adding them to the
+top-level <code>write_dua_df()</code> function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## --------------
+## Setup
+## --------------
+## set DUA crosswalk
+dua_cw &lt;- system.file('extdata', 'dua_cw.csv', package = 'duawranglr')
+set_dua_cw(dua_cw)
+## read in data
+admin &lt;- system.file('extdata', 'admin_data.csv', package = 'duawranglr')
+df &lt;- read_dua_file(admin)
+## set restriction level
+set_dua_level('level_iii')
+## remove restrictive variables
+df &lt;- dplyr::select(df, -c(sid,sname,tname))
+## --------------
+
+## check restrictions
+check_dua_restrictions(df)
+
+## able to write since restrictions check passed
+file &lt;- file.path(tempdir(), 'clean_data.csv')
+write_dua_df(df, file_name = file, output_type = 'csv')
+
+## Not run: 
+ write_dua_df(df, 'clean_data', output_type = 'delimited', sep = '|')
+ write_dua_df(df, 'clean_data', output_type = 'stata', version = 11)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

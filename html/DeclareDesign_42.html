@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>draw_functions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Draw data, estimates, and inquiries from a design</h2>
+
+<h3>Description</h3>
+
+<p>Draw data, estimates, and inquiries from a design
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">draw_data(design, data = NULL, start = 1, end = length(design))
+
+draw_estimand(...)
+
+draw_estimands(...)
+
+draw_estimates(...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>A design object, typically created using the + operator</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data.frame object with sufficient information to get the data, estimates, inquiries, an assignment vector, or a sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>(Defaults to 1) a scalar indicating which step in the design to begin with. By default all data steps are drawn, from step 1 to the last step of the design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>end</code></td>
+<td>
+<p>(Defaults to <code>length(design)</code>) a scalar indicating which step in the design to finish drawing data by.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>A design or set of designs typically created using the + operator</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Two-arm randomized experiment
+design &lt;-
+  declare_model(
+    N = 500,
+    gender = rbinom(N, 1, 0.5),
+    X = rep(c(0, 1), each = N / 2),
+    U = rnorm(N, sd = 0.25),
+    potential_outcomes(Y ~ 0.2 * Z + X + U)
+  ) +
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) +
+  declare_sampling(S = complete_rs(N = N, n = 200)) +
+  declare_assignment(Z = complete_ra(N = N, m = 100)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) +
+  declare_estimator(Y ~ Z, inquiry = "ATE")
+
+# Use draw_data to create a dataset using a design
+dat &lt;- draw_data(design)
+
+# Use end argument to draw data up to a certain design component
+dat_no_sampling &lt;- draw_data(design, end = 3)
+
+# Use draw_estimands to extract value of inquiry
+draw_estimands(design)
+
+# Use draw_estimates to extract value of estimator
+draw_estimates(design)
+
+</code></pre>
+
+
+</div>

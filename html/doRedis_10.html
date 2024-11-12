@@ -1,0 +1,151 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>registerDoRedis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Register the Redis back end for foreach.</h2>
+
+<h3>Description</h3>
+
+<p>The doRedis package imlpements a simple but flexible parallel back end
+for foreach that uses Redis for inter-process communication. The work
+queue name specifies the base name of a small set of Redis keys that the
+coordinator and worker processes use to exchange data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">registerDoRedis(
+  queue,
+  host = "localhost",
+  port = 6379,
+  password,
+  ftinterval = 30,
+  chunkSize = 1,
+  progress = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>queue</code></td>
+<td>
+<p>A work queue name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>host</code></td>
+<td>
+<p>The Redis server host name or IP address</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>port</code></td>
+<td>
+<p>The Redis server port number</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>password</code></td>
+<td>
+<p>An optional Redis database password</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ftinterval</code></td>
+<td>
+<p>Default fault tolerance interval in seconds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chunkSize</code></td>
+<td>
+<p>Default iteration granularity, see <code>setChunkSize</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>(logical) Show progress bar for computations?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional arguments passed to <code>redisConnect</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Back-end worker R processes  advertise their availablility for work
+with the <code>redisWorker</code> function.
+</p>
+<p>The doRedis parallel back end tolerates faults among the worker processes and
+automatically resubmits failed tasks. It is also portable and supports
+heterogeneous sets of workers, even across operative systems.  The back end
+supports dynamic pools of worker processes.  New workers may be added to work
+queues at any time and can be used by running foreach computations.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>NULL</code> is invisibly returned; this function is called for side effect of registering a foreach backend.
+</p>
+
+
+<h3>Note</h3>
+
+<p>All doRedis functions require access to a Redis database server (not included
+with this package).
+</p>
+<p>Worker processes default to same random number generator as
+the coordinator process by default with seeds set per iteration rather than per
+worker to yield reproducible output independent of the number of worker
+processes. The L'Ecuyer-CMRG RNG available from the parallel package is
+recommended when high-quality distributed pseudorandom numbers are needed.
+See package vignette for more details and additional options.
+</p>
+<p>Avoid using fork-based parallel functions within doRedis expressions.
+Use of <code>mclapply</code> and similar functions in the body of a doRedis foreach
+loop can result in worker faults.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>foreach</code>, <code>doRedis-package</code>, <code>setChunkSize</code>, <code>removeQueue</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Only run if a Redis server is running
+if (redux::redis_available()) {
+## The example assumes that a Redis server is running on the local host
+## and standard port.
+
+# 1. Start a single local R worker process
+startLocalWorkers(n=1, queue="jobs", linger=1)
+
+# 2. Run a simple sampling approximation of pi:
+registerDoRedis("jobs")
+pie = foreach(j=1:10, .combine=sum, .multicombine=TRUE) %dopar%
+        4 * sum((runif(1000000) ^ 2 + runif(1000000) ^ 2) &lt; 1) / 10000000
+removeQueue("jobs")
+print(pie)
+
+# Note that removing the work queue automatically terminates worker processes.
+}
+
+</code></pre>
+
+
+</div>

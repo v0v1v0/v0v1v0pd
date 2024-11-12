@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>declare_test</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Declare test</h2>
+
+<h3>Description</h3>
+
+<p>Declares an test which generates a test statistic and associated inferential statistics. 
+</p>
+<p>Use of <code>declare_test</code> is identical to use of <code>declare_estimator</code>. Use <code>declare_test</code> for hypothesis testing with no specific inquiry in mind; use <code>declare_estimator</code> for hypothesis testing when you can link each estimate to an inquiry. For example, <code>declare_test</code> could be used for a K-S test of distributional equality and <code>declare_estimator</code> for a difference-in-means estimate of an average treatment effect.
+</p>
+<p>See <code>declare_estimator</code> help for an explanation of how to use <code>method_handler</code>, which is used identically in both <code>declare_estimator</code> and <code>declare_test</code>. The main difference between <code>declare_estimator</code> and <code>declare_test</code> is that <code>declare_test</code> does not link with an explicit inquiry.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">declare_test(..., handler = label_test(method_handler), label = "test")
+
+label_test(fn)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments to be captured, and later passed to the handler</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>handler</code></td>
+<td>
+<p>a tidy-in, tidy-out function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>a string describing the step</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fn</code></td>
+<td>
+<p>A function that takes a data.frame as an argument and returns a data.frame with test statistics as columns.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>label_test</code> takes a data-in-data out function to <code>fn</code>, and returns a data-in-data-out function that first runs the provided test function <code>fn</code> and then appends a label for the test.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A function that accepts a data.frame as an argument and returns a data.frame containing the value of the test statistic and other inferential statistics.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>declare_estimator</code> for documentation of the <code>method_handler</code> function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Balance test F test
+
+balance_test_design &lt;-
+  declare_model(
+    N = 100, 
+    cov1 = rnorm(N), 
+    cov2 = rnorm(N), 
+    cov3 = rnorm(N)
+  ) +
+  declare_assignment(Z = complete_ra(N, prob = 0.2)) +
+  declare_test(Z ~ cov1 + cov2 + cov3, .method = lm_robust, .summary = glance)
+  
+## Not run: 
+diagnosis &lt;- diagnose_design(
+  design = balance_test_design,
+  diagnosands = declare_diagnosands(
+  false_positive_rate = mean(p.value &lt;= 0.05))
+)
+
+## End(Not run)
+
+# K-S test of distributional equality
+
+ks_test &lt;- function(data) {
+  test &lt;- with(data, ks.test(x = Y[Z == 1], y = Y[Z == 0]))
+  data.frame(statistic = test$statistic, p.value = test$p.value)
+}
+
+distributional_equality_design &lt;-
+  declare_model(
+    N = 100, 
+    Y_Z_1 = rnorm(N), 
+    Y_Z_0 = rnorm(N, sd = 1.5)
+  ) + 
+  declare_assignment(Z = complete_ra(N, prob = 0.5)) + 
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) + 
+  declare_test(handler = label_test(ks_test), label = "ks-test")
+  
+## Not run: 
+diagnosis &lt;- diagnose_design(
+  design = distributional_equality_design,
+  diagnosands = declare_diagnosands(power = mean(p.value &lt;= 0.05))
+) 
+
+## End(Not run)
+
+# Thanks to Jake Bowers for this example
+
+if(require("coin")) {
+
+  library(coin) 
+  
+  our_ttest &lt;- function(data) {
+    res &lt;- coin::oneway_test(
+      outcome ~ factor(Xclus),
+      data = data,
+      distribution = "asymptotic"
+    )
+    data.frame(p.value = pvalue(res)[[1]])
+  }
+  
+  ttest_design &lt;- 
+    declare_model(
+      N = 100, 
+      Xclus = rbinom(n = N, size = 1, prob = 0.2), 
+      outcome = 3 + rnorm(N)) +
+    declare_test(handler = label_test(our_ttest), label = "t-test")
+    
+  ## Not run: 
+  diagnosis &lt;- diagnose_design(
+    design = ttest_design,
+    diagnosands = declare_diagnosands(
+      false_positive_rate = mean(p.value &lt;= 0.05))
+  )
+  
+## End(Not run)
+  
+}
+
+</code></pre>
+
+
+</div>

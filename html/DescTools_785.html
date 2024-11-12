@@ -1,0 +1,292 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>GetNewWrd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Create a New Word Instance
+
+</h2>
+
+<h3>Description</h3>
+
+<p>Start a new instance of Word and return its handle.
+By means of this handle we can then control the word application. <br><code>WrdKill</code> ends a running MS-Word task.
+
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">GetNewWrd(visible = TRUE, template = "Normal", header = FALSE,
+          main = "Descriptive report")
+
+WrdKill()
+
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>visible</code></td>
+<td>
+<p>logical, should Word made visible? Defaults to <code>TRUE</code>.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>the name of the template to be used for creating a new document.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>logical, should a caption and a list of contents be inserted? Default is <code>FALSE</code>.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+<p>the main title of the report
+
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The package <b>RDCOMClient</b> reveals the whole VBA-world of MS-Word. So generally speaking any VBA code can be run fully controlled by R. In practise, it might be a good idea to record a macro and rewrite the VB-code in R.<br></p>
+<p>Here's a list of some frequently used commands. Let's assume we have a handle to the application  and a handle to the current selection defined as:
+</p>
+<pre>
+wrd &lt;- GetNewWrd()
+sel &lt;- wrd$Selection()
+</pre>
+<p>Then we can access the most common properties as follows:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+new document </td>
+<td style="text-align: left;"> <code>wrd[["Documents"]]$Add(template, FALSE, 0)</code>, template is the templatename. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+open document </td>
+<td style="text-align: left;"> <code>wrd[["Documents"]]$Open(Filename="C:/MyPath/MyDocument.docx")</code>. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+save document </td>
+<td style="text-align: left;"> <code>wrd$ActiveDocument()$SaveAs2(FileName="P:/MyFile.docx")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+quit word </td>
+<td style="text-align: left;"> <code>wrd$quit()</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+kill word task </td>
+<td style="text-align: left;"> <code>WrdKill</code> kills a running word task (which might not be ended with quit.) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+normal text </td>
+<td style="text-align: left;"> Use <code>ToWrd</code> which offers many arguments as fontname, size, color, alignment etc. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ </td>
+<td style="text-align: left;">  <code>ToWrd("Lorem ipsum dolor sit amet, consetetur", </code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ </td>
+<td style="text-align: left;">    <code>font=list(name="Arial", size=10, col=wdConst$wdColorRed)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+simple text </td>
+<td style="text-align: left;"> <code>sel$TypeText("sed diam nonumy eirmod tempor invidunt ut labore")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+heading </td>
+<td style="text-align: left;">  <code>WrdCaption("My Word-Story", index=1)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+insert R output </td>
+<td style="text-align: left;"> <code>ToWrd(capture.output(str(d.diamonds)))</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+pagebreak </td>
+<td style="text-align: left;"> <code>sel$InsertBreak(wdConst$wdPageBreak)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+sectionbreak </td>
+<td style="text-align: left;"> <code>sel$InsertBreak(wdConst$wdSectionBreakContinuous)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> (<code>wdSectionBreakNextPage</code>) </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+move cursor right </td>
+<td style="text-align: left;"> <code>sel$MoveRight(Unit=wdConst$wdCharacter, Count=2, Extend=wdConst$wdExtend)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+goto end </td>
+<td style="text-align: left;"> <code>sel$EndKey(Unit=wdConst$wdStory)</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+pagesetup </td>
+<td style="text-align: left;"> <code>sel[["PageSetup"]][["Bottommargin"]] &lt;- 4 * 72</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+orientation </td>
+<td style="text-align: left;"> <code>sel[["PageSetup"]][["Orientation"]] &lt;- wdConst$wdOrientLandscape</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+add bookmark </td>
+<td style="text-align: left;"> <code>wrd[["ActiveDocument"]][["Bookmarks"]]$Add("myBookmark")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+goto bookmark </td>
+<td style="text-align: left;"> <code>sel$GoTo(wdConst$wdGoToBookmark, 0, 0, "myBookmark")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+update bookmark </td>
+<td style="text-align: left;"> <code>WrdUpdateBookmark("myBookmark", "New text for my bookmark")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+show document map </td>
+<td style="text-align: left;"> <code> wrd[["ActiveWindow"]][["DocumentMap"]] &lt;- TRUE</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+create table </td>
+<td style="text-align: left;">  <code>WrdTable</code>() which allows to define the table's geometry </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+insert caption </td>
+<td style="text-align: left;"> <code>sel$InsertCaption(Label="Abbildung", TitleAutoText="InsertCaption",</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+<td style="text-align: left;"> <code>Title="My Title")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+tables of figures </td>
+<td style="text-align: left;"> <code>wrd$ActiveDocument()$TablesOfFigures()$Add(Range=sel$range(),</code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+<td style="text-align: left;"> <code>Caption="Figure")</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+insert header
+  </td>
+<td style="text-align: left;"> <code>wview &lt;- wrd[["ActiveWindow"]][["ActivePane"]][["View"]][["SeekView"]] </code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+<td style="text-align: left;"> <code>wview &lt;- ifelse(header, wdConst$wdSeekCurrentPageHeader, wdConst$wdSeekCurrentPageFooter) </code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+  </td>
+<td style="text-align: left;"> <code>ToWrd(x, ..., wrd=wrd) </code>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a handle (pointer) to the created Word instance.
+
+
+
+
+
+</p>
+
+
+<h3>Note</h3>
+
+<p>Note that the list of contents has to be refreshed by hand after inserting text (if inserted by <code>header = TRUE</code>).
+
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Andri Signorell &lt;andri@signorell.net&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>GetNewXL</code>, <code>GetNewPP</code>
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run:  # Windows-specific example
+
+wrd &lt;- GetNewWrd()
+Desc(d.pizza[,1:4], wrd=wrd)
+
+wrd &lt;- GetNewWrd(header=TRUE)
+Desc(d.pizza[,1:4], wrd=wrd)
+
+# enumerate all bookmarks in active document
+for(i in 1:wrd[["ActiveDocument"]][["Bookmarks"]]$count()){
+  print(wrd[["ActiveDocument"]][["Bookmarks"]]$Item(i)$Name())
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

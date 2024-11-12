@@ -1,0 +1,244 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>iqLearn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Interactive Q-Learning</h2>
+
+<h3>Description</h3>
+
+<p>The complete interactive Q-Learning algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## Second-Stage Analysis
+iqLearnSS(..., moMain, moCont, data, response, txName, iter = 0L, 
+          verbose = TRUE)
+
+## First-Stage Analysis for Fitted Main Effects
+iqLearnFSM(..., moMain, moCont, data, response, txName, iter = 0L, 
+           verbose = TRUE)
+
+## First-Stage Analysis for Fitted Contrasts
+iqLearnFSC(..., moMain, moCont, data, response, txName, iter = 0L, 
+           verbose = TRUE)
+
+## First-Stage Analysis of Contrast Variance Log-Linear Model
+iqLearnFSV(..., object, moMain, moCont, data, iter = 0L, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>ignored. Provided to require named inputs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moMain</code></td>
+<td>
+<p>An object of class modelObj or a list of objects of class
+modelObjSubset, which define the models and R methods to be used to
+obtain parameter estimates and predictions for the main effects component 
+of the outcome regression. See ?modelObj and/or ?modelObjSubset for 
+details. NULL is an acceptable value if moCont is defined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moCont</code></td>
+<td>
+<p>An object of class modelObj or a list of objects of class
+modelObjSubset, which define the models and R methods to be used to 
+obtain parameter estimates and predictions for the contrasts component 
+of the outcome regression. See ?modelObj and/or ?modelObjSubset for 
+details. NULL is an acceptable value if moMain is defined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame of covariates and treatment history.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>For the second stage analysis, the response vector.
+For first stage analyses, the value object returned by iqLearnSS().</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>The value object returned by iqLearFSC()</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>txName</code></td>
+<td>
+<p>A character string giving column header of treatment variable
+in data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>An integer. See ?iter for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical. If TRUE, screen prints are generated.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Laber, EB, Linn, KA, and Stefanski, LA (2014).
+Interactive model building for Q-Learning.
+Biometrika, 101, 831–847. PMCID: PMC4274394.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other statistical methods: 
+<code>bowl()</code>,
+<code>earl()</code>,
+<code>optimalClass()</code>,
+<code>optimalSeq()</code>,
+<code>owl()</code>,
+<code>qLearn()</code>,
+<code>rwl()</code>
+</p>
+<p>Other multiple decision point methods: 
+<code>bowl()</code>,
+<code>optimalClass()</code>,
+<code>optimalSeq()</code>,
+<code>qLearn()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Load and process data set
+data(bmiData)
+
+# define the negative 12 month change in BMI from baseline
+y12 &lt;- -100*(bmiData[,6L] - bmiData[,4L])/bmiData[,4L]
+
+#### Full Interactive Q-Learning Algorithm
+
+### Second-Stage Analysis
+
+# outcome model
+moMain &lt;- buildModelObj(model = ~parentBMI+month4BMI,
+                        solver.method = 'lm')
+
+moCont &lt;- buildModelObj(model = ~race + parentBMI+month4BMI,
+                        solver.method = 'lm')
+
+fitSS &lt;- iqLearnSS(moMain = moMain, moCont = moCont,
+                   data = bmiData, response = y12,  txName = 'A2')
+
+### First-Stage Analysis Main Effects Term
+
+# main effects model
+moMain &lt;- buildModelObj(model = ~parentBMI+baselineBMI,
+                        solver.method = 'lm')
+
+moCont &lt;- buildModelObj(model = ~race + parentBMI+baselineBMI,
+                        solver.method = 'lm')
+
+fitFSM &lt;- iqLearnFSM(moMain = moMain, moCont = moCont,
+                     data = bmiData, response = fitSS,  txName = 'A1')
+
+### First-Stage Analysis Contrasts Term
+
+# contrasts model
+moMain &lt;- buildModelObj(model = ~parentBMI+baselineBMI,
+                        solver.method = 'lm')
+
+moCont &lt;- buildModelObj(model = ~race + parentBMI+baselineBMI,
+                        solver.method = 'lm')
+
+fitFSC &lt;- iqLearnFSC(moMain = moMain, moCont = moCont,
+                     data = bmiData, response = fitSS,  txName = 'A1')
+
+### First-Stage Analysis Contrasts Variance - Log-linear
+
+# contrasts variance model
+moMain &lt;- buildModelObj(model = ~baselineBMI,
+                        solver.method = 'lm')
+
+moCont &lt;- buildModelObj(model = ~baselineBMI,
+                        solver.method = 'lm')
+
+fitFSV &lt;- iqLearnFSV(object = fitFSC, moMain = moMain, moCont = moCont,
+                     data = bmiData)
+
+####Available methods
+
+  ### Estimated value
+  estimator(x = fitFSC, y = fitFSM, z = fitFSV, w = fitSS, dens = 'nonpar')
+
+  ## Estimated optimal treatment and decision functions for training data
+  ## Second stage optimal treatments
+  optTx(x = fitSS)
+
+  ## First stage optimal treatments when contrast variance is modeled.
+  optTx(x = fitFSM, y = fitFSC, z = fitFSV, dens = 'nonpar')
+
+  ## First stage optimal treatments when contrast variance is constant.
+  optTx(x = fitFSM, y = fitFSC, dens = 'nonpar')
+
+  ## Estimated optimal treatment and decision functions for new data
+  ## Second stage optimal treatments
+  optTx(x = fitSS, bmiData)
+
+  ## First stage optimal treatments when contrast variance is modeled.
+  optTx(x = fitFSM, y = fitFSC, z = fitFSV, dens = 'nonpar', bmiData)
+
+  ## First stage optimal treatments when contrast variance is constant.
+  optTx(x = fitFSM, y = fitFSC, dens = 'nonpar', bmiData)
+
+### The following methods are available for all objects: fitSS, fitFSM,
+### fitFSC and fitFSV. We include only one here for illustration.
+
+  # Coefficients of the outcome regression objects
+  coef(object = fitSS)
+
+  # Description of method used to obtain object
+  DTRstep(object = fitFSM)
+
+  # Value object returned by outcome regression method
+  fitObject(object = fitFSC)
+
+  # Value object returned by outcome regression method
+  outcome(object = fitFSV)
+
+  # Plots if defined by outcome regression method
+  dev.new()
+  par(mfrow = c(2,4))
+
+  plot(x = fitSS)
+  plot(x = fitSS, suppress = TRUE)
+
+  # Show main results of method
+  show(object = fitFSM)
+
+  # Show summary results of method
+  summary(object = fitFSV)
+
+</code></pre>
+
+
+</div>

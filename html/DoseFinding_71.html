@@ -1,0 +1,310 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>planMod</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluate performance metrics for fitting dose-response models</h2>
+
+<h3>Description</h3>
+
+<p>This function evaluates, the performance metrics for fitting dose-response models (using asymptotic approximations or
+simulations). Note that some metrics are available via the print method and others only via the summary
+method applied to planMod objects. The implemented metrics are </p>
+
+<ul>
+<li>
+<p> Root of the mean-squared error to estimate the placebo-adjusted
+dose-response averaged over the used dose-levels, i.e. a rather discrete set
+(<code>dRMSE</code>). Available via the print method of planMod objects.  </p>
+</li>
+<li>
+<p>Root of the mean-squared error to estimate the placebo-adjusted
+dose-response (<code>cRMSE</code>) averaged over fine (almost continuous) grid at
+101 equally spaced values between placebo and the maximum dose. NOTE:
+Available via the summary method applied to planMod objects.  </p>
+</li>
+<li>
+<p> Ratio of
+the placebo-adjusted mean-squared error (at the observed doses) of
+model-based vs ANOVA approach (<code>Eff-vs-ANOVA</code>). This can be interpreted
+on the sample size scale. NOTE: Available via the summary method applied to
+planMod objects.  </p>
+</li>
+<li>
+<p> Power that the (unadjusted) one-sided ‘<span class="samp">⁠1-alpha⁠</span>’
+confidence interval comparing the dose with maximum effect vs placebo is
+larger than ‘<span class="samp">⁠tau⁠</span>’. By default ‘<span class="samp">⁠alpha = 0.025⁠</span>’ and ‘<span class="samp">⁠tau = 0⁠</span>’
+(<code>Pow(maxDose)</code>). Available via the print method of planMod objects.
+</p>
+</li>
+<li>
+<p> Probability that the EDp estimate is within the true [EDpLB, EDpUB]
+(by default ‘<span class="samp">⁠p=0.5⁠</span>’, ‘<span class="samp">⁠pLB=0.25⁠</span>’ and ‘<span class="samp">⁠pUB=0.75⁠</span>’). This metric
+gives an idea on the ability to characterize the increasing part of the
+dose-response curve (<code>P(EDp)</code>). Available via the print method of
+planMod objects.  </p>
+</li>
+<li>
+<p> Length of the quantile range for a target dose (TD
+or EDp). This is calculated by taking the difference of the dUB and dLB
+quantile of the empirical distribution of the dose estimates.
+(<code>lengthTDCI</code> and <code>lengthEDpCI</code>). It is NOT calculated by
+calculating confidence interval lengths in each simulated data-set and
+taking the mean. NOTE: Available via the summary method of planMod objects.
+</p>
+</li>
+</ul>
+<h3>Usage</h3>
+
+<pre><code class="language-R">planMod(
+  model,
+  altModels,
+  n,
+  sigma,
+  S,
+  doses,
+  asyApprox = TRUE,
+  simulation = FALSE,
+  alpha = 0.025,
+  tau = 0,
+  p = 0.5,
+  pLB = 0.25,
+  pUB = 0.75,
+  nSim = 100,
+  cores = 1,
+  showSimProgress = TRUE,
+  bnds,
+  addArgs = NULL
+)
+
+## S3 method for class 'planMod'
+summary(
+  object,
+  digits = 3,
+  len = 101,
+  Delta = NULL,
+  p = NULL,
+  dLB = 0.05,
+  dUB = 0.95,
+  ...
+)
+
+## S3 method for class 'planMod'
+plot(
+  x,
+  type = c("dose-response", "ED", "TD"),
+  p,
+  Delta,
+  placAdj = FALSE,
+  xlab = "Dose",
+  ylab = "",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Character vector determining the dose-response model(s) to be used for fitting the data.  When more than
+one dose-response model is provided the best fitting model is chosen using the AIC. Built-in models are "linlog",
+"linear", "quadratic", "emax", "exponential", "sigEmax", "betaMod" and "logistic" (see drmodels).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>altModels</code></td>
+<td>
+<p>An object of class ‘<span class="samp">⁠Mods⁠</span>’, defining the true mean vectors under which operating characteristics
+should be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n, sigma, S</code></td>
+<td>
+<p>Either a vector ‘<span class="samp">⁠n⁠</span>’ and ‘<span class="samp">⁠sigma⁠</span>’ or ‘<span class="samp">⁠S⁠</span>’ need to be specified.  When ‘<span class="samp">⁠n⁠</span>’ and
+‘<span class="samp">⁠sigma⁠</span>’ are specified it is assumed computations are made for a normal homoscedastic ANOVA model with group
+sample sizes given by ‘<span class="samp">⁠n⁠</span>’ and residual standard deviation ‘<span class="samp">⁠sigma⁠</span>’, i.e. the covariance matrix used for
+the estimates is thus <code>sigma^2*diag(1/n)</code> and the degrees of freedom are calculated as
+<code>sum(n)-nrow(contMat)</code>. When a single number is specified for ‘<span class="samp">⁠n⁠</span>’ it is assumed this is the sample size
+per group and balanced allocations are used.<br></p>
+<p>When ‘<span class="samp">⁠S⁠</span>’ is specified this will be used as covariance matrix for the estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>Doses to use</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asyApprox, simulation</code></td>
+<td>
+<p>Logicals determining, whether asymptotic approximations or simulations should be
+calculated. If multiple models are specified in ‘<span class="samp">⁠model⁠</span>’ asymptotic approximations are not available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha, tau</code></td>
+<td>
+<p>Significance level for the one-sided confidence interval for model-based contrast of best dose vs
+placebo. Tau is the threshold to compare the confidence interval limit to. CI(MaxDCont) gives the percentage that
+the bound of the confidence interval was larger than tau.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p, pLB, pUB</code></td>
+<td>
+<p>p determines the type of EDp to estimate. pLB and pUB define the bounds for the EDp estimate. The
+performance metric Pr(Id-ED) gives the percentage that the estimated EDp was within the true EDpLB and EDpUB.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nSim</code></td>
+<td>
+<p>Number of simulations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>Number of cores to use for simulations. By default 1 cores is used, note that cores &gt; 1 will have no
+effect Windows, as the mclapply function is used internally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showSimProgress</code></td>
+<td>
+<p>In case of simulations show the progress using a progress-bar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bnds</code></td>
+<td>
+<p>Bounds for non-linear parameters. This needs to be a list with list entries corresponding to the selected
+bounds. The names of the list entries need to correspond to the model names. The <code>defBnds</code> function
+provides the default selection.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addArgs</code></td>
+<td>
+<p>See the corresponding argument in function <code>fitMod</code>. This argument is directly passed to
+fitMod.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object, digits</code></td>
+<td>
+<p>object: A planMod object. digits: Digits in summary output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>len</code></td>
+<td>
+<p>Number of equally spaced points to determine the mean-squared error on a grid (cRMSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Delta</code></td>
+<td>
+<p>Additional arguments determining what dose estimate to plot, when ‘<span class="samp">⁠type = "ED"⁠</span>’ or ‘<span class="samp">⁠type =
+"TD"⁠</span>’</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dLB, dUB</code></td>
+<td>
+<p>Which quantiles to use for calculation of <code>lengthTDCI</code> and <code>lengthEDpCI</code>. By default dLB =
+0.05 and dUB = 0.95, so that this corresponds to a 90% interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments (currently ignored)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class planMod</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Type of plot to produce</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>placAdj</code></td>
+<td>
+<p>When ‘<span class="samp">⁠type = "dose-response"⁠</span>’, this determines whether dose-response estimates are shown on
+placebo-adjusted or original scale</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab, ylab</code></td>
+<td>
+<p>Labels for the plot (ylab only applies for ‘<span class="samp">⁠type = "dose-response"⁠</span>’)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A plot method exists to summarize dose-response and dose estimations graphically.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>References</h3>
+
+<p>TBD
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>fitMod</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+doses &lt;- c(0,10,25,50,100,150)
+fmodels &lt;- Mods(linear = NULL, emax = 25,
+                logistic = c(50, 10.88111), exponential= 85,
+                betaMod=rbind(c(0.33,2.31),c(1.39,1.39)),
+                doses = doses, addArgs=list(scal = 200),
+                placEff = 0, maxEff = 0.4)
+sigma &lt;- 1
+n &lt;- rep(62, 6)*2
+
+model &lt;- "quadratic"
+pObj &lt;- planMod(model, fmodels, n, sigma, doses=doses,
+               simulation = TRUE,
+               alpha = 0.025, nSim = 200,
+               p = 0.5, pLB = 0.25, pUB = 0.75)
+print(pObj)
+## to get additional metrics (e.g. Eff-vs-ANOVA, cRMSE, lengthTDCI, ...)
+summary(pObj, p = 0.5, Delta = 0.3)
+plot(pObj)
+plot(pObj, type = "TD", Delta=0.3)
+plot(pObj, type = "ED", p = 0.5)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,68 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>setChunkSize</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Set the default granularity of distributed tasks.</h2>
+
+<h3>Description</h3>
+
+<p>A job is the collection of all tasks in a foreach loop.
+A task is a collection of loop iterations of at most size <code>chunkSize</code>.
+R workers are assigned work by task in blocks of at most
+<code>chunkSize</code> loop iterations per task.
+The default value is one iteration per task.
+Setting the default chunk size larger for shorter-running jobs can
+substantially improve performance. Setting this value too high can
+negatively impact load-balancing across workers, however.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">setChunkSize(value = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>positive integer chunk size setting</p>
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p><code>value</code> is invisibly returned; this value is called for its side effect.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Only run if a Redis server is running
+if (redux::redis_available()) {
+
+# Start a single local R worker process
+startLocalWorkers(n=1, queue="jobs", linger=1)
+
+# Register the work queue with the coordinator R process
+registerDoRedis("jobs")
+
+# Compare verbose task submission output from...
+setChunkSize(1)
+foreach(j=1:4, .combine=c, .verbose=TRUE) %dopar% j
+
+# with the verbose task submission output from:
+setChunkSize(2)
+foreach(j=1:4, .combine=c, .verbose=TRUE) %dopar% j
+
+# Clean up
+removeQueue("jobs")
+}
+
+</code></pre>
+
+
+</div>

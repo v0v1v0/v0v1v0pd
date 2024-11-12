@@ -1,0 +1,89 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get.knclusters</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get Areas in a Cluster Detected with Kulldorff's Statistic</h2>
+
+<h3>Description</h3>
+
+<p>When <em>kn.iscluster</em> is called from <em>opgam</em> to use Kulldorff's scan
+statistic for the detection of clusters of disease, <em>get.knclusters</em> can
+be used to get the areas included in each cluster. <em>opgam</em> only returns
+the cluster centres, size and related information but not the areas in the
+cluster.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get.knclusters(d, knresults)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>Data frame with the data, used in the call to <em>opgam</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>knresults</code></td>
+<td>
+<p>Data frame returned by a call to <em>opgam</em>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list with the same length as the number of rows in 'knresults'.  Each
+element in the list is a vector of integers with the row indices of 'd' of the
+areas in the cluster. The order of the indices reflects the distance to the
+cluster centre.
+</p>
+
+
+<h3>References</h3>
+
+<p>Kulldorff, Martin and Nagarwalla, Neville (1995). Spatial Disease Clusters: Detection and Inference. Statistics in Medicine 14, 799-810.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>DCluster, kullnagar, kullnagar.stat, kullnagar.boot, kullnagar.pboot, opgam
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(boot)
+library(spdep)
+
+data(nc.sids)
+
+sids&lt;-data.frame(Observed=nc.sids$SID74)
+sids&lt;-cbind(sids, Expected=nc.sids$BIR74*sum(nc.sids$SID74)/sum(nc.sids$BIR74))
+sids&lt;-cbind(sids, Population=nc.sids$BIR74, x=nc.sids$x, y=nc.sids$y)
+
+#K&amp;N's method over the centroids
+mle&lt;-calculate.mle(sids, model="poisson")
+knresults&lt;-opgam(data=sids, thegrid=sids[,c("x","y")], alpha=.05, 
+	iscluster=kn.iscluster, fractpop=.15, R=99, model="poisson", mle=mle)
+
+#Plot all centroids and significant ones in red
+plot(sids$x, sids$y, main="Kulldorff and Nagarwalla's method")
+points(knresults$x, knresults$y, col="red", pch=19)
+
+#Plot first cluster with the highest likelihood ratio test in green
+clusters&lt;-get.knclusters(sids, knresults)
+idx&lt;-which.max(knresults$statistic)
+points(sids$x[clusters[[idx]]], sids$y[clusters[[idx]]], col="green", pch=19)
+</code></pre>
+
+
+</div>

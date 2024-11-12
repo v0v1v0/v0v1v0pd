@@ -1,0 +1,81 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>do</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Do anything</h2>
+
+<h3>Description</h3>
+
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#superseded"><img src="../help/figures/lifecycle-superseded.svg" alt="[Superseded]"></a>
+</p>
+<p><code>do()</code> is superseded as of dplyr 1.0.0, because its syntax never really
+felt like it belonged with the rest of dplyr. It's replaced by a combination
+of <code>reframe()</code> (which can produce multiple rows and multiple columns),
+<code>nest_by()</code> (which creates a rowwise tibble of nested data),
+and <code>pick()</code> (which allows you to access the data for the "current" group).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">do(.data, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>a tbl</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Expressions to apply to each group. If named, results will be
+stored in a new column. If unnamed, must return a data frame. You can
+use <code>.</code> to refer to the current group. You can not mix named and
+unnamed arguments.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># do() with unnamed arguments becomes reframe() or summarise()
+# . becomes pick()
+by_cyl &lt;- mtcars %&gt;% group_by(cyl)
+by_cyl %&gt;% do(head(., 2))
+# -&gt;
+by_cyl %&gt;% reframe(head(pick(everything()), 2))
+by_cyl %&gt;% slice_head(n = 2)
+
+# Can refer to variables directly
+by_cyl %&gt;% do(mean = mean(.$vs))
+# -&gt;
+by_cyl %&gt;% summarise(mean = mean(vs))
+
+# do() with named arguments becomes nest_by() + mutate() &amp; list()
+models &lt;- by_cyl %&gt;% do(mod = lm(mpg ~ disp, data = .))
+# -&gt;
+models &lt;- mtcars %&gt;%
+  nest_by(cyl) %&gt;%
+  mutate(mod = list(lm(mpg ~ disp, data = data)))
+models %&gt;% summarise(rsq = summary(mod)$r.squared)
+
+# use broom to turn models into data
+models %&gt;% do(data.frame(
+  var = names(coef(.$mod)),
+  coef(summary(.$mod)))
+)
+
+# -&gt;
+models %&gt;% reframe(broom::tidy(mod))
+
+</code></pre>
+
+
+</div>

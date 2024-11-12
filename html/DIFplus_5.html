@@ -1,0 +1,222 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ML.DIF</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Main function to compute adjusted Mantel-Haenszel statistics</h2>
+
+<h3>Description</h3>
+
+<p>This main function computes both unadjusted and adjusted MH statistics 
+in the presence of clustered data based on Begg (1999) &lt;doi:10.1111/j.0006-341X.1999.00302.x&gt;, Begg &amp; Paykin (2001) 
+&lt;doi:10.1080/00949650108812115&gt;, and French &amp; Finch (2013) &lt;doi: 10.1177/0013164412472341&gt;.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ML.DIF (Response.data, Response.code=c(0,1),Cluster, Group, 
+       group.names=NULL, Stratum=NULL, correct.factor=0.85, 
+       missing.code="NA", missing.impute="LW", 
+       anchor.items=NULL, purification=FALSE, 
+       max.iter=10, alpha = .05)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Response.data</code></td>
+<td>
+<p>A scored item responses matrix in the form of matrix or data frame. This matrix should not include any
+other variables (group, stratum, cluser, etc.).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Response.code</code></td>
+<td>
+<p>A numerical vector of all possible item responses. By default, Response.code=c(0,1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Cluster</code></td>
+<td>
+<p>The cluster variable. Its length should be equal to the sample size of the item response matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Group</code></td>
+<td>
+<p>The variable of group membership (e.g., gender). Its length should be equal to the sample size of the item response matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.names</code></td>
+<td>
+<p>Names for each defined group (e.g., c('Male','Female')). This argument is optional. By default, group.names=NULL.
+If not provided, group names of "Group.1, Group.2, etc." will be automatically generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Stratum</code></td>
+<td>
+<p>The matching variable. By default, Stratum=NULL. If not provided, the observed total score will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct.factor</code></td>
+<td>
+<p>The value of adjustment applied to the adjusted MH statistic (i.e., f). The default value used here is .85. 
+The adjusted MH statistic was found to exhibit low statistical power for DIF detection in some conditions. One solution to this 
+is to reduce the magnitude of f through multiplying it by the correct factor (e.g., .85, .90, .95). The value of .85 is suggested by
+French &amp; Finch (2013) &lt;doi: 10.1177/0013164412472341&gt;.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing.code</code></td>
+<td>
+<p>Indication of how missing values were defined in the data. By default, missing.code="NA".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>missing.impute</code></td>
+<td>
+<p>The approach selected to handle missing item responses. By default, missing.impute="LW", indicating the list-wise
+deletion will be used. Other options include: "PM" (person mean or row mean imputation),"IM" (item mean or column mean imputation), 
+"TW" (two-way imputation), "LR" (logistic regression imputation), and EM (EM imputation). Check the package "TestDataImputation" 
+(<a href="https://cran.r-project.org/package=TestDataImputation">https://cran.r-project.org/package=TestDataImputation</a>) for more details. <br>
+Note: If any missing data are detected on group, cluster, or stratum variables, listwise deletion will be used before handling missing item responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor.items</code></td>
+<td>
+<p>A scored item responses matrix of selected anchor items. This matrix should be a subset of the response data matrix
+specified above. By default, anchor.items=NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purification</code></td>
+<td>
+<p>True of false argument, indicating whether purification will be used. By default, purification=FALSE. <br>
+Note: Purification will not be applied if anchor items are specified and/or the matching variable is defined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.iter</code></td>
+<td>
+<p>The maximum number of iterations for purification. The default value is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The alpha value used to decide on the DIF items. The default value is .05.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This main function computes both unadjusted and adjusted Mantel-Haenszel statistics in the presence of multilevel data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of MH statistcs, contigency tables, etc.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>MH.values</code></td>
+<td>
+<p>Summary of estimated MH statistics and corresponding p-values. Specifically, <br>
+* MH.unadj is the unadjusted MH test statistic.<br>
+* MH.score is the MH statistic based on working score test (Begg, 1999).<br>
+* MH.GMH is the MH test statistic based on Holland &amp; Thayer's (1998) formula. <br>
+* MH.Yates is the MH.GMH statistic with Yates' correction. <br>
+* MH.adj is the adjusted MH statistic for clustered data; <br>
+* f.adj is the adjustment value based on Begg (1999). <br>
+* f.adj.correct is the product of f and the correction factor (.85, etc.). <br>
+* DIF.Item (Yes) = 1 indicates the item is flagged as a DIF item;<br>
+* N.Valid, N.Strata, and N.Cluster refer to the sample size, number of valid stata and cluster that are used in the analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Stratum.statistics</code></td>
+<td>
+<p>summary statistics for each item: n.valid.strata, n.valid.category, 
+and also sample sizes for each stratum across items.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c.table.list.all</code></td>
+<td>
+<p>A list that contains all contigency tables across items and strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c.table.list.valid</code></td>
+<td>
+<p>A list that contains only valid contigency tables across items and strata. 
+Strata that have missign item response categories
+or zero marginal means are removed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.out</code></td>
+<td>
+<p>A cleaned data set with variables "Group",  "Group.factor","Cluster", "Stratum", 
+and all item responses (with missing data handled).</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+
+<p>Begg, M. D. (1999). 
+"Analyzing k (2 × 2) Tables Under Cluster Sampling."
+Biometrics, 55(1), 302-307. doi:10.1111/j.0006-341X.1999.00302.x. 
+
+</p>
+
+<p>Begg, M. D. &amp; Paykin, A. B.  (2001). 
+"Performance of and software for a modified mantel-haenszel statistic for correlated data."
+Journal of Statistical Computation and Simulation, 70(2), 175-195. doi:10.1080/00949650108812115.
+
+</p>
+
+<p>French, B. F. &amp; Finch, W. H. (2013). 
+"Extensions of Mantel-Haenszel for Multilevel DIF Detection."
+Educational and Psychological Measurement, 73(4), 648-671. 
+doi:10.1177/0013164412472341.
+
+</p>
+
+<p>Holland, P. W. &amp; Thayer, D. T. (1988). 
+"Differential item performance and the Mantel-Haenszel procedure."
+In H. Wainer &amp; H. I. Braun (Eds.), Test validity (pp.129-145). Lawrence Erlbaum Associates, Inc.
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Specify the item responses matrix
+data(data.adult)
+Response.data&lt;-data.adult[,2:13]
+#Run the function with specifications      
+ML.DIF.out&lt;-ML.DIF (Response.data, Response.code=c(0,1),Cluster=data.adult$Cluster, 
+Group=data.adult$Group, group.names=c('Reference','Focal'), 
+Stratum=NULL, correct.factor=0.85, 
+missing.code="NA", missing.impute="LW",
+anchor.items=NULL, purification=FALSE,
+max.iter=10, alpha = .05)
+#Obtain results
+ML.DIF.out$MH.values
+ML.DIF.out$Stratum.statistics
+</code></pre>
+
+
+</div>

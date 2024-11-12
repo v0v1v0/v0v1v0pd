@@ -1,0 +1,377 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sens.dynaTree</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Monte Carlo Sensitivity Analysis for dynaTree Models
+</h2>
+
+<h3>Description</h3>
+
+<p>A Monte Carlo sensitivity analysis using random Latin
+hypercube samples (LHSs) or bootstrap resamples for each particle
+to estimate main effects as well as 1st order and total
+sensitivity indices
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynaTree'
+sens(object, class = NULL, nns = 1000, nME = 100,
+              span = 0.3, method = c("lhs", "boot"),
+              lhs = NULL, categ = NULL, verb = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>a <code>"dynaTree"</code>-class object built by <code>dynaTree</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>class</code></td>
+<td>
+
+<p>only valid for <code>object$model = "class"</code>, allows the
+user to specify the subset of class labels in
+<code>unique(object$y)</code> for which sensitivity indices are
+calculated.  The implementation loops over the vector
+of labels provided.  The default of <code>NULL</code> results in
+<code>class = unique(object$y)</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nns</code></td>
+<td>
+
+<p>A positive integer scalar indicating the size of each
+LHS or bootstrap drawn for use in the Monte Carlo
+integration scheme underlying the sensitivity analysis;
+the total number of locations is <code>nn.lhs*(ncol(X)+2)</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nME</code></td>
+<td>
+
+<p>A positive integer scalar indicating number of grid points,
+in each input dimension, upon which
+main effects will be estimated
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>span</code></td>
+<td>
+
+<p>A positive real-valued scalar giving the smoothing parameter
+for main effects integration: the fraction of <code>nns</code> points
+that will be included in a moving average window that is used
+to estimate main effects at the <code>nME</code> locations in each
+input dimension
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>indicates whether LHS or bootstrap should be used
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lhs</code></td>
+<td>
+
+<p>if <code>method = "lhs"</code> then this argument should be
+a <code>list</code> with entries <code>rect</code>, <code>shape</code>
+and <code>mode</code> describing the marginal distributions of
+the Latin Hypercube; specify <code>NULL</code>
+for a default specification for 
+<code>method = "boot"</code>.  The fields should have the following
+format(s):
+</p>
+
+<ul>
+<li> <p><code>rect</code>: Optional rectangle describing the domain of
+the uncertainty
+distribution with respect to which the sensitivity is to be
+determined.  This defines the domain from which the LH sample
+is to be taken.  The rectangle should be a <code>matrix</code> or
+<code>data.frame</code> with <code>ncol(rect) = 2</code>, and number of rows
+equal to the dimension of the domain.  For 1-d data, a vector of
+length 2 is allowed.  The default is the input
+data range of each column of (<code>object$X</code>).
+</p>
+</li>
+<li> <p><code>shape</code>: Optional vector of shape parameters for Beta
+marginal distributions having length <code>ncol(object$X)</code> and
+elements <code>&gt; 1</code>, i.e., concave Beta distributions. If
+specified, the uncertainty distribution (i.e. the LHS) is
+proportional to a joint pdf formed by independent Beta
+distributions in each dimension of the domain, scaled and shifted
+to have support defined by <code>rect</code>.  If unspecified, the
+uncertainty distribution is uniform over <code>rect</code>. The
+specification <code>shape[i]=0</code> instructs <code>sens</code> to treat the
+i'th dimension as a binary variable. In this case, <code>mode[i]</code>
+is the probability parameter for a bernoulli uncertainty
+distribution, and we must also have <code>rect[i,]=c(0,1)</code>.
+</p>
+</li>
+<li> <p><code>mode</code>: Optional vector of mode values for the Beta
+uncertainty distribution. Vector of length equal to the dimension
+of the domain, with elements within the support defined by
+<code>rect</code>.  If <code>shape</code> is specified, but this is not,
+then the scaled Beta distributions will be symmetric.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>categ</code></td>
+<td>
+
+<p>A vector of logicals of length <code>ncol(object$X)</code> indicating
+which, if any, dimensions of the input space should be treated
+as categorical; this input is used to help set the default
+<code>lhs$shape</code> argument if not specified; the default <code>categ</code>
+argument is <code>NULL</code> meaning that the categorical inputs
+are derived from <code>object$X</code> in a sensible way
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>a positive scalar integer indicating how many predictive locations
+(iterations) after which a progress statement should be
+printed to the console; a (default) value of <code>verb = 0</code> is quiet
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Saltelli (2002) describes a Latin Hypercube sampling based method for
+estimation of the 'Sobol' sensitivity indices:
+</p>
+<p>1st Order for input <code class="reqn">i</code>,
+</p>
+<p style="text-align: center;"><code class="reqn">S(i) = \mbox{Var}(E[f|x_i])/\mbox{Var}(f),</code>
+</p>
+
+<p>where <code class="reqn">x_i</code> is the  <code class="reqn">i</code>-th input.
+</p>
+<p>Total Effect for input <code class="reqn">i</code>,
+</p>
+<p style="text-align: center;"><code class="reqn">T(i) = E[\mbox{Var}(f|x_{-i})]/\mbox{Var}(f),</code>
+</p>
+
+<p>where <code class="reqn">x_{-i}</code> is all inputs except for the <code class="reqn">i</code>-th.
+</p>
+<p>All moments are with respect to the appropriate marginals of the
+uncertainty distribution <code class="reqn">U</code> – that is, the probability
+distribution on the inputs with respect to which sensitivity is being
+investigated.
+Under this approach, the integrals involved are approximated through
+averages over properly chosen samples based on two LH samples
+proportional to U. If <code>nns</code> is the sample size for the
+Monte Carlo estimate, this scheme requires <code>nns*(ncol(X)+2)</code>
+function evaluations.
+</p>
+<p>The <code>sens.dynaTree</code> function implements the method for unknown functions
+<code class="reqn">f</code>, through prediction via one of the <span class="pkg">tgp</span> regression
+models conditional on an observed set of <code>X</code> locations.
+For each particle, treated as sample from the <code>dynaTree</code>
+model posterior,
+the <code>nns*(ncol(X)+2)</code> locations are drawn randomly from the
+LHS scheme and realizations of the sensitivity indices are
+calculated. Thus we obtain a posterior sample of the indices,
+incorporating variability from both the Monte Carlo estimation and
+uncertainty about the function output. Since a subset of the
+predictive locations are actually an LHS proportional to the
+uncertainty distribution, we can also estimate the main effects
+through simple non-parametric regression (a moving average).
+</p>
+<p>See the Gramacy, Taddy, &amp; Wild (2011) reference below for more details.
+</p>
+<p>If <code>method = "boot"</code> is used then simply replace LHS above
+with a bootstrap resample of the <code>object$X</code> locations.
+</p>
+<p>As with prediction, the <code>dynaTrees</code> function enables
+repeated calls to <code>sens.dynaTree</code>
+</p>
+
+
+<h3>Value</h3>
+
+<p>The object returned is of class <code>"dynaTree"</code>, which includes a
+copy of the list elements from the <code>object</code> passed in, 
+with the following (sensitivity-analysis specific)
+additions.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>MEgrid </code></td>
+<td>
+<p> An <code>nME</code>-by-<code>ncol(object$X)</code> matrix
+containing the main effects predictive grid at which the following
+<code>MEmean</code>, <code>MEq1</code>, and <code>MEq2</code> quantities were obtained </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MEmean </code></td>
+<td>
+<p> A <code>matrix</code> with <code>ncol(object$X)</code>
+columns and <code>nME</code> rows containing the mean main effects
+for each input dimension </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MEq1 </code></td>
+<td>
+<p> same as <code>MEmean</code> but containing the 5% quantiles </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MEq2 </code></td>
+<td>
+<p> same as <code>MEmean</code> but containing the 95% quantiles </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S </code></td>
+<td>
+<p> An <code>object$N</code>-row and <code>ncol(object$X)</code>
+<code>matrix</code> containing the posterior (samples) of the
+1st Order Sobol sensitivity indices </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>T </code></td>
+<td>
+<p> same as <code>S</code> but containing the Total Effect indices </p>
+</td>
+</tr>
+</table>
+<p>In the case of <code>object$model = "class"</code> the entries
+listed above will themselves be lists with an entry for each
+<code>class</code> specified on input, or all classes as is the
+default
+</p>
+
+
+<h3>Note</h3>
+
+<p>The quality of sensitivity analysis is dependent on the size of
+the LHSs used for integral approximation; as with any Monte
+Carlo integration scheme, the sample size (<code>nns</code>) must
+increase with the dimensionality of the problem.  The total
+sensitivity indices <code class="reqn">T</code> are forced non-negative,
+and if negative values occur it is necessary to increase
+<code>nnd</code>. Postprocessing replaces negative values with <code>NA</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robert B. Gramacy <a href="mailto:rbg@vt.edu">rbg@vt.edu</a>, <br>
+Matt Taddy and Christoforos Anagnostopoulos</p>
+
+
+<h3>References</h3>
+
+<p>Saltelli, A. (2002) 
+<em>Making best use of model evaluations to compute sensitivity indices.</em>
+Computer Physics Communications, 145, 280-297.
+</p>
+<p>Gramacy, R.B., Taddy, M.A., and S. Wild (2011).
+“Variable Selection and Sensitivity Analysis via
+Dynamic Trees with an Application to Computer Code Performance Tuning”
+arXiv:1108.4739
+</p>
+<p><a href="https://bobby.gramacy.com/r_packages/dynaTree/">https://bobby.gramacy.com/r_packages/dynaTree/</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dynaTree</code>, <code>predict.dynaTree</code>,
+<code>relevance.dynaTree</code>, 
+<code>varpropuse</code>, <code>varproptotal</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## friedman data
+if(require("tgp")) {
+  f &lt;- friedman.1.data(1000)
+  X &lt;- f[,1:6]
+  Z &lt;- f$Y
+  
+  ## fit the model and do the sensitivity analysis
+  N &lt;- 100 ## use N &gt;= 1000 for better results
+  ## small N is for fast CRAN checks
+  out &lt;- dynaTree(X=X, y=Z, N=N, ab=c(0.01,2))
+  ## also try with model="linear"
+  
+  ## gather relevance statistics
+  out &lt;- relevance(out)
+  boxplot(out$relevance)
+  abline(h=0, col=2, lty=2)
+  ## relevance stats are not as useful when model="linear"
+  ## since it will appear that x4 and x5 not helpful; these
+  ## interact linearly with the response
+  
+  ## full simulation-based sensitivity analysis, the dynaTree::
+  ## part is only needed if the tgp package is loaded
+  out &lt;- dynaTree::sens(out, verb=100)
+  
+  ## plot the main effects
+  r &lt;- range(rbind(c(out$MEmean, out$MEq1, out$MEq2)))
+  par(mfrow=c(1,ncol(out$X)), mar=c(5,3,2,1))
+  plot(out$MEgrid[,1], out$MEmean[,1], type="l", ylim=r, lwd=2,
+       ylab="", xlab=colnames(out$MEmean)[1])
+  lines(out$MEgrid[,1], out$MEq1[,1], lty=2, lwd=2)
+  lines(out$MEgrid[,1], out$MEq2[,1], lty=2, lwd=2)
+  if(ncol(out$X) &gt; 1) {
+    for(d in 2:ncol(out$X)) {
+      plot(out$MEgrid[,d], out$MEmean[,d], col=d, type="l", ylim=r,
+           lwd=2, xlab=colnames(out$MEmean)[d], ylab="")
+      lines(out$MEgrid[,d], out$MEq1[,d], col=d, lty=2)
+      lines(out$MEgrid[,d], out$MEq2[,d], col=d, lty=2)
+    }
+  }
+  
+  ## Sobol indices
+  par(mfrow=c(1,2), mar=c(5,4,4,2))
+  boxplot(out$S, main="first order indices", xlab="inputs")
+  boxplot(out$T, main="total indices", xlab="inputs")
+  ## these look better when model="linear"
+  
+  ## clean up
+  deletecloud(out)
+  
+  ## for a classification example using the sensitivity hooks
+  ## in the dynaTrees function,  see the class2d demo
+  ## i.e., demo("class2d")
+  }
+</code></pre>
+
+
+</div>

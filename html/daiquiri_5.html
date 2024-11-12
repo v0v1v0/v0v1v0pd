@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>daiquiri_report</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a data quality report from a data frame</h2>
+
+<h3>Description</h3>
+
+<p>Accepts record-level data from a data frame, validates it against the
+expected type of content of each column, generates a collection of time
+series plots for visual inspection, and saves a report to disk.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">daiquiri_report(
+  df,
+  field_types,
+  override_column_names = FALSE,
+  na = c("", "NA", "NULL"),
+  dataset_description = NULL,
+  aggregation_timeunit = "day",
+  report_title = "daiquiri data quality report",
+  save_directory = ".",
+  save_filename = NULL,
+  show_progress = TRUE,
+  log_directory = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>A data frame. Rectangular data can be read from file using
+<code>read_data()</code>. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>field_types</code></td>
+<td>
+<p><code>field_types()</code> object specifying names and types of
+fields (columns) in the supplied <code>df</code>. See also field_types_available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>override_column_names</code></td>
+<td>
+<p>If <code>FALSE</code>, column names in the supplied <code>df</code>
+must match the names specified in <code>field_types</code> exactly. If <code>TRUE</code>, column
+names in the supplied <code>df</code> will be replaced with the names specified in
+<code>field_types</code>. The specification must therefore contain the columns in the
+correct order. Default = <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na</code></td>
+<td>
+<p>vector containing strings that should be interpreted as missing
+values, Default = <code>c("","NA","NULL")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataset_description</code></td>
+<td>
+<p>Short description of the dataset being checked.
+This will appear on the report. If blank, the name of the data frame object
+will be used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregation_timeunit</code></td>
+<td>
+<p>Unit of time to aggregate over. Specify one of
+<code>"day"</code>, <code>"week"</code>, <code>"month"</code>, <code>"quarter"</code>, <code>"year"</code>. The <code>"week"</code> option is
+Monday-based. Default = <code>"day"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>report_title</code></td>
+<td>
+<p>Title to appear on the report</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_directory</code></td>
+<td>
+<p>String specifying directory in which to save the
+report. Default is current directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_filename</code></td>
+<td>
+<p>String specifying filename for the report, excluding any
+file extension. If no filename is supplied, one will be automatically
+generated with the format <code>daiquiri_report_YYMMDD_HHMMSS</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_progress</code></td>
+<td>
+<p>Print progress to console. Default = <code>TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_directory</code></td>
+<td>
+<p>String specifying directory in which to save log file.
+If no directory is supplied, progress is not logged.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list containing information relating to the supplied parameters as
+well as the resulting <code>daiquiri_source_data</code> and <code>daiquiri_aggregated_data</code>
+objects.
+</p>
+
+
+<h3>Details</h3>
+
+<p>In order for the package to detect any non-conformant
+values in numeric or datetime fields, these should be present in the data
+frame in their raw character format. Rectangular data from a text file will
+automatically be read in as character type if you use the <code>read_data()</code>
+function. Data frame columns that are not of class character will still be
+processed according to the <code>field_types</code> specified.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>read_data()</code>, <code>field_types()</code>,
+<code>field_types_available()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# load example data into a data.frame
+raw_data &lt;- read_data(
+  system.file("extdata", "example_prescriptions.csv", package = "daiquiri"),
+  delim = ",",
+  col_names = TRUE
+)
+
+# create a report in the current directory
+daiq_obj &lt;- daiquiri_report(
+  raw_data,
+  field_types = field_types(
+    PrescriptionID = ft_uniqueidentifier(),
+    PrescriptionDate = ft_timepoint(),
+    AdmissionDate = ft_datetime(includes_time = FALSE, na = "1800-01-01"),
+    Drug = ft_freetext(),
+    Dose = ft_numeric(),
+    DoseUnit = ft_categorical(),
+    PatientID = ft_ignore(),
+    Location = ft_categorical(aggregate_by_each_category = TRUE)
+  ),
+  override_column_names = FALSE,
+  na = c("", "NULL"),
+  dataset_description = "Example data provided with package",
+  aggregation_timeunit = "day",
+  report_title = "daiquiri data quality report",
+  save_directory = ".",
+  save_filename = "example_data_report",
+  show_progress = TRUE,
+  log_directory = NULL
+)
+
+
+
+</code></pre>
+
+
+</div>

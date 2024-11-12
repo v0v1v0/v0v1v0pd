@@ -1,0 +1,193 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DMTL</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distribution Mapping based Transfer Learning</h2>
+
+<h3>Description</h3>
+
+<p>This function performs distribution mapping based transfer learning (DMTL)
+regression for given target (primary) and source (secondary) datasets. The
+data available in the source domain are used to design an appropriate
+predictive model. The target features with unknown response values are
+transferred to the source domain <em>via</em> distribution matching and then the
+corresponding response values in the source domain are predicted using the
+aforementioned predictive model. The response values are then transferred to
+the original target space by applying distribution matching again. Hence,
+this function needs an <strong>unmatched</strong> pair of target datasets (features and
+response values) and a <strong>matched</strong> pair of source datasets.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DMTL(
+  target_set,
+  source_set,
+  use_density = FALSE,
+  pred_model = "RF",
+  model_optimize = FALSE,
+  sample_size = 1000,
+  random_seed = NULL,
+  all_pred = FALSE,
+  get_verbose = FALSE,
+  allow_parallel = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>target_set</code></td>
+<td>
+<p>List containing the target datasets. A named list with
+components <code>X</code> (predictors) and <code>y</code> (response). The predictions are performed
+to estimate the response values corresponding to <code>X</code> while <code>y</code> is only used
+to estimate the response distribution parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>source_set</code></td>
+<td>
+<p>List containing the source datasets. A named list with
+components <code>X</code> (predictors) and <code>y</code> (response). These two sets must be matched
+and used in both distribution estimation and predictive modeling.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_density</code></td>
+<td>
+<p>Flag for using kernel density as distribution estimate
+instead of histogram counts. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred_model</code></td>
+<td>
+<p>String indicating the underlying predictive model. The
+currently available options are -
+</p>
+
+<ul>
+<li> <p><code>RF</code> for random forest regression. If <code>model_optimize = FALSE</code>, builds a
+model with <code>n_tree = 200</code> and <code>m_try = 0.4</code>.
+</p>
+</li>
+<li> <p><code>SVM</code> for support vector regression. If <code>model_optimize = FALSE</code>, builds a
+model with <code>kernel = "poly"</code>, <code>C = 2</code>, and <code>degree = 3</code>.
+</p>
+</li>
+<li> <p><code>EN</code> for elastic net regression. If <code>model_optimize = FALSE</code>, builds a
+model with <code>alpha = 0.8</code> and <code>lambda</code> generated from a 5-fold cross
+validation.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_optimize</code></td>
+<td>
+<p>Flag for model parameter tuning. If <code>TRUE</code>, performs a
+grid search to optimize parameters and train with the resulting model.
+If <code>FALSE</code>, uses a set of predefined parameters. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_size</code></td>
+<td>
+<p>Sample size for estimating distributions of target and
+source datasets. Defaults to <code>1e3</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>random_seed</code></td>
+<td>
+<p>Seed for random number generator (for reproducible
+outcomes). Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all_pred</code></td>
+<td>
+<p>Flag for returning the prediction values in the source space.
+If <code>TRUE</code>, the function returns a named list with two components- <code>target</code>
+and <code>source</code> (predictions in the target space and source space,
+respectively). Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>get_verbose</code></td>
+<td>
+<p>Flag for displaying the progress when optimizing the
+predictive model <em>i.e.</em>, <code>model_optimize = TRUE</code>. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allow_parallel</code></td>
+<td>
+<p>Flag for allowing parallel processing when performing
+grid search <em>i.e.</em>, <code>model_optimimze = TRUE</code>. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>all_pred = FALSE</code>, a vector containing the final prediction values.
+</p>
+<p>If <code>all_pred = TRUE</code>, a named list with two components <code>target</code> and <code>source</code>
+<em>i.e.</em>, predictions in the original target space and in source space,
+respectively.
+</p>
+
+
+<h3>Note</h3>
+
+
+<ul>
+<li>
+<p> The datasets in <code>target_set</code> (<em>i.e.</em>, <code>X</code> and <code>y</code>) do not need to be
+matched (<em>i.e.</em>, have the same number of rows) since the response values are
+used only to estimate distribution for mapping while the feature values are
+used for both mapping and final prediction. In contrast, the datasets in
+<code>source_set</code> (<em>i.e.</em>, <code>X</code> and <code>y</code>) must have matched samples.
+</p>
+</li>
+<li>
+<p> It is recommended to normalize the two response values (<code>y</code>) so that
+they will be in the same range. If normalization is not performed, <code>DMTL()</code>
+uses the range of target <code>y</code> values as the prediction range.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(8644)
+
+## Generate two dataset with different underlying distributions...
+x1 &lt;- matrix(rnorm(3000, 0.3, 0.6), ncol = 3)
+dimnames(x1) &lt;- list(paste0("sample", 1:1000), paste0("f", 1:3))
+y1 &lt;- 0.3*x1[, 1] + 0.1*x1[, 2] - x1[, 3] + rnorm(1000, 0, 0.05)
+x2 &lt;- matrix(rnorm(3000, 0, 0.5), ncol = 3)
+dimnames(x2) &lt;- list(paste0("sample", 1:1000), paste0("f", 1:3))
+y2 &lt;- -0.2*x2[, 1] + 0.3*x2[, 2] - x2[, 3] + rnorm(1000, 0, 0.05)
+
+## Model datasets using DMTL &amp; compare with a baseline model...
+library(DMTL)
+
+target &lt;- list(X = x1, y = y1)
+source &lt;- list(X = x2, y = y2)
+y1_pred &lt;- DMTL(target_set = target, source_set = source, pred_model = "RF")
+y1_pred_bl &lt;- RF_predict(x_train = x2, y_train = y2, x_test = x1)
+
+print(performance(y1, y1_pred, measures = c("MSE", "PCC")))
+print(performance(y1, y1_pred_bl, measures = c("MSE", "PCC")))
+
+</code></pre>
+
+
+</div>

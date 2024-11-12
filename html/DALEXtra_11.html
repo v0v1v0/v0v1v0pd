@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>funnel_measure</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Caluculate difference in performance in models across different categories</h2>
+
+<h3>Description</h3>
+
+<p>Function <code>funnel_measure</code> allows users to compare two models based on their explainers. It partitions dataset on which models were built
+and creates categories according to quantiles of columns in <code>parition data</code>. <code>nbins</code> parameter determines number of quantiles.
+For each category difference in provided measure is being calculated. Positive value of that difference means that Champion model
+has better performance in specified category, while negative value means that one of the Challengers was better. Function allows
+to compare multiple Challengers at once.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">funnel_measure(
+  champion,
+  challengers,
+  measure_function = NULL,
+  nbins = 5,
+  partition_data = champion$data,
+  cutoff = 0.01,
+  cutoff_name = "Other",
+  factor_conversion_threshold = 7,
+  show_info = TRUE,
+  categories = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>champion</code></td>
+<td>
+<p>- explainer of champion model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>challengers</code></td>
+<td>
+<p>- explainer of challenger model or list of explainers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>measure_function</code></td>
+<td>
+<p>- measure function that calculates performance of model based on true observation and prediction.
+Order of parameters is important and should be (y, y_hat). The measure calculated by the function
+should have the property that lower score value indicates better model. If NULL, RMSE will be used for regression,
+one minus auc for classification and crossentropy for multiclass classification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbins</code></td>
+<td>
+<p>- Number of quantiles (partition points) for numeric columns. In case when more than one quantile have the same value, there will be less partition points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partition_data</code></td>
+<td>
+<p>- Data by which test dataset will be partitioned for computation. Can be either data.frame or character vector.
+When second is passed, it has to indicate names of columns that will be extracted from test data.
+By default full test data. If data.frame, number of rows has to be equal to number of rows in test data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff</code></td>
+<td>
+<p>- Threshold for categorical data. Entries less frequent than specified value will be merged into one category.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff_name</code></td>
+<td>
+<p>- Name for new category that arised after merging entries less frequent than <code>cutoff</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor_conversion_threshold</code></td>
+<td>
+<p>- Numeric columns with lower number of unique values than value of this parameter will be treated as factors</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_info</code></td>
+<td>
+<p>- Logical value indicating if progress bar should be shown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>categories</code></td>
+<td>
+<p>- a named list of variable names that will be plotted in a different colour. By default it is partitioned on Explanatory, External and Target.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class <code>funnel_measure</code>
+</p>
+<p>It is a named list containing following fields:
+</p>
+
+<ul>
+<li> <p><code>data</code> data.frame that consists of columns:
+</p>
+
+<ul>
+<li> <p><code>Variable</code> Variable according to which partitions were made
+</p>
+</li>
+<li> <p><code>Measure</code> Difference in measures. Positive value indicates that champion was better, while negative that challenger.
+</p>
+</li>
+<li> <p><code>Label</code> String that defines subset of <code>Variable</code> values (partition rule).
+</p>
+</li>
+<li> <p><code>Challenger</code> Label of challenger explainer that was used in <code>Measure</code>
+</p>
+</li>
+<li> <p><code>Category</code> a category of the variable passed to function
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>models_info</code> data.frame containing information about models used in analysis
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library("mlr")
+library("DALEXtra")
+task &lt;- mlr::makeRegrTask(
+  id = "R",
+  data = apartments,
+  target = "m2.price"
+)
+learner_lm &lt;- mlr::makeLearner(
+  "regr.lm"
+)
+model_lm &lt;- mlr::train(learner_lm, task)
+explainer_lm &lt;- explain_mlr(model_lm, apartmentsTest, apartmentsTest$m2.price, label = "LM")
+
+learner_rf &lt;- mlr::makeLearner(
+  "regr.ranger"
+)
+model_rf &lt;- mlr::train(learner_rf, task)
+explainer_rf &lt;- explain_mlr(model_rf, apartmentsTest, apartmentsTest$m2.price, label = "RF")
+
+learner_gbm &lt;- mlr::makeLearner(
+  "regr.gbm"
+)
+model_gbm &lt;- mlr::train(learner_gbm, task)
+explainer_gbm &lt;- explain_mlr(model_gbm, apartmentsTest, apartmentsTest$m2.price, label = "GBM")
+
+
+plot_data &lt;- funnel_measure(explainer_lm, list(explainer_rf, explainer_gbm),
+                            nbins = 5, measure_function = DALEX::loss_root_mean_square)
+plot(plot_data)
+
+</code></pre>
+
+
+</div>

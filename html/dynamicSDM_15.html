@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extract_static_coords</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract explanatory variables from static rasters</h2>
+
+<h3>Description</h3>
+
+<p>Explanatory variable data are extracted from static environmental rasters at
+record co-ordinate or across moving window matrix
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extract_static_coords(
+  occ.data,
+  varnames,
+  extraction.method = "simple",
+  static.rasters,
+  moving.window.matrix,
+  GEE.math.fun
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>occ.data</code></td>
+<td>
+<p>a data frame, with columns for occurrence record co-ordinates
+and dates with column names as follows; record longitude as "x", latitude as
+"y", and associated explanatory variable data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varnames</code></td>
+<td>
+<p>a character string or vector, the unique names for each
+explanatory variable in order of layers in the SpatRaster.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extraction.method</code></td>
+<td>
+<p>a character string or vector, the methods to extract
+data from SpatRaster using <code>terra</code> package <code>extract</code> function. One of <code>simple</code>
+or <code>bilinear</code>. If <code>simple</code> values for the cell a point falls in are
+returned. If <code>bilinear</code> the returned values are interpolated from the values
+of the four nearest raster cells.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>static.rasters</code></td>
+<td>
+<p>a <code>SpatRaster</code> containing one or more SpatRaster layers
+to extract data from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moving.window.matrix</code></td>
+<td>
+<p>optional; a matrix of weights with an odd number
+of sides, representing the spatial neighbourhood of cells (“moving
+window”) to calculate <code>GEE.math.fun</code> across from record co-ordinate. See
+details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GEE.math.fun</code></td>
+<td>
+<p>optional; a character string, the mathematical function to
+compute across the specified spatial matrix for each record.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function to extract data from static rasters either at occurrence
+record co-ordinates or spatially buffered using a moving window matrix.
+</p>
+<p>Note:
+</p>
+
+<ul>
+<li> <p><code>varnames</code> must be in the order of raster layers within the SpatRaster.
+</p>
+</li>
+<li> <p><code>extraction.method</code> must be of length one to apply to all layers, or
+length equal to the number of layers in <code>static.rasters</code>.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Returns the occurrence data frame with added columns for extracted
+data.
+</p>
+
+
+<h3>Spatial buffering (optional)</h3>
+
+<p>Using the <code>focal</code> function from <code>terra</code> R package (Hijmans et al., 2022),
+<code>GEE.math.fun</code> is calculated across the spatial buffer area from the record
+co-ordinate. The spatial buffer area used is specified by the argument
+<code>moving.window.matrix</code>, which dictates the neighbourhood of cells
+surrounding the cell containing the occurrence record to include in this
+calculation.
+</p>
+<p>See function <code>get_moving_window()</code> to generate appropriate
+<code>moving.window.matrix</code>.
+</p>
+
+
+<h3>Mathematical function</h3>
+
+<p><code>GEE.math.fun</code> specifies the mathematical function to be calculated over the
+spatial buffered area and temporal period. Options are limited to Google
+Earth Engine ImageCollection Reducer functions
+(<a href="https://developers.google.com/earth-engine/apidocs/">https://developers.google.com/earth-engine/apidocs/</a>) for which an
+analogous R function is available. This includes: "allNonZero","anyNonZero",
+"count", "first","firstNonNull", "last", "lastNonNull", "max","mean",
+"median","min", "mode","product", "sampleStdDev", "sampleVariance",
+"stdDev", "sum" and "variance".
+</p>
+
+
+<h3>References</h3>
+
+<p>Hijmans, R.J., Bivand, R., Forner, K., Ooms, J., Pebesma, E. and Sumner, M.D.,
+2022. Package ‘terra’. Maintainer: Vienna, Austria.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data("sample_explan_data")
+random_cat_layer &lt;- terra::rast(sample_extent_data)
+random_cat_layer &lt;- terra::setValues(random_cat_layer,
+                                    sample(0:10, terra::ncell(random_cat_layer),
+                                           replace = TRUE))
+
+extract_static_coords(occ.data = sample_explan_data,
+                     varnames = "random_cat_layer",
+                     static.rasters = random_cat_layer)
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>phyperR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>-only version of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s original phyper() algorithm</h2>
+
+<h3>Description</h3>
+
+<p>An <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version of the first <code>phyper()</code> algorithm in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, which was
+used up to svn rev <code>30227</code> on 2004-07-09.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+phyperR(q, m, n, k, lower.tail=TRUE, log.p=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>vector of quantiles representing the number of white balls
+drawn without replacement from an urn which contains both black and
+white balls.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>the number of white balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the number of black balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>the number of balls drawn from the urn, hence must be in <code class="reqn">0,1,\dots, m+n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if TRUE (default), probabilities are
+<code class="reqn">P[X \le x]</code>, otherwise, <code class="reqn">P[X &gt; x]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.p</code></td>
+<td>
+<p>logical; if TRUE, probabilities p are given as log(p).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a numeric vector similar to <code>phyper(q, m, n, k)</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The original argument list in <code>C</code> was <code>(x, NR, NB, n)</code> where
+there were <em>red</em> and <em>black</em> balls in the urn.
+</p>
+<p>Note that we have <em>vectorized</em> a translation to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> of the original C
+code.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>phyper</code> and our <code>phyperR2()</code> for the pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
+version of the newer (Welinder) <code>phyper()</code> algorithm
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">m &lt;- 9:12; n &lt;- 7:10; k &lt;- 10
+x &lt;- 0:(k+1) # length 12
+## confirmation that recycling + lower.tail, log.p now work:
+for(lg in c(FALSE,TRUE))
+  for(lt in c(FALSE, TRUE)) {
+    cat("(lower.tail = ", lt, " -- log = ", lg,"):\n", sep="")
+    withAutoprint({
+      (rr &lt;-
+           cbind(x, m, n, k, # recycling (to 12 rows)
+                 ph  = phyper (x, m, n, k, lower.tail=lt, log.p=lg),
+                 phR = phyperR(x, m, n, k, lower.tail=lt, log.p=lg)))
+      all.equal(rr[,"ph"], rr[,"phR"], tol = 0)
+      ## saw   4.706e-15 1.742e-15 7.002e-12 1.086e-15  [x86_64 Lnx]
+      stopifnot(all.equal(rr[,"ph"], rr[,"phR"],
+                          tol = if(lg &amp;&amp; !lt) 2e-11 else 2e-14))
+    })
+  }
+
+</code></pre>
+
+
+</div>

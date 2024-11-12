@@ -1,0 +1,354 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make.design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creates a Survey.Design object</h2>
+
+<h3>Description</h3>
+
+<p>Creates a description of a survey design. Designs may use different
+types of either point or line transect designs across strata but cannot mix
+point and line transect design types within a single design object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make.design(
+  region = make.region(),
+  transect.type = "line",
+  design = "systematic",
+  samplers = numeric(0),
+  line.length = numeric(0),
+  seg.length = numeric(0),
+  effort.allocation = numeric(0),
+  design.angle = 0,
+  spacing = numeric(0),
+  edge.protocol = "minus",
+  seg.threshold = numeric(0),
+  bounding.shape = "rectangle",
+  truncation = 50,
+  coverage.grid = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>region</code></td>
+<td>
+<p>an object of class Region defining the survey region.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transect.type</code></td>
+<td>
+<p>character variable specifying either "line" or "point"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>a character variable describing the type of design. Either "random",
+"systematic", "eszigzag" (equal-spaced zigzag), "eszigzagcom" (equal spaced zigzag
+with complementary lines) or "segmentedgrid". See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samplers</code></td>
+<td>
+<p>the number of samplers you wish the design to generate
+(note that the number actually generated may differ slightly due to the
+shape of the study region for some designs). This may be one value or a value
+for each stratum.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>line.length</code></td>
+<td>
+<p>the total line length you desire or a vector of line lengths
+the same length as the number of strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seg.length</code></td>
+<td>
+<p>the length of the line transect segments for a segmented grid
+design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effort.allocation</code></td>
+<td>
+<p>Used for multi-strata regions where only a total effort
+value is provided. This numeric argument should have one value per stratum indicating
+the proportion of the total effort to allocate to that stratum. If length is
+0 (the default) and only a total line length or total number of samplers is supplied,
+effort is allocated based on stratum area.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design.angle</code></td>
+<td>
+<p>numeric value detailing the angle of the design. Can provide
+multiple values relating to strata. The use of the angle varies with design, it
+can be either the angle of the grid of points, the angle of lines or the design
+axis for the zigzag design. See details. In addition, a value of -1 will cause a
+random design angle to be generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spacing</code></td>
+<td>
+<p>used by systematic designs, numeric value(s) to define spacing
+between transects. Can be a vector of values with one value per stratum.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edge.protocol</code></td>
+<td>
+<p>character value indicating whether a "plus" sampling or
+"minus" sampling protocol is used. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seg.threshold</code></td>
+<td>
+<p>this is a percentage threshold value applicable to segmented
+grid designs controlling which partial segments are discarded around the survey
+region boundary. By default, the value of 50, means that only segments that are
+more than half inside the survey region will be retained. To retain all segments,
+no matter how small they are when clipped to the survey region boundary set this
+value to 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bounding.shape</code></td>
+<td>
+<p>only applicable to zigzag designs. A character value saying
+whether the zigzag transects should be generated using a minimum bounding
+"rectangle" or "convex.hull". The default is a minimum bounding rectangle.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncation</code></td>
+<td>
+<p>A single numeric value describing the longest distance at which
+an object may be observed. Truncation distance is constant across strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coverage.grid</code></td>
+<td>
+<p>An object of class Coverage.Grid for use when
+running the coverage simulation.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>Plus versus Minus Sampling</strong>
+If you choose for your design to use a minus sampling strategy then transects will
+only be generated within the survey region and will give lower coverage around the
+edge of the survey region. Plus sampling generates transects within an area
+greater than the study region. To do this <span class="pkg">dssd</span> first puts a buffer around the
+study region before generating the transects within the buffered region. The width
+of the buffer is the truncation distance supplies by the user. Plus sampling
+helps to ensure more even coverage around the edge of the study area. See
+<em>Buckland et. al, 2001</em> "Introduction to Distance Sampling" for information
+on when to use plus versus minus sampling.
+</p>
+<p><strong>Point Transect Designs</strong>
+For point transect designs the user may either specify "random" or
+"systematic" for the design argument. If the user specifies "random", they
+should also provide a value for effort detailing the number of point transects
+they wish their survey to have. For stratified designs they may specify a vector
+of numbers detailing the number of transects per strata or alternatively use the
+effort.allocation argument to allocate a total effort amount proportionally. If
+effort.allocation is left blank then effort will be allocated according to strata
+area. If the user specified"systematic" they may either provide their desired number
+of samplers or a value for spacing which defines the gap between each of the
+points (again a vector of spacing values can be provided for each strata).
+Optionally the user may select a design.angle. For both random and systematic
+point transect designs the user may select either a minus or plus sampling edge
+protocol.
+</p>
+<p><strong>Line Transect Designs:</strong>
+For line transect designs the user may either specify "random" (randomly
+placed full width lines), "systematic" (systematically placed full width lines),
+"eszigzag" (equally spaced zigzag lines), "eszigzagcom" (two sets of complementary
+equally spaced zigzag lines) or "segmentedgrid" (a grid of short line transect
+segments). Note that users may also select a "segmentedtrack" design but dssd 
+does not generate transects from this design. This addition was made so that 
+simulations can be run from Distance for Windows using this design. In this
+case, the transect shapefiles will be generated by Distance for Windows for
+use in the simulation. dssd provides this design as an option to allow the 
+design specifications to be stored within the simulation.
+</p>
+<p>If the user specifies a "random" design, they should provide the either the
+number of samplers they wish the design to generate or the line length they wish
+to achieve, either by strata or as a total. If the user specifies "systematic"
+they should specify either the number of samplers, the desired line length or
+the spacing between lines. The design angle for these parallel line designs
+refers to the angle of the lines where 0 is a vertical line and moving round
+in a clockwise direction. If the user specifies a zigzag design they should
+specify the systematic spacing value, number of samplers or line length to be
+used and should choose between generating the design in a minimum bounding
+rectangle or a convex hull. The default is minimum bounding rectangle which gives
+more even coverage but the convex hull is generally more efficient. A segmented
+grid design may be generated using the either the number of samplers or total
+line length, combined with a value for segment length. Alternatively the user
+may specify a values for spacing and segment length. The segmented grid design
+also uses the segment threshold argument. All the designs may be generated
+using plus or minus sampling protocols. Similar to the point transect designs
+different values may be specified for each strata for all of the above options.
+The design angle for the zigzag designs refers to the angle of a line which
+would run through the middle of each zigzag transect if the zigzags were to
+be generated within a rectangle. The design angle for zigzags should usually
+run along the longest dimension of the study region. A segmented trackline 
+design requires the same specified values as the segmented grid design.
+</p>
+<p>NOTE: If multiple global design effort arguments are supplied (i.e. spacing,
+samplers, line.length) then only the first of spacing then line.length then
+number of samplers will be used. The other values provided will be discarded.
+Different design effort arguments may supplied for different strata. This is
+achieved by supplying vectors of numeric values for each of the desired
+effort measures, there should be 1 value for each stratum. A value indicates
+the effort for that stratum and NA's should be used to ensure that only one
+measure of effort is defined for each stratum.
+</p>
+<p><strong>Effort Allocation:</strong>
+For multi-strata designs users are able to define a single global effort value,
+for example number of samplers or line length, and allocate proportions of it
+to each stratum using the effort.allocation argument. If a global effort value
+is supplied and effort.allocation is not defined then effort is assigned
+based on stratum area. This should lead to a design which is at least
+approximately equal effort across strata. In the case where all strata use the
+same systematic design then in the absence of effort.allocation the spacing will
+be calculated globally and exactly equal effort will be achieved. In the case
+where different designs are chosen for different strata or a non-systematic
+design is selected then effort and spacing values will be calculated at the
+stratum level and this can lead to some variations in coverage between strata.
+</p>
+<p>See the Getting Started Vignette and the Multiple Strata in dssd Vignette for
+example designs.
+</p>
+
+
+<h3>Value</h3>
+
+<p>object of a class which inherits from class Survey.Design either
+Line.Transect.Design or Point.Transect.Design
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Laura Marshall
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Point transect example
+shapefile.name &lt;- system.file("extdata", "TrackExample.shp", package = "dssd")
+region &lt;- make.region(region.name = "study area",
+                     shape = shapefile.name)
+
+
+# Generate coverage grid (spacing quite sparse for speed)
+cover &lt;- make.coverage(region,
+                       n.grid.points = 250)
+
+# Define design
+design &lt;- make.design(region = region,
+                      transect.type = "point",
+                      design = "random",
+                      samplers = 25,
+                      design.angle = 45,
+                      edge.protocol = "minus",
+                      truncation = 3,
+                      coverage.grid = cover)
+
+# Generate a single survey instance
+survey &lt;- generate.transects(design)
+plot(region, survey, covered.area = TRUE)
+
+# Note, the number of reps here has been set to 5 to avoid lengthy run-times,
+# however, the reps should be at least 100 for an idea of design statistics
+# (i.e. trackline lengths) and 500 + to give a good odea of coverage.
+design &lt;- run.coverage(design, reps = 5)
+# Plot the coverage
+plot(design)
+# Display the design statistics
+design
+#Extract coverage scores
+coverage.scores &lt;- get.coverage(design)
+hist(coverage.scores)
+
+#Multi-strata line transect example
+shapefile.name &lt;- system.file("extdata", "AreaRProjStrata.shp", package = "dssd")
+region &lt;- make.region(region.name = "study area",
+                     strata.name = c("North", "NW", "West Upper",
+                                     "West Lower", "SW", "South"),
+                     shape = shapefile.name)
+plot(region)
+# Make a coverage grid
+cover &lt;- make.coverage(region,
+                       n.grid.points = 500)
+# Define the design
+design &lt;- make.design(region = region,
+                      transect.type = "line",
+                      design = c("systematic", "systematic",
+                                 "eszigzag", "systematic",
+                                 "systematic", "eszigzagcom"),
+                      line.length = 5000*1000, #5000km x 1000m (projection in m)
+                      design.angle = c(160, 135, 170, 135, 50, 60),
+                      edge.protocol = "minus",
+                      truncation = 3000,
+                      coverage.grid = cover)
+
+# Create a single set of transects to check
+survey &lt;- generate.transects(design)
+plot(region, survey, covered.area = TRUE)
+
+# Note, the number of reps here has been set to 5 to avoid lengthy run-times,
+# however, the reps should be at least 100 for an idea of design statistics
+# (i.e. trackline lengths) and 500 + to give a good odea of coverage.
+design &lt;- run.coverage(design, reps = 5)
+# Plot the coverage
+plot(design)
+# Display the design statistics
+design
+# Extract coverage scores for the first strata
+coverage.scores &lt;- get.coverage(design, strata.id = 1)
+summary(coverage.scores)
+
+
+# Fast running example for CRAN testing purposes
+# This spacing is too sparse to assess coverage in a real example and
+# the number of repetitions is too low to assess design statistics
+cover &lt;- make.coverage(region,
+                       n.grid.points = 50)
+design &lt;- make.design(region = region,
+                      transect.type = "point",
+                      design = "random",
+                      samplers = 25,
+                      design.angle = 45,
+                      edge.protocol = "minus",
+                      truncation = 3,
+                      coverage.grid = cover)
+survey &lt;- generate.transects(design)
+plot(region, survey, covered.area = TRUE)
+design &lt;- run.coverage(design, reps = 3)
+plot(design)
+design
+
+</code></pre>
+
+
+</div>

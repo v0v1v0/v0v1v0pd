@@ -1,0 +1,85 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>*.fn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Concatenation of functions</h2>
+
+<h3>Description</h3>
+
+<p>Used to concatenate observation functions, prediction functions and parameter transformation functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'fn'
+p1 * p2
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p1</code></td>
+<td>
+<p>function of class <code>obsfn</code>, <code>prdfn</code>, <code>parfn</code> or <code>idfn</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p2</code></td>
+<td>
+<p>function of class <code>obsfn</code>, <code>prdfn</code>, <code>parfn</code> or <code>idfn</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Object of the same class as <code>x1</code> and <code>x2</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Define a time grid on which to make a prediction by peace-wise linear function.
+# Then define a (generic) prediction function based on thid grid.
+times &lt;- 0:5
+grid &lt;- data.frame(name = "A", time = times, row.names = paste0("p", times))
+x &lt;- Xd(grid)
+
+# Define an observable and an observation function
+observables &lt;- eqnvec(Aobs = "s*A")
+g &lt;- Y(g = observables, f = NULL, states = "A", parameters = "s")
+
+# Collect parameters and define an overarching parameter transformation
+# for two "experimental condtions".
+dynpars &lt;- attr(x, "parameters")
+obspars &lt;- attr(g, "parameters")
+innerpars &lt;- c(dynpars, obspars)
+
+trafo &lt;- structure(innerpars, names = innerpars)
+trafo_C1 &lt;- replaceSymbols(innerpars, paste(innerpars, "C1", sep = "_"), trafo)
+trafo_C2 &lt;- replaceSymbols(innerpars, paste(innerpars, "C2", sep = "_"), trafo)
+
+p &lt;- NULL
+p &lt;- p + P(trafo = trafo_C1, condition = "C1")
+p &lt;- p + P(trafo = trafo_C2, condition = "C2")
+
+# Collect outer (overarching) parameters and 
+# initialize with random values
+outerpars &lt;- attr(p, "parameters")
+pars &lt;- structure(runif(length(outerpars), 0, 1), names = outerpars)
+
+# Predict internal/unobserved states
+out1 &lt;- (x*p)(times, pars)
+plot(out1)
+
+# Predict observed states in addition to unobserved
+out2 &lt;- (g*x*p)(times, pars)
+plot(out2)
+</code></pre>
+
+
+</div>

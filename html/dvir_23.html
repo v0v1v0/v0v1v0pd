@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>findUndisputed</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Undisputed identifications in a DVI problem</h2>
+
+<h3>Description</h3>
+
+<p>This function uses the pairwise LR matrix to find <em>undisputed</em> matches
+between victims and missing individuals. An identification <code class="reqn">V_i = M_j</code> is
+called undisputed, relative to a threshold T, if the corresponding likelihood
+ratio <code class="reqn">LR_{i,j} \geq T</code> AND <code class="reqn">LR_{i,j}</code> is at least T times greater
+than all other pairwise LRs involving <code class="reqn">V_i</code> or <code class="reqn">M_j</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">findUndisputed(
+  dvi,
+  pairings = NULL,
+  ignoreSex = FALSE,
+  threshold = 10000,
+  strict = FALSE,
+  relax = !strict,
+  limit = 0,
+  nkeep = NULL,
+  numCores = 1,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dvi</code></td>
+<td>
+<p>A <code>dviData</code> object, typically created with <code>dviData()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pairings</code></td>
+<td>
+<p>A list of possible pairings for each victim. If NULL, all
+sex-consistent pairings are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreSex</code></td>
+<td>
+<p>A logical.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>A non-negative number. If no pairwise LR exceed this, the
+iteration stops.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strict</code></td>
+<td>
+<p>A logical affecting the definition of being undisputed (see
+Details). Default: FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relax</code></td>
+<td>
+<p>Deprecated; use <code>strict = FALSE</code> instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>limit</code></td>
+<td>
+<p>A positive number. Only pairwise LR values above this are
+considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nkeep</code></td>
+<td>
+<p>An integer, or NULL. If given, only the <code>nkeep</code> most likely
+pairings are kept for each victim.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numCores</code></td>
+<td>
+<p>An integer; the number of cores used in parallelisation.
+Default: 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical. Default: TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the parameter <code>strict</code> is set to TRUE, the last criterion is replaced with
+the stronger requirement that all other pairwise LRs involving <code class="reqn">V_i</code> or
+<code class="reqn">M_j</code> must be at most 1.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following entries:
+</p>
+
+<ul>
+<li> <p><code>dviReduced</code>: A reduced version of <code>dvi</code>, where undisputed
+victims/missing persons are removed, and data from undisputed victims
+inserted into the reference data.
+</p>
+</li>
+<li> <p><code>summary</code>: A data frame summarising the undisputed matches.
+</p>
+</li>
+<li> <p><code>LRmatrix</code>: Output from <code>pairwiseLR()</code> applied to
+the reduced problem.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>pairwiseLR()</code>, <code>findExcluded()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+u1 = findUndisputed(planecrash, verbose = FALSE)
+u1$summary 
+
+# With `strict = TRUE`, the match M3 = V2 goes away
+u2 = findUndisputed(planecrash, strict = TRUE, verbose = FALSE)
+u2$summary
+
+# Reason: M3 has LR &gt; 1 also against V7
+u2$LRmatrix[, "M3"] |&gt; round(2)
+
+
+</code></pre>
+
+
+</div>

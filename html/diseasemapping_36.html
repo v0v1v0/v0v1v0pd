@@ -1,0 +1,100 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>nbToInlaGraph</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Write a graph file for INLA
+</h2>
+
+<h3>Description</h3>
+
+<p>Writes a graph file from an adjacency matrix suitable for use with INLA.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">nbToInlaGraph(adjMat, graphFile="graph.dat", region.id = attributes(adjMat)$region.id)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>adjMat</code></td>
+<td>
+<p>An object of class <code>nb</code> containing the adjacency matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graphFile</code></td>
+<td>
+<p>name of file to save adjacency matrix to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>region.id</code></td>
+<td>
+<p>names of regions</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function correctly handles regions which have zero neighbours.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of names and indices
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Patrick Brown
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>adjacent</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data('kentucky')
+kentucky = terra::unwrap(kentucky)
+# remove all the neighbours Ballard county
+kSub = kentucky[-c(2,20,79),]
+
+
+adjMat = terra::adjacent(kSub)
+attributes(adjMat)$region.id = kSub$County
+
+nFile = tempfile()
+nbRes = nbToInlaGraph(adjMat, nFile)
+
+# Ballard is region 3
+nbRes['Ballard']
+# note that Ballard has no neighbours
+table(adjMat[,'from']==3)
+
+cat(readLines(nFile, n=5), sep='\n')
+
+
+# there will be a warning about zero neighbours
+junk = bym(poverty ~ 1, data=kSub, family='gaussian', num.threads=3)
+
+
+
+</code></pre>
+
+
+</div>

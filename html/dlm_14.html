@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dlmForecast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction and simulation of future observations</h2>
+
+<h3>Description</h3>
+
+<p>The function evaluates the expected value and variance of future
+observations and system states. It can also generate a sample from the
+distribution of future observations and system states.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  dlmForecast(mod, nAhead = 1, method = c("plain", "svd"), sampleNew = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>an object of class <code>"dlm"</code>, or a list with components
+<code>m0</code>, <code>C0</code>,
+<code>FF</code>, <code>V</code>, <code>GG</code>, and <code>W</code>, defining the model
+and the parameters of the prior distribution. <code>mod</code> can also be
+an object of class <code>"dlmFiltered"</code>, such as the output from
+<code>dlmFilter</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nAhead</code></td>
+<td>
+<p>number of steps ahead for which a forecast is
+requested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p><code>method="svd"</code> uses singular value decomposition
+for the calculations. Currently, only <code>method="plain"</code>
+is implemented.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sampleNew</code></td>
+<td>
+<p>if <code>sampleNew=n</code> for an integer <code>n</code>, them a
+sample of size <code>n</code> from the forecast distribution of states and
+observables will be returned.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with components
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+    <code>a</code>
+</td>
+<td style="text-align: left;"> matrix of expected values of future states</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>R</code>
+</td>
+<td style="text-align: left;"> list of variances of future states</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>f</code>
+</td>
+<td style="text-align: left;"> matrix of expected values of future observations</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>Q</code>
+</td>
+<td style="text-align: left;"> list of variances of future observations</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>newStates</code>
+</td>
+<td style="text-align: left;"> list of matrices containing the simulated
+    future values</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      </td>
+<td style="text-align: left;"> of the states. Each component of the list corresponds</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      </td>
+<td style="text-align: left;"> to one simulation.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>newObs</code>
+</td>
+<td style="text-align: left;"> same as <code>newStates</code>, but for the observations.
+  </td>
+</tr>
+</table>
+<p>The last two components are not present if <code>sampleNew=FALSE</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The function is currently entirely written in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> and is not
+particularly fast. Currently, only constant models are allowed. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Giovanni Petris <a href="mailto:GPetris@uark.edu">GPetris@uark.edu</a></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Comparing theoretical prediction intervals with sample quantiles
+set.seed(353)
+n &lt;- 20; m &lt;- 1; p &lt;- 5
+mod &lt;- dlmModPoly() + dlmModSeas(4, dV=0)
+W(mod) &lt;- rwishart(2*p,p) * 1e-1
+m0(mod) &lt;- rnorm(p, sd=5)
+C0(mod) &lt;- diag(p) * 1e-1
+new &lt;- 100
+fore &lt;- dlmForecast(mod, nAhead=n, sampleNew=new)
+ciTheory &lt;- (outer(sapply(fore$Q, FUN=function(x) sqrt(diag(x))), qnorm(c(0.1,0.9))) +
+             as.vector(t(fore$f)))
+ciSample &lt;- t(apply(array(unlist(fore$newObs), dim=c(n,m,new))[,1,], 1,
+                    FUN=function(x) quantile(x, c(0.1,0.9))))
+plot.ts(cbind(ciTheory,fore$f[,1]),plot.type="s", col=c("red","red","green"),ylab="y")
+for (j in 1:2) lines(ciSample[,j], col="blue")
+legend(2,-40,legend=c("forecast mean", "theoretical bounds", "Monte Carlo bounds"),
+       col=c("green","red","blue"), lty=1, bty="n")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DBH</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Discrete Burr Hatke family</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>DBH()</code> defines the Discrete Burr Hatke distribution, one-parameter
+discrete distribution, for a <code>gamlss.family</code> object to be used in GAMLSS fitting
+using the function <code>gamlss()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DBH(mu.link = "logit")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>mu.link</code></td>
+<td>
+<p>defines the mu.link, with "logit" link as the default for the mu parameter. Other links are "probit" and "cloglog"'(complementary log-log)</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>The Discrete Burr-Hatke distribution with parameters <code class="reqn">\mu</code> has a support
+0, 1, 2, ... and density given by
+</p>
+<p><code class="reqn">f(x | \mu) = (\frac{1}{x+1}-\frac{\mu}{x+2})\mu^{x}</code>
+</p>
+<p>The pmf is log-convex for all values of <code class="reqn">0 &lt; \mu &lt; 1</code>, where <code class="reqn">\frac{f(x+1;\mu)}{f(x;\mu)}</code>
+is an increasing function in <code class="reqn">x</code> for all values of the parameter <code class="reqn">\mu</code>.
+</p>
+<p>Note: in this implementation we changed the original parameters <code class="reqn">\lambda</code> for <code class="reqn">\mu</code>,
+we did it to implement this distribution within gamlss framework.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a <code>gamlss.family</code> object which can be used
+to fit a Discrete Burr-Hatke distribution
+in the <code>gamlss()</code> function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Valentina Hurtado Sepulveda, <a href="mailto:vhurtados@unal.edu.co">vhurtados@unal.edu.co</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>El-Morshedy M, Eliwa MS, Altun E (2020).
+“Discrete Burr-Hatke distribution with properties, estimation methods and regression model.”
+<em>IEEE access</em>, <b>8</b>, 74359–74370.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dDBH.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1
+# Generating some random values with
+# known mu
+y &lt;- rDBH(n=1000, mu=0.74)
+
+library(gamlss)
+mod1 &lt;- gamlss(y~1, family=DBH,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+# Extracting the fitted values for mu
+# using the inverse logit function
+inv_logit &lt;- function(x) exp(x) / (1+exp(x))
+inv_logit(coef(mod1, parameter="mu"))
+
+# Example 2
+# Generating random values under some model
+
+# A function to simulate a data set with Y ~ DBH
+gendat &lt;- function(n) {
+  x1 &lt;- runif(n)
+  mu    &lt;- inv_logit(-3 + 5 * x1)
+  y &lt;- rDBH(n=n, mu=mu)
+  data.frame(y=y, x1=x1)
+}
+
+datos &lt;- gendat(n=150)
+
+mod2 &lt;- NULL
+mod2 &lt;- gamlss(y~x1, family=DBH, data=datos,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+summary(mod2)
+
+# Example 3
+# number of carious teeth among the four deciduous molars.
+# Taken from EL-MORSHEDY (2020) page 74364.
+
+y &lt;- rep(0:4, times=c(64, 17, 10, 6, 3))
+
+mod3 &lt;- gamlss(y~1, family=DBH,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+# Extracting the fitted values for mu
+# using the inverse link function
+inv_logit &lt;- function(x) 1/(1 + exp(-x))
+inv_logit(coef(mod3, what="mu"))
+</code></pre>
+
+
+</div>

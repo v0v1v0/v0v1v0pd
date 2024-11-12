@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>query</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Search DataONE for data and metadata objects</h2>
+
+<h3>Description</h3>
+
+<p>The DataONE search index is searched for data that matches the specified query parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">query(x, ...)
+
+## S4 method for signature 'D1Node'
+query(
+  x,
+  solrQuery = as.character(NA),
+  encode = TRUE,
+  as = "list",
+  parse = TRUE,
+  searchTerms = as.character(NA),
+  encodeReserved = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The CNode or MNode instance to send the query to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>(Not yet used.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solrQuery</code></td>
+<td>
+<p>The query search terms, either as a string or as list with named members.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encode</code></td>
+<td>
+<p>A logical, if <code>TRUE</code> then the query is URL encoded. The default is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as</code></td>
+<td>
+<p>The return type. Possible values: "json", "xml", "list" or "data.frame" with "list" as the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parse</code></td>
+<td>
+<p>A logical value. If TRUE, then the result is parsed and converted to appropriate R data types. If FALSE, character values are returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>searchTerms</code></td>
+<td>
+<p>A list of name / value pairs (an alternative to <code>solrQuery</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>encodeReserved</code></td>
+<td>
+<p>A logical, if TRUE then reserved characters in the query are URL encoded (FALSE is default). See <code>URLencode</code> for details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>"query"</code> method sends a query to a DataONE search index that uses the Apache Solr search 
+engine <a href="https://solr.apache.org/">https://solr.apache.org/</a>. This same Solr search engine is the underlying mechanism used by the
+DataONE online search tool available at <a href="https://search.dataone.org/">https://search.dataone.org/</a>.
+</p>
+<p>The <code>"solrQuery"</code> argument is used to specify search terms that data of interest must match. This parameter uses
+Solr query terms, so some familiarity with Solr is helpful, however, fairly simple queries can be effective. This
+argument can be created as either a single character string containing the Solr query, for example: <code>solrQuery = "q=id:doi*&amp;rows=2&amp;wt=json"</code>,
+or as a list of key value pairs: <code>solrQuery = list(q = "id:doi*", rows = "2", wt = "json")</code>. These two queries produce the same result.
+</p>
+<p>As an alternative to specifying the Solr query terms using the <code>"solrquery"</code> argument, the <code>"searchTerms"</code> argument
+can be specified, which does not require any Solr syntax. This parameter is a list with query field / value pairs, i.e. 
+<code>searchTerms=list(abstract=kelp, attribute=biomass)</code>.
+The query fields can be listed for a DataONE node using <code>getQueryEngineDescription</code>.
+Either <code>"searchTerms"</code> or <code>"solrQuery"</code> must be specified.
+</p>
+<p>The <code>"as"</code> argument is used to specify the query result to be returned as: "json", xml", "list", "data.frame".
+</p>
+<p>The <code>"parsed"</code> argument, if specified as TRUE, causes the query result to be converted to appropriate R data types.
+For example, if <code>ar = "xml"</code> and <code>parsed = TRUE</code>, then the query result is returned as an R XMLInternalDocument, or 
+If <code>'parsed = FALSE'</code> then a character variable with the XML string is returned. Specify <code>as = "list"</code> to have 
+the result parsed to an R list, with each list element containing one Solr query result of the total result set.
+</p>
+
+
+<h3>Value</h3>
+
+<p>search results as a list, data.frame or XML document
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(dataone)
+cn &lt;- CNode("PROD")
+queryParams &lt;- list(q="id:doi*", rows="5", 
+    fq="(abstract:chlorophyll AND dateUploaded:[2000-01-01T00:00:00Z TO NOW])", 
+    fl="title,id,abstract,size,dateUploaded,attributeName")
+# Return result as a list.
+result &lt;- query(cn, queryParams, as="list")
+
+# Query and return the result as a data.frame of character values.
+queryParams &lt;- list(q="id:doi*", rows="3", 
+    fq="(abstract:chlorophyll AND dateUploaded:[2000-01-01T00:00:00Z TO NOW])", 
+    fl="title,id,abstract,size,dateUploaded,attributeName")
+result &lt;- query(cn, queryParams, as="data.frame", parse=FALSE)
+
+# Return the result as JSON
+queryParams &lt;- "q=id:doi*&amp;rows=2&amp;wt=json"
+result &lt;- query(cn, queryParams, as="json")
+
+# The following query shows how to embed quotes
+cn &lt;- CNode("SANDBOX2")
+queryParamList &lt;- list(q="(attribute:lake) and (attribute:\"Percent Nitrogen\")", rows="1000",
+                       fl="title,id,abstract,size,dateUploaded,attributeName", wt="xml")
+result &lt;- query(cn, queryParamList, as="data.frame")
+
+# The following query uses the searchTerms parameter
+cn &lt;- CNode()
+mn &lt;- getMNode(cn, "urn:node:KNB")
+mySearchTerms &lt;- list(abstract="kelp", attribute="biomass")
+result &lt;- query(mn, searchTerms=mySearchTerms, as="data.frame")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

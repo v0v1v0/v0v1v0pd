@@ -1,0 +1,103 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adjDevResid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Adjusted Deviance Residuals in short format</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the adjusted deviance residuals for arbitrary prediction models.
+The adjusted deviance residuals should be approximately normal distributed,
+in the case of a well fitting model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">adjDevResid(dataLong, hazards)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataLong</code></td>
+<td>
+<p>Data set in long format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hazards</code></td>
+<td>
+<p>Estimated discrete hazards of the data in long format("numeric vector"). Hazard
+rates are probabilities and therefore restricted to the interval [0, 1].</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+ <ul>
+<li>
+<p>Output List with objects: </p>
+
+<ul><li>
+<p>AdjDevResid Adjusted deviance residuals as numeric vector </p>
+</li></ul>
+</li>
+<li>
+<p>Input A list of given argument input values (saved for reference) </p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Tutz G (2012).
+<em>Regression for Categorical Data</em>.
+Cambridge University Press.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>intPredErr</code>, <code>predErrCurve</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(survival)
+
+# Transform data to long format
+heart[, "stop"] &lt;- ceiling(heart[, "stop"])
+set.seed(0)
+Indizes &lt;- sample(unique(heart$id), 25)
+randSample &lt;- heart[unlist(sapply(1:length(Indizes), 
+function(x) which(heart$id == Indizes[x]))),]
+heartLong &lt;- dataLongTimeDep(dataSemiLong = randSample, 
+timeColumn = "stop", eventColumn = "event", idColumn = "id", timeAsFactor = FALSE)
+
+# Fit a generalized, additive model and predict discrete hazards on data in long format
+library(mgcv)
+gamFit &lt;- gam(y ~ timeInt + surgery + transplant + s(age), data = heartLong, family = "binomial")
+hazPreds &lt;- predict(gamFit, type = "response")
+
+# Calculate adjusted deviance residuals
+devResiduals &lt;- adjDevResid(dataLong = heartLong, hazards = hazPreds)$Output$AdjDevResid
+devResiduals
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,364 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>canvas</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>drawer main canvas workbench compinent</h2>
+
+<h3>Description</h3>
+
+<p>use this function on Shiny UI or R markdown to create the
+image editing area.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">canvas(
+  canvasID,
+  title = "drawer",
+  height = "100vh",
+  width = "100%",
+  logo_src = "drawer/img/drawer.png",
+  log_link = "https://github.com/lz100/drawer",
+  on_start = TRUE,
+  rmarkdown = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>canvasID</code></td>
+<td>
+<p>string, an unique HTML ID</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>string, title of the canvas</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>height</code></td>
+<td>
+<p>string, css value of initial height of the canvas, like "100vh"
+for full height current window, "50vh" for half.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width</code></td>
+<td>
+<p>string, css value of initial width of the canvas</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logo_src</code></td>
+<td>
+<p>string, link of an image you want to display as logo on the
+top left</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_link</code></td>
+<td>
+<p>string, a link, when the logo is clicked, where should it jump to</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>on_start</code></td>
+<td>
+<p><code>TRUE</code> or a CSS selector. See details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rmarkdown</code></td>
+<td>
+<p>bool, are you using inside R markdown? If yes, drawer will copy
+all image icons that required by the canvas to current directory to <code>./drawer/img/...</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>outside Shiny or Rmarkdown</h4>
+
+<p><strong>If you are not working in Shiny or R markdown, you need to add the</strong>
+<strong>required full "Bootstrap3" javascript and CSS + latest "jquery" dependencies by yourself.</strong>
+</p>
+
+
+
+<h4>height and width</h4>
+
+<p>There are two options for canvas height and width:
+</p>
+
+<ul>
+<li>
+<p> dynamic CSS units like "100vh" (viewpoint height), "100vw" (view point width),
+or "100%" for both. This kind of units adapt to all kinds of user screen settings.
+</p>
+</li>
+<li>
+<p> fixed unit, <code>px</code> (pixels). This does not change across users, but fixes
+the <code>on_start</code> problem (read below).
+</p>
+</li>
+</ul>
+<h4>height</h4>
+
+
+<ul><li> <p><code>height</code>, css style <code>vh</code> is safer than <code style="white-space: pre;">⁠%⁠</code> is not safe, unless the parent
+has some defined height, "%" will work. Otherwise, if the parent height is "auto"
+or not defined, and you choose "100%", canvas will still have 0 height.
+</p>
+</li></ul>
+<p>Width usually does not have this problem. As long as an element is displayed,
+it has some width.
+</p>
+
+
+
+<h4><code>on_start</code></h4>
+
+<p>This argument specify if you want to initiate the canvas when the document is loaded.
+If <code>TRUE</code>, then when the document loading is done, start the canvas. The problem
+is if you set the height to be "vh" (view height) units and if the canvas is
+hidden, like in a different tab and not displayed on start, the view height is
+0, because it is hidden on another tab (display property is <code>none</code>), so it
+will cause the canvas cannot be initiated properly.
+</p>
+<p>The solution is to bind the initiation with a clicking event, like on a tab or a button.
+For example, make a button on the second tab and bind <code>on_start</code> to that button:
+<code>on_start = "#buttonID"</code>. Then when users click on that button, canvas initiate.
+Remember this is a Jquery CSS selector, which means you need to append "#" in
+front your button ID.
+</p>
+<p>If you want to do it automatically, like clicking on a certain tab, some CSS
+knowledge may required. For example, in Shiny, you can use shiny::tabsetPanel
+to create a tab panel.
+</p>
+<div class="sourceCode r"><pre>tabsetPanel(id = "tabs",
+    tabPanel("Tab A", value = "A", ...),
+    tabPanel("Tab B", value = "B", ...),
+    ...
+)
+
+</pre></div>
+<p>Then, bind to it <code>canvas(on_start = '#tabs li a[data-value="B"]', ...)</code>.
+This means we are selecting the element with ID "tabs", which is the main tabsetPanel
+ID, then a list item (<code>li</code>) which is the tab titles you see on UI, and finally, the
+link jump to tab B, (<code style="white-space: pre;">⁠a[data-value="B"]⁠</code>). See examples for a real case.
+</p>
+<p>Another way to fix it is by given the <code>height</code> and <code>width</code> a fixed pixel unit:
+</p>
+<div class="sourceCode r"><pre>canvas(
+    canvasID = "canvas_f",
+    height = "900px",
+    width = "1500px"
+)
+</pre></div>
+
+
+
+<h4>Upload your own image to canvas</h4>
+
+<p>You can drag your own images to the canvas.
+Support major image formats, like "jpg", "png", "svg", "gif", "webp", "bmp".
+Moving images like
+"gif", "webp" will be animated on left side preview, but will not move on canvas.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>a HTML component to be added to a Shiny app or document
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># basic usage
+if(interactive()){
+  library(shiny)
+
+  ui &lt;- fluidPage(
+    h3("Try to drag pictures locally to canvas"),
+    canvas("canvas_a")
+  )
+
+  server &lt;- function(input, output, session) {
+
+  }
+
+  shinyApp(ui, server)
+}
+
+# multiple canvas on a page
+if(interactive()){
+  library(shiny)
+
+  ui &lt;- fluidPage(
+    h3("multiple canvas on a page"),
+    p("They are independent"),
+    p("Dragging from one canvas to another is not supported currently"),
+    column(6, canvas("canvas_left")),
+    column(6, canvas("canvas_right"))
+  )
+
+  server &lt;- function(input, output, session) {
+
+  }
+
+  shinyApp(ui, server)
+}
+
+# with capture buttons buttons
+if(interactive()){
+  library(shiny)
+  library(ggplot2)
+  ui &lt;- fluidPage(
+    fluidRow(
+      id = "new_row",
+      column(
+        6,
+        h3("this is a title"),
+        column(6, tags$label("plot 1"), plotOutput("plot_1")),
+        column(6, tags$label("plot 2"), plotOutput("plot_2")),
+      ),
+      column(
+        6,
+        h2("To canvas buttons"),
+        h4("pure button with `toCanvasBtn`"),
+        toCanvasBtn(
+          dom = "plot_1",
+          label = "capture plot 1",
+          canvasID = "canvas_b"
+        ), br(),
+        toCanvasBtn(
+          dom = "capture_button",
+          label = "capture this button itself",
+          canvasID = "canvas_b",
+          id = "capture_button"
+        ), br(),
+        toCanvasBtn(
+          dom = "#new_row .col-sm-6:first-of-type",
+          label = "complex selector to select left column",
+          canvasID = "canvas_b",
+          isID = FALSE
+        ), br(),
+        h4("button text input for any part of document with `toCanvasBtn`"),
+        toCanvasTextBtn(
+          label = "try #plot_2 to for plot 2 or other selector",
+          canvasID = "canvas_b",
+          text_value = "#plot_2"
+        )
+      )
+    ),
+    canvas("canvas_b")
+  )
+
+  server &lt;- function(input, output, session) {
+    output$plot_1 &lt;- renderPlot({
+      ggplot(mpg, aes(cty, hwy)) +
+        geom_count(col="tomato3", show.legend=F)
+    })
+    output$plot_2 &lt;- renderPlot({
+      ggplot(mpg, aes(cty, hwy)) +
+        geom_point()
+    })
+  }
+
+  shinyApp(ui, server)
+}
+
+# start canvas as hidden, initiate later in tab panels
+if(interactive()){
+  library(shiny)
+
+  ui &lt;- fluidPage(
+    tabsetPanel(
+      id = "tabs",
+      tabPanel(
+        "Home page",
+        value = "tab_1",
+        h4("Content on home page ...."),
+        p("Canvas is hidden on start, go to other tabs")
+      ),
+      tabPanel(
+        "Canvas C",
+        value = "tab_2",
+        markdown(
+          '
+          # canvas hidden on start
+          In this example, you will see if the canvas is hidden,
+          not on the first tab in a `tabsetPanel`, or other similar
+          UI where you do not see canvas on start. Then, the canvas
+          cannot be initiate properly using the default height value (100vh).
+          Using the dynamic computed CSS height like "100%", or "100vh" with "hidden"
+          (display = none) elements give the height of `0` on start.
+          So, you **should not see the canvas** on this tab, but a broken
+          structure and no canvas grid.
+
+          To fix it, either give it a fixed `height` and `width` pixel unit, like
+
+          - `height = "800px"`, `width = "1500px"`
+
+          or bind the initiation event to a click of a button, the tab title or
+          any other element you specify with the `on_start` argument. See the
+          example code and watch how we do it in "canvas D-F".
+          '
+        ),
+        canvas(canvasID = "canvas_c")
+      ),
+      tabPanel(
+        "Canvas D",
+        value = "tab_3",
+        h4("Initiate canvas by a button"),
+        actionButton("start_canvas", "Start Canvas C"),
+        canvas(
+          canvasID = "canvas_d",
+          on_start = "#start_canvas"
+        )
+      ),
+      tabPanel(
+        "Canvas E",
+        value = "tab_4",
+        h4("Initiate canvas by clicking tab title"),
+        p("Canvas initiate when first time users come to this tab"),
+        canvas(
+          canvasID = "canvas_e",
+          on_start = "#tabs li a[data-value='tab_4']"
+        )
+      ),
+      tabPanel(
+        "Canvas F",
+        value = "tab_5",
+        h4("Initiate canvas with fixed height and width"),
+        canvas(
+          canvasID = "canvas_f",
+          height = "800px",
+          width = "1500px"
+        )
+      )
+    )
+  )
+
+  server &lt;- function(input, output, session) {
+
+  }
+
+  shinyApp(ui, server)
+}
+</code></pre>
+
+
+</div>

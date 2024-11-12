@@ -1,0 +1,531 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EmpiricalRiskMinimizationDP.CMS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Privacy-preserving Empirical Risk Minimization for Binary Classification</h2>
+
+<h3>Description</h3>
+
+<p>This class implements differentially private empirical risk
+minimization (Chaudhuri et al. 2011). Either the output or the
+objective perturbation method can be used. It is intended to be a framework
+for building more specific models via inheritance. See
+<code>LogisticRegressionDP</code> for an example of this type of
+structure.
+</p>
+
+
+<h3>Details</h3>
+
+<p>To use this class for empirical risk minimization, first use the
+<code>new</code> method to construct an object of this class with the desired
+function values and hyperparameters. After constructing the object, the
+<code>fit</code> method can be applied with a provided dataset and data bounds to
+fit the model.  In fitting, the model stores a vector of coefficients
+<code>coeff</code> which satisfy differential privacy. These can be released
+directly, or used in conjunction with the <code>predict</code> method to
+privately predict the outcomes of new datapoints.
+</p>
+<p>Note that in order to guarantee differential privacy for empirical risk
+minimization, certain constraints must be satisfied for the values used to
+construct the object, as well as for the data used to fit. These conditions
+depend on the chosen perturbation method. Specifically, the provided loss
+function must be convex and differentiable with respect to <code>y.hat</code>,
+and the absolute value of the first derivative of the loss function must be
+at most 1. If objective perturbation is chosen, the loss function must also
+be doubly differentiable and the absolute value of the second derivative of
+the loss function must be bounded above by a constant c for all possible
+values of <code>y.hat</code> and <code>y</code>, where <code>y.hat</code> is the predicted
+label and <code>y</code> is the true label. The regularizer must be 1-strongly
+convex and differentiable. It also must be doubly differentiable if
+objective perturbation is chosen. Finally, it is assumed that if x
+represents a single row of the dataset X, then the l2-norm of x is at most
+1 for all x. Note that because of this, a bias term cannot be included
+without appropriate scaling/preprocessing of the dataset. To ensure
+privacy, the add.bias argument in the <code>fit</code> and <code>predict</code> methods
+should only be utilized in subclasses within this package where appropriate
+preprocessing is implemented, not in this class.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>mapXy</code></dt>
+<dd>
+<p>Map function of the form <code>mapXy(X, coeff)</code> mapping input
+data matrix <code>X</code> and coefficient vector or matrix <code>coeff</code> to
+output labels <code>y</code>.</p>
+</dd>
+<dt><code>mapXy.gr</code></dt>
+<dd>
+<p>Function representing the gradient of the map function with
+respect to the values in <code>coeff</code> and of the form <code>mapXy.gr(X,
+  coeff)</code>, where <code>X</code> is a matrix and <code>coeff</code> is a matrix or
+numeric vector.</p>
+</dd>
+<dt><code>loss</code></dt>
+<dd>
+<p>Loss function of the form <code>loss(y.hat, y)</code>, where
+<code>y.hat</code> and <code>y</code> are matrices.</p>
+</dd>
+<dt><code>loss.gr</code></dt>
+<dd>
+<p>Function representing the gradient of the loss function with
+respect to <code>y.hat</code> and of the form <code>loss.gr(y.hat, y)</code>, where
+<code>y.hat</code> and <code>y</code> are matrices.</p>
+</dd>
+<dt><code>regularizer</code></dt>
+<dd>
+<p>Regularization function of the form
+<code>regularizer(coeff)</code>, where <code>coeff</code> is a vector or matrix.</p>
+</dd>
+<dt><code>regularizer.gr</code></dt>
+<dd>
+<p>Function representing the gradient of the
+regularization function with respect to <code>coeff</code> and of the form
+<code>regularizer.gr(coeff)</code>.</p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>Nonnegative real number representing the regularization
+constant.</p>
+</dd>
+<dt><code>eps</code></dt>
+<dd>
+<p>Positive real number defining the epsilon privacy budget. If set
+to Inf, runs algorithm without differential privacy.</p>
+</dd>
+<dt><code>perturbation.method</code></dt>
+<dd>
+<p>String indicating whether to use the 'output' or
+the 'objective' perturbation methods (Chaudhuri et al. 2011).</p>
+</dd>
+<dt><code>c</code></dt>
+<dd>
+<p>Positive real number denoting the upper bound on the absolute
+value of the second derivative of the loss function, as required to
+ensure differential privacy for the objective perturbation method.</p>
+</dd>
+<dt><code>coeff</code></dt>
+<dd>
+<p>Numeric vector of coefficients for the model.</p>
+</dd>
+<dt><code>kernel</code></dt>
+<dd>
+<p>Value only used in child class <code>svmDP</code>. String
+indicating which kernel to use for SVM. Must be one of {'linear',
+'Gaussian'}. If 'linear' (default), linear SVM is used. If
+'Gaussian', uses the sampling function corresponding to the Gaussian
+(radial) kernel approximation.</p>
+</dd>
+<dt><code>D</code></dt>
+<dd>
+<p>Value only used in child class <code>svmDP</code>. Nonnegative
+integer indicating the dimensionality of the transform space
+approximating the kernel. Higher values of <code>D</code> provide better kernel
+approximations at a cost of computational efficiency.</p>
+</dd>
+<dt><code>sampling</code></dt>
+<dd>
+<p>Value only used in child class <code>svmDP</code>.
+Sampling function of the form <code>sampling(d)</code>, where <code>d</code> is the
+input dimension, returning a (<code>d</code>+1)-dimensional vector of samples
+corresponding to the Fourier transform of the kernel to be approximated.</p>
+</dd>
+<dt><code>phi</code></dt>
+<dd>
+<p>Value only used in child class <code>svmDP</code>. Function of
+the form <code>phi(x, theta)</code>, where <code>x</code> is an individual row of the
+original dataset, and theta is a (<code>d</code>+1)-dimensional vector sampled
+from the Fourier transform of the kernel to be approximated, where
+<code>d</code> is the dimension of <code>x</code>. The function returns a numeric
+scalar corresponding to the pre-filtered value at the given row with the
+given sampled vector.</p>
+</dd>
+<dt><code>kernel.param</code></dt>
+<dd>
+<p>Value only used in child class <code>svmDP</code>.
+Positive real number corresponding to the Gaussian kernel parameter.</p>
+</dd>
+<dt><code>prefilter</code></dt>
+<dd>
+<p>Value only used in child class <code>svmDP</code>. Matrix
+of pre-filter values used in converting data into transform space.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-EmpiricalRiskMinimizationDP.CMS-new"><code>EmpiricalRiskMinimizationDP.CMS$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EmpiricalRiskMinimizationDP.CMS-fit"><code>EmpiricalRiskMinimizationDP.CMS$fit()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EmpiricalRiskMinimizationDP.CMS-predict"><code>EmpiricalRiskMinimizationDP.CMS$predict()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-EmpiricalRiskMinimizationDP.CMS-clone"><code>EmpiricalRiskMinimizationDP.CMS$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-EmpiricalRiskMinimizationDP.CMS-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create a new <code>EmpiricalRiskMinimizationDP.CMS</code> object.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EmpiricalRiskMinimizationDP.CMS$new(
+  mapXy,
+  loss,
+  regularizer,
+  eps,
+  gamma,
+  perturbation.method = "objective",
+  c = NULL,
+  mapXy.gr = NULL,
+  loss.gr = NULL,
+  regularizer.gr = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>mapXy</code></dt>
+<dd>
+<p>Map function of the form <code>mapXy(X, coeff)</code> mapping input
+data matrix <code>X</code> and coefficient vector or matrix <code>coeff</code> to
+output labels <code>y</code>. Should return a column matrix of predicted labels
+for each row of <code>X</code>. See <code>mapXy.sigmoid</code> for an example.</p>
+</dd>
+<dt><code>loss</code></dt>
+<dd>
+<p>Loss function of the form <code>loss(y.hat, y)</code>, where
+<code>y.hat</code> and <code>y</code> are matrices. Should be defined such that it
+returns a matrix of loss values for each element of <code>y.hat</code> and
+<code>y</code>. See <code>loss.cross.entropy</code> for an example. It must be
+convex and differentiable, and the absolute value of the first derivative
+of the loss function must be at most 1. Additionally, if the objective
+perturbation method is chosen, it must be doubly differentiable and the
+absolute value of the second derivative of the loss function must be
+bounded above by a constant c for all possible values of <code>y.hat</code> and
+<code>y</code>.</p>
+</dd>
+<dt><code>regularizer</code></dt>
+<dd>
+<p>String or regularization function. If a string, must be
+'l2', indicating to use l2 regularization. If a function, must have form
+<code>regularizer(coeff)</code>, where <code>coeff</code> is a vector or matrix, and
+return the value of the regularizer at <code>coeff</code>. See
+<code>regularizer.l2</code> for an example. Additionally, in order to
+ensure differential privacy, the function must be 1-strongly convex and
+differentiable. If the objective perturbation method is chosen, it must
+also be doubly differentiable.</p>
+</dd>
+<dt><code>eps</code></dt>
+<dd>
+<p>Positive real number defining the epsilon privacy budget. If set
+to Inf, runs algorithm without differential privacy.</p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>Nonnegative real number representing the regularization
+constant.</p>
+</dd>
+<dt><code>perturbation.method</code></dt>
+<dd>
+<p>String indicating whether to use the 'output' or
+the 'objective' perturbation methods (Chaudhuri et al. 2011).
+Defaults to 'objective'.</p>
+</dd>
+<dt><code>c</code></dt>
+<dd>
+<p>Positive real number denoting the upper bound on the absolute
+value of the second derivative of the loss function, as required to
+ensure differential privacy for the objective perturbation method. This
+input is unnecessary if perturbation.method is 'output', but is required
+if perturbation.method is 'objective'. Defaults to NULL.</p>
+</dd>
+<dt><code>mapXy.gr</code></dt>
+<dd>
+<p>Optional function representing the gradient of the map
+function with respect to the values in <code>coeff</code>. If given, must be of
+the form <code>mapXy.gr(X, coeff)</code>, where <code>X</code> is a matrix and
+<code>coeff</code> is a matrix or numeric vector. Should be defined such that
+the ith row of the output represents the gradient with respect to the ith
+coefficient. See <code>mapXy.gr.sigmoid</code> for an example. If not
+given, non-gradient based optimization methods are used to compute the
+coefficient values in fitting the model.</p>
+</dd>
+<dt><code>loss.gr</code></dt>
+<dd>
+<p>Optional function representing the gradient of the loss
+function with respect to <code>y.hat</code> and of the form
+<code>loss.gr(y.hat, y)</code>, where <code>y.hat</code> and <code>y</code> are matrices.
+Should be defined such that the ith row of the output represents the
+gradient of the loss function at the ith set of input values. See
+<code>loss.gr.cross.entropy</code> for an example. If not given,
+non-gradient based optimization methods are used to compute the
+coefficient values in fitting the model.</p>
+</dd>
+<dt><code>regularizer.gr</code></dt>
+<dd>
+<p>Optional function representing the gradient of the
+regularization function with respect to <code>coeff</code> and of the form
+<code>regularizer.gr(coeff)</code>. Should return a vector. See
+<code>regularizer.gr.l2</code> for an example. If <code>regularizer</code> is
+given as a string, this value is ignored. If not given and
+<code>regularizer</code> is a function, non-gradient based optimization methods
+are used to compute the coefficient values in fitting the model.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A new <code>EmpiricalRiskMinimizationDP.CMS</code> object.
+</p>
+
+
+<hr>
+<a id="method-EmpiricalRiskMinimizationDP.CMS-fit"></a>
+
+
+
+<h4>Method <code>fit()</code>
+</h4>
+
+<p>Fit the differentially private empirical risk minimization
+model. This method runs either the output perturbation or the objective
+perturbation algorithm (Chaudhuri et al. 2011), depending on
+the value of perturbation.method used to construct the object, to
+generate an objective function. A numerical optimization method is then
+run to find optimal coefficients for fitting the model given the training
+data and hyperparameters. The built-in <code>optim</code> function using
+the "BFGS" optimization method is used. If <code>mapXy.gr</code>,
+<code>loss.gr</code>, and <code>regularizer.gr</code> are all given in the
+construction of the object, the gradient of the objective function is
+utilized by <code>optim</code> as well. Otherwise, non-gradient based
+optimization methods are used. The resulting privacy-preserving
+coefficients are stored in <code>coeff</code>.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EmpiricalRiskMinimizationDP.CMS$fit(
+  X,
+  y,
+  upper.bounds,
+  lower.bounds,
+  add.bias = FALSE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Dataframe of data to be fit.</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>Vector or matrix of true labels for each row of <code>X</code>.</p>
+</dd>
+<dt><code>upper.bounds</code></dt>
+<dd>
+<p>Numeric vector of length <code>ncol(X)</code> giving upper
+bounds on the values in each column of X. The <code>ncol(X)</code> values are
+assumed to be in the same order as the corresponding columns of <code>X</code>.
+Any value in the columns of <code>X</code> larger than the corresponding upper
+bound is clipped at the bound.</p>
+</dd>
+<dt><code>lower.bounds</code></dt>
+<dd>
+<p>Numeric vector of length <code>ncol(X)</code> giving lower
+bounds on the values in each column of <code>X</code>. The <code>ncol(X)</code>
+values are assumed to be in the same order as the corresponding columns
+of <code>X</code>. Any value in the columns of <code>X</code> larger than the
+corresponding upper bound is clipped at the bound.</p>
+</dd>
+<dt><code>add.bias</code></dt>
+<dd>
+<p>Boolean indicating whether to add a bias term to <code>X</code>.
+Defaults to FALSE.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-EmpiricalRiskMinimizationDP.CMS-predict"></a>
+
+
+
+<h4>Method <code>predict()</code>
+</h4>
+
+<p>Predict label(s) for given <code>X</code> using the fitted
+coefficients.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EmpiricalRiskMinimizationDP.CMS$predict(X, add.bias = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Dataframe of data on which to make predictions. Must be of same
+form as <code>X</code> used to fit coefficients.</p>
+</dd>
+<dt><code>add.bias</code></dt>
+<dd>
+<p>Boolean indicating whether to add a bias term to <code>X</code>.
+Defaults to FALSE. If add.bias was set to TRUE when fitting the
+coefficients, add.bias should be set to TRUE for predictions.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>Matrix of predicted labels corresponding to each row of <code>X</code>.
+</p>
+
+
+<hr>
+<a id="method-EmpiricalRiskMinimizationDP.CMS-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>EmpiricalRiskMinimizationDP.CMS$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>References</h3>
+
+<p>Chaudhuri K, Monteleoni C, Sarwate AD (2011).
+“Differentially Private Empirical Risk Minimization.”
+<em>Journal of Machine Learning Research</em>, <b>12</b>(29), 1069-1109.
+<a href="https://jmlr.org/papers/v12/chaudhuri11a.html">https://jmlr.org/papers/v12/chaudhuri11a.html</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Build train dataset X and y, and test dataset Xtest and ytest
+N &lt;- 200
+K &lt;- 2
+X &lt;- data.frame()
+y &lt;- data.frame()
+for (j in (1:K)){
+  t &lt;- seq(-.25, .25, length.out = N)
+  if (j==1) m &lt;- stats::rnorm(N,-.2, .1)
+  if (j==2) m &lt;- stats::rnorm(N, .2, .1)
+  Xtemp &lt;- data.frame(x1 = 3*t , x2 = m - t)
+  ytemp &lt;- data.frame(matrix(j-1, N, 1))
+  X &lt;- rbind(X, Xtemp)
+  y &lt;- rbind(y, ytemp)
+}
+Xtest &lt;- X[seq(1,(N*K),10),]
+ytest &lt;- y[seq(1,(N*K),10),,drop=FALSE]
+X &lt;- X[-seq(1,(N*K),10),]
+y &lt;- y[-seq(1,(N*K),10),,drop=FALSE]
+
+# Construct object for logistic regression
+mapXy &lt;- function(X, coeff) e1071::sigmoid(X%*%coeff)
+# Cross entropy loss
+loss &lt;- function(y.hat,y) -(y*log(y.hat) + (1-y)*log(1-y.hat))
+regularizer &lt;- 'l2' # Alternatively, function(coeff) coeff%*%coeff/2
+eps &lt;- 1
+gamma &lt;- 1
+perturbation.method &lt;- 'objective'
+c &lt;- 1/4 # Required value for logistic regression
+mapXy.gr &lt;- function(X, coeff) as.numeric(e1071::dsigmoid(X%*%coeff))*t(X)
+loss.gr &lt;- function(y.hat, y) -y/y.hat + (1-y)/(1-y.hat)
+regularizer.gr &lt;- function(coeff) coeff
+ermdp &lt;- EmpiricalRiskMinimizationDP.CMS$new(mapXy, loss, regularizer, eps,
+                                             gamma, perturbation.method, c,
+                                             mapXy.gr, loss.gr,
+                                             regularizer.gr)
+
+# Fit with data
+# Bounds for X based on construction
+upper.bounds &lt;- c( 1, 1)
+lower.bounds &lt;- c(-1,-1)
+ermdp$fit(X, y, upper.bounds, lower.bounds) # No bias term
+ermdp$coeff # Gets private coefficients
+
+# Predict new data points
+predicted.y &lt;- ermdp$predict(Xtest)
+n.errors &lt;- sum(round(predicted.y)!=ytest)
+
+</code></pre>
+
+
+</div>

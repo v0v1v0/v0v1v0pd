@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>autoSum</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Computes sum of distances between consecutive samples in a multivariate time-series.</h2>
+
+<h3>Description</h3>
+
+<p>Computes the sum of distances between consecutive samples in a multivariate time-series. Required to compute the measure of dissimilarity <code>psi</code> (Birks and Gordon 1985). Distances can be computed through the methods "manhattan", "euclidean", "chi", and "hellinger", and are implemented in the function <code>distance</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">autoSum(
+  sequences = NULL,
+  least.cost.path = NULL,
+  time.column = NULL,
+  grouping.column = NULL,
+  exclude.columns = NULL,
+  method = "manhattan",
+  parallel.execution = TRUE
+  )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sequences</code></td>
+<td>
+<p>dataframe with one or several multivariate time-series identified by a grouping column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>least.cost.path</code></td>
+<td>
+<p>a list usually resulting from either <code>leastCostPath</code> or <code>leastCostPathNoBlocks</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time.column</code></td>
+<td>
+<p>character string, name of the column with time/depth/rank data. The data in this column is not modified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grouping.column</code></td>
+<td>
+<p>character string, name of the column in <code>sequences</code> to be used to identify separates sequences within the file. This argument is ignored if <code>sequence.A</code> and <code>sequence.B</code> are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude.columns</code></td>
+<td>
+<p>character string or character vector with column names in <code>sequences</code>, or <code>squence.A</code> and <code>sequence.B</code> to be excluded from the analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character string naming a distance metric. Valid entries are: "manhattan", "euclidean", "chi", and "hellinger". Invalid entries will throw an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.execution</code></td>
+<td>
+<p>boolean, if <code>TRUE</code> (default), execution is parallelized, and serialized if <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Distances are computed as:
+</p>
+
+<ul>
+<li> <p><code>manhattan</code>: <code>d &lt;- sum(abs(x - y))</code>
+</p>
+</li>
+<li> <p><code>euclidean</code>: <code>d &lt;- sqrt(sum((x - y)^2))</code>
+</p>
+</li>
+<li> <p><code>chi</code>: <code>
+    xy &lt;- x + y
+    y. &lt;- y / sum(y)
+    x. &lt;- x / sum(x)
+    d &lt;- sqrt(sum(((x. - y.)^2) / (xy / sum(xy))))</code>
+</p>
+</li>
+<li> <p><code>hellinger</code>: <code>d &lt;- sqrt(1/2 * sum(sqrt(x) - sqrt(y))^2)</code>
+</p>
+</li>
+</ul>
+<p>Note that zeroes are replaced by 0.00001 whem <code>method</code> equals "chi" or "hellinger".
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with slots named according <code>grouping.column</code> if there are several sequences in <code>sequences</code> or a number if there is only one sequence.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Blas Benito &lt;blasbenito@gmail.com&gt;
+</p>
+
+<ul><li>
+<p> Birks, H.J.B.  and Gordon, A.D. (1985) Numerical Methods in Quaternary Pollen Analysis. Academic Press.
+</p>
+</li></ul>
+<h3>See Also</h3>
+
+<p><code>distance</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+#loading data
+data(sequenceA)
+data(sequenceB)
+
+#preparing datasets
+AB.sequences &lt;- prepareSequences(
+ sequence.A = sequenceA,
+ sequence.A.name = "A",
+ sequence.B = sequenceB,
+ sequence.B.name = "B",
+ merge.mode = "complete",
+ if.empty.cases = "zero",
+ transformation = "hellinger"
+ )
+
+#computing distance matrix
+AB.distance.matrix &lt;- distanceMatrix(
+ sequences = AB.sequences,
+ grouping.column = "id",
+ method = "manhattan",
+ parallel.execution = FALSE
+ )
+
+#computing least cost matrix
+AB.least.cost.matrix &lt;- leastCostMatrix(
+ distance.matrix = AB.distance.matrix,
+ diagonal = FALSE,
+ parallel.execution = FALSE
+ )
+
+AB.least.cost.path &lt;- leastCostPath(
+ distance.matrix = AB.distance.matrix,
+ least.cost.matrix = AB.least.cost.matrix,
+ parallel.execution = FALSE
+ )
+
+#autosum
+AB.autosum &lt;- autoSum(
+ sequences = AB.sequences,
+ least.cost.path = AB.least.cost.path,
+ grouping.column = "id",
+ parallel.execution = FALSE
+ )
+AB.autosum
+
+
+
+</code></pre>
+
+
+</div>

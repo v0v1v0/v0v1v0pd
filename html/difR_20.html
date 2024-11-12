@@ -1,0 +1,261 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>genLogistik</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generalized logistic regression DIF statistic</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the "generalized logistic regression" likelihood-ratio or Wald statistics for DIF detection among 
+multiple groups. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">genLogistik(data, member, match = "score", anchor = 1:ncol(data), 
+ 	type = "both", criterion = "LRT") 
+ </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>numeric: the data matrix (one row per subject, one column per item).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>member</code></td>
+<td>
+<p>numeric: the vector of group membership with zero and positive integer entries only. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>specifies the type of matching criterion. Can be either <code>"score"</code> (default) to compute the test score, or any continuous or discrete variable with the same length as the number of rows of <code>data</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor</code></td>
+<td>
+<p>a vector of integer values specifying which items (all by default) are currently considered as anchor (DIF free) items. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>a character string specifying which DIF effects must be tested. Possible values are <code>"both"</code> (default), <code>"udif"</code> and <code>"nudif"</code>. 
+See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>character: the type of test statistic used to detect DIF items. Possible values are <code>"LRT"</code> (default) and <code>"Wald"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This command computes the generalized logistic regression statistic (Magis, Raiche, Beland and Gerard, 2011) in the specific framework of differential item
+functioning among  <code class="reqn">(J+1)</code> groups and <em>J</em> is the number of focal groups. It forms the basic command of <code>difGenLogistic</code> and is specifically 
+designed for this call.
+</p>
+<p>The three possible models to be fitted are:
+</p>
+<p style="text-align: center;"><code class="reqn">M_0: logit (\pi_i) = \alpha + \beta X + \gamma_i + \delta_i X</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">M_1: logit (\pi_i) = \alpha + \beta X + \gamma_i</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">M_2: logit (\pi_i) = \alpha + \beta X</code>
+</p>
+
+<p>where <code class="reqn">\pi_i</code> is the probability of answering correctly the item in group <em>i</em> (<code class="reqn">i = 0, ..., J</code>) and <code class="reqn">X</code> is the matching criterion. Parameters
+<code class="reqn">\alpha</code> and <code class="reqn">\beta</code> are the common intercept and the slope of the logistic curves, while <code class="reqn">\gamma_i</code> and <code class="reqn">\delta_i</code> are group-specific
+parameters. For identification reasons the parameters <code class="reqn">\gamma_0</code> and <code class="reqn">\delta_0</code> of the reference group are set to zero. The set of parameters
+<code class="reqn">\{\gamma_i: i = 1, ..., J\}</code> of the focal groups (<code class="reqn">g=i</code>) represents the uniform DIF effect across all groups, and the set of parameters 
+<code class="reqn">\{\delta_i: i = 1, ..., n\}</code> is used to model nonuniform DIF effect across all groups.
+The models are fitted with the <code>glm</code> function.
+</p>
+<p>The matching criterion can be either the test score or any other continuous or discrete variable to be passed in the <code>Logistik</code> function. This is specified by the <code>match</code> argument. By default, it takes the value <code>"score"</code> and the test score (i.e. raw score) is computed. The second option is to assign to <code>match</code> a vector of continuous or discrete numeric values, which acts as the matching criterion. Note that for consistency this vector should not belong to the <code>data</code> matrix.
+</p>
+<p>Two tests are available: the Wald test and the likelihood ratio test. With the likelihood ratio test, two nested models are fitted and compared by means
+of Wilks' Lambda (or likelihood ratio) statistic (Wilks, 1938). With the Wald test, the model parameters are statistically tested using an appropriate 
+contrast matrix. Each test is set with the <code>criterion</code> argument, with the values <code>"LRT"</code> and <code>"Wald"</code> respectively. 
+</p>
+<p>The argument <code>type</code> determines the type of DIF effect to be tested. The three possible values of <code>type</code> are: <code>type="both"</code> which tests
+the hypothesis <code class="reqn">H_0: \gamma_i = \delta_i=0</code> for all <em>i</em>; <code>type="nudif"</code> which tests the hypothesis <code class="reqn">H_0: \delta_i = 0</code> for all <em>i</em>;
+and <code>type="udif"</code> which tests the hypothesis <code class="reqn">H_0: \gamma_i = 0 | \delta_i = 0</code> for all <em>i</em>. In other words, <code>type="both"</code> tests
+for DIF (without distinction between uniform and nonuniform effects), while <code>type="udif"</code> and <code>type="nudif"</code> test for uniform and nonuniform DIF,
+respectively. Whatever the tested DIF effects, this is a simultaneous test of the equality of focal group parameters to zero.
+</p>
+<p>The data are passed through the <code>data</code> argument, with one row per subject and one column per item.  Missing values are allowed but must be coded as 
+<code>NA</code> values. They are discarded from the fitting of the logistic models (see <code>glm</code> for further details).
+</p>
+<p>The vector of group membership, specified with <code>member</code> argument, must hold only zeros and positive integers. The value zero corresponds to the
+reference group, and each positive integer value corresponds to one focal group. At least two different positive integers must be supplied.
+</p>
+<p>Option <code>anchor</code> sets the items which are considered as anchor items for computing the  logistic regression DIF statistics. Items other than the anchor 
+items and the tested item are discarded. <code>anchor</code> must hold integer values specifying the column numbers of the corresponding anchor items. It is 
+mainly designed to perform item purification.
+</p>
+<p>In addition to the results of the fitted models (model parameters, covariance matrices, test statistics), Nagelkerke's <code class="reqn">R^2</code> coefficients (Nagelkerke, 1991)
+are computed for each model and the output returns the differences in these coefficients. Such differences are used as measures of effect size by the
+<code>difGenLogistic</code> command; see Gomez-Benito, Dolores Hidalgo and Padilla (2009), Jodoin and Gierl (2001) and Zumbo and Thomas (1997).
+</p>
+
+
+<h3>Value</h3>
+
+ 
+<p>A list with nine components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>stat</code></td>
+<td>
+<p>the values of the generalized logistic regression DIF statistics (that is, the likelihood ratio test statistics).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R2M0</code></td>
+<td>
+<p>the values of Nagelkerke's R^2 coefficients for the "full" model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R2M1</code></td>
+<td>
+<p>the values of Nagelkerke's R^2 coefficients for the "simpler" model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deltaR2</code></td>
+<td>
+<p>the differences between Nagelkerke's <code class="reqn">R^2</code> coefficients of the tested models. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parM0</code></td>
+<td>
+<p>a matrix with one row per item and <code class="reqn">2+J*2</code> columns (where <em>J</em> is the number of focal groups), holding successively the fitted 
+parameters <code class="reqn">\hat{\alpha}</code>, <code class="reqn">\hat{\beta}</code>, <code class="reqn">\hat{\gamma}_i</code> and <code class="reqn">\hat{\delta}_i</code> (<code class="reqn">i = 1, ..., J</code>) of the "full" 
+model (<code class="reqn">M_0</code> if <code>type="both"</code> or <code>type="nudif"</code>, <code class="reqn">M_1</code> if <code>type="udif"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parM1</code></td>
+<td>
+<p>the same matrix as <code>parM0</code> but with fitted parameters for the "simpler" model (<code class="reqn">M_1</code> if <code>type="nudif"</code>, <code class="reqn">M_2</code> if <code>type="both"</code>
+or <code>type="udif"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covMat</code></td>
+<td>
+<p>a 3-dimensional matrix of size <em>p</em> x <em>p</em> x <em>K</em>, where <em>p</em> is the number of estimated parameters and <em>K</em> is the number of
+items, holding the <em>p</em> x <em>p</em> covariance matrices of the estimated parameters (one matrix for each tested item).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>the value of the <code>criterion</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>a character string, either <code>"score"</code> or <code>"matching variable"</code> depending on the <code>match</code> argument.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Sebastien Beland <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:sebastien.beland.1@hotmail.com">sebastien.beland.1@hotmail.com</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br>
+David Magis <br>
+Department of Psychology, University of Liege <br>
+Research Group of Quantitative Psychology and Individual Differences, KU Leuven <br><a href="mailto:David.Magis@uliege.be">David.Magis@uliege.be</a>, <a href="http://ppw.kuleuven.be/okp/home/">http://ppw.kuleuven.be/okp/home/</a> <br>
+Gilles Raiche <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:raiche.gilles@uqam.ca">raiche.gilles@uqam.ca</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Gomez-Benito, J., Dolores Hidalgo, M. and Padilla, J.-L. (2009). Efficacy of effect size measures in logistic regression: an application for detecting DIF. 
+<em>Methodology, 5</em>, 18-25. doi: <a href="https://doi.org/10.1027/1614-2241.5.1.18">10.1027/1614-2241.5.1.18</a>
+</p>
+<p>Jodoin, M. G. and Gierl, M. J. (2001). Evaluating Type I error and power rates using an effect size measure with logistic regression procedure for DIF detection. <em>Applied Measurement in Education, 14</em>, 329-349. doi: <a href="https://doi.org/10.1207/S15324818AME1404_2">10.1207/S15324818AME1404_2</a>
+</p>
+<p>Magis, D., Beland, S., Tuerlinckx, F. and De Boeck, P. (2010). A general framework and an R package for the detection
+of dichotomous differential item functioning. <em>Behavior Research Methods, 42</em>, 847-862. doi: <a href="https://doi.org/10.3758/BRM.42.3.847">10.3758/BRM.42.3.847</a>
+</p>
+<p>Magis, D., Raiche, G., Beland, S. and Gerard, P. (2011). A logistic regression procedure to detect differential item functioning among multiple groups. <em>International Journal of Testing, 11</em>, 365–386. doi: <a href="https://doi.org/10.1080/15305058.2011.602810">10.1080/15305058.2011.602810</a>
+</p>
+<p>Nagelkerke, N. J. D. (1991). A note on a general definition of the coefficient of determination. <em>Biometrika, 78</em>, 691-692. doi: <a href="https://doi.org/10.1093/biomet/78.3.691">10.1093/biomet/78.3.691</a>
+</p>
+<p>Wilks, S. S. (1938). The large-sample distribution of the likelihood ratio for testing composite hypotheses. <em>Annals of Mathematical Statistics, 9</em>, 60-62. doi: <a href="https://doi.org/10.1214/aoms/1177732360">10.1214/aoms/1177732360</a>
+</p>
+<p>Zumbo, B. D. and Thomas, D. R. (1997). A measure of effect size for a model-based approach for studying DIF. Prince George, Canada: University of Northern British
+Columbia, Edgeworth Laboratory for Quantitative Behavioral Science.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>difGenLogistic</code>, <code>genDichoDif</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+ # Loading of the verbal data
+ data(verbal)
+ attach(verbal)
+
+ # Creating four groups according to gender (0 or 1) and trait anger score
+ # ("Low" or "High")
+ # Reference group: women with low trait anger score (&lt;=20)
+ group &lt;- rep(0,nrow(verbal))
+ group[Anger&gt;20 &amp; Gender==0] &lt;- 1
+ group[Anger&lt;=20 &amp; Gender==1] &lt;- 2
+ group[Anger&gt;20 &amp; Gender==1] &lt;- 3
+
+ # Testing both types of DIF simultaneously
+ # With all items
+ genLogistik(verbal[,1:24], group)
+ genLogistik(verbal[,1:24], group, criterion = "Wald")
+
+ # Removing item 6 from the set of anchor items
+ genLogistik(verbal[,1:24], group, anchor = c(1:5, 7:24))
+ genLogistik(verbal[,1:24], group, anchor = c(1:5, 7:24), criterion = "Wald")
+
+ # Testing nonuniform DIF effect
+ genLogistik(verbal[,1:24], group, type = "nudif")
+ genLogistik(verbal[,1:24], group, type = "nudif", criterion="Wald")
+
+ # Testing uniform DIF effect
+ genLogistik(verbal[,1:24], group, type = "udif")
+ genLogistik(verbal[,1:24], group, type = "udif", criterion="Wald")
+
+ # Using trait anger score as matching criterion
+ genLogistik(verbal[,1:24], group, match = verbal[,25])
+ 
+## End(Not run)
+ </code></pre>
+
+
+</div>

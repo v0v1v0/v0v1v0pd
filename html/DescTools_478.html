@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>TMod</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Comparison Table For Linear Models
+
+</h2>
+
+<h3>Description</h3>
+
+<p>Collect the coefficients and some qualifying statistics of linear models and organize it in a table for comparison and reporting. The function supports linear and general linear models.
+
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">TMod(..., FUN = NULL, order = NA)
+
+ModSummary(x, ...)
+
+## S3 method for class 'lm'
+ModSummary(x, conf.level = 0.95, ...)
+## S3 method for class 'glm'
+ModSummary(x, conf.level = 0.95, use.profile = TRUE, ...)
+
+## S3 method for class 'TMod'
+plot(x, terms = NULL, intercept = FALSE, ...)
+## S3 method for class 'TMod'
+print(x, digits = 3, na.form = "-", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a (general) linear model object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>a list of (general) linear models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>the level for the confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>function with arguments <code>est</code>, <code>se</code>, <code>tval</code>, <code>pval</code>, <code>lci</code>, <code>uci</code> to display the coefficients. The default function will display the coefficient and significance stars for the p-values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>row of the results table to be used as order for the models (as typically "AIC"). Can be any label in the first column of the results table. Default is <code>NA</code> for no special order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms</code></td>
+<td>
+<p>a vector with the terms of the model formula to be plotted. By default this will be all of them.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.profile</code></td>
+<td>
+<p>logical. Defines if profile approach should be used, which normally is a good choice for small datasets. Calculating profile can however take ages for large datasets and not be necessary there. So we can fallback to normal confidence intervals. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>logical, defining whether the intercept should be plotted (default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>integer, the desired (fixed) number of digits after the decimal point. Unlike <code>formatC</code> you will always get this number of digits even if the last digit is 0.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.form</code></td>
+<td>
+<p>character, string specifying how <code>NA</code>s should be specially formatted.
+If set to <code>NULL</code> (default) no special action will be taken.
+
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In order to compare the coefficients of linear models, the user is left to his own devices. R offers no support in this respect. <code>TMod()</code> jumps into the breach and displays the coefficients of several models in tabular form. For this purpose, different quality indicators for the models are displayed, so that a comprehensive comparison of the models is possible. In particular, it is easy to see the effect that adding or omitting variables has on forecast quality.
+</p>
+<p>A plot function for a <code>TMod</code> object will produce a dotchart with the coefficients and their confidence intervals.
+</p>
+
+
+<h3>Value</h3>
+
+<p>character table
+
+
+
+
+
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Andri Signorell &lt;andri@signorell.net&gt;
+
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>help</code>
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">r.full &lt;- lm(Fertility ~ . , swiss)
+r.nox &lt;- lm(Fertility ~ . -Examination - Catholic, swiss)
+r.grp &lt;- lm(Fertility ~ . -Education - Catholic + CutQ(Catholic), swiss)
+r.gam &lt;- glm(Fertility ~ . , swiss, family=Gamma(link="identity"))
+r.gama &lt;- glm(Fertility ~ .- Agriculture , swiss, family=Gamma(link="identity"))
+r.gaml &lt;- glm(Fertility ~ . , swiss, family=Gamma(link="log"))
+
+TMod(r.full, r.nox, r.grp, r.gam, r.gama, r.gaml)
+
+# display confidence intervals
+TMod(r.full, r.nox, r.gam, FUN = function(est, se, tval, pval, lci, uci){
+  gettextf("%s [%s, %s]",
+           Format(est, fmt=Fmt("num")),
+           Format(lci, digits=3),
+           Format(uci, digits=2)
+           )
+})
+
+
+# cbind interface is not supported!!
+# d.titanic &lt;- reshape(as.data.frame(Titanic),
+#                       idvar = c("Class","Sex","Age"),
+#                       timevar="Survived",
+#                       direction = "wide")
+#
+# r.glm0 &lt;- glm(cbind(Freq.Yes, Freq.No) ~ 1, data=d.titanic, family="binomial")
+# r.glm1 &lt;- glm(cbind(Freq.Yes, Freq.No) ~ Class, data=d.titanic, family="binomial")
+# r.glm2 &lt;- glm(cbind(Freq.Yes, Freq.No) ~ ., data=d.titanic, family="binomial")
+
+d.titanic &lt;- Untable(Titanic)
+
+r.glm0 &lt;- glm(Survived ~ 1, data=d.titanic, family="binomial")
+r.glm1 &lt;- glm(Survived ~ Class, data=d.titanic, family="binomial")
+r.glm2 &lt;- glm(Survived ~ ., data=d.titanic, family="binomial")
+
+TMod(r.glm0, r.glm1, r.glm2)
+
+# plot OddsRatios
+d.pima &lt;- MASS::Pima.tr2
+
+r.a &lt;- glm(type ~ npreg + bp + skin + bmi + ped + age, data=d.pima, family=binomial)
+r.b &lt;- glm(type ~ npreg + glu + bp + skin, data=d.pima, family=binomial)
+r.c &lt;- glm(type ~ npreg + age, data=d.pima, family=binomial)
+
+or.a &lt;- OddsRatio(r.a)
+or.b &lt;- OddsRatio(r.b)
+or.c &lt;- OddsRatio(r.c)
+
+
+# create the model table
+tm &lt;- TMod(m_A=or.a, m_B=or.b, m_C=or.c)
+# .. and plotit
+plot(tm, main="ORs for Models A, B, C", intercept=FALSE,
+     pch=15, col=c(DescTools::hred, DescTools::hblue, DescTools::horange), 
+     panel.first=abline(v=1, col="grey30"))
+</code></pre>
+
+
+</div>

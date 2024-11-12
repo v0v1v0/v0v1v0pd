@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>moments</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute distributional moments from the parameters</h2>
+
+<h3>Description</h3>
+
+<p>This function takes (predicted) parameters of a response distribution and
+calculates the corresponding distributional moments from it. Furthermore, you
+can specify own functions that calculate measures depending on distributional
+parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">moments(par, fam_name, what = "mean", ex_fun = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>Parameters of the modeled distribution in a data.frame form. Can
+be Output of <code>preds</code>, for example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fam_name</code></td>
+<td>
+<p>Name of the used family in character form. Can be one of
+<code>distreg.vis::dists$dist_name</code>. All gamlss.dist and exported bamlss
+families are supported. To obtain the family from a model in character
+form, use <code>fam_obtainer</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>what</code></td>
+<td>
+<p>One of <code>"mean"</code>, <code>"upperlimit"</code>, <code>"lowerlimit"</code>.
+If it is <code>mean</code> (which is also the default), then the mean of the
+parameter samples is calculated. 2.5
+for <code>lowerlimit</code> and <code>upperlimit</code>, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ex_fun</code></td>
+<td>
+<p>An external function <code>function(par) {...}</code> which
+calculates a measure, whose dependency from a certain variable is of
+special interest.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>With the exception of betareg, the distributional families behind the
+estimation of the distributional regression models are represented by own
+objects, e.g. GA or lognormal_bamlss. We
+worked together with both the authors of gamlss and bamlss such
+that the functions to compute the moments from the parameters of the
+underlying distribution is already implemented in the family functon itself.
+As an example, try out <code>gamlss.dist::BE()$mean</code>, which shows one
+example. The function <code>moments()</code> utilizes this fact and ensures that
+the outcome is always in the right format: Two columns named 'Expected_Value'
+and 'Variance' detailing the first two moments. One exception appears when an
+external function is specified, at which point there are three columns.
+</p>
+<p>Each row details one 'scenario' meaning one covariate combination for which
+to predict the moments. <code>moments()</code> is heavily used in
+plot_moments, where moments are calculated over the entire range of
+one variable.
+</p>
+<p>If target distribution stems from a bamlss model, <code>moments()</code> can
+also utilize the samples from the preds function to transform them.
+This is important for correct estimates, as just taking the mean of the
+samples and then using those means to estimate the moments can lead to
+inaccurate results. <code>moments()</code> knows when samples of predicted
+parameters were specified in the <code>par</code> argument, and then transforms the
+samples to the moments, before taking averages. Only through this procedure
+we even get credible intervals for the expected moments (see "upperlimit" and
+"lowerlimit" as possible outcomes of argument <code>what</code>).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Get some artificial data
+gamma_data &lt;- model_fam_data(fam_name = "gamma", nrow = 100)
+
+# Estimate model
+library("bamlss")
+model &lt;- bamlss(list(gamma ~ norm2 + binomial1,
+                     sigma ~ norm2 + binomial1),
+                     data = gamma_data,
+                     family = gamma_bamlss())
+
+# Get some predicted parameters in sample and without sample form
+pred_params &lt;- preds(model, vary_by = "binomial1")
+pred_params_samples &lt;- preds(model, vary_by = "binomial1", what = "samples")
+
+# Now calculate moments - with samples more correct estimates come out
+moments(pred_params, fam_name = "gamma", what = "mean")
+moments(pred_params_samples, fam_name = "gamma", what = "mean")
+
+# Now with specifying an external function
+my_serious_fun &lt;- function(par) {
+  return(par[["mu"]] + 3*par[["sigma"]])
+}
+moments(pred_params_samples,
+        what = "mean",
+        fam_name = "gamma",
+        ex_fun = "my_serious_fun")
+
+</code></pre>
+
+
+</div>

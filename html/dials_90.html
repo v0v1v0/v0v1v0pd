@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>new-param</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Tools for creating new parameter objects</h2>
+
+<h3>Description</h3>
+
+<p>These functions are used to construct new parameter objects. Generally,
+these functions are called from higher level parameter generating functions
+like <code>mtry()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">new_quant_param(
+  type = c("double", "integer"),
+  range = NULL,
+  inclusive = NULL,
+  default = deprecated(),
+  trans = NULL,
+  values = NULL,
+  label = NULL,
+  finalize = NULL,
+  ...,
+  call = caller_env()
+)
+
+new_qual_param(
+  type = c("character", "logical"),
+  values,
+  default = deprecated(),
+  label = NULL,
+  finalize = NULL,
+  ...,
+  call = caller_env()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>A single character value. For quantitative parameters, valid
+choices are <code>"double"</code> and <code>"integer"</code> while for qualitative factors they are
+<code>"character"</code> and <code>"logical"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range</code></td>
+<td>
+<p>A two-element vector with the smallest or largest possible
+values, respectively. If these cannot be set when the parameter is defined,
+the <code>unknown()</code> function can be used. If a transformation is specified,
+these values should be in the <em>transformed units</em>. If <code>values</code> is supplied,
+and <code>range</code> is <code>NULL</code>, <code>range</code> will be set to <code>range(values)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inclusive</code></td>
+<td>
+<p>A two-element logical vector for whether the range
+values should be inclusive or exclusive. If <code>values</code> is supplied,
+and <code>inclusive</code> is <code>NULL</code>, <code>inclusive</code> will be set to <code>c(TRUE, TRUE)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>default</code></td>
+<td>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated"><img src="../help/figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a>
+No longer used. If a value is supplied, it will be ignored and
+a warning will be thrown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trans</code></td>
+<td>
+<p>A <code>trans</code> object from the <span class="pkg">scales</span> package, such as
+<code>scales::transform_log()</code> or <code>scales::transform_reciprocal()</code>. Create custom
+transforms with <code>scales::new_transform()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p>A vector of possible values that is required when <code>type</code> is
+<code>"character"</code> or <code>"logical"</code> but optional otherwise. For quantitative
+parameters, this can be used as an alternative to <code>range</code> and <code>inclusive</code>.
+If set, these will be used by <code>value_seq()</code> and <code>value_sample()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>An optional named character string that can be used for
+printing and plotting. The name should match the object name (e.g.
+<code>"mtry"</code>, <code>"neighbors"</code>, etc.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>finalize</code></td>
+<td>
+<p>A function that can be used to set the data-specific
+values of a parameter (such as the <code>range</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>These dots are for future extensions and must be empty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The call passed on to <code>rlang::abort()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"param"</code> with the primary class being either
+<code>"quant_param"</code> or <code>"qual_param"</code>. The <code>range</code> element of the object
+is always converted to a list with elements <code>"lower"</code> and <code>"upper"</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a function that generates a quantitative parameter
+# corresponding to the number of subgroups.
+num_subgroups &lt;- function(range = c(1L, 20L), trans = NULL) {
+  new_quant_param(
+    type = "integer",
+    range = range,
+    inclusive = c(TRUE, TRUE),
+    trans = trans,
+    label = c(num_subgroups = "# Subgroups"),
+    finalize = NULL
+  )
+}
+
+num_subgroups()
+
+num_subgroups(range = c(3L, 5L))
+
+# Custom parameters instantly have access
+# to sequence generating functions
+value_seq(num_subgroups(), 5)
+
+</code></pre>
+
+
+</div>

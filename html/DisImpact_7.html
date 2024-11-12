@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>di_iterate_sql</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Iteratively calculate disproportionate impact using multiple methods for many variables, using SQL.</h2>
+
+<h3>Description</h3>
+
+<p>Iteratively calculate disproportionate impact via the percentage point gap (PPG), proportionality index, and 80% index methods for many success variables, disaggregation variables, and scenarios, using SQL (for data stored in a database or in a parquet data file).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">di_iterate_sql(
+  db_conn,
+  db_table_name,
+  success_vars,
+  group_vars,
+  cohort_vars = NULL,
+  scenario_repeat_by_vars = NULL,
+  exclude_scenario_df = NULL,
+  weight_var = NULL,
+  include_non_disagg_results = TRUE,
+  ppg_reference_groups = "overall",
+  min_moe = 0.03,
+  use_prop_in_moe = FALSE,
+  prop_sub_0 = 0.5,
+  prop_sub_1 = 0.5,
+  di_prop_index_cutoff = 0.8,
+  di_80_index_cutoff = 0.8,
+  di_80_index_reference_groups = "hpg",
+  check_valid_reference = TRUE,
+  parallel = FALSE,
+  parallel_n_cores = parallel::detectCores()/2,
+  mssql_flag = FALSE,
+  return_what = "data",
+  staging_table = paste0("DisImpact_Staging_", paste0(sample(1:9, size = 5, replace =
+    TRUE), collapse = "")),
+  drop_staging_table = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>db_conn</code></td>
+<td>
+<p>A database connection object, returned by dbConnect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>db_table_name</code></td>
+<td>
+<p>A character value specifying a database table name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>success_vars</code></td>
+<td>
+<p>A character vector of success variable names to iterate across.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_vars</code></td>
+<td>
+<p>A character vector of group (disaggregation) variable names to iterate across.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cohort_vars</code></td>
+<td>
+<p>(Optional) A character vector of the same length as <code>success_vars</code> to indicate the cohort variable to be used for each variable specified in <code>success_vars</code>.  A vector of length 1 could be specified, in which case the same cohort variable is used for each success variable.  If not specified, then a single cohort is assumed for all success variables (defaults to <code>NULL</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scenario_repeat_by_vars</code></td>
+<td>
+<p>(Optional) A character vector of variables to repeat DI calculations for across all combination of these variables.  For example, the following variables could be specified:
+</p>
+
+<ul>
+<li>
+<p> Ed Goal: Degree/Transfer, Shot-term Career, Non-credit
+</p>
+</li>
+<li>
+<p> First time college student: Yes, No
+</p>
+</li>
+<li>
+<p> Full-time status: Yes, No
+</p>
+</li>
+</ul>
+<p>Each combination of these variables (eg, full time, first time college students with an ed goal of degree/transfer as one combination) would constitute an iteration / sample for which to calculate disproportionate impact for outcomes listed in <code>success_vars</code> and for the disaggregation variables listed in <code>group_vars</code>. The overall rate of success for full time, first time college students with an ed goal of degree/transfer would just include these students and not others.  Each variable specified is also collapsed to an '- All' group so that the combinations also reflect all students of a particular category.  The total number of combinations for the previous example would be (+1 representing the all category): (3 + 1) x (2 + 1) x (2 + 1) = 36.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude_scenario_df</code></td>
+<td>
+<p>(Optional) A data frame with variables that match <code>scenario_repeat_by_vars</code> for specifying the combinations to exclude from DI calculations.  Following the example specified above, one could choose to exclude part-time non-credit students from consideration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight_var</code></td>
+<td>
+<p>(Optional) A character variable specifying the weight variable if the input data set is summarized (i.e., the the success variables specified in <code>success_vars</code> contain count of successes).  Weight here corresponds to the denominator when calculating the success rate.  Defaults to <code>NULL</code> for an input data set where each row describes an individual.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_non_disagg_results</code></td>
+<td>
+<p>A logical variable specifying whether or not the non-disaggregated results should be returned; defaults to <code>TRUE</code>.  When <code>TRUE</code>, a new variable <code>`- None`</code> is added to the data set with a single data value <code>'- All'</code>, and this variable is added to <code>group_vars</code> as a disaggregation/group variable.  The user would want these results returned to review non-disaggregated results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ppg_reference_groups</code></td>
+<td>
+<p>Either <code>'overall'</code>, <code>'hpg'</code>, <code>'all but current'</code>, or a character vector of the same length as <code>group_vars</code> that indicates the reference group value for each group variable in <code>group_vars</code> when determining disproportionate impact using the percentage point gap method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_moe</code></td>
+<td>
+<p>The minimum margin of error to be used in the PPG calculation; see di_ppg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_prop_in_moe</code></td>
+<td>
+<p>(<code>TRUE</code> or <code>FALSE</code>) Whether the estimated proportions should be used in the margin of error calculation by the PPG; see di_ppg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop_sub_0</code></td>
+<td>
+<p>Default is 0.50; see di_ppg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop_sub_1</code></td>
+<td>
+<p>Default is 0.50; see di_ppg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_prop_index_cutoff</code></td>
+<td>
+<p>Threshold used for determining disproportionate impact using the proportionality index; see di_prop_index; defaults to 0.80.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_80_index_cutoff</code></td>
+<td>
+<p>Threshold used for determining disproportionate impact using the 80% index; see di_80_index; defaults to 0.80.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_80_index_reference_groups</code></td>
+<td>
+<p>Either <code>'overall'</code>, <code>'hpg'</code>, <code>'all but current'</code>, or a character vector of the same length as <code>group_vars</code> that indicates the reference group value for each group variable in <code>group_vars</code> when determining disproportionate impact using the 80% index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_valid_reference</code></td>
+<td>
+<p>(<code>TRUE</code> or <code>FALSE</code>) Check whether <code>ppg_reference_groups</code> and <code>di_80_index_reference_groups</code> contain valid values; defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>If <code>TRUE</code>, then perform calculations in parallel.  The parallel feature is only supported when <code>db_table_name</code> is a path to a parquet file (<code>'/path/to/data.parquet'</code>) and that <code>db_conn</code> is a connection to a duckdb database (e.g.,  <code>dbConnect(duckdb(), dbdir=':memory:')</code>).  Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel_n_cores</code></td>
+<td>
+<p>The number of CPU cores to use if <code>parallel=TRUE</code>.  Defaults to half of the maximum number of CPU cores on the system.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mssql_flag</code></td>
+<td>
+<p>User-specified logical flag (<code>TRUE</code> or <code>FALSE</code>) that indicates if the MS SQL Server variant of the SQL language should be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_what</code></td>
+<td>
+<p>A character value specifying the return value for the function call.  For <code>'data'</code>, the function will return a long data frame with the disproportionate calculations and relevant statistics, after the calculations are performed on the SQL database engine.  For <code>'SQL'</code>, a list object of individual queries will be returned for the user to execute elsewhere.  Defaults to <code>'data'</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>staging_table</code></td>
+<td>
+<p>A character value indicating the name of the staging or results table in the database for storing the disproportionate impact calculations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop_staging_table</code></td>
+<td>
+<p><code>TRUE</code>/<code>FALSE</code> A logical flag indicating whether or not the staging table specified in <code>staging_table</code> should be dropped in the database after the results are returned to R; defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Iteratively calculate disproportionate impact via the percentage point gap (PPG), proportionality index, and 80% index methods for all combinations of <code>success_vars</code>, <code>group_vars</code>, and <code>cohort_vars</code>, for each combination of subgroups specified by <code>scenario_repeat_by_vars</code>, using SQL (calculations done on the database engine or duckdb for parquet files).
+</p>
+
+
+<h3>Value</h3>
+
+<p>When <code>return_what='data'</code> (default), a long data frame is returned (see the return value for di_iterate).  When <code>return_what='SQL'</code> (default), a list object where each element is a query (character value) is returned.
+</p>
+
+
+</div>

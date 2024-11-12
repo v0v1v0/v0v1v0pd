@@ -1,0 +1,331 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>initLayout</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a Data Structure or Map for the Site Layout</h2>
+
+<h3>Description</h3>
+
+<p>Read plot layout data and perform premliminary error-checking 
+and formatting. Search plot layout data can come in any of several different
+formats, including shape files for search area polygons and turbine locations,
+R polygons, (x, y) coordinates, or simple description of search plot type for
+each turbine (square, circular, road &amp; pad). A vector of distances along with
+a search radius is also accommodated by <code>dwp</code>, but these can be directly
+processed in <code>prepRing</code> without preprocessing in <code>initLayout</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">initLayout(
+  data_layout,
+  dataType = "simple",
+  unitCol = "turbine",
+  file_turbine = NULL,
+  radCol = "radius",
+  shapeCol = "shape",
+  padCol = "padrad",
+  roadwidCol = "roadwidth",
+  nRoadCol = "n_road",
+  xCol = "x",
+  yCol = "y",
+  ncarcCol = "ncarc",
+  scCol = NULL,
+  notSearched = NULL,
+  quiet = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_layout</code></td>
+<td>
+<p>Either the name of a shape file (polygons or multipolygons)
+that delineates areas searched at each turbine; a .csv file with R polygons,
+(x, y) coordinates, or simple descriptions of search parameters at each turbine;
+or a data frame with r polygons, (x, y) coordinates, or simple plot layout
+descriptions. See "Details" for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataType</code></td>
+<td>
+<p>An identifier for the type of data to be imported: <code>"shape"</code>,
+<code>"polygon"</code>, <code>"xy"</code>, or <code>"simple"</code>. If <code>data_layout</code> is
+the name of a shape file, the <code>dataType = "shape"</code> identifier is optional.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unitCol</code></td>
+<td>
+<p>Column name for turbine IDs. If <code>data_layout</code> is the name
+of a shape file, then <code>file_turbine</code> must also be provided, giving
+turbine locations. The <code>unitCol</code> must be present in <code>data_layout</code>
+and in <code>file_turbine</code> (if provided). Turbine IDs in the <code>unitCol</code>
+must be syntactically valid R names (see Details below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file_turbine</code></td>
+<td>
+<p>The name of a shape file (points) giving the turbine
+locations for turbines listed in the <code>unitCol</code> column in the
+<code>data_layout</code> if <code>data_layout</code> is a shape file. If 
+<code>dataType = "xy"</code> and the grids in <code>data_layout</code> are all centered
+at (0, 0) with their turbines at the center, then <code>file_turbine</code> is not
+necessary and is ignored. Otherwise, if the grid coordinates are UTMs, 
+<code>file_turbine</code> is either (1) a data frame with turbine names (in 'unitCol')
+and the location of turbines in 'x' and 'y', or (2) the name of a .csv file 
+with turbine locations ('unitCol', 'x', and 'y'). <code>file_turbine</code> is not 
+required (and is ignored) for other data types.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>radCol</code></td>
+<td>
+<p>for <code>dataType = "simple"</code> layouts: the name of the column in
+<code>data_layout</code> that gives the search radius for each turbine</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shapeCol</code></td>
+<td>
+<p>for <code>dataType = "simple"</code> layouts: the name of the column in
+<code>data_layout</code> that gives the plot shape for each turbine.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>padCol</code></td>
+<td>
+<p>for <code>dataType = "simple"</code> layouts: the name of the column in
+<code>data_layout</code> that gives the radius of the turbine pad</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>roadwidCol</code></td>
+<td>
+<p>for <code>dataType = "simple"</code> layouts: the name of the column in
+<code>data_layout</code> that gives the width of the turbine access road(s)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nRoadCol</code></td>
+<td>
+<p>for <code>dataType = "simple"</code> layouts: the name of the column in
+<code>data_layout</code> that gives the number of turbine access roads at each turbine</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xCol</code></td>
+<td>
+<p>for <code>dataType = "xy"</code> or <code>dataType = "polygon"</code> layouts: 
+the name of the column in <code>data_layout</code> that gives <code>x</code> coordinates 
+on the grid (for <code>dataType = "xy"</code>) or <code>x</code> coordinates of search area
+polygon (for <code>dataType = "polygon"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yCol</code></td>
+<td>
+<p>for <code>dataType = "xy"</code> or <code>dataType = "polygon"</code> layouts: 
+the name of the column in <code>data_layout</code> that gives <code>y</code> coordinates 
+on the grid (for <code>dataType = "yy"</code>) or <code>y</code> coordinates of search area
+polygon (for <code>dataType = "polygon"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncarcCol</code></td>
+<td>
+<p>for <code>dataType = "xy"</code> layouts: the name of the column with
+carcass counts in each grid cell. The column is required but may be all zeros
+with carcasses added from a matrix of carcass locations later</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scCol</code></td>
+<td>
+<p>for <code>dataType = "xy"</code> layouts: the name of column in data_layout
+with names of search classes. This is used for excluding unsearched areas
+from the grid data (x, y). It is used ONLY with <code>dataType = "xy"</code> and
+used to remove rows with <code>x[, scCol] == notSearched</code>, where <code>x</code>
+is the search grid data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>notSearched</code></td>
+<td>
+<p>for <code>dataType = "xy"</code> layouts: the name(s) of search 
+class(es) in <code>scCol</code> that are not searched (optional). Ignored for data 
+types other than <code>xy</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>boolean for controlling whether progress of calculations and other
+notes are printed to the console as the function runs</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>All the layout types (except for vector, which is addressed elsewhere)
+can accommodate patterns of seached and not searched areas. If the searched
+areas are subdivided into different search classes with different detection
+probabilities, then search plot layout data must be input either from shape files
+with non-intersecting polgons delineating the search classes or from x-y grid
+data. If there is more than one search class variable (for example, ground
+cover and search schedule), then the covariates may be entered in separate
+columns if the layout files give grid coordinates or may be combined into
+one column in the shape files. For example, ground visibility may be easy or
+difficult and search schedule may be 1-day or 14-day. These can be combined
+into a single column with values of, say, <code>easy1</code>, <code>easy14</code>,
+<code>difficult1</code>, and <code>difficult14</code>.
+</p>
+<p>There must be a turbine ID column (<code>unitCol</code>) in each of the files. The 
+individual turbine ID's must be syntactically valid R names, i.e., contain 
+combinations of letters, numbers, dot ( . ), and underscores ( _ ) only and 
+not begin with a number or a dot followed by a number. Other characters are 
+not allowed: no spaces, hyphens, parentheses, etc.
+</p>
+<p>If shape files are to be imported, both shape files (search area polygons and
+turbine locations) must have their three standard, mandatory component files
+(.shp, .shx, .dbf) stored in the same folder. Only the name of the .shp should
+be entered in the function call. Other components are automatically searched
+for and processed if available.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list or data frame with components appropriate to the type of data
+imported. The data structure is returned as an S3 class object, which other
+functions in <code>dwp</code> can recognize and properly process. There is minimal
+processing on the data after importing, but the structures are lightly error-checked
+and formatted for more thorough processing, depending on data type and analysis
+objectives. Typically, the layout data will be later processed by a call to
+<code>prepRing</code> to create a characterization of the searched area at 
+the site by "rings", with tallies of searched area, search classes, and 
+fraction of area searched in concentric, 1 meter rings around each turbine. 
+The format of the output depends on the format of the input. There are 
+several possibilities, including, each of which is an S3 object with 
+characteristics specific to the imported data:
+</p>
+
+<dl>
+<dt><code>shapeLayout</code></dt>
+<dd>
+<p>List with elements:
+</p>
+
+<ul>
+<li> <p><code>$layout</code> = turbine search area configurations (polygons 
+and multipolygons) from <code>data_layout</code> shape file as an 
+<code>sf</code> object.
+</p>
+</li>
+<li> <p><code>$layoutAdj</code> = polygons from <code>$layout</code> but recentered at (0, 0)
+</p>
+</li>
+<li> <p><code>$turbines</code> = turbine data (as <code>sf</code> object)
+</p>
+</li>
+<li> <p><code>$unitCol</code> = name of the column with turbine IDs (character string)
+</p>
+</li>
+<li> <p><code>$tset</code> = turbine names (vector of character strings)
+</p>
+</li>
+<li> <p><code>$tcenter</code> = locations of turbine centers (nturb by 2 array)
+with UTMs of turbine locations, extracted and simplified from
+<code>$turbines</code>. Column names are <code>X</code> and <code>Y</code>, measuring
+meters from a reference point. Row names are the names of the turbines.
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>simpleLayout</code></dt>
+<dd>
+<p>Data frame with columns:
+</p>
+
+<ul>
+<li> <p><code>turbine</code> = turbine IDs (syntactically valid R names)
+</p>
+</li>
+<li> <p><code>radius</code> = search radius. If <code>shape = "square"</code>, then
+radius is 1/2 the width of the square.
+</p>
+</li>
+<li> <p><code>shape</code> = general descriptor of the shape of the search plot as
+<code>"square"</code>, <code>"circular"</code>, or <code>"RP"</code> (for roads and pads search).
+</p>
+</li>
+<li> <p><code>padrad</code> = radius of the turbine pad (assumed circular)
+</p>
+</li>
+<li> <p><code>roadwidth</code> = width of the access road(s)
+</p>
+</li>
+<li> <p><code>n_road</code> = number of access roads
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>polygonLayout</code></dt>
+<dd>
+<p>List of polygons, one for each turbine. The maximum search
+radius at any turbine is assigned as an attribute (<code>attr(, "rad")</code>).
+</p>
+</dd>
+<dt><code>xyLayout</code></dt>
+<dd>
+<p>List with elements:
+</p>
+
+<ul>
+<li> <p><code>xydat</code> = data frame with columns for turbine names, x and y
+coordinates of 1m grid centers spanning the searched area, number of
+carcasses found in each grid cell, and optional covariates.
+</p>
+</li>
+<li> <p><code>tcenter</code> = matrix giving turbine locations (<code>x, y</code>), with
+row names = turbine names.
+</p>
+</li>
+<li> <p><code>ncarc</code> = vector giving the number of carcasses found at each
+turbine.
+</p>
+</li>
+<li> <p><code>unitCol</code> = name of the column where turbine IDs are stored in
+<code>xydat</code>.
+</p>
+</li>
+<li> <p><code>tset</code> = names of the searched turbines
+</p>
+</li>
+</ul>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(layout_simple)
+# converts properly formatted dataframe to 'simpleLayout' object
+initLayout(layout_simple) 
+
+data(layout_xy)
+initLayout(layout_xy, dataType = "xy")
+
+data(layout_polygon)
+initLayout(layout_polygon, dataType = "polygon", unitCol = "turbine")
+
+</code></pre>
+
+
+</div>

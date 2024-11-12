@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dgamma.R</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Gamma Density Function Alternatives</h2>
+
+<h3>Description</h3>
+
+<p><code>dgamma.R()</code> is aimed to be an R level “clone” of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s C
+level implementation <code>dgamma</code> (from package <span class="pkg">stats</span>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dgamma.R(x, shape, scale = 1, log,
+         dpois_r_args = list())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>non-negative numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>non-negative shape parameter of the Gamma distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>positive scale parameter; note we do not see the need to have
+a <code>rate</code> parameter as the standard <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical indicating if the result is desired on the log scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dpois_r_args</code></td>
+<td>
+<p>a <code>list</code> of optional arguments for
+<code>dpois_raw()</code>; not much checked, must be specified correctly.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>numeric vector of the same length as <code>x</code> (which may have to be
+thought of recycled along <code>shape</code> and/or <code>scale</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p>(As <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s C code) this depends crucially on the “workhorse”
+function <code>dpois_raw()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+xy  &lt;- curve(dgamma  (x, 12), 0,30) # R's dgamma()
+xyR &lt;- curve(dgamma.R(x, 12, dpois_r_args = list(verbose=TRUE)), add=TRUE,
+             col = adjustcolor(2, 1/3), lwd=3)
+stopifnot(all.equal(xy, xyR, tolerance = 4e-15)) # seen 7.12e-16
+## TODO: check *vectorization* in x --&gt; add tests/*.R				___ TODO ___
+
+
+## From R's  &lt;R&gt;/tests/d-p-q-r-tst-2.R -- replacing dgamma() w/ dgamma.R()
+## PR#17577 - dgamma(x, shape)  for shape &lt; 1 (=&gt; +Inf at x=0) and very small x
+stopifnot(exprs = {
+    all.equal(dgamma.R(2^-1027, shape = .99 , log=TRUE), 7.1127667376, tol=1e-10)
+    all.equal(dgamma.R(2^-1031, shape = 1e-2, log=TRUE), 702.8889158,  tol=1e-10)
+    all.equal(dgamma.R(2^-1048, shape = 1e-7, log=TRUE), 710.30007699, tol=1e-10)
+    all.equal(dgamma.R(2^-1048, shape = 1e-7, scale = 1e-315, log=TRUE),
+              709.96858768, tol=1e-10)
+})
+## R's dgamma() gave all Inf in R &lt;= 3.6.1 [and still there in 32-bit Windows !]
+</code></pre>
+
+
+</div>

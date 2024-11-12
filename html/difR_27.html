@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>itemParEst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Item parameter estimation for DIF detection</h2>
+
+<h3>Description</h3>
+
+<p>Fits a specified logistic IRT model and returns related item parameter estimates.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">itemParEst(data, model, c = NULL, engine = "ltm", discr = 1)
+ </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>numeric: the data matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character: the IRT model to be fitted (either <code>"1PL"</code>, <code>"2PL"</code> or <code>"3PL"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>optional numeric value or vector giving the values of the constrained pseudo-guessing parameters. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>engine</code></td>
+<td>
+<p>character: the engine for estimating the 1PL model, either <code>"ltm"</code> (default) or <code>"lme4"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>discr</code></td>
+<td>
+<p>either <code>NULL</code> or a real positive value for the common discrimination parameter (default is 1). Used only if <code>model</code> is <code>"1PL"</code>
+and <code>engine</code> is <code>"ltm"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>itemParEst</code> permits to get item parameter estimates of some pre-specified logistic IRT model, together with estimates of 
+the standard errors and the covariances between item parameters, if any. The output is ordered such that it can be directly used
+with the methods of Lord (<code>difLord</code>) and Raju (<code>difRaju</code>) and Generalized Lord's (<code>difGenLord</code>) 
+to detect differential item functioning.
+</p>
+<p>The <code>data</code> is a matrix whose rows correspond to the subjects and columns to the items. 
+</p>
+<p>Missing values are allowed but must be coded as <code>NA</code> values. They are discarded for item parameter estimation.
+</p>
+<p>If the model is not the 1PL model, or if <code>engine</code> is equal to <code>"ltm"</code>, the selected IRT model is fitted using marginal maximum likelihood
+by means of the functions from the <code>ltm</code> package (Rizopoulos, 2006). Otherwise, the 1PL model is fitted as a generalized 
+linear mixed model, by means of the <code>glmer</code> function of the <code>lme4</code> package (Bates and Maechler, 2009). With the <code>"ltm"</code> engine, the 
+common discrimination parameter can be either fixed to a constant value using the <code>discr</code> argument, or it can be estimated (though not returned) 
+by specifying <code>discr</code> to <code>NULL</code>. The default value of the common discrimination is 1.
+</p>
+<p>The 3PL model can be fitted either unconstrained or by fixing the pseudo-guessing values. In the latter case the argument <code>c</code> 
+holds either a numeric vector of same length of the number of items, with one value per item pseudo-guessing parameter, or a single value which
+is duplicated for all the items. If <code>c</code> is different from <code>NULL</code> then the 3PL model is always fitted (whatever the value of <code>model</code>).
+</p>
+<p>Each row of the output matrix corresponds to one item of the <code>data</code> set; the number of columns depends on the fitted model. At most,
+nine columns are produced, with the unconstrained 3PL model. The order of the columns is the following: first, the estimates of item discrimination 
+<em>a</em>, difficulty <em>b</em> and pseudo-guessing <em>c</em>; second,  the corresponding standard errors <em>se(a)</em>, <em>se(b)</em> and <em>se(c)</em>; 
+finally, the covariances between the item parameters, <em>cov(a,b)</em>, <em>cov(a,c)</em> and <em>cov(b,c)</em>. 
+</p>
+<p>If the 2PL model is fitted, only five columns are displayed: <em>a</em>, <em>b</em>, <em>se(a)</em>, <em>se(b)</em> and <em>cov(a,b)</em>. 
+In case of the 1PL model, only <em>b</em> and <em>se(b)</em> are returned. If the constrained 3PL is considered, the output matrix holds six columns, 
+the first five being identical to those from the 2PL model, and the last one holds the fixed pseudo-guessing parameters.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix with one row per item and at most nine columns, with item parameter estimates, standard errors and covariances, if any. See <b>Details</b>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Whenever making use of the <code>ltm</code> package to fit the IRT models, the linear parametrization is used, the covariance matrix is extracted with the <code>vcov()</code> function, and final standard errors and covariances are derived by the Delta method. See Rizopoulos (2006) for further details, and the <code>Note.pdf</code> document in the <code>difR</code> package for mathematical details.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastien Beland <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:sebastien.beland.1@hotmail.com">sebastien.beland.1@hotmail.com</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br>
+David Magis <br>
+Department of Psychology, University of Liege <br>
+Research Group of Quantitative Psychology and Individual Differences, KU Leuven <br><a href="mailto:David.Magis@uliege.be">David.Magis@uliege.be</a>, <a href="http://ppw.kuleuven.be/okp/home/">http://ppw.kuleuven.be/okp/home/</a> <br>
+Gilles Raiche <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:raiche.gilles@uqam.ca">raiche.gilles@uqam.ca</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br></p>
+
+
+<h3>References</h3>
+
+ 
+<p>Bates, D. and Maechler, M. (2009). lme4: Linear mixed-effects models using S4 classes. R package version 0.999375-31. http://CRAN.R-project.org/package=lme4
+</p>
+<p>Magis, D., Beland, S., Tuerlinckx, F. and De Boeck, P. (2010). A general framework and an R package for the detection
+of dichotomous differential item functioning. <em>Behavior Research Methods, 42</em>, 847-862. doi: <a href="https://doi.org/10.3758/BRM.42.3.847">10.3758/BRM.42.3.847</a>
+</p>
+<p>Rizopoulos, D. (2006). ltm: An R package for latent variable modelling and item response theory analyses. <em>Journal of Statistical Software, 17</em>, 1–25. doi: <a href="https://doi.org/10.18637/jss.v017.i05">10.18637/jss.v017.i05</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>itemPar1PL</code>, <code>itemPar2PL</code>, <code>itemPar3PL</code>, <code>itemPar3PLconst</code>, <code>difLord</code>, <code>difRaju</code>, 
+</p>
+<p><code>difGenLord</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+ # Loading of the verbal data
+ data(verbal)
+
+ # Estimation of the item parameters (1PL model, "ltm" engine)
+ items.1PL &lt;- itemParEst(verbal[,1:24], model = "1PL")
+
+ # Estimation of the item parameters (1PL model, "ltm" engine,
+ # estimated common discrimination parameter)
+ items.1PL &lt;- itemParEst(verbal[,1:24], model = "1PL", discr = NULL)
+
+ # Estimation of the item parameters (1PL model, "lme4" engine)
+ items.1PL &lt;- itemParEst(verbal[,1:24], model = "1PL", engine = "lme4")
+
+ # Estimation of the item parameters (2PL model)
+ items.2PL &lt;- itemParEst(verbal[,1:24], model = "2PL")
+
+ # Estimation of the item parameters (3PL model)
+ # items.3PL &lt;- itemParEst(verbal[,1:24], model = "3PL")
+
+ # Constraining all pseudo-guessing values to be equal to 0.05
+ items.3PLc &lt;- itemParEst(verbal[,1:24], model = "3PL", c = 0.05)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

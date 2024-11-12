@@ -1,0 +1,237 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DirichletRegData</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prepare Compositional Data</h2>
+
+<h3>Description</h3>
+
+<p>This function prepares a matrix with compositional variables for further processing in the <span class="pkg">DirichletReg</span> package.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DR_data(Y, trafo = sqrt(.Machine$double.eps), base = 1,
+    norm_tol = sqrt(.Machine$double.eps))
+
+## S3 method for class 'DirichletRegData'
+print(x, type = c("processed", "original"), ...)
+
+## S3 method for class 'DirichletRegData'
+summary(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+
+<table><tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+
+<p>A <code>matrix</code> or <code>data.frame</code> with nonnegative values of all compositional variables (in some cases, a vector is also permissible, see “Details”).
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>trafo</code></td>
+<td>
+
+<p>Either a logical or numeric value.
+Transformation of variables causes the values to shrink away from extreme values of 0 and 1, see “Details”.
+<br>    
+If logical, it will force (<code>TRUE</code>) or suppress (<code>FALSE</code>) transformation.
+Suppressing transformation in the presence of extreme values (0 and 1) will result in an error.
+<br>
+If <code>trafo</code> is numeric it is used as a “threshold”, so transformation will be applied if values in <code>Y</code> are <code class="reqn">y &lt; \mathtt{trafo}</code> or <code class="reqn">y &gt; \left(1-\mathtt{trafo}\right)</code>.
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+
+<p>The “base” component to use in the reparametrized model
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>norm_tol</code></td>
+<td>
+
+<p>Due to numerical precision, row sums of <code class="reqn">\mathbf{Y}</code> may not be <em>exactly</em> equal to 1.
+Therefore, <code>norm_tol</code> is a small non-negative value (default: <code>sqrt(.Machine$double.eps)</code>) which represents the tolerance when testing for “near equality” to 1 (see <code>all.equal</code>).
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A <code>DirichletRegData</code> object
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Displays either the (possibly normalized or transformed) <code>"processed"</code> or <code>"original"</code> data
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>A <code>DirichletRegData</code> object
+</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Further arguments
+</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+
+
+<h4><code>Y</code></h4>
+
+
+<p><code>Y</code> is a <code>matrix</code> or <code>data.frame</code> containing compositional variables.
+If they do not sum up to 1 for all observations, normalization is forced where each row entry is divided by the row's sum (a warning will be issued that normalization was applied).<br>
+In case one row-entry (or more) is <code>NA</code>, the whole row will be returned as <code>NA</code>.
+Beta-distributed variables can be supplied as a single vector which, however, has to have values in the interval <code class="reqn">[0,\,1]</code>.
+The second variable will be generated (<code>1 - Y</code>) and a <code>matrix</code> consisting of the columns <code>1 - Y</code> and <code>Y</code> will be returned.
+A message will be issued that a beta-distributed variable was assumed and that this assumtion needs to be checked.
+</p>
+
+
+
+<h4><code>trafo</code></h4>
+
+
+<p>The transformation (done if <code>trafo = TRUE</code>) is a generalization of that proposed by Smithson and Verkuilen (2006) that transforms each component <code class="reqn">y</code> of <code class="reqn">Y</code> by computing <code class="reqn">y^{*}=\frac{y(n-1)+\frac{1}{2}}{n}</code> where <code class="reqn">n</code> is the number of observations in <code class="reqn">Y</code> (this approach is also used in the package <span class="pkg">betareg</span>, see Cribari-Neto &amp; Zeileis, 2010).<br>
+For an arbitrary number of dimensions (or variables) <code class="reqn">d</code> the transformation is <code class="reqn">y^{*}=\frac{y(n-1)+\frac{1}{d}}{n}</code>.
+</p>
+
+
+
+<h4><code>base</code></h4>
+
+
+<p>To set the base (i.e., omitted) component of <code>Y</code> for the “alternative” (mean/precision) model, the argument <code>base</code> can be used. This is by default set to the first variable in <code>Y</code> (if a vector is be supplied, the column <code>1 - Y</code> becomes the base component).<br>
+Note that the definition can be overruled in <code>DirichReg</code>.
+</p>
+
+
+
+<h4>
+<code>x</code> and <code>object</code>
+</h4>
+
+
+<p>Objects created by <code>DR_data</code>.
+</p>
+
+
+
+<h4><code>type</code></h4>
+
+
+<p>specifies for the print method whether the original or processed data are displayed.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>The function returns a <code>matrix</code> object of class <code>DirichletRegData</code> with the following attributes:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "dimnames")</code></td>
+<td>
+<p>a list with two entries, row names (by default <code>NULL</code>) and column names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "Y.original")</code></td>
+<td>
+<p>the original data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "dims")</code></td>
+<td>
+<p>number of dimensions of <code>Y</code> (i.e., number of columns)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "dim.names")</code></td>
+<td>
+<p>the number of components in <code>Y</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "obs")</code></td>
+<td>
+<p>number of observations of <code>Y</code> (i.e., number of rows)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "valid_obs")</code></td>
+<td>
+<p>number of valid observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "normalized")</code></td>
+<td>
+<p>a logical value indicating whether the data were normalized</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "transformed")</code></td>
+<td>
+<p>a logical value indicating whether the data were transformed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attr(*, "base")</code></td>
+<td>
+<p>number of the variable used as the base in the reparametrized model</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Marco J. Maier</p>
+
+
+<h3>References</h3>
+
+<p>Smithson, M. &amp; Verkuilen, J. (2006). A Better Lemon Squeezer? Maximum-Likelihood Regression With Beta-Distributed Dependent Variables. <em>Psychological Methods, 11</em>(1), 54–71.
+</p>
+<p>Cribari-Neto, F. &amp; Zeileis, A. (2010). Beta Regression in R. <em>Journal of Statistical Software, 34</em>(2), 1–24.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># create a DirichletRegData object from the Arctic Lake data
+head(ArcticLake[, 1:3])
+AL &lt;- DR_data(ArcticLake[, 1:3])
+summary(AL)
+head(AL)
+</code></pre>
+
+
+</div>

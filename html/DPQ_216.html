@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qgammaAppr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute (Approximate) Quantiles of the Gamma Distribution</h2>
+
+<h3>Description</h3>
+
+<p>Compute approximations to the quantile (i.e., inverse cumulative)
+function of the Gamma distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qgammaAppr(p, shape, lower.tail = TRUE, log.p = FALSE,
+           tol = 5e-07)
+qgamma.R  (p, alpha, scale = 1, lower.tail = TRUE, log.p = FALSE,
+           EPS1 = 0.01, EPS2 = 5e-07, epsN = 1e-15, maxit = 1000,
+           pMin = 1e-100, pMax = (1 - 1e-14),
+           verbose = getOption("verbose"))
+
+qgammaApprKG(p, shape, lower.tail = TRUE, log.p = FALSE)
+ 
+
+qgammaApprSmallP(p, shape, lower.tail = TRUE, log.p = FALSE)
+ 
+ 
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>numeric vector (possibly log tranformed) probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape, alpha</code></td>
+<td>
+<p>shape parameter, non-negative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>scale parameter, non-negative, see <code>qgamma</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail, log.p</code></td>
+<td>
+<p>logical, see, e.g., <code>qgamma()</code>; must
+have length 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>tolerance of maximal approximation error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EPS1</code></td>
+<td>
+<p>small positive number. ...</p>
+</td>
+</tr>
+</table>
+<table><tr style="vertical-align: top;">
+<td><code>EPS2</code></td>
+<td>
+<p>small positive number. ...</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>epsN</code></td>
+<td>
+<p>small positive number. ...</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>maximal number of iterations. ...</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>pMin, pMax</code></td>
+<td>
+<p>boundaries for <code>p</code>. ...</p>
+</td>
+</tr></table>
+<table><tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical indicating if the algorithm should produce
+“monitoring” information.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p><code>qgammaApprSmallP(p, a)</code> should be a good approximation in the
+following situation when both <code>p</code> and <code>shape</code> <code class="reqn">= \alpha =:
+  a</code> are small :
+</p>
+<p>If we look at  Abramowitz&amp;Stegun <code class="reqn">gamma*(a,x) = x^-a * P(a,x)</code>
+and its series  <code class="reqn">g*(a,x) = 1/gamma(a) * (1/a - 1/(a+1) * x + ...)</code>,
+</p>
+<p>then the first order approximation <code class="reqn">P(a,x) = x^a * g*(a,x) ~= x^a/gamma(a+1)</code>
+and hence its inverse  <code class="reqn">x = qgamma(p, a) ~= (p * gamma(a+1)) ^ (1/a)</code>
+should be good as soon as  <code class="reqn">1/a &gt;&gt; 1/(a+1) * x</code>
+</p>
+<p>&lt;==&gt;  x &lt;&lt; (a+1)/a = (1 + 1/a)
+</p>
+<p>&lt;==&gt;  x &lt; eps *(a+1)/a
+</p>
+<p>&lt;==&gt;  log(x) &lt; log(eps) + log( (a+1)/a ) = log(eps) + log((a+1)/a)  ~  -36 - log(a)
+where log(x) ~= log(p * gamma(a+1)) / a = (log(p) + lgamma1p(a))/a
+</p>
+<p>such that the above
+</p>
+<p>&lt;==&gt;  (log(p) + lgamma1p(a))/a &lt; log(eps) + log((a+1)/a)
+</p>
+<p>&lt;==&gt;  log(p) + lgamma1p(a) &lt; a*(-log(a)+ log(eps) + log1p(a))
+</p>
+<p>&lt;==&gt;  log(p) &lt;  a*(-log(a)+ log(eps) + log1p(a)) - lgamma1p(a) =: bnd(a)
+</p>
+<p>Note that <code>qgammaApprSmallP()</code> indeed also builds on <code>lgamma1p()</code>.
+</p>
+<p><code>.qgammaApprBnd(a)</code> provides this bound <code class="reqn">bnd(a)</code>;
+it is simply <code>a*(logEps + log1p(a) - log(a)) - lgamma1p(a)</code>, where
+<code>logEps</code> is <code class="reqn">\log(\epsilon)</code> = <code>log(eps)</code> where <code>eps &lt;-
+ .Machine$double.eps</code>, i.e. typically (always?) <code>logEps</code><code class="reqn">= \log
+ \epsilon = -52 * \log(2) =  -36.04365</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>numeric
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Abramowitz, M. and Stegun, I. A. (1972)
+<em>Handbook of Mathematical Functions</em>. New York: Dover.
+<a href="https://en.wikipedia.org/wiki/Abramowitz_and_Stegun">https://en.wikipedia.org/wiki/Abramowitz_and_Stegun</a> provides
+links to the full text which is in public domain.<br></p>
+
+
+<h3>See Also</h3>
+
+<p><code>qgamma</code> for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s Gamma distribution functions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  ## TODO :  Move some of the curve()s from ../tests/qgamma-ex.R !!
+</code></pre>
+
+
+</div>

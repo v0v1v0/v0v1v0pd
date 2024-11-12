@@ -1,0 +1,239 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prepare_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prepare data for disaggregation modelling</h2>
+
+<h3>Description</h3>
+
+<p><em>prepare_data</em> function is used to extract all the data required for fitting a disaggregation model.
+Designed to be used in the <em>disaggregation::disag_model</em> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prepare_data(
+  polygon_shapefile,
+  covariate_rasters,
+  aggregation_raster = NULL,
+  id_var = "area_id",
+  response_var = "response",
+  sample_size_var = NULL,
+  mesh_args = NULL,
+  na_action = FALSE,
+  make_mesh = TRUE,
+  mesh.args = NULL,
+  na.action = NULL,
+  makeMesh = NULL,
+  ncores = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>polygon_shapefile</code></td>
+<td>
+<p>sf object containing at least three columns: one with the geometried, one with the id for the polygons (<em>id_var</em>) and one with the response count data (<em>response_var</em>); for binomial data, i.e survey data, it can also contain a sample size column (<em>sample_size_var</em>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate_rasters</code></td>
+<td>
+<p>SpatRaster of covariate rasters to be used in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregation_raster</code></td>
+<td>
+<p>SpatRaster to aggregate pixel level predictions to polygon level e.g. population to aggregate prevalence. If this is not supplied a uniform raster will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_var</code></td>
+<td>
+<p>Name of column in sf object with the polygon id.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response_var</code></td>
+<td>
+<p>Name of column in sf object with the response data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_size_var</code></td>
+<td>
+<p>For survey data, name of column in sf object (if it exists) with the sample size data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh_args</code></td>
+<td>
+<p>list of parameters that control the mesh structure with the same names as used by INLA.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_action</code></td>
+<td>
+<p>logical. If TRUE, NAs in response will be removed, covariate NAs will be given the median value, aggregation NAs will be set to zero. Default FALSE (NAs in response or covariate data within the polygons will give errors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>make_mesh</code></td>
+<td>
+<p>logical. If TRUE, build INLA mesh, takes some time. Default TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh.args</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>makeMesh</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Takes a sf object with the response data and a SpatRaster of covariates.
+</p>
+<p>Extract the values of the covariates (as well as the aggregation raster, if given) at each pixel within the polygons
+(<em>parallelExtract</em> function). This is done in parallel and <em>n.cores</em> argument is used to set the number of cores
+to use for covariate extraction. This can be the number of covariates used in the model.
+</p>
+<p>The aggregation raster defines how the pixels within each polygon are aggregated.
+The disaggregation model performs a weighted sum of the pixel prediction, weighted by the pixel values in the aggregation raster.
+For disease incidence rate you use the population raster to aggregate pixel incidence rate by summing the number of cases
+(rate weighted by population). If no aggregation raster is provided a uniform distribution is assumed, i.e. the pixel predictions
+are aggregated to polygon level by summing the pixel values.
+</p>
+<p>Makes a matrix that contains the start and end pixel index for each polygon. Builds an INLA mesh to use for the spatial field
+(<em>getStartendindex</em> function).
+</p>
+<p>The <em>mesh.args</em> argument allows you to supply a list of INLA mesh parameters to control the mesh used for the spatial field
+(<em>build_mesh</em> function).
+</p>
+<p>The <em>na.action</em> flag is automatically off. If there are any NAs in the response or covariate data within the polygons the
+<em>prepare_data</em> method will error. Ideally the NAs in the data would be dealt with beforehand, however, setting na.action = TRUE
+will automatically deal with NAs. It removes any polygons that have NAs as a response, sets any aggregation pixels with NA to zero
+and sets covariate NAs pixels to the median value for the that covariate.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list is returned of class <code>disag_data</code>.
+The functions <em>summary</em>, <em>print</em> and <em>plot</em> can be used on <code>disag_data</code>.
+The list  of class <code>disag_data</code> contains:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x </code></td>
+<td>
+<p>The sf object used as an input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate_rasters </code></td>
+<td>
+<p>The SpatRaster used as an input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polygon_data </code></td>
+<td>
+<p>A data frame with columns of <em>area_id</em>, <em>response</em> and <em>N</em> (sample size: all NAs unless using binomial data). Each row represents a polygon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariate_data </code></td>
+<td>
+<p>A data frame with columns of <em>area_id</em>, <em>cell_id</em> and one for each covariate in <em>covariate_rasters</em>. Each row represents a pixel in a polygon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregation_pixels </code></td>
+<td>
+<p>An array with the value of the aggregation raster for each pixel in the same order as the rows of <em>covariate_data</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coords_for_fit </code></td>
+<td>
+<p>A matrix with two columns of x, y coordinates of pixels within the polygons. Used to make the spatial field.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coords_for_prediction </code></td>
+<td>
+<p>A matrix with two columns of x, y coordinates of pixels in the whole Raster. Used to make predictions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start_end_index </code></td>
+<td>
+<p>A matrix with two columns containing the start and end index of the pixels within each polygon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh </code></td>
+<td>
+<p>A INLA mesh to be used for the spatial field of the disaggregation model.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+polygons &lt;- list()
+for(i in 1:100) {
+  row &lt;- ceiling(i/10)
+  col &lt;- ifelse(i %% 10 != 0, i %% 10, 10)
+  xmin = 2*(col - 1); xmax = 2*col; ymin = 2*(row - 1); ymax = 2*row
+  polygons[[i]] &lt;- list(cbind(c(xmin, xmax, xmax, xmin, xmin),
+                              c(ymax, ymax, ymin, ymin, ymax)))
+}
+
+polys &lt;- lapply(polygons,sf::st_polygon)
+response_df &lt;- data.frame(area_id = 1:100, response = runif(100, min = 0, max = 10))
+spdf &lt;- sf::st_sf(response_df,geometry=polys)
+
+r &lt;- terra::rast(nrow=20,ncol=20)
+terra::ext(r) &lt;- terra::ext(spdf)
+r[] &lt;- sapply(1:terra::ncell(r), function(x) rnorm(1, ifelse(x %% 20 != 0, x %% 20, 20), 3))
+
+r2 &lt;- terra::rast(nrow=20,ncol=20)
+terra::ext(r2) &lt;- terra::ext(spdf)
+r2[] &lt;- sapply(1:terra::ncell(r), function(x) rnorm(1, ceiling(x/10), 3))
+cov_rasters &lt;- c(r, r2)
+
+test_data &lt;- prepare_data(polygon_shapefile = spdf,
+                          covariate_rasters = cov_rasters)
+
+
+</code></pre>
+
+
+</div>

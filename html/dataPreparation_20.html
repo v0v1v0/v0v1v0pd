@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>find_and_transform_dates</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Identify date columns</h2>
+
+<h3>Description</h3>
+
+<p>Find and transform dates that are hidden in a character column. <br>
+It use a bunch of default formats, and you can also add your own formats.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">find_and_transform_dates(
+  data_set,
+  cols = "auto",
+  formats = NULL,
+  n_test = 30,
+  ambiguities = "IGNORE",
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data_set</code></td>
+<td>
+<p>Matrix, data.frame or data.table</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+<p>List of column(s) name(s) of data_set to look into. To check all all columns, set it
+to "auto". (characters, default to "auto")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formats</code></td>
+<td>
+<p>List of additional Date formats to check (see <code>strptime</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_test</code></td>
+<td>
+<p>Number of non-null rows on which to test (numeric, default to 30)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ambiguities</code></td>
+<td>
+<p>How ambiguities should be treated (see details in ambiguities section)
+(character, default to IGNORE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Should the algorithm talk? (Logical, default to TRUE)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is using <code>identify_dates</code> to find formats. Please see it's documentation.
+In case <code>identify_dates</code> doesn't find wanted formats you can either provide format
+in param <code>formats</code>
+or use <code>set_col_as_date</code> to force transformation.
+</p>
+
+
+<h3>Value</h3>
+
+<p>data_set set (as a data.table) with identified dates transformed by <strong>reference</strong>.
+</p>
+
+
+<h3>Ambiguity</h3>
+
+<p>Ambiguities are often present in dates. For example, in date: 2017/01/01, there is no way to know
+if format is YYYY/MM/DD or YYYY/DD/MM. <br>
+Some times ambiguity can be solved by a human. For example
+17/12/31, a human might guess that it is YY/MM/DD, but there is no sure way to know.  <br>
+To be safe, find_and_transform_dates doesn't try to guess ambiguities. <br>
+To answer ambiguities problem, param <code>ambiguities</code> is now available. It can take one of the following values
+</p>
+
+<ul>
+<li> <p><code>IGNORE</code> function will then take the first format which match (fast, but can make some mistakes)
+</p>
+</li>
+<li> <p><code>WARN</code> function will try all format and tell you - via prints - that there are
+multiple matches (and won't perform date transformation)
+</p>
+</li>
+<li> <p><code>SOLVE</code> function will try to solve ambiguity by going through more lines, so will be slower.
+If it is able to solve it, it will transform the column, if not it will print the various acceptable formats.
+</p>
+</li>
+</ul>
+<p>If there are some columns that have no chance to be a match think of removing them from <code>cols</code>
+to save some computation time.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load exemple set
+data(tiny_messy_adult)
+head(tiny_messy_adult)
+# using the find_and_transform_dates
+find_and_transform_dates(tiny_messy_adult, n_test = 5)
+head(tiny_messy_adult)
+
+# Example with ambiguities
+## Not run: 
+require(data.table)
+data(tiny_messy_adult) # reload data
+# Add an ambiguity by sorting date1
+tiny_messy_adult$date1 = sort(tiny_messy_adult$date1, na.last = TRUE)
+# Try all three methods:
+result_1 = find_and_transform_dates(copy(tiny_messy_adult))
+result_2 = find_and_transform_dates(copy(tiny_messy_adult), ambiguities = "WARN")
+result_3 = find_and_transform_dates(copy(tiny_messy_adult), ambiguities = "SOLVE")
+
+## End(Not run)
+# "##NOT RUN:" mean that this example hasn't been run on CRAN since its long. But you can run it!
+</code></pre>
+
+
+</div>

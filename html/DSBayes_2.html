@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DSBayes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bayesian subgroup analysis in clinical trials</h2>
+
+<h3>Description</h3>
+
+<p>Calculate posterior modes and credible intervals of parameters of 
+the Dixon-Simon model for subgroup analysis (with binary covariates) in clinical trials.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">     DSBayes(obj, thetahat, C, lvector, control=list(), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+
+<p>The object from a regression model, for example, 
+linear regression or Cox proportional-hazards regression.
+If <code>obj</code> is specified, then <code>thetahat</code> and <code>C</code> 
+should be set to NULL. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetahat</code></td>
+<td>
+
+<p>A vector of regression coefficients without the intercept.
+If <code>thetahat</code> is specified, then <code>C</code> should be provided 
+as well, and <code>obj</code> should be set at NULL. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+
+<p>A variance covariance matrix of regression.
+If <code>C</code> is given, then <code>thetahat</code> should also be provided,
+and <code>obj</code> should be set at NULL. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lvector</code></td>
+<td>
+      
+<p>A vector or a matrix that denotes linear combination of the 
+parameters for which posterior estimates are desired.
+Note that, the order of the  <code>lvector</code> should be as follows:
+the first parameter should always be the treatment indicator, 
+then a set of binary covariates, and then the interactions between the
+treatment with covariates. See *Examples*.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A list of control parameters. See *Details*.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>control</code> argument is a list that can supply any of the following components:
+</p>
+
+<dl>
+<dt><code>tol</code></dt>
+<dd>
+<p>A relative accuracy for numerical quadrature. Default is <code>tol = 1.e-03</code>.</p>
+</dd>
+<dt><code>epsilon</code></dt>
+<dd>
+<p>A small positive quantity to ensure proper posterior resulting from
+Jeffreys' prior. Default is <code>epsilon = 0.005</code>.</p>
+</dd>
+<dt><code>ci</code></dt>
+<dd>
+<p>Level of the credible interval. Default is <code>ci = 0.95</code>.</p>
+</dd>
+<dt><code>k</code></dt>
+<dd>
+<p> A constant value to determine the interval width for searching the Bayesian credible interval,
+from lower to upper for a maximum of the density function. Default value for 
+<code>k</code> is, k = qnorm((6+ci)/7) = 2.45.
+</p>
+</dd>
+<dt><code>transform</code></dt>
+<dd>
+<p>= NULL, then no transformation is performed.  
+If <code>transform = "logit"</code>, which is at default, then logit transformation 
+is applied for posterior density function to find the credibile interval,
+<code>logit(x) = log(x/(1-x))</code>. </p>
+</dd>
+<dt><code>print</code></dt>
+<dd>
+<p>= TRUE  or FALSE, indicating whether or not we want to print  <code>control</code> parameters and progress. Default is FALSE.</p>
+</dd>   
+</dl>
+<h3>Author(s)</h3>
+
+<p>Ravi Varadhan &lt;rvaradhan@jhmi.edu&gt; and Wenliang Yao (maintainer) &lt;yaow080@gmail.com&gt;</p>
+
+
+<h3>References</h3>
+
+<p>Dixon D. and Simon R. (1991).  Bayesian Subset Analysis. <em>Biometrics</em>, 47, 871-881
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# ex1 - use given thetahat and C matrix, and set "obj=NULL".
+# an example from the clinical trial reported by Fisher(1988)
+
+thetahat  	&lt;- c(-1.57,-0.52,-0.39,.68, 1.09, 0.68, 0.91)
+names(thetahat) &lt;- c("trt","Sex","Age","Stage","trt*sex","trt*age","trt*stage")
+p &lt;- length(thetahat)
+
+C &lt;- matrix(NA, p, p)
+C[upper.tri(C, diag=TRUE)] &lt;- c( .1502, .0141, .0505, .0198, .0042, .0506,
+ .0389, -.0038, .0041, .0538, -.0361, -.0505, -.0042, .0039, .1037, -.0445,
+ -.0042, -.0507, -.0041, -.0046, .1066,-.1209, .0037, -.0041, -.0536, -.0025,
+ .0120, .1474)
+C[lower.tri(C)] &lt;- t(C)[lower.tri(t(C))]
+
+# define lvector
+trt 	&lt;- rep(1,8)
+cov 	&lt;- as.data.frame(matrix(rep(0,24), ncol=3))
+lmatrix&lt;-as.matrix(cbind(trt,cov,rep(1:0,each=4),rep(rep(0:1,each=2),2), rep(0:1,4)))
+dimnames(lmatrix)[[2]]&lt;-c("trt","Sex","Age","Stage","trt*sex","trt*age","trt*stage")
+
+lvector &lt;- lmatrix[2,]    # for 1 subset  
+#&gt; lvector
+#      trt       Sex       Age     Stage   trt*sex   trt*age trt*stage 
+#        1         0         0         0         1         0         1 
+# treatment effect for the subset of Female under 65 at stage C.
+# in this case the reference group is Male, under 65 years, at stage B.
+
+#lvector &lt;- lmatrix       # for all 8 subsets
+
+result &lt;- DSBayes(NULL, thetahat, C, lvector)
+
+
+################################################################################
+# ex2 - use "obj" option, and set "thetahat=NULL" and "C=NULL" 
+# To run ex2, you need to remove hashmark(#).
+
+#data(simsolvd)
+#simsolvd$event &lt;- 1-simsolvd$censor
+#obj &lt;- glm(event~trt*(age+beat+lvef+cardratio+sodium),
+#                 family = "binomial", data = simsolvd)
+#
+#para    &lt;- as.data.frame(matrix(rep(rep(0,5),5), ncol=5))
+#lmatrix &lt;- as.matrix(cbind(rep(1,5),para[1:5,],diag(1,5)))
+#dimnames(lmatrix)[[2]] &lt;- c("trt","age","beat","lvef","cardratio","sodium",
+#"trt*age","trt*beat","trt*lvef","trt*cardratio","trt*sodium")
+  
+#lvector   &lt;- lmatrix[2,] 	    # for 1 subset 
+#out &lt;- DSBayes(obj, NULL, NULL, lvector)
+
+</code></pre>
+
+
+</div>

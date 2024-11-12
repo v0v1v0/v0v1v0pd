@@ -1,0 +1,145 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>visualize</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Produce distribution plots</h2>
+
+<h3>Description</h3>
+
+<p>Generic shell function that calls a plotting function in order to produce a marginal
+distribution plot for a variable (or for each variable in a dataset). What type of plot is made 
+might depend on the data class of the variable.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">visualize(v, vnam = NULL, visuals = setVisuals(), doEval = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>The variable (vector) or dataset (data.frame) which is to be plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vnam</code></td>
+<td>
+<p>The name of the variable. This name might be printed on the plots, depending on the
+choice of plotting function. If not supplied, it will default to the name of <code>v</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>visuals</code></td>
+<td>
+<p>A list of visual functions to use on each supported variable type. We recommend
+using <code>setVisuals</code> for creating this list and refer to the documentation
+of this function for more details. This function allows for choosing variable-type dependent 
+visuals. However, if <code>visualize()</code> is called on a full dataset, all visualizations
+must be of the same type and therefore, the <code>all</code> argument of <code>setVisuals</code> is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doEval</code></td>
+<td>
+<p>A logical. If <code>TRUE</code> (the default), <code>visualize</code> has the side effect of
+producing a plot (or multiple plots, if <code>v</code> is a data.frame). Otherwise,
+visualize returns a character string containing R-code for producing the plot (or, when <code>v</code> is
+a data.frame, a list of such character strings).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments used for class-specific choices of visual functions 
+(see <em>details</em>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Visual functions can be  supplied using their names (in character strings) using
+<code>setVisuals</code>. Note that only a single visual function is allowed for each variable class.
+The default visual settings can be inspected by calling <code>setVisuals()</code>.  
+An overview of all available <code>visualFunction</code>s can be obtained by calling
+<code>allVisualFunctions</code>. 
+</p>
+<p>A user defined visual function can be supplied using its function name. Details on how 
+to construct valid visual functions are found in <code>visualFunction</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 ( doi: <a href="https://doi.org/10.18637/jss.v090.i06">10.18637/jss.v090.i06</a>).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>setVisuals</code>, <code>allVisualFunctions</code>,
+<code>standardVisual</code>, <code>basicVisual</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> #Standard use: Return standalone code for plotting a function:
+   visualize(c(1:10), "Variable 1", doEval = FALSE)
+
+ #Define a new visualization function and call it using visualize either
+ #using allVisual or a class specific argument:
+   mosaicVisual &lt;- function(v, vnam, doEval) {
+     thisCall &lt;- call("mosaicplot", table(v), main = vnam, xlab = "")
+     if (doEval) {
+       return(eval(thisCall))
+     } else return(deparse(thisCall))
+   }
+   mosaicVisual &lt;- visualFunction(mosaicVisual, 
+                                  description = "Mosaicplots from graphics",
+                                  classes = allClasses())
+  
+  #Inspect all options for visualFunctions:
+  allVisualFunctions()
+
+  #set mosaicVisual for all variable types:
+  visualize(c("1", "1", "1", "2", "2", "a"), "My variable", 
+      visuals = setVisuals(all = "mosaicVisual"))
+
+  #set mosaicVisual only for character variables:
+  visualize(c("1", "1", "1", "2", "2", "a"), "My variable", 
+     visuals = setVisuals(character = "mosaicVisual"))
+
+  #this will use standardVisual, as our variable is not numeric:
+  visualize(c("1", "1", "1", "2", "2", "a"), "My variable", 
+      visuals = setVisuals(numeric = "mosaicVisual"))
+
+   #return code for a mosaic plot
+   visualize(c("1", "1", "1", "2", "2", "a"), "My variable", 
+       allVisuals = "mosaicVisual", doEval=FALSE)
+
+  #Produce multiple plots easily by calling visualize on a full dataset:
+   data(testData)
+   testData2 &lt;- testData[, c("charVar", "factorVar", "numVar", "intVar")]
+   visualize(testData2)
+   
+ #When using visualize on a dataset, datatype specific arguments have no
+ #influence:
+   visualize(testData2, setVisuals(character = "basicVisual", 
+       factor = "basicVisual"))
+   
+ #But we can still use the "all" argument in setVisuals:
+   visualize(testData2, visuals =  setVisuals(all = "basicVisual"))
+ 
+
+</code></pre>
+
+
+</div>

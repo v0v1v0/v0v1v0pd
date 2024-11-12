@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optimum_param</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Function to find the optimum parameter for derivative estimation (embedding or spar according to derivative estimation method chosen)</h2>
+
+<h3>Description</h3>
+
+<p><code>optimum_param</code>  calculates the optimum parameter for derivative estimation by varying the latter in a range introduced as input and keeping the parameter and
+coefficients having the $R^2$ closest to 1.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optimum_param(
+  data,
+  id = NULL,
+  input = NULL,
+  time,
+  signal,
+  dermethod = "gold",
+  model = "1order",
+  order = 2,
+  pmin = 3,
+  pmax = 21,
+  pstep = 2,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Is a data frame containing at least one column, that is the signal to be analyzed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Is a CHARACTER containing the NAME of the column of data containing the identifier of the individual.
+If this parameter is not entered when calling the function, a single individual is assumed and a linear regression is done instead
+of the linear mixed-effects regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>input</code></td>
+<td>
+<p>Is a CHARACTER or a VECTOR OF CHARACTERS containing the NAME(s) of data column(s) containing the EXCITATION vector(s).
+If this parameter is not entered when calling the function,
+the excitation is assumed to be unknown. In this case, the linear mixed-effect regression is still carried out but no coefficient is calculated
+for the excitation term. The function then uses the parameters estimated by the regression to carry out an exponential fit of the signal
+and build the estimated curve.
+The function will consider as an excitation each column of data having a name contained in the input vector.
+The function will return a coefficient for each one of the excitation variables included in the input vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>Is a CHARACTER containing the NAME of the column of data containing the time vector. If this parameter is not entered when calling the function,
+it is assumed that time steps are of 1 unit and the time vector is generated internally in the function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signal</code></td>
+<td>
+<p>Is a CHARACTER containing the NAME of the column of the data frame containing the SIGNAL to be studied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dermethod</code></td>
+<td>
+<p>is the derivative estimation method. The methods currently available are: "gold","glla" and "fda" (see their respective function for more details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>is the model to be used for analysis of the signal. The models available are "1order" and "2order"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>is the maximum order of the derivative estimated when using <code>calculate.gold</code> or <code>calculate.glla</code>.
+Using a higher order can enhance derivative estimation (see doi: <a href="https://doi.org/10.1080/00273171.2015.1123138">10.1080/00273171.2015.1123138</a>Chow et al.(2016))</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmin</code></td>
+<td>
+<p>is the minimum of the interval in which to vary the parameter (embedding number or spar according to derivative method chosen)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmax</code></td>
+<td>
+<p>is the maximum of the interval in which to vary the parameter (embedding number or spar according to derivative method chosen)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pstep</code></td>
+<td>
+<p>is the step that will be considered when varying the parameter. For instance pmin=3, pmax=7 and pstep=2 and dermethod="gold" will make the embedding number take
+the values 3,5 and 7.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Is a boolean that displays status messages of the function (and functions it calls) when set to TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list of three objects:
+</p>
+
+<ul>
+<li>
+<p>  analysis is a data.frame containing the resultmean object of the analysis made (result of the analyze.1order or analyze.2order function
+according to model chosen) with the different values of embedding/spar and the resulting $R^2$.
+</p>
+</li>
+<li>
+<p>  summary_opt is a data.frame containing the analysis that had the best $R^2$ from the analysis data.frame previously mentioned
+</p>
+</li>
+<li>
+<p> d contains the optimum value of the embedding/spar
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>analyze.1order</code> and <code>analyze.2order</code> for the estimation of equation coefficients in signals following a first and second order differential equation respectively
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">s2 &lt;- generate.panel.2order(time = 0:100,
+                            excitation = c(rep(0,25),rep(1,76)),
+                            y0 = 0,
+                            v0= 0,
+                            xi = 0.05,
+                            period=10,
+                            k=1,
+                            yeq=0,
+                            nind=4,
+                            internoise = 0.2,
+                            intranoise = 8)
+resgold &lt;- optimum_param (data=s2,
+                          id="id",
+                          input="excitation",
+                          time="time",
+                          signal="signal",
+                          model = "2order",
+                          dermethod = "gold",
+                          pmin = 3,
+                          pmax = 13,
+                          pstep = 2,
+                          verbose = TRUE)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,100 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lsum</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Properly Compute the Logarithm of a Sum (of Exponentials)</h2>
+
+<h3>Description</h3>
+
+<p>Properly compute <code class="reqn">\log(x_1 + \ldots + x_n)</code>.
+for given <code class="reqn">log(x_1),..,log(x_n)</code>.  Here, <code class="reqn">x_i &gt; 0</code> for all <code class="reqn">i</code>.
+</p>
+<p>If the inputs are denoted <code class="reqn">l_i = log(x_i)</code> for <code class="reqn">i = 1,2,..,n</code>, we
+compute <code>log(sum(exp(l[])))</code>, numerically stably.
+</p>
+<p>Simple vector version of <code>copula:::lsum()</code> (CRAN package
+<a href="https://CRAN.R-project.org/package=copula"><span class="pkg">copula</span></a>). 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lsum(lx, l.off = max(lx))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lx</code></td>
+<td>
+<p>n-vector of values log(x_1),..,log(x_n).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l.off</code></td>
+<td>
+<p>the offset to substract and re-add; ideally in
+the order of the maximum of each column.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p style="text-align: center;"><code class="reqn">
+    log(x_1 + .. + x_n) = log(sum(x)) = log(sum(exp(log(x)))) =
+    = log(exp(log(x_max))*sum(exp(log(x)-log(x_max)))) =
+    = log(x_max) + log(sum(exp(log(x)-log(x_max))))) =
+    = lx.max + log(sum(exp(lx-lx.max)))
+  </code>
+</p>
+
+
+
+<h3>Author(s)</h3>
+
+<p>Originally, via paired programming: Marius Hofert and Martin Maechler.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lssum()</code> which computes a sum in log scale
+with specified (typically alternating) signs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## The "naive" version :
+lsum0 &lt;- function(lx) log(sum(exp(lx)))
+
+lx1 &lt;- 10*(-80:70) # is easy
+lx2 &lt;- 600:750     # lsum0() not ok [could work with rescaling]
+lx3 &lt;- -(750:900)  # lsum0() = -Inf - not good enough
+m3 &lt;- cbind(lx1,lx2,lx3)
+lx6 &lt;- lx5 &lt;- lx4 &lt;- lx3
+lx4[149:151] &lt;- -Inf ## = log(0)
+lx5[150] &lt;- Inf
+lx6[1] &lt;- NA_real_
+m6 &lt;- cbind(m3,lx4,lx5,lx6)
+stopifnot(exprs = {
+  all.equal(lsum(lx1), lsum0(lx1))
+  all.equal((ls1 &lt;- lsum(lx1)),  700.000045400960403, tol=8e-16)
+  all.equal((ls2 &lt;- lsum(lx2)),  750.458675145387133, tol=8e-16)
+  all.equal((ls3 &lt;- lsum(lx3)), -749.541324854612867, tol=8e-16)
+  ## identical: matrix-version &lt;==&gt; vector versions
+  identical(lsum(lx4), ls3)
+  identical(lsum(lx4), lsum(head(lx4, -3))) # the last three were -Inf
+  identical(lsum(lx5), Inf)
+  identical(lsum(lx6), lx6[1])
+  identical((lm3 &lt;- apply(m3, 2, lsum)), c(lx1=ls1, lx2=ls2, lx3=ls3))
+  identical(apply(m6, 2, lsum), c(lm3, lx4=ls3, lx5=Inf, lx6=lx6[1]))
+})
+</code></pre>
+
+
+</div>

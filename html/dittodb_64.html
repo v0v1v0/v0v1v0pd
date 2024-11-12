@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>redact_columns</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Redact columns from a dataframe with the default redactors</h2>
+
+<h3>Description</h3>
+
+<p>This function redacts the columns specified in <code>columns</code> in the data given in
+<code>data</code> using <code>dittodb</code>'s standard redactors.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">redact_columns(data, columns, ignore.case = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a dataframe to redact</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>columns</code></td>
+<td>
+<p>character, the columns to redact</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignore.case</code></td>
+<td>
+<p>should case be ignored? (default: <code>TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional options to pass on to <code>grep()</code> when matching the column
+names</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The column names given in the <code>columns</code> argument are treated as regular
+expressions, however they always have <code>^</code> and <code>$</code> added to the beginning and
+end of the strings. So if you would like to match any column that starts with
+the string <code>sensitive</code> (e.g. <code>sensitive_name</code>, <code>sensitive_date</code>) you could
+use <code style="white-space: pre;">⁠"sensitive.*⁠</code> and this would catch all of those columns (though it would
+not catch a column called <code>most_sensitive_name</code>).
+</p>
+<p>The standard redactors replace all values in the column with the following
+values based on the columns type:
+</p>
+
+<ul>
+<li>
+<p> integer – <code>9L</code>
+</p>
+</li>
+<li>
+<p> numeric – <code>9</code>
+</p>
+</li>
+<li>
+<p> character – <code>"[redacted]"</code>
+</p>
+</li>
+<li> <p><code>POSIXct</code> (date times) – <code>as.POSIXct("1988-10-11T17:00:00", tz = tzone)</code>
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>data, with the columns specified in <code>columns</code> duly redacted
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if (check_for_pkg("nycflights13", message)) {
+  small_flights &lt;- head(nycflights13::flights)
+
+  # with no columns specified, redacting does nothing
+  redact_columns(small_flights, columns = NULL)
+
+  # integer
+  redact_columns(small_flights, columns = c("arr_time"))
+
+  # numeric
+  redact_columns(small_flights, columns = c("arr_delay"))
+
+  # characters
+  redact_columns(small_flights, columns = c("origin", "dest"))
+
+  # datetiems
+  redact_columns(small_flights, columns = c("time_hour"))
+}
+</code></pre>
+
+
+</div>

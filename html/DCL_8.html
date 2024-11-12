@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dcl.estimation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parameter estimation - Double Chain Ladder model</h2>
+
+<h3>Description</h3>
+
+<p>Compute the estimated parameters in the model (delay parameters, severity underwriting inflation, severity mean and variance) using the Double Chain Ladder method. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dcl.estimation( Xtriangle , Ntriangle , adj = 1 , Tables = TRUE , 
+   num.dec = 4 , n.cal = NA , Fj.X=NA , Fj.N=NA )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Xtriangle </code></td>
+<td>
+
+<p>The paid run-off triangle: incremental aggregated payments. It should be a matrix with incremental aggregated  payments located in the upper triangle and the lower triangle  consisting in missing or zero values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ntriangle </code></td>
+<td>
+
+<p>The counts data triangle: incremental number of reported claims. It should be a matrix with the observed counts located in the upper triangle and the lower triangle  consisting in missing or zero values. It should has the same dimension as <code>Xtriangle</code> (both in the same aggregation level (quarters, years,etc.))</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adj </code></td>
+<td>
+<p>Method to adjust the estimated delay parameters for the distributional model. It should be 1 (default value) or 2. See more in details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tables </code></td>
+<td>
+<p>Logical. If <code>TRUE</code> (default) it is showed a table with the estimated parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.dec </code></td>
+<td>
+<p>Number of decimal places used to report numbers in the tables (if <code>Tables=TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.cal</code></td>
+<td>
+<p>Integer specifying the number of most recent calendars which will be used to calculate the development factors. By default <code>n.cal=NA</code> and all the observed calendars    are used (classical chain ladder). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Fj.X</code></td>
+<td>
+<p>Optional vector with lentgth m-1 (m being the dimension of the triangles) with the development factors to calculate the chain ladder estimates from <code>Xtriangle</code>. See more details in <code>clm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Fj.N</code></td>
+<td>
+<p>Optional vector with lentgth m-1 with the development factors to calculate the chain ladder estimates from <code>Ntriangle</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Two models are estimated in the double chain ladder framework (Martinez-Miranda, Nielsen and Verrall 2012). 
+</p>
+<p>The basic DCL model only makes assumption on the first moments  (see assumptions M1-M3 in Section 2 of the paper). From the two input triangles (<code>Ntriangle</code>,<code>Xtriangle</code>) the parameters involved in this model are estimated: <code>pi.delay</code> (delay parameters  that could be negative values and/or sum up above 1, by solving the linear system (7) in Section 3), <code>mu</code> (mean of the individual payments in the first underwriting period,  from expression (9)), <code>inflat</code> (the underwriting severity mean inflation, from expression (8)), <code>alpha.N</code> and <code>beta.N</code> (the chain ladder parameters in the (OD)Poisson model for <code>Ntriangle</code> from expressions (10)-(12)). Using the estimated parameters in this simpler model the predicted outstanding numbers (calculated from equations (14) and (15)) are exactly the classical chain ladder predictions (see Theorem 1 in pp. 67). 
+</p>
+<p>The second model is a distributional model (assumptions D1-D4 in Section 5) which allows to provide the full cash-flow. In this model the parameters are adjusted to match with the assumptions: <code>pj</code> are delay probabilities resulting from adjusting the general parameters <code>pi.delay</code> (defined in expressions (21)-(22)), <code>mu.adj</code> is the corresponding adjusted mean factor and <code>sigma2</code> is the variance factor (in expression (24)). The function <code>dcl.estimation</code> suggest two different adjustments of the general <code>pi.delay</code>, the user should choose the adjustment which does not modify substantially the IBNR/RBNS split in the basic model (M1-M3), see Martinez-Miranda, Nielsen, Verrall and W|thrich (2013) for a discussion.
+</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pi.delay</code></td>
+<td>
+<p>General delay parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>Mean severity factor</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflat</code></td>
+<td>
+<p>Underwriting severity inflation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pj</code></td>
+<td>
+<p>Delay probabilities (under a Multinomial assumption)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu.adj</code></td>
+<td>
+<p>Adjusted mean factor corresponding to the <code>pj</code> parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma2</code></td>
+<td>
+<p>Variance severity factor</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi</code></td>
+<td>
+<p>Overdispersion parameter used to derive the estimate <code>sigma2</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ey</code></td>
+<td>
+<p>Severity mean for each underwriting period</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Vy</code></td>
+<td>
+<p>Severity variance for each underwriting period</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adj</code></td>
+<td>
+<p>Type of adjusted used to derive the <code>pj</code> probabilities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.N </code></td>
+<td>
+<p>Underwriting chain ladder parameter in the (OD)-Poisson model. Counts triangle (Ntriangle)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta.N </code></td>
+<td>
+<p>Underwriting chain ladder parameter in the (OD)-Poisson model. Counts triangle (Ntriangle)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nhat </code></td>
+<td>
+<p>The chain ladder preditions (counts triangle). It is a matrix having the chain ladder predictions in the future (lower triangle) and the fitted values in the past (upper triangle).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.X </code></td>
+<td>
+<p>Underwriting chain ladder parameter in the (OD)-Poisson model. Paid triangle (Xtriangle)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta.X </code></td>
+<td>
+<p>Underwriting chain ladder parameter in the (OD)-Poisson model. Paid triangle (Xtriangle)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Xhat </code></td>
+<td>
+<p>The chain ladder preditions (paid triangle). It is a matrix having the chain ladder predictions in the future (lower triangle) and the fitted values in the past (upper triangle).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>M.D. Martinez-Miranda, J.P. Nielsen and R. Verrall
+</p>
+
+
+<h3>References</h3>
+
+<p>Martinez-Miranda, M.D., Nielsen, J.P. and Verrall, R. (2012) Double Chain Ladder. <em>Astin Bulletin</em>, 42/1, 59-76.
+</p>
+<p>Martinez-Miranda, M.D., Nielsen, J.P., Verrall, R. and W|thrich, M.V. (2013) Double Chain Ladder, Claims Development Inflation and Zero Claims. <em>Scandinavian Actuarial Journal</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Plot.dcl.par</code>, <code>dcl.predict</code>,
+<code>bdcl.estimation</code>, <code>idcl.estimation</code>,  <code>clm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(NtriangleDCL)
+data(XtriangleDCL)
+# Estimation of the DCL parameters described in Martinez-Miranda, Nielsen and Verrall (2012)
+est1&lt;-dcl.estimation(XtriangleDCL,NtriangleDCL)
+Plot.dcl.par(est1)
+# Compare two possible adjustmets to get distributional parameters
+# est1 with adj=1
+pj.1&lt;-est1$pj
+pi.delay&lt;-est1$pi.delay
+est2&lt;-dcl.estimation(XtriangleDCL,NtriangleDCL,adj=2,Tables=FALSE)
+pj.2&lt;-est2$pj
+data.frame(pi.delay=pi.delay,pj.adj.1=pj.1,pj.adj.2=pj.2)
+</code></pre>
+
+
+</div>

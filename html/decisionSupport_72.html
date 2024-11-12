@@ -1,0 +1,316 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>welfareDecisionAnalysis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analysis of the underlying welfare based decision problem.</h2>
+
+<h3>Description</h3>
+
+<p>The optimal choice between two different opportunities is calculated. Optimality is taken as 
+maximizing expected welfare. Furthermore, the Expected Opportunity Loss (EOL) is calculated.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">welfareDecisionAnalysis(
+  estimate,
+  welfare,
+  numberOfModelRuns,
+  randomMethod = "calculate",
+  functionSyntax = "data.frameNames",
+  relativeTolerance = 0.05,
+  verbosity = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>estimate</code></td>
+<td>
+<p><code>estimate</code> object describing the distribution of the input variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>welfare</code></td>
+<td>
+<p>either a <code>function</code> or a <code>list</code> with two <code>functions</code>, i.e.
+<code>list(p1,p2)</code>. In the first case the function is the net benefit (or welfare) of project approval (PA) vs.
+the status quo (SQ). In the second case the element <code>p1</code> is the function valuing the first
+project and the element <code>p2</code> valuing the second project, viz. the welfare function of <code>p1</code>
+and <code>p2</code> respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numberOfModelRuns</code></td>
+<td>
+<p><code>integer</code>: The number of running the welfare model for the 
+underlying Monte Carlo simulation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomMethod</code></td>
+<td>
+<p><code>character</code>: The method to be used to sample the distribution
+representing the input estimate. For details see option <code>method</code> in 
+<code>random.estimate</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>functionSyntax</code></td>
+<td>
+<p><code>character</code>: function syntax used in the welfare function(s). For 
+details see <code>mcSimulation</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relativeTolerance</code></td>
+<td>
+<p><code>numeric</code>: the relative tolerance level of deviation of the
+generated confidence interval from the specified interval. If this deviation is greater than
+<code>relativeTolerance</code> a warning is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbosity</code></td>
+<td>
+<p><code>integer</code>: if <code>0</code> the function is silent; the larger the value the
+more verbose is output information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>The underlying decision problem and its notational framework</h4>
+
+ 
+<p>We are considering a
+decision maker who can influence an ecological-economic system having two alternative decisions
+<code class="reqn">d_1</code> and <code class="reqn">d_2</code> at hand. We assume, that the system can be characterized by the 
+<code class="reqn">n-</code>dimensional
+vector <code class="reqn">X</code>. The characteristics <code class="reqn">X</code>, are not necessarily known exactly to the decision maker.
+However, we assume furthermore that she is able to quantify this uncertainty which we call an
+<em>estimate</em> of the characteristics. Mathematically, an estimate is a random variable with
+probability density <code class="reqn">\rho_X</code>.
+</p>
+<p>Furthermore, the characteristics <code class="reqn">X</code> determine the welfare <code class="reqn">W(d)</code> according to the welfare
+function <code class="reqn">w_d</code>: 
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+      W_d = w_d (X) 
+  </code>
+</p>
+ 
+<p>Thus, the welfare of decision <code class="reqn">d</code> is also a random
+variable whose probability distribution we call <code class="reqn">\rho_{W_d}</code>. The welfare function <code class="reqn">w_d</code> values
+the decision <code class="reqn">d</code> given a certain state <code class="reqn">X</code> of the system. In other words, decision <code class="reqn">d_2</code> is
+preferred over decision <code class="reqn">d_1</code>, if and only if, the expected welfare of decision <code class="reqn">d_2</code> is
+greater than the expected welfare (For a comprehensive
+discussion of the concept of social preference ordering and its representation by a welfare
+function cf. Gravelle and Rees (2004)) of decsion <code class="reqn">d_1</code>, formally 
+</p>
+<p style="text-align: center;"><code class="reqn">
+    d_1 \prec d_2 \Leftrightarrow \textrm{E}[W_{d_1}] &lt; \textrm{E}[W_{d_2}].
+   </code>
+</p>
+
+<p>This means the best decision <code class="reqn">d^*</code> is the one which maximizes welfare: 
+</p>
+<p style="text-align: center;"><code class="reqn"> 
+    d^* := \arg \max_{d=d_1,d_2} \textrm{E}[W_d]
+  </code>
+</p>
+
+<p>This maximization principle has a dual minimization principle. We define the net benefit
+<code class="reqn">\textrm{NB}_{d_1} := W_{d_1} - W_{d_2}</code> as the difference 
+between the welfare of the two decision
+alternatives. A loss <code class="reqn">L_d</code> is characterized if a decision <code class="reqn">d</code> produces a negative net benefit.
+No loss occurs if the decision produces a positive net benefit. This is reflected in the formal
+definition 
+</p>
+<p style="text-align: center;"><code class="reqn">
+      L_d := - \textrm{NB}_d, \textrm{~if~} \textrm{NB}_d  &lt; 0, \textrm{~and~} L_d := 0  
+         \textrm{~otherwise}.
+  </code>
+</p>
+
+<p>Using this notion it can be shown that the maximization of
+expected welfare is equivalent to the minimization of the expected loss 
+<code class="reqn">\textrm{EL}_d := \textrm{E}[L_d]</code>. 
+</p>
+
+
+<h5>The Expected Opportunity Loss (EOL)</h5>
+
+<p>The use of this concept, here, is in line as described in Hubbard (2014). The Expected
+Opportunity Loss (<code class="reqn">\textrm{EOL}</code>) is defined as the expected loss for the best
+decision. The best decision minimizes the expected loss:
+</p>
+<p style="text-align: center;"><code class="reqn">
+      \textrm{EOL} := \min \left\{ \textrm{EL}_{d_1}, \textrm{EL}_{d_2}\right\}
+     </code>
+</p>
+
+<p>The <code class="reqn">\textrm{EOL}</code> is always conditional on the available information which is
+characterized by the probability distribution of <code class="reqn">X</code>
+<code class="reqn">\rho_X</code>: <code class="reqn">\textrm{EOL} = \textrm{EOL}(\rho_X)</code>.
+</p>
+
+
+
+<h5>Special case: Status quo and project approval</h5>
+
+<p>A very common actual binary decision problem is the question if a certain project shall be 
+approved versus continuing with business as usual, i.e. the status quo. It appears to be 
+natural to identify the status quo with zero welfare. This is a special case ( Actually, one
+can show, that this special case is equivalent to the discussion above.) of the binary
+decision problem that we are considering here. The two decision alternatives are
+</p>
+
+<dl>
+<dt><code class="reqn">d_1:</code></dt>
+<dd>
+<p> project approval (PA) and </p>
+</dd>
+<dt><code class="reqn">d_2:</code></dt>
+<dd>
+<p> status quo (SQ),</p>
+</dd>
+</dl>
+<p>and the welfare of the approved project (or project outcome or yield of the project) is the
+random variable <code class="reqn">W_\textrm{PA}</code> with distribution 
+<code class="reqn">P_{W_\textrm{PA}} = w_\textrm{PA}(P_X)</code>:
+</p>
+<p style="text-align: center;"><code class="reqn">
+        W_\textrm{PA} \sim w_\textrm{PA}(P_X) = P_{W_\textrm{PA}}
+       </code>
+</p>
+
+<p>and the welfare of the status quo serves as reference and is normalized to zero:
+</p>
+<p style="text-align: center;"><code class="reqn">
+      W_\textrm{SQ} \equiv 0,
+    </code>
+</p>
+
+<p>which implies zero expected welfare of the status quo:
+</p>
+<p style="text-align: center;"><code class="reqn">
+      \textrm{E}[W]_\textrm{SQ} 	= 0.
+    </code>
+</p>
+
+
+
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>welfareDecisionAnalysis</code> with the following elements:
+</p>
+
+<dl>
+<dt><code>$mcResult</code></dt>
+<dd>
+<p>The results of the Monte Carlo analysis of <code>estimate</code> 
+transformed by <code>welfare</code></p>
+</dd>
+</dl>
+<p> (cf. <code>mcSimulation</code>).
+</p>
+<dl>
+<dt><code>$enbPa</code></dt>
+<dd>
+<p>Expected Net Benefit of project approval: ENB(PA)</p>
+</dd>
+<dt><code>$elPa</code></dt>
+<dd>
+<p>Expected Loss in case of project approval: EL(PA)</p>
+</dd>
+<dt><code>$elSq</code></dt>
+<dd>
+<p>Expected Loss in case of status quo: EL(SQ)</p>
+</dd>
+<dt><code>$eol</code></dt>
+<dd>
+<p>Expected Opportunity Loss: EOL</p>
+</dd>
+<dt><code>$optimalChoice</code></dt>
+<dd>
+<p>The optimal choice, i.e. either project approval (PA) or the status quo (SQ).
+</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Hubbard, Douglas W., <em>How to Measure Anything? - Finding the Value of "Intangibles" in Business</em>,
+John Wiley &amp; Sons, Hoboken, New Jersey, 2014, 3rd Ed, <a href="https://www.howtomeasureanything.com/">https://www.howtomeasureanything.com/</a>.
+</p>
+<p>Gravelle, Hugh and Ray Rees, <em>Microeconomics</em>, Pearson Education Limited, 3rd edition, 2004.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mcSimulation</code>, <code>estimate</code>, <code>summary.welfareDecisionAnalysis</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#############################################################
+# Example 1 (Creating the estimate from the command line):
+#############################################################
+# Create the estimate object:
+variable=c("revenue","costs")
+distribution=c("posnorm","posnorm")
+lower=c(10000,  5000)
+upper=c(100000, 50000)
+costBenefitEstimate&lt;-as.estimate(variable, distribution, lower, upper)
+# (a) Define the welfare function without name for the return value:
+profit&lt;-function(x){
+ x$revenue-x$costs
+}
+# Perform the decision analysis:
+myAnalysis&lt;-welfareDecisionAnalysis(estimate=costBenefitEstimate, 
+                                    welfare=profit, 
+                                    numberOfModelRuns=100000,
+                                    functionSyntax="data.frameNames")
+# Show the analysis results:
+print(summary((myAnalysis)))
+#############################################################
+# (b) Define the welfare function with a name for the return value:
+profit&lt;-function(x){
+ list(Profit=x$revenue-x$costs)
+}
+# Perform the decision analysis:
+myAnalysis&lt;-welfareDecisionAnalysis(estimate=costBenefitEstimate, 
+                                    welfare=profit, 
+                                    numberOfModelRuns=100000,
+                                    functionSyntax="data.frameNames")
+# Show the analysis results:
+print(summary((myAnalysis)))
+#############################################################
+# (c) Two decsion variables:
+welfareModel&lt;-function(x){
+ list(Profit=x$revenue-x$costs,
+   Costs=-x$costs)
+}
+# Perform the decision analysis:
+myAnalysis&lt;-welfareDecisionAnalysis(estimate=costBenefitEstimate, 
+                                    welfare=welfareModel, 
+                                    numberOfModelRuns=100000,
+                                    functionSyntax="data.frameNames")
+# Show the analysis results:
+print(summary((myAnalysis)))
+</code></pre>
+
+
+</div>

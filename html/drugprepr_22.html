@@ -1,0 +1,84 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>isolate_overlaps</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Separating overlapping prescription periods</h2>
+
+<h3>Description</h3>
+
+<p>Run this function and then you can either simply discard overlapping
+intervals or shift them around using an appropriate algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">isolate_overlaps(data)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame including variables <code>patid</code>, <code>start_date</code>,
+<code>stop_date</code> and <code>prodcode</code></p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>The older implementation used <code>isolateoverlaps</code> from the
+<code>intervalaverage</code> package and <code>Overlap</code> from the <code>DescTools</code>
+package. Here we refactor it using functions from <code>tidyverse</code> instead.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame of <code>patid</code>, <code>prodcode</code>, <code>start_date</code> and
+<code>stop_date</code>, where intervals are either exactly overlapping or mutually
+non-overlapping (but not partially overlapping), such that the union of such
+intervals is equivalent to those originally provided in <code>data</code>
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function currently doesn't use any keys except <code>patid</code> and
+<code>prodcode</code>. It may be desirable to add a row ID, for matching each
+partial interval back to the original interval from which it was derived.
+This may be relevant to models using weighted dosages.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>intervalaverage::isolateoverlaps</code>,
+<code>foverlaps</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1)
+overlapping_data &lt;- data.frame(
+  rowid = 1:20,
+  patid = 1:2,
+  prodcode = 'a',
+  start_date = Sys.Date() + c(round(rexp(19, 1/7)), -20),
+  qty = rpois(20, 64),
+  ndd = sample(seq(.5, 12, by = .5), 20, replace = TRUE),
+  stringsAsFactors = FALSE
+)
+overlapping_data &lt;- transform(overlapping_data,
+  stop_date = start_date + qty / ndd
+)
+isolate_overlaps(overlapping_data)
+
+</code></pre>
+
+
+</div>

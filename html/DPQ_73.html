@@ -1,0 +1,171 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gam1d</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute  1/Gamma(x+1) - 1  Accurately</h2>
+
+<h3>Description</h3>
+
+<p>Computes <code class="reqn">1/\Gamma(a+1) - 1</code> accurately in <code class="reqn">[-0.5, 1.5]</code> for numeric argument <code>a</code>;
+For <code>"mpfr"</code> numbers, the precision is increased intermediately such
+that <code class="reqn">a+1</code> should not lose precision.
+</p>
+<p>FIXME: "Pure-R" implementation is in ‘<span class="file"> ~/R/Pkgs/DPQ/TODO_R_versions_gam1_etc.R </span>’
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+gam1d(a, warnIf = TRUE, verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>a numeric or numeric-alike, typically inheriting from <code>class</code> <code>"mpfr"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warnIf</code></td>
+<td>
+<p>logical if a <code>warning</code> should be signalled when
+<code>a</code> is not in the “proper” range <code class="reqn">[-0.5, 1.5]</code>.</p>
+</td>
+</tr>
+</table>
+<table><tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical indicating if some output from C code execution
+should be printed to the console.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+ 
+
+<p><a href="https://dlmf.nist.gov/">https://dlmf.nist.gov/</a> states the well-know Taylor series for
+</p>
+<p style="text-align: center;"><code class="reqn">\frac{1}{\Gamma(z)} = \sum_{k=1}^\infty c_k z^k</code>
+</p>
+
+<p>with <code class="reqn">c_1 = 1</code>,  <code class="reqn">c_2 = \gamma</code>, (Euler's gamma, <code class="reqn">\gamma = 0.5772...</code>, with
+recursion <code class="reqn">c_k = (\gamma c_{k-1} - \zeta(2) c_{k-2} ... +(-1)^k \zeta(k-1) c_1) /(k-1)</code>.
+</p>
+<p>Hence,  </p>
+<p style="text-align: center;"><code class="reqn">\frac{1}{\Gamma(z+1)}    = z+1 + \sum_{k=2}^\infty c_k (z+1)^k</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\frac{1}{\Gamma(z+1)} -1 = z + \gamma*(z+1)^2 + \sum_{k=3}^\infty c_k (z+1)^k</code>
+</p>
+
+<p>Consequently, for <code class="reqn">\zeta_k := \zeta(k)</code>,
+<code class="reqn">c_3 = (\gamma^2 - \zeta_2)/2</code>,
+<code class="reqn">c_4 = \gamma^3/6 - \gamma \zeta_2/2 + \zeta_3/3</code>.
+</p>
+<pre>
+  gam &lt;- Const("gamma", 128)
+  z &lt;- Rmpfr::zeta(mpfr(1:7, 128))
+  (c3 &lt;- (gam^2 -z[2])/2)                       # -0.655878071520253881077019515145
+  (c4 &lt;- (gam*c3 - z[2]*c2 + z[3])/3)           # -0.04200263503409523552900393488
+  (c4 &lt;- gam*(gam^2/6 - z[2]/2) + z[3]/3)
+  (c5 &lt;- (gam*c4 - z[2]*c3 + z[3]*c2 - z[4])/4) # 0.1665386113822914895017007951
+  (c5 &lt;- (gam^4/6 - gam^2*z[2] + z[2]^2/2 + gam*z[3]*4/3 - z[4])/4)
+</pre>
+
+
+<h3>Value</h3>
+
+<p>a numeric-alike vector like <code>a</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler building on C code of TOMS 708</p>
+
+
+<h3>References</h3>
+
+<p>TOMS 708, see <code>pbeta</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gamma</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">g1 &lt;- function(u) 1/gamma(u+1) - 1
+u &lt;- seq(-.5, 1.5, by=1/16); set.seed(1); u &lt;- sample(u) # permuted (to check logic)
+
+
+g11   &lt;- vapply(u, gam1d, 1)
+gam1d. &lt;- gam1d(u)
+stopifnot( all.equal(g1(u), g11) )
+stopifnot( identical(g11, gam1d.) )
+
+## Comparison of g1() and gam1d(), slightly extending the [-.5, 1.5] interval:
+u &lt;- seq(-0.525, 1.525, length.out = 2001)
+mg1 &lt;- cbind(g1 = g1(u), gam1d = gam1d(u))
+clr &lt;- adjustcolor(1:2, 1/2)
+matplot(u, mg1, type = "l", lty = 1, lwd=1:2, col=clr) # *no* visual difference
+## now look at *relative* errors
+relErrV &lt;- sfsmisc::relErrV
+relE &lt;- relErrV(mg1[,"gam1d"], mg1[,"g1"])
+plot(u, relE, type = "l")
+plot(u, abs(relE), type = "l", log = "y",
+     main = "|rel.diff|  gam1d() vs 'direct' 1/gamma(u+1) - 1")
+
+## now {Rmpfr} for "truth" :
+if(requireNamespace("Rmpfr")) withAutoprint({
+    asN  &lt;- Rmpfr::asNumeric; mpfr &lt;- Rmpfr::mpfr
+    gam1M &lt;- g1(mpfr(u, 512)) # "cheap": high precision avoiding "all" cancellation
+    relE &lt;- asN(relErrV(gam1M, gam1d(u)))
+    plot(relE ~ u, type="l", ylim = c(-1,1) * 2.5e-15,
+         main = expression("Relative Error of " ~~ gam1d(u) %~~% frac(1, Gamma(u+1)) - 1))
+    grid(lty = 3); abline(v = c(-.5, 1.5), col = adjustcolor(4, 1/2), lty=2, lwd=2)
+})
+
+
+
+
+
+if(requireNamespace("Rmpfr") &amp;&amp; FALSE) { 
+  
+## Comparison using Rmpfr; slightly extending the [-.5, 1.5] interval:
+##	{relErrV(), mpfr(), asN() defined above}
+
+u &lt;- seq(-0.525, 1.525, length.out = 2001)
+gam1M &lt;- gam1(mpfr(u, 128))
+relE &lt;- asN(relErrV(gam1M, gam1d(u)))
+
+plot(relE ~ u, type="l", ylim = c(-1,1) * 2.5e-15,
+     main = expression("Relative Error of " ~~ gam1d(u) == frac(1, Gamma(u+1)) - 1))
+grid(lty = 3); abline(v = c(-.5, 1.5), col = adjustcolor(4, 1/2), lty=2, lwd=2)
+
+## what about the direct formula -- how bad is it really ?
+relED &lt;- asN(relErrV(gam1M, g1(u)))
+
+plot(relE ~ u, type="l", ylim = c(-1,1) * 1e-14,
+     main = expression("Relative Error of " ~~ gam1d(u) == frac(1, Gamma(u+1)) - 1))
+lines(relED ~ u, col = adjustcolor(2, 1/2), lwd = 2)
+# mtext("comparing with direct formula   1/gamma(u+1) - 1")
+legend("top", c("gam1d(u)", "1/gamma(u+1) - 1"), col = 1:2, lwd=1:2, bty="n")
+## direct is clearly *worse* , but not catastrophical
+}
+
+</code></pre>
+
+
+</div>

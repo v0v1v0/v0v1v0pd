@@ -1,0 +1,218 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting dose-response models</h2>
+
+<h3>Description</h3>
+
+<p>A general model fitting function for analysis of concentration/dose/time-effect/response data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  drm(formula, curveid, pmodels, weights, data = NULL, subset, fct, 
+  type = c("continuous", "binomial", "Poisson", "quantal", "event"), 
+  bcVal = NULL, bcAdd = 0, 
+  start, na.action = na.omit, robust = "mean", logDose = NULL, 
+  control = drmc(), lowerl = NULL, upperl = NULL, separate = FALSE, pshifts = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a symbolic description of the model to be fit. Either of the form 'response <code class="reqn">~</code> dose' 
+or as a data frame with response values in first column and dose values in second column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>curveid</code></td>
+<td>
+<p>a numeric vector or factor containing the grouping of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmodels</code></td>
+<td>
+<p>a data frame with a many columns as there are parameters in the non-linear function. 
+Or a list containing a formula for each parameter in the nonlinear function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>a numeric vector containing weights. For continuous/quantitative responses weights are multiplied inside the squared errors (see the details below).
+For binomial reponses weights provide information about the total number of binary observations used to obtain the response (which is a proportion): 
+1/2 and 10/20 lead to different analyses due to the different totals (2 vs. 20) even though the proportion in both cases is 0.5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>an optional data frame containing the variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations to be used in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fct</code></td>
+<td>
+<p>a list with three or more elements specifying the non-linear
+function, the accompanying self starter function, the names of the parameter in the non-linear function and, 
+optionally, the first and second derivatives as well as information used for calculation of ED values.
+Currently available functions include, among others, the four- and five-parameter log-logistic models 
+<code>LL.4</code>, <code>LL.5</code> and the Weibull model <code>W1.4</code>. Use
+<code>getMeanFunctions</code> for a full list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>a character string specifying the data type (parameter estimation will depend on the data type as different log likelihood function will be used).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bcVal</code></td>
+<td>
+<p>a numeric value specifying the lambda parameter to be used in the Box-Cox transformation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bcAdd</code></td>
+<td>
+<p>a numeric value specifying the constant to be added on both sides prior to Box-Cox transformation. 
+The default is 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>an optional numeric vector containing starting values for all mean parameters in the model. 
+Overrules any self starter function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function for treating mising values ('NA's). Default is <code>na.omit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>robust</code></td>
+<td>
+<p>a character string specifying the rho function for robust estimation. Default is non-robust 
+least squares estimation ("mean"). Available robust methods are: median estimation ("median"), 
+least median of squares ("lms"), least trimmed squares ("lts"), metric trimming ("trimmed"), 
+metric winsorizing ("winsor") and Tukey's biweight ("tukey").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logDose</code></td>
+<td>
+<p>a numeric value or NULL. If log doses value are provided the base of the logarithm should be specified (exp(1) for the natural logarithm
+and 10 for 10-logarithm).</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list of arguments controlling constrained optimisation (zero as boundary), 
+maximum number of iteration in the optimisation,
+relative tolerance in the optimisation, warnings issued during the optimisation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowerl</code></td>
+<td>
+<p>a numeric vector of lower limits for all parameters in the model 
+(the default corresponds to minus infinity for all parameters).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upperl</code></td>
+<td>
+<p>a numeric vector of upper limits for all parameters in the model 
+(the default corresponds to plus infinity for all parameters).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separate</code></td>
+<td>
+<p>logical value indicating whether curves should be fit separately (independent of each other).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pshifts</code></td>
+<td>
+<p>a matrix of constants to be added to the matrix of parameters. Default is no shift for all parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function relies on the general optimiser function <code>optim</code> for the minimisation of negative log likelihood function. 
+For a continuous response this reduces to least squares estimation, which is carried out by minimising the following sums of squares
+</p>
+<p style="text-align: center;"><code class="reqn">\sum_{i=1}^N [w_i (y_i-f_i)]^2</code>
+</p>
+
+<p>where <code class="reqn">y_i</code>, <code class="reqn">f_i</code>, and <code class="reqn">w_i</code> correspond to the observed value, expected value, and the weight respectively, for the ith observation (from 1 to <code class="reqn">N</code>).
+</p>
+<p>The control arguments are specified using the function <code>drmc</code>.
+</p>
+<p>Setting <code>lowerl</code> and/or <code>upperl</code> automatically invokes constrained optimisation.
+</p>
+<p>The columns of a data frame argument to <code>pmodels</code> are automatically converted into factors. 
+This does not happen if a list is specified.   
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class 'drc'. 
+</p>
+
+
+<h3>Note</h3>
+
+
+
+
+
+<p>For robust estimation MAD (median abslolute deviance) is used to estimate the residual variance.  
+</p>
+
+
+
+
+
+<h3>Author(s)</h3>
+
+<p>Christian Ritz and Jens C. Streibig</p>
+
+
+<h3>See Also</h3>
+
+<p>Examples using <code>drm</code> found in the help pages of <code>ryegrass</code> (continuous data), 
+<code>secalonic</code> (continuous data), and <code>selenium</code> (binomial data), 
+as well as for a number of other datasets and functions in <code>drc</code>.
+</p>
+
+
+</div>

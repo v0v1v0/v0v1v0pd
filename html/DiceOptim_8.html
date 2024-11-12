@@ -1,0 +1,277 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>critcst_optimizer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximization of constrained Expected Improvement criteria</h2>
+
+<h3>Description</h3>
+
+<p>Given objects of class <code>km</code> for the objective and constraints,
+and a set of tuning parameters (<code>lower, upper and critcontrol</code>), <code>critcst_optimizer</code> performs
+the maximization of a constrained Expected Improvement or SUR criterion and delivers
+the next point to be visited in an EGO-like procedure. <br><br>
+The latter maximization relies either on a genetic algorithm using derivatives,
+<code>genoud</code> or exhaustive search at pre-specified points. 
+It is important to remark that the information
+needed about the objective and constraint functions reduces here to the vector of response values
+embedded in the models (no call to the objective/constraint functions or simulators (except possibly for the objective)).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">critcst_optimizer(
+  crit = "EFI",
+  model.fun,
+  model.constraint,
+  equality = FALSE,
+  lower,
+  upper,
+  type = "UK",
+  critcontrol = NULL,
+  optimcontrol = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+<p>sampling criterion. Three choices are available : "<code>EFI</code>", "<code>AL</code>" and "<code>SUR</code>",</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.fun</code></td>
+<td>
+<p>object of class <code>km</code> corresponding to the objective function,
+or, if the objective function is fast-to-evaluate, either the objective function to be minimized or a 
+<code>fastfun</code> object, see details and examples below,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model.constraint</code></td>
+<td>
+<p>either one or a list of models of class <code>km</code>, one for each constraint,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equality</code></td>
+<td>
+<p>either <code>FALSE</code> if all constraints are inequalities, or a Boolean vector indicating which are equalities,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>"<code>SK</code>" or "<code>UK</code>" (default), depending whether uncertainty related to trend estimation has to be taken into account.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>critcontrol</code></td>
+<td>
+<p>optional list of control parameters for criterion <code>crit</code>, see details.<br>
+Options for the <code>checkPredict</code> function: <code>threshold</code> (<code>1e-4</code>) and <code>distance</code> (<code>covdist</code>) are used to avoid numerical issues occuring when adding points too close to the existing ones.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimcontrol</code></td>
+<td>
+<p>optional list of control parameters for optimization of the selected infill criterion. 
+"<code>method</code>" set the optimization method; one can 
+choose between "<code>discrete</code>" and "<code>genoud</code>". For each method, further parameters can be set.<br> 
+For "<code>discrete</code>", one has to provide the argument "<code>candidate.points</code>". <br>
+For "<code>genoud</code>", one can control, among others, "<code>pop.size</code>" (default :  <code>[N = 3*2^dim</code> for <code>dim &lt; 6</code> and  <code>N = 32*dim</code> otherwise]),
+"<code>max.generations</code>" (<code>12</code>), "<code>wait.generations</code>" (<code>2</code>)),
+see <code>genoud</code>. Numbers into brackets are the default values.
+@return A list with components: 
+</p>
+
+<ul>
+<li>
+<p><code>par</code>: The best set of parameters found,
+</p>
+</li>
+<li>
+<p><code>value</code>: The value of expected improvement at <code>par</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Extension of the function <code>max_EI</code> for constrained optimization.<br></p>
+<p>Available infill criteria with <code>crit</code> are : <br></p>
+
+<ul>
+<li>
+<p> Expected Probability of Feasibily (<code>EFI</code>) <code>crit_EFI</code>,
+</p>
+</li>
+<li>
+<p> Augmented Lagrangian (<code>AL</code>) <code>crit_AL</code>,
+</p>
+</li>
+<li>
+<p> Stepwise Uncertainty Reduction of the excursion volume (<code>SUR</code>) <code>crit_SUR_cst</code>.
+</p>
+</li>
+</ul>
+<p>Depending on the selected criterion, parameters  can be given with <code>critcontrol</code>.
+Also options for <code>checkPredict</code> are available.
+More precisions are given in the corresponding help pages. <br></p>
+<p>If the objective function to minimize is inexpensive, i.e. no need of a kriging model,
+then one can provide it in <code>model.obj</code>, which is handled next with class <code>fastfun</code> (or directly as a <code>fastfun</code> object). 
+See example below.
+</p>
+<p>In the case of equality constraints, it is possible to define them with <code>equality</code>.
+Additionally, one can modify the tolerance on the constraints using the <code>tolConstraints</code> component of <code>critcontrol</code>:
+an optional vector giving a tolerance for each of the constraints (equality or inequality). 
+It is highly recommended to use it when there are equality constraints since the default tolerance of 0.05 (resp. 0 for inequality constraints) 
+in such case might not be suited.<br></p>
+
+
+<h3>Author(s)</h3>
+
+<p>Victor Picheny 
+</p>
+<p>Mickael Binois
+</p>
+
+
+<h3>References</h3>
+
+<p>W.R. Jr. Mebane and J.S. Sekhon (2011), Genetic optimization using derivatives: The rgenoud package for R, <em>Journal of Statistical Software</em>, 42(11), 1-26 <br></p>
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global optimization of expensive black-box functions, <em>Journal of Global Optimization</em>, 13, 455-492.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>critcst_optimizer</code>, <code>crit_EFI</code>, <code>crit_AL</code>,
+<code>crit_SUR_cst</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#---------------------------------------------------------------------------
+# 2D objective function, 2 cases
+#---------------------------------------------------------------------------
+
+set.seed(2546)
+library(DiceDesign)
+
+n_var &lt;- 2
+fun &lt;- branin
+
+fun1.cst &lt;- function(x){return(goldsteinprice(x)+.5)}
+fun2.cst &lt;- function(x){return(3/2 - x[1] - 2*x[2] - .5*sin(2*pi*(x[1]^2 - 2*x[2])))}
+
+# Constraint function with vectorial output
+cstfun &lt;- function(x){return(c(fun1.cst(x), fun2.cst(x)))}
+
+n.grid &lt;- 31
+test.grid &lt;- expand.grid(X1 = seq(0, 1, length.out = n.grid), X2 = seq(0, 1, length.out = n.grid))
+obj.grid &lt;- apply(test.grid, 1, fun)
+cst1.grid &lt;- apply(test.grid, 1, fun1.cst)
+cst2.grid &lt;- apply(test.grid, 1, fun2.cst)
+
+n_appr &lt;- 12 
+design.grid &lt;- round(maximinESE_LHS(lhsDesign(n_appr, n_var, seed = 2)$design)$design, 1)
+obj.init &lt;- apply(design.grid, 1, fun)
+cst1.init &lt;- apply(design.grid, 1, fun1.cst)
+cst2.init &lt;- apply(design.grid, 1, fun2.cst)
+model.fun &lt;- km(~., design = design.grid, response = obj.init)
+model.constraint1 &lt;- km(~., design = design.grid, response = cst1.init, lower=c(.2,.2))
+model.constraint2 &lt;- km(~., design = design.grid, response = cst2.init, lower=c(.2,.2))
+models.cst &lt;- list(model.constraint1, model.constraint2)
+
+lower &lt;- rep(0, n_var)
+upper &lt;- rep(1, n_var)
+
+#---------------------------------------------------------------------------
+# Augmented Lagrangian Improvement, fast objective function, two ineq constraints,
+# optimization with genoud
+#---------------------------------------------------------------------------
+critcontrol &lt;- list(lambda=c(.5,2), rho=.5)
+optimcontrol &lt;- list(method = "genoud", max.generations=10, pop.size=20)
+
+AL_grid &lt;- apply(test.grid, 1, crit_AL, model.fun = fastfun(fun, design.grid),
+                 model.constraint = models.cst, critcontrol=critcontrol)
+
+cstEGO1 &lt;- critcst_optimizer(crit = "AL", model.fun = fun,
+                             model.constraint = models.cst, equality = FALSE,
+                             lower = lower, upper = upper, 
+                             optimcontrol = optimcontrol, critcontrol=critcontrol)
+
+filled.contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), nlevels = 50,
+               matrix(AL_grid, n.grid), main = "AL map and its maximizer (blue)",
+               xlab = expression(x[1]), ylab = expression(x[2]), color = terrain.colors, 
+               plot.axes = {axis(1); axis(2);
+                            points(design.grid[,1], design.grid[,2], pch = 21, bg = "white")
+                            contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), 
+                            matrix(obj.grid, n.grid), nlevels = 10, add=TRUE,drawlabels=TRUE,
+                                   col = "black")
+                            contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), 
+                            matrix(cst1.grid, n.grid), level = 0, add=TRUE,drawlabels=FALSE,
+                                   lwd=1.5, col = "red")
+                            contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), 
+                            matrix(cst2.grid, n.grid), level = 0, add=TRUE,drawlabels=FALSE,
+                                   lwd=1.5, col = "red")
+                            points(cstEGO1$par, col = "blue", pch = 4, lwd = 2)
+                            }
+              )
+#---------------------------------------------------------------------------
+# SUR, expensive objective function, one equality constraint,
+# optimization with genoud, integration on a regular grid
+#---------------------------------------------------------------------------
+optimcontrol &lt;- list(method = "genoud", s = 40, maxit = 40)
+critcontrol  &lt;- list(tolConstraints = .15, integration.points=as.matrix(test.grid))
+
+SUR_grid &lt;- apply(test.grid, 1, crit_SUR_cst, model.fun = model.fun,
+                  model.constraint = model.constraint1, equality = TRUE, critcontrol = critcontrol)
+
+cstEGO2 &lt;- critcst_optimizer(crit = "SUR", model.fun = model.fun,
+                             model.constraint = model.constraint1, equality = TRUE,
+                             lower = lower, upper = upper, 
+                             optimcontrol = optimcontrol, critcontrol = critcontrol)
+
+filled.contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), nlevels = 50,
+               matrix(SUR_grid, n.grid), main = "SUR map and its maximizer (blue)",
+               xlab = expression(x[1]), ylab = expression(x[2]), color = terrain.colors, 
+               plot.axes = {axis(1); axis(2);
+                            points(design.grid[,1], design.grid[,2], pch = 21, bg = "white")
+                            contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), 
+                            matrix(obj.grid, n.grid), nlevels = 10, add=TRUE,
+                            drawlabels=TRUE, col = "black")
+                            contour(seq(0, 1, length.out = n.grid), seq(0, 1, length.out = n.grid), 
+                            matrix(cst1.grid, n.grid), level = c(-critcontrol$tolConstraints,
+                            critcontrol$tolConstraints), 
+                            add=TRUE, drawlabels=FALSE,lwd=1.5, col = "orange")
+                            points(cstEGO2$par, col = "blue", pch = 4, lwd = 2)
+                            }
+              )
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,379 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>f_drug_demand</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Drug Demand Forecasting</h2>
+
+<h3>Description</h3>
+
+<p>Obtains drug demand forecasting via modeling and
+simulation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">f_drug_demand(
+  df = NULL,
+  newEvents = NULL,
+  visitview = NULL,
+  kit_description_df = NULL,
+  treatment_by_drug_df = NULL,
+  dosing_schedule_df = NULL,
+  model_k0 = "negative binomial",
+  model_t0 = "log-logistic",
+  model_t1 = "least squares",
+  model_ki = "negative binomial",
+  model_ti = "least absolute deviations",
+  model_di = "linear mixed-effects model",
+  pilevel = 0.95,
+  nyears = 1,
+  ncores_max = 10,
+  pred_pp_only = FALSE,
+  showplot = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>A data frame for subject-level enrollment and event data,
+including the following variables:
+<code>trialsdt</code>, <code>usubjid</code>, <code>randdt</code>,
+<code>treatment</code>, <code>treatment_description</code>,
+<code>time</code>, <code>event</code>, <code>dropout</code>, and <code>cutoffdt</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newEvents</code></td>
+<td>
+<p>A data frame containing the imputed event data
+for both ongoing and new patients, typically obtained from
+the output of the <code>getPrediction</code> function of the
+<code>eventPred</code> package. It contains the following variables:
+<code>draw</code>, <code>usubjid</code>, <code>arrivalTime</code>, <code>treatment</code>,
+<code>treatment_description</code>, <code>time</code>, <code>event</code>,
+<code>dropout</code>, and <code>totalTime</code>. It must be provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>visitview</code></td>
+<td>
+<p>A data frame containing the observed drug dispensing
+data, including the following variables:
+<code>usubjid</code>, <code>visit</code>, <code>date</code>, <code>drug</code>,
+<code>drug_name</code>, <code>kit</code>, <code>kit_name</code>, <code>kit_number</code>,
+and <code>dispensed_quantity</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kit_description_df</code></td>
+<td>
+<p>A data frame indicating the
+drug and kit descriptions, including the following variables:
+<code>drug</code>, <code>drug_name</code>, <code>kit</code>, and <code>kit_name</code>.
+It must be specified at the design stage. It will be replaced with
+the observed information at the analysis stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment_by_drug_df</code></td>
+<td>
+<p>A data frame indicating the treatments
+associated with each drug, including the following variables:
+<code>treatment</code> and <code>drug</code>.
+It must be specified at the design stage. It will
+be replaced with the observed information at the analysis stage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dosing_schedule_df</code></td>
+<td>
+<p>A data frame providing dosing schedule
+information. It contains the following variables:
+<code>kit</code>, <code>target_days</code>, <code>target_dose</code>, and
+<code>max_cycles</code>. It must be provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_k0</code></td>
+<td>
+<p>The model for the number of skipped
+visits between randomization and the first drug dispensing visit.
+Options include "constant", "poisson", "zero-inflated poisson",
+and "negative binomial".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_t0</code></td>
+<td>
+<p>The model for the gap time between randomization
+and the first drug dispensing visit when there is no visit skipping.
+Options include "constant", "exponential", "weibull",
+"log-logistic", and "log-normal".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_t1</code></td>
+<td>
+<p>The model for the gap time between randomization
+and the first drug dispensing visit when there is visit skipping.
+Options include "least squares" and "least absolute deviations".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_ki</code></td>
+<td>
+<p>The model for the number of skipped
+visits between two consecutive drug dispensing visits.
+Options include "constant", "poisson", "zero-inflated poisson",
+and "negative binomial".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_ti</code></td>
+<td>
+<p>The model for the gap time between two consecutive
+drug dispensing visits. Options include "least squares"
+and "least absolute deviations".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_di</code></td>
+<td>
+<p>The model for the dispensed doses at drug
+dispensing visits. Options include "constant",
+"linear model", and "linear mixed-effects model".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pilevel</code></td>
+<td>
+<p>The prediction interval level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nyears</code></td>
+<td>
+<p>The number of years after the data cut for prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores_max</code></td>
+<td>
+<p>The maximum number of cores to use for parallel
+computing. The actual number of cores used is the minimum of
+<code>ncores_max</code> and half of the detected number of cores.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred_pp_only</code></td>
+<td>
+<p>A Boolean variable that controls whether or not
+to make protocol-based predictions only.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showplot</code></td>
+<td>
+<p>A Boolean variable that controls whether or not to
+show the drug dispensing model fit and drug demand prediction
+plots. It defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>For design-stage drug demand forecasting, a list with the
+following components:
+</p>
+
+<ul>
+<li> <p><code>kit_description_df</code>: A data frame indicating the
+drug and kit descriptions, including the following variables:
+<code>drug</code>, <code>drug_name</code>, <code>kit</code>, and <code>kit_name</code>.
+</p>
+</li>
+<li> <p><code>treatment_by_drug_df</code>: A data frame indicating the treatments
+associated with each drug, including the following variables:
+<code>treatment</code> and <code>drug</code>.
+</p>
+</li>
+<li> <p><code>dosing_schedule_df</code>: A data frame providing dosing schedule
+information. It contains the following variables:
+<code>kit</code>, <code>target_days</code>, <code>target_dose</code>, and
+<code>max_cycles</code>.
+</p>
+</li>
+<li> <p><code>dosing_pred_df</code>: A data frame for dosing summary by kit type
+and time point per protocol. It includes the following variables:
+<code>kit</code>, <code>kit_name</code>, <code>t</code>, <code>n</code>, <code>pilevel</code>,
+<code>lower</code>, <code>upper</code>, <code>mean</code>, <code>var</code>, and
+<code>parameter</code>.
+</p>
+</li>
+<li> <p><code>dosing_pred_plot</code>: A plot object for dosing prediction.
+</p>
+</li>
+</ul>
+<p>For analysis-stage drug demand forecasting, a list with the
+following components:
+</p>
+
+<ul>
+<li> <p><code>trialsdt</code>: The trial start date.
+</p>
+</li>
+<li> <p><code>cutoffdt</code>: The cutoff date.
+</p>
+</li>
+<li> <p><code>dosing_summary_t0</code>: A data frame for the cumulative doses
+dispensed before the cutoff date. It contains the following
+variables:
+<code>kit</code>, <code>kit_name</code>, and <code>cum_dose_t0</code>.
+</p>
+</li>
+<li> <p><code>cum_dispense_plot</code>: The step plot for the cumulative doses
+dispensed for each kit type.
+</p>
+</li>
+<li> <p><code>bar_t0_plot</code>: The bar chart for the time between
+randomization and the first drug dispensing visit.
+</p>
+</li>
+<li> <p><code>bar_ti_plot</code>: The bar chart for the gap time between two
+consecutive drug dispensing visits.
+</p>
+</li>
+<li> <p><code>bar_di_plot</code>: The bar chart for the doses dispensed at drug
+dispensing visits.
+</p>
+</li>
+<li> <p><code>common_time_model</code>: A Boolean variable that indicates
+whether a common time model is used for drug dispensing visits.
+</p>
+</li>
+<li> <p><code>k0_fit</code>: The model fit for the number of skipped
+visits between randomization and the first drug dispensing visit.
+</p>
+</li>
+<li> <p><code>t0_fit</code>: The model fit for the gap time between
+randomization and the first drug dispensing visit when there is
+no visit skipping.
+</p>
+</li>
+<li> <p><code>t1_fit</code>: The model fit for the gap time between
+randomization and the first drug dispensing visit when there is
+visit skipping.
+</p>
+</li>
+<li> <p><code>ki_fit</code>: The model fit for the number of skipped
+visits between two consecutive drug dispensing visits.
+</p>
+</li>
+<li> <p><code>ti_fit</code>: The model fit for the gap time between two
+consecutive drug dispensing visits.
+</p>
+</li>
+<li> <p><code>di_fit</code>: The model fit for the dispensed doses at drug
+dispensing visits.
+</p>
+</li>
+<li> <p><code>kit_description_df</code>: A data frame indicating the
+drug and kit descriptions, including the following variables:
+<code>drug</code>, <code>drug_name</code>, <code>kit</code>, and <code>kit_name</code>.
+</p>
+</li>
+<li> <p><code>treatment_by_drug_df</code>: A data frame indicating the treatments
+associated with each drug, including the following variables:
+<code>treatment</code> and <code>drug</code>.
+</p>
+</li>
+<li> <p><code>dosing_schedule_df</code>: A data frame providing dosing schedule
+information. It contains the following variables:
+<code>kit</code>, <code>target_days</code>, <code>target_dose</code>, and
+<code>max_cycles</code>.
+</p>
+</li>
+<li> <p><code>dosing_subject_df</code>: A data frame for the observed and imputed
+subject-level dosing records for the first iteration. It includes
+the following variables:
+<code>drug</code>, <code>drug_name</code>, <code>kit</code>, <code>kit_name</code>,
+<code>usubjid</code>, <code>treatment</code>, <code>treatment_description</code>,
+<code>arrivalTime</code>, <code>time</code>, <code>day</code>, <code>dose</code>,
+<code>cum_dose</code>, <code>row_id</code>, <code>subject_type</code>, <code>imputed</code>,
+<code>trialsdt</code>, <code>cutoffdt</code>, <code>randdt</code>, <code>adt</code>,
+and <code>date</code>.
+</p>
+</li>
+<li> <p><code>dosing_pred_df</code>: A data frame for dosing summary by kit type
+and time point. It includes the following variables:
+<code>kit</code>, <code>kit_name</code>, <code>t</code>, <code>n</code>, <code>pilevel</code>,
+<code>lower</code>, <code>upper</code>, <code>mean</code>, <code>var</code>, <code>date</code>,
+and <code>parameter</code>.
+</p>
+</li>
+<li> <p><code>dosing_pred_plot</code>: A plot object for dosing prediction.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Kaifeng Lu, <a href="mailto:kaifenglu@gmail.com">kaifenglu@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>f_fit_t0</code>, <code>f_fit_ki</code>,
+<code>f_fit_ti</code>, <code>f_fit_di</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+set.seed(529)
+
+pred &lt;- eventPred::getPrediction(
+  df = df2,
+  to_predict = "event only",
+  target_d = 250,
+  event_model = "log-logistic",
+  dropout_model = "none",
+  pilevel = 0.95,
+  nyears = 1,
+  nreps = 200,
+  showplot = FALSE,
+  by_treatment = TRUE)
+
+drug_demand &lt;- f_drug_demand(
+  df = df2,
+  newEvents = pred$event_pred$newEvents,
+  visitview = visitview2,
+  dosing_schedule_df = dosing_schedule_df,
+  model_k0 = "zero-inflated poisson",
+  model_t0 = "log-logistic",
+  model_t1 = "least squares",
+  model_ki = "zero-inflated poisson",
+  model_ti = "least squares",
+  model_di = "linear mixed-effects model",
+  pilevel = 0.95,
+  nyears = 1,
+  ncores_max = 2,
+  showplot = FALSE)
+
+drug_demand$dosing_pred_plot
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,203 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>post_perc_effect</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Posterior of a Dose's Percentage Effect</h2>
+
+<h3>Description</h3>
+
+<p>Given a dose, the "percentage effect" is defined as
+(effect of the given dose - small_bound) / (maximum effect in dose range -
+small_bound).  This function returns the posterior statistics and/or
+samples of this effect.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">post_perc_effect(
+  x,
+  dose,
+  probs,
+  time,
+  lower,
+  upper,
+  greater,
+  small_bound,
+  index,
+  return_samples
+)
+
+## S3 method for class 'dreamer_bma'
+post_perc_effect(
+  x,
+  dose,
+  probs = c(0.025, 0.975),
+  time = NULL,
+  lower = min(x$doses),
+  upper = max(x$doses),
+  greater = TRUE,
+  small_bound = 0,
+  index = NA,
+  return_samples = FALSE
+)
+
+## S3 method for class 'dreamer_mcmc'
+post_perc_effect(
+  x,
+  dose,
+  probs = c(0.025, 0.975),
+  time = NULL,
+  lower = min(attr(x, "doses")),
+  upper = max(attr(x, "doses")),
+  greater = TRUE,
+  small_bound = 0,
+  index = 1:(nrow(x[[1]]) * length(x)),
+  return_samples = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from a call to <code>dreamer_mcmc()</code>, or
+the MCMC samples from a single model of output from
+a <code>dreamer_mcmc()</code> call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p>the dose at which to calculate the posterior percentage
+effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>a vector of quantiles to calculate on the posterior.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>the slice of time for which to calculate the posterior
+percentage effect.  Applies to longitudinal models only.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>the lower bound of the dose range under consideration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>the upper bound of the dose range under consideration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greater</code></td>
+<td>
+<p>logical indicating if the response is desired to
+be increasing (<code>TRUE</code>) or decreasing (<code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>small_bound</code></td>
+<td>
+<p>the lower (if <code>greater = TRUE</code>) or upper
+(if <code>greater = FALSE</code>) bound that the effect is expected to
+take.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index</code></td>
+<td>
+<p>an index on which MCMC samples should be used.  Generally
+the user should not specify anything for this argument as <code>dreamer</code>
+will handle this automatically.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_samples</code></td>
+<td>
+<p>logical indicating if the posterior samples should
+be returned.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A named list with the following components:
+</p>
+
+<ul>
+<li>
+<p> stats: a tibble listing the dose, time (where relevant),
+probability a percentage effect exists, the average percentage effect,
+and the specified quantiles of the percentage effect.
+</p>
+</li>
+<li>
+<p> samps: a tibble with the posterior samples for each dose/time
+combination.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e3,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+post_perc_effect(output, dose = c(3, 5))
+
+# from a single model
+post_perc_effect(output$mod_linear, dose = c(3, 5))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbReadTable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read database tables as data frames</h2>
+
+<h3>Description</h3>
+
+<p>Reads a database table to a data frame, optionally converting
+a column to row names and converting the column names to valid
+R identifiers.
+Use <code>dbReadTableArrow()</code> instead to obtain an Arrow object.
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbReadTable(conn, name, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>A DBIConnection object, as returned by
+<code>dbConnect()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>The table name, passed on to <code>dbQuoteIdentifier()</code>. Options are:
+</p>
+
+<ul>
+<li>
+<p> a character string with the unquoted DBMS table name,
+e.g. <code>"table_name"</code>,
+</p>
+</li>
+<li>
+<p> a call to <code>Id()</code> with components to the fully qualified table name,
+e.g. <code>Id(schema = "my_schema", table = "table_name")</code>
+</p>
+</li>
+<li>
+<p> a call to <code>SQL()</code> with the quoted and fully qualified table name
+given verbatim, e.g. <code>SQL('"my_schema"."table_name"')</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other parameters passed on to methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function returns a data frame.
+Use <code>dbReadTableArrow()</code> to obtain an Arrow object.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dbReadTable()</code> returns a data frame that contains the complete data
+from the remote table, effectively the result of calling <code>dbGetQuery()</code> with
+<code style="white-space: pre;">⁠SELECT * FROM &lt;name&gt;⁠</code>.
+</p>
+<p>An empty table is returned as a data frame with zero rows.
+</p>
+<p>The presence of rownames depends on the <code>row.names</code> argument,
+see <code>sqlColumnToRownames()</code> for details:
+</p>
+
+<ul>
+<li>
+<p> If <code>FALSE</code> or <code>NULL</code>, the returned data frame doesn't have row names.
+</p>
+</li>
+<li>
+<p> If <code>TRUE</code>, a column named "row_names" is converted to row names.
+</p>
+</li>
+</ul>
+<ul>
+<li>
+<p> If <code>NA</code>, a column named "row_names" is converted to row names if it exists,
+otherwise no translation occurs.
+</p>
+</li>
+<li>
+<p> If a string, this specifies the name of the column in the remote table
+that contains the row names.
+</p>
+</li>
+</ul>
+<p>The default is <code>row.names = FALSE</code>.
+</p>
+<p>If the database supports identifiers with special characters,
+the columns in the returned data frame are converted to valid R
+identifiers
+if the <code>check.names</code> argument is <code>TRUE</code>,
+If <code>check.names = FALSE</code>, the returned table has non-syntactic column names without quotes.
+</p>
+
+
+<h3>Failure modes</h3>
+
+<p>An error is raised if the table does not exist.
+</p>
+<p>An error is raised if <code>row.names</code> is <code>TRUE</code> and no "row_names" column exists,
+</p>
+<p>An error is raised if <code>row.names</code> is set to a string and no corresponding column exists.
+</p>
+<p>An error is raised when calling this method for a closed
+or invalid connection.
+An error is raised
+if <code>name</code> cannot be processed with <code>dbQuoteIdentifier()</code>
+or if this results in a non-scalar.
+Unsupported values for <code>row.names</code> and <code>check.names</code>
+(non-scalars,
+unsupported data types,
+<code>NA</code> for <code>check.names</code>)
+also raise an error.
+</p>
+
+
+<h3>Additional arguments</h3>
+
+<p>The following arguments are not part of the <code>dbReadTable()</code> generic
+(to improve compatibility across backends)
+but are part of the DBI specification:
+</p>
+
+<ul>
+<li> <p><code>row.names</code> (default: <code>FALSE</code>)
+</p>
+</li>
+<li> <p><code>check.names</code>
+</p>
+</li>
+</ul>
+<p>They must be provided as named arguments.
+See the "Value" section for details on their usage.
+</p>
+
+
+<h3>Specification</h3>
+
+<p>The <code>name</code> argument is processed as follows,
+to support databases that allow non-syntactic names for their objects:
+</p>
+
+<ul>
+<li>
+<p> If an unquoted table name as string: <code>dbReadTable()</code> will do the
+quoting,
+perhaps by calling <code>dbQuoteIdentifier(conn, x = name)</code>
+</p>
+</li>
+<li>
+<p> If the result of a call to <code>dbQuoteIdentifier()</code>: no more quoting is done
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p>Other DBIConnection generics: 
+<code>DBIConnection-class</code>,
+<code>dbAppendTable()</code>,
+<code>dbAppendTableArrow()</code>,
+<code>dbCreateTable()</code>,
+<code>dbCreateTableArrow()</code>,
+<code>dbDataType()</code>,
+<code>dbDisconnect()</code>,
+<code>dbExecute()</code>,
+<code>dbExistsTable()</code>,
+<code>dbGetException()</code>,
+<code>dbGetInfo()</code>,
+<code>dbGetQuery()</code>,
+<code>dbGetQueryArrow()</code>,
+<code>dbIsReadOnly()</code>,
+<code>dbIsValid()</code>,
+<code>dbListFields()</code>,
+<code>dbListObjects()</code>,
+<code>dbListResults()</code>,
+<code>dbListTables()</code>,
+<code>dbQuoteIdentifier()</code>,
+<code>dbReadTableArrow()</code>,
+<code>dbRemoveTable()</code>,
+<code>dbSendQuery()</code>,
+<code>dbSendQueryArrow()</code>,
+<code>dbSendStatement()</code>,
+<code>dbUnquoteIdentifier()</code>,
+<code>dbWriteTable()</code>,
+<code>dbWriteTableArrow()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+con &lt;- dbConnect(RSQLite::SQLite(), ":memory:")
+
+dbWriteTable(con, "mtcars", mtcars[1:10, ])
+dbReadTable(con, "mtcars")
+
+dbDisconnect(con)
+
+</code></pre>
+
+
+</div>

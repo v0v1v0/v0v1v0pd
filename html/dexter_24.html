@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_responses</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Selecting data</h2>
+
+<h3>Description</h3>
+
+<p>Extract data from a dexter database
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_responses(
+  dataSrc,
+  predicate = NULL,
+  columns = c("person_id", "item_id", "item_score")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataSrc</code></td>
+<td>
+<p>a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predicate</code></td>
+<td>
+<p>an expression to select data on</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>columns</code></td>
+<td>
+<p>the columns you wish to select, can include any column in the project, see: <code>get_variables</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Many functions in Dexter accept a data source and a predicate. Predicates are extremely flexible 
+but they have a few limitations because they work on the individual response level. It is therefore not possible
+for example, to remove complete person cases from an analysis based on responses to a single item 
+by using just a predicate expression.
+</p>
+<p>For such cases, Dexter supports selecting the data and manipulating it before passing it back to a Dexter function 
+or possibly doing something else with it. The following example will hopefully clarify this.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a data.frame of responses
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+# goal: fit the extended nominal response model using only persons 
+# without any missing responses
+library(dplyr)
+
+# the following would not work since it will omit only the missing 
+# responses, not the persons; which is not what we want in this case
+wrong = fit_enorm(db, response != 'NA')
+
+# to select on an aggregate level, we need to gather the data and 
+# manipulate it ourselves
+data = get_responses(db, 
+   columns=c('person_id','item_id','item_score','response')) |&gt;
+   group_by(person_id) |&gt;
+   mutate(any_missing = any(response=='NA')) |&gt;
+   filter(!any_missing)
+
+correct = fit_enorm(data)
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,170 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Y</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Observation functions.</h2>
+
+<h3>Description</h3>
+
+<p>Creates an object of type obsfn that evaluates an observation function
+and its derivatives based on the output of a model prediction function, see prdfn, 
+as e.g. produced by Xs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Y(
+  g,
+  f = NULL,
+  states = NULL,
+  parameters = NULL,
+  condition = NULL,
+  attach.input = TRUE,
+  deriv = TRUE,
+  compile = FALSE,
+  modelname = NULL,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>g</code></td>
+<td>
+<p>Named character vector or equation vector defining the observation function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>Named character of equations or object that can be converted to eqnvec or object of class fn.
+If f is provided, states and parameters are guessed from f.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>states</code></td>
+<td>
+<p>character vector, alternative definition of "states", usually the names of <code>f</code>. If both,
+f and states are provided, the states argument overwrites the states derived from f.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>character vector, alternative definition of the "parameters",
+usually the symbols contained in "g" and "f" except for <code>states</code> and the code word <code>time</code>. If both,
+f and parameters are provided, the parameters argument overwrites the parameters derived from f and g.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition</code></td>
+<td>
+<p>either NULL (generic prediction for any condition) or a character, denoting
+the condition for which the function makes a prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>attach.input</code></td>
+<td>
+<p>logical, indiating whether the original input should be
+returned with the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deriv</code></td>
+<td>
+<p>logical, generate function to evaluate derivatives of observables. Necessary for parameter estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compile</code></td>
+<td>
+<p>Logical, compile the function (see funC0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modelname</code></td>
+<td>
+<p>Character, used if <code>compile = TRUE</code>, sets a fixed filename for the
+C file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Print compiler output to R command line.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For odemodels with forcings, it is best, to pass the prediction function <code>x</code> to the "f"-argument 
+instead of the equations themselves. If an eqnvec is passed to "f" in this case, the forcings and states
+have to be specified manually via the "states"-argument.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class obsfn, i.e.
+a function <code>y(..., deriv = TRUE, conditions = NULL)</code> representing the evaluation of the 
+observation function. Arguments <code>out</code> (model prediction) and <code>pars</code> (parameter values)
+shoudl be passed by the <code>...</code> argument.
+If <code>out</code> has the attribute  "sensitivities", the result of
+<code>y(out, pars)</code>, will have an attributed "deriv" which reflecs the sensitivities of 
+the observation with respect to the parameters.
+If <code>pars</code> is the result of a parameter transformation <code>p(pars)</code> (see P), 
+the Jacobian 
+of the parameter transformation and the sensitivities of the observation function
+are multiplied according to the chain rule for differentiation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Define a time grid on which to make a prediction by peace-wise linear function.
+# Then define a (generic) prediction function based on thid grid.
+times &lt;- 0:5
+grid &lt;- data.frame(name = "A", time = times, row.names = paste0("p", times))
+x &lt;- Xd(grid)
+
+# Define an observable and an observation function
+observables &lt;- eqnvec(Aobs = "s*A")
+g &lt;- Y(g = observables, f = NULL, states = "A", parameters = "s")
+
+# Collect parameters and define an overarching parameter transformation
+# for two "experimental condtions".
+dynpars &lt;- attr(x, "parameters")
+obspars &lt;- attr(g, "parameters")
+innerpars &lt;- c(dynpars, obspars)
+
+trafo &lt;- structure(innerpars, names = innerpars)
+trafo_C1 &lt;- replaceSymbols(innerpars, paste(innerpars, "C1", sep = "_"), trafo)
+trafo_C2 &lt;- replaceSymbols(innerpars, paste(innerpars, "C2", sep = "_"), trafo)
+
+p &lt;- NULL
+p &lt;- p + P(trafo = trafo_C1, condition = "C1")
+p &lt;- p + P(trafo = trafo_C2, condition = "C2")
+
+# Collect outer (overarching) parameters and 
+# initialize with random values
+outerpars &lt;- attr(p, "parameters")
+pars &lt;- structure(runif(length(outerpars), 0, 1), names = outerpars)
+
+# Predict internal/unobserved states
+out1 &lt;- (x*p)(times, pars)
+plot(out1)
+
+# Predict observed states in addition to unobserved
+out2 &lt;- (g*x*p)(times, pars)
+plot(out2)
+</code></pre>
+
+
+</div>

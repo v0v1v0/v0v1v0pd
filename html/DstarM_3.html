@@ -1,0 +1,97 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>chisqFit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate model fit</h2>
+
+<h3>Description</h3>
+
+<p>Calculate model fit
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">chisqFit(resObserved, data, DstarM = FALSE, tt = NULL, formula = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resObserved</code></td>
+<td>
+<p>either output from <code>estObserved</code> or a matrix containing custom densities to calculate the fitness for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe containing data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DstarM</code></td>
+<td>
+<p>Logical. Should the DstarM fit measure be calculated or the traditional fit measure?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tt</code></td>
+<td>
+<p>time grid custom densities where calculated on. Should only be supplied if <code>resOberved</code> is a matrix containing custom densities</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Optional formula argument, for when columns names in the data are different from those used to obtain the results.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function allows a user to manually calculate a chi-square goodness of fit measure for model densities.
+This is useful for comparing a traditional analysis and a D*M analysis. For completion, this function can also calculate a
+D*M fit measure. We do not recommend usage of the D*M measure. While the chi-square fit measure is
+identical to the value of the optimizer when fitting, the DstarM fit measure is not equal to that of a DstarM analysis.
+This is because this function calculates the DstarM fit measure on the complete distribution, not on the
+model distributions, as is done during the optimization.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tt = seq(0, 5, .1)
+pars = c(.8, 2, .5, .5, .5, # condition 1
+         .8, 3, .5, .5, .5,  # condition 2
+         .8, 4, .5, .5, .5)  # condition 3
+pdfND = dbeta(tt, 10, 30)
+
+# simulate data
+allDat = simData(n = 3e3, pars = pars, tt = tt, pdfND = pdfND, return.pdf = TRUE)
+truePdf = allDat$pdfUnnormalized
+dat = allDat$dat
+chisqFit(resObserved = truePdf, data = dat, tt = tt)
+## Not run: 
+# estimate it
+define restriction matrix
+restr = matrix(1:5, 5, 3)
+restr[2, 2:3] = 6:7 # allow drift rates to differ
+# fix parameters for speed up
+fixed = matrix(c('z1', 'a1 / 2', 'sz1', .5, 'sv1', .5), 2, 3)
+resD = estDstarM(data = dat, tt = tt, restr = restr, fixed = fixed,
+                 Optim = list(parallelType = 1))
+resN = estND(resD, Optim = list(parallelType = 1))
+
+resO = estObserved(resD, resN, data = dat)
+resO$fit # proper fit
+
+## End(Not run)
+</code></pre>
+
+
+</div>

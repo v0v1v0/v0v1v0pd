@@ -1,0 +1,88 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>defineOptions-package</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Define and Parse Command Line Options
+</h2>
+
+<h3>Description</h3>
+
+<p>Parses command line arguments and supplies values to scripts. Users can specify names to which parsed inputs are assigned, value types into which inputs are cast, long options or short options, input splitters and callbacks that define how options should be specified and how input values are supplied.
+</p>
+
+
+<h3>Details</h3>
+
+<p>Definitions are consturcted by calling <code>define_option</code> method for <code>ParserDef</code> object, which is
+instantiated by <code>new_parser_def</code> function. The second argument of <code>define_option</code> takes a list
+that has defition about how to parse and store its option value. The definition also holds information about how to behave
+when the option is not specified. Finally, <code>parse_with_defs</code> function takes command line arguments and <code>ParserDef</code> object
+and returns parsing result.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>NA
+Maintainer: Toshihiro Umehara &lt;toshi@niceume.com&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ParserDef</code>
+<code>new_parser_def</code>
+<code>define_option</code>
+<code>parse_with_defs</code>
+<code>callbacks</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(defineOptions)
+parser_def = new_parser_def() |&gt;
+    define_option(
+        list(
+            def_name = "target_range",
+            def_type = "integer",
+            long_option = "--target-range",
+            short_option = "-r",
+            input_splitter = ",",
+            callback = opt_optional_input_required( input_when_omitted = "70,180" )
+        )
+    ) |&gt;
+    define_option(
+        list(
+            def_name = "exclude_weekend",
+            def_type = "logical",
+            long_option = "--exclude-weekend",
+            callback = opt_optional_input_disallowed( input_when_specified = "TRUE",
+                                                      input_when_omitted = "FALSE" )
+        )
+    )|&gt;
+    define_option(
+        list(
+            def_name = "output_path",
+            def_type = "character",
+            long_option = "--output",
+            callback = opt_required_input_required()
+        )
+    )
+
+# In practice, command line arguments can be obtained by commandArgs() function
+# with trailingOnly option TRUE.
+# command_arguments = commandArgs(trailingOnly = TRUE)
+
+example_string = "input1.txt input2.txt --target-range 60,140 --exclude-weekend --output log.data"
+command_arguments = strsplit( example_string, " ")[[1]]
+
+parsed_args = parse_with_defs( parser_def, command_arguments)
+print(parsed_args)
+</code></pre>
+
+
+</div>

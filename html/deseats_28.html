@@ -1,0 +1,384 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deseats</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Locally Weighted Regression for Trend and Seasonality in Equidistant Time 
+Series under Short Memory</h2>
+
+<h3>Description</h3>
+
+<p>Simultaneously estimate the trend and the 
+seasonality via locally weighted regression in an equidistant time series 
+under short memory. The default setting uses an iterative plug-in algorithm 
+for identifying the asymptotically globally optimal bandwidth for smoothing.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deseats(
+  y,
+  smoothing_options = set_options(),
+  bwidth_start = NULL,
+  inflation_rate = c("optimal", "naive"),
+  correction_factor = FALSE,
+  autocor = TRUE,
+  drop = NULL,
+  error_model = c("free", "ARMA"),
+  nar_lim = c(0, 3),
+  nma_lim = c(0, 3),
+  arma_mean = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>a numerical vector or a time series object of class <code>ts</code> or 
+that can be transformed with <code>as.ts</code> to an object of class 
+<code>ts</code>; for these observations, trend and seasonality will be obtained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothing_options</code></td>
+<td>
+<p>an S4 object of class <code>smoothing_options</code>, which 
+is returned by the function <code>set_options</code>; it 
+includes details about the
+options to consider in the locally weighted regression such as the order of
+polynomial and the bandwidth for smoothing among others.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bwidth_start</code></td>
+<td>
+<p>a single numeric value that is only relevant if the slot
+<code>bwidth</code> in <code>smoothing_options</code> is set to <code>NA</code>; 
+as the bandwidth will then
+be selected automatically, <code>bwidth_start</code> sets the initial bandwidth for 
+the algorithm; the default, <code>bwidth_start = NULL</code>, corresponds to 
+<code>bwidth_start = 0.1</code> for a local linear trend and to 
+<code>bwidth_start = 0.2</code> for a local cubic trend.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflation_rate</code></td>
+<td>
+<p>a character vector of length one that indicates, which inflation rate 
+to use in the bandwidth selection; for a local linear trend, we have 
+<code>inflation_rate = "optimal"</code> as the default, for a local cubic trend
+it is <code>inflation_rate = "naive"</code>, which correspond to inflation rates
+of 5/7 and 9/13, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction_factor</code></td>
+<td>
+<p>A logical vector of length one; theoretically, a 
+larger bandwidth to estimate the sum of autocovariances from residuals of 
+pilot trend and seasonality estimates is advisable than for estimating trend
+and seasonality; for <code>correction_factor = TRUE</code>, this is implemented;
+for <code>error_model = "ARMA"</code>, <code>correction_factor = FALSE</code> is 
+enforced; the default is <code>correction_factor = FALSE</code>, because it was
+found that setting this argument to <code>TRUE</code> often overestimates the 
+bandwidth.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>autocor</code></td>
+<td>
+<p>a logical vector of length one; indicates whether to consider
+autocorrelated errors (<code>TRUE</code>) or independent but identically 
+distributed errors (<code>FALSE</code>); the default is <code>autocor = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>a numeric vector of length one that indicates the proportion of 
+the observations to not include at each boundary in the bandwidth estimation 
+process, if a bandwidth is selected automatically; the default is 
+<code>drop = NULL</code>, which corresponds to <code>drop = 0.05</code> for a 
+local linear trend and to <code>drop = 0.1</code> for a local cubic trend.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error_model</code></td>
+<td>
+<p>a character vector of length one that indicates whether
+for <code>autocor = TRUE</code> the sum of autocovariances of the errors is 
+obtained purely nonparametrically (<code>"free"</code>) or whether an
+autoregressive moving-average (ARMA) model is assumed <code>"ARMA"</code>; the
+default is <code>error_model = "free"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nar_lim</code></td>
+<td>
+<p>only valid for <code>error_model = "ARMA"</code>; set the minimum and 
+maximum AR order to check via the BIC in each iteration of the algorithm via 
+a two-element vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nma_lim</code></td>
+<td>
+<p>only valid for <code>error_model = "ARMA"</code>; set the minimum and
+maximum MA order to check via the BIC in each iteration of the algorithm via
+a two-element vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arma_mean</code></td>
+<td>
+<p>only valid for <code>error_model = "ARMA"</code>; decide whether to 
+include an estimate of the mean in the ARMA fitting for the detrended series.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Trend and seasonality are estimated based on the additive
+nonparametric regression model for an equidistant time series
+</p>
+<p style="text-align: center;"><code class="reqn">y_t = m(x_t) + s(x_t) + \epsilon_t,</code>
+</p>
+
+<p>where <code class="reqn">y_t</code> is the observed time series with <code class="reqn">t=1,...n</code>, <code class="reqn">x_t = t / n</code> is the rescaled time
+on the interval <code class="reqn">[0, 1]</code>, <code class="reqn">m(x_t)</code> is a smooth and deterministic
+trend function, <code class="reqn">s(x_t)</code> is a (slowly changing) seasonal component with 
+seasonal period <code class="reqn">p_s</code> and <code class="reqn">\epsilon_t</code> are stationary errors 
+with <code class="reqn">E(\epsilon_t) = 0</code> and short-range dependence (see for example also 
+Feng, 2013, for a similar model, where the stochastic term is however i.i.d.).
+</p>
+<p>It is assumed that <code class="reqn">m</code> and <code class="reqn">s</code> can be approximated locally by a polynomial of
+small order and by a trigonometric polynomial, respectively. Through locally
+weighted regression, <code class="reqn">m</code> and <code class="reqn">s</code> can therefore be estimated given 
+a suitable bandwidth.
+</p>
+<p>The iterative-plug-in (IPI) algorithm, which numerically minimizes the
+asymptotic mean squared error (AMISE) to select a bandwidth is 
+an extension of Feng (2013) to the case with short-range dependence in the 
+errors. To achieve this goal, the error variance in the AMISE in Feng (2013) 
+is replaced by the sum of autocovariances of the error process and this 
+quantity is being estimated using a slightly adjusted version of the 
+Bühlmann (1996) algorithm. This procedure is similar to the method described 
+in Feng, Gries and Fritz (2020), 
+where data-driven local polynomial regression with an automatically selected 
+bandwidth is used to estimate the trend according to a model without 
+seasonality and where the same adjusted Bühlmann (1996) algorithm is 
+considered to estimate the sum of autocovariances in the error process.
+</p>
+<p>Define <code class="reqn">I[m^{(k)}] = \int_{c_b}^{d_b} [m^{(k)}(x)]^2 dx</code>, <code class="reqn">\beta_{(k)} = \int_{-1}^{1} u^k
+K(u) du</code>
+and <code class="reqn">R(K) = \int_{-1}^{1} K^{2}(u) du</code>, where <code class="reqn">p</code> is the order of the (local) polynomial 
+considered for <code class="reqn">m</code>,
+<code class="reqn">k = p + 1</code> is the order of the asymptotically equivalent kernel <code class="reqn">K</code> 
+for estimating <code class="reqn">m</code>, <code class="reqn">0 \leq c_{b}&lt; d_{b} \leq 1</code>, and
+<code class="reqn">c_f</code> is the variance factor, i.e. the sum of autocovariances divided by 
+<code class="reqn">2\pi</code>.
+</p>
+<p>Furthermore, we define
+</p>
+<p style="text-align: center;"><code class="reqn">C_{1} = \frac{I[m^{(k)}] \beta_{(k)}^2}{(k!)^2}</code>
+</p>
+
+<p>and
+</p>
+<p style="text-align: center;"><code class="reqn">C_{2} = \frac{2 \pi c_{f} (d_b - c_b)[R(K) + (p_s - 1) R(W)]}{nh}</code>
+</p>
+
+<p>with <code class="reqn">h</code> being the bandwidth, <code class="reqn">n</code> being the number of
+observations and <code class="reqn">W</code> being the weighting function considered in the 
+weighted least squares approach, for example a second-order kernel function 
+with support on <code class="reqn">[-1,1]</code>. The AMISE is then
+</p>
+<p style="text-align: center;"><code class="reqn">AMISE(h) = h^{2k}C_{1} + C_{2}.</code>
+</p>
+
+<p>The function calculates suitable estimates for <code class="reqn">c_f</code>, the variance
+factor, and <code class="reqn">I[m^{(k)}]</code> over different iterations. In each
+iteration, a bandwidth is obtained in accordance with the AMISE that once
+more serves as an input for the following iteration. The process repeats
+until either convergence or the 40th iteration is reached. For further
+details on the asymptotic theory or the algorithm, please consult Feng,
+Gries and Fritz (2020) or Feng et al. (2019).
+</p>
+<p>To apply the function, only few arguments are needed: a data input <code>y</code>,
+an object with smoothing options <code>smoothing_options</code> returned by 
+<code>set_options</code> and 
+a starting value for the relative bandwidth
+<code>bwidth_start</code>. Aside from <code>y</code>, each argument has a default setting.
+By default, a local linear trend is considered. In some cases, a local cubic 
+trend may, however, be more suitable. For more specific information on the input arguments
+consult the section <em>Arguments</em>.
+</p>
+<p>When applying the function, an optimal bandwidth is obtained based on the
+IPI algorithm proposed by Feng, Gries and Fritz (2020). In a second step,
+the nonparametric trend of the series and the seasonality are calculated with 
+respect to the chosen bandwidth.
+</p>
+<p>Note that with this function <code class="reqn">m(x_t)</code> and <code class="reqn">s(x_t)</code> can be 
+estimated without a parametric
+model assumption for the error series. Thus, after estimating and removing
+the trend and the seasonality, any suitable parametric model, e.g. an 
+ARMA(<code class="reqn">p,q</code>) model for <code>errors = "autocor"</code>, can be fitted to the 
+residuals (see <code>arima</code>).
+</p>
+<p>Usually, a local cubic trend (<code>smoothing_options = set_options(order_poly = 3)</code>)
+gives more suitable results. Moreover, if the resulting bandwidth is too large, 
+adjustments to the arguments <code>inflation_rate</code> and <code>drop</code> should be
+tried first in that order before any other changes 
+to the input arguments.
+</p>
+<p>The default print method for this function delivers key numbers such as the 
+bandwidth considered for smoothing.
+</p>
+<p>NOTE:
+</p>
+<p>This function implements C++ code by means
+of the <code>Rcpp</code> and
+<code>RcppArmadillo</code> packages for
+better performance.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns and S4 object with the following elements (access them 
+via <code>@</code>):
+</p>
+
+<dl>
+<dt><code>boundary_method</code></dt>
+<dd>
+<p>the applied boundary method.</p>
+</dd>
+<dt><code>bwidth</code></dt>
+<dd>
+<p>the globally applied bandwidth in the smoothing process; if not 
+if no input is given in the function call, this is the automatically selected 
+optimal bandwidth.</p>
+</dd>
+<dt><code>decomp</code></dt>
+<dd>
+<p>An object of class <code>"mts"</code> that consists of the
+decomposed time series data.</p>
+</dd>
+<dt><code>frequency</code></dt>
+<dd>
+<p>the frequency of the time series.</p>
+</dd>
+<dt><code>kernel_fun</code></dt>
+<dd>
+<p>the second-order kernel function considered for weighting.</p>
+</dd>
+<dt><code>order_poly</code></dt>
+<dd>
+<p>the order of polynomial considered locally for the trend.</p>
+</dd>
+<dt><code>order_poly</code></dt>
+<dd>
+<p>the order of polynomial considered locally for the trend.</p>
+</dd>
+<dt><code>sum_autocov</code></dt>
+<dd>
+<p>the estimated sum of autocovariances.</p>
+</dd>
+<dt><code>ts_name</code></dt>
+<dd>
+<p>the object name of the initially provided time series object.</p>
+</dd>
+<dt><code>weights_wfun</code></dt>
+<dd>
+<p>a matrix that gives the weights of the weighting 
+function <code class="reqn">K</code> at each estimation time point; ; if 
+<code class="reqn">n</code> is the length of the given time series and <code class="reqn">b</code> is the applied 
+(relative) bandwidth, then the first row of the weighting system gives the 
+weighting function weights when estimating at <code class="reqn">t=1</code>, the second row gives 
+the weights when estimating at <code class="reqn">t=2</code> and so on for all left-hand side 
+boundary points 
+until the middle row, which contains the 
+weights used at all interior points; the rows following the middle row contain
+the weights for right-hand side boundary points (the rows are ordered
+chronologically)</p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>an array with many slices that represent the weighting 
+systems for various filters; each slice is a matrix, which gives the weighting 
+system to estimate a component, for example trend + seasonality, as a weighted 
+average from the given time series; if 
+<code class="reqn">n</code> is the length of the given time series and <code class="reqn">b</code> is the applied 
+(relative) bandwidth, then the first row of the weighting system gives the 
+weights to obtain estimates at <code class="reqn">t=1</code>, the second row gives the weights to 
+obtain estimates at <code class="reqn">t=2</code> and so on for all left-hand side boundary points 
+until the middle row, which contains the 
+weights used at all interior points; the rows following the middle row contain
+the weights for right-hand side boundary points (the rows are ordered
+chronologically); 
+the slice names are <code>"Trend"</code>, <code>"Season"</code> and <code>"Combined"</code>,
+where <code>"Combined"</code> are the weights to estimate trend + seasonality 
+combined.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+
+<ul>
+<li>
+<p> Dominik Schulz (Research Assistant) (Department of Economics, Paderborn
+University), <br>
+Author and Package Creator
+</p>
+</li>
+<li>
+<p> Yuanhua Feng (Department of Economics, Paderborn
+University), <br>
+Author
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>Bühlmann, P. (1996). Locally Adaptive Lag-Window Spectral Estimation.
+Journal of Time Series Analysis, 17(3): 247-270. 
+DOI: 10.1111/j.1467-9892.1996.tb00275.x.
+</p>
+</li>
+<li>
+<p>Feng, Y. (2013). An iterative plug-in algorithm for decomposing seasonal 
+time series using the Berlin Method. Journal of Applied Statistics, 40(2): 
+266-281. DOI: 10.1080/02664763.2012.740626.
+</p>
+</li>
+<li>
+<p>Feng, Y., Gries. T, and Fritz, M. (2020). Data-driven local polynomial 
+for the trend and its derivatives in economic time series. Journal of 
+Nonparametric Statistics, 32(2): 510-533. DOI: 10.1080/10485252.2020.1759598.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+Xt &lt;- log(EXPENDITURES)
+smoothing_options &lt;- set_options(order_poly = 3)
+est &lt;- deseats(Xt, smoothing_options = smoothing_options)
+est
+plot(est, which = 1)
+
+
+</code></pre>
+
+
+</div>

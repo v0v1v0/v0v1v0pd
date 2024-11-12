@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>OGKCStep</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Robust and Deterministic Linear Regression via OGKCStep</h2>
+
+<h3>Description</h3>
+
+<p>Function to find the OGKCStep ('best') H-subset.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  OGKCStep(x0, scale_est, alpha=0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x0</code></td>
+<td>
+<p>Matrix of continuous variables. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric parameter controlling the size of the subsets over which the determinant is minimized, i.e., alpha*n observations are used for computing the determinant. Allowed values are between 0.5 and 1 and the default is 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale_est</code></td>
+<td>
+<p>A character string specifying the
+variance functional.  Possible values are Qn or scaleTau2.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>best</code></td>
+<td>
+
+<p>the best subset found and used for computing the raw estimates, with
+<code>length(best) == quan = h.alpha.n(alpha,n,p)</code>.
+</p>
+</td>
+</tr></table>
+<h3>Author(s)</h3>
+
+<p>Large part of the the code are from function <code>.detmcd</code> in package robustbase , 
+, see citation("robustbase")
+</p>
+
+
+<h3>References</h3>
+
+<p>Maronna, R.A. and Zamar, R.H. (2002) Robust estimates of location
+and dispersion of high-dimensional datasets; <em>Technometrics</em>
+<b>44</b>(4), 307–317.
+</p>
+<p>Rousseeuw, P.J. and Croux, C. (1993) Alternatives to the Median Absolute Deviation; 
+<em>Journal of the American Statistical Association</em> , <b>88</b>(424), 1273–1283.
+</p>
+<p>Peter J. Rousseeuw (1984), Least Median of Squares Regression.
+<em>Journal of the American Statistical Association</em> <b>79</b>, 871–881.
+</p>
+<p>P. J. Rousseeuw and A. M. Leroy (1987)
+<em>Robust Regression and Outlier Detection.</em> Wiley.
+</p>
+<p>P. J. Rousseeuw and K. van Driessen (1999)
+A fast algorithm for the minimum covariance determinant estimator.
+<em>Technometrics</em> <b>41</b>, 212–223.
+</p>
+<p>Pison, G., Van Aelst, S., and Willems, G. (2002)
+Small Sample Corrections for LTS and MCD.
+<em>Metrika</em> <b>55</b>, 111–123.
+</p>
+<p>Hubert, M., Rousseeuw, P. J. and Verdonck, T. (2012) A deterministic algorithm for robust location
+and scatter. <em>Journal of Computational and Graphical Statistics</em>
+<b>21</b>, 618–637.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n&lt;-100
+set.seed(123)# for reproducibility
+x0&lt;-matrix(rnorm(n*2),nc=2)
+out1&lt;-OGKCStep(x0,alpha=0.5,scale_est=pcaPP::qn)
+
+#comparaison with DetMCD:
+
+#a) create data
+
+set.seed(123456)
+Simulation&lt;-DetR:::fx01()
+#should be \approx 10
+sqrt(min(mahalanobis(Simulation$Data[Simulation$label==0,],rep(0,ncol(Simulation$Data)),
+Simulation$Sigma_u))/qchisq(0.975,df=ncol(Simulation$Data)))
+a0&lt;-eigen(Simulation$Sigma_u)
+Su_ih&lt;-(a0$vector)%*%diag(1/sqrt(a0$values))%*%t(a0$vector)
+#run algorithms 
+A0&lt;-robustbase::covMcd(Simulation$Data,nsamp='deterministic',scalefn=pcaPP::qn,alpha=0.5)
+A1&lt;-OGKCStep(Simulation$Data,alpha=0.5,scale_est=pcaPP::qn)
+#getbiases algorithms 
+SB&lt;-eigen(Su_ih%*%var(Simulation$Data[A1,])%*%Su_ih)$values
+log10(SB[1]/SB[ncol(Simulation$Data)-1])
+SB&lt;-eigen(Su_ih%*%var(Simulation$Data[A0$best,])%*%Su_ih)$values
+log10(SB[1]/SB[ncol(Simulation$Data)-1])
+</code></pre>
+
+
+</div>

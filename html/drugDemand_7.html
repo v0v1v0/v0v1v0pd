@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>f_dose_draw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Drug Dispensing Data Simulation</h2>
+
+<h3>Description</h3>
+
+<p>Simulates drug dispensing data after cutoff for
+both ongoing and new patients.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">f_dose_draw(
+  vf_ongoing,
+  vf_new,
+  common_time_model,
+  k0_fit,
+  t0_fit,
+  t1_fit,
+  ki_fit,
+  ti_fit,
+  di_fit,
+  t0,
+  t,
+  ncores_max
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>vf_ongoing</code></td>
+<td>
+<p>A data frame for the observed drug dispensing
+data for ongoing patients with drug dispensing records.
+It includes the following variables:
+<code>draw</code>, <code>kit</code>, <code>kit_name</code>, <code>usubjid</code>,
+<code>day</code>, <code>dose</code>, <code>arrivalTime</code>, <code>treatment</code>,
+<code>treatment_description</code>, <code>time</code>, and <code>totalTime</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vf_new</code></td>
+<td>
+<p>A data frame for the randomization date for new
+patients and ongoing patients with no drug dispensing records.
+It includes the following variables:
+<code>draw</code>, <code>kit</code>, <code>kit_name</code>, <code>usubjid</code>,
+<code>arrivalTime</code>, <code>treatment</code>, <code>treatment_description</code>,
+<code>time</code>, and <code>totalTime</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>common_time_model</code></td>
+<td>
+<p>A Boolean variable that indicates whether
+a common time model is used for drug dispensing visits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k0_fit</code></td>
+<td>
+<p>The model fit for the number of skipped
+visits between randomization and the first drug dispensing visit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t0_fit</code></td>
+<td>
+<p>The model fit for the gap time between randomization
+and the first drug dispensing visit when there is no visit skipping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t1_fit</code></td>
+<td>
+<p>The model fit for the gap time between randomization
+and the first drug dispensing visit when there is visit skipping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ki_fit</code></td>
+<td>
+<p>The model fit for the number of skipped
+visits between two consecutive drug dispensing visits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ti_fit</code></td>
+<td>
+<p>The model fit for the gap time between two
+consecutive drug dispensing visits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_fit</code></td>
+<td>
+<p>The model fit for the dispensed doses at drug
+dispensing visits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t0</code></td>
+<td>
+<p>The cutoff date relative to the trial start date.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>A vector of new time points for drug dispensing prediction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncores_max</code></td>
+<td>
+<p>The maximum number of cores to use for parallel
+computing. The actual number of cores used is the minimum of
+<code>ncores_max</code> and half of the detected number of cores.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with two components:
+</p>
+
+<ul>
+<li> <p><code>dosing_subject_new</code>: A data frame containing observed and
+imputed subject-level dosing records for ongoing and new patients
+for the first iteration. It contains the following variables:
+<code>draw</code>, <code>kit</code>, <code>kit_name</code>, <code>usubjid</code>,
+<code>day</code>, <code>dose</code>, <code>arrivalTime</code>, <code>treatment</code>,
+<code>treatment_description</code>, <code>time</code>, and <code>totalTime</code>.
+</p>
+</li>
+<li> <p><code>dosing_summary_new</code>: A data frame providing dosing summaries
+by drug, future time point, and simulation draw for ongoing
+and new patients. It contains the following variables:
+<code>kit</code>, <code>kit_name</code>, <code>t</code>, <code>draw</code>, and
+<code>total_dose_b</code>.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Kaifeng Lu, <a href="mailto:kaifenglu@gmail.com">kaifenglu@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>f_fit_t0</code>, <code>f_fit_ki</code>,
+<code>f_fit_ti</code>, <code>f_fit_di</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+set.seed(431)
+library(dplyr)
+
+pred &lt;- eventPred::getPrediction(
+  df = df2,
+  to_predict = "event only",
+  target_d = 250,
+  event_model = "log-logistic",
+  dropout_model = "none",
+  pilevel = 0.95,
+  nyears = 3,
+  nreps = 200,
+  showsummary = FALSE,
+  showplot = FALSE,
+  by_treatment = TRUE)
+
+observed &lt;- f_dose_observed(df2, visitview2, showplot = FALSE)
+
+fit &lt;- f_dispensing_models(
+  observed$vf, dosing_schedule_df,
+  model_k0 = "zero-inflated poisson",
+  model_t0 = "log-logistic",
+  model_t1 = "least squares",
+  model_ki = "zero-inflated poisson",
+  model_ti = "least squares",
+  model_di = "linear mixed-effects model",
+  nreps = 200, showplot = FALSE)
+
+trialsdt = df2$trialsdt[1]
+cutoffdt = df2$cutoffdt[1]
+t0 = as.numeric(cutoffdt - trialsdt + 1)
+nyears = 3
+t1 = t0 + nyears*365
+t = c(seq(t0, t1, 30), t1)
+
+vf_ongoing_new &lt;- f_ongoing_new(
+  pred$event_pred$newEvents,
+  observed$kit_description_df,
+  observed$treatment_by_drug_df,
+  observed$vf)
+
+dose_draw &lt;- f_dose_draw(
+  vf_ongoing_new$vf_ongoing,
+  vf_ongoing_new$vf_new,
+  fit$common_time_model,
+  fit$k0_fit, fit$t0_fit, fit$t1_fit,
+  fit$ki_fit, fit$ti_fit, fit$di_fit,
+  t0, t, ncores_max = 2)
+
+head(dose_draw$dosing_subject_new)
+head(dose_draw$dosing_summary_new)
+
+
+</code></pre>
+
+
+</div>

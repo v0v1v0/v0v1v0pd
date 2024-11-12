@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>modeltab</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Origination/extinction response table for statistical modelling.</h2>
+
+<h3>Description</h3>
+
+<p>This function takes an occurrence dataset and reformats it to a table that can be used as input for logistic models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">modeltab(
+  x,
+  tax,
+  bin,
+  taxvars = NULL,
+  rt = FALSE,
+  singletons = FALSE,
+  probs = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>(data.frame)</code> Fossil occurrence data.frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tax</code></td>
+<td>
+<p><code>(character)</code> Variable name of the occurring taxa (variable type: <code>factor</code> or <code>character</code> - such as <code>"genus"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin</code></td>
+<td>
+<p><code>(character)</code> Variable name of the bin numbers of the occurrences. This variable should be <code>numeric</code> and should increase as time passes by (use negative values for age estimates). The current version only supports discreet, non-negative integer interval numbers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>taxvars</code></td>
+<td>
+<p><code>(character)</code> Taxon-specific column names of the variables that should be included in the output table. Only one entry/taxon is used, make sure that the data are clean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rt</code></td>
+<td>
+<p><code>(logical)</code> Should the range-through assumption be applied within the function? If set to <code>TRUE</code> then missing occurrences will be interpolated with <code>FALSE</code> values in both the <code>ext</code> and <code>ori</code> variables. .</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>singletons</code></td>
+<td>
+<p><code>(logical)</code> Should single-interval taxa be included from the final table? This is not recommended, as it is impossible to get a <code>FALSE</code> response for these taxa.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p><code>(logical)</code> When set to <code>NULL</code>, the response variable will be binary. When set to <code>"samp3t"</code> or <code>"sampRange"</code> the response results will be probabilities, based on the three-timer sampling completeness, or the range-based sampling completeness, respectively.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Every entry in the output table corresponds to one cell in the <code>bin</code>/<code>tax</code> matrix. This function omits duplicates and concatenates two <code>logical</code> vectors (response variables) to the occurrence dataset:  
+The <code>ori</code> vector is <code>TRUE</code> in the interval when the taxon first appeared, and <code>FALSE</code> in all others. The <code>ext</code> vector is <code>TRUE</code> in the interval the taxon appeared for the last time, and <code>FALSE</code> in the rest.
+</p>
+<p>The true date of extinction and origination is unknown, therefore these events can only be expressed as probabilities. The argument <code>probs</code> allows the replacement of a binary response with two probability values, which are based on the apparent sampling patterns. For extinctions, when <code>probs</code> is set to <code>"samp3t"</code>, the response parameter for extinctions in the last bin of appearance is set to the three-timer sampling compelteness of the following bin. Assuming that the taxon'as range offset is not larger than a whole bin, if the taxon did not go extinct in the bin in which it appeared the last time, it is assumed to be going extinct in the following bin, and the remainder (1 -  sampling completeness) is assigned to that bin. The pattern is reversed for originations. For <code>probs="sampRange"</code>, the range-based completeness measures are applied in a similar fashion. For Phanerozoic-scale analyses, a whole bin difference between apparent event and the actual event is reasonable. See more in Reddin et al. 2021. Note that the response probabilities are set to missing values (<code>NA</code>s) when the probabilities cannot be calculated. The variable <code>ext</code> is also set to <code>NaN</code> for the early virtual extension of the range, and <code>ori</code> is treated the same for the late-extension. 
+</p>
+<p><strong>References:</strong>
+</p>
+<p>Reddin, C. J., Kocsis, Á. T., Aberhan, M., &amp; Kiessling, W. (2021). Victims of ancient hyperthermal events herald the fates of marine clades and traits under global warming. Global Change Biology, 27(4), 868–878. https://doi.org/10.1111/gcb.15434
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.frame with binary response variables.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load necessary data
+data(corals)
+# simple table
+modTab&lt;-modeltab(corals, bin="stg", tax="genus", taxvars=c("ecology", "family"))
+# probabilities for extinction modeling
+modTab2 &lt;- modeltab(corals, bin="stg", tax="genus", probs="samp3t")
+# only extinction response (omit virtual origination extensions)
+extTab &lt;- modTab2[!is.nan(modTab2$ext), ]
+# only extinction response (omit virtual extinction extensions)
+oriTab &lt;- modTab2[!is.nan(modTab2$ori), ]
+
+</code></pre>
+
+
+</div>

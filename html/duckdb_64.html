@@ -1,0 +1,180 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>duckdb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Connect to a DuckDB database instance</h2>
+
+<h3>Description</h3>
+
+<p><code>duckdb()</code> creates or reuses a database instance.
+</p>
+<p><code>duckdb_shutdown()</code> shuts down a database instance.
+</p>
+<p>Return an <code>adbcdrivermanager::adbc_driver()</code> for use with Arrow Database
+Connectivity via the adbcdrivermanager package.
+</p>
+<p><code>dbConnect()</code> connects to a database instance.
+</p>
+<p><code>dbDisconnect()</code> closes a DuckDB database connection.
+The associated DuckDB database instance is shut down automatically,
+it is no longer necessary to set <code>shutdown = TRUE</code> or to call <code>duckdb_shutdown()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">duckdb(
+  dbdir = DBDIR_MEMORY,
+  read_only = FALSE,
+  bigint = "numeric",
+  config = list()
+)
+
+duckdb_shutdown(drv)
+
+duckdb_adbc()
+
+## S4 method for signature 'duckdb_driver'
+dbConnect(
+  drv,
+  dbdir = DBDIR_MEMORY,
+  ...,
+  debug = getOption("duckdb.debug", FALSE),
+  read_only = FALSE,
+  timezone_out = "UTC",
+  tz_out_convert = c("with", "force"),
+  config = list(),
+  bigint = "numeric"
+)
+
+## S4 method for signature 'duckdb_connection'
+dbDisconnect(conn, ..., shutdown = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dbdir</code></td>
+<td>
+<p>Location for database files. Should be a path to an existing
+directory in the file system. With the default (or <code>""</code>), all
+data is kept in RAM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>read_only</code></td>
+<td>
+<p>Set to <code>TRUE</code> for read-only operation.
+For file-based databases, this is only applied when the database file is opened for the first time.
+Subsequent connections (via the same <code>drv</code> object or a <code>drv</code> object pointing to the same path)
+will silently ignore this flag.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bigint</code></td>
+<td>
+<p>How 64-bit integers should be returned. There are two options: <code>"numeric"</code> and <code>"integer64"</code>.
+If <code>"numeric"</code> is selected, bigint integers will be treated as double/numeric.
+If <code>"integer64"</code> is selected, bigint integers will be set to bit64 encoding.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>config</code></td>
+<td>
+<p>Named list with DuckDB configuration flags, see
+<a href="https://duckdb.org/docs/configuration/overview#configuration-reference">https://duckdb.org/docs/configuration/overview#configuration-reference</a> for the possible options.
+These flags are only applied when the database object is instantiated.
+Subsequent connections will silently ignore these flags.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drv</code></td>
+<td>
+<p>Object returned by <code>duckdb()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>Print additional debug information such as queries</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timezone_out</code></td>
+<td>
+<p>The time zone returned to R, defaults to <code>"UTC"</code>, which
+is currently the only timezone supported by duckdb.
+If you want to display datetime values in the local timezone,
+set to <code>Sys.timezone()</code> or <code>""</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz_out_convert</code></td>
+<td>
+<p>How to convert timestamp columns to the timezone specified
+in <code>timezone_out</code>. There are two options: <code>"with"</code>, and <code>"force"</code>. If <code>"with"</code>
+is chosen, the timestamp will be returned as it would appear in the specified time zone.
+If <code>"force"</code> is chosen, the timestamp will have the same clock
+time as the timestamp in the database, but with the new time zone.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>A <code>duckdb_connection</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shutdown</code></td>
+<td>
+<p>Unused. The database instance is shut down automatically.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>duckdb()</code> returns an object of class duckdb_driver.
+</p>
+<p><code>dbDisconnect()</code> and <code>duckdb_shutdown()</code> are called for their
+side effect.
+</p>
+<p>An object of class "adbc_driver"
+</p>
+<p><code>dbConnect()</code> returns an object of class duckdb_connection.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(adbcdrivermanager)
+with_adbc(db &lt;- adbc_database_init(duckdb_adbc()), {
+  as.data.frame(read_adbc(db, "SELECT 1 as one;"))
+})
+
+drv &lt;- duckdb()
+con &lt;- dbConnect(drv)
+
+dbGetQuery(con, "SELECT 'Hello, world!'")
+
+dbDisconnect(con)
+duckdb_shutdown(drv)
+
+# Shorter:
+con &lt;- dbConnect(duckdb())
+dbGetQuery(con, "SELECT 'Hello, world!'")
+dbDisconnect(con, shutdown = TRUE)
+</code></pre>
+
+
+</div>

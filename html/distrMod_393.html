@@ -1,0 +1,226 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>trafo-methods</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Methods for function trafo in Package ‘distrMod’ </h2>
+
+<h3>Description</h3>
+
+<p>Methods for function <code>trafo</code> in package <span class="pkg">distrMod</span>;
+there are accessor (<code>trafo</code>) and replacement (<code>trafo&lt;-</code>)
+versions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">trafo(object, param, ...)
+## S4 method for signature 'Estimate,missing'
+trafo(object,param)
+## S4 method for signature 'ParamFamParameter,missing'
+trafo(object,param)
+## S4 method for signature 'ParamWithScaleAndShapeFamParameter,missing'
+trafo(object,param)
+## S4 method for signature 'ParamFamily,missing'
+trafo(object,param)
+## S4 method for signature 'ParamFamily,ParamFamParameter'
+trafo(object,param)
+## S4 method for signature 'Estimate,ParamFamParameter'
+trafo(object,param)
+trafo.fct(object)
+trafo(object) &lt;- value
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of either class <code>Estimate</code>,
+<code>ParamFamParameter</code>, <code>ParamFamily</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p>an object of class <code>ParamFamParameter</code>; the parameter
+value at which to evaluate the transformation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>a matrix or a function; if it is a matrix, dimensions must
+be consistent to the parametric setting; if it is function, it should
+take one argument <code>param</code> of class <code>ParamFamParameter</code> and
+return a list of length two with named components <code>fval</code>
+(the function value, see below)
+and <code>mat</code> (a matrix — with the same dimensions consistency
+conditions as above).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional argument(s) for methods; not used so far.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>trafo</code> is a slot of class <code>ParamFamParameter</code>, which
+in turn is a slot of class <code>ParamFamily</code>. It also sort of
+arises in class <code>Estimate</code>, i.e., all slots can be identified
+by the information contained in an instance thereof.
+</p>
+<p>As usual, <code>trafo</code> also is the accessor and replacement method 
+for this slot. Its corresponding return value depends on the signature
+for which the accessor / replacement method is used. More specifically,
+for <code>trafo</code>, we have methods for the following signatures:
+</p>
+
+<dl>
+<dt>signature <code>Estimate,missing</code>:</dt>
+<dd>
+<p>returns a list of length two with components
+<code>fct</code> and <code>mat</code> (see below)</p>
+</dd>
+<dt>signature <code>Estimate,ParamFamParameter</code>:</dt>
+<dd>
+<p>returns a list of length two with components
+<code>fct</code> and <code>mat</code> (see below)</p>
+</dd>
+<dt>signature <code>ParamFamParameter,missing</code>:</dt>
+<dd>
+<p>returns a matrix (see below)</p>
+</dd>
+<dt>signature <code>ParamFamily,missing</code>:</dt>
+<dd>
+<p>returns a matrix (see below)</p>
+</dd>
+<dt>signature <code>ParamFamily,ParamFamParameter</code>:</dt>
+<dd>
+<p>returns a list of length two
+with components <code>fct</code> and <code>mat</code> (see below)</p>
+</dd>
+</dl>
+<p><code>trafo</code> realizes partial influence curves; i.e.; we are only
+interested in some possibly lower dimensional smooth (not necessarily
+linear or even coordinate-wise) aspect/transformation <code class="reqn">\tau</code>
+of the parameter <code class="reqn">\theta</code>.
+</p>
+<p>For the this function <code class="reqn">\tau()</code>, we provide an accessor 
+<code>trafo.fct</code> for signature <code>ParamFamily-method</code>
+returning this function.  
+</p>
+<p>To be coherent with the corresponding <em>nuisance</em>
+implementation, we make the following convention:
+</p>
+<p>The full parameter <code class="reqn">\theta</code> is split up coordinate-wise
+in a main parameter <code class="reqn">\theta'</code> and a nuisance parameter
+<code class="reqn">\theta''</code> (which is unknown, too, hence has to be
+estimated, but only is of secondary interest) and a fixed,
+known part <code class="reqn">\theta'''</code>.
+</p>
+<p>Without loss of generality, we restrict ourselves to the case that
+transformation <code class="reqn">\tau</code> only acts on the main parameter
+<code class="reqn">\theta'</code> — if we want to transform the whole
+parameter, we only have to assume that both nuisance parameter
+<code class="reqn">\theta''</code> and fixed, known part of the parameter
+<code class="reqn">\theta'''</code> have length 0.
+</p>
+<p>To the implementation:
+</p>
+<p>Slot <code>trafo</code> can either contain a (constant) matrix
+<code class="reqn">D_\theta</code> or a function
+</p>
+<p style="text-align: center;"><code class="reqn">\tau\colon \Theta' \to \tilde \Theta,\qquad \theta \mapsto \tau(\theta)</code>
+</p>
+ 
+<p>mapping main parameter
+<code class="reqn">\theta'</code> to some range <code class="reqn">\tilde \Theta</code>.
+</p>
+<p>If <em>slot value</em> <code>trafo</code> is a function, besides <code class="reqn">\tau(\theta)</code>, 
+it will also return the corresponding derivative matrix
+<code class="reqn">\frac{\partial}{\partial \theta}\tau(\theta)</code>.
+More specifically, the return value of this function <code>theta</code> is a
+list with entries <code>fval</code>, the function value <code class="reqn">\tau(\theta)</code>,
+and <code>mat</code>, the derivative matrix.
+</p>
+<p>In case <code>trafo</code> is a matrix <code class="reqn">D</code>, we interpret it as such a derivative
+matrix <code class="reqn">\frac{\partial}{\partial \theta}\tau(\theta)</code>,
+and, correspondingly, <code class="reqn">\tau(\theta)</code> as the linear mapping
+<code class="reqn">\tau(\theta)=D\,\theta</code>.<br></p>
+<p>According to the signature, <em>method</em> <code>trafo</code> will return different
+return value types. For signature
+</p>
+
+<dl>
+<dt>
+<code>Estimate,missing</code>:</dt>
+<dd>
+<p>it will return a list with entries
+<code>fct</code>, the function  <code class="reqn">\tau</code>, and <code>mat</code>, the matrix
+<code class="reqn">\frac{\partial}{\partial \theta}\tau(\theta)</code>.
+function <code class="reqn">\tau</code> will then return the list <code>list(fval, mat)</code>
+mentioned above.
+</p>
+</dd>
+<dt>
+<code>Estimate,ParamFamParameter</code>:</dt>
+<dd>
+<p>as signature
+<code>Estimate,missing</code>.</p>
+</dd>
+<dt>
+<code>ParamFamParameter,missing</code>:</dt>
+<dd>
+<p>it will just return the
+corresponding matrix.</p>
+</dd>
+<dt>
+<code>ParamFamily,missing</code>:</dt>
+<dd>
+<p>is just wrapper to signature
+<code>ParamFamParameter,missing</code>.</p>
+</dd>
+<dt>
+<code>ParamFamily,ParamFamParameter</code>:</dt>
+<dd>
+<p>as signature
+<code>Estimate,missing</code>.</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Gaussian location and scale
+NS &lt;- NormLocationScaleFamily(mean=2, sd=3)
+## generate data out of this situation
+x &lt;- r(distribution(NS))(30)
+
+## want to estimate mu/sigma, sigma^2
+## -&gt; new trafo slot:
+trafo(NS) &lt;- function(param){
+  mu &lt;- param["mean"]
+  sd &lt;- param["sd"]
+  fval &lt;- c(mu/sd, sd^2)
+  nfval &lt;- c("mu/sig", "sig^2")
+  names(fval) &lt;- nfval
+  mat &lt;- matrix(c(1/sd,0,-mu/sd^2,2*sd),2,2)
+  dimnames(mat) &lt;- list(nfval,c("mean","sd"))
+  return(list(fval=fval, mat=mat))
+}
+
+## Maximum likelihood estimator
+(res &lt;- MLEstimator(x = x, ParamFamily = NS))
+## confidence interval
+ confint(res)
+
+</code></pre>
+
+
+</div>

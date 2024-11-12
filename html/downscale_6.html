@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.downscale</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict occupancy at fine grain sizes</h2>
+
+<h3>Description</h3>
+
+<p>Predict proportion of occupancy at fine grain sizes using parameters from an object of class <code>downscale</code> estimated from coarse grain sizes using <code>downscale</code>. Proportion of occupancy is converted to area of occupancy (AOO) by multiplying by the extent. There is also a simple plot function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'downscale'
+predict(object, new.areas, tolerance = 1e-6, plot = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a fitted object of class <code>'downscale'</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new.areas</code></td>
+<td>
+<p>vector of grain sizes (in squared units e.g. km^2) for which area of occupancy will be predicted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolerance</code></td>
+<td>
+<p>only applicable for the <code>Thomas</code> model. The tolerance used during integration in the Thomas model during optimisation of parameters. Lower numbers allow for greater accuracy but require longer processing times (default = <code>1e-6</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>if <code>plot = TRUE</code> (default) plots observed and predicted occupancies against grain size on a log-log plot using 
+<code>plot.predict.downscale</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments, including graphical parameters for <code>plot.predict.downscale</code>, passed to other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function takes the parameters for a downscaling model estimated through <code>downscale</code> and uses the model to predict area of occupancy at finer grain sizes. See <code>downscale</code> for details on the downscaling models and their parameterisation. Plotting can be called directly from <code>predict.downscale</code> or from <code>plot.predict.downscale</code>.
+</p>
+<p>For predictions using the Thomas model, if the tolerance value is not sufficiently low it may lead to innacurate results. Typically, this will be indicated by fine grain sizes with higher predicted occupancies than those at larger grain sizes. In these cases try a lower tolerance value in the arguments.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>predict</code> returns an object of class <code>'predict.downscale'</code> with three objects:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Downscaling model used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predicted</code></td>
+<td>
+<p>Data frame containing two columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+     <code>Cell.area</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Grain sizes for which occupancies have been estimated</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Occupancy</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Predicted proportion of occupancy for each grain size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>AOO</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Predicted area of occupancy (proportion of area occupancy multiplied by extent)</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     </td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observed</code></td>
+<td>
+<p>Data frame containing two columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+     <code>Cell.area</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Grain sizes for which occupancies have been observed</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Occupancy</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Observed proportion of occupancy for each grain size</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     </td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Charles Marsh &lt;<a href="mailto:charlie.marsh@mailbox.org">charlie.marsh@mailbox.org</a>&gt; with input from Louise Barwell.
+</p>
+
+
+<h3>References</h3>
+
+<p>Azaele, S., Cornell, S.J., &amp; Kunin, W.E. (2012). Downscaling
+species occupancy from coarse spatial scales. <em>Ecological
+Applications</em> 22, 1004-1014.
+</p>
+<p>Barwell, L.J., Azaele, S., Kunin, W.E., &amp; Isaac, N.J.B. (2014).
+Can coarse-grain patterns in insect atlas data predict local occupancy?
+<em>Diversity and Distributions</em> 20, 895-907.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>downscale</code> for estimating parameters of a
+downscaling function from observed occupancies at coarse grain sizes.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example species data
+data.file &lt;- system.file("extdata", "atlas_data.txt", package = "downscale")
+atlas.data &lt;- read.table(data.file, header = TRUE)
+
+## if the input data is a data frame it must have the columns "lon", "lat"
+## and "presence"
+head(atlas.data)
+
+## explore thresholds using upgrain.threshold
+thresh &lt;- upgrain.threshold(atlas.data = atlas.data,
+                            cell.width = 10,
+                            scales = 3,
+                            thresholds = seq(0, 1, 0.1))
+
+## upgrain data (using All Sampled threshold)
+occupancy &lt;- upgrain(atlas.data,
+                     cell.width = 10,
+                     scales = 3,
+                     method = "All_Sampled")
+
+## Logistic model
+(logis &lt;- downscale(occupancies = occupancy,
+                      model = "Logis"))
+
+## Predictions occupancy at finer scales
+logis.pred &lt;- predict(logis,
+                      new.areas = c(1, 2, 5, 25, 100),
+                      plot = FALSE)
+logis.pred
+plot(logis.pred)
+
+## It can also be a good idea to include the observed cell sizes in the
+## predictions to observe the fit of the model (this time run plot = TRUE)
+predict(logis,
+        new.areas = c(1, 2, 5, 25, 100, 400, 1600, 6400),
+        plot = TRUE)
+</code></pre>
+
+
+</div>

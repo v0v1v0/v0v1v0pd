@@ -1,0 +1,253 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sensitivityplot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot of a summary of BMD values per group of items</h2>
+
+<h3>Description</h3>
+
+<p>Plot of a summary of BMD values per group of items 
+(with groups defined for example from biological annotation), 
+with groups ordered by values of the chosen summary (as an ECDF plot)
+or ordered as they are in the definition of the factor coding for them,
+with points sized by the numbers of items per group.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sensitivityplot(extendedres, BMDtype = c("zSD", "xfold"),
+                group, ECDF_plot = TRUE, colorby,
+                BMDsummary = c("first.quartile", "median" , "median.and.IQR"),
+                BMD_log_transfo = TRUE,
+                line.size = 0.5, line.alpha = 0.5, point.alpha = 0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>extendedres</code></td>
+<td>
+<p>the dataframe of results provided by bmdcalc (res)  
+or a subset of this data frame (selected lines). This dataframe can be extended 
+with additional columns coming for example from the annotation of items, and some lines 
+can be replicated if their corresponding item has more than one annotation. 
+This extended dataframe
+must at least contain the column giving the chosen BMD values
+on which to compute the sensitivity (column <code>BMD.zSD</code> or <code>BMD.xfold</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BMDtype</code></td>
+<td>
+<p>The type of BMD used, <code>"zSD"</code> (default choice) or <code>"xfold"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>the name of the column of extendedres coding for the groups
+on which we want to estimate a global sensitivity. 
+If <code>ECDF_plot</code> is FALSE, this column should be a factor ordered as you want 
+the groups to appear in the plot from bottom up.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ECDF_plot</code></td>
+<td>
+<p>if TRUE (default choice) groups appear ordered by 
+values of the BMD summary value
+from the bottom up, else they are ordered as their corresponding levels in the factor
+given in <code>group</code>. If <code>colorby</code> is given, <code>ECDF_plot</code> is fixed to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colorby</code></td>
+<td>
+<p>optional argument naming the column of <code>extendedres</code> coding for 
+an additional level of grouping that will be materialized by the color. 
+If not missing,  <code>ECDF_plot</code> is fixed to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BMDsummary</code></td>
+<td>
+<p>The type of summary used for sensitivity plot, 
+<code>"first.quartile"</code> (default choice)
+for the plot of first quartiles of BMD values per group, 
+<code>"median"</code> for the plot of medians of BMD values per group
+and <code>"median.and.IQR"</code> for the plot of medians with an interval corresponding
+to the inter-quartile range (IQR).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BMD_log_transfo</code></td>
+<td>
+<p>If TRUE, default choice, a log transformation of the BMD is used in the plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>line.size</code></td>
+<td>
+<p>Width of the lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>line.alpha</code></td>
+<td>
+<p>Transparency of the lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>point.alpha</code></td>
+<td>
+<p>Transparency of the points.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The chosen summary is calculated on the BMD values for each group 
+(groups can be for example defined as pathways from biological annotation of items)
+and plotted as an ECDF plot (ordered by the BMD summary) or in the order of the levels of the factor defining
+the groups from bottom to up. In this plot each point is sized according to the number of items in the corresponding group. Optionally a different levels 
+(e.g. different molecular levels in a multi-omics approach) can be coded by different colors.</p>
+
+
+<h3>Value</h3>
+
+ 
+<p>a ggplot object.
+</p>
+
+
+<h3>Author(s)</h3>
+
+ 
+<p>Marie-Laure Delignette-Muller
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>ecdfquantileplot</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# (1) An example from data published by Larras et al. 2020
+# in Journal of Hazardous Materials
+# https://doi.org/10.1016/j.jhazmat.2020.122727
+
+# a dataframe with metabolomic results (output $res of bmdcalc() or bmdboot() functions)
+resfilename &lt;- system.file("extdata", "triclosanSVmetabres.txt", package="DRomics")
+res &lt;- read.table(resfilename, header = TRUE, stringsAsFactors = TRUE)
+str(res)
+
+# a dataframe with annotation of each item identified in the previous file
+# each item may have more than one annotation (-&gt; more than one line)
+annotfilename &lt;- system.file("extdata", "triclosanSVmetabannot.txt", package="DRomics")
+annot &lt;- read.table(annotfilename, header = TRUE, stringsAsFactors = TRUE)
+str(annot)
+
+# Merging of both previous dataframes
+# in order to obtain an extenderes dataframe
+# bootstrap results and annotation
+annotres &lt;- merge(x = res, y = annot, by.x = "id", by.y = "metab.code")
+head(annotres)
+
+### an ECDFplot of 25th quantiles of BMD-zSD calculated by pathway
+sensitivityplot(annotres, BMDtype = "zSD",
+                            group = "path_class", 
+                            BMDsummary = "first.quartile")
+
+
+
+# same plot in raw BMD scale (so not in log scale) 
+sensitivityplot(annotres, BMDtype = "zSD",
+                            group = "path_class",  
+                            BMDsummary = "first.quartile",
+                            BMD_log_transfo = FALSE)
+
+### Plot of 25th quantiles of BMD-zSD calculated by pathway
+### in the order of the levels as defined in the group input
+levels(annotres$path_class)
+sensitivityplot(annotres, BMDtype = "zSD",
+                            group = "path_class", ECDF_plot = FALSE, 
+                            BMDsummary = "first.quartile")
+
+### an ECDFplot of medians of BMD-zSD calculated by pathway
+sensitivityplot(annotres, BMDtype = "zSD",
+                            group = "path_class",  
+                            BMDsummary = "median")
+
+### an ECDFplot of medians of BMD-zSD calculated by pathway
+### with addition of interquartile ranges (IQRs) 
+sensitivityplot(annotres, BMDtype = "zSD",
+                            group = "path_class",  
+                            BMDsummary = "median.and.IQR") 
+
+### The same plot playing with graphical parameters 
+sensitivityplot(annotres, BMDtype = "zSD",
+                            group = "path_class",  
+                            BMDsummary = "median.and.IQR",
+                            line.size = 1.5, line.alpha = 0.4, point.alpha = 1) 
+                           
+
+# (2) 
+# An example with two molecular levels
+#
+### Rename metabolomic results
+metabextendedres &lt;- annotres
+
+# Import the dataframe with transcriptomic results 
+contigresfilename &lt;- system.file("extdata", "triclosanSVcontigres.txt", package = "DRomics")
+contigres &lt;- read.table(contigresfilename, header = TRUE, stringsAsFactors = TRUE)
+str(contigres)
+
+# Import the dataframe with functional annotation (or any other descriptor/category 
+# you want to use, here KEGG pathway classes) 
+contigannotfilename &lt;- system.file("extdata", "triclosanSVcontigannot.txt", package = "DRomics")
+contigannot &lt;- read.table(contigannotfilename, header = TRUE, stringsAsFactors = TRUE)
+str(contigannot)
+
+# Merging of both previous dataframes   
+contigextendedres &lt;- merge(x = contigres, y = contigannot, by.x = "id", by.y = "contig")
+# to see the structure of this dataframe
+str(contigextendedres)
+
+### Merge metabolomic and transcriptomic results
+extendedres &lt;- rbind(metabextendedres, contigextendedres)
+extendedres$molecular.level &lt;- factor(c(rep("metabolites", nrow(metabextendedres)),
+                              rep("contigs", nrow(contigextendedres))))
+str(extendedres)
+
+### Plot of 25th quantiles of BMD-zSD calculated by pathway
+### and colored by molecular level
+# optional inverse alphabetic ordering of groups for the plot
+extendedres$path_class &lt;- factor(extendedres$path_class, 
+                levels = sort(levels(extendedres$path_class), 
+                decreasing = TRUE))
+sensitivityplot(extendedres, BMDtype = "zSD",
+                            group = "path_class", colorby = "molecular.level", 
+                            BMDsummary = "first.quartile")
+
+### Plot of medians and IQRs of BMD-zSD calculated by pathway
+### and colored by molecular level
+sensitivityplot(extendedres, BMDtype = "zSD",
+                            group = "path_class", colorby = "molecular.level", 
+                            BMDsummary = "median.and.IQR",
+                            line.size = 1.2, line.alpha = 0.4, 
+                            point.alpha = 0.8) 
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,303 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataLongCompRisks</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data Long Competing Risks Transformation</h2>
+
+<h3>Description</h3>
+
+<p>Transforms short data format to long format for discrete survival modelling
+in the case of competing risks with right censoring. It is assumed that the
+covariates are not time varying.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataLongCompRisks(
+  dataShort,
+  timeColumn,
+  eventColumns,
+  eventColumnsAsFactor = FALSE,
+  timeAsFactor = FALSE,
+  aggTimeFormat = FALSE,
+  lastTheoInt = NULL,
+  responseAsFactor = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataShort</code></td>
+<td>
+<p>Original data in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character giving the column name of the observed times ("character vector"). It
+is required that the observed times are discrete ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumns</code></td>
+<td>
+<p>Character vector giving the column names of the event
+indicators (excluding censoring column)("character vector"). It is required that all events are
+binary encoded. If the sum of all event indicators is zero, then this is
+interpreted as a censored observation. Alternatively a column name of a
+factor representing competing events can be given. In this case the argument
+<em>eventColumnsAsFactor</em> has to be set TRUE and the first level is assumed to
+represent censoring.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumnsAsFactor</code></td>
+<td>
+<p>Should the argument <em>eventColumns</em> be interpreted
+as column name of a factor variable ("logical vector")? Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeAsFactor</code></td>
+<td>
+<p>Should the time intervals be coded as factor ("logical vector")? 
+Default is FALSE. In the default settings the discrete time variable are treated as quantitative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggTimeFormat</code></td>
+<td>
+<p>Instead of the usual long format, should every
+observation have all time intervals ("logical vector")? Default is standard
+long format. In the case of nonlinear risk score models, the time effect has
+to be integrated out before these can be applied to the C-index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastTheoInt</code></td>
+<td>
+<p>Gives the number of the last theoretic interval ("integer
+vector"). Only used, if <em>aggTimeFormat</em> is set to TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>responseAsFactor</code></td>
+<td>
+<p>Should the response columns be given as factor ("logical vector")? 
+Default is FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>It is assumed, that only one event happens at a specific time point
+(competing risks). Either the observation is censored or one of the possible
+events takes place.
+</p>
+<p>In contrast to continuous survival (see e. g. <code>Surv</code>) 
+the start and stop time notation is not used here. In discrete time survival analysis the only relevant
+information is to use the stop time. Start time does not matter, because all discrete intervals need to be  
+included in the long data set format to ensure consistent estimation. It is assumed that the supplied 
+data set <em>dataShort</em> contains all repeated measurements of each cluster (e. g. persons). 
+For further information see example <em>Start-stop notation</em>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Original data set in long format with additional columns </p>
+
+<ul>
+<li> <p>obj Gives identification number of objects (row index in short
+format) (integer) </p>
+</li>
+<li> <p>timeInt Gives number of discrete time intervals
+(factor) </p>
+</li>
+<li> <p>responses Columns with dimension count of events + 1
+(censoring) </p>
+ <ul>
+<li> <p>e0 No event (observation censored in specific
+interval) </p>
+</li>
+<li> <p>e1 Indicator of first event, 1 if event takes place and 0
+otherwise </p>
+</li>
+<li>
+<p> ... ...  </p>
+</li>
+<li> <p>ek Indicator of last k-th event, 1 if event
+takes place and zero otherwise</p>
+</li>
+</ul>
+<p>If argument responseAsFactor=TRUE, then responses will be coded as factor in one column.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Steele F, Goldstein H, Browne W (2004).
+“A general multilevel multistate competing risks model for event history data, with an application to a study of contraceptive use dynamics.”
+<em>Statistical Modelling</em>, <b>4</b>, 145-159. <br><br>
+Narendranathan W, Stewart MB (1993).
+“Modelling the Probability of Leaving Unemployment: Competing Risks Models with Flexible Base-Line Hazards.”
+<em>Journal of the Royal Statistical Society Series C</em>, <b>42</b>, 63-83.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contToDisc</code>, <code>dataLongTimeDep</code>,
+<code>dataLongCompRisksTimeDep</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Select subsample
+SubUnempDur &lt;- UnempDur [1:100, ]
+
+# Convert competing risk data to long format
+SubUnempDurLong &lt;- dataLongCompRisks (dataShort = SubUnempDur, timeColumn = "spell", 
+eventColumns = c("censor1", "censor2", "censor3", "censor4"))
+head(SubUnempDurLong, 20)
+
+# Fit multinomial logit model with VGAM package
+# with one coefficient per response
+library(VGAM)
+multLogitVGM &lt;- vgam(cbind(e0, e1, e2, e3, e4) ~ timeInt + ui + age + logwage,
+                    family = multinomial(refLevel = 1), 
+                    data = SubUnempDurLong)
+coef(multLogitVGM)
+
+# Alternative: Use nnet
+# Convert response to factor
+rawResponseMat &lt;- SubUnempDurLong[, c("e0", "e1", "e2", "e3", "e4")]
+NewFactor &lt;- factor(unname(apply(rawResponseMat, 1, function(x) which(x == 1))), 
+                    labels = colnames(rawResponseMat))
+
+# Include recoded response in data
+SubUnempDurLong &lt;- cbind(SubUnempDurLong, NewResp = NewFactor)
+
+# Construct formula of mlogit model
+mlogitFormula &lt;- formula(NewResp ~ timeInt + ui + age + logwage)
+
+# Fit multinomial logit model
+# with one coefficient per response
+library(nnet)
+multLogitNNET &lt;- multinom(formula = mlogitFormula, data = SubUnempDurLong)
+coef(multLogitNNET)
+
+###########################################################
+# Simulation
+# Cause specific competing risks in case of right-censoring
+# Discrete subdistribution hazards model
+
+# Simulate covariates as multivariate normal distribution
+library(mvnfast)
+set.seed(1980)
+X &lt;- mvnfast::rmvn(n = 1000, mu = rep(0, 4), sigma = diag(4))
+
+# Specification of two discrete cause specific hazards with four intervals
+# Event 1
+theoInterval &lt;- 4
+betaCoef_event1 &lt;- seq(-1, 1, length.out = 5)[-3]
+timeInt_event1 &lt;- seq(0.1, -0.1, length.out = theoInterval-1)
+linPred_event1 &lt;- c(X %*% betaCoef_event1)
+# Event 2
+betaCoef_event2 &lt;- seq(-0.5, 0.5, length.out = 5)[-3]
+timeInt_event2 &lt;- seq(-0.1, 0.1, length.out = theoInterval-1)
+linPred_event2 &lt;- c(X %*% betaCoef_event2)
+# Discrete cause specific hazards in last theoretical interval
+theoHaz_event1 &lt;- 0.5
+theoHaz_event2 &lt;- 0.5
+
+haz_event1_X &lt;- cbind(sapply(1:length(timeInt_event1), 
+               function(x) exp(linPred_event1 + timeInt_event1[x]) / 
+               (1 + exp(linPred_event1 + timeInt_event1[x]) + 
+               exp(linPred_event2 + timeInt_event2[x])) ), theoHaz_event1)
+
+haz_event2_X &lt;- cbind(sapply(1:length(timeInt_event2), 
+               function(x) exp(linPred_event2 + timeInt_event2[x]) / 
+               (1 + exp(linPred_event1 + timeInt_event1[x]) + 
+               exp(linPred_event2 + timeInt_event2[x]) ) ), theoHaz_event2)
+allCauseHaz_X &lt;- haz_event1_X + haz_event2_X
+
+
+pT_X &lt;- t(sapply(1:dim(allCauseHaz_X)[1], function(i) estMargProb(allCauseHaz_X[i, ]) ))
+
+
+pR_T_X_event1 &lt;- haz_event1_X / (haz_event1_X + haz_event2_X)
+
+
+survT &lt;- sapply(1:dim(pT_X)[1], function(i) sample(x = 1:(length(timeInt_event1) + 1), 
+                                                  size = 1, prob = pT_X[i, ]) )
+censT &lt;- sample(x = 1:(length(timeInt_event1)+1), size = dim(pT_X)[1], 
+               prob = rep(1/(length(timeInt_event1) + 1), (length(timeInt_event1) + 1)), 
+               replace = TRUE)
+
+
+obsT &lt;- ifelse(survT &lt;= censT, survT, censT)
+obsEvent &lt;- rep(0, length(obsT))
+obsEvent &lt;- sapply(1:length(obsT), 
+                  function(i) if(survT[i] &lt;= censT[i]){
+                    return(sample(x = c(1, 2), size=1, 
+                    prob = c(pR_T_X_event1[i, obsT[i]  ], 
+                    1 - pR_T_X_event1[i, obsT[i]  ]) ))
+                  } else{
+                    
+                    return(0)
+                  }
+)
+
+
+# Recode last interval to censored
+lastInterval &lt;- obsT == theoInterval
+obsT[lastInterval] &lt;- theoInterval - 1
+obsEvent[lastInterval] &lt;- 0
+obsT &lt;- factor(obsT)
+obsEvent &lt;- factor(obsEvent)
+
+datShort &lt;- data.frame(event = factor(obsEvent), time = obsT, X)
+datLong &lt;- dataLongCompRisks(dataShort = datShort, timeColumn = "time", 
+                            eventColumns = "event", responseAsFactor = TRUE, 
+                            eventColumnsAsFactor = TRUE, timeAsFactor = TRUE)
+
+
+# Estimate discrete cause specific hazard model
+library(VGAM)
+estModel &lt;- vglm(formula=responses ~ timeInt + X1 + X2 + X3 + X4, data=datLong, 
+                family = multinomial(refLevel = 1))
+
+
+# Mean squared errors per event
+coefModels &lt;- coef(estModel)
+mean((coefModels[seq(7, length(coefModels), 2)] - betaCoef_event1)^2) # Event 1
+mean((coefModels[seq(8, length(coefModels), 2)] - betaCoef_event2)^2) # Event 2
+# -&gt; Estimated coefficients are near true coefficients for each event type
+
+</code></pre>
+
+
+</div>

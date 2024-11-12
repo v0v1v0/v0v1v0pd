@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>convert_data_discrete</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>convert_data_discrete</h2>
+
+<h3>Description</h3>
+
+<p>#' A helper function for converting individual columns of alternatives' data.
+It is assumed that <code>data</code>  contains data corresponding to a discrete
+DexiAttribute. During conversion, <code>data</code> elements are converted either
+to sets or distributions, and function <code>aggregate</code> if applied on them.
+When <code>interpret = "set"</code>, values are also optionally converted to the interval <code style="white-space: pre;">⁠[omin:omax]⁠</code>,
+and reversed using <code>reverse_value()</code> for scales whose <code style="white-space: pre;">⁠$order = "descending"⁠</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">convert_data_discrete(
+  data,
+  scale,
+  interpret = c("set", "distribution", "none"),
+  aggregate = min,
+  omin = 0,
+  omax = 1,
+  map_values = TRUE,
+  reverse_descending = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A vector containing DEXi values: single numbers, integer vectors or distribuions.
+Typically a <code>data.frame</code> column of DEXi alternatives' data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>A DexiDiscreteScale object or a discrete DexiAttribute object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interpret</code></td>
+<td>
+<p>Either <code>"set"</code> (default), <code>"distribution"</code> or <code>"none"</code>.
+Determines how are individual <code>data</code> elements interpreted: as sets or distributions.
+Actually, each element is converted either to a set or distribution prior do applying <code>aggregate()</code>.
+When <code>interpret = "none"</code>, just <code>aggregate()</code> is applied on the original <code>value</code> from <code>data</code>,
+without any value scaling or reversal.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggregate</code></td>
+<td>
+<p>A function applied on each interpreted <code>data</code> element.
+Normally a function that maps a numeric vector (set or distribution) to a single number.
+Default: <code>min()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omin</code></td>
+<td>
+<p>Lower output bound for <code>lin_map()</code> value scaling. Applies only when <code>interpret = "set"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omax</code></td>
+<td>
+<p>Upper output bound for <code>lin_map()</code> value scaling  Applies only when <code>interpret = "set"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>map_values</code></td>
+<td>
+<p><code>logical(1)</code>. Whether or not to perform value scaling using <code>lin_map()</code>.
+Applies only when <code>interpret = "set"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reverse_descending</code></td>
+<td>
+<p><code>logical(1)</code>. Whether or not to reverse values of a "descending" scale.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Vector of converted values.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lin_map()</code>, <code>reverse_value()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">scla &lt;- DexiDiscreteScale(values = c("L", "M", "H"))
+scld &lt;- DexiDiscreteScale(values = c("L", "M", "H"), order = "descending")
+convert_data_discrete(c(1, 2, 3), scla)    # 0.0 0.5 1.0
+convert_data_discrete(c(1, 2, 3), scld)    # 1.0 0.5 0.0
+convert_data_discrete(list(1, 2, 3), scla) # 0.0 0.5 1.0
+convert_data_discrete(list(1, 2, 3), scld) # 1.0 0.5 0.0
+convert_data_discrete(list(1, 2, 3), scld, omax=10) # 10  5  0
+data &lt;- list(1, c(1,2), distribution(0.2, 0, 0.8), NA)
+convert_data_discrete(data, scla, omax=10) #  0  0  0 NA
+convert_data_discrete(data, scld, omax=10) # 10 10 10 NA
+convert_data_discrete(data, scla, aggregate=max, omax=10)  #  0  5 10 NA
+convert_data_discrete(data, scla, aggregate=mean, omax=10) # 0.0 2.5 5.0  NA
+
+</code></pre>
+
+
+</div>

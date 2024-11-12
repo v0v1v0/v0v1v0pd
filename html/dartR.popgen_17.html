@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>utils.outflank</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>OutFLANK:  An Fst outlier approach by Mike Whitlock and Katie Lotterhos,
+University of British Columbia.</h2>
+
+<h3>Description</h3>
+
+<p>This function is the original implementation of Outflank by Whitlock and
+Lotterhos. dartR simply provides a convenient wrapper around their functions
+and an easier install being an r package (for information please refer to
+their github repository)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">utils.outflank(
+  FstDataFrame,
+  LeftTrimFraction = 0.05,
+  RightTrimFraction = 0.05,
+  Hmin = 0.1,
+  NumberOfSamples,
+  qthreshold = 0.05
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>FstDataFrame</code></td>
+<td>
+<p>A data frame that includes a row for each locus, with
+columns as follows:
+</p>
+
+<ul>
+<li>
+<p> $LocusName: a character string that uniquely names
+each locus.
+</p>
+</li>
+<li>
+<p> $FST: Fst calculated for this locus. (Kept here to
+report the unbased Fst of the results)
+</p>
+</li>
+<li>
+<p> $T1: The numerator of the estimator for Fst
+(necessary, with $T2, to calculate mean Fst)
+</p>
+</li>
+<li>
+<p> $T2: The denominator of the estimator of Fst
+</p>
+</li>
+<li>
+<p> $FSTNoCorr: Fst calculated for this locus without
+sample size correction. (Used to find outliers)
+</p>
+</li>
+<li>
+<p> $T1NoCorr: The numerator of the estimator for Fst
+without sample size correction (necessary, with $T2, to
+calculate mean Fst)
+</p>
+</li>
+<li>
+<p> $T2NoCorr: The denominator of the estimator of Fst
+without sample size correction
+</p>
+</li>
+<li>
+<p> $He: The heterozygosity of the locus (used to screen
+out low heterozygosity loci that have a different distribution)
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LeftTrimFraction</code></td>
+<td>
+<p>The proportion of loci that are trimmed from the
+lower end of the range of Fst before the likelihood funciton is applied
+[default 0.05].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RightTrimFraction</code></td>
+<td>
+<p>The proportion of loci that are trimmed from the
+upper end of the range of Fst before the likelihood funciton is applied
+[default 0.05].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Hmin</code></td>
+<td>
+<p>The minimum heterozygosity required before including calculations
+from a locus [default 0.1].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NumberOfSamples</code></td>
+<td>
+<p>The number of spatial locations included in the data
+set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qthreshold</code></td>
+<td>
+<p>The desired false discovery rate threshold for calculating
+q-values [default 0.05].</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This method looks for Fst outliers from a list of Fst's for different loci.
+It assumes that each locus has been genotyped in all populations with
+approximately equal coverage.
+</p>
+<p>OutFLANK estimates the distribution of Fst based on a trimmed sample of Fst's.
+It assumes that the majority of loci in the center of the distribution are
+neutral and infers the shape of the distribution of neutral Fst using a
+trimmed set of loci. Loci with the highest and lowest Fst's are trimmed from
+the data set before this inference, and the distribution of Fst df/(mean Fst)
+is assumed to'follow a chi-square distribution. Based on this inferred
+distribution, each locus is given a q-value based on its quantile in the
+inferred null'distribution.
+</p>
+<p>The main procedure is called OutFLANK – see comments in that function
+immediately below for input and output formats. The other functions here are
+necessary and must be uploaded, but are not necessarily needed by the user
+directly.
+</p>
+<p>Steps:
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns a list with seven elements:
+</p>
+
+<ul>
+<li>
+<p> FSTbar: the mean FST inferred from loci not marked as outliers
+</p>
+</li>
+<li>
+<p> FSTNoCorrbar: the mean FST (not corrected for sample size -gives an
+upwardly biased estimate of FST)
+</p>
+</li>
+<li>
+<p> dfInferred: the inferred number of degrees of freedom for the
+chi-square distribution of neutral FST
+</p>
+</li>
+<li>
+<p> numberLowFstOutliers: Number of loci flagged as having a significantly
+low FST (not reliable)
+</p>
+</li>
+<li>
+<p> numberHighFstOutliers: Number of loci identified as having
+significantly high FST
+</p>
+</li>
+<li>
+<p> results: a data frame with a row for each locus. This data frame
+includes all the original columns in the
+data set, and six new ones:
+</p>
+
+<ul>
+<li>
+<p> $indexOrder (the original order of the input data set),
+</p>
+</li>
+<li>
+<p> $GoodH (Boolean variable which is TRUE if the expected
+heterozygosity is greater than the Hemin set by input),
+</p>
+</li>
+<li>
+<p> $OutlierFlag (TRUE if the method identifies the locus as
+an outlier, FALSE otherwise), and
+</p>
+</li>
+<li>
+<p> $q (the q-value for the test of neutrality for the locus)
+</p>
+</li>
+<li>
+<p> $pvalues (the p-value for the test of neutrality for the
+locus)
+</p>
+</li>
+<li>
+<p> $pvaluesRightTail the one-sided (right tail) p-value for
+a locus
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Bernd Gruber (bugs? Post to
+<a href="https://groups.google.com/d/forum/dartr">https://groups.google.com/d/forum/dartr</a>); original implementation of
+Whitlock &amp; Lotterhos
+</p>
+
+
+</div>

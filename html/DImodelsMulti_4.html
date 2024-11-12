@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataSWE</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+The Sweden dataset
+</h2>
+
+<h3>Description</h3>
+
+<p>Single site dataset containing 48 experimental units (plots), with four species seeded at two
+density levels, representing fifteen communities. One ecosystem function response is recorded for
+each plot at a three time points.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("dataSWE")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 432 observations on the following 9 variables.
+</p>
+
+<dl>
+<dt><code>YEARN</code></dt>
+<dd>
+<p>a numeric vector indicating the time point (year) that the ecosystem
+function recording was measured at</p>
+</dd>
+<dt><code>PLOT</code></dt>
+<dd>
+<p>a numeric vector indicating the ID of the experimental unit from which the
+observation was recorded</p>
+</dd>
+<dt><code>TREAT</code></dt>
+<dd>
+<p>a vector of factors with three levels, 1, or 2 indicating the treatment
+applied to the plot</p>
+</dd>
+<dt><code>G1</code></dt>
+<dd>
+<p>a numeric vector ranging from 0 to 1, the proportion of the species G1</p>
+</dd>
+<dt><code>G2</code></dt>
+<dd>
+<p>a numeric vector ranging from 0 to 1, the proportion of the species G2</p>
+</dd>
+<dt><code>L1</code></dt>
+<dd>
+<p>a numeric vector ranging from 0 to 1, the proportion of the species L1</p>
+</dd>
+<dt><code>L2</code></dt>
+<dd>
+<p>a numeric vector ranging from 0 to 1, the proportion of the species L2</p>
+</dd>
+<dt><code>DENS</code></dt>
+<dd>
+<p>a character vector representing the seeding density of the plot (-1 or 1)</p>
+</dd>
+<dt><code>YIELD</code></dt>
+<dd>
+<p>a numeric vector indicating the value of the harvest recorded</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>Data comes from a single site from a wider agrosdiversity experiment conducted in Belgium,
+established in 2002. <br>
+The four species used were Lolium perenne (G1), Phleum pratense (G2), Trifolium pratense (L1), and
+Trifolium repens (L2). There are two recommended functional groupings: grouping grasses (G1, G2)
+and legumes (L1, L2), or grouping fast-establishing species (G1, L1) and temporally persistent
+species (G2, L2). <br>
+One ecosystem function (aboveground biomass (t DM ha-1)) was recorded by summing recordings from
+four harvests over each year, for three year.
+</p>
+
+
+<h3>Source</h3>
+
+<p>Kirwan, L., Connolly, J., Brophy, C., Baadshaug, O.H., Belanger, G., Black, A., Carnus, T., Collins,
+R.P., Cop, J., Delgado, I. and De Vliegher, A., 2014. <br>
+The Agrodiversity Experiment: three years of data from a multisite study in intensively managed
+grasslands.
+</p>
+
+
+<h3>References</h3>
+
+<p>Dooley, A., Isbell, F., Kirwan, L., Connolly, J., Finn, J.A. and Brophy, C., 2015. <br>
+Testing the effects of diversity on ecosystem multifunctionality using a multivariate model. <br>
+Ecology Letters, 18(11), pp.1242-1251. <br></p>
+<p>Kirwan, L., Connolly, J., Brophy, C., Baadshaug, O.H., Belanger, G., Black, A., Carnus, T., Collins,
+R.P., Cop, J., Delgado, I. and De Vliegher, A., 2014. <br>
+The Agrodiversity Experiment: three years of data from a multisite study in intensively managed
+grasslands. <br></p>
+<p>Finn, J.A., Kirwan, L., Connolly, J., Sebastia, M.T., Helgadottir, A., Baadshaug, O.H.,
+Belanger, G., Black, A., Brophy, C., Collins, R.P. and Cop, J., 2013. <br>
+Ecosystem function enhanced by combining four functional types of plant species in intensively
+managed grassland mixtures: a 3-year continental-scale field experiment.<br>
+Journal of Applied Ecology, 50(2), pp.365-375 .<br></p>
+<p>Kirwan, L., Connolly, J., Finn, J.A., Brophy, C., Luscher, A., Nyfeler, D. and Sebastia, M.T.,
+2009. <br>
+Diversity-interaction modeling: estimating contributions of species identities and interactions
+to ecosystem function. <br>
+Ecology, 90(8), pp.2032-2038. <br></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">####################################################################################################
+####################################################################################################
+
+## Modelling Example
+
+# For a more thorough example of the workflow of this package, please see vignette
+# DImulti_workflow using the following code:
+
+# vignette("DImulti_workflow")
+
+
+head(dataSWE)
+
+# We begin by transforming the time identifier column to a factor, to better group coefficients
+
+dataSWE$YEARN &lt;- as.factor(dataSWE$YEARN)
+
+# We fit a repeated measures DI model using the main function DImulti().
+# We begin by passing the initial species proportions column names through 'prop' and the
+# response value column name through 'y'.
+# As the data contains multiple time points, we include the 'time' parameter, through which we
+# specify the column name containing the repeated measure indicator and the autocorrelation
+# structure we want to use, in this case, we use compound symmetry (CS).
+# The experimental unit ID is stored in the column "PLOT" and so we pass this to 'unit_IDs'.
+# We request that the method fits an average interaction structure and we include the treatments
+# DENS and TREAT as additional fixed effects.
+# We opt to use the ML estimation method to allow for model comparisons with different fixed
+# effects.
+# Finally, we specify the data object, dataSWE, through 'data'.
+
+SWEmodel &lt;- DImulti(y = "YIELD", time = c("YEARN", "CS"), unit_IDs = "PLOT",
+                    prop = 5:8, data = dataSWE, DImodel = "AV",
+                    extra_fixed = ~ 1:(DENS:TREAT),
+                    method = "ML")
+
+print(SWEmodel)
+
+# We can now make any changes to the model's fixed effects and use a series of anovas (if the
+# models are nested) or information criteria such as AIC, AICc, BIC, or BICc to select a final model
+# We choose to change the interactions structure to functional groups, grouping the grasses and
+# legumes, and simplify the extra_fixed terms, as an example, by only crossing the ID effect of G1
+# with the treatments, and no longer crossing them with each other.
+
+SWEmodel2 &lt;- DImulti(y = "YIELD", time = c("YEARN", "CS"), unit_IDs = "PLOT",
+                    prop = 5:8, data = dataSWE, DImodel = "FG", FG = c("G", "G", "L", "L"),
+                    extra_fixed = ~ G1_ID:(DENS+TREAT),
+                    method = "ML")
+
+BICc(SWEmodel); BICc(SWEmodel2)
+
+# We select the model with the lower information criteria, which is our functional group model, and
+# refit it using the "REML" estimation method, for unbiased estimates.
+
+SWEmodel2 &lt;- DImulti(y = "YIELD", time = c("YEARN", "CS"), unit_IDs = "PLOT",
+                    prop = 5:8, data = dataSWE, DImodel = "FG", FG = c("G", "G", "L", "L"),
+                    extra_fixed = ~ G1_ID:(DENS+TREAT),
+                    method = "REML")
+
+# With this model, we can examine the coefficients
+
+coef(SWEmodel2)
+
+# or the variance and correlation structures
+
+SWEmodel2$corr
+nlme::getVarCov(SWEmodel2)
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,262 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adaptive_iptw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute asymptotically linear IPTW estimators with super learning
+for the propensity score</h2>
+
+<h3>Description</h3>
+
+<p>Compute asymptotically linear IPTW estimators with super learning
+for the propensity score
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">adaptive_iptw(W, A, Y, DeltaY = as.numeric(!is.na(Y)),
+  DeltaA = as.numeric(!is.na(A)), stratify = FALSE, family = if (all(Y
+  %in% c(0, 1))) {     stats::binomial() } else {     stats::gaussian() },
+  a_0 = unique(A[!is.na(A)]), SL_g = NULL, glm_g = NULL, SL_Qr = NULL,
+  glm_Qr = NULL, returnModels = TRUE, verbose = FALSE, maxIter = 2,
+  tolIC = 1/length(Y), tolg = 0.01, cvFolds = 1, gn = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>A <code>data.frame</code> of named covariates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>A <code>numeric</code> vector of binary treatment assignment (assumed to
+be equal to 0 or 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>A <code>numeric</code> numeric of continuous or binary outcomes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DeltaY</code></td>
+<td>
+<p>A <code>numeric</code> indicator of missing outcome (assumed to be
+equal to 0 if missing 1 if observed)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DeltaA</code></td>
+<td>
+<p>A <code>numeric</code> indicator of missing treatment (assumed to be
+equal to 0 if missing 1 if observed)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stratify</code></td>
+<td>
+<p>A <code>logical</code> indicating whether to estimate the missing
+outcome regression separately for observations with different levels of
+<code>A</code> (if <code>TRUE</code>) or to pool across <code>A</code> (if <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>A <code>family</code> object equal to either <code>binomial()</code> or
+<code>gaussian()</code>, to be passed to the <code>SuperLearner</code> or <code>glm</code>
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_0</code></td>
+<td>
+<p>A vector of <code>numeric</code> treatment values at which to return
+marginal mean estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SL_g</code></td>
+<td>
+<p>A vector of characters describing the super learner library to be
+used for each of the propensity score regressions (<code>DeltaA</code>, <code>A</code>,
+and <code>DeltaY</code>). To use the same library for each of the regressions (or
+if there is no missing data in <code>A</code> nor <code>Y</code>), a single library may
+be input. See <code>link{SuperLearner::SuperLearner}</code> for details on how
+super learner libraries can be specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_g</code></td>
+<td>
+<p>A list of characters describing the formulas to be used
+for each of the propensity score regressions (<code>DeltaA</code>, <code>A</code>, and
+<code>DeltaY</code>). To use the same formula for each of the regressions (or if
+there is no missing data in <code>A</code> nor <code>Y</code>), a single character
+formula may be input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SL_Qr</code></td>
+<td>
+<p>A vector of characters or a list describing the Super Learner
+library to be used for the reduced-dimension outcome regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>glm_Qr</code></td>
+<td>
+<p>A character describing a formula to be used in the call to
+<code>glm</code> for reduced-dimension outcome regression. Ignored if
+<code>SL_Qr!=NULL</code>. The formula should use the variable name <code>'gn'</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnModels</code></td>
+<td>
+<p>A logical indicating whether to return model fits for the
+propensity score and reduced-dimension regressions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical indicating whether to print status updates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+<p>A numeric that sets the maximum number of iterations the TMLE
+can perform in its fluctuation step.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolIC</code></td>
+<td>
+<p>A numeric that defines the stopping criteria based on the
+empirical mean of the influence function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tolg</code></td>
+<td>
+<p>A numeric indicating the minimum value for estimates of the
+propensity score.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cvFolds</code></td>
+<td>
+<p>A numeric equal to the number of folds to be used in
+cross-validated fitting of nuisance parameters. If <code>cvFolds = 1</code>, no
+cross-validation is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gn</code></td>
+<td>
+<p>An optional list of propensity score estimates. If specified, the
+function will ignore the nuisance parameter estimation specified by
+<code>SL_g</code> and <code>glm_g</code>. The entries in the list should correspond to
+the propensity for the observed values of <code>W</code>, with order determined by
+the input to <code>a_0</code> (e.g., if <code>a_0 = c(0,1)</code> then <code>gn[[1]]</code>
+should be propensity of <code>A</code> = 0 and <code>gn[[2]]</code> should be propensity
+of <code>A</code> = 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other options (not currently used).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"adaptive_iptw"</code>.
+</p>
+
+<dl>
+<dt><code>iptw_tmle</code></dt>
+<dd>
+<p>A <code>list</code> of point estimates and
+covariance matrix for the IPTW estimator based on a targeted
+propensity score. </p>
+</dd>
+<dt><code>iptw_tmle_nuisance</code></dt>
+<dd>
+<p>A <code>list</code> of the final TMLE estimates
+of the propensity score (<code>$gnStar</code>) and reduced-dimension
+regression (<code>$QrnStar</code>) evaluated at the observed data values.</p>
+</dd>
+<dt><code>iptw_os</code></dt>
+<dd>
+<p>A <code>list</code> of point estimates and covariance matrix
+for the one-step correct IPTW estimator.</p>
+</dd>
+<dt><code>iptw_os_nuisance</code></dt>
+<dd>
+<p>A <code>list</code> of the initial estimates of the
+propensity score and reduced-dimension regression evaluated at the
+observed data values.</p>
+</dd>
+<dt><code>iptw</code></dt>
+<dd>
+<p>A <code>list</code> of point estimates for the standard IPTW
+estimator. No estimate of the covariance matrix is provided because
+theory does not support asymptotic Normality of the IPTW estimator if
+super learning is used to estimate the propensity score.</p>
+</dd>
+<dt><code>gnMod</code></dt>
+<dd>
+<p>The fitted object for the propensity score. Returns
+<code>NULL</code> if <code>returnModels = FALSE</code>.</p>
+</dd>
+<dt><code>QrnMod</code></dt>
+<dd>
+<p>The fitted object for the reduced-dimension regression
+that guards against misspecification of the outcome regression.
+Returns <code>NULL</code> if <code>returnModels = FALSE</code>.</p>
+</dd>
+<dt><code>a_0</code></dt>
+<dd>
+<p>The treatment levels that were requested for computation
+of covariate-adjusted means.</p>
+</dd>
+<dt><code>call</code></dt>
+<dd>
+<p>The call to <code>adaptive_iptw</code>.</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load super learner
+library(SuperLearner)
+# simulate data
+set.seed(123456)
+n &lt;- 100
+W &lt;- data.frame(W1 = runif(n), W2 = rnorm(n))
+A &lt;- rbinom(n, 1, plogis(W$W1 - W$W2))
+Y &lt;- rbinom(n, 1, plogis(W$W1 * W$W2 * A))
+# fit iptw with maxIter = 1 to run fast
+
+fit1 &lt;- adaptive_iptw(
+  W = W, A = A, Y = Y, a_0 = c(1, 0),
+  SL_g = c("SL.glm", "SL.mean", "SL.step"),
+  SL_Qr = "SL.npreg", maxIter = 1
+)
+
+</code></pre>
+
+
+</div>

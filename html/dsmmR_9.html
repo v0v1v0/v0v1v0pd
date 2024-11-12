@@ -1,0 +1,266 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_kernel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Obtain the Drifting semi-Markov kernel</h2>
+
+<h3>Description</h3>
+
+<p>This is a generic method that computes and returns the drifting
+semi-Markov kernel.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_kernel(obj, t, u, v, l, klim = 100)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>An object that inherits from the S3
+classes <code>dsmm</code>,
+<code>dsmm_fit_parametric</code>, or
+<code>dsmm_fit_nonparametric</code>,
+<code>dsmm_nonparametric</code> or <code>dsmm_parametric</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>Optional, but recommended. Positive integer specifying
+the instance <code class="reqn">t</code> of the visited states.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>u</code></td>
+<td>
+<p>Optional. Can be either of the two options below:
+</p>
+
+<ul>
+<li>
+<p> Character specifying the previous state <code class="reqn">u</code>, e.g. <code>u = "a"</code>.
+</p>
+</li>
+<li>
+<p> Positive integer, specifying a state in the state space <code class="reqn">E</code>.
+For example, if <code class="reqn">E = \{a, c, g, t\}</code> and <code>u = 1</code>, it corresponds
+to the state <code class="reqn">a</code>, if <code>u = 2</code>, it corresponds to the state <code class="reqn">c</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>Optional. Can be either of the two options below:
+</p>
+
+<ul>
+<li>
+<p> Character specifying the next state <code class="reqn">v</code>, e.g. <code>v = "c"</code>.
+</p>
+</li>
+<li>
+<p> Positive integer, specifying a state in the state space <code class="reqn">E</code>.
+For example, if <code class="reqn">E = \{a, c, g, t\}</code> and <code>v = 3</code>, it corresponds
+to the state <code class="reqn">c</code>, if <code>v = 4</code>, it corresponds to the state <code class="reqn">t</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l</code></td>
+<td>
+<p>Optional. Positive integer specifying the sojourn time <code class="reqn">l</code>
+that is spent in the previous state <code class="reqn">u</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>klim</code></td>
+<td>
+<p>Optional. Positive integer. Used only when <code>obj</code> inherits
+from the S3 classes <code>dsmm_parametric</code> or <code>dsmm_fit_parametric</code>.
+Specifies the time horizon used to approximate the <code class="reqn">d + 1</code> sojourn time
+distributions if <code class="reqn">f</code> is drifting, or just <code class="reqn">1</code> sojourn time
+distribution if <code class="reqn">f</code> is <em>not drifting</em>.
+Default value is 100.
+</p>
+<p>A larger value will result in a considerably larger
+kernel, which has dimensions of <code class="reqn">s \times s \times klim \times (n + 1)</code>,
+which will increase the memory requirements and will slow down considerably
+the <code>simulate.dsmm()</code> method.
+However, this will lead to better estimations through <code>fit_dsmm()</code>.
+(dsmm_parametric, fit_dsmm, simulate.dsmm)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The drifting semi-Markov kernel is given as the probability that,
+given at the instance <code class="reqn">t</code> the previous state
+is <code class="reqn">u</code>, the next state state <code class="reqn">v</code> will be reached
+with a sojourn time of <code class="reqn">l</code>:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{t}{n}}(u,v,l) = P(J_{t}=v,X_{t}=l|J_{t-1}=u),</code>
+</p>
+
+<p>where <code class="reqn">n</code> is the model size, defined as the length of the embedded
+Markov chain <code class="reqn">(J_{t})_{t\in \{0,\dots,n\}}</code> minus the last state,
+<code class="reqn">J_t</code> is the visited state at the instant <code class="reqn">t</code> and
+<code class="reqn">X_{t} = S_{t}-S_{t-1}</code> is the sojourn time of the state <code class="reqn">J_{t-1}</code>.
+Specifically, it is given as the sum of a linear combination:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{t}{n}}(u,v,l)=
+     \sum_{i = 0}^{d}A_{i}(t)\ q_{\frac{i}{d}}(u,v,l),</code>
+</p>
+
+<p>where <code class="reqn">A_i, i = 0, \dots, d</code> are <code class="reqn">d + 1</code> polynomials with degree
+<code class="reqn">d</code> that satisfy certain conditions (see dsmmR) and
+<code class="reqn">q_{\frac{i}{d}}(u,v,l), i = 0, \dots, d</code>
+are <code class="reqn">d + 1</code> semi-Markov kernels.
+Three possible model specifications are described below.
+We will use the exponentials <code class="reqn">(1), (2), (3)</code> to distinguish between
+the drifting semi-Markov kernel <code class="reqn">q_\frac{t}{n}</code> and the
+semi-Markov kernels <code class="reqn">q_\frac{i}{d}</code> used in
+Model 1, Model 2 and Model 3.
+</p>
+<p><strong><em>Model 1</em></strong>
+</p>
+<p>In this case, both <code class="reqn">p</code> and <code class="reqn">f</code> are "drifting" between <code class="reqn">d + 1</code>
+fixed points of the model, hence the "drifting" in drifting semi-Markov
+models. Therefore, the semi-Markov kernels <code class="reqn">q_{\frac{i}{d}}^{\ (1)}</code> are
+equal to:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{i}{d}}^{\ (1)}(u,v,l) =
+     {p_{\frac{i}{d}}(u,v)}{f_{\frac{i}{d}}(u,v,l)},</code>
+</p>
+
+<p>where for <code class="reqn">i = 0, \dots, d</code> we have <code class="reqn">d + 1</code> Markov Transition
+matrices <code class="reqn">p_{\frac{i}{d}}(u,v)</code>, and <code class="reqn">d + 1</code> sojourn time
+distributions <code class="reqn">f_{\frac{i}{d}}(u,v,l)</code>, where <code class="reqn">d</code> is the
+polynomial degree.
+</p>
+<p>Thus, the drifting semi-Markov kernel will be equal to:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{t}{n}}^{\ (1)}(u,v,l) =
+\sum_{i = 0}^{d} A_i(t)\ q_{\frac{i}{d}}^{\ (1)}(u,v,l) =
+\sum_{i = 0}^{d} A_i(t)\ p_{\frac{i}{d}}(u,v)f_{\frac{i}{d}}(u,v,l)
+</code>
+</p>
+
+<p><strong><em>Model 2</em></strong>
+</p>
+<p>In this case, <code class="reqn">p</code> is drifting and <code class="reqn">f</code> <strong>is not drifting</strong>.
+Therefore, the semi-Markov kernels <code class="reqn">q_{\frac{i}{d}}^{\ (2)}</code> are
+equal to:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{i}{d}}^{\ (2)}(u,v,l)={p_{\frac{i}{d}}(u,v)}{f(u,v,l)}.</code>
+</p>
+
+<p>Thus, the drifting semi-Markov kernel will be equal to:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{t}{n}}^{\ (2)}(u,v,l) =
+\sum_{i = 0}^{d} A_i(t)\ q_{\frac{i}{d}}^{\ (2)}(u,v,l) =
+\sum_{i = 0}^{d} A_i(t)\ p_{\frac{i}{d}}(u,v)f(u,v,l)
+</code>
+</p>
+
+<p><strong><em>Model 3</em></strong>
+</p>
+<p>In this case, <code class="reqn">f</code> is drifting and <code class="reqn">p</code> <strong>is not drifting</strong>.
+</p>
+<p>Therefore, the semi-Markov kernels <code class="reqn">q_{\frac{i}{d}}^{\ (3)}</code>
+are now described as:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{i}{d}}^{\ (3)}(u,v,l)={p(u,v)}{f_{\frac{i}{d}}(u,v,l)}.</code>
+</p>
+
+<p>Thus, the drifting semi-Markov kernel will be equal to:
+</p>
+<p style="text-align: center;"><code class="reqn">q_{\frac{t}{n}}^{\ (3)}(u,v,l) =
+\sum_{i = 0}^{d} A_i(t)\ q_{\frac{i}{d}}^{\ (3)}(u,v,l) =
+\sum_{i = 0}^{d} A_i(t)\ p(u,v)f_{\frac{i}{d}}(u,v,l)
+</code>
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>An array with dimensions of
+<code class="reqn">s \times s \times k_{max} \times (n + 1)</code>, giving the
+value of the drifting semi-Markov kernel <code class="reqn">q_{\frac{t}{n}}(u,v,l)</code> for
+the corresponding <code class="reqn">(u,v,l,t)</code>. If any of <code class="reqn">u,v,l</code> or <code class="reqn">t</code> are
+specified, we obtain the element of the array for their given value.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>For the objects required to calculate this kernel:
+fit_dsmm, parametric_dsmm, nonparametric_dsmm.
+</p>
+<p>For sequence simulation through this kernel: simulate.dsmm.
+</p>
+<p>For the theoretical background of drifting semi-Markov models: dsmmR.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Setup.
+states &lt;- c("Rouen", "Bucharest", "Samos", "Aigio", "Marseille")
+emc &lt;- create_sequence(states, probs = c(0.3, 0.1, 0.1, 0.3, 0.2))
+obj_model_2 &lt;- fit_dsmm(
+    sequence = emc,
+    states = states,
+    degree = 3,
+    f_is_drifting = FALSE,
+    p_is_drifting = TRUE
+)
+
+# Get the kernel.
+kernel_model_2 &lt;- get_kernel(obj_model_2)
+cat(paste0("If no further arguments are made, kernel has dimensions ",
+           "for all u, v, l, t:\n",
+           "(s, s, k_max, n + 1) = (",
+           paste(dim(kernel_model_2), collapse = ", "), ")"))
+
+# Specifying `t`.
+kernel_model_2_t &lt;- get_kernel(obj_model_2, t = 100)
+# kernel_model_2_t[ , , , t = 100]
+cat(paste0("If we specify t, the kernel has dimensions for ",
+           "all the remaining u, v, l:\n(s, s, k_max) = (",
+           paste(dim(kernel_model_2_t), collapse = ", "), ")"))
+
+# Specifying `t` and `u`.
+kernel_model_2_tu &lt;- get_kernel(obj_model_2, t = 2, u = "Aigio")
+# kernel_model_2_tu["Aigio", , , t = 2]
+cat(paste0("If we specify t and u, the kernel has dimensions for ",
+           "all the remaining v, l:\n(s, k_max) = (",
+           paste(dim(kernel_model_2_tu), collapse = ", "), ")"))
+
+# Specifying `t`, `u` and `v`.
+kernel_model_2_tuv &lt;- get_kernel(obj_model_2, t = 3,
+                                 u = "Rouen", v = "Bucharest")
+# kernel_model_2_tuv["Rouen", "Bucharest", , t = 3]
+cat(paste0("If we specify t, u and v, the kernel has dimensions ",
+           "for all l:\n(k_max) = (",
+           paste(length(kernel_model_2_tuv), collapse = ", "), ")"))
+
+# It is possible to ask for any valid combination of `u`, `v`, `l` and `t`.
+</code></pre>
+
+
+</div>

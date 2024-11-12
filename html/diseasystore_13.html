@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>FeatureHandler</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>FeatureHandler</h2>
+
+<h3>Description</h3>
+
+<p>This <code>FeatureHandler</code> R6 handles individual features for the feature stores.
+They define the three methods associated with features (<code>compute</code>, <code>get</code> and <code>key_join</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A new instance of the <code>FeatureHandler</code> R6 class.
+</p>
+
+
+<h3>Active bindings</h3>
+
+<div class="r6-active-bindings">
+
+<dl>
+<dt><code>compute</code></dt>
+<dd>
+<p>(<code>function</code>)<br>
+A function of the form "function(start_date, end_date, slice_ts, source_conn)".
+This function should compute the feature from the source connection.</p>
+</dd>
+<dt><code>get</code></dt>
+<dd>
+<p>(<code>function</code>)<br>
+A function of the form "function(target_table, slice_ts, target_conn)".
+This function should retrieve the computed feature from the target connection.</p>
+</dd>
+<dt><code>key_join</code></dt>
+<dd>
+<p>(<code>function</code>)<br>
+One of the aggregators from aggregators.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-FeatureHandler-new"><code>FeatureHandler$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-FeatureHandler-clone"><code>FeatureHandler$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-FeatureHandler-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Creates a new instance of the <code>FeatureHandler</code> R6 class.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>FeatureHandler$new(compute = NULL, get = NULL, key_join = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>compute</code></dt>
+<dd>
+<p>(<code>function</code>)<br>
+A function of the form "function(start_date, end_date, slice_ts, source_conn)".
+This function should return a <code>data.frame</code> with the computed feature (computed from the source connection).
+The <code>data.frame</code> should contain the following columns:
+</p>
+
+<ul>
+<li>
+<p> key_*: One (or more) columns containing keys to link this feature with other features
+</p>
+</li>
+<li>
+<p> *: One (or more) columns containing the features that are computed
+</p>
+</li>
+<li>
+<p> valid_from, valid_until: A set of columns containing the time period for which this feature information
+is valid.<br></p>
+</li>
+</ul>
+</dd>
+<dt><code>get</code></dt>
+<dd>
+<p>(<code>function</code>)<br>
+(Optional). A function of the form "function(target_table, slice_ts, target_conn)".
+This function should retrieve the computed feature from the target connection.<br></p>
+</dd>
+<dt><code>key_join</code></dt>
+<dd>
+<p>(<code>function</code>)<br>
+A function like one of the aggregators from <code>aggregators()</code>.
+</p>
+<p>The function should return an expression on the form:
+dplyr::summarise(.data,
+dplyr::across(.cols = tidyselect::all_of(feature),
+.fns = list(n = ~ aggregation function),
+.names = "{.fn}"),
+.groups = "drop")</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A new instance of the <code>FeatureHandler</code> R6 class.
+</p>
+
+
+<hr>
+<a id="method-FeatureHandler-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>FeatureHandler$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+  # The FeatureHandler is typically configured as part of making a new Diseasystore.
+  # Most often, we need only specify `compute` and `key_join` to get a functioning FeatureHandler
+
+  # In this example we use mtcars as the basis for our features
+  conn &lt;- SCDB::get_connection(drv = RSQLite::SQLite())
+
+  # We use mtcars as our basis. First we add the rownames as an actual column
+  data &lt;- dplyr::mutate(mtcars, key_name = rownames(mtcars), .before = dplyr::everything())
+
+  # Then we add some imaginary times where these cars were produced
+  data &lt;- dplyr::mutate(data,
+                        production_start = as.Date(Sys.Date()) + floor(runif(nrow(mtcars)) * 100),
+                        production_end   = production_start + floor(runif(nrow(mtcars)) * 365))
+
+  dplyr::copy_to(conn, data, "mtcars")
+
+  # In this example, the feature we want is the "maximum miles per gallon"
+  # The feature in question in the mtcars data set is then "mpg" and when we need to reduce
+  # our data set, we want to use the "max()" function.
+
+  # We first write a compute function for the mpg in our modified mtcars data set
+  # Our goal is to get the mpg of all cars that were in production at the between start/end_date
+  compute_mpg &lt;- function(start_date, end_date, slice_ts, source_conn) {
+    out &lt;- SCDB::get_table(source_conn, "mtcars", slice_ts = slice_ts) |&gt;
+      dplyr::filter({{ start_date }} &lt;= .data$production_end,
+                    .data$production_start &lt;= {{ end_date }}) |&gt;
+      dplyr::transmute("key_name", "mpg",
+                       "valid_from" = "production_start",
+                       "valid_until" = "production_end")
+
+    return(out)
+  }
+
+  # We can now combine into our FeatureHandler
+  fh_max_mpg &lt;- FeatureHandler$new(compute = compute_mpg, key_join = key_join_max)
+
+  DBI::dbDisconnect(conn)
+
+</code></pre>
+
+
+</div>

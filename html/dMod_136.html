@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Pimpl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parameter transformation (implicit)</h2>
+
+<h3>Description</h3>
+
+<p>Parameter transformation (implicit)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">Pimpl(
+  trafo,
+  parameters = NULL,
+  condition = NULL,
+  keep.root = TRUE,
+  positive = TRUE,
+  compile = FALSE,
+  modelname = NULL,
+  verbose = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>trafo</code></td>
+<td>
+<p>Named character vector defining the equations to be set to zero. 
+Names correspond to dependent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>Character vector, the independent variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition</code></td>
+<td>
+<p>character, the condition for which the transformation is generated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.root</code></td>
+<td>
+<p>logical, applies for <code>method = "implicit"</code>. The root of the last
+evaluation of the parameter transformation function is saved as guess for the next 
+evaluation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>positive</code></td>
+<td>
+<p>logical, returns projection to the (semi)positive range. Comes with a warning if
+the steady state has been found to be negative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compile</code></td>
+<td>
+<p>Logical, compile the function (see funC0)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modelname</code></td>
+<td>
+<p>Character, used if <code>compile = TRUE</code>, sets a fixed filename for the
+C file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Print compiler output to R command line.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Usually, the equations contain the dependent variables, the independent variables and 
+other parameters. The argument <code>p</code> of <code>p2p</code> must provide values for the independent
+variables and the parameters but ALSO FOR THE DEPENDENT VARIABLES. Those serve as initial guess
+for the dependent variables. The dependent variables are then numerically computed by 
+multiroot. The Jacobian of the solution with respect to dependent variables
+and parameters is computed by the implicit function theorem. The function <code>p2p</code> returns
+all parameters as they are with corresponding 1-entries in the Jacobian.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a function <code>p2p(p, fixed = NULL, deriv = TRUE)</code> representing the parameter 
+transformation. Here, <code>p</code> is a named numeric vector with the values of the outer parameters,
+<code>fixed</code> is a named numeric vector with values of the outer parameters being considered
+as fixed (no derivatives returned) and <code>deriv</code> is a logical determining whether the Jacobian
+of the parameter transformation is returned as attribute "deriv".
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Pexpl for explicit parameter transformations
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">########################################################################
+## Example 1: Steady-state trafo
+########################################################################
+f &lt;- c(A = "-k1*A + k2*B",
+       B = "k1*A - k2*B")
+P.steadyState &lt;- Pimpl(f, "A")
+
+p.outerValues &lt;- c(k1 = 1, k2 = 0.1, A = 10, B = 1)
+P.steadyState(p.outerValues)
+
+########################################################################
+## Example 2: Steady-state trafo combined with log-transform
+########################################################################
+f &lt;- c(A = "-k1*A + k2*B",
+       B = "k1*A - k2*B")
+P.steadyState &lt;- Pimpl(f, "A")
+
+logtrafo &lt;- c(k1 = "exp(logk1)", k2 = "exp(logk2)", A = "exp(logA)", B = "exp(logB)")
+P.log &lt;- P(logtrafo)
+
+p.outerValue &lt;- c(logk1 = 1, logk2 = -1, logA = 0, logB = 0)
+(P.log)(p.outerValue)
+(P.steadyState * P.log)(p.outerValue)
+
+########################################################################
+## Example 3: Steady-states with conserved quantitites
+########################################################################
+f &lt;- c(A = "-k1*A + k2*B", B = "k1*A - k2*B")
+replacement &lt;- c(B = "A + B - total")
+f[names(replacement)] &lt;- replacement
+
+pSS &lt;- Pimpl(f, "total")
+pSS(c(k1 = 1, k2 = 2, A = 5, B = 5, total = 3))
+</code></pre>
+
+
+</div>

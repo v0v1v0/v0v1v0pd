@@ -1,0 +1,109 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>anova.wrda</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Permutation Test for weighted redundancy analysis</h2>
+
+<h3>Description</h3>
+
+<p><code>anova.wrda</code> performs residual predictor permutation for weighted 
+redundancy analysis (wRDA), which is robust against differences in the 
+weights (ter Braak, 2022). The arguments of the function are similar to 
+those of <code>anova.cca</code>, but more restricted.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'wrda'
+anova(object, ..., permutations = 999, by = c("omnibus", "axis"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object from <code>dc_CA</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>unused.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permutations</code></td>
+<td>
+<p>a list of control values for the permutations as
+returned by the function <code>how</code>, or the number of 
+permutations required (default 999), or a permutation matrix where each row
+gives the permuted indices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>character <code>"axis"</code> which sets the test statistic to the
+first eigenvalue of the RDA model. Default: <code>NULL</code> which sets the test
+statistic to the weighted variance fitted by the predictors
+(=sum of all constrained eigenvalues). The default is quicker 
+computationally as it avoids computation of an svd of permuted data sets.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The algorithm is based on published R-code for residual predictor 
+permutation in weighted redundancy analysis (ter Braak, 2022), but
+using QR-decomposition instead of ad-hoc least-squares functions.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with two elements with names <code>table</code> and <code>eigenvalues</code>.
+The <code>table</code> is as from <code>anova.cca</code> and 
+<code>eigenvalues</code> gives the wrda eigenvalues.
+</p>
+
+
+<h3>References</h3>
+
+<p>ter Braak, C.J.F. (2022) Predictor versus response permutation
+for significance testing in weighted regression and redundancy analysis.
+Journal of statistical computation and simulation, 92, 2041-2059.
+<a href="https://doi.org/10.1080/00949655.2021.2019256">doi:10.1080/00949655.2021.2019256</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("dune_trait_env")
+
+# rownames are carried forward in results
+rownames(dune_trait_env$comm) &lt;- dune_trait_env$comm$Sites
+response &lt;- dune_trait_env$comm[, -1]  # must delete "Sites"
+
+w &lt;- rep(1, 20) 
+w[1:10] &lt;- 8 
+w[17:20] &lt;- 0.5
+
+object &lt;- wrda(formula = ~ A1 + Moist + Mag + Use + Condition(Manure),
+               response = response, 
+               data = dune_trait_env$envir, 
+               weights = w)
+object # Proportions equal to those Canoco 5.15
+
+mod_scores &lt;- scores(object, display = "all")
+scores(object, which_cor = c("A1", "X_lot"), display = "cor")
+anova(object)
+</code></pre>
+
+
+</div>

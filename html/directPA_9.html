@@ -1,0 +1,85 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pathwayStats</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pathway Level Statistics</h2>
+
+<h3>Description</h3>
+
+<p>Takes a vector of statistics with each element corresponds to a gene or phosphorylation site, 
+and calculates a combined statistics for those that belong to the same pathway or kinase.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pathwayStats(PGs, T, minSize=5, method="Stouffer")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>PGs</code></td>
+<td>
+<p>an array of names indicating genes or substrates that belong to a given pathway or kinase.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>T</code></td>
+<td>
+<p>a vector of statistics (z-scores converted) with each element correspond to a gene or 
+phosphorylation site that belong to the same pathway or kinase.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minSize</code></td>
+<td>
+<p>the size of annotation groups to be considered for calculating enrichment. Groups 
+that are smaller than the minSize will be removed from the analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the p-value integration method for combining accross multiple treatments. Available methods 
+are Stouffer, OSP, Fisher, and maxP. The default method is Stouffer.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a doublet corresponding to the enrichment after integration across all genes or substrates 
+that belong to the same pathway or kinase, and the size of the mapped genes or substrates to that pathway
+or kinase.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load the example data
+data(PM)
+
+# load pathway annotations
+data(Pathways)
+
+# convert statistics into z-scores
+PM.zscores &lt;- apply(PM, 2, function(x){qnorm(rank(x)/(nrow(PM)+1))})
+
+# Rotate the matrix by contrast 1, -1, -1 (i.e. up-regulation, down-regulation, dow-regulation).
+PM.rotated &lt;- rotate3d(PM.zscores, contrast = c(1, -1, -1))
+
+# combine rotated statistics across treatments
+gene.pvalues &lt;- apply(PM.rotated, 1, geneStats)
+
+# compute statistics for all reactome pathways
+gene.zscores &lt;- qnorm(gene.pvalues, lower.tail = FALSE)
+gst &lt;- t(sapply(Pathways.reactome, pathwayStats, gene.zscores))
+
+</code></pre>
+
+
+</div>

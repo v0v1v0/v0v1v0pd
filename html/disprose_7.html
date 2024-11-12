@@ -1,0 +1,342 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>count_PhCh</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate physical and chemical properties</h2>
+
+<h3>Description</h3>
+
+<p>Calculates GC-content, detects several nucleotides in a row, calculates minimum folding energy and melting temperature for oligonucleotide probes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">count_PhCh(
+  probe.var,
+  trim = FALSE,
+  data,
+  digits = 4,
+  mc.cores = 1,
+  MFE.files.dir = NULL,
+  delete.MFE.files = FALSE,
+  GCmin = 40,
+  GCmax = 60,
+  nucl.pattern = c("a", "t", "g", "c"),
+  n.crit = 5,
+  RNAfold.path,
+  temperature = 40,
+  MFEmin = -3,
+  TD.params = NULL,
+  TMmin = 55,
+  TMmax = 60,
+  verbose = TRUE,
+  Na = 50,
+  K = 0,
+  Tris = 0,
+  Mg = 0,
+  dNTPs = 0
+)
+
+count_GC(
+  probe.var,
+  trim.gc = FALSE,
+  GCmin = 40,
+  GCmax = 60,
+  mc.cores = 1,
+  add.to.data = FALSE,
+  data,
+  digits = 4
+)
+
+count_REP(
+  probe.var,
+  trim.rep = FALSE,
+  nucl.pattern = c("a", "t", "g", "c"),
+  n.crit = 5,
+  mc.cores = 1,
+  add.to.data = FALSE,
+  data
+)
+
+count_MFE(
+  probe.var,
+  RNAfold.path,
+  temperature = 40,
+  trim.mfe = FALSE,
+  MFEmin = -3,
+  add.to.data = FALSE,
+  data,
+  MFE.files.dir = NULL,
+  delete.MFE.files = FALSE,
+  mc.cores = 1,
+  digits = 4,
+  verbose = TRUE
+)
+
+count_TM(
+  probe.var,
+  TD.params = NULL,
+  trim.tm = FALSE,
+  TMmin = 55,
+  TMmax = 60,
+  add.to.data = FALSE,
+  data,
+  digits = 4,
+  mc.cores = 1,
+  verbose = TRUE,
+  Na = 50,
+  K = 0,
+  Tris = 0,
+  Mg = 0,
+  dNTPs = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>probe.var</code></td>
+<td>
+<p>character; vector of nucleotide probes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim, trim.gc, trim.rep, trim.mfe, trim.tm</code></td>
+<td>
+<p>logical; whether to select results that meet the criterion</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>integer; number of decimal places to round the result</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc.cores</code></td>
+<td>
+<p>integer; number of processors for parallel computation (not supported on Windows)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MFE.files.dir</code></td>
+<td>
+<p>character; directory for RNAfold input and output files</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.MFE.files</code></td>
+<td>
+<p>logical; delete RNAfold input and output files</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GCmin, GCmax</code></td>
+<td>
+<p>numeric; minimum and maximum value of GC-content (percent, used if <code>trim = TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nucl.pattern</code></td>
+<td>
+<p>character; vector of nucleotide pattern</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.crit</code></td>
+<td>
+<p>integer; minimal amount of nucleotide pattern's repeats in a row to detect</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RNAfold.path</code></td>
+<td>
+<p>character; name and path to RNAfold executable file</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temperature</code></td>
+<td>
+<p>numeric; folding design temperature</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MFEmin</code></td>
+<td>
+<p>numeric; maximum value of folding energy (used if <code>trim = TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TD.params</code></td>
+<td>
+<p>character; vector of length 4, contains designation for four tables with thermodynamic values
+(nn_table - thermodynamic NN values, tmm_table - thermodynamic values for terminal mismatches,
+imm_table -  thermodynamic values for internal mismatches, de_table - thermodynamic values for dangling ends).
+See Tm_NN for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>TMmin, TMmax</code></td>
+<td>
+<p>numeric; minimum and maximum value of melting temperature (used if <code>trim = TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Na</code></td>
+<td>
+<p>numeric; millimolar concentration of Na, default is 50 (used for <code>count_TM</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>numeric; millimolar concentration of K, default is 0 (used for <code>count_TM</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Tris</code></td>
+<td>
+<p>numeric; millimolar concentration of Tris, default is 0 (used for <code>count_TM</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Mg</code></td>
+<td>
+<p>numeric; millimolar concentration of Mg, default is 0 (used for <code>count_TM</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dNTPs</code></td>
+<td>
+<p>numeric; millimolar concentration of dNTPs, default is 0 (used for <code>count_TM</code> function)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add.to.data, data</code></td>
+<td>
+<p>logical; add result vector to specified data frame (used unconditionally if <code>trim = TRUE</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>GC-content trimming selects results that are between <code>GCmin</code> and <code>GCmax</code> (inclusive).
+Nucleotides' amount trimming deletes probes that contain <code>n.crit</code> or more of same nucleotides (pattern) in a row.
+Minimum folding energy trimming selects results that are equal or more than <code>MFEmin</code>.
+Melting temperature trimming selects results that are between <code>TMmin</code> and <code>TMmax</code> (inclusive).
+</p>
+<p>This function is using ViennaRNA service to count minimum folding energy. ViennaRNA Package (UNIX or Windows) must be installed.
+While counting MFE, working directory is set to <code>MFE.files.dir</code> and input and output files
+for ViennaRNA ("seq_in" and "seq_out") are created in the working directory.Afterwards the working directory is changed back to user's setting.
+If no <code>MFE.files.dir</code> exists it is created and is not deleted even if <code>delete.MFE.files = TRUE</code>.
+</p>
+<p>Melting temperature is counted with Tm_NN function. Indication of thermodynamic values must be provided.
+By default they are: nn_table = "DNA_NN4", tmm_table = "DNA_TMM1", imm_table = "DNA_IMM1", de_table = "DNA_DE1".
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>trim = FALSE</code>, <code>count_PhCh</code> function returns data frame with GC-count (<code>GC.percent</code>),
+nucleotide repeats (<code>repeats</code>, TRUE/FALSE), minimum folding energy (<code>MFE</code>) and melting temperature (<code>TM</code>) columns.
+If <code>trim = TRUE</code>, <code>count_PhCh</code> function returns provided data frame with attached four columns
+and rows selected according to values <code>GCmin, GCmax, n.crit, MFEmin, TMmin, TMmax</code>.
+</p>
+<p>If <code>trim.gc= FALSE</code>, <code>count_GC</code> function returns <code>GC.percent</code> vector or data with attached <code>GC.percent</code> column (when <code>add.to.data = TRUE</code>).
+If <code>trim.gc = TRUE</code>, <code>count_GC</code> function returns provided data frame with attached <code>GC.percent</code> column and rows selected according to <code>GCmin, GCmax</code> values.
+</p>
+<p>If <code>trim.rep = FALSE</code>, <code>count_REP</code> function returns <code>repeats</code> vector (logical; TRUE/FALSE - there are/there are no nucleotide repeats) or data with attached <code>repeats</code> column (when <code>add.to.data = TRUE</code>).
+If <code>trim.rep = TRUE</code>, <code>count_REP</code> function returns provided data frame with attached <code>repeats</code> column and rows selected according to <code>n.crit</code> value.
+</p>
+<p>If <code>trim.mfe = FALSE</code>, <code>count_MFE</code> function returns <code>MFE</code> vector or data with attached <code>MFE</code> column (when <code>add.to.data = TRUE</code>).
+If <code>trim.mfe = TRUE</code>, <code>count_MFE</code> function returns provided data frame with attached <code>MFE</code> column and rows selected according to <code>MFEmin</code> value.
+</p>
+<p>If <code>trim.tm = FALSE</code>, <code>count_TM</code> function returns <code>TM</code> vector or data with attached <code>TM</code> column (when <code>add.to.data = TRUE</code>).
+If <code>trim.tm = TRUE</code>, <code>count_TM</code> function returns provided data frame with attached <code>TM</code> column and rows selected according to <code>TMmin, TMmax</code> values.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>count_PhCh</code>: Calculates GC.percent, detects several nucleotides in a row, calculates minimum folding energy and melting temperature
+</p>
+</li>
+<li> <p><code>count_GC</code>: Calculates GC-content (percent)
+</p>
+</li>
+<li> <p><code>count_REP</code>: Detects several nucleotides in a row
+</p>
+</li>
+<li> <p><code>count_MFE</code>: Calculates minimum folding energy
+</p>
+</li>
+<li> <p><code>count_TM</code>: Calculates melting temperature
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>References</h3>
+
+<p>Lorenz R., Stephan H.B., Höner zu Siederdissen C. et al. (2011). ViennaRNA Package 2.0. Algorithms for Molecular Biology, 6, 1.
+<a href="https://almob.biomedcentral.com/articles/10.1186/1748-7188-6-26">https://almob.biomedcentral.com/articles/10.1186/1748-7188-6-26</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">probes &lt;- data.frame (ids = 1:3,  probes = c ("acacacacacaca", "aaaaagggggtttttccccc",
+                                             "atgcgctagctcagc"))
+probes &lt;- count_GC (probe.var = probes$probes, trim.gc = FALSE, GCmin = 40, GCmax = 60,
+                   add.to.data = TRUE, data = probes)
+
+probes &lt;- count_REP (probe.var = probes$probes, trim.rep = FALSE, n.crit = 5,
+                    add.to.data = TRUE, data = probes)
+## Not run: 
+# This function is using ViennaRNA service. ViennaRNA Package must be installed.
+MFE.files.dir &lt;- tempdir()
+probes &lt;- count_MFE (probe.var = probes$probes, RNAfold.path = "D:/Vienna/RNAfold.exe",
+                    temperature = 40, trim.mfe = FALSE, MFEmin = 0,
+                    MFE.files.dir = MFE.files.dir, delete.MFE.files = TRUE,
+                    add.to.data = TRUE, data = probes, mc.cores = 1)
+unlink (MFE.files.dir, recursive = TRUE)
+
+## End(Not run)
+probes &lt;- count_TM (probe.var = probes$probes, TD.params = NULL, trim.tm = FALSE,
+                   TMmin = 55, TMmax = 60, add.to.data = TRUE, data = probes,
+                   digits = 4, mc.cores = 1)
+# All in one command
+## Not run: 
+# This function is using ViennaRNA service. ViennaRNA Package must be installed.
+MFE.files.dir &lt;- tempdir()
+probes2 &lt;- count_PhCh (probe.var = probes$probes, trim = FALSE,
+                      nucl.pattern = c ("a", "t", "g", "c"), n.crit = 5,
+                      MFE.files.dir = MFE.files.dir, delete.MFE.files = TRUE,
+                      RNAfold.path = "D:/Vienna/RNAfold.exe", temperature = 40,
+                      TD.params = NULL, digits = 3, mc.cores = 1,
+                      data = probes)
+unlink (MFE.files.dir, recursive = TRUE)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

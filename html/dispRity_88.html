@@ -1,0 +1,499 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dispRity.metric</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Disparity metrics</h2>
+
+<h3>Description</h3>
+
+<p>Different implemented disparity metrics.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dimension.level3.fun(matrix, ...)
+dimension.level2.fun(matrix, ...)
+dimension.level1.fun(matrix, ...)
+between.groups.fun(matrix, matrix2, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>matrix</code></td>
+<td>
+<p>A matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional arguments to be passed to the function. Usual optional arguments are <code>method</code> for specifying the method for calculating distance passed to <code>vegdist</code> (e.g. <code>method = "euclidean"</code> - default - or <code>method = "manhattan"</code>) or <code>k.root</code> to scale the result using the <code class="reqn">kth</code> root. See details below for available optional arguments for each function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>matrix2</code></td>
+<td>
+<p>Optional, a second matrix for metrics between groups.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>These are inbuilt functions for calculating disparity. See <code>make.metric</code> for details on <code>dimension.level3.fun</code>, <code>dimension.level2.fun</code>, <code>dimension.level1.fun</code> and <code>between.groups.fun</code>. The dimensions levels (1, 2 and 3) can be seen as similar to ranks in linear algebra.
+</p>
+<p>The currently implemented dimension-level 1 metrics are:
+</p>
+
+<ul>
+<li> <p><code>convhull.volume</code>: calculates the convex hull hypervolume of a matrix (calls <code>convhulln(x, options = "FA")$vol</code>).
+</p>
+
+<ul>
+<li>
+<p> Both <code>convhull</code> functions call the <code>convhulln</code> function with the <code>"FA"</code> option (computes total area and volume).
+</p>
+</li>
+<li>
+<p> WARNING: both <code>convhull</code> functions can be computationally intensive above 10 dimensions!
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>convhull.surface</code>: calculates the convex hull hypersurface of a matrix (calls <code>convhulln(x, options = "FA")$area</code>).
+</p>
+</li>
+<li> <p><code>diagonal</code>: calculates the longest distance in the ordinated space.
+</p>
+
+<ul><li>
+<p> WARNING: This function is the generalisation of Pythagoras' theorem and thus <b>works only if each dimensions are orthogonal to each other</b>.
+</p>
+</li></ul>
+</li>
+<li> <p><code>ellipsoid.volume</code>: calculates the ellipsoid volume of a matrix. This function tries to determine the nature of the input matrix and uses one of these following methods to calculate the volume. You can always specify the method using <code>method = "my_choice"</code> to overrun the automatic method choice.
+</p>
+
+<ul>
+<li> <p><code>"eigen"</code>: this method directly calculates the eigen values from the input matrix (using <code>eigen</code>). This method is automatically selected if the input matrix is "distance like" (i.e. square with two mirrored triangles and a diagonal).
+</p>
+</li>
+<li> <p><code>"pca"</code>: this method calculates the eigen values as the sum of the variances of the matrix (<code>abs(apply(var(matrix),2, sum))</code>). This is automatically selected if the input matrix is NOT "distance like". Note that this method is faster than <code>"eigen"</code> but only works if the input matrix is an ordinated matrix from a PCA, PCO, PCoA, NMDS or MDS.
+</p>
+</li>
+<li> <p><code>"axes"</code>: this method calculates the actual semi axes length using the input matrix. It is never automatically selected. By default this method calculates the length of the major axes based on the 0.95 confidence interval ellipse but this can be modified by providing additional arguments from <code>axis.covar</code>.
+</p>
+</li>
+<li> <p><code>&lt;a numeric vector&gt;</code>: finally, you can directly provide a numeric vector of eigen values. This method is never automatically selected and overrides any other options.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>func.div</code>: The functional divergence (Villeger et al. 2008): the ratio of deviation from the centroid (this is similar to <code>FD::dbFD()$FDiv</code>).
+</p>
+</li>
+<li> <p><code>func.eve</code>: The functional evenness (Villeger et al. 2008): the minimal spanning tree distances evenness (this is similar to <code>FD::dbFD()$FEve</code>). If the matrix used is not a distance matrix, the distance method can be passed using, for example <code>method = "euclidean"</code> (default).
+</p>
+</li>
+<li> <p><code>mode.val</code>: calculates the modal value of a vector.
+</p>
+</li>
+<li> <p><code>n.ball.volume</code>: calculate the volume of the minimum n-ball (if <code>sphere = TRUE</code>) or of the ellipsoid (if <code>sphere = FALSE</code>).
+</p>
+</li>
+<li> <p><code>roundness</code>: calculate the roundness of an elliptical representation of a variance-covariance matrix as the integral of the ranked distribution of the major axes. A value of 1 indicates a sphere, a value between 1 and 0.5 indicates a more pancake like representation and a value between 0.5 and 0 a more cigar like representation. You can force the variance-covariance calculation by using the option <code>vcv = TRUE</code> (default) that will calculate the variance-covariance matrix if the input is not one.
+</p>
+</li>
+</ul>
+<p>See also <code>mean</code>, <code>median</code>, <code>sum</code> or <code>prod</code> for commonly used summary metrics.
+</p>
+<p>The currently implemented dimension-level 2 metrics are:
+</p>
+
+<ul>
+<li> <p><code>ancestral.dist</code>: calculates the distance between each elements coordinates in the matrix and their ancestors' coordinates (if <code>to.root = FALSE</code>; default) or to the root coordinates (if <code>to.root = TRUE</code>) for a given <code>tree</code>. The distance is calculate as Euclidean by default but can be changed through the <code>methods</code> argument (<code>method = "euclidean"</code>; default). Note that the matrix must contain data for both tips and nodes in the <code>tree</code>, otherwise you must provide a matrix to the argument <code>reference.data</code> that contains them. Note that if the function is used in <code>dispRity</code>, both the <code>tree</code> and <code>reference.data</code> can be automatically recycled from the <code>dispRity</code> object (if present).
+</p>
+</li>
+<li> <p><code>angles</code>: calculates the angles of the main axis of variation per dimension in a <code>matrix</code>. The angles are calculated using the least square algorithm from the <code>lm</code> function. The unit of the angle can be changed through the <code>unit</code> argument (either <code>"degree"</code> (default), <code>radian</code> or <code>slope</code>) and a base angle to measure the angle from can be passed through the <code>base</code> argument (by default <code>base = 0</code>, measuring the angle from the horizontal line (note that the <code>base</code> argument has to be passed in the same unit as <code>unit</code>). When estimating the slope through <code>lm</code>, you can use the option <code>significant</code> to only consider significant slopes (<code>TRUE</code>) or not (<code>FALSE</code> - default).
+</p>
+</li>
+<li> <p><code>centroids</code>: calculates the distance between each row and the centroid of the matrix (Laliberte 2010). This function can take an optional arguments <code>centroid</code> for defining the centroid (if missing (default), the centroid of the matrix is used). This argument can be either a subset of coordinates matching the matrix's dimensions (e.g. <code>c(0, 1, 2)</code> for a matrix with three columns) or a single value to be the coordinates of the centroid (e.g. <code>centroid = 0</code> will set the centroid coordinates to <code>c(0, 0, 0)</code> for a three dimensional matrix). NOTE: distance is calculated as <code>"euclidean"</code> by default, this can be changed using the <code>method</code> argument.
+</p>
+</li>
+<li> <p><code>deviations</code>: calculates the minimal Euclidean distance between each element in and the hyperplane (or line if 2D, or a plane if 3D). You can specify equation of hyperplane of <em>d</em> dimensions in the <code class="reqn">intercept + ax + by + ... + nd = 0</code> format. For example the line <code class="reqn">y = 3x + 1</code> should be entered as <code>c(1, 3, -1)</code> or the plane <code class="reqn">x + 2y - 3z = 44</code> as <code>c(44, 1, 2, -3)</code>. If missing the <code>hyperplane</code> (default) is calculated using a least square regression using a gaussian <code>glm</code>. Extra arguments can be passed to <code>glm</code> through <code>...</code>. When estimating the hyperplane, you can use the option <code>significant</code> to only consider significant slopes (<code>TRUE</code>) or not (<code>FALSE</code> - default).
+</p>
+</li>
+<li> <p><code>displacements</code>: calculates the ratio between the distance to the centroid (see <code>centroids</code> above) and the distance from a reference (by default the origin of the space). The reference can be changed through the <code>reference</code> argument. NOTE: distance is calculated as <code>"euclidean"</code> by default, this can be changed using the <code>method</code> argument.
+</p>
+</li>
+<li> <p><code>edge.length.tree</code>: calculates the edge length from a given tree for each elements present in the matrix. Each edge length is either measured between the element and the root of the tree (<code>to.root = TRUE</code> ; default) or between the element and its last ancestor (<code>to.root = FALSE</code>))
+</p>
+</li>
+<li> <p><code>neighbours</code>: calculates the distance to a neighbour (Foote 1990). By default this is the distance to the nearest neighbour (<code>which = min</code>) but can be set to any dimension level - 1 function (e.g. <code>which = mean</code> gives the distance to the most average neighbour). NOTE: distance is calculated as <code>"euclidean"</code> by default, this can be changed using the <code>method</code> argument. 
+</p>
+</li>
+<li> <p><code>pairwise.dist</code>: calculates the pairwise distance between elements - calls <code>vegdist(matrix, method = method, diag = FALSE, upper = FALSE, ...)</code>. The distance type can be changed via the <code>method</code> argument (see <code>vegdist</code> - default: <code>method = "euclidean"</code>). This function outputs a vector of pairwise comparisons in the following order: d(A,B), d(A,C), d(B,C) for three elements A, B and C. NOTE: distance is calculated as <code>"euclidean"</code> by default, this can be changed using the <code>method</code> argument.
+</p>
+</li>
+<li> <p><code>projections</code>: projects each element on a vector defined as (<code>point1</code>, <code>point2</code>) and measures some aspect of this projection. The different aspects that can be measured are:
+</p>
+
+<ul>
+<li> <p><code>measure = "position"</code> (default), the distance of each element <em>on</em> the vector (<code>point1</code>, <code>point2</code>). Negative values means the element projects on the opposite direction of the vector (<code>point1</code>, <code>point2</code>).
+</p>
+</li>
+<li> <p><code>measure = "distance"</code>, the euclidean distance of each element <em>from</em> the vector (<code>point1</code>, <code>point2</code>).
+</p>
+</li>
+<li> <p><code>measure = "degree"</code>, the angle between the vector (<code>point1</code>, <code>point2</code>) and any vector (<code>point1</code>, <code>element</code>) in degrees.
+</p>
+</li>
+<li> <p><code>measure = "radian"</code>, the angle between the vector (<code>point1</code>, <code>point2</code>) and any vector (<code>point1</code>, <code>element</code>) in radians.
+</p>
+</li>
+<li> <p><code>measure = "orthogonality"</code>, the angle between the vector (<code>point1</code>, <code>point2</code>) and any vector (<code>point1</code>, <code>element</code>) expressed in right angle ranging between 0 (non angle) and 1 (right angle).
+</p>
+</li>
+</ul>
+<p>By default, <code>point1</code> is the centre of the space (coordinates <code>0, 0, 0, ...</code>) and <code>point2</code> is the centroid of the space (coordinates <code>colMeans(matrix)</code>). Coordinates for <code>point1</code> and <code>point2</code> can be given as a single value to be repeated (e.g. <code>point1 = 1</code> is translated into <code>point1 = c(1, 1, ...)</code>) or a specific set of coordinates.
+Furthermore, by default, the space is scaled so that the vector (<code>point1</code>, <code>point2</code>) becomes the unit vector (distance (<code>point1</code>, <code>point2</code>) is set to 1; option <code>scale = TRUE</code>; default). You can use the unit vector of the space using the option <code>scale = FALSE</code>.
+Other options include the centering of the projections on 0.5 (<code>centre = TRUE</code>; default is set to <code>FALSE</code>) ranging the projection onto the vector (<code>point1</code>, <code>point2</code>) between -1 and 1 (higher or lower values project beyond the vector); and whether to output the projection values as absolute values (<code>abs = FALSE</code>; default is set to <code>FALSE</code>). These two last options only affect the results from <code>measure = "position"</code>.
+</p>
+</li>
+<li> <p><code>projections.tree</code>: calculates the <code>projections</code> metric but drawing the vectors from a phylogenetic tree. This metric can intake any argument from <code>projections</code> (see above) but for <code>point1</code> and <code>point2</code> that are replaced by the argument <code>type</code>. <code>type</code> is a <code>vector</code> or a <code>list</code> of two elements that designates which vector to draw and can be any pair of the following options (the first element being the origin of the vector and the second where the vector points to):
+</p>
+
+<ul>
+<li> <p><code>"root"</code>: the root of the tree (the first element in tree$node.label);
+</p>
+</li>
+<li> <p><code>"ancestor"</code>: the element's most recent ancestor;
+</p>
+</li>
+<li> <p><code>"tips"</code>: the centroid of the tips;
+</p>
+</li>
+<li> <p><code>"nodes"</code>: the centroid of all the nodes;
+</p>
+</li>
+<li> <p><code>"livings"</code>: the centroid of the tips the furthest from the root;
+</p>
+</li>
+<li> <p><code>"fossils"</code>: the centroid of all the tips that are not the furthest from the root;
+</p>
+</li>
+<li>
+<p> any numeric values that can be interpreted as <code>point1</code> and <code>point2</code> in <code>projections</code>;
+</p>
+</li>
+<li>
+<p> or a user defined function that with the inputs <code>matrix</code> and <code>tree</code> and <code>row</code> (the element's ID, i.e. the row number in <code>matrix</code>). 
+</p>
+</li>
+</ul>
+<p><em>NOTE:</em> the elements to calculate the origin and end points of the vector are calculated by default on the provided input <code>matrix</code> which can be missing data from the tree if used with <code>custom.subsets</code> or <code>chrono.subsets</code>. You can always provide the full matrix using the option <code>reference.data = my_matrix</code>. Additional arguments include any arguments to be passed to <code>projections</code> (e.g. <code>centre</code> or <code>abs</code>).
+</p>
+</li>
+<li> <p><code>quantiles</code>: calculates the quantile range of each axis of the matrix. The quantile can be changed using the <code>quantile</code> argument (default is <code>quantile = 95</code>, i.e. calculating the range on each axis that includes 95% of the data). An optional argument, <code>k.root</code>, can be set to <code>TRUE</code> to scale the ranges by using its <code class="reqn">kth</code> root (where <code class="reqn">k</code> are the number of dimensions). By default, <code>k.root = FALSE</code>.
+</p>
+</li>
+<li> <p><code>radius</code>: calculates a distance from the centre of each axis. The <code>type</code> argument is the function to select which distance to calculate. By default <code>type = max</code> calculates the maximum distance between the elements and the centre for each axis (i.e. the radius for each dimensions)
+</p>
+</li>
+<li> <p><code>ranges</code>: calculates the range of each axis of the matrix (Wills 2001). An optional argument, <code>k.root</code>, can be set to <code>TRUE</code> to scale the ranges by using its <code class="reqn">kth</code> root (where <code class="reqn">k</code> are the number of dimensions). By default, <code>k.root = FALSE</code>.
+</p>
+</li>
+<li> <p><code>variances</code>: calculates the variance of each axis of the matrix (Wills 2001). This function can also take the <code>k.root</code> optional argument described above.
+</p>
+</li>
+<li> <p><code>span.tree.length</code>: calculates the length of the minimum spanning tree (see <code>spantree</code>). This function can get slow with big matrices. To speed it up, one can directly use distance matrices as the multidimensional space.
+</p>
+</li>
+</ul>
+<p>The currently implemented between.groups metrics are:
+</p>
+
+<ul>
+<li> <p><code>disalignment</code>: calculates the rejection of a point from <code>matrix</code> from the major axis of <code>matrix2</code>. Options are, <code>axis</code> to choose which major axis to reject from (default is <code>axis = 1</code>); <code>level</code> for the ellipse' confidence interval (to calculate the axis) (default is <code>level = 0.95</code>) and <code>point.to.reject</code>, a numeric value for designating which point in <code>matrix</code> to use or a function for calculating it (default is <code>point.to.reject = colMeans</code> for <code>matrix</code>'s centroid).
+</p>
+</li>
+<li> <p><code>group.dist</code>: calculates the distance between two groups (by default, this is the minimum euclidean vector norm distance between groups). Negative distances are considered as 0. This function must intake two matrices (<code>matrix</code> and <code>matrix2</code>) and the quantiles to consider. For the minimum distance between two groups, the 100th quantiles are considered (default: <code>probs = c(0,1)</code>) but this can be changed to any values (e.g. distance between the two groups accounting based on the 95th CI: <code>probs = c(0.025, 0.975)</code>; distance between centroids: <code>probs = c(0.5)</code>, etc...). This function is the linear algebra equivalent of the <code>hypervolume::hypervolume_distance</code> function.
+</p>
+</li>
+<li> <p><code>point.dist</code>: calculates the distance between <code>matrix</code> and a point calculated from <code>matrix2</code>. By default, this point is the centroid of <code>matrix2</code>. This can be changed by passing a function to be applied to <code>matrix2</code> through the <code>point</code> argument (for example, for the centroid: <code>point.dist(..., point = colMeans)</code>). NOTE: distance is calculated as <code>"euclidean"</code> by default, this can be changed using the <code>method</code> argument.
+</p>
+</li>
+<li> <p><code>projections.between</code>: calculates the projection of the major axis between two matrices. It allows the same arguments as <code>projections</code>. This function measures the major axis from both input matrices, centre their origins and projects the end of the vector of <code>matrix</code> onto the vector from <code>matrix2</code>. Which axis to measure can be changed with the option <code>axis</code> (for the major axis, <code>axis = 1</code>; default) and the confidence interval can be changed using <code>level</code> (for the 95 confidence interval, <code>level = 0.95</code>; default - see <code>axis.covar</code> for more details).
+</p>
+</li>
+</ul>
+<p>When used in the <code>dispRity</code> function, optional arguments are declared after the <code>metric</code> argument: for example
+<code>dispRity(data, metric = centroids, centroid = 0, method = "manhattan")</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>References</h3>
+
+<p>Donohue I, Petchey OL, Montoya JM, Jackson AL, McNally L, Viana M, Healy K, Lurgi M, O'Connor NE, Emmerson MC. 2013. On the dimensionality of ecological stability. Ecology letters. 16(4):421-9.
+</p>
+<p>Lalibert'e E, Legendre P. 2010. A distance-based framework for measuring functional diversity from multiple traits. Ecology, 91(1), pp.299-305.
+</p>
+<p>Vill'eger S, Mason NW, Mouillot D. 2008. New multidimensional functional diversity indices for a multifaceted framework in functional ecology. Ecology. 89(8):2290-301.
+</p>
+<p>Wills MA. 2001. Morphological disparity: a primer. In Fossils, phylogeny, and form (pp. 55-144). Springer, Boston, MA.
+</p>
+<p>Foote, M. 1990. Nearest-neighbor analysis of trilobite morphospace. Systematic Zoology, 39(4), pp.371-382.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dispRity</code> and <code>make.metric</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## A random matrix
+dummy_matrix &lt;- matrix(rnorm(90), 9, 10)
+
+## ancestral.dist
+## A random tree with node labels
+rand_tree &lt;- rtree(5) ; rand_tree$node.label &lt;- paste0("n", 1:4)
+## Adding the tip and node names to the matris
+rownames(dummy_matrix) &lt;- c(rand_tree$tip.label, rand_tree$node.label)
+## Calculating the distances to the ancestors
+ancestral.dist(dummy_matrix, tree = rand_tree)
+## Calculating the manhattan distances to the root
+ancestral.dist(dummy_matrix, tree = rand_tree,
+               to.root = TRUE, method = "manhattan")
+
+## angles
+## The angles in degrees of each axis
+angles(dummy_matrix)
+## The angles in slope from the 1:1 slope (Beta = 1)
+angles(dummy_matrix, unit = "slope", base = 1)
+
+## centroids
+## Distances between each row and centroid of the matrix
+centroids(dummy_matrix)
+## Distances between each row and an arbitrary point
+centroids(dummy_matrix, centroid = c(1,2,3,4,5,6,7,8,9,10))
+## Distances between each row and the origin
+centroids(dummy_matrix, centroid = 0)
+
+## convhull.surface
+## Making a matrix with more elements than dimensions (for convhull)
+thinner_matrix &lt;- matrix(rnorm(90), 18, 5)
+## Convex hull hypersurface of a matrix
+convhull.surface(thinner_matrix)
+
+## convhull.volume
+## Convex hull volume of a matrix
+convhull.volume(thinner_matrix)
+
+## deviations
+## The deviations from the least square hyperplane
+deviations(dummy_matrix)
+## The deviations from the plane between the x and y axis
+deviations(dummy_matrix, hyperplane = c(0,1,1,0,0,0,0,0,0,0,0))
+
+## diagonal
+## Matrix diagonal
+diagonal(dummy_matrix) # WARNING: only valid if the dimensions are orthogonal
+
+## disalignment
+## Two dummy matrices
+matrix_1 &lt;- matrix(rnorm(16), 4, 4)
+matrix_2 &lt;- matrix(rnorm(16), 4, 4)
+## Measuring the disalignment of matrix_1 from matrix_2
+disalignment(matrix_1, matrix_2)
+## Same but using the 2nd major axis of the 0.75 CI ellipse
+## from matrix_2 and the first point from matrix_1.
+disalignment(matrix_1, matrix_2,
+             axis = 2, level = 0.75,
+             point.to.reject = 1)
+
+## displacements
+## displacement ratios (from the centre)
+displacements(dummy_matrix)
+## displacement ratios (from an arbitrary point)
+displacements(dummy_matrix, reference = c(1,2,3,4,5,6,7,8,9,10))
+## displacement ratios from the centre (manhattan distance)
+displacements(dummy_matrix, method = "manhattan")
+
+## edge.length.tree
+## Making a dummy tree with node labels
+dummy_tree &lt;- makeNodeLabel(rtree((nrow(dummy_matrix)/2)+1))
+## Naming the elements in the matrix
+named_matrix &lt;- dummy_matrix
+rownames(named_matrix) &lt;- c(dummy_tree$tip.label,
+                            dummy_tree$node.label)
+## The total edge length of each element in the matrix (to the root)
+edge.length.tree(named_matrix, tree = dummy_tree)
+
+## The edge lengths for each edge leading to the elements in the matrix
+edge.length.tree(named_matrix, tree = dummy_tree, to.root = FALSE)
+
+## ellipsoid.volume
+## Ellipsoid volume of a matrix
+ellipsoid.volume(dummy_matrix)
+## Calculating the same volume with provided eigen values
+ordination &lt;- prcomp(dummy_matrix)
+## Calculating the ellipsoid volume by providing your own eigen values
+ellipsoid.volume(ordination$x, method = ordination$sdev^2)
+
+## func.div
+## Functional divergence
+func.div(dummy_matrix)
+
+## func.eve
+## Functional evenness
+func.eve(dummy_matrix) 
+## Functional evenness (based on manhattan distances)
+func.eve(dummy_matrix, method = "manhattan")
+
+## group.dist
+## The distance between groups
+dummy_matrix2 &lt;- matrix(runif(40, min = 2, max = 4), 4, 10)
+## The minimum distance between both groups
+group.dist(dummy_matrix, dummy_matrix2)
+## The distance between both groups' centroids
+group.dist(dummy_matrix, dummy_matrix2, probs = 0.5)
+## The minimum distance between the 50% CI of each group
+group.dist(dummy_matrix, dummy_matrix2, probs = c(0.25, 0.75))
+
+## mode.val
+## Modal value of a vector
+mode.val(dummy_matrix)
+
+## neighbours
+## The nearest neighbour euclidean distances
+neighbours(dummy_matrix)
+## The furthest neighbour manhattan distances
+neighbours(dummy_matrix, which = max, method = "manhattan")
+
+## pairwise.dist
+## The pairwise distance
+pairwise.dist(dummy_matrix)
+## The average squared pairwise distance
+mean(pairwise.dist(dummy_matrix)^2)
+## equal to:
+# geiger::disparity(data = dummy_matrix)
+
+## point.dist
+## The distances from the rows dummy_matrix
+## to the centroids of dummy_matrix2
+point.dist(dummy_matrix, dummy_matrix2)
+## The average distances from dummy_matrix
+## to the centroids of dummy_matrix2
+mean(point.dist(dummy_matrix, dummy_matrix2))
+## The manhattan distance from the rows dummy_matrix
+## to the standard deviation of dummy_matrix2
+point.dist(dummy_matrix, dummy_matrix2, point = sd, method = "manhattan")
+
+## projections
+## The distances on the vector defined from the centre of
+## the matrix to its centroid (default)
+projections(dummy_matrix)
+## The distances from the vector defined from the third
+## element of the matrix to the point of coordinated
+## c(1,1,1, ...) the matrix to its centroid (default)
+projections(dummy_matrix, measure = "distance",
+            point1 = dummy_matrix[3, ],
+            point2 = 1)
+
+## projections.tree
+## Making a dummy tree with node labels
+dummy_tree &lt;- makeNodeLabel(rtree((nrow(dummy_matrix)/2)+1))
+## Naming the elements in the matrix
+named_matrix &lt;- dummy_matrix
+rownames(named_matrix) &lt;- c(dummy_tree$tip.label,
+                            dummy_tree$node.label)
+## The projection on the vector defined from the root of
+## the tree to the ancestor of each element in the matrix
+projections.tree(named_matrix, dummy_tree,
+                  type = c("root", "ancestor"))
+## The rejection from the vector defined from the centroid
+## of the nodes to the centroids of the tips
+projections.tree(named_matrix, dummy_tree,
+                  type = c("nodes", "tips"),
+                  measure = "distance")
+## A user function that define coordinates based on the 
+## centroid of the three first nodes
+user.fun &lt;- function(matrix, tree, row = NULL) {
+     return(colMeans(matrix[tree$node.label[1:3], ]))
+}
+## The projection on the vector defined by the coordinates
+## 0,0,0 and a user defined function
+projections.tree(named_matrix, dummy_tree,
+                  type = c(0, user.fun))
+
+## projections.between
+## Two dummy matrices
+matrix_1 &lt;- matrix(rnorm(16), 4, 4)
+matrix_2 &lt;- matrix(rnorm(16), 4, 4)
+## Projecting the major axis of matrix_2 onto the one from matrix_1
+projections.between(matrix_1, matrix_2)
+## Projecting both second major 0.75 axes
+## and getting the rejections (see projections() for option details)
+projections.between(matrix_1, matrix_2,
+                    measure = "distance",
+                    axis = 2, level = 0.75)
+
+## quantiles
+## The 95 quantiles
+quantiles(dummy_matrix)
+## The 100 quantiles (which are equal to the ranges)
+quantiles(dummy_matrix, quantile = 100) == ranges(dummy_matrix) # All TRUE
+
+## radius
+## The maximal radius of each axis (maximum distance from centre of each axis)
+radius(dummy_matrix)
+
+## ranges
+## ranges of each column in a matrix
+ranges(dummy_matrix)
+## ranges of each column in the matrix corrected using the kth root
+ranges(dummy_matrix, k.root = TRUE)
+
+## roundness
+## calculating the variance-covariance of the dummy_matrix
+vcv &lt;- var(dummy_matrix)
+## calculating the roundness of it
+roundness(vcv)
+## calculating the roundness of the dummy matrix by calculating the vcv
+roundness(dummy_matrix, vcv = TRUE)
+
+## span.tree.length
+## Minimum spanning tree length (default)
+span.tree.length(dummy_matrix)
+## Minimum spanning tree length from a distance matrix (faster)
+distance &lt;- as.matrix(dist(dummy_matrix))
+span.tree.length(distance)
+## Minimum spanning tree length based on Manhattan distance
+span.tree.length(dummy_matrix, method = "manhattan")
+span.tree.length(as.matrix(dist(dummy_matrix, method = "manhattan"))) # Same
+
+## variances
+## variances of a each column in the matrix
+variances(dummy_matrix)
+## variances of a each column in the matrix corrected using the kth root
+variances(dummy_matrix, k.root = TRUE)
+
+
+</code></pre>
+
+
+</div>

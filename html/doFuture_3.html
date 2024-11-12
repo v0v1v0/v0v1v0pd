@@ -1,0 +1,84 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>doFuture</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>doFuture: Foreach Parallel Adapter using Futures</h2>
+
+<h3>Description</h3>
+
+<p>The <span class="pkg">doFuture</span> package provides mechanisms for using the
+<strong>foreach</strong> package together with the <strong>future</strong> package
+such that <code>foreach()</code> parallelizes via <em>any</em> future backend.
+</p>
+
+
+<h3>Usage</h3>
+
+<p>There are two alternative ways to use this package:
+</p>
+
+<ol>
+<li> <p><code>y &lt;- foreach(...) %dofuture% { ... }</code>
+</p>
+</li>
+<li> <p><code>y &lt;- foreach(...) %dopar% { ... }</code> with <code>registerDoFuture()</code>
+</p>
+</li>
+</ol>
+<p>The <em>first alternative</em> (recommended), which uses <code>%dofuture%</code>, avoids
+having to use <code>registerDoFuture()</code>.  The <code>%dofuture%</code> operator provides
+a more consistent behavior than <code style="white-space: pre;">⁠%dopar%⁠</code>, e.g. there is a unique set of
+foreach arguments instead of one per possible adapter.  Identification
+of globals, random number generation (RNG), and error handling is
+handled by the future ecosystem, just like with other map-reduce
+solutions such as <strong><a href="https://cran.r-project.org/package=future.apply">future.apply</a></strong> and <strong><a href="https://cran.r-project.org/package=furrr">furrr</a></strong>.
+An example is:
+</p>
+<div class="sourceCode r"><pre>library(doFuture)
+plan(multisession)
+
+y &lt;- foreach(x = 1:4, y = 1:10) %dofuture% {
+  z &lt;- x + y
+  slow_sqrt(z)
+}
+</pre></div>
+<p>This alternative is the recommended way to let <code>foreach()</code> parallelize
+via the future framework if you start out from scratch.
+</p>
+<p>See <code>%dofuture%</code> for more details and examples on this approach.
+</p>
+<p>The <em>second alternative</em> is based on the traditional <strong>foreach</strong>
+approach where one registers a foreach adapter to be used by <code style="white-space: pre;">⁠%dopar%⁠</code>.
+A popular adapter is <code>doParallel::registerDoParallel()</code>, which
+parallelizes on the local machine using the <strong>parallel</strong> package.
+This package provides <code>registerDoFuture()</code>, which parallelizes using
+the <strong>future</strong> package, meaning any future-compliant parallel backend
+can be used.
+An example is:
+</p>
+<div class="sourceCode r"><pre>library(doFuture)
+registerDoFuture()
+plan(multisession)
+
+y &lt;- foreach(x = 1:4, y = 1:10) %dopar% {
+  z &lt;- x + y
+  slow_sqrt(z)
+}
+</pre></div>
+<p>This alternative is useful if you already have a lot of R code that
+uses <code style="white-space: pre;">⁠%dopar%⁠</code> and you just want to switch to using the future
+framework for parallelization.  Using <code>registerDoFuture()</code> is also
+useful when you wish to use the future framework with packages and
+functions that uses <code>foreach()</code> and <code style="white-space: pre;">⁠%dopar%⁠</code> internally,
+e.g. <strong><a href="https://cran.r-project.org/package=caret">caret</a></strong>, <strong><a href="https://cran.r-project.org/package=plyr">plyr</a></strong>, <strong><a href="https://cran.r-project.org/package=NMF">NMF</a></strong>, and <strong><a href="https://cran.r-project.org/package=glmnet">glmnet</a></strong>.  It can
+also be used to configure the Bioconductor <strong><a href="https://bioconductor.org/packages/BiocParallel/">BiocParallel</a></strong> package,
+and any package that rely on it, to parallelize via the future
+framework.
+</p>
+<p>See <code>registerDoFuture()</code> for more details and examples on this approach.
+</p>
+
+
+</div>

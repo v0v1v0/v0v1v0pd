@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtwDist</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute a dissimilarity matrix</h2>
+
+<h3>Description</h3>
+
+<p>Compute the dissimilarity matrix between a set of single-variate timeseries.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtwDist(mx, my = mx, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mx</code></td>
+<td>
+<p>numeric matrix, containing timeseries as rows</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>my</code></td>
+<td>
+<p>numeric matrix, containing timeseries as rows (for cross-distance)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments passed to the <code>dtw()</code> call</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>dtwDist</code> computes a dissimilarity matrix, akin to <code>dist()</code>,
+based on the Dynamic Time Warping definition of a distance between
+single-variate timeseries.
+</p>
+<p>The <code>dtwDist</code> command is a synonym for the <code>proxy::dist()</code>
+function of package <a href="https://CRAN.R-project.org/package=proxy"><span class="pkg">proxy</span></a>; the DTW distance is registered as
+<code>method="DTW"</code> (see examples below).
+</p>
+<p>The timeseries are stored as rows in the matrix argument <code>m</code>. In other
+words, if <code>m</code> is an N * T matrix, <code>dtwDist</code> will build N<em>N ordered
+pairs of timeseries, perform the corresponding N</em>N <code>dtw</code> alignments,
+and return all of the results in a matrix. Each of the timeseries is T
+elements long.
+</p>
+<p><code>dtwDist</code> returns a square matrix, whereas the <code>dist</code> object is
+lower-triangular. This makes sense because in general the DTW "distance" is
+not symmetric (see e.g.  asymmetric step patterns).  To make a square matrix
+with the <code>proxy::dist()</code> function semantics, use the two-arguments
+call as <code>dist(m,m)</code>. This will return a square <code>crossdist</code> object.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A square matrix whose element <code style="white-space: pre;">⁠[i,j]⁠</code> holds the Dynamic Time
+Warp distance between row <code>i</code> (query) and <code>j</code> (reference) of
+<code>mx</code> and <code>my</code>, i.e.  <code>dtw(mx[i,],my[j,])$distance</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>To convert a square cross-distance matrix (<code>crossdist</code> object) to
+a symmetric <code>dist()</code> object, use a suitable conversion strategy
+(see examples).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Toni Giorgino
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+## Symmetric step pattern =&gt; symmetric dissimilarity matrix;
+## no problem coercing it to a dist object:
+
+m &lt;- matrix(0,ncol=3,nrow=4)
+m &lt;- row(m)
+dist(m,method="DTW");
+
+# Old-fashioned call style would be:
+#   dtwDist(m)
+#   as.dist(dtwDist(m))
+
+
+
+## Find the optimal warping _and_ scale factor at the same time.
+## (There may be a better, analytic way)
+
+# Prepare a query and a reference
+
+query&lt;-sin(seq(0,4*pi,len=100))
+reference&lt;-cos(seq(0,4*pi,len=100))
+
+# Make a set of several references, scaled from 0 to 3 in .1 increments.
+# Put them in a matrix, in rows
+
+scaleSet &lt;- seq(0.1,3,by=.1)
+referenceSet&lt;-outer(1/scaleSet,reference)
+
+# The query has to be made into a 1-row matrix.
+# Perform all of the alignments at once, and normalize the result.
+
+dist(t(query),referenceSet,meth="DTW")-&gt;distanceSet
+
+# The optimal scale for the reference is 1.0
+plot(scaleSet,scaleSet*distanceSet,
+  xlab="Reference scale factor (denominator)",
+  ylab="DTW distance",type="o",
+  main="Sine vs scaled cosine alignment, 0 to 4 pi")
+
+
+
+
+
+## Asymmetric step pattern: we can either disregard part of the pairs
+## (as.dist), or average with the transpose
+
+mm &lt;- matrix(runif(12),ncol=3)
+dm &lt;- dist(mm,mm,method="DTW",step=asymmetric); # a crossdist object
+
+# Old-fashioned call style would be:
+#   dm &lt;- dtwDist(mm,step=asymmetric)
+#   as.dist(dm)
+
+
+## Symmetrize by averaging:
+(dm+t(dm))/2
+
+
+## check definition
+stopifnot(dm[2,1]==dtw(mm[2,],mm[1,],step=asymmetric)$distance)
+
+
+
+</code></pre>
+
+
+</div>

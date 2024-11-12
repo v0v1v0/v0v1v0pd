@@ -1,0 +1,250 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rsmformula</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Functions for supporting response surface analysis with package rsm </h2>
+
+<h3>Description</h3>
+
+<p>These functions support response surface analysis with package rsm. 
+Function rsmformula creates a model formula for use with function rsm, 
+using the FO, TWI and PQ notation. Function code.design prepares a fractional 
+factorial 2-level design with center points from package FrF2 or a ccd, bbd 
+or lhs design from this package for convenient use with package rsm functionality, 
+function decode.design reverses the coding action.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">code.design(design)
+decode.design(design)
+rsmformula(design, response=NULL, factor.names=NULL, 
+    use.blockvar = TRUE, degree=2, coded=TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> a response surface design of class <code>design</code> 
+with at least one response variable and 
+of a type derived from <code>ccd</code>, <code>bbd</code>, or <code>lhs</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p> character string specifying the response variable to be analysed 
+(default: the first response of the design) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor.names</code></td>
+<td>
+<p> character vector specifying the factors to be included 
+(default: all experimental factors) </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.blockvar</code></td>
+<td>
+<p> logical indicating whether or not the block effect (if available) 
+is to be included into the model </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree</code></td>
+<td>
+<p> default is 2 for a full second order model. 
+For a first order only model, specify 1; 
+for a model with main effects and 2-factor interactions, specify 1.5. 
+<code>degree</code> corresponds to the <code>order</code> element of the object created by 
+function <code>rsm</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coded</code></td>
+<td>
+<p> logical indicating whether the formula is to be provided in 
+coded names (x1, x2 etc., <code>coded=TRUE</code>) or original variable names (<code>coded=FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> reserved for future usage</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function <code>code.design</code> rescales the variables of a design with quantitative 
+variables according to the information stored in the <code>coding</code> element of 
+the <code>design.info</code> attribute of <code>design</code>, 
+function <code>decode.design</code> rescales a coded design to original units. 
+</p>
+<p>Function <code>rsmformula</code> creates a formula for use with function <code>rsm</code>. 
+If this function is created in coded variable names (which is the default), 
+it can be used in function <code>rsm</code> 
+together with the coded data object created by function <code>code.design</code> 
+for creating a response surface model, which can be post-processed by the utilities provided 
+in package <span class="pkg">rsm</span>, especially the <code>[rsm:rsm]{methods}</code> for class <code>rsm</code> objects 
+and functions <code>steepest</code> or <code>canonical.path</code>. 
+</p>
+<p>IMPORTANT: coded vs. original units<br>
+The text below assumes that the design has been entered using the <code>default.levels</code> or the 
+<code>factor.names</code> option to specify the factor levels in original units.<br>
+The usual steepest ascent analysis is done
+in coded units, i.e. if e.g. factor X1 has original units 10 (code -1 = (10-20)/10) 
+and 30 (code +1 = (30-20)/10) 
+and factor X2 has original units 0.1 (code -1 = (0.1 - 0.2)/0.1) 
+and 0.3 (code +1 = (0.3 - 0.2)/0.1), 
+an increase of 10 for a change in factor X1 from 10 to 30 is considered 
+steeper (slope 10/2) than an increase of 9 for a change in factor X2 
+from 0.1 to 0.3 (slope 9/2). If this behavior is 
+desired, usage of <code>rsmformula</code> with option coded=TRUE and a design generated 
+by <code>code.design</code> is needed. <br>
+Otherwise, i.e. when assessment is desired 
+in original units, the ascent for factor X2 (9/0.2) would of course be much steeper  
+than for factor X1 (10/20) in the above example. For obtaining an assessment based 
+on the original units, one can simply use <code>rsmformula</code> with option coded=FALSE 
+and the design itself in original units in the 
+<code>rsm</code> model. This only makes sense for first order models: 
+function <code>steepest</code> always assesses the slope at the origin; 
+for first order models, it does not matter where the slope is assessed. For models 
+with order (=<code>degree</code>) 1.5 or 2, the <code>steepest</code> analysis in original units 
+is adequate only for the exceptional case that 0 is the point of interest.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Function <code>code.design</code> returns a <code>coded.data</code> object 
+for usage with function <code>rsm</code>; this object can be returned to its 
+original state by applying function <code>decode.design</code>. 
+</p>
+<p>Function <code>rsmformula</code> returns a formula with an <code>FO</code> (=first order) portion, 
+for <code>degree=1.5</code> additionally a <code>TWI</code> (=two factor interactions, 2fis) portion,
+and for <code>degree=2</code> also a <code>PQ</code> (=pure quadratic) portion. 
+</p>
+<p>This representation of the model formula is needed for response surface analyses 
+with package <span class="pkg">rsm</span>. Per default, the formula comes 
+in coded variable names (<code>x1</code>, <code>x2</code> etc.).
+</p>
+
+
+<h3>Note</h3>
+
+<p> This package is still under (slow) development. Reports about bugs and inconveniences are welcome.  </p>
+
+
+<h3>Author(s)</h3>
+
+<p> Ulrike Groemping </p>
+
+
+<h3>References</h3>
+
+ 
+<p>Lenth, R.V. (2009). Response-Surface Methods in R, using <span class="pkg">rsm</span>.
+<em>Journal of Statistical Software</em> <b>32</b>(7), 1-17. 
+URLhttp://www.jstatsoft.org/v32/i07/.
+</p>
+<p>Myers, R.H., Montgomery, D.C. and Anderson-Cook, C.M. (2009). <em>Response Surface Methodology. 
+Process and Product Optimization Using Designed Experiments</em>. Wiley, New York.
+</p>
+
+
+<h3>See Also</h3>
+
+<p> See also <code>rsm</code>, 
+<code>steepest</code>, <code>canonical.path</code>, 
+<code>contour.lm</code>,
+. 
+The <code>formula</code> method for class <code>design</code> objects 
+creates equivalent model formulae in standard model notation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  ## an artificial example with random response
+  ## purely for demonstrating how the functions work together with rsm
+  plan &lt;- ccd.design(5, ncenter=6, 
+         factor.names = list(one=c(10,30),two=c(1,5),three=c(0.1,0.9),
+                             four=c(2,4),five=c(-1,1)))
+  set.seed(298)
+  plan &lt;- add.response(plan, rnorm(38))
+  
+  ## coding
+  plan.c &lt;- code.design(plan)
+  plan.c
+  decode.design(plan.c)
+  
+  ## first order analysis
+     ## formulae needed for first order models:
+    rsmformula(plan, degree=1)                ## coded
+    rsmformula(plan, degree=1, coded=FALSE)   ## original units
+    
+    ## steepest ascent: steepness assessed in coded units, 
+    ## results also presented in original units
+    linmod1 &lt;- rsm(rsmformula(plan, degree=1), data=plan.c)
+    summary(linmod1)
+    steepest(linmod1)
+    
+    ## steepest ascent: steepness assessed in original units!!! 
+    ## this is different from the usual approach!!! 
+    ## cf. explanation in Details section
+    linmod1.original &lt;- rsm(rsmformula(plan, degree=1, coded=FALSE), data=plan)
+    summary(linmod1.original)
+    steepest(linmod1.original)
+
+  ## second order analysis (including quadratic, degree=1.5 would omit quadratic
+    ## formulae needed for second order models:
+    rsmformula(plan, degree=2)               ## coded
+    rsmformula(plan, degree=2, coded=FALSE)  ## original units
+       ## the formulae can also be constructed analogously to the FO formulae 
+       ## by using SO instead of FO
+       ## rsmformula returns the more detailed function because 
+       ##     it can be more easily modified to omit one of the effects
+    
+    ## the stationary point is not affected by using coded or original units
+    ##     neither is the decision about the nature of the stationary point
+    ## a subsequent canonical path analysis will however be affected,
+    ##     analogously to the steepest ascent (cf. Details section)
+    
+    ## analysis in coded units
+    linmod2 &lt;- rsm(rsmformula(plan, degree=2), data=plan.c)
+    summary(linmod2)
+    ## analysis in original units
+    linmod2.original &lt;- rsm(rsmformula(plan, degree=2, coded=FALSE), data=plan)
+    summary(linmod2.original)
+    ## the contour plot may be nicer when using original units
+    contour(linmod2, form=~x1*x2)
+    contour(linmod2.original, form=~one*two)
+    ## the canonical path is usually more reasonable in coded units
+    canonical.path(linmod2)            ## coded units
+    canonical.path(linmod2.original)   ## original units
+    
+    ## analogous analysis without the special formula notation of function rsm
+    linmod &lt;- rsm(rnorm.38. ~ Block.ccd + (one + two + three + four + five)^2 + 
+          I(one^2) + I(two^2) + I(three^2) + I(four^2) + I(five^2), data=plan)
+    summary(linmod)
+    contour(linmod, form=~one*two)  ## contour plot is possible
+    ## steepest or canonical.path cannot be used, 
+    ## because the model is a conventional lm
+ 
+    ## contour will not work on the convenience model
+    ## lm(plan), which is otherwise identical to linmod
+    ## (it will neither work on lm(formula(plan), plan))
+    ## or lm(rsmformula(plan), plan)
+   </code></pre>
+
+
+</div>

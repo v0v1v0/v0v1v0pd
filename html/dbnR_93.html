@@ -1,0 +1,89 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict_dt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Performs inference over a test dataset with a GBN</h2>
+
+<h3>Description</h3>
+
+<p>This function performs inference over each row of a folded data.table, 
+plots the results and gives metrics of the accuracy of the predictions. Given
+that only a single row is predicted, the horizon of the prediction is at most 1.
+This function is also called by the generic predict method for "dbn.fit" 
+objects. For long term forecasting, please refer to the 
+<code>forecast_ts</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predict_dt(fit, dt, obj_nodes, verbose = T, look_ahead = F)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>the fitted bn</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>the test dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj_nodes</code></td>
+<td>
+<p>the nodes that are going to be predicted. They are all predicted at the same time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>if TRUE, displays the metrics and plots the real values against the predictions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>look_ahead</code></td>
+<td>
+<p>boolean that defines whether or not the values of the variables in t_0 should be used when predicting, even if they are not present in obj_nodes. This decides if look-ahead bias is introduced or not.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a data.table with the prediction results for each row
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">size = 3
+data(motor)
+dt_train &lt;- motor[200:900]
+dt_val &lt;- motor[901:1000]
+
+# With a DBN
+obj &lt;- c("pm_t_0")
+net &lt;- learn_dbn_struc(dt_train, size)
+f_dt_train &lt;- fold_dt(dt_train, size)
+f_dt_val &lt;- fold_dt(dt_val, size)
+fit &lt;- fit_dbn_params(net, f_dt_train, method = "mle-g")
+res &lt;- suppressWarnings(predict_dt(fit, f_dt_val, obj_nodes = obj, verbose = FALSE))
+
+# With a Gaussian BN directly from bnlearn
+obj &lt;- c("pm")
+net &lt;- bnlearn::mmhc(dt_train)
+fit &lt;- bnlearn::bn.fit(net, dt_train, method = "mle-g")
+res &lt;- suppressWarnings(predict_dt(fit, dt_val, obj_nodes = obj, verbose = FALSE))
+</code></pre>
+
+
+</div>

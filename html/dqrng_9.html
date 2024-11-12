@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dqRNGkind</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>R interface</h2>
+
+<h3>Description</h3>
+
+<p>The <code>dqrng</code> package provides several fast random number
+generators together with fast functions for generating random numbers
+according to a uniform, normal and exponential distribution. These
+functions are modeled after the <code>base</code> functions
+<code>set.seed</code>, <code>RNGkind</code>, <code>runif</code>,
+<code>rnorm</code>, and <code>rexp</code>. However, note that the functions
+provided here do not accept vector arguments for the number of observations
+as well as the parameters describing the distribution functions. Please see
+<code>register_methods</code> if you need this functionality.
+</p>
+<p><code>dqrrademacher</code> uses a fast algorithm to generate random
+Rademacher variables (-1 and 1 with equal probability). To do so, it
+generates a random 64 bit integer and then uses each bit to generate
+a 0/1 variable. This generates 64 integers per random number generation.
+</p>
+<p><code>dqrng_get_state</code> and <code>dqrng_set_state</code> can be used to get and set
+the RNG's internal state. The character vector should not be manipulated directly.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dqRNGkind(kind, normal_kind = "ignored")
+
+dqrng_get_state()
+
+dqrng_set_state(state)
+
+dqrunif(n, min = 0, max = 1)
+
+dqrnorm(n, mean = 0, sd = 1)
+
+dqrexp(n, rate = 1)
+
+dqrrademacher(n)
+
+dqset.seed(seed, stream = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>kind</code></td>
+<td>
+<p>string specifying the RNG (see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normal_kind</code></td>
+<td>
+<p>ignored; included for compatibility with <code>RNGkind</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>state</code></td>
+<td>
+<p>character vector representation of the RNG's internal state</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of  observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min</code></td>
+<td>
+<p>lower limit of the uniform distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max</code></td>
+<td>
+<p>upper limit of the uniform distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean</code></td>
+<td>
+<p>mean value of the normal distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>standard deviation of the normal distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rate</code></td>
+<td>
+<p>rate of the exponential distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>integer scalar to seed the random number generator, or an integer vector of length 2 representing a 64-bit seed. Maybe <code>NULL</code>, see details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stream</code></td>
+<td>
+<p>integer used for selecting the RNG stream; either a scalar or a vector of length 2</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Supported RNG kinds:
+</p>
+
+<dl>
+<dt>pcg64</dt>
+<dd>
+<p>The default 64 bit variant from the PCG family developed by
+Melissa O'Neill. See <a href="https://www.pcg-random.org/">https://www.pcg-random.org/</a> for more details.</p>
+</dd>
+<dt>Xoroshiro128++ and Xoshiro256++</dt>
+<dd>
+<p>RNGs developed by David Blackman and
+Sebastiano Vigna. See <a href="https://prng.di.unimi.it/">https://prng.di.unimi.it/</a> for more details.
+The older generators Xoroshiro128+ and Xoshiro256+ should be used only for
+backwards compatibility.</p>
+</dd>
+<dt>Threefry</dt>
+<dd>
+<p>The 64 bit version of the 20 rounds Threefry engine as
+provided by <code>sitmo-package</code></p>
+</dd>
+</dl>
+<p>Xoroshiro128++ is the default since it is fast, small and has good statistical
+properties.
+</p>
+<p>The functions <code>dqrnorm</code> and <code>dqrexp</code> use the Ziggurat algorithm as
+provided by <code>boost.random</code>.
+</p>
+<p>See <code>generateSeedVectors</code> for rapid generation of integer-vector
+seeds that provide 64 bits of entropy. These allow full exploration of
+the state space of the 64-bit RNGs provided in this package.
+</p>
+<p>If the provided <code>seed</code> is <code>NULL</code>, a seed is generated from R's RNG
+without state alteration.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dqrunif</code>, <code>dqrnorm</code>, and <code>dqrexp</code> return a numeric vector
+of length <code>n</code>. <code>dqrrademacher</code> returns an integer vector of length <code>n</code>.
+<code>dqrng_get_state</code> returns a character vector representation of the RNG's internal state.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>set.seed</code>, <code>RNGkind</code>, <code>runif</code>,
+<code>rnorm</code>, and <code>rexp</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dqrng)
+
+# Set custom RNG.
+dqRNGkind("Xoshiro256++")
+
+# Use an integer scalar to set a seed.
+dqset.seed(42)
+
+# Use integer scalars to set a seed and the stream.
+dqset.seed(42, 123)
+
+# Use an integer vector to set a seed.
+dqset.seed(c(31311L, 24123423L))
+
+# Use an integer vector to set a seed and a scalar to select the stream.
+dqset.seed(c(31311L, 24123423L), 123)
+
+# Random sampling from distributions.
+dqrunif(5, min = 2, max = 10)
+dqrexp(5, rate = 4)
+dqrnorm(5, mean = 5, sd = 3)
+
+# get and restore the state
+(state &lt;- dqrng_get_state())
+dqrunif(5)
+dqrng_set_state(state)
+dqrunif(5)
+
+</code></pre>
+
+
+</div>

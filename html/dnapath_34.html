@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>run_aracne</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Wrapper for ARACNE method</h2>
+
+<h3>Description</h3>
+
+<p>Conducts co-expression analysis using ARACNE (Margolin et al. 2006).
+Uses the implementation from the <code>minet</code> package (Meyer et al. 2008).
+Can be used for the <code>network_inference</code> argument in <code>dnapath</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">run_aracne(
+  x,
+  weights = NULL,
+  estimator = "spearman",
+  disc = "none",
+  nbins = NULL,
+  eps = 0,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A n by p matrix of gene expression data (n samples and p genes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>An optional vector of weights. This is used by <code>dnapath()</code> to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimator</code></td>
+<td>
+<p>Argument is passed into <code>build.mim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>disc</code></td>
+<td>
+<p>Argument is passed into <code>build.mim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbins</code></td>
+<td>
+<p>Argument is passed into <code>build.mim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Argument is passed into <code>aracne</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments are ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A p by p matrix of association scores.
+</p>
+
+
+<h3>References</h3>
+
+<p>Margolin AA, Nemenman I, Basso K, Wiggins C, Stolovitzky G, Dalla Favera R, Califano A (2006).
+“ARACNE: An Algorithm for the Reconstruction of Gene Regulatory Networks in a Mammalian Cellular Context.”
+In <em>BMC Bioinformatics</em>, volume 7(1), S7.
+BioMed Central.
+</p>
+<p>Meyer PE, Lafitte F, Bontempi G (2008).
+“<span class="pkg">minet</span>: A R/Bioconductor Package for Inferring Large Transcriptional Networks using Mutual Information.”
+<em>BMC Bioinformatics</em>, <b>9</b>(1), 461.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>run_bc3net</code>, <code>run_c3net</code>,
+<code>run_clr</code>, <code>run_corr</code>,
+<code>run_dwlasso</code>, <code>run_genie3</code>,
+<code>run_glasso</code>, <code>run_mrnet</code>,
+<code>run_pcor</code>, and <code>run_silencer</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(meso)
+data(p53_pathways)
+
+# To create a short example, we subset on two pathways from the p53 pathway list,
+# and will only run 5 permutations for significance testing.
+pathway_list &lt;- p53_pathways[c(8, 13)]
+n_perm &lt;- 5
+
+# Use this method to perform differential network analysis.
+# The parameters in run_aracne() can be adjusted using the ... argument.
+# For example, the 'estimator' parameter can be specified as shown here.
+results &lt;- dnapath(x = meso$gene_expression,
+                   pathway_list = pathway_list,
+                   group_labels = meso$groups,
+                   n_perm = n_perm,
+                   network_inference = run_aracne,
+                   estimator = "spearman")
+summary(results)
+
+# The group-specific association matrices can be extracted using get_networks().
+nw_list &lt;- get_networks(results[[1]]) # Get networks for pathway 1.
+
+
+# nw_list has length 2 and contains the inferred networks for the two groups.
+# The gene names are the Entrezgene IDs from the original expression dataset.
+# Renaming the genes in the dnapath results to rename those in the networks.
+# NOTE: The temporary directory, tempdir(), is used in this example. In practice,
+#       this argument can be removed or changed to an existing directory
+results &lt;- rename_genes(results, to = "symbol", species = "human",
+                        dir_save = tempdir())
+nw_list &lt;- get_networks(results[[1]]) # The genes (columns) will have new names.
+
+# (Optional) Plot the network using SeqNet package (based on igraph plotting).
+# First rename entrezgene IDs into gene symbols.
+SeqNet::plot_network(nw_list[[1]])
+
+</code></pre>
+
+
+</div>

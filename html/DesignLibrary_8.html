@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>factorial_designer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a factorial design</h2>
+
+<h3>Description</h3>
+
+<p>A <code>2^k</code> factorial designer with <code>k</code> factors assigned with independent probabilities. Results in <code>2^k</code> treatment combinations, each with independent, normally distributed shocks. Estimands are average effects and average interactions of given conditions, averaged over other conditions. Estimation uses regression of demeaned variables with propensity weights.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">factorial_designer(
+  N = 256,
+  k = 3,
+  outcome_means = rep(0, 2^k),
+  sd = 1,
+  outcome_sds = rep(sd, 2^k),
+  assignment_probs = rep(0.5, k),
+  outcome_name = "Y",
+  treatment_names = NULL,
+  args_to_fix = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>An integer. Size of sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>An integer. The number of factors in the design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome_means</code></td>
+<td>
+<p>A numeric vector of length <code>2^k</code>. Means for each of the <code>2^k</code> treatment combinations. See 'Details' for the correct order of values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>A nonnegative number. Standard deviation for outcomes when all outcomes have identical standard deviations. For outcome-specific standard deviations use <code>outcomes_sds</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome_sds</code></td>
+<td>
+<p>A non negative numeric vector of length <code>2^k</code>. Standard deviations for each of the treatment combinations. See 'Details' for the correct order of values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>assignment_probs</code></td>
+<td>
+<p>A numeric vector of length <code>k</code>. Independent probability of assignment to each treatment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outcome_name</code></td>
+<td>
+<p>A character. Name of outcome variable (defaults to "Y"). Must be provided without spacing inside the function <code>c()</code> as in <code>outcome_name = c("War")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment_names</code></td>
+<td>
+<p>A character vector of length <code>k</code>. Name of treatment factors variable (defaults to "T1", "T2", ..., "Tk"). Must be provided without spacing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args_to_fix</code></td>
+<td>
+<p>A character vector. Names of arguments to be args_to_fix in design. By default <code>k</code>, <code>probs</code>, <code>outcome_name</code>, and <code>treatment_names</code> are always args_to_fix.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>factorial_designer</code> creates a factorial design with <code>2^k</code> treatment combinations resulting from <code>k</code> factors, each with two conditions each (<code>c(0,1)</code>). The order of the scalar arguments <code>outcome_means</code> and <code>outcome_sds</code> must follow the one returned by <code>expand.grid(rep(list(c(0,1)), k))</code>, where each of the columns is a treatment. 
+</p>
+<p>Estimands are defined for each combination of treatment assignment as linear combinations of potential outcomes, typically weighted averages of differences. Note that the weighting for the estimand does not reflect treatment assignment probabilities but rather weights each possible condition equally. 
+</p>
+<p>For example, in a design with <code class="reqn">k = 3</code> factors, the treatment effect of A, (TE_A), averaged over conditions defined by B and C, is given by: </p>
+<p style="text-align: center;"><code class="reqn">TE_A = 1/4*(Y_{111} - Y_{011}) + 1/4*(Y_{101} - Y_{001}) + 1/4*(Y_{110} - Y_{010}) + 1/4*(Y_{100} - Y_{000}).</code>
+</p>
+<p> The "average interaction of A and B" — that is the average effect (for a single unit) of A on the effect of B across conditions defined by C — is: </p>
+<p style="text-align: center;"><code class="reqn">TE_{AB} = 1/2*[(Y_{111} - Y_{011}) - (Y_{101} - Y_{001})] + 1/2*[(Y_{110} - Y_{010}) - (Y_{100} - Y_{000})].</code>
+</p>
+<p> And the triple interaction—that is, the effect of C on the the effect of B on the effect of A  is: </p>
+<p style="text-align: center;"><code class="reqn">TE_{ABC} = [(Y_{111} - Y_{011}) - (Y_{101} - Y_{001})] - [(Y_{110} - Y_{010}) - (Y_{100} - Y_{000})],</code>
+</p>
+<p> where <code class="reqn">Y_{abc}</code> is short for the potential outcome of Y when A is a,  B is b,  and C is c.
+</p>
+<p>Estimates draw from a regression in which all treatments are demeaned and weighted by the inverse probability of being in the condition they are in. 
+Note that in  this demeaned regression the constant captures the average outcome across all conditions — not the outcome when all units are in the control condition. The coefficient on T1 captures the average effect of T1 across other conditions—not the effect of T1 when other conditions are at 0. And so on.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A factorial design.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p><a href="https://declaredesign.org/">DeclareDesign Team</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# A factorial design using default arguments
+factorial_design &lt;- factorial_designer()
+
+# A 2 x 2 x 2 factorial design with unequal probabilities of assignment to 
+# each treatment condition. In this case the estimator weights up by the 
+# conditional probabilities of assignment.
+factorial_design_2 &lt;- factorial_designer(k = 3, 
+                                         assignment_probs = c(1/2, 1/4, 1/8), 
+                                         outcome_means = c(0,0,0,0,0,0,0,4))
+## Not run: 
+diagnose_design(factorial_design_2)
+
+## End(Not run)
+# Mapping from outcomes to estimands 
+# The mapping between the potential outcomes schedule and the estimands of
+# interest is not always easy. To help with intuition consider a 2^3 
+# factorial design. You might like to think of a data generating process as
+# a collection of marginal effects and interaction effects mapping from
+# treatments to outcomes. 
+# For instance: Y = -.25 + .75*X1 - .25*X2 -.25*X3 + X1*X2*X3
+# The vector of implied potential outcome means as a function of conditions  
+# could then be generated like this:
+
+X &lt;- expand.grid(rep(list(c(0,1)), 3))
+outcome_means =  -.25 + X[,1]*3/4 - X[,2]/4 - X[,3]/4 + X[,1]*X[,2]*X[,3]
+outcomes &lt;- cbind(X, outcome_means)
+colnames(outcomes) &lt;- c("X1", "X2", "X3", "mean")
+outcomes
+
+# Examination of the outcomes in this table reveals that there is an 
+# average outcome of 0 (over all conditions), an average effect of treatment
+# X1 of 1,  an average effects for X2 and X3 of 0,  the two way interactions 
+# are .5 (averaged over conditions of the third treatment) and the triple 
+# interaction is 1.
+# These are exactly the estimands calculated by the designer and returned in 
+# diagnosis.
+factorial_design_3 &lt;- factorial_designer(k = 3, 
+                                         outcome_means = outcome_means,
+                                         outcome_sds = rep(.01, 8))
+## Not run: 
+library(DeclareDesign)
+diagnose_design(factorial_design_3, sims = 10)
+
+## End(Not run)
+
+
+</code></pre>
+
+
+</div>

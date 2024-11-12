@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ds_test</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Hypothesis testing via dynamic slicing
+</h2>
+
+<h3>Description</h3>
+
+<p>Perform a one- or <em>K</em>-sample (<code class="reqn">K &gt; 1</code>) hypothesis testing via dynamic slicing.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  ds_test(y, x, ..., type = c("ds", "eqp"), lambda = 1, alpha = 1, rounds = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A numeric vector of data values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Either an integer vector of data values, from 0 to <code class="reqn">K-1</code>, or a character string naming a cumulative distribution function or an actual cumulative distribution function such as <code>pnorm</code>. Only continuous CDFs are valid.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Parameters of the distribution specified (as a character string) by <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Methods applied for dynamic slicing. "<code>ds</code>" (default) stands for original dynamic slicing scheme. "<code>eqp</code>" stands for dynamic slicing scheme with <code class="reqn">n^{1/2}</code>-resolution (for <em>K</em>-sample test, <code class="reqn">K &gt; 1</code>) or <code class="reqn">n</code>-resolution (for one-sample test).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>Penalty for introducing an additional slice, which is used to avoid making too many slices. It corresponds to the type I error under the scenario that the two variables are independent. <code>lambda</code> should be greater than 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Penalty required for "<code>ds</code>" type in one-sample test. It penalizes both the width and the number of slices to avoid too many slices and degenerate slice (interval). <code>alpha</code> should be greater than 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rounds</code></td>
+<td>
+<p>Number of permutations for estimating empirical <em>p</em>-value.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>x</code> is an integer vector, <code>ds_test</code> performs <em>K</em>-sample test (<code class="reqn">K &gt; 1</code>).
+</p>
+<p>Under this scenario, suppose that there are observations <code>y</code> drawn from some <em>continuous</em> populations. Let <code>x</code> be a vector that stores values of indicator of samples from different populations, <em>i.e.</em>, <code>x</code> has values <code class="reqn">0, 1, \ldots, K-1</code>. The null hypothesis is that these populations have the same distribution.
+</p>
+<p>If <code>x</code> is a character string naming a continuous (cumulative) distribution function, <code>ds_test</code> performs one-sample test with the null hypothesis that the distribution function which generated <code>y</code> is distribution <code>x</code> with parameters specified by <code class="reqn">\ldots</code>. The parameters specified in <code class="reqn">\ldots</code> must be pre-specified and not estimated from the data.
+</p>
+<p>Only empirical <em>p</em>-values are available by specifying the value of parameter <code>rounds</code>, the number of permutation. <code>lambda</code> and <code>alpha</code> (for one-sample test with type "<code>ds</code>") contributes to <em>p</em>-value.
+</p>
+<p>The procedure of choosing parameter <code>lambda</code> was described in Jiang, Ye &amp; Liu (2015). Refer to dataset <code>ds_type_one_error</code> in this package for the empirical relationship of <code>lambda</code>, sample size and type I error.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with class "<code>htest</code>" containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>The value of the dynamic slicing statistic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>The <em>p</em>-value of the test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>A character string describing the alternative hypothesis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string indicating what type of test was performed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+<p>A character string giving the name(s) of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slices</code></td>
+<td>
+<p>Slicing strategy that maximize dynamic slicing statistic in <em>K</em>-sample test. Each row stands for a slice. Each column except the last one stands for the number of observations take each value in each slice. The last column is the number of observations in each slice <em>i.e.</em>, the sum of the first column to the <em>k</em>th column.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Jiang, B., Ye, C. and Liu, J.S. Non-parametric <em>K</em>-sample tests via dynamic slicing. <em>Journal of the American Statistical Association</em>, 110(510): 642-653, 2015.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##  One-sample test
+n &lt;- 100
+mu &lt;- 0.5
+y &lt;- rnorm(n, mu, 1)
+lambda &lt;- 1.0
+alpha &lt;- 1.0
+dsres &lt;- ds_test(y, "pnorm", 0, 1, lambda = 1, alpha = 1, rounds = 100)
+dsres &lt;- ds_test(y, "pnorm", 0, 1, type = "ds", lambda = 1, alpha = 1)
+dsres &lt;- ds_test(y, "pnorm", 0, 1, type = "eqp", lambda = 1, rounds = 100)
+dsres &lt;- ds_test(y, "pnorm", 0, 1, type = "eqp", lambda = 1)
+
+##  K-sample test
+n &lt;- 100
+mu &lt;- 0.5
+y &lt;- c(rnorm(n, -mu, 1), rnorm(n, mu, 1))
+
+##  generate x in this way:
+x &lt;- c(rep(0, n), rep(1, n))
+x &lt;- as.integer(x)
+
+##  or in this way:
+x &lt;- c(rep("G1", n), rep("G2", n))
+x &lt;- relabel(x)
+
+lambda &lt;- 1.0
+dsres &lt;- ds_test(y, x, lambda = 1, rounds = 100)
+dsres &lt;- ds_test(y, x, type = "eqp", lambda = 1, rounds = 100)
+</code></pre>
+
+
+</div>

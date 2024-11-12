@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>contrasts_DI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+
+Compute contrasts for Diversity Interactions (DI) models
+</h2>
+
+<h3>Description</h3>
+
+
+<p>This function calculates and tests contrasts using <code>glht</code> for a model object created by the <code>DI</code> or <code>autoDI</code> functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">contrasts_DI(object, contrast, contrast_vars, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A <code>DI</code> or <code>autoDI</code> model object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>The coefficients to generate the contrast. There are three options to specify these coefficients:
+</p>
+<p>A list with each element being a vector of the same length as the number of linear coefficients in the model. The list can be named for tracking the contrasts.
+</p>
+<p>A matrix with the same number of columns as the number of linear coefficients in the model. The matrix can be given row names to track the different contrasts.
+</p>
+<p>A numeric vector with the length being a multiple of the number of coefficients in the matrix.
+</p>
+<p>Overrides <code>contrast_vars</code> if specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast_vars</code></td>
+<td>
+<p>A quicker and easier way to specify contrast coefficients for testing categorical variables. A nested named list with same names as the categorical variables in the model and same lengths as levels of those variables can be specified and the contrast will be calculated without the user having to specify the remaining variables. 
+</p>
+<p>Will be overridden if <code>contrast</code> is specified.
+</p>
+<p>Recommended for only testing cateogrical variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to the <code>glht</code> function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The contrasts are calculated and tested using the <code>glht</code> function in the <code>multcomp</code> package. 
+
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>glht</code> is returned
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rafael A. Moral, John Connolly, Rishabh Vishwakarma and Caroline Brophy
+</p>
+
+
+<h3>References</h3>
+
+
+<p>Kirwan L, J Connolly, JA Finn, C Brophy, A Lüscher, D Nyfeler and MT Sebastia (2009) Diversity-interaction modelling - estimating contributions of species identities and interactions to ecosystem function. Ecology, 90, 2032-2038. 
+</p>
+<p>Torsten Hothorn, Frank Bretz and Peter Westfall (2008).
+Simultaneous Inference in General Parametric Models.
+Biometrical Journal 50(3), 346–363.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DI</code>
+<code>autoDI</code>
+<code>glht</code>
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Load the Switzerland data
+  data(Switzerland)
+## Summarise the Switzerland data
+  summary(Switzerland)
+
+## Fit a DI model
+  m1 &lt;- DI(y = "yield", prop = 4:7, treat = 'nitrogen', DImodel = 'AV',
+  density = 'density', estimate_theta = FALSE, data = Switzerland)
+  summary(m1)
+  
+## Contrasts for difference between monocultures of p1 and p2, p3 and p4, p2 and p3
+  con1 &lt;- contrasts_DI(object = m1,
+                       contrast = list('p1vp2 Mono' = c(1, -1, 0, 0, 0, 0, 0),
+                                       'p3vp4 Mono' = c(0, 0, 1, -1, 0, 0, 0),
+                                       'p2vp3 Mono' = c(0, -1, 1, 0, 0, 0, 0)))
+  summary(con1)
+  
+## Contrasts for 50:50 mixture of p1 and p2 vs 50:50 mixture of p3 and p4  
+  con2 &lt;- contrasts_DI(object = m1,
+                       contrast = list('p1p2 vs p3p4' = c(0.5, 0.5, -0.5, -0.5, 0, 0, 0)))
+  summary(con2)
+
+## Example using contrast_vars
+  data(sim2)
+
+### Fit model with block
+  m2 &lt;- DI(y = "response", prop = 3:6, DImodel = 'FULL', block = 'block',
+           estimate_theta = FALSE, data = sim2)
+  summary(m2)
+  
+### contrast for average of first two blocks vs third block
+  con3 &lt;- contrasts_DI(object = m2,
+                       contrast_vars = list('block' = list('1_2vs3' = c(0.5, 0.5, -1, 0))))
+  summary(con3)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,354 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dfba_sim_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated Data Generator and Inferential Comparison</h2>
+
+<h3>Description</h3>
+
+<p>This function is designed to be called by other DFBA programs that compare
+frequentist and Bayesian power. The function generates simulated data for two
+conditions that can be from nine different probability models.
+The program also computes the frequentist <em>p</em>-value from a <em>t</em>-test
+on the generated data, and it computes the Bayesian posterior probability
+from a distribution-free analysis of the difference between the two
+conditions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dfba_sim_data(
+  n = 20,
+  a0 = 1,
+  b0 = 1,
+  model,
+  design,
+  delta,
+  shape1 = 1,
+  shape2 = 1,
+  block_max = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Number of values per condition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>The first shape parameter for the prior beta distribution (default is 1). Must be positive and finite.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b0</code></td>
+<td>
+<p>The second shape parameter for the prior beta distribution (default is 1). Must be positive and finite.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Theoretical probability model for the data. One of <code>"normal"</code>, <code>"weibull"</code>, <code>"cauchy"</code>, <code>"lognormal"</code>, <code>"chisquare"</code>, <code>"logistic"</code>, <code>"exponential"</code>, <code>"gumbel"</code>, or <code>"pareto"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>Indicates the data structure. One of <code>"independent"</code> or <code>"paired"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>Theoretical mean difference between conditions; the second condition minus the first condition</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape1</code></td>
+<td>
+<p>The shape parameter for condition 1 for the distribution indicated by <code>model</code> input (default is 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape2</code></td>
+<td>
+<p>The shape parameter for condition 2 for the distribution indicated by <code>model</code> input (default is 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block_max</code></td>
+<td>
+<p>The maximum size for a block effect (default is 0)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Researchers need to make experimental-design decisions such as
+the choice about the sample size per condition and the decision
+to use a within-block design or an independent-group design. These
+planning issues arise regardless if one uses either a frequentist
+or Bayesian approach to statistical inference. In the DFBA package,
+there are a number of functions to help users with these decisions.
+</p>
+<p>The <code>dfba_sim_data()</code> program is used along with other functions to
+assess the relative power for detecting a condition difference of an
+amount delta between two conditions. Delta is an input for the
+<code>dfba_sim_data()</code> program, and it must be a nonnegative value.
+Specifically, the <code>dfba_sim_data()</code> program generates two sets of data
+that are randomly drawn from one of nine different theoretical
+models. The input ‘model’ stipulates the data generating probability
+function. The input ‘model’ is one of the following strings:
+</p>
+
+<ul>
+<li> <p><code>"normal"</code>
+</p>
+</li>
+<li> <p><code>"weibull"</code>
+</p>
+</li>
+<li> <p><code>"cauchy"</code>
+</p>
+</li>
+<li> <p><code>"lognormal"</code>
+</p>
+</li>
+<li> <p><code>"chisquare"</code>
+</p>
+</li>
+<li> <p><code>"logistic"</code>
+</p>
+</li>
+<li> <p><code>"exponential"</code>
+</p>
+</li>
+<li> <p><code>"gumbel"</code>
+</p>
+</li>
+<li> <p><code>"pareto"</code>
+</p>
+</li>
+</ul>
+<p>For each model there are <code>n</code> continuous scores randomly sampled for each
+condition, where <code>n</code> is a  user-specified input value. The <code>design</code>
+argument is either <code>"independent"</code> or <code>"paired"</code>, and stipulates
+whether the two sets of scores are either independent or from a common blocks
+such as for the case of two scores for the same person (<em>i.e.</em>, one in
+each condition).
+</p>
+<p>The <code>shape1</code> and <code>shape2</code> arguments are values for the shape parameter
+for the respective first and second condition, and their meaning
+depends on the probability model. For <code>model="normal"</code>, these
+parameters are the standard deviations of the two distributions. For
+<code>model = "weibull"</code>, the parameters are the Weibull shape parameters.
+For <code>model = "cauchy"</code>, the parameters are the scale factors for the
+Cauchy distributions. For <code>model = "lognormal"</code>, the shape
+parameters are the standard deviations for log(X). For <code>model = "chisquare"</code>,
+the parameters are the degrees of freedom (<em>df</em>) for the two
+distributions. For <code>model = "logistic"</code>, the parameters are the scale
+factors for the distributions. For <code>model = "exponential"</code>, the parameters
+are the rate parameters for the distributions.
+</p>
+<p>For the Gumbel distribution, the <code>E</code> variate is equal to
+<code>delta - shape2*log(log(1/U))</code> where <code>U</code> is a random value sampled
+from the uniform distribution on the interval <code>[.00001, .99999]</code>, and
+the <code>C</code> variate is equal to <code>-shape1*log(log(1/U))</code> where <code>U</code>
+is another score sampled from the uniform distribution. The <code>shape1</code> and
+<code>shape2</code> arguments for <code>model = "gumbel"</code> are the scale parameters
+for the distributions. The Pareto model is a distribution designed to account
+for income distributions as studied by economists (Pareto, 1897). For the
+Pareto distribution, the cumulative function is equal to <code>1-(x_m/x)^alpha</code>
+where <code>x</code> is greater than <code>x_m</code> (Arnold, 1983). In the <code>E</code>
+condition, <code>x_m = 1 + delta</code> and in the <code>C</code> condition <code>x_m = 1</code>.
+The alpha parameter is 1.16 times the shape parameters <code>shape1</code> and
+<code>shape2</code>. Since the default value for each shape parameter is 1, the
+resulting alpha value of 1.16 is the default value. When alpha = 1.16, the
+Pareto distribution approximates an income distribution that represents the
+80-20 law where 20% of the population receives 80% of the income
+(Hardy, 2010).
+</p>
+<p>The <code>block_max</code> argument provides for incorporating block effects in the
+random sampling. The block effect for each score is a separate effect for the
+block. The block effect B for a score is a random number drawn from a uniform
+distribution on the interval <code>[0, block_max]</code>. When <code>design = "paired"</code>,
+the same random block effect is added to the score in the first condition,
+which is the random <code>C</code> value, and it is also added to the corresponding
+paired value for the <code>E</code> variate. Thus, the pairing research design
+eliminates the effect of block variation for the assessment of condition
+differences. When <code>design = "independent"</code>, there are different block-effect
+contributions to the <code>E</code> and <code>C</code> variates, which reduces the
+discrimination of condition differences because it increases the variability
+of the difference in the two variates. The user can study the effect of the
+relative discriminability of detecting an effect of delta by adjusting the
+value of the <code>block_max</code> argument. The default for <code>block_max</code> is 0,
+but it can be altered to any non-negative real number.
+</p>
+<p>The output from calling the <code>dfba_sim_data()</code> function are two
+statistics that are based on the <em>n</em> scores generated in the two
+conditions. One statistic is the frequentist <em>p</em>-value for rejecting the
+null hypothesis that delta &lt;= 0 from a parametric <em>t</em>-test. The
+<em>p</em>-value is the upper tail probability of the sample <em>t</em>-statistic
+for either the paired <em>t</em>-test when <code>design = "paired"</code> or it is
+the upper tail probability of the sample <em>t</em>-statistic for the two-group
+<em>t</em>-test when <code>design = "independent"</code>. The second output statistic
+is the Bayesian posterior probability for one of two possible nonparametric
+tests. If <code>design = "paired"</code>, the <code>dfba_sim_sim()</code> function
+calls the <code>dfba_wilcoxon()</code> function to ascertain the posterior
+probability that <code>phi_w &gt; .5</code>. If <code>design = "independent"</code>, the
+<code>dfba_sim_data()</code> function calls the <code>dfba_mann_whitney()</code> function
+to estimate the posterior probability that <code>omega_E &gt; .5</code>. The arguments
+<code>a0</code> and <code>b0</code> for the <code>dfba_sim_data()</code> function are passed
+along to either the <code>dfba_wilcoxon()</code> function or the
+<code>dfba_mann_whitney()</code> function. The default values are <code>a0 = b0 = 1</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>pvalue</code></td>
+<td>
+<p>The upper tail of the sample t value for the test that delta &lt;= 0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prH1</code></td>
+<td>
+<p>Bayesian posterior probability either for the hypothesis that phi_w &gt; .5 from the nonparametric Wilcoxon test when <code>design = "paired"</code> or for the hypothesis that omega_E &gt; .5 from the Mann-Whitney test when <code>design = "independent"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>Vector of length n of simulated values for condition 1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>Vector of length n of simulated values for condition 2</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>The data structure indicated by the <code>design</code> argument. One of <code>"independent"</code> or <code>"paired"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Random sampling for both the Gumbel and the Pareto distributions are
+generated by the <code>dfba_sim_data()</code> function using the inverse transform
+method (Fishman, 1996).
+</p>
+
+
+<h3>References</h3>
+
+<p>Arnold, B. C. (1983). Pareto Distribution. Fairland, MD:
+International Cooperative Publishing House.
+</p>
+<p>Chechile, R. A. (2017). A Bayesian analysis for the Wilcoxon signed-rank
+statistic. Communications in Statistics - Theory and Methods,
+https://doi.org/10.1080/03610926.2017.1388402.
+</p>
+<p>Chechile, R. A. (2020). A Bayesian analysis for the Mann- Whitney statistic.
+Communications in Statistics - Theory and Methods,
+https://doi.org/10.1080/03610926.2018.1549247.
+</p>
+<p>Fishman, G. S. (1996) Monte Carlo: Concepts, Algorithms and Applications.
+New York: Springer.
+</p>
+<p>Hardy, M. (2010). Pareto's Law. Mathematical Intelligencer,
+32, 38-43.
+</p>
+<p>Johnson, N. L., Kotz S., and Balakrishnan, N. (1995). Continuous Univariate
+Distributions, Vol. 1, New York: Wiley.
+</p>
+<p>Pareto, V. (1897). Cours d'Economie Politique. Vol. 2,
+Lausanne: F. Rouge.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>Distributions</code> for details on the
+parameters of the normal, Weibull, Cauchy, lognormal, chi-squared, logistic,
+and exponential distributions.
+</p>
+<p><code>dfba_wilcoxon</code>
+</p>
+<p><code>dfba_mann_whitney</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example of two paired normal distributions where the s.d. of the two
+# conditions are 1 and 4.
+
+dfba_sim_data(n = 50,
+             model = "normal",
+             design = "paired",
+             delta = .4,
+             shape1 = 1,
+             shape2 = 4)
+
+# Example of two independent Weibull variates with their shape parameters =.8
+# and with a .25 offset
+
+dfba_sim_data(n = 80,
+              model = "weibull",
+              design = "independent",
+              delta = .25,
+              shape1 = .8,
+              shape2 = .8)
+
+# Example of two independent Weibull variates with their shape
+# parameters = .8 and with a .25 offset along with some block differences
+# with the max block effect being 1.5
+
+dfba_sim_data(n = 80,
+             model = "weibull",
+             design = "independent",
+             delta = .25,
+             shape1 = .8,
+             shape2 = .8,
+             block_max = 1.5)
+
+# Example of two paired Cauchy variates with a .4 offset
+
+dfba_sim_data(n = 50,
+             model = "cauchy",
+             design = "paired",
+             delta = .4)
+# Example of two paired Cauchy variates with a .4 offset where the Bayesian
+# analysis uses the Jeffreys prior
+
+dfba_sim_data(n = 50,
+             a0 = .5,
+             b0 = .5,
+             model = "cauchy",
+             design = "paired",
+             delta=.4)
+
+</code></pre>
+
+
+</div>

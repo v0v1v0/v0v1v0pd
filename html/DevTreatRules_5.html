@@ -1,0 +1,119 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>PredictRule</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get the treatment rule implied by <code>BuildRule()</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>Map the object returned by <code>BuildRule()</code> to the treatment rule corresponding to a particular dataset
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">PredictRule(
+  BuildRule.object,
+  new.X,
+  desirable.outcome = NULL,
+  clinical.threshold = 0,
+  return.predicted.response = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>BuildRule.object</code></td>
+<td>
+<p>The object returned by the <code>BuildRule()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new.X</code></td>
+<td>
+<p>A data frame representing the dataset for which the treatment rule is desired.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>desirable.outcome</code></td>
+<td>
+<p>A logical equal to <code>TRUE</code> if higher values of the outcome are considered desirable (e.g. for a binary outcome, 1 is more desirable than 0). The <code>OWL.framework</code> and <code>OWL</code> approaches to treatment rule estimation require a desirable outcome.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clinical.threshold</code></td>
+<td>
+<p>A numeric equal a positive number above which the predicted outcome under treatment must be superior to the predicted outcome under control for treatment to be recommended. Only used when <code>BuildRuleObject</code> was specified and derived from the split-regression or direct-interactions approach. Defaults to 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.predicted.response</code></td>
+<td>
+<p>logical indicating whether the predicted response variable (for <code>split.regression</code>, <code>OWL.framework</code>, and <code>OWL</code> approaches) or score function (for <code>direct.interactions</code>) should be returned in addition to its mapping to a binary treatment recommendation. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> If <code>return.predicted.response=FALSE</code> (the default), then the single object returned is a numeric vector of 0s and 1s, with length equal to the number of rows in <code>new.X</code>, where a 0 indicates treatment is not recommended and a 1 indicates treatment is recommended for the corresponding observation in <code>new.X</code>.
+</p>
+</li>
+<li>
+<p> If <code>return.predicted.response=TRUE</code>, then the object returned is a list with some combination of the following components (depending on which prediction approach underlies the <code>BuildRule.object</code>).
+</p>
+
+<ul>
+<li> <p><code>recommended.treatment</code>: A numeric vector of 0s and 1s, with length equal to the number of rows in <code>new.X</code>, where a 0 indicates treatment is not recommended and a 1 indicates treatment is recommended for the corresponding observation in <code>new.X</code>.
+</p>
+</li>
+<li> <p><code>predicted.outcome</code>: A numeric vector showing the predicted values of the score function mapped to <code>recommended.treatment</code>. Only returned if <code>return.predicted.response=TRUE</code> and the approach underlying <code>BuildRule.object</code>. was ‘direct.interactions’.
+</p>
+</li>
+<li> <p><code>predicted.outcome.under.control</code>: A numeric vector showing the predicted values of the outcome under no treatment which, along with <code>predicted.outcome.under.treatment</code>, corresponds to <code>recommended.treatment</code>. Only returned if <code>return.predicted.response=TRUE</code> and the approach underlying <code>BuildRule.object</code>. was ‘split.regression’.
+</p>
+</li>
+<li> <p><code>predicted.outcome.under.treatment</code>: A numeric vector showing the predicted values of the outcome under treatment which, along with <code>predicted.outcome.under.control</code>, corresponds to <code>recommended.treatment</code>. Only returned if <code>return.predicted.response=TRUE</code> and the approach underlying <code>BuildRule.object</code>. was ‘split.regression’.
+</p>
+</li>
+<li> <p><code>predicted.treatment.prob</code>: A numeric vector showing the predicted treatment probability that corresponds to <code>recommended.treatment</code>. Only returned if <code>return.predicted.response=TRUE</code> and the approach underlying <code>BuildRule.object</code>. was ‘OWL.framework’.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(123)
+example.split &lt;- SplitData(data=obsStudyGeneExpressions,
+                                     n.sets=3, split.proportions=c(0.5, 0.25, 0.25))
+development.data &lt;- example.split[example.split$partition == "development",]
+validation.data &lt;- example.split[example.split$partition == "validation",]
+one.rule &lt;- BuildRule(development.data=development.data,
+                     study.design="observational",
+                     prediction.approach="split.regression",
+                     name.outcome="no_relapse",
+                     type.outcome="binary",
+                     desirable.outcome=TRUE,
+                     name.treatment="intervention",
+                     names.influencing.treatment=c("prognosis", "clinic", "age"),
+                     names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                     propensity.method="logistic.regression",
+                     rule.method="glm.regression")
+one.prediction &lt;- PredictRule(BuildRule.object=one.rule,
+                                        new.X=validation.data[, c("age", paste0("gene_", 1:10))],
+                                        desirable.outcome=TRUE,
+                                        clinical.threshold=0)
+table(one.prediction)
+</code></pre>
+
+
+</div>

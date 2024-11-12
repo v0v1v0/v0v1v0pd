@@ -1,0 +1,268 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sequential_g</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform linear sequential g-estimation to estimate the controlled
+direct effect of a treatment net the effect of a mediator.</h2>
+
+<h3>Description</h3>
+
+<p>Perform linear sequential g-estimation to estimate the controlled
+direct effect of a treatment net the effect of a mediator.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sequential_g(
+  formula,
+  data,
+  subset,
+  weights,
+  na.action,
+  offset,
+  contrasts = NULL,
+  verbose = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>formula specification of the first-stage,
+second-stage, and blip-down models. The right-hand side of the
+formula should have three components separated by the <code>|</code>,
+with the first component specifying the first-stage model with
+treatment and any baseline covariates, the second component
+specifying the intermediate covariates for the first-stage, and
+the third component specifying the blip-down model. See Details
+below for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe to apply <code>formula</code> on.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>A vector of logicals indicating which rows of <code>data</code> to keep.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>an optional vector of weights to be used in the fitting
+process.  Should be <code>NULL</code> or a numeric vector.
+If non-NULL, weighted least squares is used with weights
+<code>weights</code> (that is, minimizing <code>sum(w*e^2)</code>); otherwise
+ordinary least squares is used.  See also ‘Details’,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen
+when the data contain <code>NA</code>s.  The default is set by
+the <code>na.action</code> setting of <code>options</code>, and is
+<code>na.fail</code> if that is unset.  The ‘factory-fresh’
+default is <code>na.omit</code>.  Another possible value is
+<code>NULL</code>, no action.  Value <code>na.exclude</code> can be useful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+<p>this can be used to specify an <em>a priori</em> known
+component to be included in the linear predictor during fitting.
+This should be <code>NULL</code> or a numeric vector or matrix of extents
+matching those of the response.  One or more <code>offset</code> terms can be
+included in the formula instead or as well, and if more than one are
+specified their sum is used.  See <code>model.offset</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>an optional list. See the <code>contrasts.arg</code>
+of <code>model.matrix.default</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical indicating whether to suppress progress bar. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>For <code>lm()</code>: additional arguments to be passed to the low level
+regression fitting functions (see below).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>sequential_g</code> function implements the linear
+sequential g-estimator developed by Vansteelandt (2009) with the
+consistent variance estimator developed by Acharya, Blackwell, and
+Sen (2016).
+</p>
+<p>The formula specifies specifies the full first-stage model
+including treatment, baseline confounders, intermediate
+confounders, and the mediators. The user places <code>|</code> bars to
+separate out these different components of the model. For
+example, the formula should have the form <code>y ~ tr + x1 + x2
+  | z1 + z2 | m1 + m2</code>. where <code>tr</code> is the name of the
+treatment variable, <code>x1</code> and <code>x2</code> are baseline
+covariates, <code>z1</code> and <code>z2</code> are intermediate covariates,
+and <code>m1</code> and <code>m2</code> are the names of the mediator
+variables. This last set of variables specify the 'blip-down' or
+'demediation' function that is used to remove the average effect
+of the mediator (possibly interacted) from the outcome to create
+the blipped-down outcome. This blipped-down outcome is the passed
+to a standard linear model with the covariates as specified for
+the direct effects model.
+</p>
+<p>See the references below for more details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns an object of <code>class</code> A <code>"seqg"</code>. Similar
+to the output of a call to <code>lm</code>. Contains the following
+components:
+</p>
+
+<ul>
+<li>
+<p> coefficients: a vector of named coefficients for the direct
+effects model.
+</p>
+</li>
+<li>
+<p> residuals: the residuals, that is the blipped-down outcome
+minus the fitted values.
+</p>
+</li>
+<li>
+<p> rank: the numeric rank of the fitted linear direct effects
+model.
+</p>
+</li>
+<li>
+<p> fitted.values: the fitted mean values of the direct effects
+model.
+</p>
+</li>
+<li>
+<p> weights: (only for weighted fits) the specified weights.
+</p>
+</li>
+<li>
+<p> df.residual: the residual degrees of freedom for the direct
+effects model.
+</p>
+</li>
+<li>
+<p> aliased: logical vector indicating if any of the terms were
+dropped or aliased due to perfect collinearity.
+</p>
+</li>
+<li>
+<p> terms: the list of <code>terms</code> object used. One for the
+baseline covariates and treatment (<code>X</code>) and one for the
+variables in the blip-down model (<code>M</code>).
+</p>
+</li>
+<li>
+<p> formula: the <code>formula</code> object used, possibly modified
+to drop a constant in the blip-down model.
+</p>
+</li>
+<li>
+<p> call: the matched call.
+</p>
+</li>
+<li>
+<p> na.action: (where relevant) information returned by
+<code>model.frame</code> of the special handling of <code>NA</code>s.
+</p>
+</li>
+<li>
+<p> xlevels: the levels of the factor variables.
+</p>
+</li>
+<li>
+<p> contrasts:  the contrasts used for the factor variables.
+</p>
+</li>
+<li>
+<p> first_mod: the output from the first-stage regression model.
+</p>
+</li>
+<li>
+<p> model: full model frame, including all variables.
+</p>
+</li>
+<li>
+<p> Ytilde: the blipped-down response vector.
+</p>
+</li>
+<li>
+<p> X: the model matrix for the second stage.
+</p>
+</li>
+<li>
+<p> M: the model matrix for demediation/blip-down function.
+</p>
+</li>
+</ul>
+<p>In addition, non-null fits will have components <code>assign</code>,
+<code>effects</code>, and <code>qr</code> from the output of <code>lm.fit</code> or
+<code>lm.wfit</code>, whichever is used.
+</p>
+
+
+<h3>References</h3>
+
+<p>Vansteelandt, S. (2009). Estimating Direct Effects in
+Cohort and Case-Control Studies. Epidemiology, 20(6), 851-860.
+</p>
+<p>Acharya, Avidit, Blackwell, Matthew, and Sen, Maya. (2016)
+"Explaining Causal Effects Without Bias: Detecting and Assessing
+Direct Effects." American Political Science Review 110:3 pp.
+512-529
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ploughs)
+
+form_main &lt;- women_politics ~ plow +
+  agricultural_suitability + tropical_climate + large_animals +
+  political_hierarchies + economic_complexity +
+  rugged | years_civil_conflict +
+  years_interstate_conflict  + oil_pc +
+  european_descent + communist_dummy + polity2_2000 +
+  serv_va_gdp2000 | centered_ln_inc + centered_ln_incsq
+
+direct &lt;- sequential_g(form_main, ploughs)
+
+summary(direct)
+</code></pre>
+
+
+</div>

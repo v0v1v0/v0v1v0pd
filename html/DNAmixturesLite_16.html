@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>map.genotypes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximum posterior genotypes of unknown contributors</h2>
+
+<h3>Description</h3>
+
+<p>For each marker, a ranked list of configurations of genotypes for some
+or all unknown contributors is returned. The list contains all
+configurations with posterior probability higher than some
+specified <code>pmin</code>.
+</p>
+<p><em>IMPORTANT: This is the <span class="pkg">DNAmixturesLite</span> package, which
+is intended as a service to enable users to try <span class="pkg">DNAmixtures</span>
+without purchasing a commercial licence for Hugin. When at all
+possible, we strongly recommend the use of <span class="pkg">DNAmixtures</span>
+rather than this lite-version. See
+<a href="https://dnamixtures.r-forge.r-project.org/">https://dnamixtures.r-forge.r-project.org/</a> for details on
+both packages.</em>
+</p>
+<p><em>While the lite-version seeks to provide the full functionality of
+<span class="pkg">DNAmixtures</span>, note that computations are much less efficient
+and that there are some differences in available functionality. Be
+aware that the present documentation is copied from
+<span class="pkg">DNAmixtures</span> and thus may not accurately describe the
+implementation of this lite-version.</em>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">map.genotypes(
+  mixture,
+  pmin,
+  U = seq_along(mixture$U),
+  markers = mixture$markers,
+  type = c("seen", "all", "unseen")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>mixture</code></td>
+<td>
+<p>a DNA mixture</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pmin</code></td>
+<td>
+<p>A list of the minimum probability to consider for each marker.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U</code></td>
+<td>
+<p>Optionally the indices of the unknown contributors of interest, specified as an integer vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>markers</code></td>
+<td>
+<p>Optionally, a subset of markers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>It may be of interest to consider only the prediction of alleles in some subset of alleles. We allow
+</p>
+
+<dl>
+<dt><code>"seen"</code></dt>
+<dd>
+<p>Consider only alleles that are seen in at least one EPG</p>
+</dd>
+<dt><code>"all"</code></dt>
+<dd>
+<p>Consider the entire allelic range</p>
+</dd>
+<dt><code>"unseen"</code></dt>
+<dd>
+<p>Consider only alleles that are not seen in any EPG (possibly redundant)</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that an error occurs if there are no configurations
+with probability higher than <code>pmin</code>. In this case, try a
+smaller <code>pmin</code>.
+</p>
+<p>The function makes use of
+<code>map.configurations</code>, which localises the
+configurations of highest high posterior probability by simulating
+from the Bayesian networks until enough (at least mass
+1-<code>pmin</code>) of the state space has been explored – the
+computation time is thus dependent on how flat the posterior is,
+and how small <code>pmin</code> is. The simulation is used only to locate
+the relevant configurations; the computed probabilities are exact.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list, which for each marker contains the maximum
+posterior configurations of allele counts (genotypes) above the specified probabilities <code>pmin</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.map.genotypes</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(MC18, USCaucasian, SGMplusDyes)
+mix &lt;- DNAmixture(list(MC18), k = 3, K = "K1", C = list(50), database = USCaucasian)
+p &lt;- mixpar(rho = list(30), eta = list(30), xi = list(0.07),
+            phi = list(c(K1 = 0.7, U1 =0.2, U2 = 0.1)))
+## Inlude the peak height information
+setPeakInfo(mix, p)
+## Marginally best genotypes for contributor U1
+mpU1 &lt;- map.genotypes(mix, pmin = 0.01, U = 1, type = "seen", markers = "D16S539")
+summary(mpU1)
+
+## Jointly best genotypes for all unknown contributors
+mp &lt;- map.genotypes(mix, pmin = 0.01, type = "seen")
+summary(mp) ## Profiles as genotypes rather than allelecounts
+
+</code></pre>
+
+
+</div>

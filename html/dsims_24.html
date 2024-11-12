@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make.population.description</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creates a Population.Description object</h2>
+
+<h3>Description</h3>
+
+<p>Creates an object which describes a population. The values in this object
+will be used to create instances of the population.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make.population.description(
+  region = make.region(),
+  density = make.density(),
+  covariates = list(),
+  N = numeric(0),
+  fixed.N = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>region</code></td>
+<td>
+<p>the Region object in which this population exists (see make.region).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>density</code></td>
+<td>
+<p>the Density object describing the distribution of the individuals / clusters (see make.density).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>Named list with one named entry per individual-level covariate. Cluster sizes can be defined here, it must be named 'size'. The distribution of covariate values can either be defined by specifying a particular distribution and its parameters or as a discrete distribution in a dataframe. Dataframes should have columns level and prob (and optionally strata) specifying the covariates levels, probabilities and strata if they are strata specific. Distributions can be defined as lists with named entries distribution and the relevant parameters as specified in details. A list of distributions can be provided with one for each strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>the number of individuals / clusters in a population with one value per
+strata. Total population size is 1000 by default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.N</code></td>
+<td>
+<p>a logical value. If TRUE the population is generated from the value(s)
+of N otherwise it is generated from the values in the density grid.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Individual-level covariate values can be defined as one of the following distributions: 'normal', 'poisson', 'ztruncpois' or 'lognormal'. The distribution name and the associated parameters as defined in the table below must be provided in a named list. Either one list can be provided for the entire study area or multiple lists grouped together as a list with one per strata.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;"> Distribution  </td>
+<td style="text-align: left;"> Parameters  </td>
+<td style="text-align: left;">         </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+               normal        </td>
+<td style="text-align: left;"> mean        </td>
+<td style="text-align: left;"> sd      </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+               poisson       </td>
+<td style="text-align: left;"> lambda      </td>
+<td style="text-align: left;">         </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+               ztruncpois    </td>
+<td style="text-align: left;"> mean        </td>
+<td style="text-align: left;">         </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+               lognormal     </td>
+<td style="text-align: left;"> meanlog     </td>
+<td style="text-align: left;"> sdlog   </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+              </td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>Population.Description-class</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Laura Marshall
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>make.simulation</code> <code>make.detectability</code> <code>make.density</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a basic rectangular study area
+region &lt;- make.region()
+
+# Make a density grid (large spacing for speed)
+density &lt;- make.density(region = region,
+                        x.space = 200,
+                        y.space = 100,
+                        constant = 1)
+density &lt;- add.hotspot(density, centre = c(1000, 100), sigma = 250, amplitude = 10)
+
+# Define some covariate values for out population
+covs &lt;- list()
+covs$size &lt;- list(distribution = "ztruncpois", mean = 5)
+
+# Define the population description
+popdsc &lt;- make.population.description(region = region,
+                                      density = density,
+                                      covariates = covs,
+                                      N = 200)
+
+# define the detecability
+detect &lt;- make.detectability(key.function = "hn", scale.param = 25, truncation = 50)
+
+# generate an example population
+pop &lt;- generate.population(popdsc, region = region, detectability = detect)
+
+plot(pop, region)
+
+# Multi-strata example (make sf shape)
+s1 = matrix(c(0,0,0,2,1,2,1,0,0,0),ncol=2, byrow=TRUE)
+s2 = matrix(c(1,0,1,2,2,2,2,0,1,0),ncol=2, byrow=TRUE)
+pol1 = sf::st_polygon(list(s1))
+pol2 = sf::st_polygon(list(s2))
+sfc &lt;- sf::st_sfc(pol1,pol2)
+strata.names &lt;- c("low", "high")
+sf.pol &lt;- sf::st_sf(strata = strata.names, geom = sfc)
+
+region &lt;- make.region(region.name = "Multi-strata Eg",
+                      strata.name = strata.names,
+                      shape = sf.pol)
+
+density &lt;- make.density(region = region,
+                        x.space = 0.22,
+                        constant = c(10,80))
+
+covs &lt;- list()
+covs$size &lt;- list(list(distribution = "poisson", lambda = 25),
+                  list(distribution = "poisson", lambda = 15))
+covs$sex &lt;- data.frame(level = rep(c("male", "female"),2),
+                      prob = c(0.5, 0.5, 0.6, 0.4),
+                      strata = c(rep("low",2),rep("high",2)))
+
+# Define the population description (this time using the density to determine
+# the population size)
+popdesc &lt;- make.population.description(region = region,
+                                       density = density,
+                                       covariates = covs,
+                                       fixed.N = FALSE)
+
+# define the detecability (see make.detectability to alter detection function
+# for different covariate values)
+detect &lt;- make.detectability(key.function = "hn", scale.param = 25, truncation = 50)
+
+# generate an example population
+pop &lt;- generate.population(popdesc, region = region, detectability = detect)
+
+plot(pop, region)
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,185 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>jointprior</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculates the joint prior distribution</h2>
+
+<h3>Description</h3>
+
+<p>Given a network with a <code>prob</code> property for each node, derives the
+joint probability distribution. Then the quantities needed in
+the local master procedure for finding the local parameter priors are
+deduced.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">jointprior(nw,N=NA,phiprior="bottcher",timetrace=FALSE) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nw</code></td>
+<td>
+<p>an object of class <code>network</code>. Each node must
+have a <code>prob</code> property to describe the local probability
+distribution. The <code>prob</code> property
+is created using <code>prob</code> method for network objects, which is called by the
+<code>network</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>an integer, which gives the size of the imaginary data base. If
+this is too small, 
+<code>NA</code>'s may be created in the output, resulting in errors in
+<code>learn</code>. If no <code>N</code> is given, the procedure tries to 
+set a value as low as possible.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phiprior</code></td>
+<td>
+<p>a string, which specifies how the prior for phi is
+calculated. Either <code>phiprior="bottcher"</code> or
+<code>phiprior="heckerman"</code> can be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timetrace</code></td>
+<td>
+<p>a logical. If <code>TRUE</code>, prints some timing
+information on the screen.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For the discrete part of the network, the joint probability
+distribution is 
+calculated by multiplying together the local probability
+distributions. Then, <code>jointalpha</code> is determined by multiplying
+each entry in the joint probability distribution by the size of the
+imaginary data base <code>N</code>. 
+</p>
+<p>For the mixed part of the network, for each configuration of the discrete
+variables, the joint Gaussian distribution of the continuous
+variables is constructed and represented by <code>jointmu</code> (one
+row for each configuration of the discrete parents) and
+<code>jointsigma</code> (a list of matrices – one for each configuration of
+the discrete parents). The configurations of the discrete parents are
+ordered according to <code>findex</code>. The algorithm for
+constructing the joint distribution of the continuous variables is
+described in Shachter and Kenley (1989). 
+</p>
+<p>Then, <code>jointalpha</code>, <code>jointnu</code>, <code>jointrho</code>, <code>mu</code> and
+<code>jointphi</code> are deduced. These quantities are later used for
+deriving local parameter priors.
+</p>
+<p>For each configuration <code>i</code> of the discrete variables,
+</p>
+<p style="text-align: center;"><code class="reqn">\nu_i=\rho_i=\alpha_i</code>
+</p>
+<p> and
+</p>
+<p style="text-align: center;"><code class="reqn">\phi_i = (\nu_i -1)\Sigma_i</code>
+</p>
+
+<p>if <code>phiprior="bottcher"</code>, see Bottcher(2001) and
+</p>
+<p style="text-align: center;"><code class="reqn">\phi_i = \nu_i(\rho_i -2)\Sigma_i/(\nu_i+1)</code>
+</p>
+
+<p>if <code>phiprior="heckerman"</code>, see Heckerman, Geiger and Chickering (1995).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following elements,
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>jointalpha</code></td>
+<td>
+<p>a table used in the local master procedure for discrete variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jointnu</code></td>
+<td>
+<p>a table used in the local master procedure for continuous variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jointrho</code></td>
+<td>
+<p>a table used in the local master procedure for continuous variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jointmu</code></td>
+<td>
+<p>a numeric matrix used in the local master procedure for continuous variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jointsigma</code></td>
+<td>
+<p>a list of numeric matrices (not used in further calculations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jointphi</code></td>
+<td>
+<p>a list of numeric matrices used in the local master procedure for continuous variables.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Susanne Gammelgaard Bottcher, <br>
+Claus Dethlefsen <a href="mailto:rpackage.deal@gmail.com">rpackage.deal@gmail.com</a>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Bottcher, S.G. (2001). Learning Bayesian Networks with Mixed Variables, Artificial Intelligence and Statistics 2001, Morgan Kaufmann, San Francisco, CA, USA, 149-156.
+</p>
+<p>Heckerman, D., Geiger, D. and Chickering, D. (1995). Learning Bayesian
+networks: The combination of knowledge and statistical data. Machine
+Learning, 20: 197-243.  
+</p>
+<p>Shachter, R.D. and Kenley, C.R. (1989), Gaussian influence diagrams. Management
+Science, 35:527-550.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>network</code>, <code>prob</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(rats)
+rats.nw    &lt;- network(rats)
+rats.prior &lt;- jointprior(rats.nw,12)
+
+## Not run: savenet(rats.nw,file("rats.net"))
+## Not run: rats.nw &lt;- readnet(file("rats.net"))
+## Not run: rats.nw &lt;- prob(rats.nw,rats)
+## Not run: rats.prior &lt;- jointprior(rats.nw,12)
+
+</code></pre>
+
+
+</div>

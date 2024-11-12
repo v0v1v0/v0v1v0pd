@@ -1,0 +1,323 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qEGO.nsteps</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sequential multipoint Expected improvement (qEI) maximizations and model
+re-estimation</h2>
+
+<h3>Description</h3>
+
+<p>Executes <code>nsteps</code> iterations of the multipoint EGO method to an object
+of class <code>km</code>.  At each step, a kriging model
+(including covariance parameters) is re-estimated based on the initial
+design points plus the points visited during all previous iterations; then
+a new batch of points is obtained by maximizing the multipoint Expected
+Improvement criterion (<code>qEI</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qEGO.nsteps(
+  fun,
+  model,
+  npoints,
+  nsteps,
+  lower = rep(0, model@d),
+  upper = rep(1, model@d),
+  crit = "exact",
+  minimization = TRUE,
+  optimcontrol = NULL,
+  cov.reestim = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>the objective function to be optimized,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code> ,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npoints</code></td>
+<td>
+<p>an integer repesenting the desired batchsize,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>an integer representing the desired number of iterations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+<p>"exact", "CL" : a string specifying the criterion used. "exact"
+triggers the maximization of the multipoint expected improvement at each
+iteration (see <code>max_qEI</code>), "CL" applies the Constant Liar
+heuristic,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimization</code></td>
+<td>
+<p>logical specifying if we want to minimize or maximize
+<code>fun</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optimcontrol</code></td>
+<td>
+<p>an optional list of control parameters for the qEI
+optimization (see details or <code>max_qEI</code>),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.reestim</code></td>
+<td>
+<p>optional boolean specifying if the kriging
+hyperparameters should be re-estimated at each iteration,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional arguments for <code>fun</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The parameters of list <code>optimcontrol</code> are :
+</p>
+<p>- <code>optimcontrol$method</code> : "BFGS" (default), "genoud" ; a string
+specifying the method used to maximize the criterion (irrelevant when
+<code>crit</code> is "CL" because this method always uses genoud),
+</p>
+<p>- when <code>crit="CL"</code> :
+</p>
+<p>+ <code>optimcontrol$parinit</code> : optional matrix of initial values (must
+have model@d columns, the number of rows is not constrained),
+</p>
+<p>+ <code>optimcontrol$L</code> : "max", "min", "mean" or a scalar value specifying
+the liar ; "min" takes <code>model@min</code>, "max" takes <code>model@max</code>,
+"mean" takes the prediction of the model ; When L is <code>NULL</code>, "min" is
+taken if <code>minimization==TRUE</code>, else it is "max".
+</p>
+<p>+ The parameters of function <code>genoud</code>. Main parameters are :
+<code>"pop.size"</code> (default : [N=3*2^model@d for dim&lt;6 and N=32*model@d
+otherwise]), <code>"max.generations"</code> (default : 12),
+<code>"wait.generations"</code> (default : 2) and <code>"BFGSburnin"</code> (default :
+2).
+</p>
+<p>- when <code>optimcontrol$method = "BFGS"</code> :
+</p>
+<p>+ <code>optimcontrol$nStarts</code> (default : 4),
+</p>
+<p>+ <code>optimcontrol$fastCompute</code> : if TRUE (default), a fast approximation
+method based on a semi-analytic formula is used, see [Marmin 2014] for
+details,
+</p>
+<p>+ <code>optimcontrol$samplingFun</code> : a function which sample a batch of
+starting point (default : <code>sampleFromEI</code>),
+</p>
+<p>+ <code>optimcontrol$parinit</code> : optional 3d-array of initial (or candidate)
+batches (for all <code>k</code>, parinit[,,k] is a matrix of size
+<code>npoints*model@d</code> representing one batch). The number of initial
+batches (length(parinit[1,1,])) is not contrained and does not have to be
+equal to <code>nStarts</code>. If there is too few initial batches for
+<code>nStarts</code>, missing batches are drawn with <code>samplingFun</code> (default
+: <code>NULL</code>),
+</p>
+<p>- when <code>optimcontrol$method = "genoud"</code> :
+</p>
+<p>+ <code>optimcontrol$fastCompute</code> : if TRUE (default), a fast approximation
+method based on a semi-analytic formula is used, see [Marmin 2014] for
+details,
+</p>
+<p>+ <code>optimcontrol$parinit</code> : optional matrix of candidate starting
+points (one row corresponds to one point),
+</p>
+<p>+ The parameters of the <code>genoud</code> function. Main parameters are
+<code>"pop.size"</code> (default : <code>[50*(model@d)*(npoints)]</code>),
+<code>"max.generations"</code> (default : 5), <code>"wait.generations"</code> (default
+: 2), <code>"BFGSburnin"</code> (default : 2).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>a data frame representing the additional points visited during
+the algorithm,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>a data frame representing the response values at the points
+given in <code>par</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npoints</code></td>
+<td>
+<p>an integer representing the number of parallel
+computations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>an integer representing the desired number of iterations
+(given in argument),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastmodel</code></td>
+<td>
+<p>an object of class <code>km</code>
+corresponding to the last kriging model fitted,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history</code></td>
+<td>
+<p>a vector of size <code>nsteps</code> representing the current
+known optimum at each step.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Sebastien Marmin 
+</p>
+<p>Clement Chevalier 
+</p>
+<p>David Ginsbourger
+</p>
+
+
+<h3>References</h3>
+
+<p>C. Chevalier and D. Ginsbourger (2014) Learning and Intelligent
+Optimization - 7th International Conference, Lion 7, Catania, Italy,
+January 7-11, 2013, Revised Selected Papers, chapter Fast computation of
+the multipoint Expected Improvement with applications in batch selection,
+pages 59-69, Springer.
+</p>
+<p>D. Ginsbourger, R. Le Riche, L. Carraro (2007), A Multipoint Criterion for
+Deterministic Parallel Global Optimization based on Kriging. The
+International Conference on Non Convex Programming, 2007.
+</p>
+<p>D. Ginsbourger, R. Le Riche, and L. Carraro. Kriging is well-suited to
+parallelize optimization (2010), In Lim Meng Hiot, Yew Soon Ong, Yoel
+Tenne, and Chi-Keong Goh, editors, <em>Computational Intelligence in
+Expensive Optimization Problems</em>, Adaptation Learning and Optimization,
+pages 131-162. Springer Berlin Heidelberg.
+</p>
+<p>S. Marmin. Developpements pour l'evaluation et la maximisation du critere
+d'amelioration esperee multipoint en optimisation globale (2014). Master's
+thesis, Mines Saint-Etienne (France) and University of Bern (Switzerland).
+</p>
+<p>J. Mockus (1988), <em>Bayesian Approach to Global Optimization</em>. Kluwer
+academic publishers.
+</p>
+<p>M. Schonlau (1997), <em>Computer experiments and global optimization</em>,
+Ph.D. thesis, University of Waterloo.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>qEI</code>, <code>max_qEI</code>, <code>qEI.grad</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+set.seed(123)
+#####################################################
+### 2 ITERATIONS OF EGO ON THE BRANIN FUNCTION,   ###
+### STARTING FROM A 9-POINTS FACTORIAL DESIGN     ###
+#####################################################
+
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+names(response.branin) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.branin, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# EGO n steps
+library(rgenoud)
+nsteps &lt;- 2 # increase to 10 for a more meaningful example
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)
+npoints &lt;- 3 # The batchsize
+oEGO &lt;- qEGO.nsteps(model = fitted.model1, branin, npoints = npoints, nsteps = nsteps,
+crit="exact", lower, upper, optimcontrol = NULL)
+print(oEGO$par)
+print(oEGO$value)
+plot(c(1:nsteps),oEGO$history,xlab='step',ylab='Current known minimum')
+
+## Not run: 
+# graphics
+n.grid &lt;- 15 # increase to 21 for better picture
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, branin)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid, y.grid, z.grid, 40)
+title("Branin function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par, pch=19, col="red")
+text(oEGO$par[,1], oEGO$par[,2], labels=c(tcrossprod(rep(1,npoints),1:nsteps)), pos=3)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

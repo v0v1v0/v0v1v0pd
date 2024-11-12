@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>partitions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distribute events into specified intervals.</h2>
+
+<h3>Description</h3>
+
+<p>Distribute events into groups defined by time or numerical intervals.
+Each set of linked records are assigned a unique identifier with relevant group-level data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">partitions(
+  date,
+  window = NULL,
+  windows_total = 1,
+  separate = FALSE,
+  sn = NULL,
+  strata = NULL,
+  data_links = "ANY",
+  custom_sort = NULL,
+  group_stats = FALSE,
+  data_source = NULL,
+  by = NULL,
+  length.out = NULL,
+  fill = TRUE,
+  display = "none",
+  precision = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>date</code></td>
+<td>
+<p><code>[date|datetime|integer|number_line]</code>. Event date or period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window</code></td>
+<td>
+<p><code>[integer|number_line]</code>. Numeric or time intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>windows_total</code></td>
+<td>
+<p><code>[integer|number_line]</code>. Minimum number of matched <code>windows</code> required for a pane. See <code>details</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separate</code></td>
+<td>
+<p><code>[logical]</code>. If <code>TRUE</code>, events matched to different <code>windows</code> are not linked.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sn</code></td>
+<td>
+<p><code>[integer]</code>. Unique record identifier. Useful for creating familiar <code>pane</code> identifiers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p><code>[atomic]</code>. Subsets of the dataset. Panes are created separately for each <code>strata</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_links</code></td>
+<td>
+<p><code>[list|character]</code>. A set of <code>data_sources</code> required in each <code>pane</code>. A <code>pane</code> without records from these <code>data_sources</code> will be unlinked. See <code>Details</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_sort</code></td>
+<td>
+<p><code>[atomic]</code>. Preferred order for selecting <code>"index"</code> events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_stats</code></td>
+<td>
+<p><code>[logical]</code>. If <code>TRUE</code> (default), the returned <code>pane</code> object will include group specific information like panes start and end dates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_source</code></td>
+<td>
+<p><code>[character]</code>. Unique data source identifier. Adds the list of datasets in each pane to the <code>pane</code>. Useful when the data is from multiple sources.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p><code>[integer]</code>. Width of splits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>length.out</code></td>
+<td>
+<p><code>[integer]</code>. Number of splits.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fill</code></td>
+<td>
+<p><code>[logical]</code>. Retain (<code>TRUE</code>) or drop (<code>FALSE</code>) the remainder of an uneven split.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>display</code></td>
+<td>
+<p><code>[character]</code>. Display a status update. Options are; <code>"none"</code> (default), <code>"progress"</code> or <code>"stats"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precision</code></td>
+<td>
+<p>Round precision</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Each assigned group is referred to as a <code>pane</code> A <code>pane</code> consists of events within a specific time or numerical intervals (<code>window</code>).
+</p>
+<p>Each <code>window</code> must cover a separate interval. Overlapping <code>windows</code> are merged before events are distributed into panes.
+Events that occur over two <code>windows</code> are assigned to the last one listed.
+</p>
+<p>Alternatively, you can create <code>windows</code> by splitting a period into equal parts (<code>length.out</code>), or into a sequence of intervals with fixed widths (<code>by</code>).
+</p>
+<p>By default, the earliest event is taken as the <code>"Index"</code> event of the <code>pane</code>.
+An alternative can be chosen with <code>custom_sort</code>.
+Note that this is simply a convenience option because it has no bearing on how groups are assigned.
+</p>
+<p><b><code>partitions()</code></b> will categorise records into 3 types;
+</p>
+
+<ul>
+<li> <p><code>"Index"</code> - Index event/record of the pane.
+</p>
+</li>
+<li> <p><code>"Duplicate_I"</code> - Duplicate of the <code>"Index"</code> record.
+</p>
+</li>
+<li> <p><code>"Skipped"</code> - Records that are not assigned to a pane.
+</p>
+</li>
+</ul>
+<p>Every element in <code>data_links</code> must be named <code>"l"</code> (links) or <code>"g"</code> (groups).
+Unnamed elements of <code>data_links</code> will be assumed to be <code>"l"</code>.
+</p>
+
+<ul>
+<li>
+<p> If named <code>"l"</code>, only groups with records from every listed <code>data_source</code> will be retained.
+</p>
+</li>
+<li>
+<p> If named <code>"g"</code>, only groups with records from any listed <code>data_source</code> will be retained.
+</p>
+</li>
+</ul>
+<p><em><code>NA</code> values in <code>strata</code> excludes records from the partitioning process</em>.
+</p>
+<p>See <code>vignette("episodes")</code> for more information.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>pane</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pane</code>; <code>number_line_sequence</code>; <code>episodes</code>; <code>links</code>; <code>overlaps</code>; <code>number_line</code>; <code>schema</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">events &lt;- c(30, 2, 11, 10, 100)
+windows &lt;- number_line(c(1, 9, 25), c(3, 12, 35))
+
+events
+partitions(date = events, length.out = 3, separate = TRUE)
+partitions(date = events, by = 10, separate = TRUE)
+partitions(date = events, window = windows, separate = TRUE)
+partitions(date = events, window = windows, separate = FALSE)
+partitions(date = events, window = windows, separate = FALSE, windows_total = 4)
+
+</code></pre>
+
+
+</div>

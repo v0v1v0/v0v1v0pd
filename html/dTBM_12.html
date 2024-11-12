@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sim_dTBM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulation of degree-corrected tensor block models</h2>
+
+<h3>Description</h3>
+
+<p>Generate order-3 tensor/matrix observations with degree heterogeneity under degree-corrected tensor block models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sim_dTBM(
+  seed = NA,
+  imat = FALSE,
+  asymm = FALSE,
+  p,
+  r,
+  core_control = c("random", "control"),
+  delta = NULL,
+  s_min = NULL,
+  s_max = NULL,
+  dist = c("normal", "binary"),
+  sigma = 1,
+  theta_dist = c("abs_normal", "pareto", "non"),
+  alpha = NULL,
+  beta = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>number, random seed for generating data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>imat</code></td>
+<td>
+<p>logic variable, if "TRUE", generate matrix data; if "FALSE", generate order-3 tensor data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asymm</code></td>
+<td>
+<p>logic variable, if "TRUE", clustering assignment differs in different modes; if "FALSE", all the modes share the same clustering assignment</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>vector, dimension of the tensor/matrix observation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>vector, cluster number on each mode</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>core_control</code></td>
+<td>
+<p>character, the way to control the generation of core tensor/matrix; see "details"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>number, Frobenius norm of the slices in core tensor if <code>core_control = "control"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s_min</code></td>
+<td>
+<p>number, value of off-diagonal elements in original core tensor/matrix if <code>core_control = "control"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s_max</code></td>
+<td>
+<p>number, value of diagonal elements in original core tensor/matrix if <code>core_control = "control"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>character, distribution of tensor/matrix observation; see "details"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>number, standard deviation of Gaussian noise if <code>dist = "normal"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>theta_dist</code></td>
+<td>
+<p>character, distribution of degree heterogeneity; see "details"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>number, shape parameter in pareto distribution if <code>theta_dist = "pareto"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>number, scale parameter in pareto distribution if <code>theta_dist = "pareto"</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The general tensor observation is generated as
+</p>
+<p><code>Y = S x1 Theta1 M1 x2 Theta2 M2 x3 Theta3 M3 + E,</code>
+</p>
+<p>where <code>S</code> is the core tensor, <code>Thetak</code> is a diagonal matrix with elements in the <code>k</code>-th vector of <code>theta</code>,
+<code>Mk</code> is the membership matrix based on the clustering assignment in the <code>k</code>-th vector of <code>z</code> with <code>r[k]</code> clusters,
+<code>E</code> is the mean-zero noise tensor, and <code>xk</code> refers to the matrix-by-tensor product on the <code>k</code>-th mode, for <code>k = 1,2,3</code>.
+</p>
+<p>If <code>imat = TRUE</code>, <code>Y,S,E</code> degenerate to matrix and <code>Y = Theta1 M1 S M2^T Theta2^T + E</code>.
+</p>
+<p>If <code>asymm = FALSE</code>, <code>Thetak = Theta</code> and <code>Mk = M</code> for all <code>k = 1,2,3</code>.
+</p>
+<p><code>core_control</code> specifies the way to generate <code>S</code>:
+</p>
+<p>If <code>core_control = "control"</code>, first generate <code>S</code> as a diagonal tensor/matrix with diagonal elements <code>s_max</code> and off-diagonal elements <code>s_min</code>;
+then scale the original core such that Frobenius norm of the slices equal to <code>delta</code>, i.e, <code>delta = sqrt(sum(S[1,,]^2))</code> or <code>delta = sqrt(sum(S[1,]^2))</code>;
+ignore the scaling if <code>delta = NULL</code>; option <code>"control"</code> is only applicable for symmetric case <code>asymm = FALSE</code>.
+</p>
+<p>If <code>core_control = "random"</code>, generate <code>S</code> with random entries following uniform distribution U(0,1).
+</p>
+<p><code>dist</code> specifies the distribution of <code>E</code>: <code>"normal"</code> for Gaussian and <code>"binary"</code> for Bernoulli distribution; <code>sigma</code> specifices the standard deviation if <code>dist = "normal"</code>.
+</p>
+<p><code>theta_dist</code> firstly specifies the distribution of <code>theta</code>: <code>"non"</code> for constant 1, <code>"abs_normal"</code> for absoulte normal distribution, <code>"pareto"</code> for pareto distribution; <code>alpha, beta</code> specify the shape and scale parameter if <code>theta_dist = "pareto"</code>;
+then scale <code>theta</code> to have mean equal to one in each cluster.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list containing the following:
+</p>
+<p><code>Y</code> array ( if <code>imat = FALSE</code> )/matrix ( if <code>imat = TRUE</code> ), simulated tensor/matrix observations with dimension <code>p</code>  
+</p>
+<p><code>X</code> array ( if <code>imat = FALSE</code> )/matrix ( if <code>imat = TRUE</code> ), mean tensor/matrix of the observation, i.e., the expectation of <code>Y</code>
+</p>
+<p><code>S</code> array ( if <code>imat = FALSE</code> )/matrix ( if <code>imat = TRUE</code> ), core tensor/matrix recording the block effects with dimension <code>r</code>
+</p>
+<p><code>theta</code> a list of vectors, degree heterogeneity on each mode
+</p>
+<p><code>z</code> a list of vectors, clustering assignment on each mode
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+test_data = sim_dTBM(seed = 1, imat = FALSE, asymm = FALSE, p = c(50,50,50), r = c(3,3,3),
+                    core_control = "control", s_min = 0.05, s_max = 1,
+                    dist = "normal", sigma = 0.5,
+                    theta_dist = "pareto", alpha = 4, beta = 3/4)
+</code></pre>
+
+
+</div>

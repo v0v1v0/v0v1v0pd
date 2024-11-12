@@ -1,0 +1,351 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distatis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>3-Way MDS based on the  "STATIS" optimization
+procedure.</h2>
+
+<h3>Description</h3>
+
+<p><code>distatis</code>: Implements the <abbr><span class="acronym">DISTATIS</span></abbr>
+method which is a 3-way generalization of
+metric multidimensional scaling
+(<em>a.k.a.</em> classical MDS or principal coordinate analysis).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">distatis(
+  LeCube2Distance,
+  Norm = "MFA",
+  Distance = TRUE,
+  double_centering = TRUE,
+  RV = TRUE,
+  nfact2keep = 3,
+  compact = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>LeCube2Distance</code></td>
+<td>
+<p>an "observations 
+<code class="reqn">\times</code> observations
+<code class="reqn">\times</code> distance matrices" array of dimensions
+<code class="reqn">I\times I \times  K</code>.
+Each of the <code class="reqn">K</code> "slices" is a <code class="reqn">I\times I</code> square
+distance (or covariance) matrix describing the 
+<code class="reqn">I</code> observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Norm</code></td>
+<td>
+<p>Type of normalization 
+used for each cross-product matrix derived
+from the distance (or covariance) matrices.  
+Current options are <code>NONE</code>
+(do nothing), <code>SUMPCA</code> (normalize by the total inertia) 
+or <code>MFA</code> (<code>default</code>) that normalizes each matrix so
+that its first eigenvalue is equal to one
+or <code>NUCLEAR</code> (i.e., the of the squarae root of the
+eigenvalues).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Distance</code></td>
+<td>
+<p>if <code>TRUE</code> (<code>default</code>) 
+the matrices are distance matrices, <code>FALSE</code>
+the matrices are treated as positive semi-definite matrices
+(e.g., scalar products,
+covariance, or correlation matrices).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>double_centering</code></td>
+<td>
+<p>if <code>TRUE</code> 
+(<code>default</code>) the matrices are double-centered
+(should always be used for distances).
+if <code>FALSE</code> the matrices
+will <em>not</em> be double centered 
+(note that these matrices 
+should be semi positive definite matrices such as,
+for example,
+covariance matrices).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RV</code></td>
+<td>
+<p>if <code>TRUE</code> (<code>default</code>) 
+we use the <code class="reqn">R_V</code> coefficient to
+compute the <code class="reqn">\alpha</code>, 
+if <code>FALSE</code>
+we use the matrix scalar product.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfact2keep</code></td>
+<td>
+<p>(default: <code>3</code>) Number of factors 
+to keep for the computation of the
+factor scores of the observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compact</code></td>
+<td>
+<p>if <code>FALSE</code> (default),
+<code>distatis</code> provides detailed output, if
+<code>TRUE</code>,  <code>distatis</code> sends back
+only the <code class="reqn">\alpha</code> weights
+(this option is used to make the
+bootstrap routine 
+<code>BootFromCompromise</code> more 
+computationally efficient).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>distatis</code> takes
+as input a set of <code class="reqn">K</code> distance matrices
+(or  positive semi-definite matrices such as scalar products,
+covariance, or correlation matrices)
+describing a set of <code class="reqn">I</code> observations.
+From this set of matrices <code>distatis</code>    
+computes: (1) a set of
+factor scores that describes the similarity structure 
+of the <code class="reqn">K</code> distance
+matrices (e.g., what distance matrices describe the 
+observations in the same
+way, what distance matrices differ from each other) 
+(2) a set of factor
+scores (called the <em>compromise</em> factor scores) 
+that best describes  
+the similarity structure of the <code class="reqn">I</code> observations 
+and (3)
+<code class="reqn">I</code>
+sets of
+partial factor scores that show how 
+each individual distance matrix "sees"
+the compromise space.  
+</p>
+<p><code>distatis</code> computes the compromise as an optimum
+linear combination of the cross-product matrices 
+associated to each distance 
+(or positive positive semi-definite)
+matrix. 
+</p>
+<p><code>distatis</code> can also be applied to a set of 
+scalar products, covariance, or correlation
+matrices.
+</p>
+<p><abbr><span class="acronym">DISTATIS</span></abbr> is part of the 
+<abbr><span class="acronym">STATIS</span></abbr> family.
+It is often used to analyze
+the results of sorting tasks.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>distatis</code> sends back the results 
+<em>via</em> two lists:
+<code>res.Cmat</code>
+and <code>res.Splus</code>.
+Note that items with a * are the only ones sent back
+when using the <code>compact = TRUE</code> option.
+</p>
+<table><tr style="vertical-align: top;">
+<td><code>res.Cmat</code></td>
+<td>
+<p>Results for the between 
+distance matrices analysis.</p>
+</td>
+</tr></table>
+<ul>
+<li> <p><code>res.Cmat$C</code>
+The <code class="reqn">I\times I</code> <b>C</b> matrix
+of scalar products (or <code class="reqn">R_V</code> between distance matrices).  
+</p>
+</li>
+<li>
+<p><code>res.Cmat$vectors</code> The eigenvectors of the <b>C</b> matrix 
+</p>
+</li>
+<li>
+<p><code>res.Cmat$alpha</code> * The <code class="reqn">\alpha</code> weights 
+</p>
+</li>
+<li>
+<p><code>res.Cmat$value</code> The eigenvalues of the <b>C</b> matrix 
+</p>
+</li>
+<li>
+<p><code>res.Cmat$G</code> The factor scores for the <b>C</b> matrix 
+</p>
+</li>
+<li> 
+<p><code>res.Cmat$ctr</code> The contributions for <code>res.Cmat$G</code>,
+</p>
+</li>
+<li>
+<p><code>res.Cmat$cos2</code> The squared cosines for <code>res.Cmat$G</code>
+</p>
+</li>
+<li>
+<p><code>res.Cmat$d2</code> The squared 
+Euclidean distance  for <code>res.Cmat$G</code>.
+</p>
+</li>
+</ul>
+<table><tr style="vertical-align: top;">
+<td><code>res.Splus</code></td>
+<td>
+<p>Results for the between observation analysis.</p>
+</td>
+</tr></table>
+<ul>
+<li> <p><code>res.Splus$SCP</code> an <code class="reqn">I\times I\times K</code> array.
+Contains
+the (normalized if needed)
+cross product matrices corresponding to the
+distance matrices.
+</p>
+</li>
+<li> <p><code>res.Splus$Splus</code> * The compromise 
+(optimal linear
+combination of the SCP's').
+</p>
+</li>
+<li> <p><code>res.Splus$eigValues</code> *
+The eigenvalues of the compromise).
+</p>
+</li>
+<li> <p><code>res.Splus$eigVectors</code> *
+The eigenvectors of the compromise).
+</p>
+</li>
+<li> <p><code>res.Splus$tau</code> * The percentage
+of explained inertia of the eigenValues).
+</p>
+</li>
+<li> <p><code>res.Splus$ProjectionMatrix</code> The
+projection matrix used to compute factor
+scores and partial factor scores.
+</p>
+</li>
+<li> <p><code>res.Splus$F</code> The factor scores for the observations.
+</p>
+</li>
+<li> 
+<p><code>res.Splus$ctr</code> The contributions for <code>res.Cmat$F</code>.
+</p>
+</li>
+<li>
+<p><code>res.Splus$cos2</code> The squared cosines for <code>res.Cmat$F</code>.
+</p>
+</li>
+<li>
+<p><code>res.Splust$d2</code> The squared 
+Euclidean distance  for <code>res.Cmat$F</code>.
+</p>
+</li>
+<li> <p><code>res.Splus$PartialF</code> an
+<code class="reqn">I \times \code{nf2keep} \times K</code> array.
+Contains the partial factors for the distance
+matrices.</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Hervé Abdi
+#@seealso <code>GraphDistatisAll</code> 
+<code>GraphDistatisBoot</code>
+#<code>GraphDistatisCompromise</code> 
+# <code>GraphDistatisPartial</code>
+#<code>GraphDistatisRv</code> <code>DistanceFromSort</code>
+#<code>BootFactorScores</code> <code>BootFromCompromise</code>
+#as <code>help</code>,
+</p>
+
+
+<h3>References</h3>
+
+<p>Abdi, H., Valentin, D., O'Toole, A.J., &amp; Edelman, B.
+(2005).
+DISTATIS: The analysis of multiple distance matrices.  
+<em>Proceedings of
+the IEEE Computer Society: 
+International Conference on Computer Vision and
+Pattern Recognition</em>.  (San Diego, CA, USA). pp. 42–47.
+</p>
+<p>Abdi, H., Valentin, D., Chollet, S., &amp; Chrea, C. (2007). 
+Analyzing
+assessors and products in sorting tasks:
+DISTATIS, theory and applications.
+<em>Food Quality and Preference</em>, <b>18</b>, 627–640.
+</p>
+<p>Abdi, H., Dunlop, J.P., &amp; Williams, L.J. (2009).  
+How to compute reliability
+estimates and display confidence and tolerance 
+intervals for pattern
+classifiers using the Bootstrap and 3-way multidimensional scaling
+(DISTATIS).  
+<em>NeuroImage</em>, <b>45</b>, 89–95.
+</p>
+<p>Abdi, H., Williams, L.J., Valentin, D., &amp; 
+Bennani-Dosse, M. (2012).
+STATIS
+and DISTATIS: Optimum multi-table principal component 
+analysis and three way
+metric multidimensional scaling.  
+<em>Wiley Interdisciplinary Reviews:
+Computational Statistics</em>, <b>4</b>, 124–167.
+</p>
+<p>The <code class="reqn">R_V</code> coefficient is described in
+</p>
+<p>Abdi, H. (2007). RV coefficient and congruence coefficient. 
+In N.J. Salkind
+(Ed.): <em>Encyclopedia of Measurement and Statistics</em>.  
+Thousand Oaks
+(CA): Sage. pp. 849–853.
+</p>
+<p>Abdi, H. (2010). Congruence: Congruence coefficient, 
+RV coefficient, and
+Mantel Coefficient.  In N.J. Salkind, D.M., Dougherty,
+&amp; B. Frey (Eds.):
+<em>Encyclopedia of Research Design.</em>
+Thousand Oaks (CA): Sage. pp.
+222–229.
+</p>
+<p>(These papers are available from 
+<a href="https://personal.utdallas.edu/~herve/">https://personal.utdallas.edu/~herve/</a>)
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# 1. Load the DistAlgo data set 
+# (available from the DistatisR package).
+data(DistAlgo)
+# DistAlgo is a 6*6*4 Array (face*face*Algorithm)
+#------------------------------------------------------------------
+# 2. Call the DISTATIS routine with the array 
+#  of distance (DistAlgo) as parameter
+DistatisAlgo &lt;- distatis(DistAlgo)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,119 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DLD</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Discrete Lindley family</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>DLD()</code> defines the Discrete Lindley distribution, one-parameter
+discrete distribution, for a <code>gamlss.family</code> object to be used in GAMLSS fitting
+using the function <code>gamlss()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DLD(mu.link = "log")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>mu.link</code></td>
+<td>
+<p>defines the mu.link, with "log" link as the default for the mu parameter.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>The Discrete Lindley distribution with parameters <code class="reqn">\mu &gt; 0</code> has a support
+0, 1, 2, ... and density given by
+</p>
+<p><code class="reqn">f(x | \mu) = \frac{e^{-\mu x}}{1 + \mu}  (\mu(1 - 2e^{-\mu}) + (1- e^{-\mu})(1+\mu x))</code>
+</p>
+<p>The parameter <code class="reqn">\mu</code> can be interpreted as a strict upper bound on the failure rate function
+</p>
+<p>The conventional discrete distributions (such as geometric, Poisson, etc.) are not
+suitable for various scenarios like reliability, failure times, and counts. Consequently,
+alternative discrete distributions have been created by adapting well-known continuous
+models for reliability and failure times. Among these, the discrete Weibull distribution
+stands out as the most widely used. But models like these require two parameters and not many
+of the known discrete distributions can provide accurate models for both times and counts,
+which the Discrete Lindley distribution does.
+</p>
+<p>Note: in this implementation we changed the original parameters <code class="reqn">\theta</code> for <code class="reqn">\mu</code>,
+we did it to implement this distribution within gamlss framework.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a <code>gamlss.family</code> object which can be used
+to fit a Discrete Lindley distribution
+in the <code>gamlss()</code> function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yojan Andrés Alcaraz Pérez, <a href="mailto:yalcaraz@unal.edu.co">yalcaraz@unal.edu.co</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Bakouch HS, Jazi MA, Nadarajah S (2014).
+“A new discrete distribution.”
+<em>Statistics</em>, <b>48</b>(1), 200–240.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dDLD.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1
+# Generating some random values with
+# known mu
+y &lt;- rDLD(n=100, mu=0.3)
+
+# Fitting the model
+library(gamlss)
+mod1 &lt;- gamlss(y~1, family=DLD,
+               control=gamlss.control(n.cyc=500, trace=FALSE))
+
+# Extracting the fitted values for mu
+# using the inverse link function
+exp(coef(mod1, what='mu'))
+
+# Example 2
+# Generating random values under some model
+
+# A function to simulate a data set with Y ~ DLD
+gendat &lt;- function(n) {
+  x1 &lt;- runif(n)
+  mu    &lt;- exp(2 - 4 * x1)
+  y &lt;- rDLD(n=n, mu=mu)
+  data.frame(y=y, x1=x1)
+}
+
+set.seed(1235)
+datos &lt;- gendat(n=150)
+
+mod2 &lt;- NULL
+mod2 &lt;- gamlss(y~x1, sigma.fo=~x2, family=DLD, data=datos,
+                 control=gamlss.control(n.cyc=500, trace=FALSE))
+
+summary(mod2)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,417 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>colapply.DTSg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply function column-wise</h2>
+
+<h3>Description</h3>
+
+<p>Applies an arbitrary function to selected columns of a <code>DTSg</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DTSg'
+colapply(
+  x,
+  fun,
+  ...,
+  cols = self$cols(class = "numeric")[1L],
+  resultCols = NULL,
+  suffix = NULL,
+  helpers = TRUE,
+  funby = NULL,
+  ignoreDST = FALSE,
+  multiplier = 1L,
+  funbyHelpers = NULL,
+  funbyApproach = self$funbyApproach,
+  clone = getOption("DTSgClone")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>DTSg</code> object (S3 method only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>A <code>function</code>. Its return value must be of length one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to <code>fun</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+<p>A character vector specifying the columns to apply <code>fun</code> to.
+Another possibility is a character string containing either comma separated
+column names, for example, <code>"x,y,z"</code>, or the start and end column separated
+by a colon, for example, <code>"x:z"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resultCols</code></td>
+<td>
+<p>An optional character vector of the same length as <code>cols</code>
+specifying the column names for the return values of <code>fun</code>. Another
+possibility is a character string containing comma separated column names,
+for example, <code>"x,y,z"</code>. Non-existing columns are added and existing columns
+are overwritten. Columns are matched element-wise between <code>cols</code> and
+<code>resultCols</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>suffix</code></td>
+<td>
+<p>An optional character string. The return values of <code>fun</code> are
+added as new columns with names consisting of the columns specified in
+<code>cols</code> and this suffix. Existing columns are never overwritten. Only used
+when <code>resultCols</code> is not specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helpers</code></td>
+<td>
+<p>A logical specifying if helper data shall be handed over to
+<code>fun</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funby</code></td>
+<td>
+<p>One of the temporal aggregation level functions described in
+<code>TALFs</code> or a user defined temporal aggregation level function. Can be
+used to apply functions like <code>cumsum</code> to a certain temporal level. See
+corresponding section and examples for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreDST</code></td>
+<td>
+<p>A logical specifying if day saving time shall be ignored
+by <code>funby</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multiplier</code></td>
+<td>
+<p>A positive integerish value “multiplying” the
+temporal aggregation level of certain <code>TALFs</code>. See corresponding section
+for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyHelpers</code></td>
+<td>
+<p>An optional <code>list</code> with helper data passed on to
+<code>funby</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyApproach</code></td>
+<td>
+<p>A character string specifying the flavour of the applied
+temporal aggregation level function. Either <code>"base"</code>, which utilises
+<code>as.POSIXct</code>, or <code>"fasttime"</code>, which utilises <code>fasttime::fastPOSIXct</code>,
+or <code>"RcppCCTZ"</code>, which utilises <code>RcppCCTZ::parseDatetime</code> as the main
+function for transforming timestamps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clone</code></td>
+<td>
+<p>A logical specifying if the object shall be modified in place or
+if a deep clone (copy) shall be made beforehand.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a <code>DTSg</code> object.
+</p>
+
+
+<h3>Helper data</h3>
+
+<p>In addition to the <code>...</code> argument, this method optionally hands over a
+<code>list</code> argument with helper data called <code>.helpers</code> to <code>fun</code>. This <code>list</code>
+contains the following elements:
+</p>
+
+<ul>
+<li> <p><em>.dateTime:</em> A <code>POSIXct</code> vector containing the <em>.dateTime</em> column.
+</p>
+</li>
+<li> <p><em>periodicity:</em> Same as the <code>periodicity</code> field.
+</p>
+</li>
+<li> <p><em>minLag:</em> A <code>difftime</code> object containing the minimum time difference
+between two subsequent timestamps.
+</p>
+</li>
+<li> <p><em>maxLag:</em> A <code>difftime</code> object containing the maximum time difference
+between two subsequent timestamps.
+</p>
+</li>
+</ul>
+<h3>User defined TALFs, TALFs helper data and multiplier</h3>
+
+<p>User defined temporal aggregation level functions have to return a
+<code>POSIXct</code> vector of the same length as the time series and accept two
+arguments: a <code>POSIXct</code> vector as its first and a <code>list</code> with helper data
+as its second. The default elements of this <code>list</code> are as follows:
+</p>
+
+<ul>
+<li> <p><em>timezone:</em> Same as the <code>timezone</code> field.
+</p>
+</li>
+<li> <p><em>ignoreDST:</em> Same as the <code>ignoreDST</code> argument.
+</p>
+</li>
+<li> <p><em>periodicity:</em> Same as the <code>periodicity</code> field.
+</p>
+</li>
+<li> <p><em>na.status:</em> Same as the <code>na.status</code> field.
+</p>
+</li>
+<li> <p><em>multiplier:</em> Same as the <code>multiplier</code> argument.
+</p>
+</li>
+<li> <p><em>funbyApproach:</em> Same as the <code>funbyApproach</code> argument.
+</p>
+</li>
+</ul>
+<p>Any additional element specified in the <code>funbyHelpers</code> argument is appended
+to the end of the helper data <code>list</code>. In case <code>funbyHelpers</code> contains an
+<em>ignoreDST, multiplier</em> or <em>funbyApproach</em> element, it takes precedence over
+the respective method argument. <em>timezone, periodicity</em> and <em>na.status</em>
+elements are rejected, as they are always taken directly from the object.
+</p>
+<p>The temporal aggregation level of certain <code>TALFs</code> can be adjusted with the
+help of the <code>multiplier</code> argument. A <code>multiplier</code> of <code>10</code>, for example, makes
+<code>byY_____</code> aggregate to decades instead of years. Another example
+is a <code>multiplier</code> of <code>6</code> provided to <code>by_m____</code>. The function
+then aggregates all months of all first and all months of all second half
+years instead of all months of all years separately. This feature is
+supported by the following <code>TALFs</code> of the package:
+</p>
+
+<ul>
+<li> <p><code>byY_____</code>
+</p>
+</li>
+<li> <p><code>byYm____</code>
+</p>
+</li>
+<li> <p><code>byYmdH__</code> (UTC and equivalent as well as all Etc/GMT time zones only)
+</p>
+</li>
+<li> <p><code>byYmdHM_</code>
+</p>
+</li>
+<li> <p><code>byYmdHMS</code>
+</p>
+</li>
+<li> <p><code>by_m____</code>
+</p>
+</li>
+<li> <p><code>by___H__</code> (UTC and equivalent as well as all Etc/GMT time zones only)
+</p>
+</li>
+<li> <p><code>by____M_</code>
+</p>
+</li>
+<li> <p><code>by_____S</code>
+</p>
+</li>
+</ul>
+<h3>Ignore day saving time</h3>
+
+<p><code>ignoreDST</code> tells a temporal aggregation level function if it is supposed to
+ignore day saving time while transforming the timestamps. This can be a
+desired feature for time series strictly following the position of the sun
+such as hydrological time series. Doing so ensures that diurnal variations
+are preserved by all means and all intervals are of the “correct”
+length, however, a possible limitation might be that the day saving time
+shift is invariably assumed to be one hour long. This feature requires that
+the periodicity of the time series was recognised and is supported by the
+following <code>TALFs</code> of the package:
+</p>
+
+<ul>
+<li> <p><code>byY_____</code>
+</p>
+</li>
+<li> <p><code>byYQ____</code>
+</p>
+</li>
+<li> <p><code>byYm____</code>
+</p>
+</li>
+<li> <p><code>byYmd___</code>
+</p>
+</li>
+<li> <p><code>by_Q____</code>
+</p>
+</li>
+<li> <p><code>by_m____</code>
+</p>
+</li>
+<li> <p><code>by___H__</code>
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>cols</code>, <code>getOption</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># new DTSg object
+x &lt;- DTSg$new(values = flow)
+
+# linear interpolation of missing values
+## R6 method
+x$colapply(fun = interpolateLinear)$print()
+
+## S3 method
+print(colapply(x = x, fun = interpolateLinear))
+
+# daily cumulative sums per month
+## R6 method
+x$colapply(
+  fun = cumsum,
+  helpers = FALSE,
+  funby = byYm____
+)$print()
+
+## S3 method
+print(colapply(
+  x = x,
+  fun = cumsum,
+  helpers = FALSE,
+  funby = byYm____
+))
+
+# calculate moving averages with the help of 'runner' (all four given
+# approaches provide the same result with explicitly missing timestamps)
+if (requireNamespace("runner", quietly = TRUE) &amp;&amp;
+    packageVersion("runner") &gt;= package_version("0.3.5")) {
+  wrapper &lt;- function(..., .helpers) {
+    runner::runner(..., idx = .helpers[[".dateTime"]])
+  }
+
+  ## R6 method
+  x$colapply(
+    fun = runner::runner,
+    f = mean,
+    k = 5,
+    lag = -2
+  )$print()
+  x$colapply(
+    fun = wrapper,
+    f = mean,
+    k = "5 days",
+    lag = "-2 days"
+  )$print()
+  x$colapply(
+    fun = runner::runner,
+    f = mean,
+    k = "5 days",
+    lag = "-2 days",
+    idx = x$getCol(col = ".dateTime")
+  )$print()
+  x$colapply(
+    fun = runner::runner,
+    f = mean,
+    k = "5 days",
+    lag = "-2 days",
+    idx = x[".dateTime"]
+  )$print()
+
+  ## S3 method
+  print(colapply(
+    x = x,
+    fun = runner::runner,
+    f = mean,
+    k = 5,
+    lag = -2
+  ))
+  print(colapply(
+    x = x,
+    fun = wrapper,
+    f = mean,
+    k = "5 days",
+    lag = "-2 days"
+  ))
+  print(colapply(
+    x = x,
+    fun = runner::runner,
+    f = mean,
+    k = "5 days",
+    lag = "-2 days",
+    idx = getCol(x = x, col = ".dateTime")
+  ))
+  print(colapply(
+    x = x,
+    fun = runner::runner,
+    f = mean,
+    k = "5 days",
+    lag = "-2 days",
+    idx = x[".dateTime"]
+  ))
+}
+
+# calculate rolling correlations somewhat inefficiently with the help of
+# 'runner'
+if (requireNamespace("runner", quietly = TRUE) &amp;&amp;
+    packageVersion("runner") &gt;= package_version("0.3.8")) {
+  wrapper &lt;- function(x, y, f, k, lag, ...) {
+    runner::runner(
+      cbind(x, y),
+      f = function(x) f(x[, 1], x[, 2]),
+      k = k,
+      lag = lag
+    )
+  }
+
+  ## R6 method
+  x$colapply(
+    fun = wrapper,
+    y = x["flow"] + rnorm(length(x["flow"])),
+    f = cor,
+    k = 5,
+    lag = -2
+  )$print()
+
+  ## S3 method
+  print(colapply(
+    x = x,
+    fun = wrapper,
+    y = x["flow"] + rnorm(length(x["flow"])),
+    f = cor,
+    k = 5,
+    lag = -2
+  ))
+}
+</code></pre>
+
+
+</div>

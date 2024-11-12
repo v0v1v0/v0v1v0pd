@@ -1,0 +1,74 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>batchDocket</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create Documents</h2>
+
+<h3>Description</h3>
+
+<p>Scans the input template file for specified flags as defined in the dictionary,
+and replaces them with corresponding data. Repeats the process for each column, generating a new document
+for each column which is saved as the file name and path listed in row 1
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">batchDocket(filename, batchDictionary)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>filename</code></td>
+<td>
+<p>The file path to the document template. Supports .doc and .docx formats</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batchDictionary</code></td>
+<td>
+<p>A data frame where each row represents a flag to be replaced in the template document
+and each column represents a final document to be generated</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Generates new .doc or .docx files with the flags replaced by the specified data for that column
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Path to the sample template file included in the package
+template_path &lt;- system.file("batch_document", "batchTemplate.docx", package="docket")
+temp_dir &lt;- normalizePath(tempdir(), winslash = "/")
+output_paths &lt;- as.list(paste0(temp_dir, paste0("/batch document", 1:5, ".docx")))
+
+# Create a dictionary by using the getDictionary function on the sample template file
+result &lt;- getBatchDictionary(template_path, output_paths)
+result[2,2:ncol(result)] &lt;- Sys.getenv("USERNAME") #Author name
+result[3,2:ncol(result)] &lt;- as.character(Sys.Date())
+result[4,2:ncol(result)] &lt;- 123
+result[5,2:ncol(result)] &lt;- 456
+result[6,2:ncol(result)] &lt;- 789
+result[7,2:ncol(result)] &lt;- sum(as.numeric(result[4:6,2]))
+
+# Verify that the result dictionary is valid
+if (checkBatchDictionary(result) == TRUE) {
+ batchDocket(template_path, result)
+ for (i in 1:length(output_paths)) {
+   if (file.exists(output_paths[[i]])) {
+     print(paste("docket", i, "Successfully Created"))
+   }
+ }
+}
+</code></pre>
+
+
+</div>

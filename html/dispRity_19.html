@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>char.diff</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Character differences</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the character difference from a discrete matrix
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">char.diff(
+  matrix,
+  method = "hamming",
+  translate = TRUE,
+  special.tokens,
+  special.behaviours,
+  order = FALSE,
+  by.col = TRUE,
+  correction
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>matrix</code></td>
+<td>
+<p>A discrete matrix or a list containing discrete characters. The differences is calculated between the columns (usually characters). Use <code>t(matrix)</code> or <code>by.col = FALSE</code> to calculate the differences between the rows.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The method to measure difference: <code>"hamming"</code> (default; Hamming 1950), <code>"manhattan"</code>, <code>"comparable"</code>, <code>"euclidean"</code>, <code>"maximum"</code>, <code>"mord"</code> (Lloyd 2016), <code>"none"</code> or <code>"binary"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>translate</code></td>
+<td>
+<p><code>logical</code>, whether to translate the characters following the <em>xyz</em> notation (<code>TRUE</code> - default; see details - Felsenstein 2004) or not (<code>FALSE</code>). Translation works for up to 26 tokens per character.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>special.tokens</code></td>
+<td>
+<p>optional, a named <code>vector</code> of special tokens to be passed to <code>grep</code> (make sure to protect the character with <code>"\\"</code>). By default <code>special.tokens &lt;- c(missing = "\\?", inapplicable = "\\-", polymorphism = "\\&amp;", uncertainty = "\\/")</code>. Note that <code>NA</code> values are not compared and that the symbol "@" is reserved and cannot be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>special.behaviours</code></td>
+<td>
+<p>optional, a <code>list</code> of one or more functions for a special behaviour for <code>special.tokens</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p><code>logical</code>, whether the character should be treated as order (<code>TRUE</code>) or not (<code>FALSE</code> - default). This argument can be a <code>logical</code> vector equivalent to the number of rows or columns in <code>matrix</code> (depending on <code>by.col</code>) to specify ordering for each character.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by.col</code></td>
+<td>
+<p><code>logical</code>, whether to measure the distance by columns (<code>TRUE</code> - default) or by rows (<code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction</code></td>
+<td>
+<p>optional, an eventual <code>function</code> to apply to the matrix after calculating the distance.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Each method for calculating distance is expressed as a function of <code class="reqn">d(x, y)</code> where <code class="reqn">x</code> and <code class="reqn">y</code> are a pair of columns (if <code>by.col = TRUE</code>) or rows in the matrix and <em>n</em> is the number of comparable rows (if <code>by.col = TRUE</code>) or columns between them and <em>i</em> is any specific pair of rows (if <code>by.col = TRUE</code>) or columns.
+The different methods are:
+</p>
+
+<ul>
+<li> <p><code>"hamming"</code> The relative distance between characters. This is equal to the Gower distance for non-numeric comparisons (e.g. character tokens; Gower 1966).
+<code class="reqn">d(x,y) = \sum[i,n](abs(x[i] - y[i])/n</code>
+</p>
+</li>
+<li> <p><code>"manhattan"</code> The "raw" distance between characters:
+<code class="reqn">d(x,y) = \sum[i,n](abs(x[i] - y[i])</code>
+</p>
+</li>
+<li> <p><code>"comparable"</code> The number of comparable characters (i.e. the number of tokens that can be compared):
+<code class="reqn">d(x,y) = \sum[i,n]((x[i] - y[i])/(x[i] - y[i]))</code>
+</p>
+</li>
+<li> <p><code>"euclidean"</code> The euclidean distance between characters:
+<code class="reqn">d(x,y) = \sqrt(\sum[i,n]((x[i] - y[i])^2))</code>
+</p>
+</li>
+<li> <p><code>"maximum"</code> The maximum distance between characters:
+<code class="reqn">d(x,y) = max(abs(x[i] - y[i]))</code>
+</p>
+</li>
+<li> <p><code>"mord"</code> The maximum observable distance between characters (Lloyd 2016):
+<code class="reqn">d(x,y) =  \sum[i,n](abs(x[i] - y[i])/\sum[i,n]((x[i] - y[i])/(x[i] - y[i])</code>
+</p>
+</li>
+<li> <p><code>"none"</code> Returns the matrix with eventual converted and/or translated tokens.
+</p>
+</li>
+<li> <p><code>"binary"</code> Returns the matrix with the binary characters.
+</p>
+</li>
+</ul>
+<p>When using <code>translate = TRUE</code>, the characters are translated following the <em>xyz</em> notation where the first token is translated to 1, the second to 2, etc. For example, the character <code>0, 2, 1, 0</code> is translated to <code>1, 2, 3, 1</code>. In other words when <code>translate = TRUE</code>, the character tokens are not interpreted as numeric values. When using <code>translate = TRUE</code>, scaled metrics (i.e <code>"hamming"</code> and <code>"gower"</code>) are divide by <code class="reqn">n-1</code> rather than <code class="reqn">n</code> due to the first character always being equal to 1.
+</p>
+<p><code>special.behaviours</code> allows to generate a special rule for the <code>special.tokens</code>. The functions should can take the arguments <code>character, all_states</code> with <code>character</code> being the character that contains the special token and <code>all_states</code> for the character (which is automatically detected by the function). By default, missing data returns and inapplicable returns <code>NA</code>, and polymorphisms and uncertainties return all present states.
+</p>
+
+<ul>
+<li>
+<p><code>missing = function(x,y) NA</code>
+</p>
+</li>
+<li>
+<p><code>inapplicable = function(x,y) NA</code>
+</p>
+</li>
+<li>
+<p><code>polymorphism = function(x,y) strsplit(x, split = "\\&amp;")[[1]]</code>
+</p>
+</li>
+<li>
+<p><code>uncertainty = function(x,y) strsplit(x, split = "\\/")[[1]]</code>
+</p>
+</li>
+</ul>
+<p>Functions in the list must be named following the special token of concern (e.g. <code>missing</code>), have only <code>x, y</code> as inputs and a single output a single value (that gets coerced to <code>integer</code> automatically). For example, the special behaviour for the special token <code>"?"</code> can be coded as: <code>special.behaviours = list(missing = function(x, y) return(y)</code> to make all comparisons containing the special token containing <code>"?"</code> return any character state <code>y</code>.
+</p>
+<p>IMPORTANT: Note that for any distance method, <code>NA</code> values are skipped in the distance calculations (e.g. distance(<code>A = {1, NA, 2}, B = {1, 2, 3}</code>) is treated as distance(<code>A = {1, 2}, B = {1, 3}</code>)).
+</p>
+<p>IMPORTANT: Note that the number of symbols (tokens) per character is limited by your machine's word-size (32 or 64 bits). If you have more than 64 tokens per character, you might want to use continuous data.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A character difference value or a matrix of class <code>char.diff</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>References</h3>
+
+<p>Felsenstein, J. <b>2004</b>. Inferring phylogenies vol. 2. Sinauer Associates Sunderland.
+Gower, J.C. <b>1966</b>. Some distance properties of latent root and vector methods used in multivariate analysis. Biometrika 53:325-338.
+Hamming, R.W. <b>1950</b>. Error detecting and error correcting codes. The Bell System Technical Journal. DOI: 10.1002/j.1538-7305.1950.tb00463.x.
+Lloyd, G.T. <b>2016</b>. Estimating morphological diversity and tempo with discrete character-taxon matrices: implementation, challenges, progress, and future directions. Biological Journal of the Linnean Society. DOI: 10.1111/bij.12746.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.char.diff</code>, <code>vegdist</code>, <code>dist</code>, <code>calculate_morphological_distances</code>, <code>daisy</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Comparing two binary characters
+char.diff(list(c(0, 1, 0, 1), c(0, 1, 1, 1)))
+
+## Pairwise comparisons in a morphological matrix
+morpho_matrix &lt;- matrix(sample(c(0,1), 100, replace = TRUE), 10)
+char.diff(morpho_matrix)
+
+## Adding special tokens to the matrix
+morpho_matrix[sample(1:100, 10)] &lt;- c("?", "0&amp;1", "-")
+char.diff(morpho_matrix)
+
+## Modifying special behaviours for tokens with "&amp;" to be treated as NA
+char.diff(morpho_matrix,
+          special.behaviours = list(polymorphism = function(x,y) return(NA)))
+
+## Adding a special character with a special behaviour (count "%" as "100")
+morpho_matrix[sample(1:100, 5)] &lt;- "%"
+char.diff(morpho_matrix,
+          special.tokens = c("paragraph" = "\\%"),
+          special.behaviours = list(paragraph = function(x,y) as.integer(100)))
+
+## Comparing characters with/without translation
+char.diff(list(c(0, 1, 0, 1), c(1, 0, 1, 0)), method = "manhattan")
+# no character difference
+char.diff(list(c(0, 1, 0, 1), c(1, 0, 1, 0)), method = "manhattan",
+          translate = FALSE)
+# all four character states are different
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ratesplit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test of rate split (selectivity)</h2>
+
+<h3>Description</h3>
+
+<p>This function will determine whether there are meaningful differences between the taxonomic rates in the individual time bins of two subsets of an occurrence database.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ratesplit(
+  x,
+  sel,
+  tax = "genus",
+  bin = "stg",
+  rate = "pc",
+  method = "AIC",
+  AICc = TRUE,
+  na.rm = TRUE,
+  alpha = NULL,
+  output = "simple"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>(data.frame)</code>: The fossil occurrence data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sel</code></td>
+<td>
+<p><code>(character)</code>: Variable name to do the splitting of the dataset. Can have only two levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tax</code></td>
+<td>
+<p><code>(character)</code>: Variable name of the occurring taxa (variable type: <code>factor</code> or <code>character</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bin</code></td>
+<td>
+<p><code>(character)</code>: Variable name of the bin numbers of the particular occurrences (<code>numeric</code>). Bin numbers should be in ascending order,can contain <code>NA</code>s, it can start from a number other than 1 and must not start with 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rate</code></td>
+<td>
+<p><code>(character)</code>: The rate metric. Currently only the per capita rates of Foote (1999) are available (<code>rate="pc"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p><code>(character)</code>: Either <code>"AIC"</code>, <code>"binom"</code> or <code>"combine"</code>. The <code>"AIC"</code> method calculates the Akaike weights of the single and dual rate models. The <code>"binom"</code> method assumes a binomial error distribution of the counts that are necessary for the rate calculations. The <code>"combine"</code> method shows slices that pass both tests, the <code>"AIC"</code> being usually the stronger.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AICc</code></td>
+<td>
+<p><code>(logical)</code>: Only applicable for the <code>"AIC"</code> method. Toggles whether the small sample corrected AIC (AICc) should be used instead of the regular one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p><code>(logical)</code>: Argument indicating whether the function should proceede when <code>NA</code>s are found in the <code>sel</code> column. Setting this argument to <code>TRUE</code> will proceede with the omission of these entries, while <code>FALSE</code> will coerce the function to output a single <code>NA</code> value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p><code>(numeric)</code>: Threshold to discriminate between meaningful and meaningless split. If <code>method="AIC"</code>, the value corresponds to the minimum weight value the dual model should have. By default it is <code>0.89</code>, which corresponds to the likelihood ratio of 8. If <code>method="binom"</code>, the value corresponds to the alpha value of the binomial test (default: 0.05). If <code>method="combine"</code> than two alpha values are required (1st for the AIC, 2nd for the binomial test). If alpha is <code>NULL</code>, than the default values will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p><code>(character)</code>: Either <code>"simple"</code> or <code>"full"</code>. <code>"simple"</code> returns the indices of the series where selectivity can be suggested. <code>"full"</code> returns a <code>matrix</code> of Akaike weights, or binomial probabilities.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Splitting an occurrence database to its subsets secreases the amount of information passed to the rate calculations and therefore the precision of the individual estimates. Therefore, our ability to tell apart two similar values decreases with the number of sampled taxa. In order to assess the subsets individually and compare them, it is advised to test whether the split into two subsets is meaningful, given the total data. Examples of this use can be found in Kiessling and Simpson (2011) and Kiessling and Kocsis (2015).
+The meaningfulness of the split is dependent on the estimate accurracy and the magnitude of the difference. Two different methods are implemented: <code>binom</code> and <code>combine</code>.
+</p>
+<p><strong>References</strong>
+</p>
+<p>Foote, M. (1999) Morphological Diversity In The Evolutionary Radiation Of Paleozoic and Post-Paleozoic Crinoids. Paleobiology 25, 1–115. doi:10.1017/S0094837300020236.
+</p>
+<p>Kiessling, W., &amp; Simpson, C. (2011). On the potential for ocean acidification to be a general cause of ancient reef crises. Global Change Biology, 17(1), 56-67.
+</p>
+<p>Kiessling, W., &amp; Kocsis, A. T. (2015). Biodiversity dynamics and environmental occupancy of fossil azooxanthellate and zooxanthellate scleractinian corals. Paleobiology, 41(3), 402-414.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of two numeric vectors.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># example with the coral dataset of Kiessling and Kocsis (2015)
+data(corals)
+data(stages)
+
+# split by ecology
+  z&lt;-corals[corals$ecology=="z",]
+  az&lt;-corals[corals$ecology=="az",]
+
+# calculate diversity dynamics
+ddZ&lt;-divDyn(z, tax="genus", bin="stg")
+ddAZ&lt;-divDyn(az, tax="genus", bin="stg")
+
+# origination rate plot
+tsplot(stages, boxes="sys", shading="series", xlim=54:95, 
+  ylab="raw per capita originations")
+lines(stages$mid, ddZ$oriPC, lwd=2, lty=1, col="blue")
+lines(stages$mid, ddAZ$oriPC, lwd=2, lty=2, col="red")
+legend("topright", inset=c(0.1,0.1), legend=c("z", "az"), 
+  lwd=2, lty=c(1,2), col=c("blue", "red"), bg="white")
+
+# The ratesplit function
+rs&lt;-ratesplit(rbind(z, az), sel="ecology", tax="genus", bin="stg")
+rs
+
+# display selectivity with points
+# select the higher rates
+selIntervals&lt;-cbind(ddZ$oriPC[rs$ori], ddAZ$oriPC[rs$ori])
+groupSelector&lt;-apply(selIntervals, 1, function(w) w[1]&lt;w[2])
+# draw the points
+points(stages$mid[rs$ori[groupSelector]], ddAZ$oriPC[rs$ori[groupSelector]],
+  pch=16, col="red", cex=2)
+points(stages$mid[rs$ori[!groupSelector]], ddZ$oriPC[rs$ori[!groupSelector]],
+  pch=16, col="blue", cex=2)
+
+
+</code></pre>
+
+
+</div>

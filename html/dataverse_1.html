@@ -1,0 +1,164 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>add_dataset_file</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add or update a file in a dataset</h2>
+
+<h3>Description</h3>
+
+<p>Add or update a file in a dataset. For most applications, this
+is the recommended function to upload your own local datasets to an
+existing Dataverse dataset. Uploading requires a Dataverse API Key in the <code>key</code>
+variable.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">add_dataset_file(
+  file,
+  dataset,
+  description = NULL,
+  key = Sys.getenv("DATAVERSE_KEY"),
+  server = Sys.getenv("DATAVERSE_SERVER"),
+  ...
+)
+
+update_dataset_file(
+  file,
+  dataset = NULL,
+  id,
+  description = NULL,
+  force = TRUE,
+  key = Sys.getenv("DATAVERSE_KEY"),
+  server = Sys.getenv("DATAVERSE_SERVER"),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>A character string for the location path of the file to be uploaded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataset</code></td>
+<td>
+<p>A character specifying a persistent identification ID for a dataset,
+for example <code>"doi:10.70122/FK2/HXJVJU"</code>. Alternatively, an object of class
+“dataverse_dataset” obtained by <code>dataverse_contents()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>description</code></td>
+<td>
+<p>Optionally, a character string providing a description of the file.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>key</code></td>
+<td>
+<p>A character string specifying a Dataverse server API key. If one
+is not specified, functions calling authenticated API endpoints will fail.
+Keys can be specified atomically or globally using
+<code>Sys.setenv("DATAVERSE_KEY" = "examplekey")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>server</code></td>
+<td>
+<p>A character string specifying a Dataverse server.
+Multiple Dataverse installations exist, with <code>"dataverse.harvard.edu"</code> being the
+most major. The server can be defined each time within a function, or it can
+be set as a default via an environment variable. To set a default, run
+<code>Sys.setenv("DATAVERSE_SERVER" = "dataverse.harvard.edu")</code>
+or add <code style="white-space: pre;">⁠DATAVERSE_SERVER = "dataverse.harvard.edu⁠</code> in one's <code>.Renviron</code>
+file (<code>usethis::edit_r_environ()</code>), with the appropriate domain as its value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to an HTTP request function, such as
+<code>GET</code>, <code>POST</code>, or
+<code>DELETE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>An integer specifying a file identifier; or, if <code>doi</code> is specified,
+a character string specifying a file name within the DOI-identified dataset; or an
+object of class “dataverse_file” as returned by <code>dataset_files</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force</code></td>
+<td>
+<p>A logical indicating whether to force the update even if the file
+types differ. Default is <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>From Dataverse v4.6.1, the “native” API provides endpoints to add and
+update files without going through the SWORD workflow. To use SWORD instead,
+see <code>add_file</code>. <code>add_dataset_file</code> adds a new file to a specified dataset.
+</p>
+<p><code>update_dataset_file</code> can be used to replace/update a published file.
+Note that it only works on published files, so unpublished drafts cannot be updated -
+the dataset must first either be published (<code>publish_dataset</code>) or
+deleted (<code>delete_dataset</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>add_dataset_file</code> returns the new file ID. It also uploads the file
+to the dataset.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>get_dataset</code>, <code>delete_dataset</code>, <code>publish_dataset</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+meta &lt;- list()
+ds &lt;- create_dataset("mydataverse", body = meta)
+
+
+# Upload RDS dataset saved to local
+saveRDS(mtcars, tmp &lt;- tempfile(fileext = ".rds"))
+f &lt;- add_dataset_file(tmp, dataset = ds, description = "mtcars")
+
+# Publish dataset
+publish_dataset(ds)
+
+# Update file and republish
+saveRDS(iris, tmp)
+update_dataset_file(tmp, dataset = ds, id = f,
+                    description = "Actually iris")
+publish_dataset(ds)
+
+# Cleanup
+unlink(tmp)
+delete_dataset(ds)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

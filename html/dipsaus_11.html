@@ -1,0 +1,273 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>AbstractQueue</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Defines abstract queue class</h2>
+
+<h3>Description</h3>
+
+<p>This class is inspired by <a href="https://cran.r-project.org/package=txtq">https://cran.r-project.org/package=txtq</a>.
+The difference is <code>AbstractQueue</code> introduce an abstract class that can
+be extended and can queue not only text messages, but also arbitrary R
+objects, including expressions and environments. All the queue types in this
+package inherit this class.
+</p>
+
+
+<h3>Abstract Public Methods</h3>
+
+<p>Methods start with <code>@...</code> are not thread-safe. Most of them are not
+used directly by users. However, you might want to override them if you
+inherit this abstract class. Methods marked as "(override)" are not
+implemented, meaning you are supposed to implement the details. Methods
+marked as "(optional)" usually have default alternatives.
+</p>
+
+<dl>
+<dt>
+<code>initialize(...)</code> (override)</dt>
+<dd>
+<p>The constructor. Usually three things to do during the process:
+1. set <code>get_locker</code> <code>free_locker</code> if you don't want to use the
+default lockers. 2. set lock file (if using default lockers). 3. call
+<code>self$connect(...)</code>
+</p>
+</dd>
+<dt>
+<code>get_locker()</code>, <code>free_locker()</code> (optional)</dt>
+<dd>
+<p>Default is <code>NULL</code> for each methods, and queue uses an internal
+<code>private$default_get_locker</code> and <code>private$default_free_locker</code>.
+These two methods are for customized locker, please
+implement these two methods as functions during <code>self$initialization</code>
+<code>get_locker</code> obtains and lock access (exclusive), and <code>free_locker</code>
+frees the locker. Once implemented, <code>private$exclusive</code> will take care
+the rest. Type: function; parameters: none; return: none
+</p>
+</dd>
+<dt>
+<code>@get_head()</code>, <code>@set_head(v)</code> (override)</dt>
+<dd>
+<p>Get head so that we know where we are in the queue <code>self$@get_head()</code>
+should return a integer indicating where we are at the queue
+<code>self$@set_head(v)</code> stores that integer. Parameter <code>v</code> is always
+non-negative, this is guaranteed. Users are not supposed to call these
+methods directly, use <code>self$head</code> and <code>self$head&lt;-</code> instead.
+However, if you inherit this class, you are supposed to override the methods.
+</p>
+</dd>
+<dt>
+<code>@get_total()</code>, <code>@set_total(v)</code> (override)</dt>
+<dd>
+<p>Similar to <code>@get_head</code> and <code>@set_head</code>, defines the total items
+ever stored in the queue. total-head equals current items in the queue.
+</p>
+</dd>
+<dt>
+<code>@inc_total(n=1)</code> (optional)</dt>
+<dd>
+<p>Increase total, usually this doesn't need to be override, unless you are
+using files to store total and want to decrease number of file connections
+</p>
+</dd>
+<dt>
+<code>@append_header(msg, ...)</code> (override)</dt>
+<dd>
+<p><code>msg</code> will be vector of strings, separated by "|", containing encoded
+headers: ‘time', 'key', 'hash', and 'message'. to decode what’s inside, you
+can use <code>self$print_items(stringr::str_split_fixed(msg, '\|', 4))</code>.
+<strong>Make sure</strong> to return a number, indicating number of items stored.
+Unless handled elsewhere, usually <code>return(length(msg))</code>.
+</p>
+</dd>
+<dt>
+<code>@store_value(value, key)</code> (override)</dt>
+<dd>
+<p>Defines how to store value. 'key' is unique identifier generated from
+time, queue ID, and value. Usually I use it as file name or key ID in
+database. value is an arbitrary R object to store. you need to store value
+somewhere and return a string that will be passed as 'hash' in
+<code>self$restore_value</code>.
+</p>
+</dd>
+<dt>
+<code>restore_value(hash, key, preserve = FALSE)</code> (override)</dt>
+<dd>
+<p>Method to restore value from given combination of 'hash' and 'key'.
+'hash' is the string returned by <code>@store_value</code>, and 'key' is the same
+as key in <code>@store_value</code>. preserve is a indicator of whether to
+preserve the value for future use. If set to <code>FALSE</code>, then you are
+supposed to free up the resource related to the value. (such as free memory
+or disk space)
+</p>
+</dd>
+<dt><code>@log(n = -1, all = FALSE) (override)</code></dt>
+<dd>
+<p>get <code>n</code> items from what you saved to during <code>@append_header</code>.
+<code>n</code> less equal than 0 means listing all possible items.
+If <code>all=TRUE</code>, return all items (number of rows should equals to
+<code>self$total</code>), including popped items. If <code>all=FALSE</code>, only
+return items in the queue (number of rows is <code>self$count</code>). The
+returned value should be a <code>n x 4</code> matrix. Usually I use
+<code>stringr::str_split_fixed(..., '\|', 4)</code>. Please see all other
+types implemented for example.
+</p>
+</dd>
+<dt>
+<code>@reset(...)</code> (override)</dt>
+<dd>
+<p>Reset queue, remove all items and reset head, total to be 0.
+</p>
+</dd>
+<dt>
+<code>@clean()</code> (override)</dt>
+<dd>
+<p>Clean the queue, remove all the popped items.
+</p>
+</dd>
+<dt>
+<code>@validate()</code> (override)</dt>
+<dd>
+<p>Validate the queue. Stop if the queue is broken.
+</p>
+</dd>
+<dt>
+<code>@connect(con, ...)</code> (override)</dt>
+<dd>
+<p>Set up connection. Usually should be called at the end of
+<code>self$initialization</code> to connect to a database, a folder, or an
+existing queue you should do checks whether the connection is new or it's
+an existing queue.
+</p>
+</dd>
+<dt>
+<code>connect(con, ...)</code> (optional)</dt>
+<dd>
+<p>Thread-safe version. sometimes you need to override this function instead
+of <code>@connect</code>, because <code>private$exclusive</code> requires <code>lockfile</code>
+to exist and to be locked. If you don't have lockers ready, or need to set
+lockers during the connection, override this one.
+</p>
+</dd>
+<dt>
+<code>destroy()</code> (optional)</dt>
+<dd>
+<p>Destroy a queue, free up space and call
+<code>delayedAssign('.lockfile', {stop(...)}, assign.env=private)</code> to raise
+error if a destroyed queue is called again later.
+</p>
+</dd>
+</dl>
+<h3>Public Methods</h3>
+
+<p>Usually don't need to override unless you know what you are doing.
+</p>
+
+<dl>
+<dt><code>push(value, message='',...)</code></dt>
+<dd>
+<p>Function to push an arbitrary R object to queue. <code>message</code> is a string
+giving notes to the pushed item. Usually message is stored with header,
+separated from values. The goal is to describe the value. <code>...</code> is
+passed to <code>@append_header</code>
+</p>
+</dd>
+<dt><code>pop(n = 1, preserve = FALSE)</code></dt>
+<dd>
+<p>Pop <code>n</code> items from the queue. <code>preserve</code> indicates whether not to
+free up the resources, though not always guaranteed.
+</p>
+</dd>
+<dt>
+<code>print_item(item)</code>, <code>print_items(items)</code>
+</dt>
+<dd>
+<p>To decode matrix returned by <code>log()</code>, returning named list or data frame
+with four heads: 'time', 'key', 'hash', and 'message'.
+</p>
+</dd>
+<dt><code>list(n=-1)</code></dt>
+<dd>
+<p>List items in the queue, decoded. If <code>n</code> is less equal than 0, then
+list all results. The result is equivalent to
+<code>self$print_items(self$log(n))</code>
+</p>
+</dd>
+<dt><code>log(n=-1,all=FALSE)</code></dt>
+<dd>
+<p>List items in the queue, encoded. This is used with <code>self$print_items</code>.
+When <code>all=TRUE</code>, result will list the  records ever pushed to the queue
+since the last time queue is cleaned. When <code>all=FALSE</code>, results will be
+items in the queue. <code>n</code> is the number of items.
+</p>
+</dd>
+</dl>
+<h3>Public Active Bindings</h3>
+
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>Read-only property. Returns unique ID of current queue.
+</p>
+</dd>
+<dt><code>lockfile</code></dt>
+<dd>
+<p>The lock file.
+</p>
+</dd>
+<dt><code>head</code></dt>
+<dd>
+<p>Integer, total number of items popped, i.e. inactive items.
+</p>
+</dd>
+<dt><code>total</code></dt>
+<dd>
+<p>Total number of items ever pushed to the queue since last cleaned, integer.
+</p>
+</dd>
+<dt><code>count</code></dt>
+<dd>
+<p>Integer, read-only, equals to total - head, number of active items in the
+queue
+</p>
+</dd>
+</dl>
+<h3>Private Methods or properties</h3>
+
+
+<dl>
+<dt><code>.id</code></dt>
+<dd>
+<p>Don't use directly. Used to store queue ID.
+</p>
+</dd>
+<dt><code>.lockfile</code></dt>
+<dd>
+<p>Location of lock file.
+</p>
+</dd>
+<dt><code>lock</code></dt>
+<dd>
+<p>Preserve the file lock.
+</p>
+</dd>
+<dt><code>exclusive(expr,...)</code></dt>
+<dd>
+<p>Function to make sure the methods are thread-safe
+</p>
+</dd>
+<dt><code>default_get_locker()</code></dt>
+<dd>
+<p>Default method to lock a queue
+</p>
+</dd>
+<dt><code>default_free_locker</code></dt>
+<dd>
+<p>Default method to free a queue
+</p>
+</dd>
+</dl>
+</div>

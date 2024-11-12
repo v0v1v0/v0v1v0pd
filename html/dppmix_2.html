@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dppmix_mvnorm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a determinantal point process multivariate normal mixture model.</h2>
+
+<h3>Description</h3>
+
+<p>Discover clusters in multidimensional data using a multivariate normal 
+mixture model with a determinantal point process prior.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dppmix_mvnorm(
+  X,
+  hparams = NULL,
+  store = NULL,
+  control = NULL,
+  fixed = NULL,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p><code>N x J</code> data matrix of <code>N</code> observations and
+<code>J</code> features</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hparams</code></td>
+<td>
+<p>a list of hyperparameter values:
+<code>delta, a0, b0, theta, sigma_prop_mu</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>store</code></td>
+<td>
+<p>a vector of character strings specifying additional vars of
+interest; a value of <code>NA</code> indicates that
+samples of all parameters in the model will be stored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list of control parameters:
+<code>niter, burnin, thin</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>a list of fixed parameter values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>whether to emit verbose message</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A determinantal point process (DPP) prior is a repulsive prior.
+Compare to mixture models using independent priors, a DPP mixutre model
+will often discover a parsimonious set of mixture components (clusters).
+</p>
+<p>Model fitting is done by sampling parameters from the posterior
+distribution using a reversible jump Markov chain Monte Carlo sampling
+approach.
+</p>
+<p>Given <code class="reqn">X = [x_i]</code>, where each <code class="reqn">x_i</code> is a D-dimensional real vector,
+we seek the posterior distribution the latent variable <code class="reqn">z = [z_i]</code>, where
+each <code class="reqn">z_i</code> is an integer representing cluster membership.
+</p>
+<p style="text-align: center;"><code class="reqn"> x_i \mid z_i  \sim  Normal(\mu_k, \Sigma_k) </code>
+</p>
+
+<p style="text-align: center;"><code class="reqn"> z_i           \sim  Categorical(w) </code>
+</p>
+
+<p style="text-align: center;"><code class="reqn"> w             \sim  Dirichlet([\delta ... \delta]) </code>
+</p>
+
+<p style="text-align: center;"><code class="reqn"> \mu_k         \sim  DPP(C) </code>
+</p>
+
+<p>where <code class="reqn">C</code> is the covariance function that evaluates the distances among the
+data points:
+</p>
+<p style="text-align: center;"><code class="reqn"> C(x_1, x_2) = exp( - \sum_d \frac{ (x_1 - x_2)^2 }{ \theta^2 } ) </code>
+</p>
+
+<p>We also define <code class="reqn">\Sigma_k = E_k \Lambda_k E_k^\top</code>, where <code class="reqn">E_k</code> is an
+orthonormal matrix whose column represents eigenvectors.
+We further assume that <code class="reqn">E_k = E</code> is fixed across all cluster components 
+so that <code class="reqn">E</code> can be estimated as the eigenvectors of the covariance matrix of
+the data matrix <code class="reqn">X</code>. Finally, we put a prior on the entries of the
+<code class="reqn">\Lambda_k</code> diagonal matrix:
+</p>
+<p style="text-align: center;"><code class="reqn"> \lambda_{kd}^{-1}  \sim  Gamma( a_0, b_0 ) </code>
+</p>
+
+<p>Hence, the hyperameters of the model include:
+<code>delta, a0, b0, theta</code>, as well as sampling hyperparameter
+<code>sigma_pro_mu</code>, which controls the spread of the Gaussian
+proposal distribution for the random-walk Metropolis-Hastings update of
+the <code class="reqn">\mu</code> parameter.
+</p>
+<p>The parameters (and their dimensions) in the model include:
+<code>K</code>, <code>z (N x 1)</code>, <code>w (K x 1)</code>, <code>lambda (K x J)</code>,
+<code>mu (K x J)</code>, <code>Sigma (J x J x K)</code>.
+If any parameter is fixed, then <code>K</code> must be fixed as well.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a <code>dppmix_mcmc</code> object containing posterior samples of
+the parameters
+</p>
+
+
+<h3>References</h3>
+
+<p>Yanxun Xu, Peter Mueller, Donatello Telesca.
+Bayesian Inference for Latent Biologic Structure with
+Determinantal Point Processes.
+Biometrics. 2016;72(3):955-64.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(1)
+ns &lt;- c(3, 3)
+means &lt;- list(c(-6, -3), c(0, 4))
+d &lt;- rmvnorm_clusters(ns, means)
+
+mcmc &lt;- dppmix_mvnorm(d$X, verbose=FALSE)
+res &lt;- estimate(mcmc)
+table(d$cl, res$z)
+
+</code></pre>
+
+
+</div>

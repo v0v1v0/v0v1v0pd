@@ -1,0 +1,109 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Oscillator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated time series data of a damped linear oscillator</h2>
+
+<h3>Description</h3>
+
+<p>A dataset simulated using a damped linear oscillator model in continuous time
+with 1 observed indicator for identifying two latent factors (position and velocity).
+The variables are as follows:
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(Oscillator)
+</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 1000 rows and 5 variables</p>
+
+
+<h3>Details</h3>
+
+
+<ul>
+<li>
+<p> id. ID of the systems (1 to 1 because this is a single person)
+</p>
+</li>
+<li>
+<p> y1. Noisy observed position
+</p>
+</li>
+<li>
+<p> times. Time index (1000 time points) spaced at one unit intervals
+</p>
+</li>
+<li>
+<p> x1. True latent position
+</p>
+</li>
+<li>
+<p> x2. True latent velocity
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The following was used to generate the data
+#--------------------------------------
+# Data Generation
+## Not run: 
+require(mvtnorm)
+require(Matrix)
+
+xdim &lt;- 2
+udim &lt;- 1
+ydim &lt;- 1
+tdim &lt;- 1000
+set.seed(315)
+tA &lt;- matrix(c(0, -.3, 1, -.7), xdim, xdim)
+tB &lt;- matrix(c(0), xdim, udim)
+tC &lt;- matrix(c(1, 0), ydim, xdim)
+tD &lt;- matrix(c(0), ydim, udim)
+tQ &lt;- matrix(c(0), xdim, xdim); diag(tQ) &lt;- c(0, 2.2)
+tR &lt;- matrix(c(0), ydim, ydim); diag(tR) &lt;- c(1.5)
+
+x0 &lt;- matrix(c(0, 1), xdim, 1)
+P0 &lt;- diag(c(1), xdim)
+tdx &lt;- matrix(0, xdim, tdim+1)
+tx &lt;- matrix(0, xdim, tdim+1)
+tu &lt;- matrix(0, udim, tdim)
+ty &lt;- matrix(0, ydim, tdim)
+
+tT &lt;- matrix(0:tdim, nrow=1, ncol=tdim+1)
+
+tI &lt;- diag(1, nrow=xdim)
+
+tx[,1] &lt;- x0
+for(i in 2:(tdim+1)){
+	q &lt;- t(rmvnorm(1, rep(0, xdim), tQ))
+	tdx[,i] &lt;- tA %*% tx[,i-1] + tB %*% tu[,i-1] + q
+	expA &lt;- as.matrix(expm(tA * (tT[,i]-tT[,i-1])))
+	intA &lt;- solve(tA) %*% (expA - tI)
+	tx[,i] &lt;- expA %*% tx[, i-1] + intA %*% tB %*% tu[,i-1] + intA %*% q
+	ty[,i-1] &lt;- tC %*% tx[,i] + tD %*% tu[,i-1] + t(rmvnorm(1, rep(0, ydim), tR))
+}
+
+
+
+rownames(ty) &lt;- paste('y', 1:ydim, sep='')
+rownames(tx) &lt;- paste('x', 1:xdim, sep='')
+simdata &lt;- cbind(id=rep(1, tdim), t(ty), times=tT[,-1], t(tx)[-1,])
+ write.table(simdata, file='Oscillator.txt', row.names=FALSE, col.names=TRUE)
+
+plot(tx[1,], type='l')
+plot(tT[,-1], ty[1,], type='l')
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,220 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predictRM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prediction of Confidence Rating and Reaction Time Distribution in race models of confidence</h2>
+
+<h3>Description</h3>
+
+<p><code>predictRM_Conf</code> predicts the categorical response distribution of
+decision and confidence ratings, <code>predictRM_RT</code> computes the
+RT distribution (density) in the independent and partially anti-correlated
+race models  (Hellmann et al., 2023), given specific parameter
+constellations. See RaceModels for more information about the models
+and parameters.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">predictRM_Conf(paramDf, model = "IRM", time_scaled = FALSE, maxrt = 15,
+  subdivisions = 100L, stop.on.error = FALSE, .progress = TRUE)
+
+predictRM_RT(paramDf, model = "IRM", time_scaled = FALSE, maxrt = 9,
+  subdivisions = 100L, minrt = NULL, scaled = FALSE, DistConf = NULL,
+  .progress = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>paramDf</code></td>
+<td>
+<p>a list or data frame with one row. Column names should match the names of
+RaceModels parameter names (only <code>mu1</code> and <code>mu2</code> are not used in this context but
+replaced by the parameter <code>v</code>). For different stimulus quality/mean
+drift rates, names should be <code>v1</code>, <code>v2</code>, <code>v3</code>,....
+Different <code>s</code> parameters are possible with <code>s1</code>, <code>s2</code>, <code>s3</code>,... with equally many steps as for drift rates. Additionally, the confidence
+thresholds should be given by names with <code>thetaUpper1</code>, <code>thetaUpper2</code>,..., <code>thetaLower1</code>,... or,
+for symmetric thresholds only by <code>theta1</code>, <code>theta2</code>,....</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character scalar. One of "IRM" or "PCRM". ("IRMt" and "PCRMt" will also be accepted. In that case,
+time_scaled is set to TRUE.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_scaled</code></td>
+<td>
+<p>logical. Whether the confidence measure should be scaled by 1/sqrt(rt). Default: FALSE.
+(It is set to TRUE, if model is "IRMt" or "PCRMt")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxrt</code></td>
+<td>
+<p>numeric. The maximum RT for the
+integration/density computation. Default: 15 (for <code>predictRM_Conf</code>
+(integration)), 9 (for <code>predictRM_RT</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subdivisions</code></td>
+<td>
+<p><code>integer</code> (default: 100).
+For <code>predictRM_Conf</code> it is used as argument for the inner integral routine.
+For <code>predictRM_RT</code> it is the number of points for which the density is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stop.on.error</code></td>
+<td>
+<p>logical. Argument directly passed on to integrate. Default is FALSE,
+since the densities invoked may lead to slow convergence of the integrals (which are still
+quite accurate) which causes R to throw an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.progress</code></td>
+<td>
+<p>logical. If TRUE (default) a progress bar is drawn to the console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minrt</code></td>
+<td>
+<p>numeric or NULL(default). The minimum rt for the density computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaled</code></td>
+<td>
+<p>logical. For <code>predictRM_RT</code>. Whether the computed density
+should be scaled to integrate to one (additional column <code>densscaled</code>). Otherwise the output
+contains only the defective density (i.e. its integral is equal to the probability of a
+response and not 1). If <code>TRUE</code>, the argument <code>DistConf</code> should be given, if available.
+Default: <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DistConf</code></td>
+<td>
+<p><code>NULL</code> or <code>data.frame</code>. A <code>data.frame</code> or <code>matrix</code> with column
+names, giving the distribution of response and rating choices for
+different conditions and stimulus categories in the form of the output of
+<code>predictRM_Conf</code>. It is only necessary, if <code>scaled=TRUE</code>, because these
+probabilities are used for scaling. If <code>scaled=TRUE</code> and <code>DistConf=NULL</code>, it will be computed
+with the function <code>predictRM_Conf</code>, which takes some time and the function will
+throw a message. Default: <code>NULL</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function <code>predictRM_Conf</code> consists merely of an integration of
+the response time density, <code>dIRM</code> and <code>dPCRM</code>, over the
+response time in a reasonable interval (0 to <code>maxrt</code>). The function
+<code>predictRM_RT</code> wraps these density
+functions to a parameter set input and a data.frame output.
+For the argument <code>paramDf</code>, the output of the fitting function <code>fitRTConf</code>
+with the respective model may be used.
+</p>
+<p>The drift rate parameters differ from those used in <code>dIRM</code>/<code>dPCRM</code>
+since in many perceptual decision experiments the drift on one accumulator is assumed to
+be the negative of the other. The drift rate of the correct accumulator is <code>v</code> (<code>v1</code>, <code>v2</code>,
+... respectively) in <code>paramDf</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>predictRM_Conf</code> returns a <code>data.frame</code>/<code>tibble</code> with columns: <code>condition</code>, <code>stimulus</code>,
+<code>response</code>, <code>rating</code>, <code>correct</code>, <code>p</code>, <code>info</code>, <code>err</code>. <code>p</code> is the predicted probability of a response
+and <code>rating</code>, given the stimulus category and condition. <code>info</code> and <code>err</code> refer to the
+respective outputs of the integration routine used for the computation.
+<code>predictRM_RT</code> returns a <code>data.frame</code>/<code>tibble</code> with columns: <code>condition</code>, <code>stimulus</code>,
+<code>response</code>, <code>rating</code>, <code>correct</code>, <code>rt</code> and <code>dens</code> (and <code>densscaled</code>, if <code>scaled=TRUE</code>).
+</p>
+
+
+<h3>Note</h3>
+
+<p>Different parameters for different conditions are only allowed for drift rate,
+<code>v</code>, and process variability <code>s</code>. All other parameters are used for all
+conditions.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastian Hellmann.
+</p>
+
+
+<h3>References</h3>
+
+<p>Hellmann, S., Zehetleitner, M., &amp; Rausch, M. (2023). Simultaneous modeling of choice, confidence and response time in visual perception. <em>Psychological Review</em> 2023 Mar 13. doi: 10.1037/rev0000411. Epub ahead of print. PMID: 36913292.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Examples for "PCRM" model (equivalent applicable for "IRM" model)
+# 1. Define some parameter set in a data.frame
+paramDf &lt;- data.frame(a=2,b=2, v1=0.5, v2=1, t0=0.1,st0=0,
+                      wx=0.6, wint=0.2, wrt=0.2,
+                      theta1=4)
+
+# 2. Predict discrete Choice x Confidence distribution:
+preds_Conf &lt;- predictRM_Conf(paramDf, "PCRM", time_scaled=TRUE)
+# equivalent:
+preds_Conf &lt;- predictRM_Conf(paramDf, "PCRMt")
+head(preds_Conf)
+
+# 3. Compute RT density
+preds_RT &lt;- predictRM_RT(paramDf, "PCRMt", maxrt=7, subdivisions=50)
+# same output with scaled density column:
+preds_RT &lt;- predictRM_RT(paramDf, "PCRMt", maxrt=7, subdivisions=50,
+                         scaled=TRUE, DistConf = preds_Conf)
+head(preds_RT)
+
+  # produces a warning, if scaled=TRUE and DistConf missing
+  preds_RT &lt;- predictRM_RT(paramDf, "PCRMt", maxrt=7, subdivisions=50,
+                           scaled=TRUE)
+
+
+
+  # Example of visualization
+  library(ggplot2)
+  preds_Conf$rating &lt;- factor(preds_Conf$rating, labels=c("unsure", "sure"))
+  preds_RT$rating &lt;- factor(preds_RT$rating, labels=c("unsure", "sure"))
+  ggplot(preds_Conf, aes(x=interaction(rating, response), y=p))+
+    geom_bar(stat="identity")+
+    facet_grid(cols=vars(stimulus), rows=vars(condition), labeller = "label_both")
+  ggplot(preds_RT, aes(x=rt, color=interaction(rating, response), y=dens))+
+    geom_line(stat="identity")+
+    facet_grid(cols=vars(stimulus), rows=vars(condition), labeller = "label_both")+
+    theme(legend.position = "bottom")
+  ggplot(aggregate(densscaled~rt+correct+rating+condition, preds_RT, mean),
+         aes(x=rt, color=rating, y=densscaled))+
+    geom_line(stat="identity")+
+    facet_grid(cols=vars(condition), rows=vars(correct), labeller = "label_both")+
+    theme(legend.position = "bottom")
+
+
+  # Use PDFtoQuantiles to get predicted RT quantiles
+  # (produces warning because of few rt steps (--&gt; inaccurate calculations))
+  PDFtoQuantiles(preds_RT, scaled = FALSE)
+
+
+</code></pre>
+
+
+</div>

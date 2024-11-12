@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>testTemporalAutocorrelation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test for temporal autocorrelation</h2>
+
+<h3>Description</h3>
+
+<p>This function performs a standard test for temporal autocorrelation on the simulated residuals
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">testTemporalAutocorrelation(simulationOutput, time,
+  alternative = c("two.sided", "greater", "less"), plot = T)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>an object of class DHARMa, either created via <code>simulateResiduals</code> for supported models or by <code>createDHARMa</code> for simulations created outside DHARMa, or a supported model. Providing a supported model directly is discouraged, because simulation settings cannot be changed in this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>the time, in the same order as the data points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>a character string specifying whether the test should test if observations are "greater", "less" or "two.sided" compared to the simulated null hypothesis</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>whether to plot output</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function performs a Durbin-Watson test on the uniformly scaled residuals, and plots the residuals against time. The DB test was originally be designed for normal residuals. In simulations, I didn't see a problem with this setting though. The alternative is to transform the uniform residuals to normal residuals and perform the DB test on those.
+</p>
+<p>Testing for temporal autocorrelation requires unique time values - if you have several observations per time value, either use recalculateResiduals function to aggregate residuals per time step, or extract the residuals from the fitted object, and plot / test each of them independently for temporally repeated subgroups (typical choices would be location / subject etc.). Note that the latter must be done by hand, outside testTemporalAutocorrelation.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Standard DHARMa simulations from models with (temporal / spatial / phylogenetic) conditional autoregressive terms will still have the respective temporal / spatial / phylogenetic correlation in the DHARMa residuals, unless the package you are using is modelling the autoregressive terms as explicit REs and is able to simulate conditional on the fitted REs. This has two consequences
+</p>
+
+<ol>
+<li>
+<p> If you check the residuals for such a model, they will still show significant autocorrelation, even if the model fully accounts for this structure.
+</p>
+</li>
+<li>
+<p> Because the DHARMa residuals for such a model are not statistically independent any more, other tests (e.g. dispersion, uniformity) may have inflated type I error, i.e. you will have a higher likelihood of spurious residual problems.
+</p>
+</li>
+</ol>
+<p>There are three (non-exclusive) routes to address these issues when working with spatial / temporal / other autoregressive models:
+</p>
+
+<ol>
+<li>
+<p> Simulate conditional on the fitted CAR structures (see conditional simulations in the help of simulateResiduals)
+</p>
+</li>
+<li>
+<p> Rotate simulations prior to residual calculations (see parameter rotation in simulateResiduals)
+</p>
+</li>
+<li>
+<p> Use custom tests / plots that explicitly compare the correlation structure in the simulated data to the correlation structure in the observed data.
+</p>
+</li>
+</ol>
+<h3>Author(s)</h3>
+
+<p>Florian Hartig
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>testResiduals</code>, <code>testUniformity</code>, <code>testOutliers</code>, <code>testDispersion</code>, <code>testZeroInflation</code>, <code>testGeneric</code>, <code>testTemporalAutocorrelation</code>, <code>testSpatialAutocorrelation</code>, <code>testQuantiles</code>, <code>testCategorical</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">testData = createData(sampleSize = 40, family = gaussian(), 
+                      randomEffectVariance = 0)
+fittedModel &lt;- lm(observedResponse ~ Environment1, data = testData)
+res = simulateResiduals(fittedModel)
+
+# Standard use
+testTemporalAutocorrelation(res, time =  testData$time)
+
+# If you have several observations per time step, e.g. 
+# because you have several locations, you will have to 
+# aggregate
+
+timeSeries1 = createData(sampleSize = 40, family = gaussian(), 
+                         randomEffectVariance = 0)
+timeSeries1$location = 1
+timeSeries2 = createData(sampleSize = 40, family = gaussian(), 
+                         randomEffectVariance = 0)
+timeSeries2$location = 2
+testData = rbind(timeSeries1, timeSeries2)
+
+fittedModel &lt;- lm(observedResponse ~ Environment1, data = testData)
+res = simulateResiduals(fittedModel)
+
+# Will not work because several residuals per time
+# testTemporalAutocorrelation(res, time = testData$time)
+
+# aggregating residuals by time
+res = recalculateResiduals(res, group = testData$time)
+testTemporalAutocorrelation(res, time = unique(testData$time))
+
+# testing only subgroup location 1, could do same with loc 2
+res = recalculateResiduals(res, sel = testData$location == 1)
+testTemporalAutocorrelation(res, time = unique(testData$time))
+
+# example to demonstrate problems with strong temporal correlations and
+# how to possibly remove them by rotating residuals
+
+## Not run: 
+
+set.seed(1)
+C &lt;- exp(-as.matrix(dist(seq(0,50,by=.5))))
+obs &lt;- as.numeric(mvtnorm::rmvnorm(1,sigma=C))
+
+opar &lt;- par(mfrow = c(1,2))
+image(C, main = "Specified autocorrelation (covariance)")
+plot(obs, type = "l", main = "Time series")
+par(opar)
+
+# calculate standard DHARMa residuals
+
+## simulations from the model:
+x = replicate(1000, as.numeric(mvtnorm::rmvnorm(1,sigma=C)))
+
+res &lt;- createDHARMa(x, obs, integerResponse = F)
+plot(res)
+testTemporalAutocorrelation(res, time = 1:length(res$scaledResiduals))
+
+# calculated rotated DHARMa residuals to remove temporal correlation
+# this only works if the autocorrelation is homogeneous / stationary
+res &lt;- createDHARMa(x, obs, integerResponse = F, rotation = C)
+testUniformity(res)
+testTemporalAutocorrelation(res, time = 1:length(res$scaledResiduals))
+
+# the same, but with a covariance based on simulations
+res &lt;- createDHARMa(x, obs, integerResponse = F, rotation = "estimated")
+testUniformity(res)
+testTemporalAutocorrelation(res, time = 1:length(res$scaledResiduals))
+
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DIME.classify</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Classification Based on The Best Model
+</h2>
+
+<h3>Description</h3>
+
+<p>Classifies observed data into differential and non-differential groups based on 
+the model selected as the best fit to the observed data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DIME.classify(data, obj, obj.cutoff = 0.1, obj.sigma.diff.cutoff = NULL, 
+  obj.mu.diff.cutoff = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>an <strong>R list</strong> of vector of normalized intensities (counts). Each element can
+correspond to particular chromosome. User can construct their own list 
+containing only the chromosome(s) they want to analyze.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+
+<p>a list object returned by DIME function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj.cutoff</code></td>
+<td>
+
+<p>optional local <em>fdr</em> cutoff for classifying data into differential
+and non-differential groups based on the best mixture model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj.sigma.diff.cutoff</code></td>
+<td>
+
+<p>optional cut-off for standard deviation of the normal component in the best 
+model to be declared as representing differential.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj.mu.diff.cutoff</code></td>
+<td>
+
+<p>optional cut-off for standard deviation of the normal component in the best 
+model to be declared as representing differential.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list object passed as input with additional element $class containing vector 
+of classifications for all the observations in data. A classification of 1
+denotes that the data is classified as differential with fdr &lt; obj.cutoff.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Cenny Taslim <a href="mailto:taslim.2@osu.edu">taslim.2@osu.edu</a>, with contributions from Abbas Khalili
+<a href="mailto:khalili@stat.ubc.ca">khalili@stat.ubc.ca</a>, Dustin Potter <a href="mailto:potterdp@gmail.com">potterdp@gmail.com</a>, 
+and Shili Lin <a href="mailto:shili@stat.osu.edu">shili@stat.osu.edu</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DIME</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DIME)
+# generate simulated datasets with underlying exponential-normal components
+N1 &lt;- 1500; N2 &lt;- 500; K &lt;- 4; rmu &lt;- c(-2.25,1.50); rsigma &lt;- c(1,1); 
+rpi &lt;- c(.05,.45,.45,.05); rbeta &lt;- c(12,10);
+set.seed(1234)
+chr1 &lt;- c(-rgamma(ceiling(rpi[1]*N1),shape = 1,scale = rbeta[1]), 
+  rnorm(ceiling(rpi[2]*N1),rmu[1],rsigma[1]), 
+  rnorm(ceiling(rpi[3]*N1),rmu[2],rsigma[2]), 
+  rgamma(ceiling(rpi[4]*N1),shape = 1,scale = rbeta[2]));
+chr2 &lt;- c(-rgamma(ceiling(rpi[1]*N2),shape = 1,scale = rbeta[1]), 
+  rnorm(ceiling(rpi[2]*N2),rmu[1],rsigma[1]), 
+  rnorm(ceiling(rpi[3]*N2),rmu[2],rsigma[2]), 
+  rgamma(ceiling(rpi[4]*N2),shape = 1,scale = rbeta[2])); 
+chr3 &lt;- c(-rgamma(ceiling(rpi[1]*N2),shape = 1,scale = rbeta[1]), 
+  rnorm(ceiling(rpi[2]*N2),rmu[1],rsigma[1]), 
+  rnorm(ceiling(rpi[3]*N2),rmu[2],rsigma[2]), 
+  rgamma(ceiling(rpi[4]*N2),shape = 1,scale = rbeta[2]));
+# analyzing only chromosome 1 and chromosome 3
+data &lt;- list(chr1,chr3);
+ 
+# run DIME with small maximum iteration and repetitions
+set.seed(1234);
+test &lt;- DIME(data,gng.max.iter=10,gng.rep=1,inudge.max.iter=10,inudge.rep=1,
+ nudge.max.iter=10,nudge.rep=1)
+# get classification based on inudge  
+test$inudge &lt;- DIME.classify(data,test$inudge,obj.cutoff=0.1);
+# vector of classification. 1 represents differential, 0 denotes non-differential
+inudgeClass &lt;- test$inudge$class;
+
+</code></pre>
+
+
+</div>

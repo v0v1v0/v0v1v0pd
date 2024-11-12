@@ -1,0 +1,269 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>outliers.ranking</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Obtain outlier rankings
+</h2>
+
+<h3>Description</h3>
+
+<p>This function uses hierarchical clustering to obtain a ranking of
+outlierness for a  set of cases. The ranking is obtained on the basis
+of the path each case follows within the merging steps of a
+agglomerative hierarchical clustering method. See the references for
+further technical details on how these rankings are obtained.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">outliers.ranking(data, test.data = NULL, method = "sizeDiff",
+                 method.pars = NULL,
+                 clus = list(dist = "euclidean",alg = "hclust",
+                             meth = "ward.D"),
+                 power = 1, verb = F)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>The data set to be ranked according to outlyingness. This parameter
+can also be the distance matrix of your additional data set, in case
+you wish to calculate these distances "outside" of this function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test.data</code></td>
+<td>
+
+<p>If a data set is provided in this argument, then the rankings are
+obtained for these cases and not for the cases provided in the
+argument <code>data</code>. The clustering process driving the obtention of
+the rankings is carried out on the union of the two sets of data
+(<code>data</code> and <code>test.data</code>), but the resulting outlier ranking
+factors are only for the observations belonging to this set. This
+parameter defaults to <code>NULL</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>The method used to obtain the outlier ranking factors (see the
+Details section). Defaults to <code>"sizeDiff"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method.pars</code></td>
+<td>
+
+<p>A list with the parameter values specific to the method selected for
+obtaining the outlier ranks (see the Details section).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clus</code></td>
+<td>
+
+<p>This is a list that provides several parameters of the clustering
+process that drives the calculation of the outlier raking factors. If
+the parameter <code>data</code> is not a distance function, then this list
+should contain a component named <code>dist</code> with a value that should
+be one of the possible values of the parameter <code>method</code> the the
+function <code>dist()</code> (see the help of this function for further
+details). The list should also contain a component named <code>alg</code>
+with the name of the clustering algorithm that should be
+used. Currently, valid names are either "hclust" (the default) or
+"diana". Finally, in case the clustering algorithm is "hclust" then
+the list should also contain a component named <code>meth</code> with the
+name of the agglomerative method to use in the hierarchical clustering
+algorithm. This should be a valid value of the parameter <code>method</code>
+of the function <code>hclust()</code> (check its help page for further
+details). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+
+<p>Integer value. It allows to raise the distance matrix to some power
+with the goal of "amplifying" the distance values (defaults to 1).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+
+<p>Boolean value that determines the level of verbosity of the function (default to FALSE).
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function produces outlier ranking factors for a set of cases. The
+methodology used for obtaining these factors is described in Section
+4.4.1.3 of the book Data Mining with R (Torgo, 2010) and more details
+can be obtained in Torgo (2007). The methodology is based on the
+simple idea of using the information provided by an agglomerative
+hierarchical clustering algorithm to infer the degree of outlyingness
+of the observations. The basic assumption is that outliers should
+offer "more resistance" to being clustered, i.e. being merged on large
+groups of observations.
+</p>
+<p>The function was written to be used with the outcome of the
+<code>hclust()</code> R function that implements several agglomerative
+clustering methods. Although in theory the methodology could be used with
+any other agglomerative hierarchical clustering algorithm, the fact is
+that the code of this implementation strongly depends on the data
+structures produced by the <code>hclust()</code> function. As such if you
+wish to change the function to be able to use other clustering
+algorithms you should ensure that the data structures it produces are
+compatible with the requirements of our function. Specifically, your
+clustering algorithm should produce a list with a component named
+<code>merge</code> that should be a matrix describing the merging steps of
+the clustering process (see the help page of the <code>hclust()</code>
+function for a full description of this data structure). This is the
+only data structure that is required by our function and that is used
+from the object returned by clustering algorithm. The <code>diana()</code> clustering algorithm
+also produces this type of information and thus can also be used with
+our function by providing the value "diana" on the component
+<code>alg</code> of the list forming the parameter <code>clus</code>.
+</p>
+<p>There are essentially two ways of using this function. The first
+consists in giving it a data set on the parameter <code>data</code> and the
+function will rank these observations according to their
+outlyingness. The other consists in specifying two sets of data. One
+is the set for which you want the outlyingness factors that should be given  on the
+parameter <code>test.data</code>. The second  set is provided on the
+<code>data</code> parameter and it is used  to increase
+the ammount of data used in the clustering process to improve the
+statistical reliability of the process.
+</p>
+<p>In the first way of using this function that was described above the
+user can either supply the data set or the respective distance matrix.
+If the data set is provided then the user should specify the type of
+distance metric it should be used to calculate the distances between
+the observations. This is done by including a distance calculation
+method in the "dist" component of the list provided in parameter
+<code>clus</code>. This method should be a valid value of the parameter
+<code>method</code> of the R function <code>dist()</code> (see its help for details).
+</p>
+<p>This function currently implements three different methods for obtaing
+outlier ranking factors from the clustering process. These are:
+"linear", "sigmoid" and "sizeDiff" (the default). Irrespectively, of
+this method the outlyingness factor of observation X is obtained by:
+OF_H(X) = max_i of_i(X), where i represents the different merging
+steps of the clustering process and it goes from 1 to N-1, where N is
+the size of the data set to be clustered. The three methods differ in
+the way they calculate of_i(X) for each merging step. In  the "linear"
+method of_i(X) = i / (N-1) * p(|g|), where g is the group to which X
+belongs at the merging step i (each merging step involves two groups),
+and |g| is the size of that group. The function p() is a penalization
+factor depending on the size of the group. The larger this size the
+smaller the value of p(), p(s) = I(s &lt; thr) * ( 1 - (s-1) / (N-2)),
+where I() is an indicator function and thr is a threshold defined as
+perc*N. The user should set the value of perc by including a component
+named "sz.perc" in the list provided in the parameter
+<code>method.pars</code>. In the "sigmoid" method of_i(X) = exp( -2 * (i -
+(N-1))^2 / (N-1)^2) * p(|g|), where the p() function has the same
+meaning as in the "linear" method but this time is defined as p(s) =
+I(s &lt; 2*thr) * ( 1 - exp( -4 * (s-2*thr)^2 / (2*thr)^2)). Again thr is
+perc*N and the user must set the value of perc by including a component
+named "sz.perc" in the list provided in the parameter
+<code>method.pars</code>. Finally, the method "sizeDiff" defines of_i(X) =
+max ( 0, ( |g_y,i| - |g_x,i| ) / ( |g_y,i| + |g_x,i| ) ),
+where g_y,i and g_x,i are the two groups involved in the merge at
+step i, and g_x,i is the group which X belongs to. Note that if X
+belongs to the larger of the two groups this will get X a value of
+of_i() equals to zero.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The result of this function is a list with four components. Component
+<code>rank.outliers</code> contains a vector with as many positions as there
+are cases to rank, where position i of the vector contains the rank
+order of the observation i. Component <code>prob.outliers</code> is another
+vector with the same size this time containing the outlyingness factor
+(the value of OF_H(X) described in the Details section) of each
+observation. Component <code>h</code> contains the object returned by the
+clustering process. Finally, component <code>dist</code> contains the
+distance matrix used i nthe clustering process.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p> Luis Torgo <a href="mailto:ltorgo@dcc.fc.up.pt">ltorgo@dcc.fc.up.pt</a> </p>
+
+
+<h3>References</h3>
+
+<p>Torgo, L. (2016) <em>Data Mining using R: learning with case studies,
+second edition</em>,
+Chapman &amp; Hall/CRC (ISBN-13: 978-1482234893).
+</p>
+<p><a href="http://ltorgo.github.io/DMwR2">http://ltorgo.github.io/DMwR2</a>  
+</p>
+<p>Torgo, L. (2007) : <em>Resource-bounded Fraud Detection</em>, 
+in Progress in Artificial Intelligence, 13th Portuguese Conference on Artificial Intelligence, EPIA 2007, Neves et. al (eds.). LNAI, Springer.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Some examples with algae frequencies in water samples
+data(algae)
+
+## Trying to obtain a reanking of the 200 samples
+o &lt;- outliers.ranking(algae)
+
+## As you may have observed the function complained about some problem
+## with the dist() function. The problem is that the algae data frame
+## contains columns (the first 3) that are factors and the dist() function
+## assumes all numeric data.
+## We can solve the problem by calculating the distance matrix "outside"
+## using the daisy() function that handles mixed-mode data, as show in
+## the code below that requires the R package "cluster" to be available
+## dm &lt;- daisy(algae)
+## o &lt;- outliers.ranking(dm)
+
+## Now let us check the outlier ranking factors ordered by decreasing
+## score of outlyingness
+o$prob.outliers[o$rank.outliers]
+
+## Another example with detection of fraudulent transactions
+data(sales)
+
+## trying to obtain the outlier ranks for the set of transactions of a
+## salesperson regarding one particular product, taking into
+## consideration the overall existing transactions of that product
+s &lt;- sales[sales$Prod == 'p1',c(1,3:4)]  # transactions of product p1
+tr &lt;- na.omit(s[s$ID != 'v431',-1])      # all except salesperson v431
+ts &lt;- na.omit(s[s$ID == 'v431',-1])
+
+o &lt;- outliers.ranking(data=tr,test.data=ts,
+         clus=list(dist='euclidean',alg='hclust',meth='average'))
+# The outlyingness factor of the transactions of this salesperson
+o$prob.outliers
+
+</code></pre>
+
+
+</div>

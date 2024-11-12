@@ -1,0 +1,305 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>BuildRule</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build a Treatment Rule</h2>
+
+<h3>Description</h3>
+
+<p>Perform principled development of a treatment rule (using the IPW approach to account for potential confounding) on a development dataset (i.e. training set) that is independent of datasets used for model selection (i.e. validation set) and rule evaluation (i.e. test set).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">BuildRule(
+  development.data,
+  study.design,
+  prediction.approach,
+  name.outcome,
+  type.outcome,
+  name.treatment,
+  names.influencing.treatment = NULL,
+  names.influencing.rule,
+  desirable.outcome,
+  rule.method = NULL,
+  propensity.method,
+  additional.weights = rep(1, nrow(development.data)),
+  truncate.propensity.score = TRUE,
+  truncate.propensity.score.threshold = 0.05,
+  type.observation.weights = NULL,
+  propensity.k.cv.folds = 10,
+  rule.k.cv.folds = 10,
+  lambda.choice = c("min", "1se"),
+  OWL.lambda.seq = NULL,
+  OWL.kernel = "linear",
+  OWL.kparam.seq = NULL,
+  OWL.cvFolds = 10,
+  OWL.verbose = TRUE,
+  OWL.framework.shift.by.min = TRUE,
+  direct.interactions.center.continuous.Y = TRUE,
+  direct.interactions.exclude.A.from.penalty = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>development.data</code></td>
+<td>
+<p>A data frame representing the *development* dataset (i.e. training set) used for building a treatment rule.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study.design</code></td>
+<td>
+<p>Either ‘observational’, ‘RCT’, or ‘naive’. For the <code>observational</code> design, the function uses inverse-probability-of-treatment observation weights (IPW) based on estimated propensity scores with predictors <code>names.influencing.treatment</code>; for the <code>RCT</code> design, the function uses IPW based on propensity scores equal to the observed sample proportions; for the <code>naive</code> design, all observation weights will be uniformly equal to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prediction.approach</code></td>
+<td>
+<p>One of ‘split.regression’, ‘direct.interactions’, ‘OWL’, or ‘OWL.framework’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name.outcome</code></td>
+<td>
+<p>A character indicating the name of the outcome variable in <code>development.data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.outcome</code></td>
+<td>
+<p>Either ‘binary’ or ‘continuous’, the form of <code>name.outcome</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name.treatment</code></td>
+<td>
+<p>A character indicating the name of the treatment variable in <code>development.data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names.influencing.treatment</code></td>
+<td>
+<p>A character vector (or single element) indicating the names of the variables in <code>development.data</code> that are expected to influence treatment assignment in the current dataset. Required for <code>study.design=</code>‘observational’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names.influencing.rule</code></td>
+<td>
+<p>A character vector (or single element) indicating the names of the variables in <code>development.data</code> that may influence response to treatment and are expected to be observed in future clinical settings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>desirable.outcome</code></td>
+<td>
+<p>A logical equal to <code>TRUE</code> if higher values of the outcome are considered desirable (e.g. for a binary outcome, a 1 is more desirable than a 0). The <code>OWL.framework</code> and <code>OWL</code> prediction approaches require a desirable outcome.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule.method</code></td>
+<td>
+<p>One of ‘glm.regression’, ‘lasso’, or ‘ridge’. For <code>type.outcome=</code>‘binary’, ‘glm.regression’ leads to logistic regression; for a <code>type.outcome=</code>‘continuous’, ‘glm.regression’ specifies linear regression. This is the underlying regression model used to develop the treatment rule.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>propensity.method</code></td>
+<td>
+<p>One of ‘logistic.regression’, ‘lasso’, or ‘ridge’. This is the underlying regression model used to estimate propensity scores for <code>study.design=</code>‘observational’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>additional.weights</code></td>
+<td>
+<p>A numeric vector of observation weights that will be multiplied by IPW weights in the rule development stage, with length equal to the number of rows in <code>development.data</code>. This can be used, for example, to account for a non-representative sampling design or to apply an IPW adjustment for missingness. The default is a vector of 1s.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate.propensity.score</code></td>
+<td>
+<p>A logical variable dictating whether estimated propensity scores less than <code>truncate.propensity.score.threshold</code> away from 0 or 1 should be truncated to be no more than <code>truncate.propensity.score.threshold</code> away from 0 or 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>truncate.propensity.score.threshold</code></td>
+<td>
+<p>A numeric value between 0 and 0.25.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type.observation.weights</code></td>
+<td>
+<p>Default is NULL, but other choices are ‘IPW.L’, ‘IPW.L.and.X’, and ‘IPW.ratio’, where L indicates <code>names.influencing.treatment</code>, X indicates <code>names.influencing.rule</code>. The default behavior is to use the ‘IPW.ratio’ observation weights (propensity score based on X divided by propensity score based on L and X) for <code>prediction.approach=</code>‘split.regression’ and to use ‘IPW.L’ observation weights (inverse of propensity score based on L) for the ‘direct.interactions’, ‘OWL’, and ‘OWL.framework’ prediction approaches.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>propensity.k.cv.folds</code></td>
+<td>
+<p>An integer specifying how many folds to use for K-fold cross-validation that chooses the tuning parameters when <code>propensity.method</code> is ‘lasso’ or ‘ridge’. Default is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rule.k.cv.folds</code></td>
+<td>
+<p>An integer specifying how many folds to use for K-fold cross-validation that chooses the tuning parameter when <code>rule.method</code> is <code>lasso</code> or ‘ridge’. Default is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda.choice</code></td>
+<td>
+<p>Either ‘min’ or ‘1se’, corresponding to the <code>s</code> argument in <code>predict.cv.glmnet()</code> from the <code>glmnet</code> package. Only used when <code>propensity.method</code> or <code>rule.method</code> is ‘lasso’ or ‘ridge’. Default is ‘min’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OWL.lambda.seq</code></td>
+<td>
+<p>Used when <code>prediction.approach=</code>‘OWL’, a numeric vector that corresponds to the <code>lambdas</code> argument in the <code>owl()</code> function from the <code>DynTxRegime</code> package. Defaults to <code>2^seq(-5, 5, 1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OWL.kernel</code></td>
+<td>
+<p>Used when <code>prediction.approach=</code>‘OWL’, a character equal to either ‘linear’ or ‘radial’. Corresponds to the <code>kernel</code> argument in the <code>owl()</code> function from the <code>DynTxRegime</code> package. Default is ‘linear’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OWL.kparam.seq</code></td>
+<td>
+<p>Used when <code>prediction.approach=</code>‘OWL’ and <code>OWL.kernel=</code>‘radial’.  Corresponds to the <code>kparam</code> argument in the <code>owl()</code> function from the <code>DynTxRegime</code> package. Defaults to <code>2^seq(-10, 10, 1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OWL.cvFolds</code></td>
+<td>
+<p>Used when <code>prediction.approach=</code>‘OWL’, an integer corresponding to the <code>cvFolds</code> argument in the <code>owl()</code> function from the <code>DynTxRegime</code> package. Defaults to 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OWL.verbose</code></td>
+<td>
+<p>Used when <code>prediction.approach=</code>‘OWL’, a logical corresponding to the <code>verbose</code> argument in the <code>owl()</code> function from the <code>DynTxRegime</code> package. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OWL.framework.shift.by.min</code></td>
+<td>
+<p>Logical, set to <code>TRUE</code> by default in recognition of our empirical observation that, with a continuous outcome, OWL framework performs far better in simulation studies when the outcome was shifted to have a minimum of just above 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direct.interactions.center.continuous.Y</code></td>
+<td>
+<p>Logical, set to <code>TRUE</code> by default in recognition of our empirical observation that, with a continuous outcome, direct-interactions performed far better in simulation studies when the outcome was mean-centered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direct.interactions.exclude.A.from.penalty</code></td>
+<td>
+<p>Logical, set to <code>TRUE</code> by default in recognition of our empirical observation that, with a continuous outcome and lasso/ridge used specified as the <code>rule.method</code>, direct-interactions performed far better in simulation studies when the coefficient corresponding to the treatment variable was excluded from the penalty function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with some combination of the following components (depending on specified <code>prediction.approach</code>)
+</p>
+
+<ul>
+<li> <p><code>type.outcome</code>: The <code>type.outcome</code> specified above (used by other functions that are based on <code>BuildRule()</code>)
+</p>
+</li>
+<li> <p><code>prediction.approach</code>: The <code>prediction.approach</code> specified above (used by other functions that are based on <code>BuildRule()</code>)
+</p>
+</li>
+<li> <p><code>rule.method</code>: The <code>rule.method</code> specified above (used by other functions that are based on <code>BuildRule()</code>)
+</p>
+</li>
+<li> <p><code>lambda.choice</code>: The <code>lambda.choice</code> specified above (used by other functions that are based on <code>BuildRule()</code>)
+</p>
+</li>
+<li> <p><code>propensity.score.object</code>: A list containing the relevant regression object from propensity score estimation. The list has two elements for <code>type.observation.weights=</code>‘IPW.ratio’ (the default for <code>prediction.approach=</code>‘split.regression’), has one element for <code>type.observation.weights=</code>‘IPW.L’ (the default for ‘OWL’, ‘OWL.framework’ and ‘direct.interactions’), has one element when <code>type.observation.weights=</code>‘IPW.L.and.X’, and is simply equal to NA if <code>study.design=</code>‘RCT’ (in which case propensity score would just be the inverse of sample proportion receiving treatment).
+</p>
+</li>
+<li> <p><code>owl.object</code>: For <code>prediction.approach=</code>‘OWL’ only, the object returned by the <code>owl()</code> function in the <code>DynTxRegime</code> package.
+</p>
+</li>
+<li> <p><code>observation.weights</code>: The observation weights used for estimating the treatment rule
+</p>
+</li>
+<li> <p><code>rule.object</code>: For <code>prediction.approach=</code>‘OWL.framework’ or <code>prediction.approach=</code>‘direct.interactions’, the regression object returned from treatment rule estimation (to which the <code>coef()</code> function could be applied, for example)
+</p>
+</li>
+<li> <p><code>rule.object.control</code>: For <code>prediction.approach=</code>‘split.regression’ the regression object returned from treatment rule estimation (to which the <code>coef()</code> function could be applied, for example) that estimates the outcome variable for individuals who do not receive treatment.
+</p>
+</li>
+<li> <p><code>rule.object.treatment</code>: For <code>prediction.approach=</code>‘split.regression’ the regression object returned from treatment rule estimation (to which the <code>coef()</code> function could be applied, for example) that estimates the outcome variable for individuals who do receive treatment.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Yingqi Zhao, Donglin Zeng, A. John Rush &amp; Michael R. Kosorok  (2012)
+Estimating individualized treatment rules using outcome weighted learning.
+Journal of the American Statistical Association,
+107:499 1106–1118.
+</p>
+</li>
+<li>
+<p> Shuai Chen, Lu Tian, Tianxi Cai, Menggang Yu (2017)
+A general statistical framework for subgroup identification and comparative treatment scoring.
+Biometrics,
+73:4: 1199–1209.
+</p>
+</li>
+<li>
+<p> Lu Tian, Ash A. Alizadeh, Andrew J. Gentles, Robert Tibshirani (2014)
+A simple method for estimating interactions between a treatment and a large number of covariates.
+Journal of the American Statistical Association,
+109:508: 1517–1532.
+</p>
+</li>
+<li>
+<p> Jeremy Roth and Noah Simon (2019).
+Using propensity scores to develop and evaluate treatment rules with observational data
+(Manuscript in progress)
+</p>
+</li>
+<li>
+<p> Jeremy Roth and Noah Simon (2019).
+Elucidating outcome-weighted learning and its comparison to split-regression: direct vs. indirect methods in practice.
+(Manuscript in progress)
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(123)
+example.split &lt;- SplitData(data=obsStudyGeneExpressions,
+                                     n.sets=3, split.proportions=c(0.5, 0.25, 0.25))
+development.data &lt;- example.split[example.split$partition == "development",]
+one.rule &lt;- BuildRule(development.data=development.data,
+                     study.design="observational",
+                     prediction.approach="split.regression",
+                     name.outcome="no_relapse",
+                     type.outcome="binary",
+                     desirable.outcome=TRUE,
+                     name.treatment="intervention",
+                     names.influencing.treatment=c("prognosis", "clinic", "age"),
+                     names.influencing.rule=c("age", paste0("gene_", 1:10)),
+                     propensity.method="logistic.regression",
+                     rule.method="glm.regression")
+coef(one.rule$rule.object.control)
+coef(one.rule$rule.object.treatment)
+</code></pre>
+
+
+</div>

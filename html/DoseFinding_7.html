@@ -1,0 +1,279 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bMCTtest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Performs Bayesian multiple contrast test</h2>
+
+<h3>Description</h3>
+
+<p>This function performs a Bayesian multiple contrast test using normal mixture priors for the response on each dose,
+as proposed in Fleischer et al. (2022). For a general description of the multiple contrast test see
+<code>MCTtest</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bMCTtest(
+  dose,
+  resp,
+  data = NULL,
+  models,
+  S = NULL,
+  type = c("normal", "general"),
+  prior,
+  alpha = 0.025,
+  na.action = na.fail,
+  mvtcontrol = mvtnorm.control(),
+  contMat = NULL,
+  critV = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dose, resp</code></td>
+<td>
+<p>Either vectors of equal length specifying dose and response values, or names of variables in the
+data frame specified in ‘<span class="samp">⁠data⁠</span>’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame containing the variables referenced in dose and resp if ‘<span class="samp">⁠data⁠</span>’ is not specified it is
+assumed that ‘<span class="samp">⁠dose⁠</span>’ and ‘<span class="samp">⁠resp⁠</span>’ are variables referenced from data (and no vectors)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>An object of class ‘<span class="samp">⁠Mods⁠</span>’, see <code>Mods</code> for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+<p>The covariance matrix of ‘<span class="samp">⁠resp⁠</span>’ when ‘<span class="samp">⁠type = "general"⁠</span>’, see Description.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Determines whether inference is based on an ANCOVA model under a homoscedastic normality assumption (when
+‘<span class="samp">⁠type = "normal"⁠</span>’), or estimates at the doses and their covariance matrix and degrees of freedom are specified
+directly in ‘<span class="samp">⁠resp⁠</span>’, ‘<span class="samp">⁠S⁠</span>’ and ‘<span class="samp">⁠df⁠</span>’. See also <code>fitMod</code> and Pinheiro et al. (2014).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>List of length equal to the number of doses with the prior for each arm.  Each element needs to be of
+class ‘<span class="samp">⁠normMix⁠</span>’ (See ‘<span class="samp">⁠RBesT⁠</span>’ package documentation). It is assumed that the i-th component of the prior
+list corresponds to the i-th largest dose. For example the first entry in the list is the prior for the placebo
+group, the second entry the prior for the second lowest dose and so on.  Internally the priors across the different
+arms are combined (densities multiplied) assuming independence. The resulting multivariate normal mixture prior
+will have as many components as the product of the number of components of the individual mixture priors. The
+posterior mixture is part of the result object under "posterior".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Significance level for the frequentist multiple contrast test. If no critical values are supplied via
+‘<span class="samp">⁠critV⁠</span>’ this is used to derive critical values for Bayesian decision rule.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>A function which indicates what should happen when the data contain NAs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mvtcontrol</code></td>
+<td>
+<p>A list specifying additional control parameters for the ‘<span class="samp">⁠qmvt⁠</span>’ and ‘<span class="samp">⁠pmvt⁠</span>’ calls in the
+code, see also <code>mvtnorm.control</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contMat</code></td>
+<td>
+<p>Contrast matrix to apply to the posterior dose-response estimates. The contrasts need to be in the
+columns of the matrix (i.e. the column sums need to be 0). If not specified optimal contrasts are calculated using
+<code>optContr</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>critV</code></td>
+<td>
+<p>Supply a critical value for the maximum posterior probability of the contrasts being greater than zero
+that needs to be surpassed to establish a non-flat dose-response. If this argument is NULL, this will be derived
+from critical values for frequentist MCP-Mod using the provided ‘<span class="samp">⁠alpha⁠</span>’.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If ‘<span class="samp">⁠type = "normal"⁠</span>’, an ANCOVA model based on a homoscedastic normality assumption is fitted and posteriors for
+dose-response and contrast vectors are obtained assuming a known variance.
+</p>
+<p>For ‘<span class="samp">⁠type = "general"⁠</span>’ it is assumed multivariate normally distributed estimates are specified in ‘<span class="samp">⁠resp⁠</span>’
+with covariance given by ‘<span class="samp">⁠S⁠</span>’, which define the likelihood.  Posteriors for dose-response and contrast vectors
+are then obtained assuming a known covariance matrix S
+</p>
+<p>The multiple contrast test decision is based on the maximum posterior probability of a contrast being greater than
+zero. Thresholds for the posterior probability can either be supplied or will be derived from frequentist critical
+values. In the latter case the Bayesian test will give approximately the same results as the frequentist multiple
+contrast test if uninformative priors are used.
+</p>
+<p>For the default calculation of optimal contrasts the prior information is ignored (i.e. contrasts are calculated in
+the same way as in <code>MCTtest</code>).  Fleischer et al. (2022) discuss using contrasts that take the prior
+effective sample sizes into account, which can be slightly more favourable for the Bayesian MCT test. Such
+alternative contrasts can be directly handed over via the ‘<span class="samp">⁠contMat⁠</span>’ argument.
+</p>
+<p>For analysis with covariate adjustment, covariate-adjusted ‘<span class="samp">⁠resp⁠</span>’ and ‘<span class="samp">⁠S⁠</span>’ can be supplied together with
+using ‘<span class="samp">⁠type = "general"⁠</span>’. See  'vignette("binary_data")' vignette "Design and analysis template MCP-Mod for binary data" for an example
+on how to obtain covariate adjusted estimates.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class bMCTtest, a list containing the output.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Marius Thomas
+</p>
+
+
+<h3>References</h3>
+
+<p>Fleischer, F., Bossert, S., Deng, Q., Loley, C. and Gierse, J. (2022).  Bayesian MCP-Mod,
+<em>Pharmaceutical Statistics</em>, <b>21</b>, 654–670
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>MCTtest</code>, <code>optContr</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+if (require("RBesT")) {
+
+###############################
+## Normal outcome
+###############################
+
+data(biom)
+## define shapes for which to calculate optimal contrasts
+doses &lt;- c(0, 0.05, 0.2, 0.6, 1)
+modlist &lt;- Mods(emax = 0.05, linear = NULL, logistic = c(0.5, 0.1),
+                linInt = c(0, 1, 1, 1), doses = doses)
+## specify an informative prior for placebo, weakly informative for other arms
+plc_prior &lt;- mixnorm(inf = c(0.8, 0.4, 0.1), rob = c(0.2, 0.4, 10))
+vague_prior &lt;- mixnorm(c(1, 0, 10))
+## i-th component of the prior list corresponds to the i-th largest dose
+## (e.g. 1st component -&gt; placebo prior; last component prior for top dose)
+prior &lt;- list(plc_prior, vague_prior, vague_prior, vague_prior, vague_prior)
+
+m1 &lt;- bMCTtest(dose, resp, biom, models=modlist, prior = prior)
+## now supply a critical value (= threshold for maxmimum posterior probability)
+m2 &lt;- bMCTtest(dose, resp, biom, models=modlist, prior = prior, critV = 0.99)
+
+####################################
+## Binary outcome with covariates
+####################################
+## Not run: 
+## generate data
+logit &lt;- function(p) log(p / (1 - p))
+inv_logit &lt;- function(y) 1 / (1 + exp(-y))
+doses &lt;- c(0, 0.5, 1.5, 2.5, 4)
+
+## set seed and ensure reproducibility across R versions
+set.seed(1, kind = "Mersenne-Twister", sample.kind = "Rejection", normal.kind = "Inversion")
+group_size &lt;- 100
+dose_vector &lt;- rep(doses, each = group_size)
+N &lt;- length(dose_vector)
+## generate covariates
+x1 &lt;- rnorm(N, 0, 1)
+x2 &lt;- factor(sample(c("A", "B"), N, replace = TRUE, prob = c(0.6, 0.4)))
+## assume approximately logit(10%) placebo and logit(35%) asymptotic response with ED50=0.5
+prob &lt;- inv_logit(emax(dose_vector, -2.2, 1.6, 0.5) + 0.3 * x1 + 0.3 * (x2 == "B"))
+dat &lt;- data.frame(y = rbinom(N, 1, prob),
+                  dose = dose_vector, x1 = x1, x2 = x2)
+
+## specify an informative prior for placebo (on logit scale), weakly informative for other arms
+plc_prior &lt;- mixnorm(inf = c(0.8, -2, 0.5), rob = c(0.2, -2, 10))
+vague_prior &lt;- mixnorm(c(1, 0, 10))
+prior &lt;- list(plc_prior, vague_prior, vague_prior, vague_prior, vague_prior)
+
+## candidate models
+mods &lt;- Mods(emax = c(0.25, 1), sigEmax = rbind(c(1, 3), c(2.5, 4)), betaMod = c(1.1, 1.1),
+             placEff = logit(0.1), maxEff = logit(0.35)-logit(0.1),
+             doses = doses)
+
+fit_cov &lt;- glm(y~factor(dose) + 0 + x1 + x2, data = dat, family = binomial)
+
+covariate_adjusted_estimates &lt;- function(mu_hat, S_hat, formula_rhs,
+                                         doses, other_covariates, n_sim) {
+  ## predict every patient under *every* dose
+  oc_rep &lt;- as.data.frame(lapply(other_covariates, function(col) rep(col, times = length(doses))))
+  d_rep &lt;- rep(doses, each = nrow(other_covariates))
+  pdat &lt;- cbind(oc_rep, dose = d_rep)
+  X &lt;- model.matrix(formula_rhs, pdat)
+  ## average on probability scale then backtransform to logit scale
+  mu_star &lt;- logit(tapply(inv_logit(X %*% mu_hat), pdat$dose, mean))
+  ## estimate covariance matrix of mu_star
+  pred &lt;- replicate(n_sim, logit(tapply(inv_logit(X %*% drop(mvtnorm::rmvnorm(1, mu_hat, S_hat))),
+                                        pdat$dose, mean)))
+  return(list(mu_star = as.numeric(mu_star), S_star = cov(t(pred))))
+}
+
+ca &lt;- covariate_adjusted_estimates(coef(fit_cov), vcov(fit_cov), ~factor(dose)+0+x1+x2,
+                                   doses, dat[, c("x1", "x2")], 1000)
+bMCTtest(doses, ca$mu_star, S = ca$S_star, type = "general", models = mods, prior = prior)
+
+## End(Not run)
+################################################
+## example with contrasts handed over
+################################################
+
+data(biom)
+## define shapes for which to calculate optimal contrasts
+doses &lt;- c(0, 0.05, 0.2, 0.6, 1)
+modlist &lt;- Mods(emax = 0.05, linear = NULL, sigEmax = c(0.5, 5),
+                linInt = c(0, 1, 1, 1), doses = doses)
+
+## specify an informative prior for placebo, weakly informative for other arms
+plc_prior &lt;- mixnorm(inf = c(0.8, 0.4, 0.1), rob = c(0.2, 0.4, 10), sigma = 0.7)
+vague_prior &lt;- mixnorm(c(1, 0, 10), sigma = 0.7)
+prior &lt;- list(plc_prior, vague_prior, vague_prior, vague_prior, vague_prior)
+
+## use prior effective sample sizes to calculate optimal contrasts
+prior_ess &lt;- unlist(lapply(prior, ess))
+n_grp &lt;- as.numeric(table(biom$dose))
+weights &lt;- n_grp + prior_ess
+cmat &lt;- optContr(modlist, w = weights)
+
+bMCTtest(dose, resp, biom, models=modlist, prior = prior, contMat = cmat)
+}
+
+</code></pre>
+
+
+</div>

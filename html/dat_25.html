@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>map</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>An implementation of map</h2>
+
+<h3>Description</h3>
+
+<p>An implementation of map and flatmap. They support the use of formulas as
+syntactic sugar for anonymous functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">map(x, f, ...)
+
+## S4 method for signature 'ANY,formula'
+map(x, f, ...)
+
+## S4 method for signature 'atomic,'function''
+map(x, f, ...)
+
+## S4 method for signature 'list,'function''
+map(x, f, p = function(x) TRUE, ...)
+
+## S4 method for signature 'list,numericORcharacteORlogical'
+map(x, f, ...)
+
+## S4 method for signature 'MList,'function''
+map(x, f, ..., simplify = FALSE)
+
+## S4 method for signature 'formula,'function''
+map(x, f, ...)
+
+flatmap(x, f, ..., flatten = unlist)
+
+## S4 method for signature 'ANY,formula'
+flatmap(x, f, ..., flatten = unlist)
+
+sac(x, f, by, ..., combine = bindRows)
+
+## S4 method for signature 'data.frame,'function''
+sac(x, f, by, ..., combine = bindRows)
+
+## S4 method for signature 'ANY,formula'
+sac(x, f, by, ..., combine = bindRows)
+
+vmap(x, f, ..., .mc = min(length(x), detectCores()), .bar = "bar")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>(vector | data.frame | formula) if x inherits from
+data.frame, a data.frame is returned. Use as.list if this is not
+what you want. When x is a formula it is interpreted to trigger a
+multivariate map.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>(function | formula | character | logical | numeric)
+something which can be interpreted as a function. formula objects are
+coerced to a function. atomics are used for subsetting in each element of
+x. See the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to the apply function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>(function | formula) a predicate function indicating which columns
+in a data.frame to use in map. This is a filter for the map operation, the
+full data.frame is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify</code></td>
+<td>
+<p>see SIMPLIFY in mapply</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flatten</code></td>
+<td>
+<p>(function | formula) a function used to flatten the results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>by</code></td>
+<td>
+<p>(e.g. character) argument is passed to extract to select
+columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>combine</code></td>
+<td>
+<p>(function | formula) a function which knows how to combine the
+list of results. bindRows is the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.mc</code></td>
+<td>
+<p>(integer) the number of cores. Passed down to mclapply or
+mcmapply.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.bar</code></td>
+<td>
+<p>(character) see verboseApply.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>map</code> will dispatch to lapply. When <code>x</code> is a
+formula this is interpreted as a multivariate map; this is implemented
+using <code>mapply</code>.  When <code>x</code> is a data.frame <code>map</code> will iterate
+over columns, however the return value is a <code>data.frame</code>. <code>p</code> can
+be used to map over a subset of <code>x</code>.
+</p>
+<p><code>flatmap</code> will dispatch to <code>map</code>. The result is then wrapped by
+<code>flatten</code> which is unlist by default.
+</p>
+<p><code>sac</code> is a naive implementation of split-apply-combine and implemented
+using <code>flatmap</code>.
+</p>
+<p><code>vmap</code> is a 'verbose' version of <code>map</code> and provides a progress bar
+and a link to parallel map (mclapply).
+</p>
+<p><code>map</code>, <code>flatmap</code>, and <code>sac</code> can be extended; they are S4
+generic functions. You don't and should not implement a new method for
+formulas. This method will coerce a formula into a function and pass it down
+to your map(newtype, function) method.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Sugar for anonymous functions
+map(data.frame(y = 1:10, z = 2), x ~ x + 1)
+map(data.frame(y = 1:10, z = 2), x ~ x + 1, is.numeric)
+map(data.frame(y = 1:10, z = 2), x ~ x + 1, x ~ all(x == 2))
+sac(data.frame(y = 1:10, z = 1:2), df ~ data.frame(my = mean(df$y)), "z")
+
+# Trigger a multivariate map with a formula
+map(1:2 ~ 3:4, f(x, y) ~ x + y)
+map(1:2 ~ 3:4, f(x, y) ~ x + y, simplify = TRUE)
+map(1:2 ~ 3:4, f(x, y, z) ~ x + y + z, z = 1)
+
+# Extracting values from lists
+map(list(1:2, 3:4), 2)
+map(list(1:3, 2:5), 2:3)
+map(list(1:3, 2:5), c(TRUE, FALSE, TRUE))
+
+# Some type checking along the way
+map(as.numeric(1:2), numeric : x ~ x)
+map(1:2, integer(1) : x ~ x)
+map(1:2, numeric(1) : x ~ x + 0.5)
+</code></pre>
+
+
+</div>

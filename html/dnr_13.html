@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>paramVertex</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parameter estimation for Vertex dynamics</h2>
+
+<h3>Description</h3>
+
+<p>Parameter estimation fro dynamic vertex case. The interface remaining almost identical to the static vertex one.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">paramVertex(
+  InputNetwork,
+  VertexStatsvec = rep(1, nvertexstats),
+  maxLag,
+  VertexLag = rep(1, maxLag),
+  VertexLagMatrix = matrix(1, maxLag, length(VertexStatsvec)),
+  VertexModelGroup = NA,
+  VertexAttLag = rep(1, maxLag),
+  dayClass = NA,
+  EdgeModelTerms,
+  EdgeModelFormula,
+  EdgeGroup,
+  EdgeIntercept = c("edges"),
+  EdgeNetparam = NA,
+  EdgeExvar = NA,
+  EdgeLag = rep(1, maxLag),
+  EdgeLagMatrix = matrix(1, maxLag, length(EdgeModelTerms)),
+  regMethod = "bayesglm",
+  paramout = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>InputNetwork</code></td>
+<td>
+<p>list of networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VertexStatsvec</code></td>
+<td>
+<p>binary vector of size 8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxLag</code></td>
+<td>
+<p>maximum lag, numeric.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VertexLag</code></td>
+<td>
+<p>binary vector of length maxLag.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VertexLagMatrix</code></td>
+<td>
+<p>binary matrix of size maxLag x 8.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VertexModelGroup</code></td>
+<td>
+<p>Grouping term for vertex model. Must be from vertex attribute list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VertexAttLag</code></td>
+<td>
+<p>Lag vector for vertex group terms. Of length maxLag.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dayClass</code></td>
+<td>
+<p>Any network level present time attribute vector. Here used to indicate week/weekend as 0/1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeModelTerms</code></td>
+<td>
+<p>Model terms in edge model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeModelFormula</code></td>
+<td>
+<p>Model formula in edge model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeGroup</code></td>
+<td>
+<p>Group terms in edge model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeIntercept</code></td>
+<td>
+<p>Intercept for edge model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeNetparam</code></td>
+<td>
+<p>Network level parameter for edge model (currently only supported parameter is current network size).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeExvar</code></td>
+<td>
+<p>Extraneous variable for edge model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeLag</code></td>
+<td>
+<p>binary vector of length maxLag.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EdgeLagMatrix</code></td>
+<td>
+<p>binary matrix of dim maxLag x length(EdgeModelTerms)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>regMethod</code></td>
+<td>
+<p>Regression method. default: "bayesglm"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paramout</code></td>
+<td>
+<p>T/F Should the parameter estimates be returned?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Vertex model parameter list is as follows (Freeman degree, In degree, Out degree, Eigen Centrality, Between centrality, Info centrality, Closeness centrality, log k cycles, log size). For more details about the definitions of the terms, please refer to the vertexstats.R file, which implements all of these. The definitions are in sna or igraph.
+</p>
+
+
+<h3>Value</h3>
+
+<p>list with following elements: <br>
+EdgeCoef: edge coefficients. <br>
+Edgemplematfull: MPLE matrix from edges. <br>
+Edgemplemat: Subsetted MPLE matrix. <br>
+VertexCoef: Coefficients from vertex. <br>
+Vstats: Vertex statistics matrix.<br>
+EdgePredictor0: Edge predictors with imputations with 0.<br>
+EdgePredictor1: Edge predictors with imputations with 1. <br>
+EdgePredictorNA: Edge predictors with imputations with NA. <br>
+EdgeFit: Edge model. <br> 
+VertexStatsFull: Vertex statistics matrix, full. <br>
+VertexFit: Vertex model. <br></p>
+
+
+<h3>Author(s)</h3>
+
+<p>Abhirup
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">nvertexstats &lt;- 9
+maxLag = 3
+VertexLag = rep(1, maxLag)
+VertexLagMatrix &lt;- matrix(0, maxLag, nvertexstats)
+VertexLagMatrix[, c(4, 7)] &lt;- 1
+VertexLagMatrix[c(2,3),7] &lt;- 0
+
+getWeekend &lt;- function(z){
+    weekends &lt;- c("Saturday", "Sunday")
+    if(!network::is.network(z)){
+        if(is.na(z)) return(NA)
+    } else {
+         zDay &lt;- get.network.attribute(z, attrname = "day")
+         out &lt;- ifelse(zDay %in% weekends, 1, 0)
+         return(out)   
+    }
+}
+
+dayClass &lt;- numeric(length(beach))
+for(i in seq_along(dayClass)) {
+    dayClass[i] &lt;- getWeekend(beach[[i]])
+}
+dayClass &lt;- na.omit(dayClass)
+
+
+out &lt;- paramVertex(InputNetwork = beach,
+                   maxLag = 3,
+                   VertexStatsvec = rep(1, nvertexstats),
+                   VertexModelGroup = "regular",
+                   VertexLag = rep(1, maxLag),
+                   VertexLagMatrix = VertexLagMatrix,
+                   dayClass = dayClass,
+                   EdgeModelTerms = NA,
+                   EdgeModelFormula = NA,
+                   EdgeGroup = NA,
+                   EdgeIntercept = c("edges"),
+                   EdgeNetparam = c("logSize"),
+                   EdgeExvar = NA,
+                   EdgeLag = c(1, 1, 0),
+                   paramout = TRUE)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>messageGenerator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Produce a message for the output of a checkFunction</h2>
+
+<h3>Description</h3>
+
+<p>Helper function for producing output messages for
+<code>checkFunction</code> type functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">messageGenerator(
+  problemStatus,
+  message = "Note that a check function found the following problematic values:",
+  nMax = 10
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>problemStatus</code></td>
+<td>
+<p>A list consisting of two entries:
+</p>
+<p><code>$problem</code> - logical indicating whether a problem was found by the
+<code>checkFunction</code> responsible for the making the <code>messageGenerator()</code> call,
+</p>
+<p><code>$problemValues</code> - a vector of values from the variable that were
+deemed problematic (see details below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>message</code></td>
+<td>
+<p>Optional, but recommended. A message describing what problem the
+problem values are related to. If <code>NULL</code> a standard message is added using the name
+of the function that called <code>messageGenerator</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nMax</code></td>
+<td>
+<p>Maximum number of problem values to be printed in the message. If the total
+number of problem values exceeds nMax, the number of omitted problem
+values are added to the message. Defaults to <code>Inf</code>, in which case all problem
+values are printed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is a tool for building <code>checkFunction</code>s for the
+<code>dataReporter</code> <code>makeDataReport</code> function. <code>checkFunction</code>s will often identify a number
+of values in a variable that are somehow problematic. <code>messageGenerator</code> takes
+these values, pastes them together with a problem description and makes sure that the
+formatting is appropriate for being rendered in a <code>rmarkdown</code> document.
+We recommend writing short and precise problem descriptions (see examples),
+but if no message is supplied, the following message is generated:
+"Note that a check function found the following problematic values: [problem values]".
+</p>
+
+
+<h3>Value</h3>
+
+<p>A character string with a problem description.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>check</code>, <code>checkFunction</code>, <code>makeDataReport</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#Varibales with/without underscores
+ noUSVar &lt;- c(1:10)
+ USVar &lt;- c("_a", "n_b", "b_", "_", 1:10)
+
+#Define a checkFunction using messageGenerator with a manual
+#problem description:
+identifyUnderscores &lt;- function(v, nMax = Inf) {
+  v &lt;- as.character(v)
+  underscorePlaces &lt;- regexpr("_", v) &gt; 0
+  problemValues &lt;- unique(v[underscorePlaces])
+  problem &lt;- any(underscorePlaces)
+  message &lt;- messageGenerator(list(problemValues = problemValues, problem = problem),
+                              "The following values contain underscores:",
+                              nMax = nMax)
+  checkResult(list(problem = problem, message = message,
+      problemValues = problemValues))
+ }
+
+ identifyUnderscores(noUSVar) #no problem
+ identifyUnderscores(USVar) #problems
+ 
+#Only print the first two problemvalues in the message:
+ identifyUnderscores(USVar, nMax = 2)
+
+#Define same function, but without a manual problem description in
+#the messageGenerator-call:
+ identifyUnderscores2 &lt;- function(v, nMax = Inf) {
+  v &lt;- as.character(v)
+  underscorePlaces &lt;- regexpr("_", v) &gt; 0
+  problemValues &lt;- unique(v[underscorePlaces])
+  problem &lt;- any(underscorePlaces)
+  message &lt;- messageGenerator(list(problemValues = problemValues,
+                                   problem = problem), nMax = nMax)
+  checkResult(list(problem = problem, message = message,
+      problemValues = problemValues))
+ }
+
+ identifyUnderscores2(noUSVar) #no problem
+ identifyUnderscores2(USVar) #problems
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adapreg.m</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Adaptive Regression</h2>
+
+<h3>Description</h3>
+
+<p>Non-parametric adaptive regression method for diffusion map basis.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">adapreg.m(epsilon, D, y, mmax = min(50, length(y)), fold = NULL,
+  nfolds = 10, objfun = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>diffusion map kernel parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>n-by-n pairwise distance matrix for a data set with n points, or
+alternatively output from the dist() function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>vector of responses to model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mmax</code></td>
+<td>
+<p>maximum model size to consider</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fold</code></td>
+<td>
+<p>vector of integers of size n specifying the k-fold
+cross-validation allocation.  Default does nfolds-fold CV by
+sample(1:nfolds,length(y),replace=T)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfolds</code></td>
+<td>
+<p>number of folds to do CV.  If fold is supplied, nfolds is
+ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>objfun</code></td>
+<td>
+<p>if the function is to be passed into an optimization routine
+(such as minimize()), then this needs to be set to TRUE, so that only the
+minimal CV risk is returned</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Fits an adaptive regression model using the estimated diffusion map
+coordinates of a data set, while holding epsilon fixed and optimizing over
+m.  The adaptive regression model is the expansion of the response function
+on the first m diffusion map basis functions.
+</p>
+<p>For a given epsilon value, this routine finds the optimal m by minimizing
+the cross-validation risk (CV MSE) of the regression estimate.  To optimize
+over (epsilon,m), use the function <code>adapreg()</code>.
+</p>
+<p>Default uses 10-fold cross-validation to choose the optimal model size.
+User may also supply a vector of fold allocations.  For instance,
+sample(1:10,length(y),replace=T) does 10-fold CV while 1:length(y) does
+leave-one-out CV.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The returned value is a list with components
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>mincvrisk</code></td>
+<td>
+<p>minimum cross-validation risk for the adaptive regression
+model for the given epsilon</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mopt</code></td>
+<td>
+<p>size of the optimal regression
+model.  If mopt equals mmax, it is advised to increase mmax.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cvrisk</code></td>
+<td>
+<p>vector of CV risk estimates for model sizes from 1:mmax</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsilon</code></td>
+<td>
+<p>value of epsilon used in diffusion map construction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.hat</code></td>
+<td>
+<p>predictions of the response, y-hat, for the optimal model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coeff</code></td>
+<td>
+<p>coefficients of the optimal model</p>
+</td>
+</tr>
+</table>
+<p>If objfun is set to TRUE, then the returned value is the minimum
+cross-validation risk for the adaptive regression model for the given
+epsilon.
+</p>
+
+
+<h3>References</h3>
+
+<p>Richards, J. W., Freeman, P. E., Lee, A. B., and Schafer, C. M.,
+(2009), ApJ, 691, 32
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>diffuse()</code>,<code>adapreg()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(stats)
+library(scatterplot3d)
+## trig function on circle
+t=seq(-pi,pi,.01)
+x=cbind(cos(t),sin(t))
+y = cos(3*t) + rnorm(length(t),0,.1)
+tcol = topo.colors(32)
+colvec = floor((y-min(y))/(max(y)-min(y))*32); colvec[colvec==0] = 1
+scatterplot3d(x[,1],x[,2],y,color=tcol[colvec],pch=20,
+  main="Cosine function supported on circle",angle=55,
+  cex.main=2,col.axis="gray",cex.symbols=2,cex.lab=2,
+  xlab=expression("x"[1]),ylab=expression("x"[2]),zlab="y")
+
+D = as.matrix(dist(x))
+# leave-one-out cross-validation:
+AR = adapreg.m(.01,D,y,fold=1:length(y))
+print(paste("optimal model size:",AR$mopt,"; min. CV risk:",
+  round(AR$mincvrisk,4)))
+par(mfrow=c(2,1),mar=c(5,5,4,1))
+plot(AR$cvrisks,typ='b',xlab="Model size",ylab="CV risk",
+  cex.lab=1.5,cex.main=1.5,main="CV risk estimates")
+plot(y,AR$y.hat,ylab=expression(hat("y")),cex.lab=1.5,cex.main=1.5,
+  main="Predictions")
+abline(0,1,col=2,lwd=2)
+
+## swiss roll data
+N=2000
+t = (3*pi/2)*(1+2*runif(N));  height = runif(N);
+X = cbind(t*cos(t), height, t*sin(t))
+X = scale(X) + matrix(rnorm(N*3,0,0.05),N,3)
+tcol = topo.colors(32)
+colvec = floor((t-min(t))/(max(t)-min(t))*32); colvec[colvec==0] = 1
+scatterplot3d(X,pch=18,color=tcol[colvec],xlab=expression("x"[1]),
+  ylab=expression("x"[2]),zlab=expression("x"[3]),cex.lab=1.5,
+  main="Swiss Roll, Noise = 0.05",cex.main=1.5,xlim=c(-2,2),
+  ylim=c(-2,2),zlim=c(-2,2),col.axis="gray")
+
+D = as.matrix(dist(X))
+# 10-fold cross-validation:
+AR = adapreg.m(.2,D,t,mmax=25,nfolds=5)
+print(paste("optimal model size:",AR$mopt,"; min. CV risk:",
+  round(AR$mincvrisk,4)))
+par(mfrow=c(2,1),mar=c(5,5,4,1))
+plot(AR$cvrisks,typ='b',xlab="Model size",ylab="CV risk",
+  cex.lab=1.5,cex.main=1.5,main="CV risk estimates")
+plot(t,AR$y.hat,ylab=expression(hat("t")),cex.lab=1.5,cex.main=1.5,
+  main="Predictions")
+abline(0,1,col=2,lwd=2)
+</code></pre>
+
+
+</div>

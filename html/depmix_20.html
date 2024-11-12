@@ -1,0 +1,403 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dependent Mixture Model Specifiction</h2>
+
+<h3>Description</h3>
+
+<p><code>dmm</code> creates an object of class <code>dmm</code>, a
+dependent mixture model.
+</p>
+<p><code>lca</code> creates an object of class <code>dmm,lca</code>, a
+latent class model or an independent mixture model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	dmm(nstates, itemtypes, modname = NULL, fixed = NULL,
+                 stval = NULL, conrows = NULL, conpat = NULL, tdfix =
+                 NULL, tdst = NULL, linmat = NULL, snames = NULL,
+                 inames = NULL)
+	## S3 method for class 'dmm'
+summary(object, specs=FALSE, precision=3, se=NULL, ...)
+
+	lca(nclasses, itemtypes, modname = NULL, fixed = NULL,
+                 stval = NULL, conrows = NULL, conpat = NULL, 
+				 linmat = NULL, snames = NULL, inames = NULL)
+	
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nstates</code></td>
+<td>
+<p>The number of latent states/classes of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nclasses</code></td>
+<td>
+<p>The number of classes of an lca model, ie the number of
+states in a <code>dmm</code> model. They are now called classes because they do
+not change over time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itemtypes</code></td>
+<td>
+<p>A vector of length <code>nitems</code> providing the type of
+measurement, 1 for gaussian data, 2 for a binary item, n&gt;3 for
+categorical items with n answer possibilities. Answer categories are 
+assumed to be unordered categorical. Ordinal responses can be implemented 
+using inequality and/or linear constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modname</code></td>
+<td>
+<p>A character string with the name of the model, good when 
+fitting many models. Components of mixture models keep their own names. 
+Names are printed in the summary. Boring default names are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>A vector of length the number of parameters of the model
+idicating whether parameters are fixed (0) or not (&gt;0).  This may be
+identical to conpat (see below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stval</code></td>
+<td>
+<p>Start values of the parameters.  These will be random if
+not specified.  Start values must be specified (for all parameters) if
+there are fixed parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conrows</code></td>
+<td>
+<p>Argument <code>conrows</code> can be used to specify general
+constraints between parameters. See details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conpat</code></td>
+<td>
+<p>Argument <code>conpat</code> can be used to specify fixed
+parameters and equality constraints.  It can not be used in conjuction
+with fixed.  See details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tdfix,tdst</code></td>
+<td>
+<p>The first is a logical vector indicating (with 1's) 
+which parameters are dependent on covariates (it should have length npars). 
+tdst provides the starting values for the regression parameters. 
+Using tdcov=TRUE in fitdmm will actually fit the regression parameters. 
+The covariate itself has to be specified in the data as 
+"covariate" (see help on markovdata) and should be scaled to 0-1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>linmat</code></td>
+<td>
+<p>A complete matrix of linear constraints.  This argument
+is intended for internal use only, it is used by the fit routine to
+re-create the model with the fitted parameter values.  Warning: use of
+this argument results in complete replacement of the otherwise created
+matrix A, which contains e.g. sum contraints for transition matrix
+parameters.  If <code>linmat</code> is provided, make sure it is correct,
+otherwise strange results may occur in fitting models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>snames</code></td>
+<td>
+<p>Names for the states may be provided in snames. 
+Defaults are State1, State2 etc. These are printed in the summary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inames</code></td>
+<td>
+<p>Names for items may be provided in inames. 
+Defaults are Item1, Item2 etc. They are printed in the summary.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dmm</code></td>
+<td>
+<p>Object of class <code>dmm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precision</code></td>
+<td>
+<p>Precision sets the number of digits to be printed in the
+summary functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p>Vector with standard errors, these are passed on from the 
+summary.fit function if and when ses are available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>specs,...</code></td>
+<td>
+<p>Internal use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>dmm</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+ 
+<p>The function <code>dmm</code> creates an object of class <code>dmm</code> and sets
+random initial parameter values if these are not provided.  Even though
+<code>dmm</code> is not a mixture of Markov models, the mixture parameter is
+is included in the parameter vector.  This is important when specifying
+constraints.  Parameters are ordered as follows: the first parameter(s)
+are the mixing proportions of the mixture of Markov and/or latent class
+models.  I.e., when a single latent class model or a single Markov
+chain is fitted, this mixture proportion has value 1.0 and is it is
+fixed in estimation.  After the mixing proportions, the next parameters
+in the parameter vector are the transition matrix parameters, the
+square of nstates in row-major order.  That is, first the transition
+probabilities from state 1 to all the other states are given, then the
+probabilities from state 2 to all the other states etc.  Next are the
+observation matrix parameters.  These are provided consecutively for
+each state/class.  Ie a trichtomous item model with two states has 6
+observation parameters; the first three are the probabilities of
+observing category 1, 2 and 3 respectively in state 1 (which sum to
+one), and then similarly for state 2.  As another example: suppose we
+have model for one binary item and one gaussian item, in that order, we
+would have 4 observation parameters for each state, first the
+probabilities of observing a symbol from category 1 or 2 in state 1,
+the two parameters, the mean and standard deviation for state 1, and
+then the same state 2 (see the example in fitdmm with data from rudy).
+Finally the initial state probabilities are provided, in the order of
+the states.  In the case of a latent class model or a finite mixture
+model, these parameters are usually denote as the mixture proportions.
+</p>
+<p>Linear constraints can be set using arguments <code>conrows</code> and
+<code>conpat</code>.  <code>conrows</code> must be contain nc by npars values, in
+row major order, with nc the number of contraints to be specified.
+<code>conrows</code> is used to define general linear constraints.  A row of
+<code>conrows</code> must contain the partial derivatives of a general linear
+constraint with respect to each of the parameters.  Suppose we want the
+constraint x1 -2*x2=0, one row of conrows should contain a 1 in
+position one and -2 in position and zeroes in the remaining positions.
+In the function <code>mixdmm</code> <code>conrows</code> is understood to specify
+linear constraints on the mixing proportions only.  As a consequence,
+it is not possible to easily constrain parameters between components of
+a mixture model.
+</p>
+<p><code>conpat</code> can be used as a shortcut for both fixed and conrows.  It
+must be a single vector of length npars contaning 0's (zeroes) for
+fixed parameters, 1's (ones) for free parameters and higher numbers for
+possibly equality constrained parameters.  E.g.
+<code>conpat=c(1,1,0,2,2,3,3,3)</code> would indicate that pars 1 and 2 are
+freely estimated, par 3 is fixed at its startvalue (which must be
+provided in this case), par 4 and 5 are to estimated equal and pars 6,
+7 and 8 are also to be estimated equal.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dmm</code> returns an object of class <code>dmm</code> which has its own summary
+method.  This will print the parameter values, itemtypes, number of (free)
+parameters, and the number of states.  There is no print method.  Using
+print will print all fields of the model which is a list of the following:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>modname</code></td>
+<td>
+<p>See above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstates</code></td>
+<td>
+<p>See above</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>snames</code></td>
+<td>
+<p>See above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nitems</code></td>
+<td>
+<p>The number of items(=length(itemtypes)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itemtypes</code></td>
+<td>
+<p>See above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inames</code></td>
+<td>
+<p>See above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npars</code></td>
+<td>
+<p>The total parameter count of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nparstotal</code></td>
+<td>
+<p>The total number of parameters of when the covariate 
+parameters are included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>freepars</code></td>
+<td>
+<p>The number of freely estimated parameters (it is
+computed as sum(as.logical(fixed))-rank(qr(A)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>freeparsnotd</code></td>
+<td>
+<p>The number of freely estimated parameters (it is
+computed as sum(as.logical(fixed))-rank(qr(A)); this version without
+the covariate parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p>A vector of length npars containing parameter values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p><code>fixed</code> is a (logical) vector of length npars
+specifying which parameters are fixed and which are not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>The matrix A contains the general linear constraints of the
+model.  nrow(A) is the number of linear constraints.  A starts with a
+number of rows for the sum constraints for the transition, observation
+and initial state parameters, after which the user provided constraints
+are added.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bu,bl</code></td>
+<td>
+<p>bu and bl represent the upper and lower bounds of the
+parameters and the constraints.  These vectors are each of length npars
++ nrow(A).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bllin,bulin</code></td>
+<td>
+<p>The lower and upper bounds of the linear
+constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>td,tdin,tdtr,tdob,tdfit</code></td>
+<td>
+<p>Logicals indicating whehter there
+covariates, in which parameters they are, and whether they are
+estimated or not (the latter is used to decide whether to print those
+values or not).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>st</code></td>
+<td>
+<p>Logical indicating whether the model has user specified
+starting values.</p>
+</td>
+</tr>
+</table>
+<p><code>lca</code> returns an object of class <code>dmm, lca</code>, and is otherwise
+identical to a <code>dmm</code> object. The only difference is that the
+transition matrix parameters are irrelevant, and
+consequently they are not printed in the summary function. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ingmar Visser <a href="mailto:i.visser@uva.nl">i.visser@uva.nl</a></p>
+
+
+<h3>References</h3>
+
+<p>On hidden Markov models: Lawrence R. Rabiner (1989).  A tutorial on
+hidden Markov models and selected applications in speech recognition.
+<em>Proceedings of IEEE</em>, 77-2, p.  267-295.
+</p>
+<p>On latent class models: A. L. McCutcheon (1987).  <em>Latent class
+analysis</em>.  Sage Publications.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mixdmm</code> on defining mixtures of <code>dmm</code>'s,
+<code>mgdmm</code> for defining multi group models, and
+<code>generate</code> for generating data from models. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# create a 2 state model with one continuous and one binary response
+# with start values provided in st
+st &lt;- c(1,0.9,0.1,0.2,0.8,2,1,0.7,0.3,5,2,0.2,0.8,0.5,0.5)
+mod &lt;- dmm(nsta=2,itemt=c(1,2), stval=st)
+summary(mod)
+
+# 2 class latent class model with equal conditional probabilities in each class
+stv=c(1,rep(c(0.9,0.1),5),rep(c(0.1,0.9),5),0.5,0.5)
+# here the conditional probs of the first item are set equal to those in
+# the subsequent items
+conpat=c(1,rep(c(2,3),5),rep(c(4,5),5),1,1)
+lc=lca(ncl=2,itemtypes=rep(2,5),conpat=conpat,stv=stv)
+summary(lc)
+
+</code></pre>
+
+
+</div>

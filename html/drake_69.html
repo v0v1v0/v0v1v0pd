@@ -1,0 +1,958 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drake_config</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Ending of _drake.R for r_make() and friends
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Call this function inside the <code style="white-space: pre;">⁠_drake.R⁠</code>
+script for <code>r_make()</code> and friends.
+All non-deprecated function arguments are the same
+between <code>make()</code> and <code>drake_config()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drake_config(
+  plan,
+  targets = NULL,
+  envir = parent.frame(),
+  verbose = 1L,
+  hook = NULL,
+  cache = drake::drake_cache(),
+  fetch_cache = NULL,
+  parallelism = "loop",
+  jobs = 1L,
+  jobs_preprocess = 1L,
+  packages = rev(.packages()),
+  lib_loc = NULL,
+  prework = character(0),
+  prepend = NULL,
+  command = NULL,
+  args = NULL,
+  recipe_command = NULL,
+  timeout = NULL,
+  cpu = Inf,
+  elapsed = Inf,
+  retries = 0,
+  force = FALSE,
+  log_progress = TRUE,
+  graph = NULL,
+  trigger = drake::trigger(),
+  skip_targets = FALSE,
+  skip_imports = FALSE,
+  skip_safety_checks = FALSE,
+  lazy_load = "eager",
+  session_info = NULL,
+  cache_log_file = NULL,
+  seed = NULL,
+  caching = c("main", "master", "worker"),
+  keep_going = FALSE,
+  session = NULL,
+  pruning_strategy = NULL,
+  makefile_path = NULL,
+  console_log_file = NULL,
+  ensure_workers = NULL,
+  garbage_collection = FALSE,
+  template = list(),
+  sleep = function(i) 0.01,
+  hasty_build = NULL,
+  memory_strategy = "speed",
+  spec = NULL,
+  layout = NULL,
+  lock_envir = NULL,
+  history = TRUE,
+  recover = FALSE,
+  recoverable = TRUE,
+  curl_handles = list(),
+  max_expand = NULL,
+  log_build_times = TRUE,
+  format = NULL,
+  lock_cache = TRUE,
+  log_make = NULL,
+  log_worker = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>plan</code></td>
+<td>
+<p>Workflow plan data frame.
+A workflow plan data frame is a data frame
+with a <code>target</code> column and a <code>command</code> column.
+(See the details in the <code>drake_plan()</code> help file
+for descriptions of the optional columns.)
+Targets are the objects that drake generates,
+and commands are the pieces of R code that produce them.
+You can create and track custom files along the way
+(see <code>file_in()</code>, <code>file_out()</code>, and <code>knitr_in()</code>).
+Use the function <code>drake_plan()</code> to generate workflow plan
+data frames.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>targets</code></td>
+<td>
+<p>Character vector, names of targets to build.
+Dependencies are built too. You may supply static and/or whole
+dynamic targets, but no sub-targets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>Environment to use. Defaults to the current
+workspace, so you should not need to worry about this
+most of the time. A deep copy of <code>envir</code> is made,
+so you don't need to worry about your workspace being modified
+by <code>make</code>. The deep copy inherits from the global environment.
+Wherever necessary, objects and functions are imported
+from <code>envir</code> and the global environment and
+then reproducibly tracked as dependencies.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Integer, control printing to the console/terminal.
+</p>
+
+<ul>
+<li> <p><code>0</code>: print nothing.
+</p>
+</li>
+<li> <p><code>1</code>: print target-by-target messages as <code>make()</code> progresses.
+</p>
+</li>
+<li> <p><code>2</code>: show a progress bar to track how many targets are
+done so far.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hook</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache</code></td>
+<td>
+<p>drake cache as created by <code>new_cache()</code>.
+See also <code>drake_cache()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fetch_cache</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallelism</code></td>
+<td>
+<p>Character scalar, type of parallelism to use.
+For detailed explanations, see
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/hpc.html⁠</code>.
+</p>
+<p>You could also supply your own scheduler function
+if you want to experiment or aggressively optimize.
+The function should take a single <code>config</code> argument
+(produced by <code>drake_config()</code>). Existing examples
+from <code>drake</code>'s internals are the <code style="white-space: pre;">⁠backend_*()⁠</code> functions:
+</p>
+
+<ul>
+<li> <p><code>backend_loop()</code>
+</p>
+</li>
+<li> <p><code>backend_clustermq()</code>
+</p>
+</li>
+<li> <p><code>backend_future()</code>
+However, this functionality is really a back door
+and should not be used for production purposes unless you really
+know what you are doing and you are willing to suffer setbacks
+whenever <code>drake</code>'s unexported core functions are updated.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jobs</code></td>
+<td>
+<p>Maximum number of parallel workers for processing the targets.
+You can experiment with <code>predict_runtime()</code>
+to help decide on an appropriate number of jobs.
+For details, visit
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/time.html⁠</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jobs_preprocess</code></td>
+<td>
+<p>Number of parallel jobs for processing the imports
+and doing other preprocessing tasks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>packages</code></td>
+<td>
+<p>Character vector packages to load, in the order
+they should be loaded. Defaults to <code>rev(.packages())</code>, so you
+should not usually need to set this manually. Just call
+<code>library()</code> to load your packages before <code>make()</code>.
+However, sometimes packages need to be strictly forced to load
+in a certain order, especially if <code>parallelism</code> is
+<code>"Makefile"</code>. To do this, do not use <code>library()</code>
+or <code>require()</code> or <code>loadNamespace()</code> or
+<code>attachNamespace()</code> to load any libraries beforehand.
+Just list your packages in the <code>packages</code> argument in the order
+you want them to be loaded.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lib_loc</code></td>
+<td>
+<p>Character vector, optional.
+Same as in <code>library()</code> or <code>require()</code>.
+Applies to the <code>packages</code> argument (see above).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prework</code></td>
+<td>
+<p>Expression (language object), list of expressions,
+or character vector.
+Code to run right before targets build.
+Called only once if <code>parallelism</code> is <code>"loop"</code>
+and once per target otherwise.
+This code can be used to set global options, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prepend</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>command</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recipe_command</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeout</code></td>
+<td>
+<p><code>deprecated</code>. Use <code>elapsed</code> and <code>cpu</code> instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cpu</code></td>
+<td>
+<p>Same as the <code>cpu</code> argument of <code>setTimeLimit()</code>.
+Seconds of cpu time before a target times out.
+Assign target-level cpu timeout times with an optional <code>cpu</code>
+column in <code>plan</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elapsed</code></td>
+<td>
+<p>Same as the <code>elapsed</code> argument of <code>setTimeLimit()</code>.
+Seconds of elapsed time before a target times out.
+Assign target-level elapsed timeout times with an optional <code>elapsed</code>
+column in <code>plan</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>retries</code></td>
+<td>
+<p>Number of retries to execute if the target fails.
+Assign target-level retries with an optional <code>retries</code>
+column in <code>plan</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force</code></td>
+<td>
+<p>Logical. If <code>FALSE</code> (default) then <code>drake</code>
+imposes checks if the cache was created with an old
+and incompatible version of drake.
+If there is an incompatibility, <code>make()</code> stops to
+give you an opportunity to
+downgrade <code>drake</code> to a compatible version
+rather than rerun all your targets from scratch.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_progress</code></td>
+<td>
+<p>Logical, whether to log the progress
+of individual targets as they are being built. Progress logging
+creates extra files in the cache (usually the <code style="white-space: pre;">⁠.drake/⁠</code> folder)
+and slows down <code>make()</code> a little.
+If you need to reduce or limit the number of files in the cache,
+call <code>make(log_progress = FALSE, recover = FALSE)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trigger</code></td>
+<td>
+<p>Name of the trigger to apply to all targets.
+Ignored if <code>plan</code> has a <code>trigger</code> column.
+See <code>trigger()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_targets</code></td>
+<td>
+<p>Logical, whether to skip building the targets
+in <code>plan</code> and just import objects and files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_imports</code></td>
+<td>
+<p>Logical, whether to totally neglect to
+process the imports and jump straight to the targets. This can be useful
+if your imports are massive and you just want to test your project,
+but it is bad practice for reproducible data analysis.
+This argument is overridden if you supply your own <code>graph</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_safety_checks</code></td>
+<td>
+<p>Logical, whether to skip the safety checks
+on your workflow. Use at your own peril.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lazy_load</code></td>
+<td>
+<p>An old feature, currently being questioned.
+For the current recommendations on memory management, see
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/memory.html#memory-strategies⁠</code>.
+The <code>lazy_load</code> argument is either a character vector or a logical.
+For dynamic targets, the behavior is always <code>"eager"</code> (see below).
+So the <code>lazy_load</code> argument is for static targets only.
+Choices for <code>lazy_load</code>:
+</p>
+
+<ul>
+<li> <p><code>"eager"</code>: no lazy loading. The target is loaded right away
+with <code>assign()</code>.
+</p>
+</li>
+<li> <p><code>"promise"</code>: lazy loading with <code>delayedAssign()</code>
+</p>
+</li>
+<li> <p><code>"bind"</code>: lazy loading with active bindings:
+<code>bindr::populate_env()</code>.
+</p>
+</li>
+<li> <p><code>TRUE</code>: same as <code>"promise"</code>.
+</p>
+</li>
+<li> <p><code>FALSE</code>: same as <code>"eager"</code>.
+</p>
+</li>
+</ul>
+<p>If <code>lazy_load</code> is <code>"eager"</code>,
+drake prunes the execution environment before each target/stage,
+removing all superfluous targets
+and then loading any dependencies it will need for building.
+In other words, drake prepares the environment in advance
+and tries to be memory efficient.
+If <code>lazy_load</code> is <code>"bind"</code> or <code>"promise"</code>, drake assigns
+promises to load any dependencies at the last minute.
+Lazy loading may be more memory efficient in some use cases, but
+it may duplicate the loading of dependencies, costing time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>session_info</code></td>
+<td>
+<p>Logical, whether to save the <code>sessionInfo()</code>
+to the cache. Defaults to <code>TRUE</code>.
+This behavior is recommended for serious <code>make()</code>s
+for the sake of reproducibility. This argument only exists to
+speed up tests. Apparently, <code>sessionInfo()</code> is a bottleneck
+for small <code>make()</code>s.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache_log_file</code></td>
+<td>
+<p>Name of the CSV cache log file to write.
+If <code>TRUE</code>, the default file name is used (<code>drake_cache.CSV</code>).
+If <code>NULL</code>, no file is written.
+If activated, this option writes a flat text file
+to represent the state of the cache
+(fingerprints of all the targets and imports).
+If you put the log file under version control, your commit history
+will give you an easy representation of how your results change
+over time as the rest of your project changes. Hopefully,
+this is a step in the right direction for data reproducibility.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Integer, the root pseudo-random number generator
+seed to use for your project.
+In <code>make()</code>, <code>drake</code> generates a unique
+local seed for each target using the global seed
+and the target name. That way, different pseudo-random numbers
+are generated for different targets, and this pseudo-randomness
+is reproducible.
+</p>
+<p>To ensure reproducibility across different R sessions,
+<code>set.seed()</code> and <code>.Random.seed</code> are ignored and have no affect on
+<code>drake</code> workflows. Conversely, <code>make()</code> does not usually
+change <code>.Random.seed</code>,
+even when pseudo-random numbers are generated.
+The exception to this last point is
+<code>make(parallelism = "clustermq")</code>
+because the <code>clustermq</code> package needs to generate random numbers
+to set up ports and sockets for ZeroMQ.
+</p>
+<p>On the first call to <code>make()</code> or <code>drake_config()</code>, <code>drake</code>
+uses the random number generator seed from the <code>seed</code> argument.
+Here, if the <code>seed</code> is <code>NULL</code> (default), <code>drake</code> uses a <code>seed</code> of <code>0</code>.
+On subsequent <code>make()</code>s for existing projects, the project's
+cached seed will be used in order to ensure reproducibility.
+Thus, the <code>seed</code> argument must either be <code>NULL</code> or the same
+seed from the project's cache (usually the <code style="white-space: pre;">⁠.drake/⁠</code> folder).
+To reset the random number generator seed for a project,
+use <code>clean(destroy = TRUE)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>caching</code></td>
+<td>
+<p>Character string, either <code>"main"</code> or <code>"worker"</code>.
+</p>
+
+<ul>
+<li> <p><code>"main"</code>: Targets are built by remote workers and sent back to
+the main process. Then, the main process saves them to the
+cache (<code>config$cache</code>, usually a file system <code>storr</code>).
+Appropriate if remote workers do not have access to the file system
+of the calling R session. Targets are cached one at a time,
+which may be slow in some situations.
+</p>
+</li>
+<li> <p><code>"worker"</code>: Remote workers not only build the targets, but also
+save them to the cache. Here, caching happens in parallel.
+However, remote workers need to have access to the file system
+of the calling R session. Transferring target data across
+a network can be slow.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep_going</code></td>
+<td>
+<p>Logical, whether to still keep running <code>make()</code>
+if targets fail.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>session</code></td>
+<td>
+<p>Deprecated. Has no effect now.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pruning_strategy</code></td>
+<td>
+<p>Deprecated. See <code>memory_strategy</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>makefile_path</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>console_log_file</code></td>
+<td>
+<p>Deprecated in favor of <code>log_make</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensure_workers</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>garbage_collection</code></td>
+<td>
+<p>Logical, whether to call <code>gc()</code> each time
+a target is built during <code>make()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>template</code></td>
+<td>
+<p>A named list of values to fill in the <code>{{ ... }}</code>
+placeholders in template files (e.g. from <code>drake_hpc_template_file()</code>).
+Same as the <code>template</code> argument of <code>clustermq::Q()</code> and
+<code>clustermq::workers</code>.
+Enabled for <code>clustermq</code> only (<code>make(parallelism = "clustermq")</code>),
+not <code>future</code> or <code>batchtools</code> so far.
+For more information, see the <code>clustermq</code> package:
+<code style="white-space: pre;">⁠https://github.com/mschubert/clustermq⁠</code>.
+Some template placeholders such as <code>{{ job_name }}</code> and <code>{{ n_jobs }}</code>
+cannot be set this way.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sleep</code></td>
+<td>
+<p>Optional function on a single numeric argument <code>i</code>.
+Default: <code>function(i) 0.01</code>.
+</p>
+<p>To conserve memory, <code>drake</code> assigns a brand new closure to
+<code>sleep</code>, so your custom function should not depend on in-memory data
+except from loaded packages.
+</p>
+<p>For parallel processing, <code>drake</code> uses
+a central main process to check what the parallel
+workers are doing, and for the affected high-performance
+computing workflows, wait for data to arrive over a network.
+In between loop iterations, the main process sleeps to avoid throttling.
+The <code>sleep</code> argument to <code>make()</code> and <code>drake_config()</code>
+allows you to customize how much time the main process spends
+sleeping.
+</p>
+<p>The <code>sleep</code> argument is a function that takes an argument
+<code>i</code> and returns a numeric scalar, the number of seconds to
+supply to <code>Sys.sleep()</code> after iteration <code>i</code> of checking.
+(Here, <code>i</code> starts at 1.)
+If the checking loop does something other than sleeping
+on iteration <code>i</code>, then <code>i</code> is reset back to 1.
+</p>
+<p>To sleep for the same amount of time between checks,
+you might supply something like <code>function(i) 0.01</code>.
+But to avoid consuming too many resources during heavier
+and longer workflows, you might use an exponential
+back-off: say,
+<code>function(i) { 0.1 + 120 * pexp(i - 1, rate = 0.01) }</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hasty_build</code></td>
+<td>
+<p>Deprecated</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>memory_strategy</code></td>
+<td>
+<p>Character scalar, name of the
+strategy <code>drake</code> uses to load/unload a target's dependencies in memory.
+You can give each target its own memory strategy,
+(e.g. <code>drake_plan(x = 1, y = target(f(x), memory_strategy = "lookahead"))</code>)
+to override the global memory strategy. Choices:
+</p>
+
+<ul>
+<li> <p><code>"speed"</code>: Once a target is newly built or loaded in memory,
+just keep it there.
+This choice maximizes speed and hogs memory.
+</p>
+</li>
+<li> <p><code>"autoclean"</code>: Just before building each new target,
+unload everything from memory except the target's direct dependencies.
+After a target is built, discard it from memory.
+(Set <code>garbage_collection = TRUE</code> to make sure it is really gone.)
+This option conserves memory, but it sacrifices speed because
+each new target needs to reload
+any previously unloaded targets from storage.
+</p>
+</li>
+<li> <p><code>"preclean"</code>: Just before building each new target,
+unload everything from memory except the target's direct dependencies.
+After a target is built, keep it in memory until <code>drake</code> determines
+they can be unloaded.
+This option conserves memory, but it sacrifices speed because
+each new target needs to reload
+any previously unloaded targets from storage.
+</p>
+</li>
+<li> <p><code>"lookahead"</code>: Just before building each new target,
+search the dependency graph to find targets that will not be
+needed for the rest of the current <code>make()</code> session.
+After a target is built, keep it in memory until the next
+memory management stage.
+In this mode, targets are only in memory if they need to be loaded,
+and we avoid superfluous reads from the cache.
+However, searching the graph takes time,
+and it could even double the computational overhead for large projects.
+</p>
+</li>
+<li> <p><code>"unload"</code>: Just before building each new target,
+unload all targets from memory.
+After a target is built, <strong>do not</strong> keep it in memory.
+This mode aggressively optimizes for both memory and speed,
+but in commands and triggers,
+you have to manually load any dependencies you need using <code>readd()</code>.
+</p>
+</li>
+<li> <p><code>"none"</code>: Do not manage memory at all.
+Do not load or unload anything before building targets.
+After a target is built, <strong>do not</strong> keep it in memory.
+This mode aggressively optimizes for both memory and speed,
+but in commands and triggers,
+you have to manually load any dependencies you need using <code>readd()</code>.
+</p>
+</li>
+</ul>
+<p>For even more direct
+control over which targets <code>drake</code> keeps in memory, see the
+help file examples of <code>drake_envir()</code>.
+Also see the <code>garbage_collection</code> argument of <code>make()</code> and
+<code>drake_config()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spec</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layout</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lock_envir</code></td>
+<td>
+<p>Deprecated in <code style="white-space: pre;">⁠drake &gt;= 7.13.10⁠</code>. Environments
+are no longer locked.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history</code></td>
+<td>
+<p>Logical, whether to record the build history
+of your targets. You can also supply a
+<code>txtq</code>, which is
+how <code>drake</code> records history.
+Must be <code>TRUE</code> for <code>drake_history()</code> to work later.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recover</code></td>
+<td>
+<p>Logical, whether to activate automated data recovery.
+The default is <code>FALSE</code> because
+</p>
+
+<ol>
+<li>
+<p> Automated data recovery is still stable.
+</p>
+</li>
+<li>
+<p> It has reproducibility issues.
+Targets recovered from the distant past may have been generated
+with earlier versions of R and earlier package environments
+that no longer exist.
+</p>
+</li>
+<li>
+<p> It is not always possible, especially when dynamic files
+are combined with dynamic branching
+(e.g. <code>dynamic = map(stuff)</code> and <code>format = "file"</code> etc.)
+since behavior is harder to predict in advance.
+</p>
+</li>
+</ol>
+<p>How it works: if <code>recover</code> is <code>TRUE</code>,
+<code>drake</code> tries to salvage old target values from the cache
+instead of running commands from the plan.
+A target is recoverable if
+</p>
+
+<ol>
+<li>
+<p> There is an old value somewhere in the cache that
+shares the command, dependencies, etc.
+of the target about to be built.
+</p>
+</li>
+<li>
+<p> The old value was generated with <code>make(recoverable = TRUE)</code>.
+</p>
+</li>
+</ol>
+<p>If both conditions are met, <code>drake</code> will
+</p>
+
+<ol>
+<li>
+<p> Assign the most recently-generated admissible data to the target, and
+</p>
+</li>
+<li>
+<p> skip the target's command.
+</p>
+</li>
+</ol>
+<p>Functions <code>recoverable()</code> and <code>r_recoverable()</code> show the most upstream
+outdated targets that will be recovered in this way in the next
+<code>make()</code> or <code>r_make()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recoverable</code></td>
+<td>
+<p>Logical, whether to make target values recoverable
+with <code>make(recover = TRUE)</code>.
+This requires writing extra files to the cache,
+and it prevents old metadata from being removed with garbage collection
+(<code>clean(garbage_collection = TRUE)</code>, <code>gc()</code> in <code>storr</code>s).
+If you need to limit the cache size or the number of files in the cache,
+consider <code>make(recoverable = FALSE, progress = FALSE)</code>.
+Recovery is not always possible, especially when dynamic files
+are combined with dynamic branching
+(e.g. <code>dynamic = map(stuff)</code> and <code>format = "file"</code> etc.)
+since behavior is harder to predict in advance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>curl_handles</code></td>
+<td>
+<p>A named list of curl handles. Each value is an
+object from <code>curl::new_handle()</code>, and each name is a URL
+(and should start with "http", "https", or "ftp").
+Example:
+list(
+<code style="white-space: pre;">⁠http://httpbin.org/basic-auth⁠</code> = curl::new_handle(
+username = "user", password = "passwd"
+)
+)
+Then, if your plan has
+<code>file_in("http://httpbin.org/basic-auth/user/passwd")</code>
+<code>drake</code> will authenticate using the username and password of the handle
+for <code style="white-space: pre;">⁠http://httpbin.org/basic-auth/⁠</code>.
+</p>
+<p><code>drake</code> uses partial matching on text to
+find the right handle of the <code>file_in()</code> URL, so the name of the handle
+could be the complete URL (<code>"http://httpbin.org/basic-auth/user/passwd"</code>)
+or a part of the URL (e.g. <code>"http://httpbin.org/"</code> or
+<code>"http://httpbin.org/basic-auth/"</code>). If you have multiple handles
+whose names match your URL, <code>drake</code> will choose the closest match.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_expand</code></td>
+<td>
+<p>Positive integer, optional.
+<code>max_expand</code> is the maximum number of targets to generate in each
+<code>map()</code>, <code>cross()</code>, or <code>group()</code> dynamic transform.
+Useful if you have a massive number of dynamic sub-targets and you want to
+work with only the first few sub-targets before scaling up.
+Note: the <code>max_expand</code> argument of <code>make()</code> and
+<code>drake_config()</code> is for dynamic branching only.
+The static branching <code>max_expand</code>
+is an argument of <code>drake_plan()</code> and <code>transform_plan()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_build_times</code></td>
+<td>
+<p>Logical, whether to record build_times for targets.
+Mac users may notice a 20% speedup in <code>make()</code>
+with <code>build_times = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>format</code></td>
+<td>
+<p>Character, an optional custom storage format for targets
+without an explicit <code>target(format = ...)</code> in the plan. Details
+about formats:
+<code style="white-space: pre;">⁠https://books.ropensci.org/drake/plans.html#special-data-formats-for-targets⁠</code> # nolint</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lock_cache</code></td>
+<td>
+<p>Logical, whether to lock the cache before running <code>make()</code>
+etc. It is usually recommended to keep cache locking on.
+However, if you interrupt <code>make()</code> before it can clean itself up,
+then the cache will stay locked,
+and you will need to manually unlock it with
+<code>drake::drake_cache("xyz")$unlock()</code>. Repeatedly unlocking the cache
+by hand is annoying, and <code>lock_cache = FALSE</code> prevents the cache
+from locking in the first place.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_make</code></td>
+<td>
+<p>Optional character scalar of a file name or
+connection object (such as <code>stdout()</code>) to dump maximally verbose
+log information for <code>make()</code> and other functions (all functions that
+accept a <code>config</code> argument, plus <code>drake_config()</code>).
+If you choose to use a text file as the console log,
+it will persist over multiple function calls
+until you delete it manually.
+Fields in each row the log file, from left to right:
+- The node name (short host name) of the
+computer (from <code>Sys.info()["nodename"]</code>).
+- The process ID (from <code>Sys.getpid()</code>).
+- A timestamp with the date and time (in microseconds).
+- A brief description of what <code>drake</code> was doing.<code style="white-space: pre;">⁠ The fields are separated by pipe symbols (⁠</code>"|"').</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log_worker</code></td>
+<td>
+<p>Logical, same as the <code>log_worker</code> argument of
+<code>clustermq::workers()</code> and <code>clustermq::Q()</code>. Only relevant
+if <code>parallelism</code> is <code>"clustermq"</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In <code>drake</code>, <code>make()</code> has two stages:
+</p>
+
+<ol>
+<li>
+<p> Configure a workflow to your environment and plan.
+</p>
+</li>
+<li>
+<p> Build targets.
+The <code>drake_config()</code> function just does step (1),
+which is a common requirement for not only <code>make()</code>,
+but also utility functions like <code>vis_drake_graph()</code>
+and <code>outdated()</code>. That is why <code>drake_config()</code>
+is a requirement for the <code style="white-space: pre;">⁠_drake.R⁠</code> script, which
+powers <code>r_make()</code>, <code>r_outdated()</code>, <code>r_vis_drake_graph()</code>, etc.
+</p>
+</li>
+</ol>
+<h3>Value</h3>
+
+<p>A configured <code>drake</code> workflow.
+</p>
+
+
+<h3>Recovery</h3>
+
+<p><code>make(recover = TRUE, recoverable = TRUE)</code>
+powers automated data recovery.
+The default of <code>recover</code> is <code>FALSE</code> because
+targets recovered from the distant past may have been generated
+with earlier versions of R and earlier package environments
+that no longer exist.
+</p>
+<p>How it works: if <code>recover</code> is <code>TRUE</code>,
+<code>drake</code> tries to salvage old target values from the cache
+instead of running commands from the plan.
+A target is recoverable if
+</p>
+
+<ol>
+<li>
+<p> There is an old value somewhere in the cache that
+shares the command, dependencies, etc.
+of the target about to be built.
+</p>
+</li>
+<li>
+<p> The old value was generated with <code>make(recoverable = TRUE)</code>.
+</p>
+</li>
+</ol>
+<p>If both conditions are met, <code>drake</code> will
+</p>
+
+<ol>
+<li>
+<p> Assign the most recently-generated admissible data to the target, and
+</p>
+</li>
+<li>
+<p> skip the target's command.
+</p>
+</li>
+</ol>
+<h3>See Also</h3>
+
+<p><code>make()</code>, <code>drake_plan()</code>, <code>vis_drake_graph()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("quarantine side effects", {
+if (requireNamespace("knitr", quietly = TRUE)) {
+writeLines(
+  c(
+    "library(drake)",
+    "load_mtcars_example()",
+    "drake_config(my_plan, targets = c(\"small\", \"large\"))"
+  ),
+  "_drake.R" # default value of the `source` argument
+)
+cat(readLines("_drake.R"), sep = "\n")
+r_outdated()
+r_make()
+r_outdated()
+}
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

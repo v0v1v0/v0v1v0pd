@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Between, Outside</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Operators To Check, If a Value Lies Within Or Outside a Given Range
+</h2>
+
+<h3>Description</h3>
+
+<p>The between and outside operators are used to check, whether a vector of given values x lie within a defined range (or outside respectively). The values can be numbers, text or dates.
+Ordered factors are supported.
+
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">x %()% rng
+x %(]% rng
+x %[)% rng
+x %[]% rng
+
+x %][% rng
+x %](% rng
+x %)[% rng
+x %)(% rng
+
+x %:% rng
+x %::% rng
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>is a variable with at least ordinal scale, usually a numeric value, but can be an ordered factor or a text as well. Texts would be treated alphabetically.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rng</code></td>
+<td>
+
+<p>a vector of two values or a matrix with 2 columns, defining the minimum and maximum of the range for x. <br> If rng is a matrix, x or rng will be recycled.
+
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The "BETWEEN" operators basically combine two conditional statements into one and simplify the query process.<br>
+They are merely a wrapper for:   <code>x &gt;= rng[1] &amp; x &lt;= rng[2]</code>,
+where the round bracket  <code>(</code>  means <em>strictly greater (&gt;)</em> and the square bracket  <code>[</code>  means <em>greater or equal (&gt;=)</em>.  Numerical values of x will be handled by C-code, which is significantly faster than two comparisons in R (especially when x is huge).
+.<br><code>%][%</code> is the negation of <code>%()%</code>, meaning all values lying outside the given range. Elements on the limits will return <code>TRUE</code>.
+</p>
+<p>Both arguments, <code>x</code> and <code>rng</code>, will be recycled to the highest dimension, which is either the length of the vector (<code>x</code>) or the number of rows of the matrix (<code>rng</code>).<br>
+See also the routines used to check, whether two ranges overlap (<code>Overlap</code>, <code>Interval</code>).
+</p>
+<p><code>%:%</code> returns all the elements of a vector between the (first found) element <code>rng[1]</code> and <code>rng[2]</code>. If no match is found it returns <code>NA</code>. If <code>rng[2]</code> occurs before <code>rng[1]</code> in the vector the elements will be returned in reverse order (which is the same behaviour as the <code>:</code> operator).
+<br><code>%::%</code> does the same in greedy mood. It uses the first match for <code>from</code> and the last match for <code>to</code>.
+<br></p>
+
+
+<h3>Value</h3>
+
+<p>A logical vector of the same length as x.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Andri Signorell &lt;andri@signorell.net&gt; based on C-code by Kevin Ushey &lt;kevinushey@gmail.com&gt;
+
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>if</code>, <code>ifelse</code>, <code>Comparison</code>,
+<code>Overlap</code>, <code>Interval</code>  </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">x &lt;- 1:9
+x %[]% c(3,5)
+
+# outside
+x &lt;- 1:9
+x %][% c(3,5)
+
+c(x,NA) %[]% c(3,5)
+
+x %(]% c(3,5)
+
+# no result when from &gt; to:
+x %[]% c(5,3)
+x %(]% c(5,5)
+
+# no problem:
+ordered(x) %[]% c(3,5)
+
+# not meaningful:
+factor(x) %[]% c(3,5)
+
+# characters
+letters[letters %(]% c("d","h")]
+
+data(d.pizza)
+x &lt;- levels(d.pizza$driver)
+x %[]% c("C","G")
+
+# select diamonds with a price between 2400 and 2510
+data(d.diamonds)
+d.diamonds[d.diamonds$price %[]% c(2400,2510),]
+
+# use it with an ordered factor and select all diamonds with
+#   symmetry between G (included) and X (excluded).
+mean(d.diamonds[d.diamonds$symmetry %[)% c("G","X"),"price"])
+
+
+# use multiple ranges
+2 %[]% cbind(1:4,2:5)
+
+# both arguments are recycled
+c(2,3) %[]% cbind(1:4,2:5)
+
+
+# between operator for vector positions
+set.seed(4)
+(x &lt;- sample(LETTERS, size=10, replace=TRUE))
+# [1] "X" "K" "S" "C" "G" "L" "S" "V" "U" "Z"
+
+# return all elements between "S" and "L" 
+x %:% c("S","L")
+# [1] "S" "C" "G" "L"
+ 
+x %:% c("S","A")
+# [1] "S" "C" "G" "L" "S" "V" "U" "Z"
+ 
+x %:% c("A","S")
+# [1] "X" "K" "S"
+
+# reverted matches return the elements in reverse order
+x %:% c("G","X")
+# [1] "G" "C" "S" "K" "X"
+
+# no match results in NA
+x %:% c("Y","B")
+
+(x &lt;- c("B", "A", "X", "K", "S", "K", "G", "L", "K", "V", "K", "Z"))
+# lazy
+x %:% c("A", "K")
+# greedy
+x %::% c("A", "K")
+</code></pre>
+
+
+</div>

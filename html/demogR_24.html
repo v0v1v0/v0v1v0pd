@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>project.leslie</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> project.leslie </h2>
+
+<h3>Description</h3>
+
+<p>Projects an population vector tmax intervals by
+pre-multiplication with a Leslie matrix.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">project.leslie(A, no, tmax, pop.sum = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p> a k x k projection matrix </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>no</code></td>
+<td>
+<p> a k x 1 population vector </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tmax</code></td>
+<td>
+<p> number of time steps to project the vector </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pop.sum</code></td>
+<td>
+<p> logical; If 'TRUE', the age-classes of the projected
+population are summed, yielding a single total population vector</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Takes an initial population vector, no, and pre-multiplies by the
+demographic projection matrix, A, tmax times.  This projection will
+be tmax*n years into the future, where n is the width of the
+age-classes in the Leslie matrix, A.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>pop.sum=FALSE</code> (the default), the value will be a k x
+tmax+1 matrix. The first column of the matrix is no and each
+subsequent column represents the population structure at time
+step 1, 2, ..., tmax.
+</p>
+<p>If  <code>pop.sum=TRUE</code>, the value will be a vector of length
+tmax+1, where each element of the vector is the total
+population at time t=0, 1, ..., tmax.
+</p>
+
+
+<h3>See Also</h3>
+
+  <p><code>leslie.matrix</code>, <code>eigen.analysis</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(goodman)
+ult &lt;- with(goodman, life.table(x=age, nKx=usa.nKx, nDx=usa.nDx))
+mx &lt;- goodman$usa.bx/goodman$usa.nKx
+usa &lt;- leslie.matrix(lx=ult$nLx,mx=mx)
+
+## initial population is the age structure in 1967
+## this includes the number of 0-1 year-olds and the number of 1-4
+## year-olds, which need to be combined into a single 5-year wide
+## element 
+
+no &lt;- goodman$usa.nKx[3:11]
+no &lt;- c(sum(goodman$usa.nKx[1:2]),no)/1e6
+
+N &lt;- project.leslie(usa,no,tmax=20)
+plot( seq(1967,2067,by=5), apply(N,2,sum), 
+         type="l", 
+	 xlab="Years", 
+	 ylab="Projected Population (millions)")
+title("Projected Total Population Size (Ages 0-45) of the United States")
+
+##   Note that this is a lousy projection since it assumes constant
+##   demographic rates and a closed population and only accounts for
+##   ages 0-45
+</code></pre>
+
+
+</div>

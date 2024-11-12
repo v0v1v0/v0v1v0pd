@@ -1,0 +1,383 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>episodes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Group dated events into episodes.</h2>
+
+<h3>Description</h3>
+
+<p>Dated events (records) within a certain duration of an index event are assigned to a unique group.
+Each group has unique ID and are described as <code>"episodes"</code>.
+<code>"episodes"</code> can be <code>"fixed"</code> or <code>"rolling"</code> (<code>"recurring"</code>).
+Each episodes has a <code>"Case"</code> and/or <code>"Recurrent"</code> record
+while all other records within the group are either <code>"Duplicates"</code> of
+the <code>"Case"</code> or <code>"Recurrent"</code> event.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">episodes(
+  date,
+  case_length = Inf,
+  episode_type = "fixed",
+  recurrence_length = case_length,
+  episode_unit = "days",
+  strata = NULL,
+  sn = NULL,
+  episodes_max = Inf,
+  rolls_max = Inf,
+  case_overlap_methods = 8,
+  recurrence_overlap_methods = case_overlap_methods,
+  skip_if_b4_lengths = FALSE,
+  data_source = NULL,
+  data_links = "ANY",
+  custom_sort = NULL,
+  skip_order = Inf,
+  reference_event = "last_record",
+  case_for_recurrence = FALSE,
+  from_last = FALSE,
+  group_stats = c("case_nm", "wind", "epid_interval"),
+  display = "none",
+  case_sub_criteria = NULL,
+  recurrence_sub_criteria = case_sub_criteria,
+  case_length_total = 1,
+  recurrence_length_total = case_length_total,
+  skip_unique_strata = TRUE,
+  splits_by_strata = 1,
+  batched = "semi"
+)
+
+links_wf_episodes(
+  date,
+  case_length = Inf,
+  episode_type = "fixed",
+  strata = NULL,
+  sn = NULL,
+  display = "none"
+)
+
+episodes_af_shift(
+  date,
+  case_length = Inf,
+  sn = NULL,
+  strata = NULL,
+  group_stats = FALSE,
+  episode_type = "fixed",
+  data_source = NULL,
+  episode_unit = "days",
+  data_links = "ANY",
+  display = "none"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>date</code></td>
+<td>
+<p><code>[date|datetime|integer|number_line]</code>. Record date or period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case_length</code></td>
+<td>
+<p><code>[integer|number_line]</code>. Duration from an index event distinguishing one <code>"Case"</code> from another.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>episode_type</code></td>
+<td>
+<p><code>[character]</code>. Options are <code>"fixed"</code> (default) or <code>"rolling"</code>. See <code>Details</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recurrence_length</code></td>
+<td>
+<p><code>[integer|number_line]</code>. Duration from an index event distinguishing a <code>"Recurrent"</code> event from its <code>"Case"</code> or prior <code>"Recurrent"</code> event.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>episode_unit</code></td>
+<td>
+<p><code>[character]</code>. Unit of time for <code>case_length</code> and <code>recurrence_length</code>. Options are "seconds", "minutes", "hours", "days" (default), "weeks", "months" or "years". See <code>diyar::episode_unit</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p><code>[atomic]</code>. Subsets of the dataset. Episodes are created separately by each <code>strata</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sn</code></td>
+<td>
+<p><code>[integer]</code>. Unique record ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>episodes_max</code></td>
+<td>
+<p><code>[integer]</code>. Maximum number of episodes permitted within each <code>strata</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rolls_max</code></td>
+<td>
+<p><code>[integer]</code>. Maximum number of times an index event can recur. Only used if <code>episode_type</code> is <code>"rolling"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case_overlap_methods</code></td>
+<td>
+<p><code>[character|integer]</code>. Specific ways a period (record) most overlap with a <code>"Case"</code> event. See (<code>overlaps</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recurrence_overlap_methods</code></td>
+<td>
+<p><code>[character|integer]</code>. Specific ways a period (record) most overlap with a <code>"Recurrent"</code> event. See (<code>overlaps</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_if_b4_lengths</code></td>
+<td>
+<p><code>[logical]</code>. If <code>TRUE</code> (default), events before a lagged <code>case_length</code> or <code>recurrence_length</code> are skipped.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_source</code></td>
+<td>
+<p><code>[character]</code>. Source ID for each record. If provided, a list of all sources in each episode is returned. See <code>epid_dataset slot</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_links</code></td>
+<td>
+<p><code>[list|character]</code>. <code>data_source</code> required in each <code>epid</code>. An episode without records from these <code>data_sources</code> will be <code>unlinked</code>. See <code>Details</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_sort</code></td>
+<td>
+<p><code>[atomic]</code>. Preferential order for selecting index events. See <code>custom_sort</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_order</code></td>
+<td>
+<p><code>[integer]</code>. End episode tracking in a <code>strata</code> when the an index event's <code>custom_sort</code> order is greater than the supplied <code>skip_order</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_event</code></td>
+<td>
+<p><code>[character]</code>. Specifies which of the records are used as index events. Options are <code>"last_record"</code> (default), <code>"last_event"</code>, <code>"first_record"</code> or <code>"first_event"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case_for_recurrence</code></td>
+<td>
+<p><code>[logical]</code>. If <code>TRUE</code>, a <code>case_length</code> is applied to both <code>"Case"</code> and <code>"Recurrent"</code> events.
+If <code>FALSE</code> (default), a <code>case_length</code> is applied to only <code>"Case"</code> events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from_last</code></td>
+<td>
+<p><code>[logical]</code>. Track episodes beginning from the earliest to the most recent record (<code>FALSE</code>) or vice versa (<code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_stats</code></td>
+<td>
+<p><code>[character]</code>. A selection of group metrics to return for each episode. Most are added to slots of the <code>epid</code> object.
+Options are <code>NULL</code> or any combination of <code>"case_nm"</code>, <code>"wind"</code> and <code>"epid_interval"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>display</code></td>
+<td>
+<p><code>[character]</code>. Display progress update and/or generate a linkage report for the analysis. Options are; <code>"none"</code> (default), <code>"progress"</code>, <code>"stats"</code>, <code>"none_with_report"</code>, <code>"progress_with_report"</code> or <code>"stats_with_report"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case_sub_criteria</code></td>
+<td>
+<p><code>[sub_criteria]</code>. Additional nested match criteria for events in a <code>case_length</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recurrence_sub_criteria</code></td>
+<td>
+<p><code>[sub_criteria]</code>. Additional nested match criteria for events in a <code>recurrence_length</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>case_length_total</code></td>
+<td>
+<p><code>[integer|number_line]</code>. Minimum number of matched <code>case_lengths</code> required for an episode.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recurrence_length_total</code></td>
+<td>
+<p><code>[integer|number_line]</code>. Minimum number of matched <code>recurrence_lengths</code> required for an episode.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>skip_unique_strata</code></td>
+<td>
+<p><code>[logical]</code>. If <code>TRUE</code>, a strata with a single event is skipped.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits_by_strata</code></td>
+<td>
+<p><code>[integer]</code>. Split analysis into <code>n</code> parts. This typically lowers max memory usage but increases run time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>batched</code></td>
+<td>
+<p><code>[character]</code>. Create and compare records in batches. Options are <code>"yes"</code>, <code>"no"</code>, and <code>"semi"</code>.
+typically, the (<code>"semi"</code>) option will have a higher max memory and shorter run-time while (<code>"no"</code>) will have a lower max memory but longer run-time</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b><code>episodes()</code></b> links dated records (events) that
+are within a set duration of each other in iterations.
+Every record is linked to a unique group (episode; <code>epid</code> object).
+These episodes represent occurrences of interest as specified by function's arguments and defined by a case definition.
+</p>
+<p>Two main type of episodes are possible;
+</p>
+
+<ul>
+<li> <p><code>"fixed"</code> - An episode where all events are within a fixed duration of an index event.
+</p>
+</li>
+<li> <p><code>"rolling"</code> - An episode where all events are within a recurring duration of an index event.
+</p>
+</li>
+</ul>
+<p>Every record in each episode is categorised as one of the following;
+</p>
+
+<ul>
+<li> <p><code>"Case"</code> - Index event of the episode (without a nested match criteria).
+</p>
+</li>
+<li> <p><code>"Case_CR"</code> - Index event of the episode (with a nested match criteria).
+</p>
+</li>
+<li> <p><code>"Duplicate_C"</code> - Duplicate of the index event.
+</p>
+</li>
+<li> <p><code>"Recurrent"</code> - Recurrence of the index event (without a nested match criteria).
+</p>
+</li>
+<li> <p><code>"Recurrent_CR"</code> - Recurrence of the index event (with a nested match criteria).
+</p>
+</li>
+<li> <p><code>"Duplicate_R"</code> - Duplicate of the recurrent event.
+</p>
+</li>
+<li> <p><code>"Skipped"</code> - Skipped records.
+</p>
+</li>
+</ul>
+<p>If <code>data_links</code> is supplied, every element of the list must be named <code>"l"</code> (links) or <code>"g"</code> (groups).
+Unnamed elements are assumed to be <code>"l"</code>.
+</p>
+
+<ul>
+<li>
+<p> If named <code>"l"</code>, groups without records from every listed <code>data_source</code> will be unlinked.
+</p>
+</li>
+<li>
+<p> If named <code>"g"</code>, groups without records from any listed <code>data_source</code> will be unlinked.
+</p>
+</li>
+</ul>
+<p>All records with a missing (<code>NA</code>) <code>strata</code> or <code>date</code> are skipped.
+</p>
+<p>Wrapper functions or alternative implementations of <b><code>episodes()</code></b> for specific use cases or benefits:
+</p>
+
+<ul>
+<li> <p><b><code>episodes_wf_splits()</code></b> - Identical records are excluded from the main analysis.
+</p>
+</li>
+<li> <p><b><code>episodes_af_shift()</code></b> - A mostly vectorised approach.
+</p>
+</li>
+<li> <p><b><code>links_wf_episodes()</code></b> - The same functionality achieved with <code>links</code>.
+</p>
+</li>
+</ul>
+<p>See <code>vignette("episodes")</code> for further details.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>epid</code>; <code>list</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>episodes_wf_splits</code>; <code>custom_sort</code>;
+<code>sub_criteria</code>; <code>epid_length</code>;
+<code>epid_window</code>; <code>partitions</code>;
+<code>links</code>; <code>overlaps</code>;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(infections)
+data(hospital_admissions)
+
+# One 16-day (15-day difference) fixed episode per type of infection
+episodes(date = infections$date,
+         strata = infections$infection,
+         case_length = 15,
+         episodes_max = 1,
+         episode_type = "fixed")
+
+# Multiple 16-day episodes with an 11-day recurrence period
+episodes(date = infections$date,
+         strata = NULL,
+         case_length = 15,
+         episodes_max = Inf,
+         episode_type = "rolling",
+         recurrence_length = 10)
+
+# Overlapping periods of hospital stays
+dfr &lt;- hospital_admissions[2:3]
+
+dfr$admin_period &lt;-
+  number_line(dfr$admin_dt,dfr$discharge_dt)
+
+dfr$ep &lt;-
+  episodes(date = dfr$admin_period,
+           strata = NULL,
+           case_length = index_window(dfr$admin_period),
+           case_overlap_methods = "inbetween")
+
+dfr
+as.data.frame(dfr$ep)
+
+</code></pre>
+
+
+</div>

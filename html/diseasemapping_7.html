@@ -1,0 +1,229 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bym-methods</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fit the BYM model
+</h2>
+
+<h3>Description</h3>
+
+<p>Uses inla to fit a Besag, York and Mollie disease mapping model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S4 method for signature 'formula,ANY,ANY,missing'
+bym(formula,data,adjMat,region.id,...)
+## S4 method for signature 'formula,ANY,missing,missing'
+bym(formula,data,adjMat,region.id,...)
+## S4 method for signature 'formula,SpatVector,NULL,character'
+bym(formula, data, adjMat, region.id, ...)
+## S4 method for signature 'formula,SpatVector,missing,character'
+bym(formula, data, adjMat, region.id, ...)
+## S4 method for signature 'formula,SpatVector,matrix,character'
+bym(formula,data,adjMat,region.id,...)
+## S4 method for signature 'formula,data.frame,matrix,character'
+bym(
+formula,data,adjMat,region.id,
+prior=list(sd=c(0.1,0.5),propSpatial=c(0.5,0.5)),
+family="poisson",formula.fitted=formula,...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>model formula, defaults to intercept-only model suitable for
+output from  <code>getSMR</code> if <code>data</code> is a
+<code>SpatialPolygonsDataFrame</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>The observations and covariates for the model, can be output from 
+<code>getSMR</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjMat</code></td>
+<td>
+<p>An object of class <code>nb</code> containing the adjacency matrix.  If not supplied
+it will be computed from <code>data</code>, but is required if <code>data</code> is a <code>SpatialPolygonDataFrame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>region.id</code></td>
+<td>
+<p>Variable in <code>data</code> giving identifiers for the spatial regions.  
+If not supplied, row numbers will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>named list of vectors specifying priors, see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>distribution of the observations, defaults to <code>poisson</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula.fitted</code></td>
+<td>
+<p>formula to use to compute the fitted values, defaults to the model 
+formula but may, for example, exclude individual-level covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional arguments passed to  
+<code>inla</code>in the <code>INLA</code>package, such as 
+<code>control.inla</code>
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Besag, York and Mollie model for Poisson distributed case counts is:
+</p>
+<p style="text-align: center;"><code class="reqn">Y_i \sim Poisson(O_i \lambda_i)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\log(\mu_i) = X_i \beta + U_i</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">U_i \sim BYM(\sigma_1^2 , \sigma_2^2)</code>
+</p>
+
+
+<ul>
+<li>
+<p><code class="reqn">Y_i</code> is the response variable for region <code class="reqn">i</code>, on the left side of the <code>formula</code> argument.
+</p>
+</li>
+<li>
+<p><code class="reqn">O_i</code> is the 'baseline' expected count, which is specified 
+in <code>formula</code> on the log scale with <code class="reqn">\log(O_i)</code> an <code>offset</code> variable.
+</p>
+</li>
+<li>
+<p><code class="reqn">X_i</code> are covariates, on the right side of <code>formula</code>
+</p>
+</li>
+<li>
+<p><code class="reqn">U_i</code> is a spatial random effect, with a spatially structured variance parameter <code class="reqn">\sigma_1^2</code>
+and a spatially independent variance <code class="reqn">\sigma_2^2</code>.
+</p>
+</li>
+</ul>
+<p>The <code>prior</code> 
+has elements named <code>sd</code> and <code>propSpatial</code>, which 
+specifies <code>model="bym2"</code> should be used with penalized complexity priors.  
+The <code>sd</code> element gives a prior for the marginal standard deviation
+<code class="reqn">\sigma_0 =\sqrt{\sigma_1^2+\sigma_2^2}</code>.  
+This prior is approximately exponential, and <code>prior$sd = c(1, 0.01)</code> specifies a 
+prior probability <code class="reqn">pr(\sigma_0 &gt; 1) = 0.01</code>.  
+The <code>propSpatial</code> element gives the prior for the ratio
+<code class="reqn">\phi = \sigma_1/\sigma_0</code>.  Having <code>prior$propSpatial = c(0.5, 0.9)</code> implies 
+<code class="reqn">pr(\phi &lt; 0.5) = 0.9</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>inla</code></td>
+<td>
+<p>results from the call to 
+<code>inla</code>.  
+Two additional elements are added: <code>marginals.bym</code> for the marginal distributions of the spatial random
+effects, and <code>marginals.fitted.bym</code> for the marginals of the fitted values.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code> or <code>SpatialPolygonsDataFrame</code> containing posterior means
+and quantiles of the spatial random effect and fitted values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>Prior and posterior distributions of the two covariance parameters, 
+and a table summary with posterior quantiles of all model parameters. 
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Patrick Brown
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>getSMR</code> 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data('kentucky')
+kentucky = terra::unwrap(kentucky)
+
+# get rid of under 10s
+larynxRates = larynxRates[-grep("_(0|5)$",names(larynxRates))]
+
+kentucky = getSMR(kentucky, larynxRates, larynx, regionCode="County")
+
+if(requireNamespace('INLA')) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+}
+
+kBYM &lt;- try(
+  bym(
+    observed ~ offset(logExpected) + poverty, kentucky,
+	  prior= list(sd=c(0.1, 0.5), propSpatial=c(0.5, 0.5))
+    ), silent=TRUE)
+
+if(length(grep("parameters", names(kBYM)))) {
+  kBYM$parameters$summary
+}
+
+
+
+if( require("mapmisc", quietly=TRUE) &amp;&amp; length(grep("parameters", names(kBYM))) ) {
+  thecol = colourScale(kBYM$data$fitted.exp, breaks=5, dec=1, style="equal")
+  terra::plot(kBYM$data, col=thecol$plot)
+  legendBreaks("topleft", thecol)
+}
+
+
+</code></pre>
+
+
+</div>

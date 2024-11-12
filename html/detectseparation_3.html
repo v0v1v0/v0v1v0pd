@@ -1,0 +1,150 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>check_infinite_estimates.glm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A simple diagnostic of whether the maximum likelihood estimates are
+infinite</h2>
+
+<h3>Description</h3>
+
+<p>A simple diagnostic of whether the maximum likelihood estimates are
+infinite
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'glm'
+check_infinite_estimates(object, nsteps = 20, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>the result of a <code>glm</code> call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>starting from <code>maxit = 1</code>, the GLM is refitted
+for <code>maxit = 2</code>, <code>maxit = 3</code>, ..., <code>maxit =
+nsteps</code>. Default value is 30.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>currently not used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>check_infinite_estimates</code>() attempts to identify the occurrence
+of infinite estimates in GLMs with binomial responses by
+successively refitting the model. At each iteration the maximum
+number of allowed IWLS iterations is fixed starting from 1 to
+<code>nsteps</code> (by setting <code>control = glm.control(maxit = j)</code>,
+where <code>j</code> takes values 1, ..., nsteps in
+<code>glm</code>). For each value of <code>maxit</code>, the estimated
+asymptotic standard errors are divided to the corresponding ones
+from <code>control = glm.control(maxit = 1)</code>. Then, based on the
+results in Lesaffre &amp; Albert (1989), if the sequence of ratios in
+any column of the resultant matrix diverges, then complete or
+quasi-complete separation occurs and the maximum likelihood
+estimate for the corresponding parameter has value minus or plus
+infinity.
+</p>
+<p><code>check_infinite_estimates</code>() can also be used to identify the
+occurrence of infinite estimates in baseline category logit models
+for nominal responses (see <code>brmultinom()</code> from
+the <span class="pkg">brglm2</span> R package), and adjacent category logit models for
+ordinal responses (see <code>bracl()</code> from the
+<span class="pkg">brglm2</span> R package).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>inf_check</code> that has a <code>plot</code> method.
+</p>
+<p>A matrix inheriting from class <code>inf_check</code>, with <code>nsteps</code>
+rows and <code>p</code> columns, where <code>p</code> is the number of model
+parameters. A <code>plot</code> method is provided for <code>inf_check</code>
+objects for the easy inspection of the ratios of the standard
+errors.
+</p>
+
+
+<h3>Note</h3>
+
+<p>For the definition of complete and quasi-complete separation, see
+Albert and Anderson (1984). Kosmidis and Firth (2021) prove that
+the reduced-bias estimator that results by the penalization of the
+logistic regression log-likelihood by Jeffreys prior takes always
+finite values, even when some of the maximum likelihood estimates
+are infinite. The reduced-bias estimates can be computed using the
+<span class="pkg">brglm2</span> R package.
+</p>
+
+
+<h3>References</h3>
+
+<p>Lesaffre, E., &amp; Albert, A. (1989). Partial Separation in Logistic
+Discrimination. *Journal of the Royal Statistical Society. Series B
+(Methodological)*, **51**, 109-116
+</p>
+<p>Kosmidis I. and Firth D. (2021). Jeffreys-prior penalty, finiteness
+and shrinkage in binomial-response generalized linear
+models. *Biometrika*, **108**, 71–82
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>multinom</code>,
+<code>detect_separation</code>,
+<code>brmultinom</code>,
+<code>bracl</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# endometrial data from Heinze \&amp; Schemper (2002) (see ?endometrial)
+data("endometrial", package = "detectseparation")
+endometrial_ml &lt;- glm(HG ~ NV + PI + EH, data = endometrial,
+                      family = binomial("probit"))
+# clearly the maximum likelihood estimate for the coefficient of
+# NV is infinite
+(estimates &lt;- check_infinite_estimates(endometrial_ml))
+plot(estimates)
+
+
+
+# Aligator data (Agresti, 2002, Table~7.1)
+if (requireNamespace("brglm2", quietly = TRUE)) {
+    data("alligators", package = "brglm2")
+    all_ml &lt;- brglm2::brmultinom(foodchoice ~ size + lake , weights = round(freq/3),
+                         data = alligators, type = "ML", ref = 1)
+    # Clearly some estimated standard errors diverge as the number of
+    # Fisher scoring iterations increases
+    plot(check_infinite_estimates(all_ml))
+    # Bias reduction the brglm2 R packages can be used to get finite estimates
+    all_br &lt;- brglm2::brmultinom(foodchoice ~ size + lake , weights = round(freq/3),
+                         data = alligators, ref = 1)
+    plot(check_infinite_estimates(all_br))
+}
+
+</code></pre>
+
+
+</div>

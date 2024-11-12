@@ -1,0 +1,263 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model_addmin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Additive-min DEA model.</h2>
+
+<h3>Description</h3>
+
+<p>Solve the weighted version of the additive-min (mADD) model of
+Aparicio et. al (2007) with different returns to scale. For non constant returns
+to scale, a modification given by Zhu et al. (2018) is done.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">model_addmin(datadea,
+               dmu_eval = NULL,
+               dmu_ref = NULL,
+               orientation = NULL,
+               weight_slack_i = 1,
+               weight_slack_o = 1,
+               rts = c("crs", "vrs", "nirs", "ndrs"),
+               method = c("mf", "milp"),
+               extreff = NULL,
+               M_d = NULL,
+               M_lambda = 1e3,
+               maxfr = NULL,
+               tol = 1e-6,
+               silent = TRUE,
+               compute_target = TRUE,
+               check_target = FALSE,
+               returnlp = FALSE,
+               ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>datadea</code></td>
+<td>
+<p>A <code>deadata</code> object with <code>n</code> DMUs, <code>m</code> inputs and <code>s</code> outputs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dmu_eval</code></td>
+<td>
+<p>A numeric vector containing which DMUs have to be evaluated.
+If <code>NULL</code> (default), all DMUs are considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dmu_ref</code></td>
+<td>
+<p>A numeric vector containing which DMUs are the evaluation reference set.
+If <code>NULL</code> (default), all DMUs are considered.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orientation</code></td>
+<td>
+<p>This parameter is either <code>NULL</code> (default) or a string, equal to
+"io" (input-oriented) or "oo" (output-oriented). It is used to modify the weight slacks. 
+If input-oriented, <code>weight_slack_o</code> are taken 0.
+If output-oriented, <code>weight_slack_i</code> are taken 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight_slack_i</code></td>
+<td>
+<p>A value, vector of length <code>m</code>, or matrix <code>m</code> x
+<code>ne</code> (where <code>ne</code> is the length of <code>dmu_eval</code>)
+with the weights of the input slacks. If 0, output-oriented.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight_slack_o</code></td>
+<td>
+<p>A value, vector of length <code>s</code>, or matrix <code>s</code> x
+<code>ne</code> (where <code>ne</code> is the length of <code>dmu_eval</code>)
+with the weights of the output slacks. If 0, input-oriented.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rts</code></td>
+<td>
+<p>A string, determining the type of returns to scale, equal to "crs" (constant),
+"vrs" (variable), "nirs" (non-increasing) or "ndrs" (non-decreasing). Under non-increasing
+or non-decreasing returns to scale, you may set <code>check_target = TRUE</code> because
+methods are not reliable. Generalized returns to scale are not available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A string with the method: "mf" (default) for maximal friends, or "milp"
+for the mixed integer linear program of Aparicio et al. (2007). MILP method is
+faster but very problematic numerically.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extreff</code></td>
+<td>
+<p>A vector with the extreme efficient DMUs for "milp" method, as it
+is returned by function <code>extreme_efficient</code>.  If <code>NULL</code> (default)
+this vector is computed internally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M_d</code></td>
+<td>
+<p>Numeric, a big positive quantity for "milp" method. It is an upper
+bound for auxiliary variables named "d" in Aparicio (2007). If <code>NULL</code>
+(default), it is estimated automatically. A very big value can produce catastrophic
+cancellations. If the results are not correct or the solver hangs, try to change its value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M_lambda</code></td>
+<td>
+<p>Numeric, a big positive quantity for "milp" method. It is an upper
+bound for lambda variables. A very big value can produce catastrophic cancellations.
+If the results are not correct or the solver hangs, try to change its value (1e3 by default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxfr</code></td>
+<td>
+<p>A list with the maximal friends sets for "mf" method, as it is returned by function
+<code>maximal_friends</code>. If <code>NULL</code> (default) this list is computed internally.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>Numeric, a tolerance margin for checking efficiency in <code>extreme_efficient</code>
+or <code>maximal_friends</code> functions, and for checking targets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Logical. If <code>FALSE</code>, it prints all the messages from
+function <code>maximal_friends</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compute_target</code></td>
+<td>
+<p>Logical. If it is <code>TRUE</code> (default), it computes targets.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_target</code></td>
+<td>
+<p>Logical. If it is <code>TRUE</code>, it checks the efficiency of targets.
+If a target is not efficient, the method has failed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>returnlp</code></td>
+<td>
+<p>Logical. If it is <code>TRUE</code>, it returns the linear problems
+(objective function and constraints).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>For compatibility issues.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>In this model, the efficiency score is the sum of the slacks. Therefore,
+a DMU is efficient when the objective value (<code>objval</code>) is zero.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p><strong>Vicente Coll-Serrano</strong> (<a href="mailto:vicente.coll@uv.es">vicente.coll@uv.es</a>).
+<em>Quantitative Methods for Measuring Culture (MC2). Applied Economics.</em>
+</p>
+<p><strong>Vicente Bolós</strong> (<a href="mailto:vicente.bolos@uv.es">vicente.bolos@uv.es</a>).
+<em>Department of Business Mathematics</em>
+</p>
+<p><strong>Rafael Benítez</strong> (<a href="mailto:rafael.suarez@uv.es">rafael.suarez@uv.es</a>).
+<em>Department of Business Mathematics</em>
+</p>
+<p>University of Valencia (Spain)
+</p>
+
+
+<h3>References</h3>
+
+<p>Aparicio, J.; Ruiz, J.L.; Sirvent, I. (2007) "Closest targets and minimum
+distance to the Pareto-efficient frontier in DEA", Journal of Productivity
+Analysis, 28, 209-218. <a href="https://doi.org/10.1007/s11123-007-0039-5">doi:10.1007/s11123-007-0039-5</a>
+</p>
+<p>Zhu, Q.; Wu, J.; Ji, X.; Li, F. (2018) "A simple MILP to determine closest
+targets in non-oriented DEA model satisfying strong monotonicity", Omega, 79,
+1-8. <a href="https://doi.org/10.1016/j.omega.2017.07.003">doi:10.1016/j.omega.2017.07.003</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>model_additive</code>, <code>extreme_efficient</code>,
+<code>maximal_friends</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example 1.
+data("Airlines")
+datadea &lt;- make_deadata(Airlines,
+                        inputs = 4:7,
+                        outputs = 2:3)
+result &lt;- model_addmin(datadea = datadea,
+                       method = "milp")
+targets(result)
+
+## Not run: 
+# Example 2. Directional model with Additive-min model in second stage 
+data("Airlines")
+datadea &lt;- make_deadata(Airlines,
+                        inputs = 4:7,
+                        outputs = 2:3)
+resdir &lt;- model_basic(datadea = datadea,
+                      orientation = "dir",
+                      maxslack = FALSE)
+proj_input &lt;- targets(resdir)[[1]] + slacks(resdir)[[1]]
+proj_output &lt;- targets(resdir)[[2]] - slacks(resdir)[[2]]
+nd &lt;- ncol(datadea$dmunames) # Number of DMUs
+maxfr &lt;- maximal_friends(datadea = datadea)
+for (i in 1:nd) {
+  datadea2 &lt;- datadea
+  datadea2$input[, i] &lt;- proj_input[i, ]
+  datadea2$output[, i] &lt;- proj_output[i, ]
+  DMUaux &lt;- model_addmin(datadea = datadea2,
+                         method = "mf",
+                         maxfr = maxfr,
+                         dmu_eval = i)$DMU[[1]]
+  resdir$DMU[[i]]$slack_input &lt;- DMUaux$slack_input
+  resdir$DMU[[i]]$slack_output &lt;- DMUaux$slack_output
+  resdir$DMU[[i]]$target_input &lt;- DMUaux$target_input
+  resdir$DMU[[i]]$target_output &lt;- DMUaux$target_output
+}
+targets(resdir)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

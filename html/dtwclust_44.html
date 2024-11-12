@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lb_improved</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Lemire's improved DTW lower bound</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates an improved lower bound (LB) on the Dynamic Time Warp (DTW) distance
+between two time series. It uses a Sakoe-Chiba constraint.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lb_improved(
+  x,
+  y,
+  window.size = NULL,
+  norm = "L1",
+  lower.env = NULL,
+  upper.env = NULL,
+  force.symmetry = FALSE,
+  error.check = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A time series (reference).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A time series with the same length as <code>x</code> (query).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window.size</code></td>
+<td>
+<p>Window size for envelope calculation. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm</code></td>
+<td>
+<p>Vector norm. Either <code>"L1"</code> for Manhattan distance or <code>"L2"</code> for Euclidean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.env</code></td>
+<td>
+<p>Optionally, a pre-computed lower envelope for <strong><code>y</code></strong> can be provided (non-proxy
+version only). See <code>compute_envelope()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper.env</code></td>
+<td>
+<p>Optionally, a pre-computed upper envelope for <strong><code>y</code></strong> can be provided (non-proxy
+version only). See <code>compute_envelope()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force.symmetry</code></td>
+<td>
+<p>If <code>TRUE</code>, a second lower bound is calculated by swapping <code>x</code> and <code>y</code>, and
+whichever result has a <em>higher</em> distance value is returned. The proxy version can only work if
+a square matrix is obtained, but use carefully.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The reference time series should go in <code>x</code>, whereas the query time series should go in <code>y</code>.
+</p>
+<p>If the envelopes are provided, they should be provided together. If either one is missing, both
+will be computed.
+</p>
+<p>The windowing constraint uses a centered window.
+The calculations expect a value in <code>window.size</code> that represents the distance between the point considered and one of the edges of the window.
+Therefore, if, for example, <code>window.size = 10</code>, the warping for an observation <code class="reqn">x_i</code> considers the points between <code class="reqn">x_{i-10}</code> and <code class="reqn">x_{i+10}</code>,
+resulting in <code>10(2) + 1 = 21</code> observations falling within the window.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The improved lower bound for the DTW distance.
+</p>
+
+
+<h3>Proxy version</h3>
+
+<p>The version registered with <code>proxy::dist()</code> is custom (<code>loop = FALSE</code> in proxy::pr_DB).
+The custom function handles multi-threaded parallelization directly with RcppParallel.
+It uses all available threads by default (see <code>RcppParallel::defaultNumThreads()</code>),
+but this can be changed by the user with <code>RcppParallel::setThreadOptions()</code>.
+</p>
+<p>An exception to the above is when it is called within a <code>foreach</code> parallel loop <strong>made by dtwclust</strong>.
+If the parallel workers do not have the number of threads explicitly specified,
+this function will default to 1 thread per worker.
+See the parallelization vignette for more information - <code>browseVignettes("dtwclust")</code>
+</p>
+
+
+<h3>Note</h3>
+
+<p>The lower bound is only defined for time series of equal length and is <strong>not</strong> symmetric.
+</p>
+<p>If you wish to calculate the lower bound between several time series, it would be better to use
+the version registered with the <code>proxy</code> package, since it includes some small optimizations. The
+convention mentioned above for references and queries still holds. See the examples.
+</p>
+<p>The proxy version of <code>force.symmetry</code> should only be used when only <code>x</code> is provided or both <code>x</code>
+and <code>y</code> are identical. It compares the lower and upper triangular of the resulting distance
+matrix and forces symmetry in such a way that the tightest lower bound is obtained.
+</p>
+
+
+<h3>References</h3>
+
+<p>Lemire D (2009). “Faster retrieval with a two-pass dynamic-time-warping lower bound .” <em>Pattern
+Recognition</em>, <strong>42</strong>(9), pp. 2169 - 2180. ISSN 0031-3203,
+<a href="https://doi.org/10.1016/j.patcog.2008.11.030">doi:10.1016/j.patcog.2008.11.030</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0031320308004925">https://www.sciencedirect.com/science/article/pii/S0031320308004925</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Sample data
+data(uciCT)
+
+# Lower bound distance between two series
+d.lbi &lt;- lb_improved(CharTraj[[1]], CharTraj[[2]], window.size = 20)
+
+# Corresponding true DTW distance
+d.dtw &lt;- dtw(CharTraj[[1]], CharTraj[[2]],
+             window.type = "sakoechiba", window.size = 20)$distance
+
+d.lbi &lt;= d.dtw
+
+# Calculating the LB between several time series using the 'proxy' package
+# (notice how both argments must be lists)
+D.lbi &lt;- proxy::dist(CharTraj[1], CharTraj[2:5], method = "LB_Improved",
+                     window.size = 20, norm = "L2")
+
+# Corresponding true DTW distance
+D.dtw &lt;- proxy::dist(CharTraj[1], CharTraj[2:5], method = "dtw_basic",
+                     norm = "L2", window.size = 20)
+
+D.lbi &lt;= D.dtw
+
+</code></pre>
+
+
+</div>

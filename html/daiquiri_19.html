@@ -1,0 +1,123 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prepare_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Prepare source data</h2>
+
+<h3>Description</h3>
+
+<p>Validate a data frame against a <code>field_types()</code> specification, and prepare
+for aggregation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prepare_data(
+  df,
+  field_types,
+  override_column_names = FALSE,
+  na = c("", "NA", "NULL"),
+  dataset_description = NULL,
+  show_progress = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>A data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>field_types</code></td>
+<td>
+<p><code>field_types()</code> object specifying names and types of
+fields (columns) in the supplied <code>df</code>. See also field_types_available.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>override_column_names</code></td>
+<td>
+<p>If <code>FALSE</code>, column names in the supplied <code>df</code>
+must match the names specified in <code>field_types</code> exactly. If <code>TRUE</code>, column
+names in the supplied <code>df</code> will be replaced with the names specified in
+<code>field_types</code>. The specification must therefore contain the columns in the
+correct order. Default = <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na</code></td>
+<td>
+<p>vector containing strings that should be interpreted as missing
+values. Default = <code>c("","NA","NULL")</code>. Additional column-specific values
+can be specified in the <code>field_types()</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataset_description</code></td>
+<td>
+<p>Short description of the dataset being checked.
+This will appear on the report. If blank, the name of the data frame object
+will be used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>show_progress</code></td>
+<td>
+<p>Print progress to console. Default = <code>TRUE</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>daiquiri_source_data</code> object
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>field_types()</code>, <code>field_types_available()</code>,
+<code>aggregate_data()</code>, <code>report_data()</code>,
+<code>daiquiri_report()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load example data into a data.frame
+raw_data &lt;- read_data(
+  system.file("extdata", "example_prescriptions.csv", package = "daiquiri"),
+  delim = ",",
+  col_names = TRUE
+)
+
+# validate and prepare the data for aggregation
+source_data &lt;- prepare_data(
+  raw_data,
+  field_types = field_types(
+    PrescriptionID = ft_uniqueidentifier(),
+    PrescriptionDate = ft_timepoint(),
+    AdmissionDate = ft_datetime(includes_time = FALSE),
+    Drug = ft_freetext(),
+    Dose = ft_numeric(),
+    DoseUnit = ft_categorical(),
+    PatientID = ft_ignore(),
+    Location = ft_categorical(aggregate_by_each_category = TRUE)
+  ),
+  override_column_names = FALSE,
+  na = c("", "NULL"),
+  dataset_description = "Example data provided with package"
+)
+
+source_data
+</code></pre>
+
+
+</div>

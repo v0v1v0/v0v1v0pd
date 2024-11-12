@@ -1,0 +1,217 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>datetime_cast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Widen/narrow datetime precision</h2>
+
+<h3>Description</h3>
+
+<p><code>datetime_widen()</code> sets a floor on the minimum "precision" in the datetime vector
+by setting any missing elements to their minimum possible value.
+<code>datetime_narrow()</code> sets a cap on the maximum "precision" by setting
+any more precise elements missing.
+<code>datetime_cast()</code> sets the precision exactly by calling both
+<code>datetime_narrow()</code> and <code>datetime_widen()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">datetime_narrow(x, precision, ...)
+
+## S3 method for class 'datetimeoffset'
+datetime_narrow(x, precision, ...)
+
+## S3 method for class 'clock_calendar'
+datetime_narrow(x, precision, ...)
+
+## S3 method for class 'clock_time_point'
+datetime_narrow(
+  x,
+  precision,
+  ...,
+  method = c("floor", "round", "ceiling", "cast")
+)
+
+## S3 method for class 'POSIXt'
+datetime_narrow(
+  x,
+  precision,
+  ...,
+  method = c("floor", "round", "ceiling"),
+  nonexistent = "error",
+  ambiguous = x
+)
+
+datetime_widen(x, precision, ...)
+
+## S3 method for class 'datetimeoffset'
+datetime_widen(
+  x,
+  precision,
+  ...,
+  year = 0L,
+  month = 1L,
+  day = 1L,
+  hour = 0L,
+  minute = 0L,
+  second = 0L,
+  nanosecond = 0L,
+  na_set = FALSE
+)
+
+## S3 method for class 'clock_calendar'
+datetime_widen(x, precision, ...)
+
+## S3 method for class 'clock_time_point'
+datetime_widen(x, precision, ...)
+
+## S3 method for class 'POSIXt'
+datetime_widen(x, precision, ...)
+
+datetime_cast(x, precision, ...)
+
+## Default S3 method:
+datetime_cast(x, precision, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A datetime vector.  Either <code>datetimeoffset()</code>, a "clock" "calendar", or a "clock" "time point".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>precision</code></td>
+<td>
+<p>Precision to narrow/widen to.  Either "missing", "year", "month", "day", "hour", "minute", "second", or "nanosecond".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Used by some methods.
+The default method for <code>datetime_cast()</code> will pass this to both <code>datetime_narrow()</code> and <code>datetime_widen()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Depending on the class either "floor", "ceiling", "round", and/or "cast".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nonexistent</code></td>
+<td>
+<p>What to do when the "clock time" in the new time zone doesn't exist.
+See <code>clock::as_zoned_time.clock_naive_time()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ambiguous</code></td>
+<td>
+<p>What to do when the "clock time" in the new time zone is ambiguous.
+See <code>clock::as_zoned_time.clock_naive_time()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>year</code></td>
+<td>
+<p>If missing what year to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>month</code></td>
+<td>
+<p>If missing what month to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>day</code></td>
+<td>
+<p>If missing what day to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hour</code></td>
+<td>
+<p>If missing what hour to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minute</code></td>
+<td>
+<p>If missing what minute to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>second</code></td>
+<td>
+<p>If missing what second to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nanosecond</code></td>
+<td>
+<p>If missing what nanosecond to assume</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na_set</code></td>
+<td>
+<p>If <code>TRUE</code> widen the "missing" datetimes as well.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A datetime vector.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  dts &lt;- as_datetimeoffset(c(NA_character_, "2020", "2020-04-10", "2020-04-10T10:10"))
+  datetime_precision(dts)
+  datetime_narrow(dts, "day")
+  datetime_widen(dts, "day")
+  datetime_cast(dts, "day")
+
+  datetime_widen(datetimeoffset(2020L), "day", month = 6, day = 15)
+
+  # vectorized "precision" is allowed
+  datetime_narrow(as_datetimeoffset(Sys.time()),
+                  c("year", "day", "second"))
+  datetime_widen(NA_datetimeoffset_, c("year", "day", "second"), na_set = TRUE)
+
+  library("clock")
+  ymd &lt;- year_month_day(1918, 11, 11, 11)
+  datetime_narrow(ymd, "day")
+  datetime_narrow(ymd, "second") # already narrower than "second"
+  datetime_widen(ymd, "second")
+  datetime_widen(ymd, "day") # already wider than "day"
+
+  ## Not run: 
+    # comparable {clock} calendar methods throw an error in certain cases
+    clock::calendar_narrow(ymd, "second") # already narrower than "second"
+    clock::calendar_widen(ymd, "day") # already wider than "day"
+  
+## End(Not run)
+
+  nt &lt;- as_naive_time(ymd)
+  datetime_narrow(nt, "day")
+  datetime_narrow(nt, "second")
+  datetime_widen(nt, "second")
+  datetime_widen(nt, "day")
+  datetime_cast(nt, "day") # same as clock::time_point_floor(nt, "day")
+  datetime_cast(nt, "day", method = "cast") # same as clock::time_point_cast(nt, "day")
+</code></pre>
+
+
+</div>

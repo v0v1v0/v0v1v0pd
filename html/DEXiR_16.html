@@ -1,0 +1,206 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DexiAttribute-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DexiAttribute</h2>
+
+<h3>Description</h3>
+
+<p><code>DexiAttribute</code> is a RC class representing a DEXi attribute in R.
+</p>
+
+
+<h3>Details</h3>
+
+<p>In a DEXi model, attributes are variables that represent observed properties of decision alternatives.
+Attributes are structured in a tree, so each attribute may, but need not, have one or more direct
+descendants (lower-level attributes) in the tree. Attributes without descendants are called <em>basic</em>
+and serve as model inputs. Attributes with one or more descendants are called <em>aggregate</em> and
+represent model outputs. In order to represent attribute hierarchies rather than plain trees, some attributes
+may be <em>linked</em>: two attributes of which one links to another one collectively represent,
+in a conceptual sense, a single attribute in the hierarchy.
+</p>
+<p>When completely defined, each attribute is associated with a value scale represented by a
+DexiScale object.
+An object DexiFunction is also defined for each aggregate attribute, aimed at
+defining the aggregation of the attribute's inputs to values of that attribute.
+</p>
+
+
+<h3>Fields</h3>
+
+
+<dl>
+<dt><code>name</code></dt>
+<dd>
+<p>character. Name of the attribute as defined in the original DEXi model. Notice that such names
+may not be unique and may contain characters that cannot be used for variable names in R.</p>
+</dd>
+<dt><code>id</code></dt>
+<dd>
+<p>character. A unique identification of the attribute in the model. Derived from <code>name</code>
+so that it can be used as a variable name in R.</p>
+</dd>
+<dt><code>description</code></dt>
+<dd>
+<p>character. An optional textual description of the attribute.</p>
+</dd>
+<dt><code>inputs</code></dt>
+<dd>
+<p>list of DexiAttributes. A list of immediate descendants of this attribute in
+the tree/hierarchy. <code>NULL</code> for basic attributes.</p>
+</dd>
+<dt><code>link</code></dt>
+<dd>
+<p>DexiAttribute. <code>NULL</code> or a link to another DexiAttribute</p>
+</dd>
+<dt><code>scale</code></dt>
+<dd>
+<p>DexiScale. Value scale associated with this attribute, or <code>NULL</code>.</p>
+</dd>
+<dt><code>funct</code></dt>
+<dd>
+<p>DexiFunction. Aggregation function associated with this attribute, or <code>NULL</code>.</p>
+</dd>
+<dt><code>parent</code></dt>
+<dd>
+<p>DexiAttribute or DexiModel (only for <code>DexiModel$root</code>). Parent
+attribute of this attribute in the tree/hierarchy. The <code>DexiModel$root</code>'s parent
+is the DexiModel, which contains all those attributes.</p>
+</dd>
+<dt><code>.alternatives</code></dt>
+<dd>
+<p>list. An internal field providing temporary storage for names or values of alternatives
+while reading them from a <code>.dxi</code> file.</p>
+</dd>
+</dl>
+<h3>Methods</h3>
+
+
+<dl>
+<dt><code>affects(ant)</code></dt>
+<dd>
+<p><code>ant</code> (as "antecedent") is some <code>DexiAttribute</code>.
+The function returns <code>TRUE</code> if <code>ant</code> lies on the path leading from this attribute
+towards the root, and is therefore affected by this attribute.</p>
+</dd>
+<dt><code>count()</code></dt>
+<dd>
+<p>Return the number of <code>input</code>s of this attribute.</p>
+</dd>
+<dt><code>dim()</code></dt>
+<dd>
+<p>Dimensions of the value space determined by this attribute's <code>inputs</code>.
+Result: a numeric vector of length equal to <code>ninp()</code>, containing <code>DexiScale$count()</code> of
+all descendant attributes, or <code>NA</code> for attributes without associated scales.
+For basic attributes, <code>dim()</code> returns <code>NULL</code>.</p>
+</dd>
+<dt><code>initialize(
+  name = "",
+  description = "",
+  inputs = list(),
+  id = "",
+  link = NULL,
+  scale = NULL,
+  funct = NULL,
+  parent = NULL,
+  ...
+)</code></dt>
+<dd>
+<p>Initialize a <code>DexiAttribute</code> object.</p>
+</dd>
+<dt><code>inp_index(inp)</code></dt>
+<dd>
+<p>Return the index of attribute <code>inp</code> in <code>inputs</code> of this attribute.</p>
+</dd>
+<dt><code>is_aggregate()</code></dt>
+<dd>
+<p>Logical: <code>TRUE</code> for aggregate attributes (attributes whose <code>ninp() &gt; 0</code>).</p>
+</dd>
+<dt><code>is_basic(include_linked = TRUE)</code></dt>
+<dd>
+<p>Logical: <code>TRUE</code> for basic attributes (attributes whose <code>ninp() == 0</code>.
+<code>include_linked</code> determines whether linked attributes are counted as basic
+(<code>TRUE</code>) or not (<code>FALSE</code>).</p>
+</dd>
+<dt><code>is_continuous()</code></dt>
+<dd>
+<p>Logical: Indicates whether or not this is a continuous attribute.</p>
+</dd>
+<dt><code>is_discrete()</code></dt>
+<dd>
+<p>Logical: Indicates whether or not this is a discrete attribute.</p>
+</dd>
+<dt><code>is_link()</code></dt>
+<dd>
+<p>Logical: Indicates whether or not this is a linked attribute.</p>
+</dd>
+<dt><code>level()</code></dt>
+<dd>
+<p>Return the level of this attribute in the hierarchy.
+The level of <code>DexiModel$root</code> is 0.</p>
+</dd>
+<dt><code>model()</code></dt>
+<dd>
+<p>Return the <code>DexiModel</code> that contains this attribute.</p>
+</dd>
+<dt><code>ninp()</code></dt>
+<dd>
+<p>Return the number of <code>input</code>s of this attribute.</p>
+</dd>
+<dt><code>structure()</code></dt>
+<dd>
+<p>Make an indentation string for this attribute, used for printing it in <code>show()</code>.</p>
+</dd>
+<dt><code>tree_indent(none = " ", thru = "|", link = "*", last = "+", line = "-")</code></dt>
+<dd>
+<p>Construct a string for representing the indentation of this attribute in the model structure.
+The arguments <code>none</code>, <code>thru</code>, <code>link</code>, <code>last</code> and <code>line</code> are
+character strings to be used in the construction.</p>
+</dd>
+<dt><code>verify()</code></dt>
+<dd>
+<p>Check the correctnes of a <code>DexiAttribute</code> object and its fields. Result: <code>error()</code> or <code>TRUE</code>.</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Load "Car.dxi"
+CarDxi &lt;- system.file("extdata", "Car.dxi", package = "DEXiR")
+Car &lt;- read_dexi(CarDxi)
+
+# For example, consider attribute PRICE
+att &lt;- Car$attrib("PRICE")
+
+# Print fields and basic properties of att
+att$verify()
+att$name
+att$id
+att$description
+att_names(att$inputs)
+att$link
+att$scale
+att$funct
+att_names(att$parent)
+att$is_aggregate()
+att$is_basic()
+att$is_link()
+att$level()
+att$count()
+att$ninp()
+att$dim()
+att$model()
+att$structure()
+
+# Check if att affects attribute CAR
+att$affects(Car$attrib("CAR"))
+
+# Find the index of other attributes in att's inputs
+att$inp_index(Car$attrib("MAINT.PRICE"))
+att$inp_index(Car$attrib("CAR"))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>f_fit_t0</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Model Fitting for Dispensing Delay After Randomization</h2>
+
+<h3>Description</h3>
+
+<p>Fits a specified time-to-event model to the gap time
+between randomization and the first drug dispensing visit when
+there is no visit skipping.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">f_fit_t0(df, model, nreps, showplot = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>The subject-level dosing data, including the following
+variables:
+</p>
+
+<ul>
+<li> <p><code>time</code>: The number of days between randomization and the
+first drug dispensing visit (first drug dispensing visit date -
+randomization date + 1).
+</p>
+</li>
+<li> <p><code>left</code>: Equals <code>time - 1</code>, used to indicate the
+left endpoint of an interval for interval censoring.
+</p>
+</li>
+<li> <p><code>right</code>: Equals <code>time</code>, used to indicate the
+right endpoint of an interval for interval censoring.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>The event model used to analyze the gap time
+between randomization and the first drug dispensing visit when
+there is no visit skipping, with options including "constant",
+"exponential", "weibull", "log-logistic", and "log-normal".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nreps</code></td>
+<td>
+<p>The number of simulations for drawing posterior model
+parameter values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>showplot</code></td>
+<td>
+<p>A Boolean variable that controls whether or not to
+show the fitted time-to-event bar chart. It defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with three components:
+</p>
+
+<ul>
+<li> <p><code>fit</code>: A list of results from the model fit that includes
+</p>
+
+<ul>
+<li> <p><code>model</code>: The specific model used in the analysis.
+</p>
+</li>
+<li> <p><code>theta</code>: The estimated model parameters.
+</p>
+</li>
+<li> <p><code>vtheta</code>: The estimated covariance matrix of <code>theta</code>.
+</p>
+</li>
+<li> <p><code>aic</code>: The Akaike Information Criterion value.
+</p>
+</li>
+<li> <p><code>bic</code>: The Bayesian Information Criterion value.
+</p>
+</li>
+</ul>
+</li>
+<li> <p><code>fit_plot</code>: A fitted time-to-event bar chart.
+</p>
+</li>
+<li> <p><code>theta</code>: Posterior draws of model parameters.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Kaifeng Lu, <a href="mailto:kaifenglu@gmail.com">kaifenglu@gmail.com</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+
+observed &lt;- f_dose_observed(df2, visitview2, showplot = FALSE)
+vf &lt;- observed$vf
+
+vf &lt;- vf %&gt;% left_join(dosing_schedule_df, by = "kit")
+
+# time from randomization to the first drug dispensing visit
+df_k0 &lt;- vf %&gt;%
+  filter(row_id == 1) %&gt;%
+  mutate(time = day,
+         skipped = floor((time - target_days/2)/target_days) + 1)
+
+# no skipping
+df_t0 &lt;- df_k0 %&gt;%
+  filter(skipped == 0) %&gt;%
+  mutate(left = time - 1, right = time)
+
+t0_fit &lt;- f_fit_t0(df_t0, model = "log-logistic", nreps = 200)
+
+</code></pre>
+
+
+</div>

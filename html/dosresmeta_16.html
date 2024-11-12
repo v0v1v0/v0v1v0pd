@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>covar.logrr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Computes the covariance matrix for a set of log relative risks</h2>
+
+<h3>Description</h3>
+
+<p>Reconstructs the covariance matrix for a set of (reported) log relative risks, given the number of cases and 
+the number of total persons or person-years for each treatment (dose) level.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">covar.logrr(cases, n, y, v, type, data, covariance = "gl")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cases</code></td>
+<td>
+<p>a vector, defining the number of cases for each exposure level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>a vector, defining the total number of subjects for each exposure level. For incidence-rate data <code>n</code> indicates the amount of person-time within 
+each exposure level.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>a vector, defining the (reported) log relative risks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>a vector, defining the variances of the reported log relative risks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>a vector (or a character string), specifying the design of the study. Options are
+<code>cc</code>, <code>ir</code>, and <code>ci</code>, for case-control, incidence-rate, and cumulative incidence data, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional data frame (or object coercible by <code>as.data.frame</code> to a data frame) containing the variables in the previous arguments.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariance</code></td>
+<td>
+<p>method to approximate the coviariance among set of reported log relative risks, "<code>gl</code>" for the method proposed by Greenland and Longnecker
+(default), "<code>h</code>" for the method proposed by Hamling.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is an internal function called by <code>dosresmeta</code> to reconstruct the (co)variance matrix of the (adjusted) log relative risks. The function
+calls, depending on the choosen method, <code>grl</code> (default) or <code>hamling</code> to reconstruct the effective counts corresponding to the (adjusted) log
+relative risks as well as their standard errors. From these it computes the covariance matrix; analytical formulas can be found in the referenced article.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The (co)variance matrix of the log relative risks.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alessio Crippa, <a href="mailto:alessio.crippa@ki.se">alessio.crippa@ki.se</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Orsini, N., Li, R., Wolk, A., Khudyakov, P., Spiegelman, D. (2012). Meta-analysis for linear and nonlinear dose-response relations: 
+examples, an evaluation of approximations, and software. American journal of epidemiology, 175(1), 66-73.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>grl</code>, <code>hamling</code>, <code>covar.smd</code>, <code>dosresmeta</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Loading data
+data("alcohol_cvd")
+
+## Obtaining the (co)variance matrix of log RR for the first study (id = 1)
+covar.logrr(y = logrr, v = I(se^2), cases = cases, n = n, type = type, 
+            data = subset(alcohol_cvd, id == 1))
+
+## Obtaining the (co)variance matrices of log RRfor all study
+by(alcohol_cvd, alcohol_cvd$id, function(x)
+   covar.logrr(y = logrr, v = I(se^2), cases = cases, n = n, 
+               type = type, data = x))
+
+## Restructuring the previous results in a list of matrices
+do.call("list", by(alcohol_cvd, alcohol_cvd$id, function(x)
+   covar.logrr(y = logrr, v = I(se^2), cases = cases, n = n, type = type,
+               data = x)))
+
+</code></pre>
+
+
+</div>

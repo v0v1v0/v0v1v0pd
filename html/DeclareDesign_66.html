@@ -1,0 +1,136 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>redesign</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Redesign</h2>
+
+<h3>Description</h3>
+
+<p><code>redesign</code> quickly generates a design from an existing one by resetting symbols used in design handler parameters in a step's environment (Advanced).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">redesign(design, ..., expand = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>An object of class design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to redesign e.g., <code>n = 100.</code> If redesigning multiple arguments, they must be specified as a named list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand</code></td>
+<td>
+<p>If TRUE, redesign using the crossproduct of <code>...</code>, otherwise recycle them.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Warning: <code>redesign</code> will edit any symbol in your design, but if the symbol you attempt to change does not exist in a step's environment no changes will be made and no error or warning will be issued. 
+</p>
+<p>Please note that <code>redesign</code> functionality is experimental and may be changed in future versions.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A design, or, in the case of multiple values being passed onto <code>...</code>, a 'by'-list of designs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Two-arm randomized experiment
+n &lt;- 500
+
+design &lt;-
+  declare_model(
+    N = 1000,
+    gender = rbinom(N, 1, 0.5),
+    X = rep(c(0, 1), each = N / 2),
+    U = rnorm(N, sd = 0.25),
+    potential_outcomes(Y ~ 0.2 * Z + X + U)
+  ) +
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) +
+  declare_sampling(S = complete_rs(N = N, n = n)) +
+  declare_assignment(Z = complete_ra(N = N, m = n/2)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) +
+  declare_estimator(Y ~ Z, inquiry = "ATE")
+
+# Use redesign to return a single modified design
+modified_design &lt;- redesign(design, n = 200)
+
+# Use redesign to return a series of modified designs
+## Sample size is varied while the rest of the design remains
+## constant
+design_vary_N &lt;- redesign(design, n = c(100, 500, 900))
+
+## Not run: 
+# redesign can be used in conjunction with diagnose_designs
+# to optimize the design for specific diagnosands
+diagnose_designs(design_vary_N)
+
+## End(Not run)
+
+# When redesigning with arguments that are vectors,
+# use list() in redesign, with each list item
+# representing a design you wish to create
+
+prob_each &lt;- c(.1, .5, .4)
+
+population &lt;- declare_model(N = 1000)
+assignment &lt;- declare_assignment(
+  Z = complete_ra(prob_each = prob_each), 
+  legacy = FALSE)
+
+design &lt;- population + assignment
+
+## returns two designs
+
+designs_vary_prob_each &lt;- redesign(
+  design,
+  prob_each = list(c(.2, .5, .3), c(0, .5, .5)))
+
+# To illustrate what does and does not get edited by redesign, 
+# consider the following three designs. In the first two, argument
+# X is called from the step's environment; in the third it is not.
+# Using redesign will alter the role of X in the first two designs
+# but not the third one.
+
+X &lt;- 3
+f &lt;- function(b, X) b*X
+g &lt;- function(b) b*X
+
+design1 &lt;- declare_model(N = 1, A = X)       + NULL
+design2 &lt;- declare_model(N = 1, A = f(2, X)) + NULL
+design3 &lt;- declare_model(N = 1, A = g(2))    + NULL
+
+draw_data(design1)
+draw_data(design2)
+draw_data(design3)
+
+draw_data(redesign(design1, X=0))
+draw_data(redesign(design2, X=0))
+draw_data(redesign(design3, X=0))
+
+</code></pre>
+
+
+</div>

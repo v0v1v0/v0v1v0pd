@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>node_dipm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Panel-Generator for Visualization of A Precision Medicine Tree</h2>
+
+<h3>Description</h3>
+
+<p>This function provides a new plot method for <code>dipm</code>
+and <code>spmtree</code>. It visualizes stratified treatment groups through 
+boxplots for a continuous outcome and survival plots for a survival outcome, 
+respectively.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">node_dipm(obj, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>A <code>party</code> tree object returned from either the 
+<code>dipm()</code> or <code>spmtree()</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed on to plotfun</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function visualizes the precision medicine trees
+proposed in Chen and Zhang (2020a, b).
+</p>
+
+
+<h3>Value</h3>
+
+<p>No return value, called for plot
+</p>
+
+
+<h3>References</h3>
+
+<p>Chen, V., Li, C., and Zhang, H. (2022). dipm: an 
+R package implementing the Depth Importance in 
+Precision Medicine (DIPM) tree and Forest-based method.
+<em>Bioinformatics Advances</em>, <strong>2</strong>(1), vbac041.
+</p>
+<p>Chen, V. and Zhang, H. (2020). Depth importance in 
+precision medicine (DIPM): a tree and forest based method. 
+In <em>Contemporary Experimental Design, 
+Multivariate Analysis and Data Mining</em>, 243-259.
+</p>
+<p>Chen, V. and Zhang, H. (2022). Depth importance in 
+precision medicine (DIPM): A tree-and forest-based 
+method for right-censored survival outcomes. 
+<em>Biostatistics</em> <strong>23</strong>(1), 157-172.
+</p>
+<p>Seibold, H., Zeileis, A., and Hothorn, T. (2019). 
+model4you: An R package for personalised treatment 
+effect estimation. <em>Journal of Open Research 
+Software</em> <strong>7</strong>(1).
+</p>
+<p>Hothorn, T. and Zeileis, A. (2015). partykit: 
+a modular toolkit for recursive partytioning in R. 
+<em>The Journal of Machine Learning Research</em> 
+<strong>16</strong>(1), 3905-3909.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dipm</code>, <code>spmtree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#' #
+# ... an example with a continuous outcome variable
+#     and two treatment groups
+#
+
+N = 100
+set.seed(123)
+
+# generate binary treatments
+treatment = rbinom(N, 1, 0.5)
+
+# generate candidate split variables
+X1 = rnorm(n = N, mean = 0, sd = 1)
+X2 = rnorm(n = N, mean = 0, sd = 1)
+X3 = rnorm(n = N, mean = 0, sd = 1)
+X4 = rnorm(n = N, mean = 0, sd = 1)
+X5 = rnorm(n = N, mean = 0, sd = 1)
+X = cbind(X1, X2, X3, X4, X5)
+colnames(X) = paste0("X", 1:5)
+
+# generate continuous outcome variable
+calculateLink = function(X, treatment){
+
+    ((X[, 1] &lt;= 0) &amp; (X[, 2] &lt;= 0)) *
+        (25 * (1 - treatment) + 8 * treatment) + 
+
+    ((X[, 1] &lt;= 0) &amp; (X[, 2] &gt; 0)) *
+        (18 * (1 - treatment) + 20 * treatment) +
+
+    ((X[,1 ] &gt; 0) &amp; (X[, 3] &lt;= 0)) *
+        (20 * (1 - treatment) + 18 * treatment) + 
+
+    ((X[,1] &gt; 0) &amp; (X[,3] &gt; 0)) *
+        (8 * (1 - treatment) + 25 * treatment)
+}
+
+Link = calculateLink(X, treatment)
+Y = rnorm(N, mean = Link, sd = 1)
+
+# combine variables in a data frame
+data = data.frame(X, Y, treatment)
+
+# fit a dipm classification tree
+tree = dipm(Y ~ treatment | ., data, mtry = 1, maxdepth = 3) 
+plot(tree, terminal_panel = node_dipm)
+            
+
+                                    
+</code></pre>
+
+
+</div>

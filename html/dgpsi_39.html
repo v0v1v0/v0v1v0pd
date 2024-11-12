@@ -1,0 +1,272 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predictions from GP, DGP, or linked (D)GP emulators</h2>
+
+<h3>Description</h3>
+
+<p>This function implements single-core or multi-core predictions (with or without multi-threading)
+from GP, DGP, or linked (D)GP emulators.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dgp'
+predict(
+  object,
+  x,
+  method = "mean_var",
+  full_layer = FALSE,
+  sample_size = 50,
+  cores = 1,
+  chunks = NULL,
+  threading = FALSE,
+  ...
+)
+
+## S3 method for class 'lgp'
+predict(
+  object,
+  x,
+  method = "mean_var",
+  full_layer = FALSE,
+  sample_size = 50,
+  cores = 1,
+  chunks = NULL,
+  threading = FALSE,
+  ...
+)
+
+## S3 method for class 'gp'
+predict(
+  object,
+  x,
+  method = "mean_var",
+  sample_size = 50,
+  cores = 1,
+  chunks = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an instance of the <code>gp</code>, <code>dgp</code>, or <code>lgp</code> class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the testing input data:
+</p>
+
+<ul>
+<li>
+<p> if <code>object</code> is an instance of the <code>gp</code> or <code>dgp</code> class, <code>x</code> is a matrix where each row is an input testing data point and each column is an input dimension.
+</p>
+</li>
+<li>
+<p> if <code>object</code> is an instance of the <code>lgp</code> class, <code>x</code> can be a matrix or a list:
+</p>
+
+<ul>
+<li>
+<p> if <code>x</code> is a matrix, it is the global testing input data that feed into the emulators in the first layer of a system.
+The rows of <code>x</code> represent different input data points and the columns represent input dimensions across all emulators in
+the first layer of the system. In this case, it is assumed that the only global input to the system is the input to the
+emulators in the first layer and there is no global input to emulators in other layers.
+</p>
+</li>
+<li>
+<p> if <code>x</code> is a list, it should have <em>L</em> (the number of layers in an emulator system) elements. The first element
+is a matrix that represents the global testing input data that feed into the emulators in the first layer of the system. The
+remaining <em>L-1</em> elements are <em>L-1</em> sub-lists, each of which contains a number (the same number of emulators in
+the corresponding layer) of matrices (rows being testing input data points and columns being input dimensions) that represent the
+global testing input data to the emulators in the corresponding layer. The matrices must be placed in the sub-lists based on how
+their corresponding emulators are placed in <code>struc</code> argument of <code>lgp()</code>. If there is no global input data to a certain emulator,
+set <code>NULL</code> in the corresponding sub-list of <code>x</code>.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the prediction approach: mean-variance (<code>"mean_var"</code>) or sampling (<code>"sampling"</code>) approach. Defaults to <code>"mean_var"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>full_layer</code></td>
+<td>
+<p>a bool indicating whether to output the predictions of all layers. Defaults to <code>FALSE</code>. Only used when <code>object</code> is a DGP and linked (D)GP emulator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_size</code></td>
+<td>
+<p>the number of samples to draw for each given imputation if <code>method = "sampling"</code>. Defaults to <code>50</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>the number of cores/workers to be used. If set to <code>NULL</code>,
+the number of cores is set to <code style="white-space: pre;">⁠(max physical cores available - 1)⁠</code>. Defaults to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chunks</code></td>
+<td>
+<p>the number of chunks that the testing input matrix <code>x</code> will be divided into for multi-cores to work on.
+Only used when <code>cores</code> is not <code>1</code>. If not specified (i.e., <code>chunks = NULL</code>), the number of chunks is set to the value of <code>cores</code>.
+Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threading</code></td>
+<td>
+<p>a bool indicating whether to use the multi-threading to accelerate the predictions of DGP or linked (D)GP emulators. Turn this option on
+when you use the Matérn-2.5 kernel and have a moderately large number of training data points as in such a case you could gain faster predictions. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>N/A.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> If <code>object</code> is an instance of the <code>gp</code> class:
+</p>
+
+<ol>
+<li>
+<p> if <code>method = "mean_var"</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains two matrices named <code>mean</code>
+for the predictive means and <code>var</code> for the predictive variances. Each matrix has only one column with its rows
+corresponding to testing positions (i.e., rows of <code>x</code>).
+</p>
+</li>
+<li>
+<p> if <code>method = "sampling"</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains a matrix whose rows correspond
+to testing positions and columns correspond to <code>sample_size</code> number of samples drawn from the predictive distribution of GP.
+</p>
+</li>
+</ol>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>dgp</code> class:
+</p>
+
+<ol>
+<li>
+<p> if <code>method = "mean_var"</code> and  <code>full_layer = FALSE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains two
+matrices named <code>mean</code> for the predictive means and <code>var</code> for the predictive variances respectively. Each matrix has its rows corresponding to testing
+positions and columns corresponding to DGP global output dimensions (i.e., the number of GP/likelihood nodes in the final layer).
+</p>
+</li>
+<li>
+<p> if <code>method = "mean_var"</code> and  <code>full_layer = TRUE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains two
+sub-lists named <code>mean</code> for the predictive means and <code>var</code> for the predictive variances respectively. Each sub-list contains <em>L</em> (i.e., the number of layers)
+matrices named <code style="white-space: pre;">⁠layer1, layer2,..., layerL⁠</code>. Each matrix has its rows corresponding to testing positions and columns corresponding to
+output dimensions (i.e., the number of GP/likelihood nodes from the associated layer).
+</p>
+</li>
+<li>
+<p> if <code>method = "sampling"</code> and  <code>full_layer = FALSE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains <em>D</em> (i.e., the number
+of GP/likelihood nodes in the final layer) matrices named <code style="white-space: pre;">⁠output1, output2,..., outputD⁠</code>. Each matrix has its rows corresponding to testing positions and
+columns corresponding to samples of size: <code>B * sample_size</code>, where <code>B</code> is the number of imputations specified in <code>dgp()</code>.
+</p>
+</li>
+<li>
+<p> if <code>method = "sampling"</code> and  <code>full_layer = TRUE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains <em>L</em> (i.e., the number
+of layers) sub-lists named <code style="white-space: pre;">⁠layer1, layer2,..., layerL⁠</code>. Each sub-list represents samples drawn from the GP/likelihood nodes in the corresponding layer,
+and contains <em>D</em> (i.e., the number of GP/likelihood nodes in the corresponding layer) matrices named <code style="white-space: pre;">⁠output1, output2,..., outputD⁠</code>. Each matrix gives samples
+of the output from one of <em>D</em> GP/likelihood nodes, and has its rows corresponding to testing positions and columns corresponding to samples
+of size: <code>B * sample_size</code>, where <code>B</code> is the number of imputations specified in <code>dgp()</code>.
+</p>
+</li>
+</ol>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>lgp</code> class:
+</p>
+
+<ol>
+<li>
+<p> if <code>method = "mean_var"</code> and  <code>full_layer = FALSE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that
+contains two sub-lists named <code>mean</code> for the predictive means and <code>var</code> for the predictive variances respectively. Each sub-list
+contains <em>M</em> number (same number of emulators in the final layer of the system) of matrices named <code style="white-space: pre;">⁠emulator1, emulator2,..., emulatorM⁠</code>.
+Each matrix has its rows corresponding to global testing positions and columns corresponding to output dimensions of the associated emulator
+in the final layer.
+</p>
+</li>
+<li>
+<p> if <code>method = "mean_var"</code> and  <code>full_layer = TRUE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains
+two sub-lists named <code>mean</code> for the predictive means and <code>var</code> for the predictive variances respectively. Each sub-list contains <em>L</em>
+(i.e., the number of layers in the emulated system) components named <code style="white-space: pre;">⁠layer1, layer2,..., layerL⁠</code>. Each component represents a layer
+and contains <em>M</em> number (same number of emulators in the corresponding layer of the system) of matrices named <code style="white-space: pre;">⁠emulator1, emulator2,..., emulatorM⁠</code>.
+Each matrix has its rows corresponding to global testing positions and columns corresponding to output dimensions of the associated
+GP/DGP emulator in the corresponding layer.
+</p>
+</li>
+<li>
+<p> if <code>method = "sampling"</code> and  <code>full_layer = FALSE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains
+<em>M</em> number (same number of emulators in the final layer of the system) of sub-lists named <code style="white-space: pre;">⁠emulator1, emulator2,..., emulatorM⁠</code>. Each
+sub-list corresponds to an emulator in the final layer, and contains <em>D</em> matrices, named <code style="white-space: pre;">⁠output1, output2,..., outputD⁠</code>, that correspond to the output
+dimensions of the GP/DGP emulator. Each matrix has its rows corresponding to testing positions and columns corresponding to samples
+of size: <code>B * sample_size</code>, where <code>B</code> is the number of imputations specified in <code>lgp()</code>.
+</p>
+</li>
+<li>
+<p> if <code>method = "sampling"</code> and  <code>full_layer = TRUE</code>: an updated <code>object</code> is returned with an additional slot called <code>results</code> that contains
+<em>L</em> (i.e., the number of layers of the emulated system) sub-lists named <code style="white-space: pre;">⁠layer1, layer2,..., layerL⁠</code>. Each sub-list represents a layer
+and contains <em>M</em> number (same number of emulators in the corresponding layer of the system) of components named <code style="white-space: pre;">⁠emulator1, emulator2,..., emulatorM⁠</code>.
+Each component corresponds to an emulator in the associated layer, and contains <em>D</em> matrices, named <code style="white-space: pre;">⁠output1, output2,..., outputD⁠</code>, that correspond to
+the output dimensions of the GP/DGP emulator. Each matrix has its rows corresponding to testing positions and columns corresponding to
+samples of size: <code>B * sample_size</code>, where <code>B</code> is the number of imputations specified in <code>lgp()</code>.
+</p>
+</li>
+</ol>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>Any R vector detected in <code>x</code> will be treated as a column vector and automatically converted into a single-column R matrix.
+Thus, if <code>x</code> is a single testing data point with multiple dimensions, it must be given as a matrix.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# See gp(), dgp(), or lgp() for an example.
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,215 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optContr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate optimal contrasts</h2>
+
+<h3>Description</h3>
+
+<p>This function calculates a contrast vectors that are optimal for detecting
+certain alternatives. The contrast is optimal in the sense of maximizing the
+non-centrality parameter of the underlying contrast test statistic:
+</p>
+<p style="text-align: center;"><code class="reqn">\frac{c'\mu}{\sqrt{c'Sc}}</code>
+</p>
+<p> Here <code class="reqn">\mu</code> is the
+mean vector under the alternative and <code class="reqn">S</code> the covariance matrix
+associated with the estimate of <code class="reqn">\mu</code>.  The optimal contrast is
+given by </p>
+<p style="text-align: center;"><code class="reqn">c^{opt} \propto S^{-1}\left(\mu - \frac{\mu^{\prime}S^{-1}1}
+{1^\prime S^{-1} 1}\right),</code>
+</p>
+ 
+<p>see Pinheiro et al. (2014).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optContr(
+  models,
+  doses,
+  w,
+  S,
+  placAdj = FALSE,
+  type = c("unconstrained", "constrained")
+)
+
+## S3 method for class 'optContr'
+plot(
+  x,
+  superpose = TRUE,
+  xlab = "Dose",
+  ylab = NULL,
+  plotType = c("contrasts", "means"),
+  ...
+)
+
+plotContr(optContrObj, xlab = "Dose", ylab = "Contrast coefficients")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+<p>An object of class ‘<span class="samp">⁠Mods⁠</span>’ defining the dose-response
+shapes for which to calculate optimal contrasts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>Optional argument. If this argument is missing the doses
+attribute in the ‘<span class="samp">⁠Mods⁠</span>’ object specified in ‘<span class="samp">⁠models⁠</span>’ is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w, S</code></td>
+<td>
+<p>Arguments determining the matrix S used in the formula for the
+optimal contrasts. Exactly one of ‘<span class="samp">⁠w⁠</span>’ and ‘<span class="samp">⁠S⁠</span>’ has to be specified.
+Note that ‘<span class="samp">⁠w⁠</span>’ and ‘<span class="samp">⁠S⁠</span>’ only have to be specified up to
+proportionality <br></p>
+ <dl>
+<dt>w</dt>
+<dd>
+<p> Vector specifying weights for the
+different doses, in the formula for calculation of the optimal contrasts.
+Specifying a weights vector is equivalent to specifying S=diag(1/w) (e.g. in
+a homoscedastic case with unequal sample sizes, ‘<span class="samp">⁠w⁠</span>’ should be
+proportional to the group sample sizes).  </p>
+</dd> <dt>S</dt>
+<dd>
+<p> Directly specify a
+matrix proportional to the covariance matrix to use.  </p>
+</dd> </dl>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>placAdj</code></td>
+<td>
+<p>Logical determining, whether the contrasts should be applied
+to placebo-adjusted estimates. If yes the returned coefficients are no
+longer contrasts (i.e. do not sum to 0). However, the result of multiplying
+of this "contrast" matrix with the placebo adjusted estimates, will give the
+same results as multiplying the original contrast matrix to the unadjusted
+estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>For ‘<span class="samp">⁠type = "constrained"⁠</span>’ the contrast coefficients of the
+zero dose group are constrained to be different from the coefficients of the
+active treatment groups. So that a weighted sum of the active treatments is
+compared against the zero dose group. For an increasing trend the
+coefficient of the zero dose group is negative and all other coefficients
+have to be positive (for a decreasing trend the other way round).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x, superpose, xlab, ylab, plotType</code></td>
+<td>
+<p>Arguments for the plot method for
+optContr objects. plotType determines, whether the contrasts or the
+underlying (standardized) mean matrix should be plotted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments for plot method</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optContrObj</code></td>
+<td>
+<p>For function ‘<span class="samp">⁠plotContr⁠</span>’ the ‘<span class="samp">⁠optContrObj⁠</span>’
+should contain an object of class ‘<span class="samp">⁠optContr⁠</span>’.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that the directionality (i.e. whether in "increase" in the response
+variable is beneficial or a "decrease", is inferred from the specified
+‘<span class="samp">⁠models⁠</span>’ object, see <code>Mods</code> for details).
+</p>
+<p>Constrained contrasts (type = "constrained") add the additional constraint
+in the optimization that the sign of the contrast coefficient for control
+and active treatments need to be different. The quadratic programming
+algorithm from the quadprog package is used to calculate the contrasts.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class ‘<span class="samp">⁠optContr⁠</span>’. A list containing entries contMat
+and muMat (i.e. contrast, mean and correlation matrix).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>References</h3>
+
+<p>Bretz, F., Pinheiro, J. C., and Branson, M. (2005), Combining
+multiple comparisons and modeling techniques in dose-response studies,
+<em>Biometrics</em>, <b>61</b>, 738–748
+</p>
+<p>Pinheiro, J. C., Bornkamp, B., Glimm, E. and Bretz, F. (2014) Model-based
+dose finding under model uncertainty using general parametric models,
+<em>Statistics in Medicine</em>, <b>33</b>, 1646–1661
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>MCTtest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+doses &lt;- c(0,10,25,50,100,150)
+models &lt;- Mods(linear = NULL, emax = 25,
+               logistic = c(50, 10.88111), exponential= 85,
+               betaMod=rbind(c(0.33,2.31), c(1.39,1.39)),
+               doses = doses, addArgs = list(scal = 200))
+contMat &lt;- optContr(models, w = rep(50,6))
+plot(contMat)
+plotContr(contMat) # display contrasts using ggplot2
+
+## now we would like the "contrasts" for placebo adjusted estimates
+dosPlac &lt;- doses[-1]
+## matrix proportional to cov-matrix of plac. adj. estimates for balanced data
+S &lt;- diag(5)+matrix(1, 5,5)
+## note that we explicitly hand over the doses here
+contMat0 &lt;- optContr(models, doses=dosPlac, S = S, placAdj = TRUE)
+## -&gt; contMat0 is no longer a contrast matrix (columns do not sum to 0)
+colSums(contMat0$contMat)
+## calculate contrast matrix for unadjusted estimates from this matrix
+## (should be same as above)
+aux &lt;- rbind(-colSums(contMat0$contMat), contMat0$contMat)
+t(t(aux)/sqrt(colSums(aux^2))) ## compare to contMat$contMat
+
+## now calculate constrained contrasts 
+if(requireNamespace("quadprog", quietly = TRUE)){
+optContr(models, w = rep(50,6), type = "constrained")
+optContr(models, doses=dosPlac, S = S, placAdj = TRUE,
+         type = "constrained")
+}
+</code></pre>
+
+
+</div>

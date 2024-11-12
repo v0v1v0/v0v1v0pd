@@ -1,0 +1,766 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DurgaPlot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Group and effect size plotting in base R.</h2>
+
+<h3>Description</h3>
+
+<p>Plot grouped data and effect size in base R, with control over a large range
+of possible display formats and options. To plot your data, first calculate
+group differences by calling <code>DurgaDiff</code>, then pass the result to
+<code>DurgaPlot</code>. Because there are so many parameters to this
+function, they are prefixed according to the component they affect. Hence,
+for example, all parameters that affect box plots are prefixed with
+<code>box</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DurgaPlot(
+  es,
+  contrasts,
+  group.dx = 0,
+  group.colour = "Set2",
+  points = TRUE,
+  points.method = c("quasirandom", "pseudorandom", "smiley", "maxout", "frowney",
+    "minout", "tukey", "tukeyDense", "jitter", "overplot"),
+  points.spread = ifelse(points.method == "jitter", 0.1, 0.3),
+  points.dx = group.dx,
+  points.adjust = 1,
+  points.params = list(),
+  violin = isFALSE(box) &amp;&amp; isFALSE(bar),
+  violin.shape = c("left-half", "right-half", "full"),
+  violin.fill = TRUE,
+  violin.params = list(),
+  violin.adj = 1.5,
+  violin.width = 0.35,
+  violin.trunc = TRUE,
+  violin.dx = group.dx,
+  box = FALSE,
+  box.fill = TRUE,
+  box.outline = TRUE,
+  box.notch = FALSE,
+  box.params = list(boxwex = 0.8, staplewex = 0.5, outwex = 0.5),
+  box.dx = group.dx,
+  bar = FALSE,
+  bar.fill = TRUE,
+  bar.width = 0.8,
+  bar.dx = group.dx,
+  ef.size = TRUE,
+  ef.size.position = c("right", "below"),
+  ef.size.violin = TRUE,
+  ef.size.violin.fill = TRUE,
+  ef.size.violin.shape = c("right-half", "left-half", "full"),
+  ef.size.violin.trunc = TRUE,
+  ef.size.pch = 17,
+  ef.size.lty = 1,
+  ef.size.lwd = 2,
+  ef.size.ticks = NULL,
+  ef.size.label = es$effect.name,
+  ef.size.dx = 0,
+  ef.size.adj.margin = TRUE,
+  ef.size.top.pad = 2.5,
+  ef.size.height = 0.35,
+  ef.size.mean.line.dx = group.dx,
+  ef.size.line.col = "grey50",
+  ef.size.line.lty = ifelse(ef.size.position == "below", 3, 1),
+  ef.size.line.lwd = 1,
+  ef.size.params = list(),
+  paired = es$paired.data,
+  paired.lty = 1,
+  paired.lwd = 1,
+  central.tendency = isFALSE(box) &amp;&amp; isFALSE(bar),
+  central.tendency.type = c("mean", "median"),
+  central.tendency.symbol = c("point", "segment"),
+  central.tendency.width = violin.width,
+  central.tendency.params = list(),
+  central.tendency.dx = group.dx,
+  error.bars = !isFALSE(central.tendency) || !isFALSE(bar),
+  error.bars.type = c("CI", "SD", "SE"),
+  error.bars.lty = 1,
+  error.bars.lwd = 3,
+  error.bars.cross.width = 0,
+  x.axis = TRUE,
+  x.axis.dx = group.dx,
+  xlab = "",
+  left.ylab = es$data.col.name,
+  left.las = graphics::par("las"),
+  add = FALSE,
+  xlim,
+  ylim,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>es</code></td>
+<td>
+<p>Data returned from a call to <code>DurgaDiff</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrasts</code></td>
+<td>
+<p>Set of contrasts (i.e. group comparisons) to be plotted.
+Defaults to contrasts passed to <code>DurgaDiff</code>, otherwise <code>".
+  - group1"</code> (where <code>group1</code> is the first group). See Details for more
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.dx</code></td>
+<td>
+<p>Used to shift group centres horizontally. E.g.,
+<code>group.dx = c(0.1, -0.1)</code> will group into pairs. Individual components
+can be shifted independently using the appropriate <code>*.dx</code> parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group.colour</code></td>
+<td>
+<p>Colours to use for each group. Either an
+<code>RColorBrewer</code> palette name or a vector of colours.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points</code></td>
+<td>
+<p>If not <code>FALSE</code>, points are plotted. If <code>TRUE</code>, points
+are displayed with a default colour (which is the group colour with 40%
+transparency). You may specify a vector of colours; if length 1, all points
+are drawn with the specified colour. If length is less than the number of
+data points, points in each group are drawn with the appropriate colour
+(extra colours are ignored). Otherwise, <code>points</code> should be a vector of
+colours with a value for each data point.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.method</code></td>
+<td>
+<p>Method used to avoid overplotting points. Use
+<code>"overplot"</code> to overplot points and <code>"jitter"</code> to add random
+noise to each x-value. See <code>offsetX</code> for remaining
+methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.spread</code></td>
+<td>
+<p>Numeric value used to adjust the points scatter method
+points horizontally (ignored if <code>points.method = "overplot"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.dx</code></td>
+<td>
+<p>Horizontal shift to be applied to points in each group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.adjust</code></td>
+<td>
+<p>Adjust the bandwidth used to calculate kernel density
+when drawing points. Smaller values mean a tighter fit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>points.params</code></td>
+<td>
+<p>List of named parameters to pass on to
+<code>points</code>, e.g. <code>DurgaPlot(es, points = "black",
+  points.params = list(pch = 21, bg = as.numeric(factor(data$Sex)) + 1))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin</code></td>
+<td>
+<p>If not <code>FALSE</code>, violin plots are drawn. Violins
+are simply probability density plots, with density on the x-axis
+and value on the y-axis. If <code>TRUE</code>, violins are drawn in
+default colours. Otherwise specifies the colour of the violin
+borders.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.shape</code></td>
+<td>
+<p>Desired violin shape - left-half only (<code>"left"</code>),
+right-half only (<code>"right"</code>), or a full violin (<code>"full"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.fill</code></td>
+<td>
+<p>Colour used to fill violins. Specify <code>FALSE</code> or
+<code>NA</code> to leave violins unfilled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.params</code></td>
+<td>
+<p>Additional graphical parameters applied to drawing
+violins. May include <code>density</code>, <code>angle</code>, <code>lty</code>, <code>lwd</code>,
+<code>lend</code> etc. Values are passed on to <code>polygon</code>;
+see its help page for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.adj</code></td>
+<td>
+<p>Value used to control violin plot smoothness by adjusting
+the kernel density bandwidth. Higher values produce a smoother plot.
+Passed unchanged as the <code>adjust</code> argument to the
+<code>density</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.width</code></td>
+<td>
+<p>Width of maximum violin horizontal extents, as a
+proportion of the distance between groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.trunc</code></td>
+<td>
+<p>Numeric value that specifies what vertical proportion of
+the violin is truncated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>violin.dx</code></td>
+<td>
+<p>Horizontal shift to be applied to each violin.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box</code></td>
+<td>
+<p>If not <code>FALSE</code>, draw a box-and-whisker plot of the grouped
+values.
+Value may be a colour, in which case the box borders are plotted with the
+colour(s). See <code>boxplot</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box.fill</code></td>
+<td>
+<p>Colour used to fill the bodies of the box-and-whisker plot.
+If FALSE or NA, bodies are not filled.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box.outline</code></td>
+<td>
+<p>If FALSE, don't draw outliers with the box plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box.notch</code></td>
+<td>
+<p>If TRUE, draws notches in the sides of the boxes. See
+<code>boxplot.stats</code> for the calculations used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box.params</code></td>
+<td>
+<p>List with additional graphical parameters to control the
+box plot appearance. Many aspects of the plots can be controlled, e.g.
+<code>box.params = list(outpch = NA)</code> prevents outlier points from being
+drawn. See <code>bxp</code> graphical parameters for a complete list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>box.dx</code></td>
+<td>
+<p>Horizontal shift to be applied to each box.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bar</code></td>
+<td>
+<p>If not <code>FALSE</code>, draw a bar plot of the group means or
+medians,
+according to <code>central.tendency</code>. May be <code>TRUE</code> or a colour.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bar.fill</code></td>
+<td>
+<p>Colour used to fill bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bar.width</code></td>
+<td>
+<p>Width of bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bar.dx</code></td>
+<td>
+<p>Horizontal shift to be applied to each bar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size</code></td>
+<td>
+<p>If not <code>FALSE</code>, effect sizes are plotted. May be
+<code>TRUE</code> or
+a colour.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.position</code></td>
+<td>
+<p>Effect sizes are plotted to the right of the main
+plot if there is only one effect size to plot and <code>ef.size.position !=
+  "below"</code>. If the effect size is drawn to the right, you will need to
+increase the size of the right margin before plotting (see
+<code>par(mar = ...)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.violin</code></td>
+<td>
+<p>If not <code>FALSE</code>, boostrapped effect size estimates
+are shown as a violin plot. May be a colour that is used for the violin
+border and fill (unless <code>ef.size.violin.fill</code> is specified).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.violin.fill</code></td>
+<td>
+<p>Colour used to fill effect size violins. Default
+is a transparent version of <code>ef.size.violin</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.violin.shape</code></td>
+<td>
+<p>Shape of the effect size violin. One of
+<code>"right-half"</code>, <code>"left-half"</code> or <code>"full"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.violin.trunc</code></td>
+<td>
+<p>If <code>TRUE</code>, effect size violin is truncated
+vertically so that it just covers the estimated effect size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.pch</code></td>
+<td>
+<p>Symbol to represent mean effect size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.lty</code></td>
+<td>
+<p>Line style for the effect size error bar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.lwd</code></td>
+<td>
+<p>Line weight for the effect size error bar.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.ticks</code></td>
+<td>
+<p>Optional locations and labels for ticks on the effect
+size y-axis. E.g. to interpret effect size using Cohen's default values,
+specify <code>ef.size.ticks = c("Large negative effect" = -0.8, "Medium
+  negative effect" = -0.5, "Small negative effect" = -0.2, "No effect" = 0,
+  "Small positive effect" = 0.2, "Medium positive effect" = 0.5, "Large
+  positive effect" = 0.8)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.label</code></td>
+<td>
+<p>Label to display on y-axis for effect size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.dx</code></td>
+<td>
+<p>Horizontal shift to be applied to each contrast/effect
+size. Unlike other <code>.dx</code> parameters, <code>ef.size.dx</code> is indexed by
+contrast rather than group. When effect size is below the plot, the
+<code>group.dx</code> for the group above the effect size is also added.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.adj.margin</code></td>
+<td>
+<p>If TRUE (the default), the right margin (if ES is
+right) or bottom margin (if ES is below) is automatically increased to make
+room to display the effect size or axis annotations. The margins are
+restored before control returns from <code>DurgaPlot</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.top.pad</code></td>
+<td>
+<p>Gap (in units of default character height scaled by
+<code>cex</code>) between the bottom of the main plot region and the top of the
+effect size plot region. Only applies when effect size is positioned below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.height</code></td>
+<td>
+<p>Height of the effect size plot region as a proportion
+of the main plot region. Only applies when effect size is positioned below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.mean.line.dx</code></td>
+<td>
+<p>Horizontal shift to be applied to the start (i.e.
+left end) of the group mean horizontal lines when effect size is on the
+right.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.line.col</code></td>
+<td>
+<p>Colour of horizontal effect-size lines that depict
+group means if effect size is on the right, otherwise colour of line at y = 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.line.lty</code></td>
+<td>
+<p>Line style of horizontal effect-size lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.line.lwd</code></td>
+<td>
+<p>Line width of horizontal effect-size lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ef.size.params</code></td>
+<td>
+<p>List of graphical parameters to apply when drawing
+effect
+sizes. These parameters are passed to <code>par</code> before
+drawing the effect size. E.g. <code>ef.size.params = list(mgp = c(3.5, 1, 0))</code>
+will shift the effect size y-axis label to the left or right (for
+<code>ef.size.position</code> <code>"below"</code> or <code>"right"</code> respectively).
+<code>ef.size.params = list(las = 1)</code> will rotate the effect size axis
+labels without rotating the main axis labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired</code></td>
+<td>
+<p>If not <code>FALSE</code> and the data a paired, lines are drawn
+joining the individual data points. May be <code>TRUE</code> or a colour.
+Defaults to <code>TRUE</code> if the data are paired (i.e. the <code>id.col</code>
+argument was specified in the call to <code>DurgaDiff</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired.lty</code></td>
+<td>
+<p>Line style for pair lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paired.lwd</code></td>
+<td>
+<p>Line width for pair lines.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central.tendency</code></td>
+<td>
+<p>If not <code>FALSE</code>, a visual indicator of central
+tendency
+is drawn. May be <code>TRUE</code> or a colour, in which case it is used for mean/median and
+error bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central.tendency.type</code></td>
+<td>
+<p>Should the indicated measure of central tendency
+be <code>"mean"</code> or <code>"median"</code>?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central.tendency.symbol</code></td>
+<td>
+<p>Should central tendency be shown as a point or
+a horizontal line segment?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central.tendency.width</code></td>
+<td>
+<p>Width of the central tendency line segment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central.tendency.params</code></td>
+<td>
+<p>Additional arguments to be passed to
+<code>points</code> (if <code>central.tendency.symbol ==
+  "point"</code>) or <code>segments</code> (if
+<code>central.tendency.symbol == "segment"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>central.tendency.dx</code></td>
+<td>
+<p>Horizontal shift to apply to central tendency
+indicator and error bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.bars</code></td>
+<td>
+<p>Should error bars be displayed? May be the colour to be
+used for error bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.bars.type</code></td>
+<td>
+<p>Should error bars depict 95% confidence intervals of
+the mean (<code>"CI"</code>), standard deviation (<code>"SD"</code>) or standard error
+(<code>"SE"</code>)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.bars.lty</code></td>
+<td>
+<p>Line style for error bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.bars.lwd</code></td>
+<td>
+<p>Line width for error bars.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.bars.cross.width</code></td>
+<td>
+<p>Length (in inches) of the horizontal crossbars
+at the ends of the error bars. If 0, no crossbar is drawn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.axis</code></td>
+<td>
+<p>if TRUE, display the x-axis ticks and labels. The effect of
+<code>x.axis = FALSE</code> is similar to setting <code>xaxt = "n"</code> in a base R
+plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.axis.dx</code></td>
+<td>
+<p>Horizontal shifts to be applied to each x-axis tick and
+label.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlab</code></td>
+<td>
+<p>X axis label.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>left.ylab</code></td>
+<td>
+<p>Left-hand y-axis label.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>left.las</code></td>
+<td>
+<p>Orientation of axis labels on left-hand y-axis label (0 =
+parallel to axis, 1 = horizontal).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p>If TRUE, the effect size plot is added to the current plot. If
+FALSE, a new plot is created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xlim, ylim</code></td>
+<td>
+<p>If specified, overrides the default plot extents.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments are passed on to the
+<code>plot</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Group data may be visualised in multiple ways: <code>points</code>, <code>violin</code>,
+<code>box</code> and <code>bar</code>. Each visualisation type is controlled by a set of
+parameters with the same prefix. To display a type, for example box plots,
+specify <code>box = TRUE</code>. Rather than <code>box = TRUE</code>, you may specify a
+colour (e.g. <code>box \ "blue"</code>), which is used as the border/outline for
+the boxes. You may also specify a vector of colours, one for each group. For
+<code>points</code>, you may specify a colour for each individual point. When
+colours are not specified, they default to the group colours
+(<code>group.colour</code>).
+</p>
+<p>Group data annotations are controlled with parameters <code>central.tendency</code>
+and <code>error.bars</code>. <code>central.tendency</code> visually represents the mean
+or median (<code>central.tendency.type</code>) of each group, while
+<code>error.bars</code> are vertical bars showing the 95% CI of the mean, standard
+deviation or standard error of the groups (<code>error.bars.type</code>).
+</p>
+<p>An effect size (for our purposes) is the difference in means between two
+groups. Effect size display is controlled by <code>ef.size</code>. The set of
+effect sizes (aka "contrasts") to be plotted is controlled by the
+<code>contrasts</code> parameter. If a single effect size is displayed, it may be
+positioned to the right of - or below - the main plot
+(<code>ef.size.position</code>). If more than one effect size is displayed, it must
+be below the main plot. If below, an effect size is drawn underneath its
+primary group. See <code>DurgaBrackets</code> for a way to display multiple
+effect sizes that would overlap if displayed as normal effect sizes.
+</p>
+<p>Custom labels for individual effects can be specified as part of the
+<code>contrasts</code> parameter. If <code>contrasts</code> is a named vector, the names
+are used as contrast labels, e.g. <code>contrasts = c("Adult change" = "adult
+- control", "Juvenile change" = "juvenile - control")</code>. A more flexible
+(although more advanced) method is to assign the <code>label.plot</code> member of
+a <code>DurgaDiff</code> object within <code>x</code>, see Examples for usage.
+</p>
+<p>The <code>contrasts</code> parameter may be a single string, a vector of strings,
+or a matrix. A single string has a format such as <code>"group1 - group2,
+group3 - group4"</code>. A single asterisk, <code>"*"</code> creates contrasts for all
+possible pairs of groups. A single string such as <code>".- control"</code>
+compares all groups against the <code>"control"</code> group, i.e. the <code>"."</code>
+expands to all groups except the named group. A vector of strings looks like
+<code>c("group1 - group2", "group3 - group4")</code>. If a matrix is specified, it
+must have a column for each contrast, with the first group in row 1 and the
+second in row 2. See also the <code>contrasts</code> parameter to
+<code>DurgaDiff</code>. It is an error to attempt to plot a contrast that
+was not estimated by <code>DurgaDiff</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list (returned invisibly) with 4 elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>es</code></td>
+<td>
+<p>Value of the <code>es</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extents</code></td>
+<td>
+<p>Matrix with the x-axis locations and y-axis extents
+of each displayed group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot.differences</code></td>
+<td>
+<p>A list of the
+displayed differences, as <code>DurgaGroupDiff</code> objects. Will be an empty
+list if no effect sizes are shown.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>palette</code></td>
+<td>
+<p>Vector of colours used by default for each group.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Gardner, M. J., &amp; Altman, D. G. (1986). Confidence intervals rather than P
+values: estimation rather than hypothesis testing. Br Med J (Clin Res Ed),
+292(6522), 746-750. doi:10.1136/bmj.292.6522.746
+</p>
+<p>Cumming, G. (2012). Understanding the new statistics : effect sizes,
+confidence intervals, and meta-analysis (1st edition ed.). New York:
+Routledge.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DurgaDiff</code>, <code>DurgaBrackets</code>,
+<code>DurgaTransparent</code>, <code>offsetX</code>, <code>boxplot</code>,
+<code>bxp</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+d &lt;- DurgaDiff(petunia, "height", "group")
+# Default plot
+DurgaPlot(d)
+
+# Boxplot with a single effect size plotted on the right
+DurgaPlot(d, contrasts = "westerham_cross - self_fertilised",
+          box = TRUE, points = "black", points.params = list(cex = 0.8))
+
+# Use confidence brackets to show all group differences
+p &lt;- DurgaPlot(d, ef.size = FALSE, group.colour = "Set1",
+          points = "black", points.method = "jitter",
+          points.params = list(pch = 21), points.dx = 0.15,
+          violin.dx = -0.05, violin = "black", violin.adj = 0.5,
+          ylim = c(12, 75))
+DurgaBrackets(p)
+
+# Adjust group names, contrasts
+d &lt;- DurgaDiff(petunia, 1, 2,
+               groups = c("self-fertilised" = "self_fertilised",
+                          "intercrossed" = "inter_cross",
+                          "Westerham-crossed" = "westerham_cross"),
+               contrasts = c("Westerham-crossed - self-fertilised",
+                             "Westerham-crossed - intercrossed",
+                             "intercrossed - self-fertilised"))
+# Shift the 2nd effect size horizontally (Westerham-crossed - intercrossed)
+# so it doesn't overlap another
+DurgaPlot(d, ef.size.dx = c(0, -2, 0))
+
+# Custom difference labels with italics
+d &lt;- DurgaDiff(petunia, 1, 2)
+d$group.differences[[3]]$label.plot &lt;- expression(italic("sp. 2")~"-"~italic("sp. 1"))
+d$group.differences[[2]]$label.plot &lt;- expression(italic("sp. 3")~"-"~italic("sp. 1"))
+DurgaPlot(d)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,224 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>posterior</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Posterior Quantities from Bayesian Model Averaging</h2>
+
+<h3>Description</h3>
+
+<p>Calculate posterior mean (and quantiles for specific
+doses for each MCMC iteration of the model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">posterior(
+  x,
+  doses,
+  times,
+  probs,
+  reference_dose,
+  predictive,
+  return_samples,
+  iter,
+  return_stats
+)
+
+## S3 method for class 'dreamer_mcmc'
+posterior(
+  x,
+  doses = attr(x, "doses"),
+  times = attr(x, "times"),
+  probs = c(0.025, 0.975),
+  reference_dose = NULL,
+  predictive = 0,
+  return_samples = FALSE,
+  iter = NULL,
+  return_stats = TRUE
+)
+
+## S3 method for class 'dreamer_mcmc_independent'
+posterior(
+  x,
+  doses = attr(x, "doses"),
+  times = attr(x, "times"),
+  probs = c(0.025, 0.975),
+  reference_dose = NULL,
+  predictive = 0,
+  return_samples = FALSE,
+  iter = NULL,
+  return_stats = TRUE
+)
+
+## S3 method for class 'dreamer_bma'
+posterior(
+  x,
+  doses = x$doses,
+  times = x$times,
+  probs = c(0.025, 0.975),
+  reference_dose = NULL,
+  predictive = 0,
+  return_samples = FALSE,
+  iter = NULL,
+  return_stats = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from a call to <code>dreamer_mcmc</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>doses at which to estimate posterior quantities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+<p>a vector of times at which to calculate the posterior response
+(for longitudinal models only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>quantiles of the posterior to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference_dose</code></td>
+<td>
+<p>the dose at which to adjust the posterior plot.
+Specifying
+a dose returns the plot of pr(trt_dose - trt_reference_dose | data).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictive</code></td>
+<td>
+<p>An integer.  If greater than 0, the return values will
+be from the predictive distribution of the mean of <code>predictive</code>
+observations.
+If 0 (default), the posterior on the dose response mean is returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_samples</code></td>
+<td>
+<p>logical indicating if the weighted raw
+MCMC samples from the Bayesian model averaging used to calculate the
+mean and quantiles should be returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>an index on which iterations of the MCMC should be used
+in the calculations.  By default, all MCMC iterations are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_stats</code></td>
+<td>
+<p>logical indicating whether or not the posterior
+statistics should be calculated.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A named list with the following elements:
+</p>
+
+<ul>
+<li>
+<p> stats: a tibble the dose, posterior mean, and posterior quantiles.
+</p>
+</li>
+<li>
+<p> samps: the weighted posterior samples.  Only returned if
+<code>return_samples = TRUE</code>.
+</p>
+</li>
+</ul>
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>posterior(dreamer_mcmc)</code>: posterior summary for linear model.
+</p>
+</li>
+<li> <p><code>posterior(dreamer_mcmc_independent)</code>: posterior summary for independent model.
+</p>
+</li>
+<li> <p><code>posterior(dreamer_bma)</code>: posterior summary for Bayesian model averaging fit.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e4,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+posterior(output)
+
+# return posterior samples of the mean
+post &lt;- posterior(output, return_samples = TRUE)
+head(post$samps)
+
+# from a single model
+posterior(output$mod_quad)
+
+# posterior of difference of doses
+posterior(output, reference_dose = 0)
+</code></pre>
+
+
+</div>

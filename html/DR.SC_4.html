@@ -1,0 +1,247 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DR.SC_fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Joint dimension reduction and spatial clustering</h2>
+
+<h3>Description</h3>
+
+<p>Joint dimension reduction and spatial clustering for scRNA-seq and spatial transcriptomics data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  DR.SC_fit(X, K, Adj_sp=NULL, q=15,
+             error.heter= TRUE, beta_grid=seq(0.5, 5, by=0.5),
+             maxIter=25, epsLogLik=1e-5, verbose=FALSE, maxIter_ICM=6,
+             wpca.int=FALSE, int.model="EEE", approxPCA=FALSE, coreNum = 5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>a  sparse matrix with class <code>dgCMatrix</code> or <code>matrix</code>, specify the log-normalization gene expression matrix used for DR-SC model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>a positive  integer allowing scalar or vector, specify the number of clusters in model fitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Adj_sp</code></td>
+<td>
+<p>an optional sparse matrix with class <code>dgCMatrix</code>, specify the adjoint matrix used for DR-SC model. We provide this interface for those users  who would like to define the adjacency matrix by their own.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>a positive integer, specify the number of latent features to be extracted, default as 15. Usually, the choice of q is a trade-off between model complexity and fit to the data,  and depends on the goals of the analysis and the structure of the data. A higher value will result in a more complex model with a higher number of parameters, which may lead to overfitting and poor generalization performance. On the other hand, a lower value will result in a simpler model with fewer parameters, but may also lead to underfitting and a poorer fit to the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.heter</code></td>
+<td>
+<p>an optional logical value, whether use the heterogenous error for DR-SC model, default as <code>TRUE</code>. If <code>error.heter=FALSE</code>, then the homogenuous error is used for probabilistic PCA model in DR-SC.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta_grid</code></td>
+<td>
+<p>an optional vector of positive value, the candidate set of the smoothing parameter to be searched by the grid-search optimization approach.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter</code></td>
+<td>
+<p>an optional positive value, represents the maximum iterations of EM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>epsLogLik</code></td>
+<td>
+<p>an optional positive vlaue, tolerance vlaue of relative variation rate of the observed pseudo log-loglikelihood value, defualt as '1e-5'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>an optional logical value, whether output the information of the ICM-EM algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxIter_ICM</code></td>
+<td>
+<p>an optional positive value, represents the maximum iterations of ICM.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wpca.int</code></td>
+<td>
+<p>an optional logical value, means whether use the weighted PCA to obtain the initial values of loadings and other paramters, default as <code>FALSE</code> which means the ordinary PCA  is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>int.model</code></td>
+<td>
+<p>an optional string, specify which Gaussian mixture model is used in evaluting the initial values for DR-SC, default as "EEE"; and see Mclust for more models' names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>approxPCA</code></td>
+<td>
+<p>an optional logical value, whether use approximated PCA to speed up the computation for initial values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coreNum</code></td>
+<td>
+<p>an optional positive integer, means the number of thread used in parallel computating, default as 5. If the length of K is one, then coreNum will be set as 1 automatically.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Nothing
+</p>
+
+
+<h3>Value</h3>
+
+<p>DR.SC_fit returns a list with class "drscObject" with the following three components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Objdrsc</code></td>
+<td>
+<p>a list including the model fitting results, in which the number of elements is same as the length of K.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>out_param</code></td>
+<td>
+<p>a numeric matrix used for model selection in MBIC.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K_set</code></td>
+<td>
+<p>a scalar or vector equal to input argument K.</p>
+</td>
+</tr>
+</table>
+<p>In addition, each element of "Objdrsc" is a list with the following comoponents:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>cluster</code></td>
+<td>
+<p>inferred class labels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hZ</code></td>
+<td>
+<p>extracted latent features.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>estimated smoothing parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Mu</code></td>
+<td>
+<p>mean vectors of mixtures components.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Sigma</code></td>
+<td>
+<p>covariance matrix of mixtures components.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>estimated loading matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Lam_vec</code></td>
+<td>
+<p>estimated variance of errors in probabilistic PCA model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>pseudo observed log-likelihood.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>nothing
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Wei Liu
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://academic.oup.com/nar/article/50/12/e72/6555431">Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi &amp; Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219.</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>None
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## we generate the spatial transcriptomics data with lattice neighborhood, i.e. ST platform.
+seu &lt;- gendata_RNAExp(height=10, width=10,p=50, K=4)
+library(Seurat)
+seu &lt;- NormalizeData(seu, verbose=FALSE)
+# choose 40 highly variable features using FindVariableFeatures in Seurat
+# seu &lt;- FindVariableFeatures(seu, nfeatures = 40)
+# or choose 40 spatailly variable features using FindSVGs in DR.SC
+seu &lt;- FindSVGs(seu, nfeatures = 40, verbose=FALSE)
+# users define the adjacency matrix
+Adj_sp &lt;- getAdj(seu, platform = 'ST')
+if(class(seu@assays$RNA)=="Assay5"){
+ var.features &lt;- seu@assays$RNA@meta.data$var.features
+ var.features  &lt;- var.features[!is.na(var.features )]
+ dat &lt;- GetAssayData(seu, assay = "RNA", slot='data')
+ X &lt;- Matrix::t(dat[var.features,])
+}else{
+ var.features &lt;- seu@assays$RNA@var.features
+ X &lt;- Matrix::t(seu[["RNA"]]@data[var.features,])
+}
+
+
+# maxIter = 2 is only used for illustration, and user can use default.
+drscList &lt;- DR.SC_fit(X,Adj_sp=Adj_sp, K=4, maxIter=2, verbose=TRUE)
+
+</code></pre>
+
+
+</div>

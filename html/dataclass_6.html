@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>data_validator</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert a dataclass to a data frame validator</h2>
+
+<h3>Description</h3>
+
+<p>If you intend to use your dataclass to validate data frame like object such
+as tibbles, data frames, or data tables, pass the dataclass into this
+function to modify behavior.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data_validator(x, strict_cols = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A dataclass object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strict_cols</code></td>
+<td>
+<p>Should additional columns be allowed in the output?</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A function with the following properties:
+</p>
+
+<ul>
+<li>
+<p> A modified dataclass function designed to accept data frames
+</p>
+</li>
+<li>
+<p> A single argument to test new data frames
+</p>
+</li>
+<li>
+<p> Each column in a new data frame will be tested
+</p>
+</li>
+<li>
+<p> An error occurs if new data passed to the returned function are invalid
+</p>
+</li>
+<li>
+<p> Data is returned if new data passed to the returned function are valid
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Define a dataclass for creating data! Pass to data_validator():
+my_df_dataclass &lt;-
+  dataclass(
+    dte_col = dte_vec(),
+    chr_col = chr_vec(),
+    # Custom column validator ensures values are positive!
+    new_col = function(x) all(x &gt; 0)
+  ) |&gt;
+  data_validator()
+
+# Validate a data frame or data frame like objects!
+data.frame(
+  dte_col = as.Date("2022-01-01"),
+  chr_col = "String!",
+  new_col = 100
+) |&gt;
+  my_df_dataclass()
+
+# Allow additional columns in output
+test_df_class &lt;-
+  dataclass(
+    dte_col = dte_vec()
+  ) |&gt;
+  data_validator(strict_cols = FALSE)
+
+tibble::tibble(
+  dte_col = as.Date("2022-01-01"),
+  other_col = "a"
+) |&gt;
+  test_df_class()
+</code></pre>
+
+
+</div>

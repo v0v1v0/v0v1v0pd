@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adhd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+A 2-stage SMART data of children with ADHD
+</h2>
+
+<h3>Description</h3>
+
+<p>We provide a two-stage sequential multiple assignment randomized trial (SMART) data of 150 children with ADHD mimicking a real world study. At the first stage, children were randomized to treatment of low-intensity behavioral modification (BMOD) or low-intensity methamphetamine (MED) with equal probability. At second stage, children were randomized to treatment of low-intensity BMOD + low-intensity MED, or high-intensity BMOD with equal probability. The primary outcome of study was children's school performance score ranging from 1 to 5 assessed at the end of the study for all participants.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("adhd")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 150 observations on the following 11 variables.
+</p>
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>IDs of the 150 children</p>
+</dd>
+<dt><code>o11</code></dt>
+<dd>
+<p>baseline covariate coded as 0/1: diagnosed with ODD (oppositional defiant disorder) before the first-stage intervention</p>
+</dd>
+<dt><code>o12</code></dt>
+<dd>
+<p>baseline covariate: ADHD score at the end of the previous school year (ranging from 0 to 3, larger values for fewer ADHD symptoms)</p>
+</dd>
+<dt><code>o13</code></dt>
+<dd>
+<p>baseline covariate coded as 0/1: receiving medication during the previous school year</p>
+</dd>
+<dt><code>o14</code></dt>
+<dd>
+<p>baseline covariate coded as 0/1: race - white (coded 1) versus nonwhite (coded 0)</p>
+</dd>
+<dt><code>a1</code></dt>
+<dd>
+<p>first-stage intervention coded as -1/1: -1 for low-intensity methamphetamine (MEDS), 1 for low-intensity behavioral modification (BMOD)</p>
+</dd>
+<dt><code>r</code></dt>
+<dd>
+<p>first-stage response indicator coded as 0/1</p>
+</dd>
+<dt><code>o21</code></dt>
+<dd>
+<p>intermediate outcome: number of months until non-response (maximum: 8 months, NA for responders)</p>
+</dd>
+<dt><code>o22</code></dt>
+<dd>
+<p>intermediate outcome coded as 0/1: adherence to the first-stage intervention, 1 for high adherence</p>
+</dd>
+<dt><code>a2</code></dt>
+<dd>
+<p>second-stage intervention coded as -1/1: -1 for low-intensity BMOD + MEDS, 1 for high-intensity BMOD</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>primary outcome (continuous): school performance at the end of the school year (ranging from 1 to 5, higher values reflect better performance)</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Pelham Jr, W. E., &amp; Fabiano, G. A. (2008). Evidence-based psychosocial treatments for attention-deficit/hyperactivity disorder. Journal of Clinical Child &amp; Adolescent Psychology, 37(1), 184-214.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(adhd)
+attach(adhd)
+n = length(a1)
+H1 = scale(cbind(o11, o12, o13, o14))
+H2 = scale(cbind(H1, a1, H1*a1, r, o22, r*a1, o22*a1))
+colnames(H2)[12] = "r*a1"
+colnames(H2)[13] = "o22*a1"
+
+fit_ql = ql(H=list(H1, H2), AA=list(a1,a2), RR=list(rep(0, n), y),
+            pi=list(rep(0.5, n), rep(0.5,n)), K=2, m=3, lasso=TRUE)
+
+c = 2^c(-3:3)
+fit_owl = owl(H=list(H1, H2), AA=list(a1,a2), RR=list(rep(0, n), y),
+              n=n, K=2, pi=list(rep(0.5, n), rep(0.5,n)), res.lasso = TRUE,
+              loss="hinge", kernel="linear", augment=TRUE, c=c, m=3)
+
+
+</code></pre>
+
+
+</div>

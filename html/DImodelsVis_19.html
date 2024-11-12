@@ -1,0 +1,320 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>grouped_ternary_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Grouped ternary diagrams</h2>
+
+<h3>Description</h3>
+
+<p>The helper function for preparing the underlying data for creating grouped
+ternary diagrams where the proportions of the compositional variables
+are combined into groups and visualised on a ternary diagram.
+These are very useful when we have multiple compositional variables that can
+be grouped together by some hierarchical grouping structure. For example, grouping
+species in a ecosystem based on the functions they perform, or grouping
+political parties based on their national alliances. Grouping variables this
+way allows us to reduce the dimensionality of the compositional data and
+visualise it. This is akin to looking at a 2-d slice of the high
+dimensional simplex. The relative proportions of each variable within a group
+can be adjust to look at different slices of the simplex. Looking at multiple
+such slices would enable us to create an approximation of how the response varies
+across the original n-dimensional simplex. The output of this function can be passed to the
+<code>grouped_ternary_plot</code> function to plot the results.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">grouped_ternary_data(
+  prop,
+  FG,
+  values = NULL,
+  tern_vars = NULL,
+  conditional = NULL,
+  add_var = list(),
+  resolution = 3,
+  prediction = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>prop</code></td>
+<td>
+<p>A character vector indicating the model coefficients
+corresponding to variable proportions. These variables should
+be compositional in nature (i.e., proportions should sum to 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FG</code></td>
+<td>
+<p>A character vector specifying the groupings of the variables specified in 'prop'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p>A numeric vector specifying the proportional split of the variables within a group.
+The default is to split the group proportion equally between
+each variable in the group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tern_vars</code></td>
+<td>
+<p>A character vector giving the names of the three variables
+to be shown in the ternary diagram.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conditional</code></td>
+<td>
+<p>A data-frame describing the names of the compositional variables
+and their respective values at which to slice the
+simplex space. The format should be, for example, as follows: <br><code>data.frame("p1" = c(0, 0.5), "p2" = c(0.2, 0.1))</code> <br>
+One figure would be created for each row in 'conditional' with
+the respective values of all specified variables. Any
+compositional variables not specified in 'conditional' will
+be assumed to be 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_var</code></td>
+<td>
+<p>A list or data-frame specifying values for additional variables
+in the model other than the proportions (i.e. not part of the
+simplex design).
+This could be useful for comparing the predictions across
+different values for a non-compositional variable.
+If specified as a list, it will be expanded to show a plot
+for each unique combination of values specified, while if specified
+as a data-frame, one plot would be generated for each row in the
+data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+<p>A number between 1 and 10 describing the resolution of the
+resultant graph.
+A high value would result in a higher definition figure
+but at the cost of being computationally expensive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prediction</code></td>
+<td>
+<p>A logical value indicating whether to pass the final data
+to the 'add_prediction' function and append the
+predictions to the data. Default value is <code>TRUE</code>, but
+often it would be desirable to make additional changes to
+the data before making any predictions, so the user can set this to
+<code>FALSE</code> and manually call the 'add_prediction'
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Arguments passed on to <code>add_prediction</code>
+</p>
+
+<dl>
+<dt><code>model</code></dt>
+<dd>
+<p>A regression model object which will be used to make predictions
+for the observations in 'data'. Will override 'coefficients'
+if specified.</p>
+</dd>
+<dt><code>coefficients</code></dt>
+<dd>
+<p>If a regression model is not available (or can't be fit in R),
+the regression coefficients from a model fit in some other
+language can be used to calculate predictions. However, the
+user would have to ensure there's an appropriate one-to-one
+positional mapping between the data columns and the
+coefficient values. Further, they would also have to provide
+a variance-covariance matrix of the coefficients in the 'vcov'
+parameter if they want the associated CI for the prediction or
+it would not be possible to calculate confidence/prediction
+intervals using this method.</p>
+</dd>
+<dt><code>vcov</code></dt>
+<dd>
+<p>If regression coefficients are specified, then the variance-covariance
+matrix of the coefficients can be specified here to calculate the
+associated confidence interval around each prediction. Failure to do
+so would result in no confidence intervals being returned. Ensure
+'coefficients' and 'vcov' have the same positional mapping with the data.</p>
+</dd>
+<dt><code>coeff_cols</code></dt>
+<dd>
+<p>If 'coefficients' are specified and a one-to-one positional
+mapping between the data-columns and coefficient vector is
+not present. A character string or numeric index can be specified
+here to reorder the data columns and match the corresponding
+coefficient value to the respective data column. See the
+"Use model coefficients for prediction" section in examples.</p>
+</dd>
+<dt><code>conf.level</code></dt>
+<dd>
+<p>The confidence level for calculating confidence/prediction
+intervals. Default is 0.95.</p>
+</dd>
+<dt><code>interval</code></dt>
+<dd>
+<p>Type of interval to calculate:
+</p>
+
+<dl>
+<dt>"none" (default)</dt>
+<dd>
+<p>No interval to be calculated.</p>
+</dd>
+<dt>"confidence"</dt>
+<dd>
+<p>Calculate a confidence interval.</p>
+</dd>
+<dt>"prediction"</dt>
+<dd>
+<p>Calculate a prediction interval.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data-frame containing compositional columns with names specified
+in 'FG' and 'prop' parameters along with any additional columns
+specified in 'add_var' parameter and the following columns appended
+at the end.
+</p>
+
+<dl>
+<dt>.x</dt>
+<dd>
+<p>The x-projection of the points within the ternary.</p>
+</dd>
+<dt>.y</dt>
+<dd>
+<p>The y-projection of the points within the ternary.</p>
+</dd>
+<dt>.add_str_ID</dt>
+<dd>
+<p>An identifier column for grouping the cartesian product
+of all additional columns specified in 'add_var'
+parameter (if 'add_var' is specified).</p>
+</dd>
+<dt>.Sp</dt>
+<dd>
+<p>An identifier column specifying the functional group along
+which the high dimensional simplex is sliced (if there are
+more than 3 groups).</p>
+</dd>
+<dt>.Value</dt>
+<dd>
+<p>The value (between 0 and 1) along the direction of functional
+group in '.Sp' at which the high dimensional simplex is sliced.</p>
+</dd>
+<dt>.Facet</dt>
+<dd>
+<p>An identifier column formed by combining '.Sp' and '.value'
+to group observations within a specific slice of the
+high dimensional simplex.</p>
+</dd>
+<dt>.Pred</dt>
+<dd>
+<p>The predicted response for each observation.
+(if 'prediction' is <code>TRUE</code>)</p>
+</dd>
+<dt>.Lower</dt>
+<dd>
+<p>The lower limit of the prediction/confidence interval
+for each observation.</p>
+</dd>
+<dt>.Upper</dt>
+<dd>
+<p>The upper limit of the prediction/confidence interval
+for each observation.</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DImodels)
+
+## Load data
+data(sim3)
+
+## Fit model
+mod &lt;- glm(response ~ 0 + (p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9)^2,
+           data = sim3)
+
+## Create data
+## We have nine (p1 to p9) variables here and using \code{\link{conditional_ternary}}
+## to visualise the simplex space won't be very helpful as there are too
+## variables to condition on
+## Instead we group the nine-variables into three groups called "G", "L" and "H"
+head(grouped_ternary_data(model = mod,
+                          prop = paste0("p", 1:9),
+                          FG = c("G","G","G","G","G","L","L","H","H"),
+                          resolution = 1))
+
+## By default the variables within a group take up an equal share of the
+## group proportion. So for example, each point along the above ternary
+## would have a 50:50 split of the variables in the group "L" or "H", thus
+## the vertex where "L" is 1, would mean that p6 and p7 are 0.5 each,
+## similarly, the vertex "H" is made up of 0.5 of p8 and p9 while the "G"
+## vertex is comprised of 0.2 of each of p1, p2, p3, p4, and p5. The concepts
+## also extend to points along the edges and interior of the ternary.
+
+## Change the proportional split of species within an FG by using `values`
+## `values` takes a numeric vector where the position of each element
+## describes the proportion of the corresponding species within the
+## corresponding FG
+## For examples this vector describes, 2-% each of p1, p2, p3, p4 and p5,
+## in G, 0% and 100% of p6 and p7, respectively in G2 and 30% and 70% of
+## p8 and p9, respectively in G3.
+vals &lt;- c(0.2, 0.2, 0.2, 0.2, 0.2,
+          0, 1,
+          0.3, 0.7)
+head(grouped_ternary_data(prop = paste0("p", 1:9),
+                          FG = c("G","G","G","G","G","L","L","H","H"),
+                          values = vals,
+                          resolution = 1,
+                          model = mod))
+
+## Can also add any additional experimental structures
+## Notice .add_str_ID in the data
+head(grouped_ternary_data(prop = paste0("p", 1:9),
+                          FG = c("G","G","G","G","G","L","L","H","H"),
+                          add_var = list("treatment" = c("50", "150")),
+                          values = vals,
+                          model = mod,
+                          resolution = 1))
+
+## It could be desirable to take the output of this function and add
+## additional variables to the data before making predictions
+## Use `prediction = FALSE` to get data without any predictions
+grouped_data &lt;- grouped_ternary_data(prop = paste0("p", 1:9),
+                                     FG = c("G","G","G","G","G","L","L","H","H"),
+                                     values = vals,
+                                     resolution = 1,
+                                     prediction = FALSE)
+grouped_data$treatment &lt;- 250
+# Add predictions
+head(add_prediction(data = grouped_data, model = mod))
+</code></pre>
+
+
+</div>

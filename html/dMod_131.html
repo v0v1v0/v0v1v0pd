@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>parfn</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Parameter transformation function</h2>
+
+<h3>Description</h3>
+
+<p>Generate functions that transform one parameter vector into another
+by means of a transformation, pushing forward the jacobian matrix
+of the original parameter.
+Usually, this function is called internally, e.g. by P.
+However, you can use it to add your own specialized parameter
+transformations to the general framework.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">parfn(p2p, parameters = NULL, condition = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p2p</code></td>
+<td>
+<p>a transformation function for one condition, i.e. a function
+<code>p2p(p, fixed, deriv)</code> which translates a parameter vector <code>p</code>
+and a vector of fixed parameter values <code>fixed</code> into a new parameter
+vector. If <code>deriv = TRUE</code>, the function should return an attribute
+<code>deriv</code> with the Jacobian matrix of the parameter transformation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>character vector, the parameters accepted by the function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>condition</code></td>
+<td>
+<p>character, the condition for which the transformation is defined</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>object of class <code>parfn</code>, i.e. a function <code>p(..., fixed, deriv,
+ conditions, env)</code>. The argument <code>pars</code> should be passed via the <code>...</code>
+argument.
+</p>
+<p>Contains attributes "mappings", a list of <code>p2p</code>
+functions, "parameters", the union of parameters acceted by the mappings and
+"conditions", the total set of conditions.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>sumfn, P
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Define a time grid on which to make a prediction by peace-wise linear function.
+# Then define a (generic) prediction function based on thid grid.
+times &lt;- 0:5
+grid &lt;- data.frame(name = "A", time = times, row.names = paste0("p", times))
+x &lt;- Xd(grid)
+
+# Define an observable and an observation function
+observables &lt;- eqnvec(Aobs = "s*A")
+g &lt;- Y(g = observables, f = NULL, states = "A", parameters = "s")
+
+# Collect parameters and define an overarching parameter transformation
+# for two "experimental condtions".
+dynpars &lt;- attr(x, "parameters")
+obspars &lt;- attr(g, "parameters")
+innerpars &lt;- c(dynpars, obspars)
+
+trafo &lt;- structure(innerpars, names = innerpars)
+trafo_C1 &lt;- replaceSymbols(innerpars, paste(innerpars, "C1", sep = "_"), trafo)
+trafo_C2 &lt;- replaceSymbols(innerpars, paste(innerpars, "C2", sep = "_"), trafo)
+
+p &lt;- NULL
+p &lt;- p + P(trafo = trafo_C1, condition = "C1")
+p &lt;- p + P(trafo = trafo_C2, condition = "C2")
+
+# Collect outer (overarching) parameters and 
+# initialize with random values
+outerpars &lt;- attr(p, "parameters")
+pars &lt;- structure(runif(length(outerpars), 0, 1), names = outerpars)
+
+# Predict internal/unobserved states
+out1 &lt;- (x*p)(times, pars)
+plot(out1)
+
+# Predict observed states in addition to unobserved
+out2 &lt;- (g*x*p)(times, pars)
+plot(out2)
+</code></pre>
+
+
+</div>

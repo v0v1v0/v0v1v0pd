@@ -1,0 +1,209 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtw_lb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DTW distance matrix guided by Lemire's improved lower bound</h2>
+
+<h3>Description</h3>
+
+<p>Calculation of a distance matrix with the Dynamic Time Warping (DTW) distance guided by Lemire's
+improved lower bound (LB_Improved).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dtw_lb(
+  x,
+  y = NULL,
+  window.size = NULL,
+  norm = "L1",
+  error.check = TRUE,
+  pairwise = FALSE,
+  dtw.func = "dtw_basic",
+  nn.margin = 1L,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>A matrix or data frame where rows are time series, or a list of time series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window.size</code></td>
+<td>
+<p>Window size to use with the LB and DTW calculation. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>norm</code></td>
+<td>
+<p>Either <code>"L1"</code> for Manhattan distance or <code>"L2"</code> for Euclidean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pairwise</code></td>
+<td>
+<p>Calculate pairwise distances?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtw.func</code></td>
+<td>
+<p>Which function to use for the core DTW calculations, either "dtw" or "dtw_basic".
+See <code>dtw::dtw()</code> and <code>dtw_basic()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nn.margin</code></td>
+<td>
+<p>Either 1 to search for nearest neighbors row-wise, or 2 to search column-wise.
+Only implemented for <code>dtw.func</code> = "dtw_basic".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments for <code>dtw.func</code> or <code>lb_improved()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function first calculates an initial estimate of a distance matrix between two sets of time
+series using <code>lb_improved()</code> (the <code>proxy::dist()</code> version). Afterwards, it uses the estimate to
+calculate the corresponding true DTW distance between <em>only</em> the nearest neighbors of each series
+in <code>x</code> found in <code>y</code>, and it continues iteratively until no changes in the nearest neighbors
+occur.
+</p>
+<p>If only <code>x</code> is provided, the distance matrix is calculated between all its time series,
+effectively returning a matrix filled with the LB_Improved values.
+</p>
+<p>This could be useful in case one is interested in only the nearest neighbor of one or more series
+within a dataset.
+</p>
+<p>The windowing constraint uses a centered window.
+The calculations expect a value in <code>window.size</code> that represents the distance between the point considered and one of the edges of the window.
+Therefore, if, for example, <code>window.size = 10</code>, the warping for an observation <code class="reqn">x_i</code> considers the points between <code class="reqn">x_{i-10}</code> and <code class="reqn">x_{i+10}</code>,
+resulting in <code>10(2) + 1 = 21</code> observations falling within the window.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The distance matrix with class <code>crossdist</code>.
+</p>
+
+
+<h3>Parallel Computing</h3>
+
+<p>Please note that running tasks in parallel does <strong>not</strong> guarantee faster computations.
+The overhead introduced is sometimes too large, and it's better to run tasks sequentially.
+</p>
+<p>This function uses the RcppParallel package for parallelization.
+It uses all available threads by default (see <code>RcppParallel::defaultNumThreads()</code>),
+but this can be changed by the user with <code>RcppParallel::setThreadOptions()</code>.
+</p>
+<p>An exception to the above is when it is called within a <code>foreach</code> parallel loop <strong>made by dtwclust</strong>.
+If the parallel workers do not have the number of threads explicitly specified,
+this function will default to 1 thread per worker.
+See the parallelization vignette for more information - <code>browseVignettes("dtwclust")</code>
+</p>
+
+
+<h3>Note</h3>
+
+<p>This function uses a lower bound that is only defined for time series of equal length.
+</p>
+<p>The <code>proxy::dist()</code> version simply calls this function.
+</p>
+<p>A considerably large dataset is probably necessary before this is faster than using <code>dtw_basic()</code>
+with <code>proxy::dist()</code>. Also note that <code>lb_improved()</code> calculates warping envelopes for the series
+in <code>y</code>, so be careful with the provided order and <code>nn.margin</code> (see examples).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alexis Sarda-Espinosa
+</p>
+
+
+<h3>References</h3>
+
+<p>Lemire D (2009). “Faster retrieval with a two-pass dynamic-time-warping lower bound .” <em>Pattern
+Recognition</em>, <strong>42</strong>(9), pp. 2169 - 2180. ISSN 0031-3203,
+<a href="https://doi.org/10.1016/j.patcog.2008.11.030">doi:10.1016/j.patcog.2008.11.030</a>,
+<a href="https://www.sciencedirect.com/science/article/pii/S0031320308004925">https://www.sciencedirect.com/science/article/pii/S0031320308004925</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lb_keogh()</code>, <code>lb_improved()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Load data
+data(uciCT)
+
+# Reinterpolate to same length
+data &lt;- reinterpolate(CharTraj, new.length = max(lengths(CharTraj)))
+
+# Calculate the DTW distance between a certain subset aided with the lower bound
+system.time(d &lt;- dtw_lb(data[1:5], data[6:50], window.size = 20L))
+
+# Nearest neighbors
+NN1 &lt;- apply(d, 1L, which.min)
+
+# Calculate the DTW distances between all elements (slower)
+system.time(d2 &lt;- proxy::dist(data[1:5], data[6:50], method = "DTW",
+                              window.type = "sakoechiba", window.size = 20L))
+
+# Nearest neighbors
+NN2 &lt;- apply(d2, 1L, which.min)
+
+# Calculate the DTW distances between all elements using dtw_basic
+# (might be faster, see notes)
+system.time(d3 &lt;- proxy::dist(data[1:5], data[6:50], method = "DTW_BASIC",
+                              window.size = 20L))
+
+# Nearest neighbors
+NN3 &lt;- apply(d3, 1L, which.min)
+
+# Change order and margin for nearest neighbor search
+# (usually fastest, see notes)
+system.time(d4 &lt;- dtw_lb(data[6:50], data[1:5],
+                         window.size = 20L, nn.margin = 2L))
+
+# Nearest neighbors *column-wise*
+NN4 &lt;- apply(d4, 2L, which.min)
+
+# Same results?
+identical(NN1, NN2)
+identical(NN1, NN3)
+identical(NN1, NN4)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,290 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>disag_model</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit the disaggregation model</h2>
+
+<h3>Description</h3>
+
+<p><em>disag_model</em> function takes a <em>disag_data</em> object created by
+<code>prepare_data</code> and performs a Bayesian disaggregation fit.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">disag_model(
+  data,
+  priors = NULL,
+  family = "gaussian",
+  link = "identity",
+  iterations = 100,
+  field = TRUE,
+  iid = TRUE,
+  hess_control_parscale = NULL,
+  hess_control_ndeps = 1e-04,
+  silent = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>disag_data object returned by <code>prepare_data</code> function that contains all the necessary objects for the model fitting</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priors</code></td>
+<td>
+<p>list of prior values:
+</p>
+
+<ul>
+<li> <p><code>priormean_intercept</code>
+</p>
+</li>
+<li> <p><code>priorsd_intercept</code>
+</p>
+</li>
+<li> <p><code>priormean_slope</code>
+</p>
+</li>
+<li> <p><code>priorsd_slope</code>
+</p>
+</li>
+<li> <p><code>prior_rho_min</code>
+</p>
+</li>
+<li> <p><code>prior_rho_prob</code>
+</p>
+</li>
+<li> <p><code>prior_sigma_max</code>
+</p>
+</li>
+<li> <p><code>prior_sigma_prob</code>
+</p>
+</li>
+<li> <p><code>prior_iideffect_sd_max</code>
+</p>
+</li>
+<li> <p><code>prior_iideffect_sd_prob</code>
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>likelihood function: <em>gaussian</em>, <em>binomial</em> or <em>poisson</em></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>link</code></td>
+<td>
+<p>link function: <em>logit</em>, <em>log</em> or <em>identity</em></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>number of iterations to run the optimisation for</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>field</code></td>
+<td>
+<p>logical. Flag the spatial field on or off</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iid</code></td>
+<td>
+<p>logical. Flag the iid effect on or off</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hess_control_parscale</code></td>
+<td>
+<p>Argument to scale parameters during the calculation of the Hessian.
+Must be the same length as the number of parameters. See <code>optimHess</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hess_control_ndeps</code></td>
+<td>
+<p>Argument to control step sizes during the calculation of the Hessian.
+Either length 1 (same step size applied to all parameters) or the same length as the number of parameters.
+Default is 1e-3, try setting a smaller value if you get NaNs in the standard error of the parameters.
+See <code>optimHess</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>logical. Suppress verbose output.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>The model definition</strong>
+</p>
+<p>The disaggregation model makes predictions at the pixel level:
+</p>
+<p style="text-align: center;"><code class="reqn">link(pred_i) = \beta_0 + \beta X + GP(s_i) + u_i</code>
+</p>
+
+<p>And then aggregates these predictions to the polygon level using the weighted sum (via the aggregation raster, <code class="reqn">agg_i</code>):
+</p>
+<p style="text-align: center;"><code class="reqn">cases_j = \sum_{i \epsilon j} pred_i \times agg_i</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">rate_j = \frac{\sum_{i \epsilon j} pred_i \times agg_i}{\sum_{i \epsilon j} agg_i}</code>
+</p>
+
+<p>The different likelihood correspond to slightly different models (<code class="reqn">y_j</code> is the response count data):
+</p>
+
+<ul>
+<li>
+<p> Gaussian:
+If <code class="reqn">\sigma</code> is the dispersion of the pixel data, <code class="reqn">\sigma_j</code> is the dispersion of the polygon data, where
+<code class="reqn">\sigma_j = \sigma \sqrt{\sum agg_i^2} / \sum agg_i </code>
+</p>
+<p style="text-align: center;"><code class="reqn">dnorm(y_j/\sum agg_i, rate_j, \sigma_j)</code>
+</p>
+<p> - predicts incidence rate.
+</p>
+</li>
+<li>
+<p> Binomial:
+For a survey in polygon j, <code class="reqn">y_j</code> is the number positive and <code class="reqn">N_j</code> is the number tested.
+</p>
+<p style="text-align: center;"><code class="reqn">dbinom(y_j, N_j, rate_j)</code>
+</p>
+<p> - predicts prevalence rate.
+</p>
+</li>
+<li>
+<p> Poisson:
+</p>
+<p style="text-align: center;"><code class="reqn">dpois(y_j, cases_j)</code>
+</p>
+<p> - predicts incidence count.
+</p>
+</li>
+</ul>
+<p>Specify priors for the regression parameters, field and iid effect as a single list. Hyperpriors for the field
+are given as penalised complexity priors you specify <code class="reqn">\rho_{min}</code> and <code class="reqn">\rho_{prob}</code> for the range of the field
+where <code class="reqn">P(\rho &lt; \rho_{min}) = \rho_{prob}</code>, and <code class="reqn">\sigma_{min}</code> and <code class="reqn">\sigma_{prob}</code> for the variation of the field
+where <code class="reqn">P(\sigma &gt; \sigma_{min}) = \sigma_{prob}</code>. Also, specify pc priors for the iid effect
+</p>
+<p>The <em>family</em> and <em>link</em> arguments are used to specify the likelihood and link function respectively.
+The likelihood function can be one of <em>gaussian</em>, <em>poisson</em> or <em>binomial</em>.
+The link function can be one of <em>logit</em>, <em>log</em> or <em>identity</em>.
+These are specified as strings.
+</p>
+<p>The field and iid effect can be turned on or off via the <em>field</em> and <em>iid</em> logical flags. Both are default TRUE.
+</p>
+<p>The <em>iterations</em> argument specifies the maximum number of iterations the model can run for to find an optimal point.
+</p>
+<p>The <em>silent</em> argument can be used to publish/suppress verbose output. Default TRUE.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list is returned of class <code>disag_model</code>.
+The functions <em>summary</em>, <em>print</em> and <em>plot</em> can be used on <code>disag_model</code>.
+The list  of class <code>disag_model</code> contains:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj </code></td>
+<td>
+<p>The TMB model object returned by <code>MakeADFun</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>opt </code></td>
+<td>
+<p>The optimized model object returned by <code>nlminb</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd_out </code></td>
+<td>
+<p>The TMB object returned by <code>sdreport</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data </code></td>
+<td>
+<p>The <em>disag_data</em> object used as an input to the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_setup </code></td>
+<td>
+<p>A list of information on the model setup. Likelihood function (<em>family</em>), link function(<em>link</em>), logical: whether a field was used (<em>field</em>) and logical: whether an iid effect was used (<em>iid</em>).</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Nanda et al. (2023) disaggregation: An R Package for Bayesian
+Spatial Disaggregation Modeling. &lt;doi:10.18637/jss.v106.i11&gt;
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+polygons &lt;- list()
+n_polygon_per_side &lt;- 10
+n_polygons &lt;- n_polygon_per_side * n_polygon_per_side
+n_pixels_per_side &lt;- n_polygon_per_side * 2
+
+for(i in 1:n_polygons) {
+  row &lt;- ceiling(i/n_polygon_per_side)
+  col &lt;- ifelse(i %% n_polygon_per_side != 0, i %% n_polygon_per_side, n_polygon_per_side)
+  xmin = 2*(col - 1); xmax = 2*col; ymin = 2*(row - 1); ymax = 2*row
+  polygons[[i]] &lt;- list(cbind(c(xmin, xmax, xmax, xmin, xmin),
+                              c(ymax, ymax, ymin, ymin, ymax)))
+}
+
+polys &lt;- lapply(polygons,sf::st_polygon)
+N &lt;- floor(runif(n_polygons, min = 1, max = 100))
+response_df &lt;- data.frame(area_id = 1:n_polygons, response = runif(n_polygons, min = 0, max = 1000))
+
+spdf &lt;- sf::st_sf(response_df, geometry = polys)
+
+# Create raster stack
+r &lt;- terra::rast(ncol=n_pixels_per_side, nrow=n_pixels_per_side)
+terra::ext(r) &lt;- terra::ext(spdf)
+r[] &lt;- sapply(1:terra::ncell(r), function(x){
+rnorm(1, ifelse(x %% n_pixels_per_side != 0, x %% n_pixels_per_side, n_pixels_per_side), 3))}
+r2 &lt;- terra::rast(ncol=n_pixels_per_side, nrow=n_pixels_per_side)
+terra::ext(r2) &lt;- terra::ext(spdf)
+r2[] &lt;- sapply(1:terra::ncell(r), function(x) rnorm(1, ceiling(x/n_pixels_per_side), 3))
+cov_stack &lt;- c(r, r2)
+names(cov_stack) &lt;- c('layer1', 'layer2')
+
+test_data &lt;- prepare_data(polygon_shapefile = spdf,
+                          covariate_rasters = cov_stack)
+
+ result &lt;- disag_model(test_data, iterations = 2)
+ 
+## End(Not run)
+
+</code></pre>
+
+
+</div>

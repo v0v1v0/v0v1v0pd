@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>wald_test.adaptive_iptw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Wald tests for adaptive_iptw objects</h2>
+
+<h3>Description</h3>
+
+<p>Wald tests for adaptive_iptw objects
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'adaptive_iptw'
+wald_test(object, est = c("iptw_tmle"), null = 0, contrast = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>"adaptive_iptw"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est</code></td>
+<td>
+<p>A vector indicating for which estimators to return a confidence
+interval. Possible estimators include the TMLE IPTW (<code>"iptw_tmle"</code>,
+recommended), the one-step IPTW (<code>"iptw_os"</code>, not recommended), the
+standard IPTW (<code>"iptw"</code>, recommended only for comparison to the other
+two estimators).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>null</code></td>
+<td>
+<p>The null hypothesis value(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>contrast</code></td>
+<td>
+<p>This option specifies what parameter to return confidence
+intervals for. If <code>contrast=NULL</code>, then test the null hypothesis that
+the covariate-adjusted marginal means equal the value(s) specified in
+<code>null</code>. <code>contrast</code> can also be a numeric vector of ones, negative
+ones, and zeros to define linear combinations of the various means (e.g., to
+estimate an average treatment effect, see examples). In this case, we test
+the null hypothesis that the linear combination of means equals the value
+specified in <code>null</code>. <code>contrast</code> can also be a list with named
+functions <code>f</code>, <code>h</code>, and <code>fh_grad</code>. The function <code>f</code>
+takes as input argument <code>eff</code> and specifies which transformation of the
+effect measure to test. The function <code>h</code> defines the contrast to be
+estimated and should take as input <code>est</code>, a vector of the same length
+as <code>object$a_0</code>, and output the desired contrast. The function
+<code>fh_grad</code> is the gradient of the function <code>h(f())</code>. The function
+computes a test of the null hypothesis that <code>h(f(object$est)) = null</code>.
+See examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other options (not currently used).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>"ci.adaptive_iptw"</code> with point estimates and
+confidence intervals of the specified level.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># load super learner
+library(SuperLearner)
+# fit adaptive_iptw
+set.seed(123456)
+n &lt;- 200
+W &lt;- data.frame(W1 = runif(n), W2 = rnorm(n))
+A &lt;- rbinom(n, 1, plogis(W$W1 - W$W2))
+Y &lt;- rbinom(n, 1, plogis(W$W1 * W$W2 * A))
+
+fit1 &lt;- adaptive_iptw(
+  W = W, A = A, Y = Y, a_0 = c(1, 0),
+  SL_g = c("SL.glm", "SL.mean", "SL.step"),
+  SL_Qr = "SL.glm"
+)
+
+# get test that each mean = 0.5
+test_mean &lt;- wald_test(fit1, null = 0.5)
+
+# get test that the ATE = 0
+ci_ATE &lt;- ci(fit1, contrast = c(1, -1), null = 0)
+
+# get test for risk ratio = 1 on log scale
+myContrast &lt;- list(
+  f = function(eff) {
+    log(eff)
+  },
+  f_inv = function(eff) {
+    exp(eff)
+  }, # not necessary
+  h = function(est) {
+    est[1] / est[2]
+  },
+  fh_grad = function(est) {
+    c(1 / est[1], -1 / est[2])
+  }
+)
+ci_RR &lt;- ci(fit1, contrast = myContrast, null = 1)
+#
+</code></pre>
+
+
+</div>

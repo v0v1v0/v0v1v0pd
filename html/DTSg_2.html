@@ -1,0 +1,347 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>aggregate.DTSg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Aggregate values</h2>
+
+<h3>Description</h3>
+
+<p>Applies a temporal aggregation level function to the <em>.dateTime</em> column of a
+<code>DTSg</code> object and aggregates its values column-wise to the function's
+temporal aggregation level utilising one or more provided summary functions.
+Additionally, it sets the object's <code>aggregated</code> field to <code>TRUE</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DTSg'
+aggregate(
+  x,
+  funby,
+  fun,
+  ...,
+  cols = self$cols(class = "numeric"),
+  n = FALSE,
+  ignoreDST = FALSE,
+  multiplier = 1L,
+  funbyHelpers = NULL,
+  funbyApproach = self$funbyApproach,
+  clone = getOption("DTSgClone")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>DTSg</code> object (S3 method only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funby</code></td>
+<td>
+<p>One of the temporal aggregation level functions described in
+<code>TALFs</code> or a user defined temporal aggregation level function. See
+corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>A summary function, (named) <code>list</code> of summary functions or
+(named) character vector specifying summary functions applied column-wise
+to all the values of the same temporal aggregation level. The return
+value(s) must be of length one. See corresponding section for further
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to <code>fun</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+<p>A character vector specifying the columns to aggregate. Another
+possibility is a character string containing either comma separated column
+names, for example, <code>"x,y,z"</code>, or the start and end column separated by a
+colon, for example, <code>"x:z"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>A logical specifying if a column named <code>.n</code> giving the number of
+values per temporal aggregation level shall be added. See corresponding
+section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ignoreDST</code></td>
+<td>
+<p>A logical specifying if day saving time shall be ignored
+by <code>funby</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multiplier</code></td>
+<td>
+<p>A positive integerish value “multiplying” the
+temporal aggregation level of certain <code>TALFs</code>. See corresponding section
+for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyHelpers</code></td>
+<td>
+<p>An optional <code>list</code> with helper data passed on to
+<code>funby</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funbyApproach</code></td>
+<td>
+<p>A character string specifying the flavour of the applied
+temporal aggregation level function. Either <code>"base"</code>, which utilises
+<code>as.POSIXct</code>, or <code>"fasttime"</code>, which utilises <code>fasttime::fastPOSIXct</code>,
+or <code>"RcppCCTZ"</code>, which utilises <code>RcppCCTZ::parseDatetime</code> as the main
+function for transforming timestamps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clone</code></td>
+<td>
+<p>A logical specifying if the object shall be modified in place or
+if a deep clone (copy) shall be made beforehand.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns an aggregated <code>DTSg</code> object.
+</p>
+
+
+<h3>User defined TALFs, TALFs helper data and multiplier</h3>
+
+<p>User defined temporal aggregation level functions have to return a
+<code>POSIXct</code> vector of the same length as the time series and accept two
+arguments: a <code>POSIXct</code> vector as its first and a <code>list</code> with helper data
+as its second. The default elements of this <code>list</code> are as follows:
+</p>
+
+<ul>
+<li> <p><em>timezone:</em> Same as the <code>timezone</code> field.
+</p>
+</li>
+<li> <p><em>ignoreDST:</em> Same as the <code>ignoreDST</code> argument.
+</p>
+</li>
+<li> <p><em>periodicity:</em> Same as the <code>periodicity</code> field.
+</p>
+</li>
+<li> <p><em>na.status:</em> Same as the <code>na.status</code> field.
+</p>
+</li>
+<li> <p><em>multiplier:</em> Same as the <code>multiplier</code> argument.
+</p>
+</li>
+<li> <p><em>funbyApproach:</em> Same as the <code>funbyApproach</code> argument.
+</p>
+</li>
+</ul>
+<p>Any additional element specified in the <code>funbyHelpers</code> argument is appended
+to the end of the helper data <code>list</code>. In case <code>funbyHelpers</code> contains an
+<em>ignoreDST, multiplier</em> or <em>funbyApproach</em> element, it takes precedence over
+the respective method argument. <em>timezone, periodicity</em> and <em>na.status</em>
+elements are rejected, as they are always taken directly from the object.
+</p>
+<p>The temporal aggregation level of certain <code>TALFs</code> can be adjusted with the
+help of the <code>multiplier</code> argument. A <code>multiplier</code> of <code>10</code>, for example, makes
+<code>byY_____</code> aggregate to decades instead of years. Another example
+is a <code>multiplier</code> of <code>6</code> provided to <code>by_m____</code>. The function
+then aggregates all months of all first and all months of all second half
+years instead of all months of all years separately. This feature is
+supported by the following <code>TALFs</code> of the package:
+</p>
+
+<ul>
+<li> <p><code>byY_____</code>
+</p>
+</li>
+<li> <p><code>byYm____</code>
+</p>
+</li>
+<li> <p><code>byYmdH__</code> (UTC and equivalent as well as all Etc/GMT time zones only)
+</p>
+</li>
+<li> <p><code>byYmdHM_</code>
+</p>
+</li>
+<li> <p><code>byYmdHMS</code>
+</p>
+</li>
+<li> <p><code>by_m____</code>
+</p>
+</li>
+<li> <p><code>by___H__</code> (UTC and equivalent as well as all Etc/GMT time zones only)
+</p>
+</li>
+<li> <p><code>by____M_</code>
+</p>
+</li>
+<li> <p><code>by_____S</code>
+</p>
+</li>
+</ul>
+<h3>Summary functions</h3>
+
+<p>Some examples for <code>fun</code> are as follows:
+</p>
+
+<ul>
+<li> <p><code>mean</code>
+</p>
+</li>
+<li> <p><code>list(min = min, max = max)</code>
+</p>
+</li>
+<li> <p><code>c(sd = "sd", var = "var")</code>
+</p>
+</li>
+</ul>
+<p>A <code>list</code> or character vector must have names in case more than one summary
+function is provided. The method can benefit from <span class="pkg">data.table</span>'s
+<em>GForce</em> optimisation in case a character
+vector specifying summary functions is provided.
+</p>
+
+
+<h3>Number of values per temporal aggregation level</h3>
+
+<p>Depending on the number of columns to aggregate, the <code>.n</code> column contains
+different counts:
+</p>
+
+<ul>
+<li>
+<p> One column: The counts are calculated from the columns' values disregarding
+any missing values. This means that missing values are always stripped
+regardless of the value of a possible <code>na.rm</code> argument.
+</p>
+</li>
+<li>
+<p> More than one column: The counts are calculated from the <em>.dateTime</em> column
+including all missing values.
+</p>
+</li>
+</ul>
+<h3>Ignore day saving time</h3>
+
+<p><code>ignoreDST</code> tells a temporal aggregation level function if it is supposed to
+ignore day saving time while transforming the timestamps. This can be a
+desired feature for time series strictly following the position of the sun
+such as hydrological time series. Doing so ensures that diurnal variations
+are preserved by all means and all intervals are of the “correct”
+length, however, a possible limitation might be that the day saving time
+shift is invariably assumed to be one hour long. This feature requires that
+the periodicity of the time series was recognised and is supported by the
+following <code>TALFs</code> of the package:
+</p>
+
+<ul>
+<li> <p><code>byY_____</code>
+</p>
+</li>
+<li> <p><code>byYQ____</code>
+</p>
+</li>
+<li> <p><code>byYm____</code>
+</p>
+</li>
+<li> <p><code>byYmd___</code>
+</p>
+</li>
+<li> <p><code>by_Q____</code>
+</p>
+</li>
+<li> <p><code>by_m____</code>
+</p>
+</li>
+<li> <p><code>by___H__</code>
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>cols</code>, <code>getOption</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># new DTSg object
+x &lt;- DTSg$new(values = flow)
+
+# mean yearly river flows
+## R6 method
+x$aggregate(
+  funby = byY_____,
+  fun = "mean",
+  na.rm = TRUE
+)$print()
+
+## S3 method
+print(aggregate(
+  x = x,
+  funby = byY_____,
+  fun = "mean",
+  na.rm = TRUE
+))
+
+# variance and standard deviation of river flows per quarter
+## R6 method
+x$aggregate(
+  funby = byYQ____,
+  fun = c(var = "var", sd = "sd"),
+  na.rm = TRUE
+)$print()
+
+## S3 method
+print(aggregate(
+  x = x,
+  funby = byYQ____,
+  fun = c(var = "var", sd = "sd"),
+  na.rm = TRUE
+))
+
+# mean of river flows of all first and all second half years
+## R6 method
+x$aggregate(
+  funby = by_m____,
+  fun = "mean",
+  na.rm = TRUE,
+  multiplier = 6
+)$print()
+
+## S3 method
+print(aggregate(
+  x = x,
+  funby = by_m____,
+  fun = "mean",
+  na.rm = TRUE,
+  multiplier = 6
+))
+
+</code></pre>
+
+
+</div>

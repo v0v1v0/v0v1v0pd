@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>progress2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>'Shiny' progress bar, but can run without reactive context</h2>
+
+<h3>Description</h3>
+
+<p>'Shiny' progress bar, but can run without reactive context
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">progress2(
+  title,
+  max = 1,
+  ...,
+  quiet = FALSE,
+  session = shiny::getDefaultReactiveDomain(),
+  shiny_auto_close = FALSE,
+  log = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>character, task description</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max</code></td>
+<td>
+<p>maximum number of items in the queue</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>passed to <code>shiny::Progress$new(...)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>suppress console output, ignored in shiny context.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>session</code></td>
+<td>
+<p>'shiny' session, default is current reactive domain</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shiny_auto_close</code></td>
+<td>
+<p>logical, automatically close 'shiny' progress bar
+once current observer is over. Default is <code>FALSE</code>. If setting to
+<code>TRUE</code>, then it's equivalent to
+<code>p &lt;- progress2(...); on.exit({p$close()}, add = TRUE)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>function when running locally, default is <code>NULL</code>,
+which redirects to <code>cat2</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list of functions:
+</p>
+
+<dl>
+<dt><code>inc(detail, message = NULL, amount = 1, ...)</code></dt>
+<dd>
+<p>Increase progress bar by <code>amount</code> (default is 1).
+</p>
+</dd>
+<dt><code>close()</code></dt>
+<dd>
+<p>Close the progress
+</p>
+</dd>
+<dt><code>reset(detail = '', message = '', value = 0)</code></dt>
+<dd>
+<p>Reset the progress to <code>value</code> (default is 0), and reset information
+</p>
+</dd>
+<dt><code>get_value()</code></dt>
+<dd>
+<p>Get current progress value
+</p>
+</dd>
+<dt><code>is_closed()</code></dt>
+<dd>
+<p>Returns logical value if the progress is closed or not.
+</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+progress &lt;- progress2('Task A', max = 2)
+progress$inc('Detail 1')
+progress$inc('Detail 2')
+progress$close()
+
+# Check if progress is closed
+progress$is_closed()
+
+# ------------------------------ Shiny Example ------------------------------
+library(shiny)
+library(dipsaus)
+
+ui &lt;- fluidPage(
+  actionButtonStyled('do', 'Click Here', type = 'primary')
+)
+
+server &lt;- function(input, output, session) {
+  observeEvent(input$do, {
+    updateActionButtonStyled(session, 'do', disabled = TRUE)
+    progress &lt;- progress2('Task A', max = 10, shiny_auto_close = TRUE)
+    lapply(1:10, function(ii){
+      progress$inc(sprintf('Detail %d', ii))
+      Sys.sleep(0.2)
+    })
+    updateActionButtonStyled(session, 'do', disabled = FALSE)
+  })
+}
+
+if(interactive()){
+  shinyApp(ui, server)
+}
+
+</code></pre>
+
+
+</div>

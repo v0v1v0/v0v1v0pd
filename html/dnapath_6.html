@@ -1,0 +1,184 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dnapath</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Differential Network Analysis Using Gene Pathways</h2>
+
+<h3>Description</h3>
+
+<p>Integrates pathways into the differential network analysis of gene expression
+data (Grimes et al. 2019).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dnapath(
+  x,
+  pathway_list,
+  group_labels = NULL,
+  network_inference = run_pcor,
+  n_perm = 100,
+  lp = 2,
+  seed = NULL,
+  verbose = FALSE,
+  mc.cores = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The gene expression data to be analyzed. This can be either (1) a
+list of two matrices or data frames that contain the gene expression profile
+from each of two populations (groups) – with rows corresponding to samples
+and columns to genes – or (2) a single matrix or data frame
+that contains the expression profiles for both groups. For case (2), the
+<code>group_labels</code> argument must be specified to identify which rows belong to which
+group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pathway_list</code></td>
+<td>
+<p>A single vector or list of vectors containing gene names
+to indicate pathway membership. The vectors are used to subset the columns
+of the matrices in <code>x</code>. A pathway list can be obtained using
+<code>get_reactome_pathways</code>. If NULL, then the entire expression
+dataset is analyzed as a single network (this approach is not recommended
+unless there are only a small number of genes).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_labels</code></td>
+<td>
+<p>If <code>x</code> is a single matrix or data frame, <code>group_labels</code> must
+be specified to label each row. <code>group_labels</code> is a matrix each row
+corresponding to a in <code>x</code>. This matrix may either (1) have a single column
+containing the group label for each observation, or (2) individual columns
+representing each group with values in <code style="white-space: pre;">⁠[0, 1]⁠</code> representing the probability
+that the patient in that row is in each group. In the latter case, if the
+rows do not sum to 1, then each entry will be divided by its row sum.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network_inference</code></td>
+<td>
+<p>A function used to infer the pathway network. It
+should take in an n by p matrix and return a p by p matrix of association
+scores. (Built-in options include: <code>run_aracne</code>,
+<code>run_bc3net</code>, <code>run_c3net</code>,
+<code>run_clr</code>, <code>run_corr</code>,
+<code>run_dwlasso</code>, <code>run_genie3</code>,
+<code>run_glasso</code>, <code>run_mrnet</code>,
+<code>run_pcor</code>, and <code>run_silencer</code>.)
+Defaults to <code>run_pcor</code> for partial correlations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_perm</code></td>
+<td>
+<p>The number of random permutations to perform during
+permutation testing. If <code>n_perm == 1</code>, the permutation tests are not performed.
+If <code>n_perm</code> is larger than the number of possible permutations, <code>n_perm</code> will
+be set to this value with a warning message.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lp</code></td>
+<td>
+<p>The lp value used to compute differential connectivity
+scores. (Note: If a vector is provided, then the results are returned as
+a list of <code>dnapath_list</code> objects, one result for each value of <code>lp</code>. This
+option is available so that network inference methods only need to be run
+once for each pathway when multple values of <code>lp</code> are being considered. This
+may be useful when conducting simulation studies).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>(Optional) Used to set.seed prior to permutation test for
+each pathway. This allows results for individual pathways to be easily
+reproduced.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Set to TRUE to turn on messages.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc.cores</code></td>
+<td>
+<p>Used in <code>mclapply</code> to run the differential
+network analysis in parallel across pathways. Must be set to 1 if on a Windows
+machine.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments are passed into the network inference function.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A 'dnapath_list' or 'dnapath' object containing results for each
+pathway in <code>pathway_list</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Grimes T, Potter SS, Datta S (2019).
+“Integrating Gene Regulatory Pathways into Differential Network Analysis of Gene Expression Data.”
+<em>Scientific reports</em>, <b>9</b>(1), 5479.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>filter_pathways</code>, <code>summary.dnapath_list</code>
+<code>subset.dnapath_list</code>, <code>sort.dnapath_list</code>,
+<code>plot.dnapath</code>, <code>rename_genes</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(meso)
+data(p53_pathways)
+set.seed(0)
+results &lt;- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
+                   group_labels = meso$groups, n_perm = 10)
+results
+summary(results) # Summary over all pathways in the pathway list.
+# Remove results for pathways with p-values above 0.2.
+top_results &lt;- filter_pathways(results, 0.2)
+# Sort the top results by the pathway DC score.
+top_results &lt;- sort(top_results, by = "dc_score")
+top_results
+summary(top_results[[1]])  # Summary of pathway 1.
+plot(results[[1]]) # Plot of the differential network for pathway 1.
+
+# Use ... to adjust arguments in the network inference function.
+# For example, using run_corr() with method = "spearman":
+results &lt;- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
+                   group_labels = meso$groups, n_perm = 10,
+                   network_inference = run_corr,
+                   method = "spearman")
+results
+</code></pre>
+
+
+</div>

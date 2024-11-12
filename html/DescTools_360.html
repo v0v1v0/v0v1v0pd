@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>LogSt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Started Logarithmic Transformation and Its Inverse
+
+</h2>
+
+<h3>Description</h3>
+
+<p>Transforms the data by a log transformation, modifying small and zero observations such that the transformation is linear for <code class="reqn">x &lt;= threshold</code> and logarithmic for x &gt; threshold. So the transformation yields finite values and is continuously differentiable.
+
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">LogSt(x, base = 10, calib = x, threshold = NULL, mult = 1)
+
+LogStInv(x, base = NULL, threshold = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector or matrix of data, which is to be transformed
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+<p>a positive or complex number: the base with respect to which logarithms are computed. Defaults to 10. Use=exp(1) for natural log.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calib</code></td>
+<td>
+<p>a vector or matrix of data used to calibrate the transformation(s), i.e., to determine
+the constant <code class="reqn">c</code> needed
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>constant <code class="reqn">c</code> that determines the transformation. The inverse function <code>LogStInv</code> will
+look for an attribute named <code>"threshold"</code> if the argument is set to <code>NULL</code>.
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mult</code></td>
+<td>
+<p>a tuning constant affecting the transformation of small values, see <code>Details</code>.
+
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In order to avoid <code class="reqn">log(x) = -\infty</code> for <code class="reqn">x=0</code> in log-transformations there's often a constant added to the variable before taking the <code class="reqn">log</code>. This is not always a pleasable strategy.
+The function
+<code>LogSt</code> handles this problem based on the following ideas:
+</p>
+
+<ul>
+<li>
+<p>The modification should only affect the values for "small" arguments.
+</p>
+</li>
+<li>
+<p>What "small" is should be determined in connection with the non-zero values of the original variable, since it should behave well (be equivariant) with respect to a change in the "unit of measurement".
+</p>
+</li>
+<li>
+<p>The function must remain monotone, and it should remain (weakly) convex.
+</p>
+</li>
+</ul>
+<p>These criteria are implemented here as follows: The shape is determined by a
+threshold <code class="reqn">c</code> at which - coming from above - the log function switches to a linear function with the same slope at this point.
+</p>
+<p>This is obtained by
+</p>
+<p style="text-align: center;"><code class="reqn">g(x) =
+  \left\{\begin{array}{ll}
+     log_{10}(x) &amp;\textup{for }x \ge c\\
+     log_{10}(c) - \frac{c - x}{c \cdot log(10)} &amp;\textup{for } x &lt; c
+  \end{array}\right.
+</code>
+</p>
+
+<p>Small values are determined by the threshold <code class="reqn">c</code>. If not given by the argument <code>threshold</code>, it is determined by the quartiles <code class="reqn">q_1</code> and <code class="reqn">q_3</code> of the non-zero data as those smaller than <code class="reqn">c = \frac{q_1^{1+r}}{q_3^r}</code> where <code class="reqn">r</code> can be set by the argument <code>mult</code>.
+The rationale is, that, for lognormal data, this constant identifies 2 percent of the data as small.<br>
+Beyond this limit, the transformation continues linear with the derivative of the log curve at this point. <br></p>
+<p>Another idea for choosing the threshold <code class="reqn">c</code> was: median(x) / (median(x)/quantile(x, 0.25))^2.9)<br><br>
+The function chooses <code class="reqn">log_{10}</code> rather than natural logs by default because they can be backtransformed relatively easily in mind.
+</p>
+<p>A generalized log (see: Rocke 2003) can be calculated in order to stabilize the variance as:
+</p>
+<pre>function (x, a) {
+ return(log((x + sqrt(x^2 + a^2)) / 2))
+}</pre>
+
+
+<h3>Value</h3>
+
+<p>the transformed data. The value <code class="reqn">c</code> used for the transformation and needed for inverse transformation is returned as <code>attr(.,"threshold")</code> and the used base as  <code>attr(.,"base")</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Werner A. Stahel, ETH Zurich <br> slight modifications Andri Signorell &lt;andri@signorell.net&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Rocke, D M, Durbin B (2003): Approximate variance-stabilizing transformations for gene-expression microarray data, <em>Bioinformatics</em>. 22;19(8):966-72.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>log</code>, <code>log10</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dd &lt;- c(seq(0,1,0.1), 5 * 10^rnorm(100, 0, 0.2))
+dd &lt;- sort(dd)
+r.dl &lt;- LogSt(dd)
+plot(dd, r.dl, type="l")
+abline(v=attr(r.dl, "threshold"), lty=2)
+
+x &lt;- rchisq(df=3, n=100)
+# should give 0 (or at least something small):
+LogStInv(LogSt(x)) - x
+</code></pre>
+
+
+</div>

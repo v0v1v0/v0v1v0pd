@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dhyperQ</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Exact Hypergeometric Distribution Probabilites</h2>
+
+<h3>Description</h3>
+
+
+<p>Computes <b>exact</b> probabilities for the hypergeometric distribution
+(see, e.g., <code>dhyper()</code> in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>), using package <a href="https://CRAN.R-project.org/package=gmp"><span class="pkg">gmp</span></a>'s
+big integer and rational numbers, notably <code>chooseZ()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dhyperQ(x, m, n, k)
+phyperQ(x, m, n, k, lower.tail=TRUE)
+phyperQall(m, n, k, lower.tail=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the number of white balls drawn without replacement from an urn
+which contains both black and white balls.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>the number of white balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>the number of black balls in the urn.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>the number of balls drawn from the urn, hence must be in
+<code class="reqn">0,1,\dots, m+n</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical indicating if the lower or upper tail
+probability should be computed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a bigrational (class <code>"bigq"</code> from package <a href="https://CRAN.R-project.org/package=gmp"><span class="pkg">gmp</span></a>) vector
+“as” <code>x</code>; currently of length one (as all the function
+arguments must be “scalar”, currently).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>chooseZ</code> (pkg <a href="https://CRAN.R-project.org/package=gmp"><span class="pkg">gmp</span></a>),
+and <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own <code>Hypergeometric</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## dhyperQ() is simply
+ function (x, m, n, k)
+ {
+    stopifnot(k - x == as.integer(k - x))
+    chooseZ(m, x) * chooseZ(n, k - x) / chooseZ(m + n, k)
+ }
+
+# a case where  phyper(11, 15, 0, 12, log=TRUE) gave 'NaN'
+(phyp5.0.12 &lt;- cumsum(dhyperQ(0:12, m=15,n=0,k=12)))
+stopifnot(phyp5.0.12 == c(rep(0, 12), 1))
+
+for(x in 0:9)
+  stopifnot(phyperQ(x, 10,7,8) +
+            phyperQ(x, 10,7,8, lower.tail=FALSE) == 1)
+
+(ph. &lt;- phyperQall(m=10, n=7, k=8))
+## Big Rational ('bigq') object of length 8:
+## [1] 1/2431    5/374     569/4862  2039/4862 3803/4862 4685/4862 4853/4862 1
+stopifnot(identical(gmp::c_bigq(list(0, ph.)),
+                    1- c(phyperQall(10,7,8, lower.tail=FALSE), 0)))
+
+(doExtras &lt;- DPQmpfr:::doExtras())
+if(doExtras) { # too slow for standard testing
+ k &lt;- 5000
+ system.time(ph &lt;-   phyper(k, 2*k, 2*k, 2*k)) #   0 (&lt; 0.001 sec)
+ system.time(phQ &lt;- phyperQ(k, 2*k, 2*k, 2*k)) # 5.6 (was 6.3) sec
+ ## Relative error of R's phyper()
+ stopifnot(print(gmp::asNumeric(1 - ph/phQ)) &lt; 1e-14) # seen 1.063e-15
+}
+</code></pre>
+
+
+</div>

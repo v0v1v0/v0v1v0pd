@@ -1,0 +1,331 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DPMCMC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Dirichlet Process-Based Markov Chain Monte Carlo (MCMC) Sampler for Mixture Model-Based Clustering
+</h2>
+
+<h3>Description</h3>
+
+<p>The MCMC sampler for <code>DIRECT</code>.  In each MCMC iteration, the function updates cluster memberships for all items, allowing for changes in the number of clusters (mixture components).  This update implements a Metropolis-Hastings (MH) sampler developed in Fu et al. (2013), and an MH sampler developed in Neal (2000).  It also updates parameters specific to each mixture components via MH sampling.  Parameters of interest include the mean vector and standard deviations of the three types of variability.  Additionally, it updates <code class="reqn">\alpha</code>, the concentration parameter in the Dirichlet-process prior, allowing for Gibbs (Escobar and West, 1995) and MH sampling.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DPMCMC(file.mcmc.cs, file.mcmc.pars, file.mcmc.probs, file.size, 
+       data, SKIP, nTime, times, c.curr, par.prior, 
+       PAR.INIT = FALSE, 
+       sdWICluster.curr = 0.5, sdTSampling.curr = 0.5, 
+       sdResidual.curr = 0.5, alpha.curr, 
+       alpha.prior.shape, alpha.prior.rate, sd.prop, 
+       nIter, burn.in, step.size, nRepeat = 1, nResample, seed.value, 
+       RNORM.METHOD = c("chol", "eigen", "svd"), 
+       SAMPLE.C = c("FRBT", "Neal"), 
+       PRIOR.MODEL = c("none", "OU", "BM", "BMdrift"), 
+       ALPHA.METHOD = c("Gibbs", "MH"), 
+       OUTPUT.CLUST.SIZE = FALSE, PRINT = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file.mcmc.cs</code></td>
+<td>
+
+<p>A character string in quotation marks indicating the output filename for cluster memberships and <code class="reqn">\alpha</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file.mcmc.pars</code></td>
+<td>
+
+<p>A character string in quotation marks indicating the output filename for MCMC samples of parameters specific to mixture components.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file.mcmc.probs</code></td>
+<td>
+
+<p>A character string in quotation marks indicating the output filename for posterior allocation probability matrices from the resampling step.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file.size</code></td>
+<td>
+
+<p>A character string in quotation marks indicating the output filename for cluster sizes.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>An <code class="reqn">N \times JR</code> matrix of continuous values, or a data frame containing such a matrix.  <code class="reqn">N</code> is the number if items, <code class="reqn">J</code> the number of time points (or experimental conditions) and <code class="reqn">R</code> the number of replicates.  Each row contains values for Replicates 1 through <code class="reqn">R</code> under Condition 1, values for Replicates 1 through <code class="reqn">R</code> under Condition 2, and so on.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SKIP</code></td>
+<td>
+
+<p>Number of columns in <code>data</code> to be skipped when processing the data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nTime</code></td>
+<td>
+
+<p>Number of time points (or experimental conditions).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>times</code></td>
+<td>
+
+<p>An integer vector of length <code>nTime</code>, indicating times (or experimental conditions).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c.curr</code></td>
+<td>
+
+<p>An integer vector of length <code class="reqn">N</code>, indicating initial cluster assignments for items 1 through <code class="reqn">N</code>.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par.prior</code></td>
+<td>
+
+<p>A list that contains parameters of the prior distributions.  It has the following format: <code>par.prior = list (uWICluster=???, uTSampling=???, uResidual=???, mean=???, meanMT1=???, sdMT1=???, meanMTProc=???, sdMTProc=???, uSDT1=???, uSDProc=???, shapeBetaProc=???, rateBetaProc=???)</code>.  See <code>DIRECT</code> for possible values of the list components.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PAR.INIT</code></td>
+<td>
+
+<p>Logical value.  Generate initial values for the standard deviations of the three types of variability if TRUE.  Use the input values otherwise.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdWICluster.curr</code></td>
+<td>
+
+<p>A positive scalar.  Initial value of the standard deviation of the within-cluster variability.  Ignored if <code>PAR.INIT=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdTSampling.curr</code></td>
+<td>
+
+<p>A positive scalar.  Initial value of the standard deviation of the variability across time points.  Ignored if <code>PAR.INIT=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sdResidual.curr</code></td>
+<td>
+
+<p>A positive scalar.  Initial value of the standard deviation of the residual variability (i.e., variability across replicates).  Ignored if <code>PAR.INIT=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.curr</code></td>
+<td>
+
+<p>A positive scalar.  Initial value of <code class="reqn">\alpha</code>, the concentration parameter of the Dirichlet-process prior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.prior.shape</code></td>
+<td>
+
+<p>A positive scalar.  The shape parameter in the beta prior for <code class="reqn">\alpha</code>, the concentration parameter of the Dirichlet-process prior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha.prior.rate</code></td>
+<td>
+
+<p>A positive scalar.  The rate parameter in the beta prior for <code class="reqn">\alpha</code>, the concentration parameter of the Dirichlet-process prior.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd.prop</code></td>
+<td>
+
+<p>A list that contains standard deviations in the proposal distributions for some key parameters.  It has the following format: <code>sd.prop=list (WICluster=???, TSampling=???, Residual=???, alpha=???)</code>.  ??? needs to be filled in with positive values.  See <code>DIRECT</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nIter</code></td>
+<td>
+
+<p>The number of MCMC iterations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burn.in</code></td>
+<td>
+
+<p>A value in (0,1) indicating the percentage of the MCMC iterations to be used as burn-in and be discarded in posterior inference.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step.size</code></td>
+<td>
+
+<p>An integer indicating the number of MCMC iterations to be skipped between two recorded MCMC samples.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nRepeat</code></td>
+<td>
+
+<p>An integer <code class="reqn">\geq 1</code> indicating the number of times to update the cluster memberships for all items.  Useful only when <code>SAMPLE.C="Neal"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nResample</code></td>
+<td>
+
+<p>An integer <code class="reqn">\geq 1</code> indicating the number of resamples to draw to estimate the posterior mixing proportions.  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed.value</code></td>
+<td>
+
+<p>A positive value used in random number generation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RNORM.METHOD</code></td>
+<td>
+
+<p>Method to compute the determinant of the covariance matrix in the calculation of the multivariate normal density.  Required.  Method choices are: "chol" for Choleski decomposition, "eigen" for eigenvalue decomposition, and "svd" for singular value decomposition.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SAMPLE.C</code></td>
+<td>
+
+<p>Method to update cluster memberships.  Required.  Method choices are: "FRBT" for the Metropolis-Hastings sampler based on a discrete uniform proposal distribution developed in Fu, Russell, Bray and Tavare, and "Neal" for the Metropolis-Hastings sampler developed in Neal (2000).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PRIOR.MODEL</code></td>
+<td>
+
+<p>Model to generate realizations of the mean vector of a mixture component.  Required.  Choices are: "none" for not assuming a stochastic process and using a zero vector, "OU" for an Ornstein-Uhlenbeck process (a.k.a. the mean-reverting process), "BM" for a Brown motion (without drift), and "BMdrift" for a Brownian motion with drift.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ALPHA.METHOD</code></td>
+<td>
+
+<p>Method to update <code class="reqn">\alpha</code>, the concentration parameter of the Dirichlet-process prior.  Required.  Choices are: "Gibbs" for a Gibbs sampler developed in Escobar and West (1995), and "MH" for a Metropolis-Hastings sampler.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>OUTPUT.CLUST.SIZE</code></td>
+<td>
+
+<p>If TRUE, output cluster sizes in MCMC iterations into an external file *_mcmc_size.out.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PRINT</code></td>
+<td>
+
+<p>If TRUE, print intermediate values during an MCMC run onto the screen.  Used for debugging for small data sets.  
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The MCMC sampling step in <code>DIRECT</code> is accomplished with <code>DPMCMC</code>.  <code>DPMCMC</code> generates MCMC samples of assignments to mixture components (number of components implicitly generated; written into external file *_mcmc_cs.out) and component-specific parameters (written into external file *_mcmc_pars.out), which include mean vectors and standard deviations of three types of variability.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>At least two files are generated by <code>DPMCMC</code> and placed under the current working directory:
+</p>
+
+<ol>
+<li>
+<p> *_mcmc_cs.out: Generated from MCMC sampling.  Each row contains an MCMC sample of assignments of items to mixture components, or cluster memberships if a component is defined as a cluster, as well as <code class="reqn">\alpha</code>, the concentration parameter in the Dirichlet-process prior.
+</p>
+</li>
+<li>
+<p> *_mcmc_pars.out: Generated from MCMC sampling.  Each row contains an MCMC sample of parameters specific to a mixture component.  Multiple rows may come from the same MCMC iteration.
+</p>
+</li>
+</ol>
+<p>If argument <code>OUTPUT.CLUST.SIZE=TRUE</code>, an additional file *_mcmc_size.out is also generated, which contains the cluster sizes of each recorded MCMC sample.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Audrey Q. Fu
+</p>
+
+
+<h3>References</h3>
+
+<p>Escobar, M. D. and West, M. (1995) Bayesian density estimation and inference using mixtures. Journal of the American Statistical Association, 90: 577-588. 
+</p>
+<p>Fu, A. Q., Russell, S., Bray, S. and Tavare, S. (2013) Bayesian clustering of replicated time-course gene expression data with weak signals. The Annals of Applied Statistics. 7(3) 1334-1361.
+</p>
+<p>Neal, R. M. (2000) Markov chain sampling methods for Dirichlet process mixture models. Journal of Computational and Graphical Statistics, 9: 249-265. 
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DIRECT</code>, which calls <code>DPMCMC</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## See example in DIRECT.
+</code></pre>
+
+
+</div>

@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>acc_univariate_outlier</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Identify univariate outliers by four different approaches</h2>
+
+<h3>Description</h3>
+
+<p>A classical but still popular approach to detect univariate outlier is the
+boxplot method introduced by Tukey 1977. The boxplot is a simple graphical
+tool to display information about continuous univariate data (e.g., median,
+lower and upper quartile). Outliers are defined as values deviating more
+than <code class="reqn">1.5 \times IQR</code> from the 1st (Q25) or 3rd (Q75) quartile. The
+strength of Tukey's method is that it makes no distributional assumptions
+and thus is also applicable to skewed or non mound-shaped data
+Marsh and Seo, 2006. Nevertheless, this method tends to identify frequent
+measurements which are falsely interpreted as true outliers.
+</p>
+<p>A somewhat more conservative approach in terms of symmetric and/or normal
+distributions is the 3SD approach, i.e. any measurement not in
+the interval of <code class="reqn">mean(x) +/- 3 * \sigma</code> is considered an outlier.
+</p>
+<p>Both methods mentioned above are not ideally suited to skewed distributions.
+As many biomarkers such as laboratory measurements represent in skewed
+distributions the methods above may be insufficient. The approach of Hubert
+and Vandervieren 2008 adjusts the boxplot for the skewness of the
+distribution. This approach is implemented in several R packages such as
+<code>robustbase::mc</code> which is used in this implementation of <code>dataquieR</code>.
+</p>
+<p>Another completely heuristic approach is also included to identify outliers.
+The approach is based on the assumption that the distances between
+measurements of the same underlying distribution should homogeneous. For
+comprehension of this approach:
+</p>
+
+<ul>
+<li>
+<p> consider an ordered sequence of all measurements.
+</p>
+</li>
+<li>
+<p> between these measurements all distances are calculated.
+</p>
+</li>
+<li>
+<p> the occurrence of larger distances between two neighboring measurements
+may
+than indicate a distortion of the data. For the heuristic definition of a
+large distance <code class="reqn">1 * \sigma</code> has been been chosen.
+</p>
+</li>
+</ul>
+<p>Note, that the plots are not deterministic, because they use
+ggplot2::geom_jitter.
+</p>
+<p>Indicator
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">acc_univariate_outlier(
+  resp_vars = NULL,
+  label_col,
+  study_data,
+  meta_data,
+  exclude_roles,
+  n_rules = length(unique(criteria)),
+  max_non_outliers_plot = 10000,
+  criteria = c("tukey", "3sd", "hubert", "sigmagap")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resp_vars</code></td>
+<td>
+<p>variable list the name of the continuous measurement
+variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude_roles</code></td>
+<td>
+<p>variable roles a character (vector) of variable roles
+not included</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_rules</code></td>
+<td>
+<p>integer from=1 to=4. the no. rules that must be violated
+to flag a variable as containing outliers. The default is 4, i.e. all.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_non_outliers_plot</code></td>
+<td>
+<p>integer from=0. Maximum number of non-outlier
+points to be plot. If more
+points exist, a subsample will
+be plotted only. Note, that
+sampling is not deterministic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criteria</code></td>
+<td>
+<p>set tukey | 3SD | hubert | sigmagap. a vector with
+methods to be used for detecting outliers.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><em><strong>Hint</strong></em>: <em>The function is designed for unimodal data only.</em>
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list with:
+</p>
+
+<ul><li> <p><code>SummaryTable</code>: <code>data.frame</code> with the columns
+<code>Variables</code>, <code>Mean</code>, <code>SD</code>, <code>Median</code>, <code>Skewness</code>, <code>Tukey (N)</code>,
+<code style="white-space: pre;">⁠3SD (N)⁠</code>, <code>Hubert (N)</code>, <code>Sigma-gap (N)</code>, <code>NUM_acc_ud_outlu</code>,
+<code style="white-space: pre;">⁠Outliers, low (N)⁠</code>, <code style="white-space: pre;">⁠Outliers, high (N)⁠</code> <code>Grading</code>
+</p>
+
+<ul>
+<li> <p><code>SummaryData</code>: <code>data.frame</code> with the columns
+<code>Variables</code>, <code>Mean</code>, <code>SD</code>, <code>Median</code>, <code>Skewness</code>, <code>Tukey (N)</code>,
+<code style="white-space: pre;">⁠3SD (N)⁠</code>, <code>Hubert (N)</code>, <code>Sigma-gap (N)</code>, <code>Outliers (N)</code>,
+<code style="white-space: pre;">⁠Outliers, low (N)⁠</code>, <code style="white-space: pre;">⁠Outliers, high (N)⁠</code> <code>Grading</code>
+</p>
+</li>
+<li> <p><code>SummaryPlotList</code>: <code>ggplot</code> univariate outlier plots
+</p>
+</li>
+</ul>
+</li></ul>
+<h3>ALGORITHM OF THIS IMPLEMENTATION:</h3>
+
+
+<ul>
+<li>
+<p> Select all variables of type float in the study data
+</p>
+</li>
+<li>
+<p> Remove missing codes from the study data (if defined in the metadata)
+</p>
+</li>
+<li>
+<p> Remove measurements deviating from limits defined in the metadata
+</p>
+</li>
+<li>
+<p> Identify outliers according to the approaches of Tukey (Tukey 1977),
+3SD (Saleem et al. 2021), Hubert (Hubert and Vandervieren 2008),
+and SigmaGap (heuristic)
+</p>
+</li>
+<li>
+<p> An output data frame is generated which indicates the no. possible
+outliers, the direction of deviations (Outliers, low; Outliers, high) for all methods
+and a summary score which sums up the deviations of the different rules
+</p>
+</li>
+<li>
+<p> A scatter plot is generated for all examined variables, flagging
+observations according to the no. violated rules (step 5).
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+
+<ul>
+<li> <p>acc_robust_univariate_outlier
+</p>
+</li>
+<li> <p><a href="https://dataquality.qihs.uni-greifswald.de/VIN_acc_impl_robust_univariate_outlier.html">Online Documentation</a>
+</p>
+</li>
+</ul>
+</div>

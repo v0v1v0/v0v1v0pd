@@ -1,0 +1,285 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>LinearRegressionDP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Privacy-preserving Linear Regression</h2>
+
+<h3>Description</h3>
+
+<p>This class implements differentially private linear regression
+using the objective perturbation technique (Kifer et al. 2012).
+</p>
+
+
+<h3>Details</h3>
+
+<p>To use this class for linear regression, first use the <code>new</code>
+method to construct an object of this class with the desired function
+values and hyperparameters. After constructing the object, the <code>fit</code>
+method can be applied with a provided dataset and data bounds to fit the
+model. In fitting, the model stores a vector of coefficients <code>coeff</code>
+which satisfy differential privacy. These can be released directly, or used
+in conjunction with the <code>predict</code> method to privately predict the
+outcomes of new datapoints.
+</p>
+<p>Note that in order to guarantee differential privacy for linear regression,
+certain constraints must be satisfied for the values used to construct the
+object, as well as for the data used to fit. The regularizer must be
+convex. Additionally, it is assumed that if x represents a single row of
+the dataset X, then the l2-norm of x is at most p for all x, where p is the
+number of predictors (including any possible intercept term). In order to
+ensure this constraint is satisfied, the dataset is preprocessed and
+scaled, and the resulting coefficients are postprocessed and un-scaled so
+that the stored coefficients correspond to the original data. Due to this
+constraint on x, it is best to avoid using an intercept term in the model
+whenever possible. If an intercept term must be used, the issue can be
+partially circumvented by adding a constant column to X before fitting the
+model, which will be scaled along with the rest of X. The <code>fit</code> method
+contains functionality to add a column of constant 1s to X before scaling,
+if desired.
+</p>
+
+
+<h3>Super class</h3>
+
+<p><code>DPpack::EmpiricalRiskMinimizationDP.KST</code> -&gt; <code>LinearRegressionDP</code>
+</p>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-LinearRegressionDP-new"><code>LinearRegressionDP$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-LinearRegressionDP-fit"><code>LinearRegressionDP$fit()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-LinearRegressionDP-clone"><code>LinearRegressionDP$clone()</code></a>
+</p>
+</li>
+</ul>
+<details open><summary>Inherited methods</summary><ul>
+<li><span class="pkg-link" data-pkg="DPpack" data-topic="EmpiricalRiskMinimizationDP.KST" data-id="predict"><a href="../../DPpack/html/EmpiricalRiskMinimizationDP.KST.html#method-EmpiricalRiskMinimizationDP.KST-predict"><code>DPpack::EmpiricalRiskMinimizationDP.KST$predict()</code></a></span></li>
+</ul></details><hr>
+<a id="method-LinearRegressionDP-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Create a new LinearRegressionDP object.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>LinearRegressionDP$new(regularizer, eps, delta, gamma, regularizer.gr = NULL)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>regularizer</code></dt>
+<dd>
+<p>String or regularization function. If a string, must be
+'l2', indicating to use l2 regularization. If a function, must have form
+<code>regularizer(coeff)</code>, where <code>coeff</code> is a vector or matrix, and
+return the value of the regularizer at <code>coeff</code>. See
+<code>regularizer.l2</code> for an example. Additionally, in order to
+ensure differential privacy, the function must be convex.</p>
+</dd>
+<dt><code>eps</code></dt>
+<dd>
+<p>Positive real number defining the epsilon privacy budget. If set
+to Inf, runs algorithm without differential privacy.</p>
+</dd>
+<dt><code>delta</code></dt>
+<dd>
+<p>Nonnegative real number defining the delta privacy parameter.
+If 0, reduces to pure eps-DP.</p>
+</dd>
+<dt><code>gamma</code></dt>
+<dd>
+<p>Nonnegative real number representing the regularization
+constant.</p>
+</dd>
+<dt><code>regularizer.gr</code></dt>
+<dd>
+<p>Optional function representing the gradient of the
+regularization function with respect to <code>coeff</code> and of the form
+<code>regularizer.gr(coeff)</code>. Should return a vector. See
+<code>regularizer.gr.l2</code> for an example. If <code>regularizer</code> is
+given as a string, this value is ignored. If not given and
+<code>regularizer</code> is a function, non-gradient based optimization methods
+are used to compute the coefficient values in fitting the model.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A new LinearRegressionDP object.
+</p>
+
+
+<hr>
+<a id="method-LinearRegressionDP-fit"></a>
+
+
+
+<h4>Method <code>fit()</code>
+</h4>
+
+<p>Fit the differentially private linear regression model. The
+function runs the objective perturbation algorithm
+(Kifer et al. 2012) to generate an objective function. A
+numerical optimization method is then run to find optimal coefficients
+for fitting the model given the training data and hyperparameters. The
+<code>nloptr</code> function is used. If <code>regularizer</code> is given as
+'l2' or if <code>regularizer.gr</code> is given in the construction of the
+object, the gradient of the objective function and the Jacobian of the
+constraint function are utilized for the algorithm, and the NLOPT_LD_MMA
+method is used. If this is not the case, the NLOPT_LN_COBYLA method is
+used. The resulting privacy-preserving coefficients are stored in coeff.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>LinearRegressionDP$fit(X, y, upper.bounds, lower.bounds, add.bias = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>X</code></dt>
+<dd>
+<p>Dataframe of data to be fit.</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>Vector or matrix of true values for each row of <code>X</code>.</p>
+</dd>
+<dt><code>upper.bounds</code></dt>
+<dd>
+<p>Numeric vector of length <code>ncol(X)+1</code> giving upper
+bounds on the values in each column of <code>X</code> and the values of
+<code>y</code>. The last value in the vector is assumed to be the upper bound
+on <code>y</code>, while the first <code>ncol(X)</code> values are assumed to be in
+the same order as the corresponding columns of <code>X</code>. Any value in the
+columns of <code>X</code> and in <code>y</code> larger than the corresponding upper
+bound is clipped at the bound.</p>
+</dd>
+<dt><code>lower.bounds</code></dt>
+<dd>
+<p>Numeric vector of length <code>ncol(X)+1</code> giving lower
+bounds on the values in each column of <code>X</code> and the values of
+<code>y</code>. The last value in the vector is assumed to be the lower bound
+on <code>y</code>, while the first <code>ncol(X)</code> values are assumed to be in
+the same order as the corresponding columns of <code>X</code>. Any value in the
+columns of <code>X</code> and in <code>y</code> larger than the corresponding lower
+bound is clipped at the bound.</p>
+</dd>
+<dt><code>add.bias</code></dt>
+<dd>
+<p>Boolean indicating whether to add a bias term to <code>X</code>.
+Defaults to FALSE.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-LinearRegressionDP-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>LinearRegressionDP$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>References</h3>
+
+<p>Kifer D, Smith A, Thakurta A (2012).
+“Private Convex Empirical Risk Minimization and High-dimensional Regression.”
+In Mannor S, Srebro N, Williamson RC (eds.), <em>Proceedings of the 25th Annual Conference on Learning Theory</em>, volume 23 of <em>Proceedings of Machine Learning Research</em>, 25.1–25.40.
+<a href="https://proceedings.mlr.press/v23/kifer12.html">https://proceedings.mlr.press/v23/kifer12.html</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Build example dataset
+n &lt;- 500
+X &lt;- data.frame(X=seq(-1,1,length.out = n))
+true.theta &lt;- c(-.3,.5) # First element is bias term
+p &lt;- length(true.theta)
+y &lt;- true.theta[1] + as.matrix(X)%*%true.theta[2:p] + stats::rnorm(n=n,sd=.1)
+
+# Construct object for linear regression
+regularizer &lt;- 'l2' # Alternatively, function(coeff) coeff%*%coeff/2
+eps &lt;- 1
+delta &lt;- 0 # Indicates to use pure eps-DP
+gamma &lt;- 1
+regularizer.gr &lt;- function(coeff) coeff
+
+lrdp &lt;- LinearRegressionDP$new('l2', eps, delta, gamma, regularizer.gr)
+
+# Fit with data
+# We must assume y is a matrix with values between -p and p (-2 and 2
+#   for this example)
+upper.bounds &lt;- c(1, 2) # Bounds for X and y
+lower.bounds &lt;- c(-1,-2) # Bounds for X and y
+lrdp$fit(X, y, upper.bounds, lower.bounds, add.bias=TRUE)
+lrdp$coeff # Gets private coefficients
+
+# Predict new data points
+# Build a test dataset
+Xtest &lt;- data.frame(X=c(-.5, -.25, .1, .4))
+predicted.y &lt;- lrdp$predict(Xtest, add.bias=TRUE)
+
+</code></pre>
+
+
+</div>

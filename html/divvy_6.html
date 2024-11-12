@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cookies</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Rarefy localities within circular regions of standard area</h2>
+
+<h3>Description</h3>
+
+<p>Spatially subsample a dataset to produce samples of standard area and extent.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cookies(
+  dat,
+  xy,
+  iter,
+  nSite,
+  r,
+  weight = FALSE,
+  crs = "epsg:4326",
+  output = "locs"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>A <code>data.frame</code> or <code>matrix</code> containing the coordinate
+columns <code>xy</code> and any associated variables, e.g. taxon names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>A vector of two elements, specifying the name or numeric position
+of columns in <code>dat</code> containing coordinates, e.g. longitude and latitude.
+Coordinates for any shared sampling sites should be identical, and where sites
+are raster cells, coordinates are usually expected to be cell centroids.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>The number of spatial subsamples to return</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nSite</code></td>
+<td>
+<p>The quota of unique locations to include in each subsample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+<p>Numeric value for the radius (km) defining the circular extent
+of each spatial subsample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>Whether sites within the subsample radius should be drawn
+at random (<code>weight = FALSE</code>, default) or with probability inversely
+proportional to the square of their distance from the centre of the
+subsample region (<code>weight = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>Coordinate reference system as a GDAL text string, EPSG code,
+or object of class <code>crs</code>. Default is latitude-longitude (<code>EPSG:4326</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Whether the returned data should be two columns of
+subsample site coordinates (<code>output = 'locs'</code>) or the subset of rows
+from <code>dat</code> associated with those coordinates (<code>output = 'full'</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function takes a single location as a starting (seed) point and
+circumscribes a buffer of <code>r</code> km around it. Buffer circles that span
+the antemeridian (180 degrees longitude) are wrapped as a multipolygon
+to prevent artificial truncation. After standardising radial extent, sites
+are drawn within the circular extent until a quota of <code>nSite</code> is met.
+Sites are sampled without replacement, so a location is used as a seed point
+only if it is within <code>r</code> km distance of at least <code>nSite-1</code> locations.
+The method is introduced in Antell et al. (2020) and described in
+detail in Methods S1 therein.
+</p>
+<p>The probability of drawing each site within the standardised extent is
+either equal (<code>weight = FALSE</code>) or proportional to the inverse-square
+of its distance from the seed point (<code>weight = TRUE</code>), which clusters
+subsample locations more tightly.
+</p>
+<p>For geodetic coordinates (latitude-longitude), distances are calculated along
+great circle arcs. For Cartesian coordinates, distances are calculated in
+Euclidian space, in units associated with the projection CRS (e.g. metres).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of length <code>iter</code>. Each list element is a
+<code>data.frame</code> or <code>matrix</code> (matching the class of <code>dat</code>)
+with <code>nSite</code> observations. If <code>output = 'locs'</code>
+(default), only the coordinates of subsampling locations are returned.
+If <code>output = 'full'</code>, all <code>dat</code> columns are returned for the
+rows associated with the subsampled locations.
+</p>
+<p>If <code>weight = TRUE</code>, the first observation in each returned subsample
+<code>data.frame</code> corresponds to the seed point. If <code>weight = FALSE</code>,
+observations are listed in the random order of which they were drawn.
+</p>
+
+
+<h3>References</h3>
+
+<p>Antell GT, Kiessling W, Aberhan M, Saupe EE (2020).
+“Marine biodiversity and geographic distributions are independent on large scales.”
+<em>Current Biology</em>, <b>30</b>(1), 115-121.
+<a href="https://doi.org/10.1016/j.cub.2019.10.065">doi:10.1016/j.cub.2019.10.065</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>clustr()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># generate occurrences: 10 lat-long points in modern Australia
+n &lt;- 10
+x &lt;- seq(from = 140, to = 145, length.out = n)
+y &lt;- seq(from = -20, to = -25, length.out = n)
+pts &lt;- data.frame(x, y)
+
+# sample 5 sets of 3 occurrences within 200km radius
+cookies(dat = pts, xy = 1:2, iter = 5,
+        nSite = 3, r = 200)
+
+</code></pre>
+
+
+</div>

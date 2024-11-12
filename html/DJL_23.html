@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>roc.sf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Rate of change (RoC) calculation using SF</h2>
+
+<h3>Description</h3>
+
+<p>Employs <code>dm.sf</code> over time to calculate RoCs. This function is valid only when multiplicative form of directional vector is used.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">roc.sf(xdata, ydata, date, t, 
+       rts="crs", g=NULL, wd=NULL, sg="ssm", ftype="d", cv="convex")</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xdata</code></td>
+<td>
+<p>Input(s) vector (<em>n</em> by <em>m</em>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ydata</code></td>
+<td>
+<p>Output(s) vector (<em>n</em> by <em>s</em>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date</code></td>
+<td>
+<p>Production date (<em>n</em> by <em>1</em>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>A vantage point from which the RoC is captured</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rts</code></td>
+<td>
+<p>Returns to scale assumption <br><code>"crs"  </code>Constant RTS (default) <br><code>"vrs"  </code>Variable RTS <br><code>"irs"  </code>Increasing RTS <br><code>"drs"  </code>Decreasing RTS
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g</code></td>
+<td>
+<p>Directional vector indicating a measurement direction (<em>n</em> by <em>(m+s)</em>)<br>
+By default (<code>NULL</code>), <code>xdata</code> &amp; <code>ydata</code> will be used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wd</code></td>
+<td>
+<p>Weak disposability vector indicating (an) undesirable output(s) (<em>1</em> by <em>s</em>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sg</code></td>
+<td>
+<p>Employs second-stage optimization <br><code>"ssm"  </code>Slack-sum maximization (default) <br><code>"max"  </code>Date-sum maximization <br><code>"min"  </code>Date-sum minimization
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ftype</code></td>
+<td>
+<p>Frontier type <br><code>"d"  </code>Dynamic frontier (default) <br><code>"s"  </code>Static frontier
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv</code></td>
+<td>
+<p>Convexity assumption <br><code>"convex" </code>Convexity holds (default) <br><code>"fdh"    </code>Free disposal hull (this will override <code>rts</code>)
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>$eff_r</code></td>
+<td>
+<p>Efficiency at release (i.e., at each production date)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$eff_t</code></td>
+<td>
+<p>Efficiency at <code>t</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$lambda_t</code></td>
+<td>
+<p>Intensity vector at <code>t</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$eft_date</code></td>
+<td>
+<p>Effective date</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$roc_past</code></td>
+<td>
+<p>RoC observed from the obsolete DMUs in the past</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$roc_avg</code></td>
+<td>
+<p>Average RoC</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>$roc_local</code></td>
+<td>
+<p>Local RoC</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Dong-Joon Lim, PhD</p>
+
+
+<h3>References</h3>
+
+<p>D.-J. Lim,  Internal combustion engine race: naturally aspirated vs turbo/super-charged, <em>working paper</em> (2015).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dm.sf</code> Distance measure using SF <br><code>roc.sf</code> RoC calculation using SF <br><code>map.soa.sf</code> SOA mapping using SF <br><code>target.arrival.sf</code> Arrival target setting using SF
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Reproduce Mercedes-Benz CLA45 AMG's local RoC in Table 5 in Lim, D-J. (2015)
+  # Load engine dataset
+    df &lt;- dataset.engine.2015
+  
+  # Subset for 4 cylinder engines
+    fce &lt;- subset(df, df[, 3] == 4)
+    
+  # Parameters
+    x &lt;- subset(fce, select = 4)
+    y &lt;- subset(fce, select = 5 : 7)
+    d &lt;- subset(fce, select = 2)
+    g &lt;- as.matrix(data.frame(0, y))
+    w &lt;- matrix(c(1, 0, 0), ncol = 3)
+
+  # Calc local Roc
+    roc.sf(x, y, d, 2014, "crs", g, w, "min")$roc_local[348, ]
+</code></pre>
+
+
+</div>

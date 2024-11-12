@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>b.OSCV.MBC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+DO-Validation for Multiplicative Bias Corrected Hazard Estimators</h2>
+
+<h3>Description</h3>
+
+<p>Bandwidth selection for the multiplicatively bias corrected local linear hazard estimation using DO-validation and one-sided (left or right) cross-validation</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">b.OSCV.MBC(grid.b, nb , K = "sextic", Ktype = "left", xi, Oi, Ei, wei = "same")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>grid.b</code></td>
+<td>
+<p>Optional. A vector of bandwidths to minimise the cross-validation score. If not specified it will be considered an equally-spaced grid of <code>nb</code> bandwidths between "amp/(M+1)" and "amp/2" for "amp" being the range of <code>xi</code> and "M" its length.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nb</code></td>
+<td>
+
+<p>Optional. The number of bandwidths used to minimise the cross-validation score. If <code>grid.b</code> is provided then the argument <code>nb</code> will be ignored (if specified). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>Indicates the kernel function to be considered in the hazard estimator. Choose between values <code>"epa"</code> (for the Epanechnikov kernel) or <code>"sextic"</code> (see details of <code>hazard.MBC</code> for the definition).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ktype</code></td>
+<td>
+<p>Choose between <code>"left"</code> or <code>"right"</code> for left- or right- sided cross-validation, respectively.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xi</code></td>
+<td>
+<p>Vector of time points where the count data are given.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Oi</code></td>
+<td>
+<p>Vector with the number (counts) of occurrences observed at each time point (<code>xi</code>). 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ei</code></td>
+<td>
+<p>Vector with the observed exposure at each time point (<code>xi</code>).  
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wei</code></td>
+<td>
+<p>Indicates the weights used in the cross-validation score. Choose between the value <code>"exposure"</code> or <code>"same"</code>. See details below.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>It is assumed that the data are given as count data i.e. number of occurrences and exposures.
+</p>
+<p>The DO-validated bandwidth is calculated as the average of left- and right- sided cross-validation (see example below). 
+</p>
+<p>If the one-sided cross-validation score is strictly increasing or decreasing then a warning will be shown together with the onesided cross-validated bandwidth (in this case one of the extremes in <code>grid.b</code>, adjusted by the rescaling constant, which is 0.5948 for Epanechnikov kernel, and 0.6501 for the sextic kernel).
+</p>
+<p>The score is defined with two different weighting functions. This is controlled with the parameter <code>wei</code>. By default <code>wei="exposure"</code> that means that only areas where the exposure is significant contribute to the criterion. Specify <code>wei="same"</code> to allow  all time points contribute the same to the criterion (see Gamiz et al. 2017).</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>boscv </code></td>
+<td>
+<p>The one-sided cross-validated bandwidth.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ind.oscv </code></td>
+<td>
+<p>The position of the one-sided cross-validated bandwidth into <code>grid.b</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oscv.values </code></td>
+<td>
+<p>The values of the one-sided cross-validation score for each bandwidth in <code>grid.b</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b.grid </code></td>
+<td>
+<p>The grid of bandwidths where the one-sided cross-validation score has been evaluated.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Gamiz, M.L., Martinez-Miranda, M.D. and Nielsen, J.P.
+</p>
+
+
+<h3>References</h3>
+
+<p>Gamiz, M.L., Martinez-Miranda, M.D. and Nielsen, J.P. (2017). Multiplicative local linear hazard estimation and best one-sided cross-validation. Available 	 at http://arxiv.org/abs/1710.05575 
+</p>
+<p>Nielsen, J.P. and Tanggaard, C. (2001). Boundary and bias correction in kernel hazard estimation. Scandinavian Journal of Statistics,28, 675-698.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>hazard.MBC</code>,<code>b.CV.MBC</code>,<code>b.BO.MBC</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(Iceland)
+Oi&lt;-Iceland$D
+Ei&lt;-Iceland$E
+ti&lt;-40:110  # time is age and it goes from 40 to 110 years
+my.bs&lt;-seq(50,80,length.out=30)
+## The left one-sided cross-validated bandwidth
+res.left&lt;-b.OSCV.MBC(grid.b=my.bs,K="sextic",Ktype="left",
+    xi=ti,Oi=Oi,Ei=Ei,wei="same")
+bleft&lt;-res.left$boscv
+## The right one-sided cross-validated bandwidth
+res.right&lt;-b.OSCV.MBC(grid.b=my.bs,K="sextic",Ktype="right",
+    xi=ti,Oi=Oi,Ei=Ei,wei="same") 
+bright&lt;-res.right$boscv
+## The do-validated bandwidth
+bdo&lt;-(bleft+bright)/2
+print(paste("DO-validated bandwidth= ", bdo, sep=""))
+</code></pre>
+
+
+</div>

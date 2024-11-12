@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>at_oob</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymptotic Test With Out-Of-Bag Scores</h2>
+
+<h3>Description</h3>
+
+<p>Test for no adverse shift with outlier scores. Like goodness-of-fit testing,
+this two-sample comparison takes the training set, <code>x_train</code> as the
+as the reference. The method checks whether the test set, <code>x_test</code>, is
+worse off relative to this reference set. The function <code>scorer</code> assigns
+an outlier score to each instance/observation in both training and test set.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">at_oob(x_train, x_test, scorer)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x_train</code></td>
+<td>
+<p>Training (reference/validation) sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_test</code></td>
+<td>
+<p>Test sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scorer</code></td>
+<td>
+<p>Function which returns a named list with outlier scores from
+the training and test sample. The first argument to <code>scorer</code> must be
+<code>x_train</code>; the second, <code>x_test</code>. The returned named list contains
+two elements: <em>train</em> and <em>test</em>, each of which is a vector of
+(outlier) scores. See notes for more information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Li and Fine (2010) derives the asymptotic null distribution for the weighted
+AUC (WAUC), the test statistic. This approach does not use permutations
+and can, as a result, be much faster because it sidesteps the need to refit
+the scoring function <code>scorer</code>. This works well for large samples. The
+prefix <em>at</em> stands for asymptotic test to tell it apart from the
+prefix <em>pt</em>, the permutation test.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A named list of class <code>outlier.test</code> containing:
+</p>
+
+<ul>
+<li> <p><code>statistic</code>: observed WAUC statistic
+</p>
+</li>
+<li> <p><code>seq_mct</code>: sequential Monte Carlo test, when applicable
+</p>
+</li>
+<li> <p><code>p_value</code>: p-value
+</p>
+</li>
+<li> <p><code>outlier_scores</code>: outlier scores from training and test set
+</p>
+</li>
+</ul>
+<h3>Notes</h3>
+
+<p>The scoring function, <code>scorer</code>, predicts out-of-bag scores to mimic
+out-of-sample behaviour. The suffix <em>oob</em> stands for out-of-bag to
+highlight this point. This out-of-bag variant avoids refitting the
+underlying algorithm from <code>scorer</code> at every permutation. It can, as a
+result, be computationally appealing.
+</p>
+
+
+<h3>References</h3>
+
+<p>Kamulete, V. M. (2022).
+<em>Test for non-negligible adverse shifts</em>.
+In The 38th Conference on Uncertainty in Artificial Intelligence. PMLR.
+</p>
+<p>Gandy, A. (2009).
+<em>Sequential implementation of Monte Carlo tests with uniformly bounded resampling risk</em>.
+Journal of the American Statistical Association, 104(488), 1504-1511.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>[pt_oob()] for (faster) p-value approximation via out-of-bag predictions.
+[pt_refit()] for (slower) p-value approximation via refitting.
+</p>
+<p>Other asymptotic-test: 
+<code>at_from_os()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(dsos)
+set.seed(12345)
+data(iris)
+setosa &lt;- iris[1:50, 1:4] # Training sample: Species == 'setosa'
+versicolor &lt;- iris[51:100, 1:4] # Test sample: Species == 'versicolor'
+
+# Using fake scoring function
+scorer &lt;- function(tr, te) list(train=runif(nrow(tr)), test=runif(nrow(te)))
+oob_test &lt;- at_oob(setosa, versicolor, scorer = scorer)
+oob_test
+
+
+
+</code></pre>
+
+
+</div>

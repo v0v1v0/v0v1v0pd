@@ -1,0 +1,281 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extract_dynamic_raster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract temporally dynamic rasters of explanatory variables.</h2>
+
+<h3>Description</h3>
+
+<p>Extract rasters for temporally dynamic explanatory variables at each projection date using Google
+Earth Engine.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extract_dynamic_raster(
+  dates,
+  spatial.ext,
+  datasetname,
+  bandname,
+  spatial.res.metres,
+  GEE.math.fun,
+  user.email,
+  varname,
+  temporal.res,
+  temporal.direction,
+  save.directory,
+  save.drive.folder,
+  resume = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+<p>a character string, vector of dates in format "YYYY-MM-DD".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.ext</code></td>
+<td>
+<p>the spatial extent for the extracted raster. Object from which extent can be
+extracted of class <code>SpatExtent</code>, <code>SpatRaster</code>, an <code>sf</code> polygon or a
+numeric vector listing xmin, xmax, ymin and ymax in order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>datasetname</code></td>
+<td>
+<p>a character string, the Google Earth Engine dataset to extract data from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandname</code></td>
+<td>
+<p>a character string, the Google Earth Engine dataset bandname to extract data for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.res.metres</code></td>
+<td>
+<p>a numeric value, specifying the spatial resolution in metres of the
+raster to be extracted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GEE.math.fun</code></td>
+<td>
+<p>a character string, the mathematical function to compute across the specified
+time frame from each projection date and for each cell.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user.email</code></td>
+<td>
+<p>a character string, user email for initialising Google Drive.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varname</code></td>
+<td>
+<p>optional; a character string, the unique name for the explanatory variable. Default
+varname is “bandname_temporal.res_temporal.direction_ GEE.math.fun_raster".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.res</code></td>
+<td>
+<p>a numeric value, the temporal resolution in days to extract data across.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temporal.direction</code></td>
+<td>
+<p>a character string, the temporal direction for extracting dynamic
+variable data across relative to each projection date given. One of <code>prior</code> or <code>post</code>: can
+be abbreviated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.directory</code></td>
+<td>
+<p>optional; a character string, path to local directory to save extracted
+rasters to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.drive.folder</code></td>
+<td>
+<p>optional; a character string, Google Drive folder name to save extracted
+rasters to. Folder must be uniquely named within your Google Drive. Do not provide path.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resume</code></td>
+<td>
+<p>a logical indicating whether to search <code>save.directory</code> or <code>save.drive.folder</code> and
+return to previous progress through projection dates.Default = TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For each projection date, this function downloads rasters at a given spatial extent and
+resolution for temporally dynamic explanatory variables. For each cell within the spatial
+extent, the <code>GEE.math.fun</code> is calculated on the data extracted from across the specified number
+of days prior or post the projection date. Rasters can be saved to Google Drive or a local
+directory too. These rasters can be combined to create projection covariate data frames for
+projecting dynamic species distribution and abundance at high spatiotemporal resolution.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns details of successful explanatory variable extractions for each projection date.
+</p>
+
+
+<h3>Google Earth Engine</h3>
+
+<p><code>extract_dynamic_raster()</code> requires users to have installed the R package <code>rgee</code> (Aybar et al.,
+2020) and initialised Google Earth Engine with valid log-in credentials. Please follow
+instructions on the following website <a href="https://cran.r-project.org/package=rgee">https://cran.r-project.org/package=rgee</a>.
+</p>
+
+<ul>
+<li> <p><code>datasetname</code> must be in the accepted Google Earth Engine catalogue layout (e.g.
+“MODIS/006/MCD12Q1” or “UCSB-CHG/CHIRPS/DAILY”)
+</p>
+</li>
+<li> <p><code>bandname</code> must be as specified under the dataset in the Google Earth Engine catalogue (e.g.
+“LC_Type5”, “precipitation”). For datasets and band names, see
+<a href="https://developers.google.com/earth-engine/datasets">https://developers.google.com/earth-engine/datasets</a>.
+</p>
+</li>
+</ul>
+<h3>Google Drive</h3>
+
+<p><code>extract_dynamic_raster()</code> also requires users to have installed the R package
+<code>googledrive</code>(D'Agostino McGowan and Bryan, 2022) and initialised Google Drive with valid log-in
+credentials, which must be stated using argument <code>user.email</code>. Please follow instructions on
+<a href="https://googledrive.tidyverse.org/">https://googledrive.tidyverse.org/</a> for initialising the <code>googledrive</code> package.
+</p>
+<p>The <code>save.drive.folder</code> must be uniquely named within your Google Drive and do not provide the
+path.
+</p>
+<p>Note: When running this function a folder labelled "dynamicSDM_download_bucket" will be created in
+your Google Drive. This will be emptied once the function has finished running and output rasters
+will be found in the <code>save.drive.folder</code> or <code>save.directory</code>.
+</p>
+
+
+<h3>Mathematical function</h3>
+
+<p><code>GEE.math.fun</code> specifies the mathematical function to be calculated over the temporal period
+from each projection date. Options are limited to Google Earth Engine ImageCollection Reducer
+functions (<a href="https://developers.google.com/earth-engine/apidocs/">https://developers.google.com/earth-engine/apidocs/</a>) for which an analogous R
+function is available. This includes: "allNonZero","anyNonZero", "count",
+"first","firstNonNull", "last", "lastNonNull", "max","mean", "median","min", "mode","product",
+"sampleStdDev", "sampleVariance", "stdDev", "sum" and "variance".
+</p>
+
+
+<h3>Categorical data</h3>
+
+<p>Please be aware, at current this function does not support the extraction of temporally dynamic
+variables for specific categories within categorical datasets.
+</p>
+<p>When extracting from categorical datasets, be careful to choose appropriate mathematical
+functions for such data. For instance, "first" or "last" may be more relevant that "sum" of land
+cover classification numbers.
+</p>
+
+
+<h3>Occasional rgee errors</h3>
+
+<p>As this function uses the <code>rgee</code> package to extract rasters from Google Earth Engine, below we
+outline occasional <code>rgee</code> errors that may occur when extracting rasters:
+</p>
+
+<ul><li>
+<p> "To avoid memory excess problems, ee_as_raster will not build Raster objects for large images"
+</p>
+</li></ul>
+<p>This can be a sporadic error. It may be related to GEE server usage or internet
+connection at the time you tested the function. Try restarting your R session or try again at
+another time. Also, try clearing the files from the "dynamicSDM_download_bucket" in your Google
+Drive.
+</p>
+<p>This error could also be due to an issue with your input <code>spatial.res.metres</code>. This
+function will extract rasters at all typical spatial resolutions of remote-sensing data and at
+global extents. If this error persists, please ensure you have not accidentally given an
+unrealistically high spatial resolution (e.g. <code>spatial.res.metres = 0.01</code> when you may be
+confusing the spatial resolution in degrees with metres).
+</p>
+
+<ul><li>
+<p> "Pixel type not supported: Type Long. Convert the image to a floating point type or a smaller
+integer type, for example, using ee.Image.toDouble()"
+</p>
+</li></ul>
+<p>This error appears when <code>rgee</code> has been given an input that cannot be extracted. Some common
+causes include:
+</p>
+
+<ul>
+<li>
+<p> Inappropriate <code>GEE.math.fun</code> for extracting categorical data.
+</p>
+</li>
+<li>
+<p> Dates or spatial extents that are not covered by the chosen GEE dataset. Remember to check
+whether the first projection date minus <code>temporal.res</code> is still within the temporal extent of the
+dataset.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Aybar, C., Wu, Q., Bautista, L., Yali, R. and Barja, A., 2020. rgee: An R package for
+interacting with Google Earth Engine. Journal of Open Source Software, 5(51), p.2272.
+</p>
+<p>D'Agostino McGowan L., and Bryan J., 2022. googledrive: An Interface to Google Drive.
+https://googledrive.tidyverse.org, https://github.com/tidyverse/googledrive.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+dates &lt;- dynamic_proj_dates("2018-01-01", "2018-12-01", interval = 3,interval.level = "month")
+
+
+data("sample_extent_data")
+user.email&lt;-as.character(gargle::gargle_oauth_sitrep()$email)
+
+extract_dynamic_raster(dates = dates,
+                      datasetname = "UCSB-CHG/CHIRPS/DAILY",
+                      bandname="precipitation",
+                      user.email = user.email,
+                      spatial.res.metres = 5566,
+                      GEE.math.fun = "sum",
+                      temporal.direction = "prior",
+                      temporal.res = 56,
+                      spatial.ext = sample_extent_data,
+                      varname = "total_annual_precipitation_prior",
+                      save.directory = tempdir())
+
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,257 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bmds</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bayesian multidimensional scaling (BMDS) using Markov Chain Monte Carlo
+(MCMC).</h2>
+
+<h3>Description</h3>
+
+<p><code>bmds</code> computes the Bayesian multidimensional scaling (BMDS) solutions
+using Markov Chain Monte Carlo for a range of specified latent space
+dimensions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bmds(
+  D,
+  min_p = 1,
+  max_pm1 = 6,
+  burnin = 0,
+  nsim = 13000,
+  ic = TRUE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>Observed dissimilarities (provided as a distance matrix).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_p</code></td>
+<td>
+<p>A length-one numeric vector providing the minimum value
+of the latent space dimension to use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_pm1</code></td>
+<td>
+<p>A length-one numeric vector providing the maximum
+value of the latent space dimension to use (minus 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>A length-one numeric vector providing the number of
+iterations to use for burnin.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>A length-one numeric vector providing the number of
+iterations to use in the MCMC simulation after burnin.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ic</code></td>
+<td>
+<p>Logical scalar. If <code>TRUE</code> computes the MDS
+information criterion (MDSIC) for all solution requested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Logical scalar. If <code>TRUE</code> prints information
+regarding the evolution of the simulation.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with the following elements:
+</p>
+
+<dl>
+<dt><code>x.chain</code></dt>
+<dd>
+<p>MCMC chain of the latent configuration
+coordinates.</p>
+</dd>
+<dt><code>sigma.chain</code></dt>
+<dd>
+<p>MCMC chain of the random error.</p>
+</dd>
+<dt><code>lambda.chain</code></dt>
+<dd>
+<p>MCMC chain of the latent configuration
+variances.</p>
+</dd>
+<dt><code>stress</code></dt>
+<dd>
+<p>Numeric vector of the stress function values.</p>
+</dd>
+<dt><code>mdsIC</code></dt>
+<dd>
+<p>List with two elements, the MDSIC and BIC values
+for the required solutions.</p>
+</dd>
+<dt><code>accept</code></dt>
+<dd>
+<p>Numeric matrix of acceptance rates.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+<p>Sergio Venturini <a href="mailto:sergio.venturini@unicatt.it">sergio.venturini@unicatt.it</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Oh, M.-S., Raftery, A. E. (2001), "Bayesian Multidimensional Scaling and
+Choice of Dimension", Journal of the American Statistical Association,
+96, 1031-1044.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cmdscale</code> for classical (metric) multidimensional scaling.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# Airline Distances Between Cities
+airline &lt;- read.csv(file = system.file("extdata", "airline.csv",
+  package = "dmbc"))
+airline.nm &lt;- airline[, 1]
+airline &lt;- airline[, 2:31]
+colnames(airline) &lt;- airline.nm
+airline &lt;- as.dist(airline)
+
+min_p &lt;- 1
+max_p &lt;- 4
+burnin &lt;- 200
+nsim &lt;- 1000
+totiter &lt;- burnin + nsim
+
+airline.mds &lt;- cmdscale(airline, max_p)
+airline.bmds &lt;- bmds(airline, min_p, max_p, burnin, nsim)
+
+opar &lt;- par(mfrow = c(1, 2))
+plot(min_p:max_p, airline.bmds$mdsIC$mdsic, type = "b",
+  main = "MDS Information Criterion", xlab = "p", ylab = "MDSIC")
+MDSICmin &lt;- which.min(airline.bmds$mdsIC$mdsic)
+points((min_p:max_p)[MDSICmin], airline.bmds$mdsIC$mdsic[MDSICmin],
+  col = "red", pch = 10, cex = 1.75, lwd = 1.5)
+
+airline.bmds.x.mode &lt;- bmds_get_x_mode(airline, airline.bmds, MDSICmin,
+  min_p, max_p, start = (burnin + 1), end = totiter)
+airline.bmds.d &lt;- dist(airline.bmds.x.mode)
+airline.mds.d &lt;- dist(airline.mds[, 1:((min_p:max_p)[MDSICmin])])
+plot(airline, airline.bmds.d, type = "n", xlab = "observed",
+  ylab = "estimated", main = "Airline Distances \n Between Cities",
+  xlim = c(0, max(airline, airline.bmds.d)),
+  ylim = c(0, max(airline, airline.bmds.d)))
+abline(0, 1, lty = 2, col = "gray")
+points(airline, airline.mds.d, pch = 19, col = "cyan", cex = .5)
+points(airline, airline.bmds.d, pch = 19, col = "magenta", cex = .5)
+legend(x = "bottomright", legend = c("Classical MDS", "Bayesian MDS"),
+  pch = c(19, 19), col = c("cyan", "magenta"))
+par(opar)
+
+# Careers of Lloyds Bank Employees
+lloyds &lt;- read.csv(file = system.file("extdata", "lloyds.csv",
+  package = "dmbc"))
+lloyds.nm &lt;- lloyds[, 1]
+lloyds &lt;- lloyds[, 2:81]
+colnames(lloyds) &lt;- lloyds.nm
+lloyds &lt;- as.dist(lloyds)
+
+min_p &lt;- 1
+max_p &lt;- 12
+burnin &lt;- 200
+nsim &lt;- 1000
+totiter &lt;- burnin + nsim
+
+lloyds.mds &lt;- cmdscale(lloyds, max_p)
+lloyds.bmds &lt;- bmds(lloyds, min_p, max_p, burnin, nsim)
+
+opar &lt;- par(mfrow = c(1, 2))
+plot((min_p:max_p), lloyds.bmds$mdsIC$mdsic, type = "b",
+  main = "MDS Information Criterion", xlab = "p", ylab = "MDSIC")
+MDSICmin &lt;- which.min(lloyds.bmds$mdsIC$mdsic)
+points((min_p:max_p)[MDSICmin], lloyds.bmds$mdsIC$mdsic[MDSICmin],
+  col = "red", pch = 10, cex = 1.75, lwd = 1.5)
+
+lloyds.bmds.x.mode &lt;- bmds_get_x_mode(lloyds, lloyds.bmds, MDSICmin,
+  min_p, max_p, start = (burnin + 1), end = totiter)
+lloyds.bmds.d &lt;- dist(lloyds.bmds.x.mode)
+lloyds.mds.d &lt;- dist(lloyds.mds[, 1:((min_p:max_p)[MDSICmin])])
+plot(lloyds, lloyds.bmds.d, type = "n", xlab = "observed",
+  ylab = "estimated", main = "Careers of Lloyds \n Bank Employees, 1905-1950",
+  xlim = c(0, max(lloyds, lloyds.bmds.d)),
+  ylim = c(0, max(lloyds, lloyds.bmds.d)))
+abline(0, 1, lty = 2, col = "gray")
+points(lloyds, lloyds.mds.d, pch = 19, col = "cyan", cex = .5)
+points(lloyds, lloyds.bmds.d, pch = 19, col = "magenta", cex = .5)
+legend(x = "topleft", legend = c("Classical MDS", "Bayesian MDS"),
+  pch = c(19, 19), col = c("cyan", "magenta"))
+par(opar)
+
+# Road distances (in km) between 21 cities in Europe
+data(eurodist, package = "datasets")
+
+min_p &lt;- 1
+max_p &lt;- 10
+burnin &lt;- 200
+nsim &lt;- 1000
+totiter &lt;- burnin + nsim
+
+eurodist.mds &lt;- cmdscale(eurodist, max_p)
+eurodist.bmds &lt;- bmds(eurodist, min_p, max_p, burnin, nsim)
+
+opar &lt;- par(mfrow = c(1, 2))
+plot((min_p:max_p), eurodist.bmds$mdsIC$mdsic, type = "b",
+  main = "MDS Information Criterion", xlab = "p", ylab = "MDSIC")
+MDSICmin &lt;- which.min(eurodist.bmds$mdsIC$mdsic)
+points((min_p:max_p)[MDSICmin], eurodist.bmds$mdsIC$mdsic[MDSICmin],
+  col = "red", pch = 10, cex = 1.75, lwd = 1.5)
+
+eurodist.bmds.x.mode &lt;- bmds_get_x_mode(eurodist, eurodist.bmds,
+  MDSICmin, min_p, max_p, start = (burnin + 1), end = totiter)
+eurodist.bmds.d &lt;- dist(eurodist.bmds.x.mode)
+eurodist.mds.d &lt;- dist(eurodist.mds[, 1:((min_p:max_p)[MDSICmin])])
+plot(eurodist, eurodist.bmds.d, type = "n", xlab = "observed",
+  ylab = "estimated", main = "Road distances (in km) \n between 21 cities in Europe",
+  xlim = c(0, max(eurodist, eurodist.bmds.d)),
+  ylim = c(0, max(eurodist, eurodist.bmds.d)))
+abline(0, 1, lty = 2, col = "gray")
+points(eurodist, eurodist.mds.d, pch = 19, col = "cyan", cex = .5)
+points(eurodist, eurodist.bmds.d, pch = 19, col = "magenta", cex = .5)
+legend(x = "topleft", legend = c("Classical MDS", "Bayesian MDS"),
+  pch = c(19, 19), col = c("cyan", "magenta"))
+par(opar)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>two_arm_covariate_designer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a simple two arm design with a possibly prognostic covariate</h2>
+
+<h3>Description</h3>
+
+<p>Builds a design with one treatment and one control arm.
+Treatment effects can be specified either by providing <code>control_mean</code> and <code>treatment_mean</code>
+or by specifying a <code>control_mean</code> and <code>ate</code>.
+Non random assignment is specified by a possible correlation, <code>rho_WZ</code>,  between <code>W</code> and a latent variable that determines the probability of <code>Z</code>.  
+Nonignorability is specified by a possible correlation, <code>rho_WY</code>,  between <code>W</code> and outcome <code>Y</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">two_arm_covariate_designer(
+  N = 100,
+  prob = 0.5,
+  control_mean = 0,
+  sd = 1,
+  ate = 1,
+  h = 0,
+  treatment_mean = control_mean + ate,
+  rho_WY = 0,
+  rho_WZ = 0,
+  args_to_fix = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>An integer. Sample size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>A number in [0,1]. Probability of assignment to treatment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control_mean</code></td>
+<td>
+<p>A number. Average outcome in control.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sd</code></td>
+<td>
+<p>A positive number. Standard deviation of shock on Y.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ate</code></td>
+<td>
+<p>A number. Average treatment effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>A number. Controls heterogeneous treatment effects by W. Defaults to 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment_mean</code></td>
+<td>
+<p>A number. Average outcome in treatment. Overrides <code>ate</code> if both specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho_WY</code></td>
+<td>
+<p>A number in [-1,1]. Correlation between W and Y.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rho_WZ</code></td>
+<td>
+<p>A number in [-1,1]. Correlation between W and Z.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args_to_fix</code></td>
+<td>
+<p>A character vector. Names of arguments to be args_to_fix in design.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Units are assigned to treatment using complete random assignment. Potential outcomes are normally distributed according to the mean and sd arguments.
+</p>
+<p>See <a href="https://declaredesign.org/r/designlibrary/articles/two_arm.html">vignette online</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A simple two-arm design with covariate W.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p><a href="https://declaredesign.org/">DeclareDesign Team</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Generate a simple two-arm design using default arguments
+two_arm_covariate_design &lt;- two_arm_covariate_designer()
+# Design with no confounding but a prognostic covariate 
+prognostic &lt;- two_arm_covariate_designer(N = 40, ate = .2, rho_WY = .9, h = .5)
+## Not run: 
+diagnose_design(prognostic)
+
+## End(Not run)
+# Design with confounding 
+confounding &lt;- two_arm_covariate_designer(N = 40, ate = 0, rho_WZ = .9, rho_WY = .9, h = .5)
+## Not run: 
+diagnose_design(confounding, sims = 2000)
+
+## End(Not run)
+
+# Curse of power: A biased design may be more likely to mislead the larger it is 
+curses &lt;- expand_design(two_arm_covariate_designer, 
+                        N = c(50, 500, 5000), ate = 0, rho_WZ = .2, rho_WY = .2)
+## Not run: 
+diagnoses &lt;- diagnose_design(curses)
+subset(diagnoses$diagnosands_df, estimator == "No controls")[,c("N", "power")]
+
+## End(Not run)
+</code></pre>
+
+
+</div>

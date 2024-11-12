@@ -1,0 +1,162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>xplot</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Repeat specified plot across multiple columns of a matrix</h2>
+
+<h3>Description</h3>
+
+<p>This is designed to repeat a plot, usually an image plot, across
+multiple columns of a matrix of gene expression values. A boxplot
+that shows the distribution of values appears below each panel.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">xplot(data = DAAGbio::coralRG$R, images = 1:6, layout = DAAGbio::coralRG$printer, mfrow =
+c(3, 2),
+FUN = imgplot, device = NULL, title = NULL, width = 7.5, height = 10,
+paneltitles = c("1:R/G", "2:G/R", "3:R/G", "4:G/R", "5:R/G", "6:G/R"),
+paneltitles.line = 0.5,
+mar = c(3.6, 3.6, 1.6, 0.6), oma = c(0.6, 0.6, 1.6, 0.6), file = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>matrix of expression array values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>images</code></td>
+<td>
+<p>columns of matrix for which plots are required</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layout</code></td>
+<td>
+<p>layout of spots, in the order (rows of grids, columns of
+grids, rows of spots in a grid, columns in a grid)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mfrow</code></td>
+<td>
+<p>row by column layout of plots on a page</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p><code>imgplot</code>, or <code>imageplot</code> from <code>limma</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>device</code></td>
+<td>
+<p>If <code>NULL</code>, plot appears on the monitor.  Other
+possibilities include <code>pdf</code>, <code>postscript</code>, <code>png</code>,
+<code>jpeg</code> and <code>bitmap</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>A title for the page of graphs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>width</code></td>
+<td>
+<p>width of plot (in)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>height</code></td>
+<td>
+<p>height of plot (in)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paneltitles</code></td>
+<td>
+<p>character vector of titles for individual panels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paneltitles.line</code></td>
+<td>
+<p>height (lines) at which panel title are to appear
+above the upper margin of each panel</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mar</code></td>
+<td>
+<p>Setting for <code>par$mar</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oma</code></td>
+<td>
+<p>Setting for <code>par$mar</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>Optional file name, if output is to a file</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>J. H. Maindonald</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+xplot(data=coralRG$R, layout=coralRG$printer, FUN=imgplot)
+
+## End(Not run)
+
+## The function is currently defined as
+function(data = DAAGbio::coralRG$R, images=1:6, layout = DAAGbio::coralRG$printer, mfrow=c(3,2),
+           FUN = imgplot, device=NULL, title=NULL, width=7.5, height=10,
+           paneltitles=c("1:R/G","2:G/R", "3:R/G","4:G/R", "5:R/G","6:G/R"),
+           paneltitles.line=0.5,
+           mar=c(3.6,3.6,1.6,0.6), oma=c(0.6,0.6,1.6,0.6), file=NULL){
+    if(is.null(title)){title &lt;- as.character(substitute(data))
+    title &lt;- paste(title[2], title[3], sep=":")
+                    }
+    if(is.null(file))file &lt;- title
+    nch &lt;- nchar(title)
+    if(!is.null(device)){devnam &lt;- deparse(substitute(device))
+    ext &lt;- switch(devnam, ps="ps", pdf="pdf", png="png",
+                  jpeg="jpg", bitmap="bmp")
+      file &lt;- paste(title,".", ext, sep="")
+      print(file)
+      device(file=file, width=width, height=height)
+    }
+    oldpar &lt;- par(mfrow=mfrow, mgp=c(1,0.25,0), oma=oma, mar=mar)
+    on.exit(par(oldpar))
+    for(i in images){
+      FUN(data[,i], layout=layout)
+      mtext(side=3,line=paneltitles.line,paneltitles[i],adj=0)
+    }
+    mtext(side=3, line=0.25, title, outer=TRUE)
+    if(!is.null(device))dev.off()
+  }
+</code></pre>
+
+
+</div>

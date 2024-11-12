@@ -1,0 +1,155 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pr_medx</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Probability of minimum X% effective dose</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the probability a dose being the smallest dose
+that has at least X% of the maximum efficacy.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pr_medx(
+  x,
+  doses = attr(x, "doses"),
+  ed,
+  greater = TRUE,
+  small_bound = 0,
+  time = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>output from a call to <code>dreamer_mcmc()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doses</code></td>
+<td>
+<p>the doses for which pr(minimum effective X% dose) is to be
+calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ed</code></td>
+<td>
+<p>a number between 0 and 100 indicating the ed% dose that is
+being sought.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>greater</code></td>
+<td>
+<p>if <code>TRUE</code>, higher responses indicate better efficacy.  If
+<code>FALSE</code>, lower responses indicate better efficacy.'</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>small_bound</code></td>
+<td>
+<p>the lower (upper) bound of the response variable
+when <code>greater = TRUE</code> (<code>FALSE</code>).  This is used to calculate the
+<code>ed</code>% effect as <code>ed / 100 * (effect_100 - small_bound) + small_bound</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>the time (scalar) at which the Pr(MEDX) should be calculated.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Obtaining the probability of a particular does being the
+minimum efficacious dose achieving <code>ed</code>% efficacy is dependent on
+the doses specified.
+</p>
+<p>For a given MCMC sample of parameters, the 100% efficacy value is defined
+as the highest efficacy of the doses specified.  For each posterior draw
+of MCMC parameters, the minimum <code>ed</code>% efficacious dose is defined as the
+lowest dose what has at least <code>ed</code>% efficacy relative to the 100%
+efficacy value.
+</p>
+<p>The <code>ed</code>% effect is calculated as
+<code>ed / 100 * (effect_100 - small_bound) + small_bound</code> where <code>effect_100</code>
+is the largest mean response among <code>doses</code> for a given MCMC iteration.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame with the following columns:
+</p>
+
+<ul>
+<li> <p><code>dose</code>: numeric dose levels.
+</p>
+</li>
+<li> <p><code>prob</code>: Prob(EDX | data) for each dose. Note: these probabilities do
+not necessarily sum to 1 because the EDX may not exist. In fact,
+Pr(EDX does not exist | data) = <code>1 - sum(prob)</code>.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = .1,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+ data = data,
+ n_adapt = 1e3,
+ n_burn = 1e3,
+ n_iter = 1e3,
+ n_chains = 2,
+ silent = FALSE,
+ mod_linear = model_linear(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ ),
+ mod_quad = model_quad(
+   mu_b1 = 0,
+   sigma_b1 = 1,
+   mu_b2 = 0,
+   sigma_b2 = 1,
+   mu_b3 = 0,
+   sigma_b3 = 1,
+   shape = 1,
+   rate = .001,
+   w_prior = 1 / 2
+ )
+)
+
+pr_medx(output, ed = 80)
+
+# single model
+pr_medx(output$mod_linear, ed = 80)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>episodes_wf_splits</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Link events to chronological episodes.</h2>
+
+<h3>Description</h3>
+
+<p><code>episodes_wf_splits</code> is a wrapper function of <code>episodes</code>.
+It's designed to be more efficient with larger datasets.
+Duplicate records which do not affect the case definition are excluded prior to episode tracking.
+The resulting episode identifiers are then recycled for the duplicate records.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">episodes_wf_splits(..., duplicates_recovered = "ANY", reframe = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed to <code>episodes</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>duplicates_recovered</code></td>
+<td>
+<p><code>[character]</code>. Determines which duplicate records are recycled.
+Options are <code>"ANY"</code> (default), <code>"without_sub_criteria"</code>, <code>"with_sub_criteria"</code> or <code>"ALL"</code>. See <code>Details</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reframe</code></td>
+<td>
+<p><code>[logical]</code>. Determines if the duplicate records in a <code>sub_criteria</code> are reframed (<code>TRUE</code>) or excluded (<code>FALSE</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b><code>episodes_wf_splits()</code></b> reduces or re-frames a dataset to
+the minimum datasets required to implement a case definition.
+This leads to the same outcome but with the benefit of a shorter processing time.
+</p>
+<p>The <code>duplicates_recovered</code> argument determines which identifiers are recycled.
+Selecting the <code>"with_sub_criteria"</code> option will force only identifiers created resulting from a matched <code>sub_criteria</code> (<code>"Case_CR"</code> and <code>"Recurrent_CR"</code>) are recycled.
+However, if <code>"without_sub_criteria"</code> is selected then only identifiers created that do not result from a matched <code>sub_criteria</code> (<code>"Case"</code> and <code>"Recurrent"</code>) are recycled
+Excluded duplicates of <code>"Duplicate_C"</code> and <code>"Duplicate_R"</code> are always recycled.
+</p>
+<p>The <code>reframe</code> argument will either <code>reframe</code> or subset a <code>sub_criteria</code>.
+Both will require slightly different functions for <code>match_funcs</code> or <code>equal_funcs</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>epid</code>; <code>list</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>episodes</code>; <code>sub_criteria</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># With 2,000 duplicate records of 20 events,
+# `episodes_wf_splits()` will take less time than `episodes()`
+dates &lt;- seq(from = as.Date("2019-04-01"), to = as.Date("2019-04-20"), by = 1)
+dates &lt;- rep(dates, 2000)
+
+system.time(
+  ep1 &lt;- episodes(dates, 1)
+)
+system.time(
+  ep2 &lt;- episodes_wf_splits(dates, 1)
+)
+
+# Both leads to the same outcome.
+all(ep1 == ep2)
+</code></pre>
+
+
+</div>

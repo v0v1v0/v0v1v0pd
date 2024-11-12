@@ -1,0 +1,139 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>glosh</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Global-Local Outlier Score from Hierarchies</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the Global-Local Outlier Score from Hierarchies (GLOSH) score for
+each data point using a kd-tree to speed up kNN search.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">glosh(x, k = 4, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an hclust object, data matrix, or dist object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>size of the neighborhood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments are passed on to <code>kNN()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>GLOSH compares the density of a point to densities of any points associated
+within current and child clusters (if any). Points that have a substantially
+lower density than the density mode (cluster) they most associate with are
+considered outliers. GLOSH is computed from a hierarchy a clusters.
+</p>
+<p>Specifically, consider a point <em>x</em> and a density or distance threshold
+<em>lambda</em>. GLOSH is calculated by taking 1 minus the ratio of how long
+any of the child clusters of the cluster <em>x</em> belongs to "survives"
+changes in <em>lambda</em> to the highest <em>lambda</em> threshold of x, above
+which x becomes a noise point.
+</p>
+<p>Scores close to 1 indicate outliers. For more details on the motivation for
+this calculation, see Campello et al (2015).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of length equal to the size of the original data
+set containing GLOSH values for all data points.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matt Piekenbrock
+</p>
+
+
+<h3>References</h3>
+
+<p>Campello, Ricardo JGB, Davoud Moulavi, Arthur Zimek, and Joerg
+Sander. Hierarchical density estimates for data clustering, visualization,
+and outlier detection. <em>ACM Transactions on Knowledge Discovery from Data
+(TKDD)</em> 10, no. 1 (2015).
+<a href="https://doi.org/10.1145/2733381">doi:10.1145/2733381</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other Outlier Detection Functions: 
+<code>kNNdist()</code>,
+<code>lof()</code>,
+<code>pointdensity()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(665544)
+n &lt;- 100
+x &lt;- cbind(
+  x=runif(10, 0, 5) + rnorm(n, sd = 0.4),
+  y=runif(10, 0, 5) + rnorm(n, sd = 0.4)
+  )
+
+### calculate GLOSH score
+glosh &lt;- glosh(x, k = 3)
+
+### distribution of outlier scores
+summary(glosh)
+hist(glosh, breaks = 10)
+
+### simple function to plot point size is proportional to GLOSH score
+plot_glosh &lt;- function(x, glosh){
+  plot(x, pch = ".", main = "GLOSH (k = 3)")
+  points(x, cex = glosh*3, pch = 1, col = "red")
+  text(x[glosh &gt; 0.80, ], labels = round(glosh, 3)[glosh &gt; 0.80], pos = 3)
+}
+plot_glosh(x, glosh)
+
+### GLOSH with any hierarchy
+x_dist &lt;- dist(x)
+x_sl &lt;- hclust(x_dist, method = "single")
+x_upgma &lt;- hclust(x_dist, method = "average")
+x_ward &lt;- hclust(x_dist, method = "ward.D2")
+
+## Compare what different linkage criterion consider as outliers
+glosh_sl &lt;- glosh(x_sl, k = 3)
+plot_glosh(x, glosh_sl)
+
+glosh_upgma &lt;- glosh(x_upgma, k = 3)
+plot_glosh(x, glosh_upgma)
+
+glosh_ward &lt;- glosh(x_ward, k = 3)
+plot_glosh(x, glosh_ward)
+
+## GLOSH is automatically computed with HDBSCAN
+all(hdbscan(x, minPts = 3)$outlier_scores == glosh(x, k = 3))
+</code></pre>
+
+
+</div>

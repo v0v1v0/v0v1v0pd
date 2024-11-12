@@ -1,0 +1,377 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>difORD</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DIF detection among ordinal data.</h2>
+
+<h3>Description</h3>
+
+<p>Performs DIF detection procedure for ordinal data
+based either on adjacent category logit model or on cumulative
+logit model and likelihood ratio test of a submodel.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">difORD(Data, group, focal.name, model = "adjacent", type = "both", match = "zscore",
+       anchor = NULL, purify = FALSE, nrIter = 10, p.adjust.method = "none",
+       alpha = 0.05, parametrization)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>data.frame or matrix: dataset which rows represent
+ordinaly scored examinee answers and columns correspond to the
+items. In addition, <code>Data</code> can hold the vector of group
+membership.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>numeric or character: a dichotomous vector of the same
+length as <code>nrow(Data)</code> or a column identifier of
+<code>Data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focal.name</code></td>
+<td>
+<p>numeric or character: indicates the level of
+<code>group</code> which corresponds to focal group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>character: logistic regression model for ordinal data
+(either <code>"adjacent"</code> (default) or <code>"cumulative"</code>). See
+<strong>Details</strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character: type of DIF to be tested. Either
+<code>"both"</code> for uniform and non-uniform DIF (default), or
+<code>"udif"</code> for uniform DIF only, or <code>"nudif"</code> for
+non-uniform DIF only. Can be specified as a single value (for all
+items) or as an item-specific vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>numeric or character: matching criterion to be used as
+an estimate of trait. Can be either <code>"zscore"</code> (default,
+standardized total score), <code>"score"</code> (total test score), or
+vector of the same length as number of observations in
+<code>Data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anchor</code></td>
+<td>
+<p>numeric or character: specification of DIF free
+items. Either <code>NULL</code> (default), or a vector of item names
+(column names of <code>Data</code>), or item identifiers (integers
+specifying the column number) determining which items are
+currently considered as anchor (DIF free) items. Argument is
+ignored if <code>match</code> is not <code>"zscore"</code> or <code>"score"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purify</code></td>
+<td>
+<p>logical: should the item purification be applied?
+(default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrIter</code></td>
+<td>
+<p>numeric: the maximal number of iterations in the item
+purification (default is 10).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.adjust.method</code></td>
+<td>
+<p>character: method for multiple comparison
+correction. Possible values are <code>"holm"</code>, <code>"hochberg"</code>,
+<code>"hommel"</code>, <code>"bonferroni"</code>, <code>"BH"</code>, <code>"BY"</code>,
+<code>"fdr"</code>, and <code>"none"</code> (default). For more details see
+<code>p.adjust</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric: significance level (default is 0.05).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parametrization</code></td>
+<td>
+<p>deprecated. Use
+<code>coef.difORD</code> for different
+parameterizations.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Calculates DIF likelihood ratio statistics based either on adjacent
+category logit model or on cumulative logit model for ordinal data.
+</p>
+<p>Using adjacent category logit model, logarithm of ratio of
+probabilities of two adjacent categories is
+</p>
+<p style="text-align: center;"><code class="reqn">log(P(y = k) / P(y = k - 1)) = b_0k + b_1 * x + b_2k * g + b_3 * x:g,</code>
+</p>
+
+<p>where <code class="reqn">x</code> is by default standardized total score (also called
+Z-score) and <code class="reqn">g</code> is a group membership.
+</p>
+<p>Using cumulative logit model, probability of gaining at least
+<code class="reqn">k</code> points is given by 2PL model, i.e.,
+</p>
+<p style="text-align: center;"><code class="reqn">P(y &gt;= k) = exp(b_0k + b_1 * x + b_2k * g + b_3 * x:g) / (1 + exp(b_0k + b_1 * x + b_2k * g + b_3 * x:g)).</code>
+</p>
+
+<p>The category probability (i.e., probability of gaining exactly
+<code class="reqn">k</code> points) is then <code class="reqn">P(y = k) = P(y &gt;= k) - P(y &gt;= k + 1)</code>.
+</p>
+<p>Both models are estimated by iteratively reweighted least squares.
+For more details see <code>vglm</code>.
+</p>
+<p>Missing values are allowed but discarded for item estimation. They
+must be coded as <code>NA</code> for both, <code>Data</code> and <code>group</code>
+parameters.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The <code>difORD()</code> function returns an object of class
+<code>"difORD"</code>. The output including values of the test
+statistics, p-values, and items marked as DIF is displayed by the
+<code>print()</code> method.
+</p>
+<p>A list of class <code>"difORD"</code> with the following arguments:
+</p>
+
+<dl>
+<dt><code>Sval</code></dt>
+<dd>
+<p>the values of likelihood ratio test statistics.</p>
+</dd>
+<dt><code>ordPAR</code></dt>
+<dd>
+<p>the estimates of the final model.</p>
+</dd>
+<dt><code>ordSE</code></dt>
+<dd>
+<p>standard errors of the estimates of the final model.</p>
+</dd>
+<dt><code>parM0</code></dt>
+<dd>
+<p>the estimates of null model.</p>
+</dd>
+<dt><code>parM1</code></dt>
+<dd>
+<p>the estimates of alternative model.</p>
+</dd>
+<dt><code>llM0</code></dt>
+<dd>
+<p>log-likelihood of null model.</p>
+</dd>
+<dt><code>llM1</code></dt>
+<dd>
+<p>log-likelihood of alternative model.</p>
+</dd>
+<dt><code>AICM0</code></dt>
+<dd>
+<p>AIC of null model.</p>
+</dd>
+<dt><code>AICM1</code></dt>
+<dd>
+<p>AIC of alternative model.</p>
+</dd>
+<dt><code>BICM0</code></dt>
+<dd>
+<p>BIC of null model.</p>
+</dd>
+<dt><code>BICM1</code></dt>
+<dd>
+<p>BIC of alternative model.</p>
+</dd>
+<dt><code>DIFitems</code></dt>
+<dd>
+<p>either the column identifiers of the items which were detected as DIF, or
+<code>"No DIF item detected"</code> in case no item was detected as DIF.</p>
+</dd>
+<dt><code>model</code></dt>
+<dd>
+<p>model used for DIF detection.</p>
+</dd>
+<dt><code>type</code></dt>
+<dd>
+<p>character: type of DIF that was tested.</p>
+</dd>
+<dt><code>purification</code></dt>
+<dd>
+<p><code>purify</code> value.</p>
+</dd>
+<dt><code>nrPur</code></dt>
+<dd>
+<p>number of iterations in item purification process. Returned only if <code>purify</code>
+is <code>TRUE</code>.</p>
+</dd>
+<dt><code>difPur</code></dt>
+<dd>
+<p>a binary matrix with one row per iteration of item purification and one column per item.
+<code>"1"</code> in i-th row and j-th column means that j-th item was identified as DIF in i-th iteration. Returned only
+if <code>purify</code> is <code>TRUE</code>.</p>
+</dd>
+<dt><code>conv.puri</code></dt>
+<dd>
+<p>logical indicating whether item purification process converged before the maximal number
+<code>nrIter</code> of iterations. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</dd>
+<dt><code>p.adjust.method</code></dt>
+<dd>
+<p>character: method for multiple comparison correction which was applied.</p>
+</dd>
+<dt><code>pval</code></dt>
+<dd>
+<p>the p-values by likelihood ratio test.</p>
+</dd>
+<dt><code>adj.pval</code></dt>
+<dd>
+<p>the adjusted p-values by likelihood ratio test using <code>p.adjust.method</code>.</p>
+</dd>
+<dt><code>df</code></dt>
+<dd>
+<p>the degress of freedom of likelihood ratio test.</p>
+</dd>
+<dt><code>alpha</code></dt>
+<dd>
+<p>numeric: significance level.</p>
+</dd>
+<dt><code>Data</code></dt>
+<dd>
+<p>the data matrix.</p>
+</dd>
+<dt><code>group</code></dt>
+<dd>
+<p>the vector of group membership.</p>
+</dd>
+<dt><code>group.names</code></dt>
+<dd>
+<p>levels of grouping variable.</p>
+</dd>
+<dt><code>match</code></dt>
+<dd>
+<p>matching criterion.</p>
+</dd>
+</dl>
+<p>For an object of class <code>"difORD"</code> several methods are available (e.g., <code>methods(class = "difORD")</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Adela Hladka (nee Drabinova) <br>
+Institute of Computer Science of the Czech Academy of Sciences <br>
+Faculty of Mathematics and Physics, Charles University <br><a href="mailto:hladka@cs.cas.cz">hladka@cs.cas.cz</a> <br></p>
+<p>Patricia Martinkova <br>
+Institute of Computer Science of the Czech Academy of Sciences <br><a href="mailto:martinkova@cs.cas.cz">martinkova@cs.cas.cz</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Agresti, A. (2010). Analysis of ordinal categorical data. Second edition. John Wiley &amp; Sons.
+</p>
+<p>Hladka, A. (2021). Statistical models for detection of differential item functioning. Dissertation thesis.
+Faculty of Mathematics and Physics, Charles University.
+</p>
+<p>Hladka, A. &amp; Martinkova, P. (2020). difNLR: Generalized logistic regression models for DIF and DDF detection.
+The R Journal, 12(1), 300–323, <a href="https://doi.org/10.32614/RJ-2020-014">doi:10.32614/RJ-2020-014</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.difORD</code> for graphical representation of item characteristic curves. <br><code>coef.difORD</code> for extraction of item parameters with their standard errors. <br><code>predict.difORD</code> for calculation of predicted values. <br><code>logLik.difORD</code>, <code>AIC.difORD</code>, <code>BIC.difORD</code>
+for extraction of log-likelihood and information criteria. <br></p>
+<p><code>p.adjust</code> for multiple comparison corrections. <br><code>vglm</code> for estimation function using iteratively reweighted least squares.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># loading data
+data(Anxiety, package = "ShinyItemAnalysis")
+Data &lt;- Anxiety[, paste0("R", 1:29)] # items
+group &lt;- Anxiety[, "gender"] # group membership variable
+
+# testing both DIF effects with adjacent category logit model
+(x &lt;- difORD(Data, group, focal.name = 1, model = "adjacent"))
+## Not run: 
+# graphical devices
+plot(x, item = 6)
+plot(x, item = "R6")
+plot(x, item = "R6", group.names = c("Males", "Females"))
+
+# estimated parameters
+coef(x)
+coef(x, SE = TRUE) # with SE
+coef(x, SE = TRUE, simplify = TRUE) # with SE, simplified
+
+# AIC, BIC, log-likelihood
+AIC(x)
+BIC(x)
+logLik(x)
+
+# AIC, BIC, log-likelihood for the first item
+AIC(x, item = 1)
+BIC(x, item = 1)
+logLik(x, item = 1)
+
+# testing both DIF effects with Benjamini-Hochberg adjustment method
+difORD(Data, group, focal.name = 1, model = "adjacent", p.adjust.method = "BH")
+
+# testing both DIF effects with item purification
+difORD(Data, group, focal.name = 1, model = "adjacent", purify = TRUE)
+
+# testing uniform DIF effects
+difORD(Data, group, focal.name = 1, model = "adjacent", type = "udif")
+# testing non-uniform DIF effects
+difORD(Data, group, focal.name = 1, model = "adjacent", type = "nudif")
+
+# testing both DIF effects with total score as matching criterion
+difORD(Data, group, focal.name = 1, model = "adjacent", match = "score")
+
+testing both DIF effects with cumulative logit model
+(x &lt;- difORD(Data, group, focal.name = 1, model = "cumulative"))
+# graphical devices
+plot(x, item = 7, plot.type = "cumulative")
+plot(x, item = 7, plot.type = "category")
+
+# estimated parameters
+coef(x, simplify = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

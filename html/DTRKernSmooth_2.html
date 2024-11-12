@@ -1,0 +1,323 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DTR.KernSmooth</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate the optimal treatment regime among all linear regimes with smoothed
+estimation methods</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the optimal treatment regime among all
+linear regimes with smoothed estimation methods and doubly robust correction,
+and outputs a 'DTR.KernSmooth' model object
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DTR.KernSmooth(
+  X,
+  y,
+  a,
+  intercept = TRUE,
+  prob = 0.5,
+  m0 = mean(y[a == 0]),
+  m1 = mean(y[a == 1]),
+  kernel = "normal",
+  phi0 = 1,
+  gamma = 2,
+  err_tol = 1e-04,
+  iter_tol = 200
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Input matrix, of dimension n_obs x n_vars; each row is an observation vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Response variable to be maximized on average if every subject follows
+the treatment recommended by the optimal regime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>Received treatments for n_obs subjects. Must be bivariate, and labeled as {0,1}.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>Logical. <code>TRUE</code> (default) if the intercept is included in estimating
+the optimal treatment regime and <code>FALSE</code> if not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>The probability to receive the assigned treatments for the n_obs subjects, i.e., P(a=a_i|X_i). If <code>NULL</code>,
+it would be estimated by logistic regression a~X.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m0</code></td>
+<td>
+<p>The estimated response values if the subjects receive treatment 0.
+The default is the average response value of all subjects who receive treatment 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m1</code></td>
+<td>
+<p>The estimated response values if the subjects receive treatment 1.
+The default is the average response value of all subjects who receive treatment 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>The kernel function to be used in smoothed estimation. Should be
+one of "normal", "poly1" and "poly2". The default value is "normal". See more details in "Details".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi0</code></td>
+<td>
+<p>The initial step size to be used in the Proximal Algorithm. The
+default value is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>The multiplier of the step sizes to be used in the Proximal
+Algorithm. Must be gamma &gt; 1. The default value is 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>err_tol</code></td>
+<td>
+<p>The desired accuracy in the estimation. The default value is 1e-4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter_tol</code></td>
+<td>
+<p>The maximum number of iterations in the estimation algorithm.
+The default value is 200.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function estimates the optimal linear treatment regime to maximizes
+the average outcome among the population if every individual follows the treatment
+recommended by this treatment regime.<br>
+Assume the propensity score <code class="reqn">\pi(\bm{x})=P(A=1|\bm{x})</code>  can be modeled as
+<code class="reqn">\pi(\bm{x},\bm{\xi})</code> where <code class="reqn">\bm{\xi}</code> is a finite-dimensional parameter
+(e.g., via logistic regression). Let <code class="reqn">\widehat{\bm{\xi}}</code> be an estimate
+of <code class="reqn">\bm{\xi}</code>. LetLet <code class="reqn">\pi_a(\bm{x}_i, \widehat{\bm{\xi}})=A_i\pi(\bm{x}_i, \widehat{\bm{\xi}})
++ (1-A_i)\left[1-\pi(\bm{x}_i, \widehat{\bm{\xi}})\right]</code>, and <code class="reqn">\widehat{m}_c(\bm{x}_i, \widehat{\bm{\beta}})
+ = I\left(\bm{x}_i^T\bm{\beta}&gt;0\right)\widehat{m}_1(\bm{x}_i)
+ +  I\left(\bm{x}_i^T\bm{\beta}\leq 0\right)\widehat{m}_0(\bm{x}_i)</code>
+Hence, our goal is to estimate <code class="reqn">\bm{\beta}</code> which maximizes:
+</p>
+<p style="text-align: center;"><code class="reqn">V_n(\bm{\beta})=n^{-1}\sum_{i=1}^n \frac{\left[A_i I\left(\bm{x}_i^T\bm{\beta}&gt;0\right)+(1-A_i)I\left(\bm{x}_i^T\bm{\beta}\leq 0\right)\right]Y_i}
+{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}- n^{-1}\sum_{i=1}^n \frac{ A_i I\left(\bm{x}_i^T\bm{\beta}&gt;0\right)+(1-A_i)I\left(\bm{x}_i^T\bm{\beta}\leq 0\right) -\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}
+{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}\widehat{m}_c(\bm{x}_i, \widehat{\bm{\beta}}),</code>
+</p>
+
+<p>with the second term as the doubly correction.
+For the identifiability, we normalize the estimator such that the second element
+has magnitude 1, i.e., <code class="reqn">|\widehat{\beta}_2|=1</code>.<br>
+To alleviates the computational challenge due to the nonsmooth indicator function,
+and derive asymptotic distribution of the estimators, we consider to use a smoothed
+function <code class="reqn">K(\cdot)</code> to approximate the indicator function <code class="reqn">I(\cdot)</code>.
+That is, we will estimate <code class="reqn">\bm{\beta}</code> which maximizes:
+</p>
+<p style="text-align: center;"><code class="reqn">n^{-1}\sum_{i=1}^n \frac{\left[A_i K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)+(1-A_i)\left\{1-K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)\right\}\right]Y_i}
+{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}- n^{-1}\sum_{i=1}^n \frac{\left[A_i-\pi_a(\bm{x}_i, \widehat{\bm{\xi}})\right] \widehat{m}_1(\bm{x}_i)K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)+\left[1-A_i-\pi_a(\bm{x}_i, \widehat{\bm{\xi}})\right] \widehat{m}_0(\bm{x}_i) \left\{1-K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)\right\}}
+{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}.</code>
+</p>
+
+<p>In this function, we provide three options for the smoothed kernel functions:
+</p>
+
+<dl>
+<dt>"normal"</dt>
+<dd>
+<p>The c.d.f of N(0,1) distribution. The bandwidth is set as <code class="reqn">h_n=0.9n^{-0.2} \min\{std (\bm{x}_i^T\bm{\beta}),IQR(\bm{x}_i^T\bm{\beta})/1.34\}</code>.</p>
+</dd>
+<dt>"poly1"</dt>
+<dd>
+<p>A polynomial function <code class="reqn">K(v) =\left[0.5 + \frac{105}{64}\{\frac{v}{5}-\frac{5}{3}(\frac{v}{5})^3 +\frac{7}{5}(\frac{v}{5})^5 - \frac{3}{7}(\frac{v}{5})^7\}\right]I( -5\leq v \leq 5)+I(v&gt;5)</code>. The bandwidth is set as <code class="reqn">h_n=0.9n^{-1/9} \min\{std (\bm{x}_i^T\bm{\beta}),IQR(\bm{x}_i^T\bm{\beta})/1.34\}</code>.</p>
+</dd>
+<dt>"poly2"</dt>
+<dd>
+<p>A polynomial function <code class="reqn">K(v) =\left[0.5 + \frac{225}{128}\{\frac{v}{5}-\frac{14}{9}(\frac{v}{5})^3 +\frac{21}{25}(\frac{v}{5})^5\}\right]I( -5\leq v \leq 5)+I(v&gt;5)</code>. The bandwidth is set as <code class="reqn">h_n=0.9n^{-1/13} \min\{std (\bm{x}_i^T\bm{\beta}),IQR(\bm{x}_i^T\bm{\beta})/1.34\}</code>.</p>
+</dd>
+</dl>
+<p>To solve the non-convexity problem of the optimization, we employ a proximal
+gradient descent algorithm for estimation. See more details in the reference.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class "DTR.KernSmooth", which is a list containing at
+least the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>The input matrix used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The response variable used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>The treatment vector received by each subject.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>Logical which indicates whether the intercept is included in
+estimating the optimal treatment regime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>The propensity score vector for each subject.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m0</code></td>
+<td>
+<p>The estimated response values used if the subjects receive treatment 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m1</code></td>
+<td>
+<p>The estimated response values used if the subjects receive treatment 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>The kernel function used in smoothed estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta_smooth</code></td>
+<td>
+<p>The estimated optimal treatment regime vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>opt_treatment</code></td>
+<td>
+<p>The predicted optimal treatments for the input data
+given the estimated optimal regime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value_smooth</code></td>
+<td>
+<p>The estimated optimal average response value among all
+linear treatment regimes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converge</code></td>
+<td>
+<p>Logical. <code>TRUE</code> if the estimation algorithm converges,
+and <code>FALSE</code> if not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter_num</code></td>
+<td>
+<p>The number of iterations used for the algorithm convergence.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Yunan Wu and Lan Wang<br> Maintainer:
+Yunan Wu &lt;yunan.wu@utdallas.edu&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Wu, Y. and Wang, L. (2021),
+<em>Resampling-based Confidence Intervals for Model-free Robust Inference
+on Optimal Treatment Regimes, Biometrics, 77: 465– 476</em>, <a href="https://doi.org/10.1111/biom.13337">doi:10.1111/biom.13337</a>.<br>
+Nesterov, Y. (2007).
+<em>Gradient methods for minimizing composite objective function. Core
+discussion papers, Université catholique de Louvain, Center for Operations
+Research and Econometrics (CORE)</em>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict.DTR.KernSmooth</code>, <code>obj_value</code>,
+<code>DTR.Boots.KernSmooth</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n &lt;- 500; p &lt;- 3
+beta &lt;- c(0.2,1,-0.5,-0.8)*0.7
+beta1 &lt;- c(1,-0.5,-0.5,0.5)
+
+set.seed(12345)
+X &lt;- matrix(rnorm(n*p),n)
+a &lt;- rbinom(n,1,0.7)
+mean1 &lt;- exp(cbind(1,X) %*% beta1)
+mean2 &lt;- 8/(1 + exp(-cbind(1,X) %*% beta)) - 4
+y &lt;- mean1 + a * mean2 + rnorm(n)
+
+smooth_model_ci &lt;- DTR.KernSmooth(X, y, a, prob = 0.3 + 0.4*a, m0 = 0, m1 = 0)
+smooth_model_ci$beta_smooth
+smooth_model_ci$value_smooth
+
+smooth_model_ic &lt;- DTR.KernSmooth(X, y, a, m0 = mean1, m1 = mean1 + mean2)
+smooth_model_ic$beta_smooth
+smooth_model_ic$value_smooth
+
+smooth_model_cc &lt;- DTR.KernSmooth(X, y, a, prob = 0.3 + 0.4*a, m0 = mean1, m1 = mean1 + mean2)
+smooth_model_cc$beta_smooth
+smooth_model_cc$value_smooth
+
+smooth_model_ii &lt;- DTR.KernSmooth(X, y, a)
+smooth_model_ii$beta_smooth
+smooth_model_ii$value_smooth
+
+</code></pre>
+
+
+</div>

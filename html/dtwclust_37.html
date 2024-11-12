@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>GAK</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fast global alignment kernels</h2>
+
+<h3>Description</h3>
+
+<p>Distance based on (triangular) global alignment kernels.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">GAK(
+  x,
+  y,
+  ...,
+  sigma = NULL,
+  window.size = NULL,
+  normalize = TRUE,
+  error.check = TRUE
+)
+
+gak(
+  x,
+  y,
+  ...,
+  sigma = NULL,
+  window.size = NULL,
+  normalize = TRUE,
+  error.check = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>Time series. A multivariate series should have time spanning the rows and variables
+spanning the columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Currently ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>Parameter for the Gaussian kernel's width. See details for the interpretation of
+<code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>window.size</code></td>
+<td>
+<p>Parameterization of the constraining band (<em>T</em> in Cuturi (2011)). See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>normalize</code></td>
+<td>
+<p>Normalize the result by considering diagonal terms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function uses the Triangular Global Alignment Kernel (TGAK) described in Cuturi (2011). It
+supports series of different length and multivariate series, so long as the ratio of the series'
+lengths doesn't differ by more than 2 (or less than 0.5).
+</p>
+<p>The <code>window.size</code> parameter is similar to the one used in DTW, so <code>NULL</code> signifies no constraint,
+and its value should be greater than 1 if used with series of different length.
+</p>
+<p>The Gaussian kernel is parameterized by <code>sigma</code>. Providing <code>NULL</code> means that the value will be
+estimated by using the strategy mentioned in Cuturi (2011) with a constant of 1. This estimation
+is subject to <strong>randomness</strong>, so consider estimating the value once and re-using it (the estimate
+is returned as an attribute of the result). See the examples.
+</p>
+<p>For more information, refer to the package vignette and the referenced article.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The logarithm of the GAK if <code>normalize = FALSE</code>, otherwise 1 minus the normalized GAK. The value
+of <code>sigma</code> is assigned as an attribute of the result.
+</p>
+
+
+<h3>Proxy version</h3>
+
+<p>The version registered with <code>proxy::dist()</code> is custom (<code>loop = FALSE</code> in proxy::pr_DB).
+The custom function handles multi-threaded parallelization directly with RcppParallel.
+It uses all available threads by default (see <code>RcppParallel::defaultNumThreads()</code>),
+but this can be changed by the user with <code>RcppParallel::setThreadOptions()</code>.
+</p>
+<p>An exception to the above is when it is called within a <code>foreach</code> parallel loop <strong>made by dtwclust</strong>.
+If the parallel workers do not have the number of threads explicitly specified,
+this function will default to 1 thread per worker.
+See the parallelization vignette for more information - <code>browseVignettes("dtwclust")</code>
+</p>
+<p>It also includes symmetric optimizations to calculate only half a distance matrix when appropriate—only one list of series should be provided in <code>x</code>.
+Starting with version 6.0.0, this optimization means that the function returns an array with the lower triangular values of the distance matrix,
+similar to what <code>stats::dist()</code> does;
+see DistmatLowerTriangular for a helper to access elements as it if were a normal matrix.
+If you want to avoid this optimization, call proxy::dist by giving the same list of series in both <code>x</code> and <code>y</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The estimation of <code>sigma</code> does <em>not</em> depend on <code>window.size</code>.
+</p>
+<p>If <code>normalize</code> is set to <code>FALSE</code>, the returned value is <strong>not</strong> a distance, rather a similarity.
+The <code>proxy::dist()</code> version is thus always normalized. Use <code>proxy::simil()</code> with <code>method</code> set to
+"uGAK" if you want the unnormalized similarities.
+</p>
+<p>A constrained unnormalized calculation (i.e. with <code>window.size &gt; 0</code> and <code>normalize = FALSE</code>) will
+return negative infinity if <code style="white-space: pre;">⁠abs(NROW(x)⁠</code> <code>-</code> <code style="white-space: pre;">⁠NROW(y))⁠</code> <code>&gt;</code> <code>window.size</code>. Since the function
+won't perform calculations in that case, it might be faster, but if this behavior is not desired,
+consider reinterpolating the time series (see <code>reinterpolate()</code>) or increasing the window size.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cuturi, M. (2011). Fast global alignment kernels. In <em>Proceedings of the 28th international
+conference on machine learning (ICML-11)</em> (pp. 929-936).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+data(uciCT)
+
+set.seed(832)
+GAKd &lt;- proxy::dist(zscore(CharTraj), method = "gak",
+                    pairwise = TRUE, window.size = 18L)
+
+# Obtained estimate of sigma
+sigma &lt;- attr(GAKd, "sigma")
+
+# Use value for clustering
+tsclust(CharTraj, k = 20L,
+        distance = "gak", centroid = "shape",
+        trace = TRUE,
+        args = tsclust_args(dist = list(sigma = sigma,
+                                        window.size = 18L)))
+
+## End(Not run)
+
+# Unnormalized similarities
+proxy::simil(CharTraj[1L:5L], method = "ugak")
+
+</code></pre>
+
+
+</div>

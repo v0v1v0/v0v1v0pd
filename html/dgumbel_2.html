@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gumbel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Gumbel Distribution and Derivatives</h2>
+
+<h3>Description</h3>
+
+<p>Density function, distribution function, quantile function and
+random generation, and their gradient functions 
+for the Gumbel distribution with location and scale parameters. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dgumbel(x, location=0, scale=1, log = FALSE, grad=FALSE) 
+pgumbel(q, location=0, scale=1, lower.tail = TRUE, log.p = FALSE, grad=FALSE) 
+qgumbel(p, location=0, scale=1, lower.tail = TRUE, grad=FALSE)
+rgumbel(n, location=0, scale=1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, q</code></td>
+<td>
+<p>Vector of quantiles.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>Vector of probabilities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>location, scale</code></td>
+<td>
+<p>Location and scale parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log, log.p</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, probabilities p are given as log(p).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>Logical; if <code>TRUE</code> (default), probabilities
+are P[X &lt;= x], otherwise, P[X &gt; x]</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grad</code></td>
+<td>
+<p>Logical; if <code>TRUE</code>, the gradient w.r.t. parameters location and scale is given instead of function value.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Gumbel distribution function with parameters
+<code class="reqn">\code{location} = a</code> and <code class="reqn">\code{scale} = b</code> is
+</p>
+<p style="text-align: center;"><code class="reqn">G(z) = \exp\left\{-\exp\left[-\left(\frac{z-a}{b}\right)
+    \right]\right\}</code>
+</p>
+
+<p>for all real <code class="reqn">z</code>, where <code class="reqn">b &gt; 0</code>.
+Gradients are exact numerical derivatives implemented using automatic differentiation.
+<code>dgumbel</code> builds on the <code>Eigen</code> linear algebra library, <code>Adept</code> for automatic differentiation and <code>RcppEigen</code> for bindings to <code>R</code> and loading <code>Eigen</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dgumbel</code> gives the density function, <code>pgumbel</code> gives
+the distribution function, <code>qgumbel</code> gives the quantile
+function, and <code>rgumbel</code> generates random deviates. 
+If <code>grad=TRUE</code> is supplied, then the gradient is returned instead of the objective function.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">dgumbel(-1:2, -1, 0.5)
+pgumbel(-1:2, -1, 0.5)
+qgumbel(seq(0.9, 0.6, -0.1), 2, 0.5)
+rgumbel(6, -1, 0.5)
+p &lt;- (1:9)/10
+pgumbel(qgumbel(p, -1, 2), -1, 2)
+## [1] 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+
+## Random number generation
+loc = .5
+scale = 3.2
+n &lt;- 1000
+x &lt;- rgumbel(n, loc, scale)
+
+## The density
+hist(x, freq=FALSE)
+xs &lt;- sort(x)
+fx &lt;- dgumbel(xs, loc, scale)
+points(xs,fx, type="l", col=2, lwd=2)
+
+## The distribution
+edf &lt;- sapply(xs, function(x){sum(xs&lt;=x)/n})
+plot(xs, edf)
+Fx &lt;- pgumbel(xs, loc, scale)
+points(xs, Fx, type="l", col=2, lwd=2) 
+
+## The quantile function
+q &lt;- qgumbel(0.6, loc, scale)
+polygon(c(xs[xs &lt;= q], q), c(Fx[xs&lt;=q], 0), col=3)
+
+## Negative log likelihood: Objective and gradient
+nll &lt;- function(par, data) -sum(dgumbel(data, par[1], par[2], log=TRUE))
+dnll &lt;- function(par, data) -rowSums(dgumbel(data, par[1], par[2], log=TRUE, grad=TRUE))
+
+## Parameter estimation
+par_start &lt;- c(3,1)
+opt &lt;- nlminb(par_start, objective=nll, gradient=dnll, data=x, control = list(trace=5))
+opt$convergence
+opt$par
+
+</code></pre>
+
+
+</div>

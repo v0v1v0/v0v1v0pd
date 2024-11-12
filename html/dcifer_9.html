@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ibdDat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pairwise Relatedness</h2>
+
+<h3>Description</h3>
+
+<p>Provides pairwise relatedness estimates within a dataset or
+between two datasets along with optional p-values and confidence intervals
+(CI).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ibdDat(
+  dsmp,
+  coi,
+  afreq,
+  dsmp2 = NULL,
+  coi2 = NULL,
+  pval = TRUE,
+  confint = FALSE,
+  rnull = 0,
+  alpha = 0.05,
+  nr = 1000,
+  reval = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dsmp</code></td>
+<td>
+<p>a list with each element corresponding to one sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coi</code></td>
+<td>
+<p>a vector containing complexity of infection for each sample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>afreq</code></td>
+<td>
+<p>a list of allele frequencies. Each element of the list
+corresponds to a locus.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dsmp2</code></td>
+<td>
+<p>a list representing a second dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coi2</code></td>
+<td>
+<p>a vector with complexities of infection for a second dataset.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>a logical value specifying if p-values should be returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confint</code></td>
+<td>
+<p>a logical value specifying if confidence intervals should be
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rnull</code></td>
+<td>
+<p>a null value of relatedness parameter for hypothesis testing
+(needed if <code>pval = TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>significance level for a 1 -
+α confidence region.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nr</code></td>
+<td>
+<p>an integer specifying precision of the estimate: resolution of
+a grid of parameter values ([0, 1]
+divided into <code>nr</code> equal intervals), over which the likelihood will be
+calculated. Ignored if non-null <code>reval</code> is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reval</code></td>
+<td>
+<p>a vector or a single-row matrix. A grid of parameter values,
+over which the likelihood will be calculated.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For this function, M is set to 1. If
+<code>confint = FALSE</code>, Newton's method is used to find the estimates,
+otherwise the likelihood is calculated for a grid of parameter values.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix if <code>pval</code> and <code>confint</code> are <code>FALSE</code> and
+3-dimensional arrays otherwise. The matrices are lower triangular if
+distances are calculated within a dataset. For a 3-dimensional array,
+stacked matrices contain relatedness estimates, p-values, and endpoints of
+confidence intervals (if requested).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ibdPair</code> for genetic relatedness between two samples
+and <code>ibdEstM</code> for estimating the number of related pairs of
+strains.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">coi   &lt;- getCOI(dsmp, lrank = 2)           # estimate COI
+afreq &lt;- calcAfreq(dsmp, coi, tol = 1e-5)  # estimate allele frequencies
+
+# subset of samples for faster processing
+i1 &lt;- 1:15     # from Maputo
+i2 &lt;- 31:40    # from Inhambane
+isub &lt;- c(i1, i2)
+
+# matrix is returned
+dres1 &lt;- ibdDat(dsmp[isub], coi[isub], afreq, pval = FALSE)
+dim(dres1)
+
+# test a null hypothesis H0: r = 0, change precision
+dres2 &lt;- ibdDat(dsmp[isub], coi[isub], afreq, pval = TRUE, rnull = 0,
+                nr = 1e2)
+dim(dres2)
+
+# test H0: r = 0.2, include 99% confidence intervals
+dres3 &lt;- ibdDat(dsmp[isub], coi[isub], afreq, pval = TRUE, confint = TRUE,
+                rnull = 0.2, alpha = 0.01)
+dres3[2, 1, ]
+
+# pairwise relatedness between two datasets, H0: r = 0
+drbetween &lt;- ibdDat(dsmp[i1], coi[i1], afreq,
+                    dsmp2 = dsmp[i2], coi2 = coi[i2])
+dim(drbetween)
+drbetween[1, 2, ]
+sum(is.na(drbetween[, , 1]))
+
+</code></pre>
+
+
+</div>

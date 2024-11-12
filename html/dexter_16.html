@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>information</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Functions of theta</h2>
+
+<h3>Description</h3>
+
+<p>returns information function, expected score function, score simulation function, or score distribution 
+for a single item, an arbitrary group of items or all items
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">information(
+  parms,
+  items = NULL,
+  booklet_id = NULL,
+  parms_draw = c("average", "sample")
+)
+
+expected_score(
+  parms,
+  items = NULL,
+  booklet_id = NULL,
+  parms_draw = c("average", "sample")
+)
+
+r_score(
+  parms,
+  items = NULL,
+  booklet_id = NULL,
+  parms_draw = c("average", "sample")
+)
+
+p_score(
+  parms,
+  items = NULL,
+  booklet_id = NULL,
+  parms_draw = c("average", "sample")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>parms</code></td>
+<td>
+<p>object produced by <code>fit_enorm</code> or a data.frame with columns item_id, item_score and, 
+depending on parametrization, a column named either beta/delta, eta or b</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>items</code></td>
+<td>
+<p>vector of one or more item_id's. If NULL and booklet_id is also NULL, all items in parms are used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>booklet_id</code></td>
+<td>
+<p>id of a single booklet (e.g. the test information function), if items is not NULL this is ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms_draw</code></td>
+<td>
+<p>when the item parameters are estimated with method "Bayes" (see: <code>fit_enorm</code>), 
+parms_draw specifies whether to use a sample (a different item parameter draw for each output column) or the posterior mean
+of the item draws. Alternatively, it can be an integer specifying a specific draw. It is ignored when parms is not estimated Bayesianly.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Each function returns a new function which accepts a vector of theta's. These return the following values: 
+</p>
+
+<dl>
+<dt>information</dt>
+<dd>
+<p>an equal length vector with the information estimate at each value of theta.</p>
+</dd>
+<dt>expected_score</dt>
+<dd>
+<p>an equal length vector with the expected score at each value of theta</p>
+</dd>
+<dt>r_score</dt>
+<dd>
+<p>a matrix with length(theta) rows and one column for each item containing simulated scores based on theta. 
+To obtain test scores, use rowSums on this matrix</p>
+</dd>
+<dt>p_score</dt>
+<dd>
+<p>a matrix with length(theta) rows and one column for each possible sumscore containing the probability of 
+the score given theta</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+db = start_new_project(verbAggrRules,':memory:')
+add_booklet(db,verbAggrData, "agg")
+p = fit_enorm(db)
+
+# plot information function for single item
+
+ifun = information(p, "S1DoScold")
+
+plot(ifun,from=-4,to=4)
+
+# compare test information function to the population ability distribution
+
+ifun = information(p, booklet="agg")
+
+pv = plausible_values(db,p)
+
+op = par(no.readonly=TRUE)
+par(mar = c(5,4,2,4))
+
+plot(ifun,from=-4,to=4, xlab='theta', ylab='test information')
+
+par(new=TRUE)
+
+plot(density(pv$PV1), col='green', axes=FALSE, xlab=NA, ylab=NA, main=NA)
+axis(side=4)
+mtext(side = 4, line = 2.5, 'population density (green)')
+
+par(op)
+close_project(db)
+
+
+
+</code></pre>
+
+
+</div>

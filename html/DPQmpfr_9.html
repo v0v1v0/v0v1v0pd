@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lgamma1pM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute  log( Gamma(x+1) ) Arbitrarily (MPFR) Accurately</h2>
+
+<h3>Description</h3>
+
+<p>Computes <code class="reqn">\log \Gamma(x+1)</code> accurately notably when <code class="reqn">|x| \ll 1</code>.
+
+For <code>"mpfr"</code> numbers, the precision is increased intermediately such
+that <code class="reqn">a+1</code> should not lose precision.
+</p>
+<p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s "own" double prec version is
+soon 
+available in package in <a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a>,
+
+
+under the name <code>gamln1()</code> (from TOMS 708).
+
+</p>
+
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+lgamma1pM(a, usePr = NULL, DPQmethod = c("lgamma1p", "algam1"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>a numeric or numeric-alike vector, typically inheriting from
+<code>class</code> <code>"mpfr"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>usePr</code></td>
+<td>
+<p>positive integer specifying the precision in <b>bit</b>s, or
+<code>NULL</code> when a smart default will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DPQmethod</code></td>
+<td>
+<p>a character string; must be the name of an
+<code>lgamma1p()</code>-alike function from package <a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a>.  It will
+be called in case of <code>is.numeric(a)</code> (and when <span class="pkg">DPQ</span> is available).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a numeric-alike vector like <code>a</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>TOMS 708, see <code>pbeta</code>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lgamma()</code> (and <code>gamma()</code> (same page)),
+and our <code>algdivM()</code>; further, package <a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a>'s
+<code>lgamma1p()</code> and
+(if already available) <code>gamln1()</code>. 
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Package {DPQ}'s  lgamma1p():
+lgamma1p &lt;- DPQ::lgamma1p
+lg1 &lt;- function(u) lgamma(u+1) # the simple direct form
+u &lt;- seq(-.5, 1.5, by=1/16); set.seed(1); u &lt;- sample(u) # permuted (to check logic)
+
+g11   &lt;- vapply(u, lgamma1p, numeric(1))
+lgamma1p. &lt;- lgamma1p(u)
+all.equal(lg1(u), g11, tolerance = 0) # see 3.148e-16
+stopifnot(exprs = {
+    all.equal(lg1(u), g11, tolerance = 2e-15)
+    identical(g11, lgamma1p.)
+})
+
+## Comparison using Rmpfr; slightly extending the [-.5, 1.5] interval:
+u &lt;- seq(-0.525, 1.525, length.out = 2001)
+lg1p  &lt;- lgamma1pM(   u)
+lg1pM &lt;- lgamma1pM(Rmpfr::mpfr(u, 128))
+asNumeric &lt;- Rmpfr::asNumeric
+relErrV   &lt;- sfsmisc::relErrV
+if(FALSE) { # DPQ "latest" version __FIXME__
+lng1  &lt;- DPQ::lngam1(u)
+relE &lt;- asNumeric(relErrV(lg1pM, cbind(lgamma1p = lg1p, lngam1 = lng1)))
+} else {
+relE &lt;- asNumeric(relErrV(lg1pM, cbind(lgamma1p = lg1p)))#, lngam1 = lng1)))
+}
+
+## FIXME: lgamma1p() is *NOT* good around u =1. -- even though it should
+##        and the R-only vs (not installed) *does* "work" (is accurate there) ?????
+## --&gt; ~/R/Pkgs/DPQ/TODO_R_versions_gam1_etc.R
+if(FALSE) {
+matplot(u, relE, type="l", ylim = c(-1,1) * 2.5e-15,
+     main = expression("relative error of " ~~ lgamma1p(u) == log( Gamma(u+1) )))
+} else {
+plot(relE ~ u, type="l", ylim = c(-1,1) * 2.5e-15,
+     main = expression("relative error of " ~~ lgamma1p(u) == log( Gamma(u+1) )))
+}
+grid(lty = 3); abline(v = c(-.5, 1.5), col = adjustcolor(4, 1/2), lty=2, lwd=2)
+
+## what about the direct formula -- how bad is it really ?
+relED &lt;- asNumeric(relErrV(lg1pM, lg1(u)))
+lines(relED ~ u, col = adjustcolor(2, 1/2), lwd = 2)
+</code></pre>
+
+
+</div>

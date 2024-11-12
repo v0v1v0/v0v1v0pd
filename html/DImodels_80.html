@@ -1,0 +1,147 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Switzerland</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+The "Switzerland" Dataset
+</h2>
+
+<h3>Description</h3>
+
+
+<p>This dataset comes from a grassland biodiversity experiment that was conducted in Switzerland as part of the "Agrodiversity Experiment" (Kirwan et al 2014). A total of 68 grassland plots were established across a gradient of species diversity, and two additional treatments (nitrogen fertiliser and total seed density) were also manipulated. The proportions of four species were varied across the plots: there were plots with 100% of a single species, and 2- and 4-species mixtures with  varying proportions (e.g., (0.5, 0.5, 0, 0) and (0.7, 0.1, 0.1, 0.1)). Nitrogen fertiliser was either 50 or 100 kg N per annum and total seed density was either low or high. Total annual yield per plot was recorded for the first year after establishment. An analysis of the Switzerland dataset is presented in Kirwan et al 2009. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("Switzerland")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 68 observations on the following 8 variables:
+</p>
+
+<dl>
+<dt><code>plot</code></dt>
+<dd>
+<p>A numeric vector uniquely identifying each of the 68 plots.</p>
+</dd>
+<dt><code>nitrogen</code></dt>
+<dd>
+<p>A factor with two levels: "50" or "150" to indicate the level of nitrogen fertiliser (kg N per annum) applied to the plot.</p>
+</dd>
+<dt><code>density</code></dt>
+<dd>
+<p>A factor with two levels: "low" and "high" to indicate the level of total seed density used when sowing the plot.</p>
+</dd>
+<dt><code>p1</code></dt>
+<dd>
+<p>A numeric vector indicating the proportion of species 1 in the plot. Species 1 was the grass species <em>Lolium perenne</em>.</p>
+</dd>
+<dt><code>p2</code></dt>
+<dd>
+<p>A numeric vector indicating the proportion of species 2 in the plot. Species 2 was the grass species <em>Dactylis glomerata</em>.</p>
+</dd>
+<dt><code>p3</code></dt>
+<dd>
+<p>A numeric vector indicating the proportion of species 3 in the plot. Species 3 was the legume species <em>Trifolium pratense</em>.</p>
+</dd>
+<dt><code>p4</code></dt>
+<dd>
+<p>A numeric vector indicating the proportion of species 4 in the plot. Species 4 was the legume species <em>Trifolium repens</em>.</p>
+</dd>
+<dt><code>yield</code></dt>
+<dd>
+<p>A numeric vector giving the total dry matter yield for the plot (tonnes per hectare per annum).</p>
+</dd> 
+</dl>
+<h3>Details</h3>
+
+
+<p><strong>What are Diversity-Interactions (DI) models?</strong>
+</p>
+<p>Diversity-Interactions (DI) models (Kirwan et al 2009) are a set of tools for analysing and interpreting data from experiments that explore the effects of species diversity on community-level responses. We strongly recommend that users read the short introduction to Diversity-Interactions models (available at: <code>DImodels</code>). Further information on Diversity-Interactions models is also available in Kirwan et al 2009 and Connolly et al 2013.
+</p>
+<p><strong>Functional groups</strong>
+</p>
+<p>In Ecology, species can be categorised into 'functional groups' based on their traits and functions. Here, the four species comprise two grasses (species 1 and 2) and two legumes (species 3 and 4); this is one possible 'functional group' categorisation of the four species. 
+</p>
+
+
+<h3>Source</h3>
+
+
+<p>Kirwan L, J Connolly, C Brophy, O Baadshaug, G Belanger, A Black, T Carnus, R Collins, J Čop, I Delgado, A De Vliegher, A Elgersma, B Frankow-Lindberg, P Golinski, P Grieu, AM Gustavsson, Á Helgadóttir, M Höglind, O Huguenin-Elie, M Jørgensen, Ž Kadžiuliene, T Lunnan, A Lüscher, P Kurki, C Porqueddu, MT Sebastia, U Thumm, D Walmsley and JA Finn (2014) The Agrodiversity Experiment: three years of data from a multisite study in intensively managed grasslands. Ecology, 95, 2680.
+
+</p>
+
+
+<h3>References</h3>
+
+<p>Connolly J, T Bell, T Bolger, C Brophy, T Carnus, JA Finn, L Kirwan, F Isbell, J Levine, A Lüscher, V Picasso, C Roscher, MT Sebastia, M Suter and A Weigelt (2013) An improved model to predict the effects of changing biodiversity levels on ecosystem function. Journal of Ecology, 101, 344-355.
+</p>
+<p>Kirwan L, J Connolly, JA Finn, C Brophy, A Lüscher, D Nyfeler and MT Sebastia (2009) Diversity-interaction modelling - estimating contributions of species identities and interactions to ecosystem function. Ecology, 90, 2032-2038.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Load the Switzerland data
+  data(Switzerland)
+## View the first few entries
+  head(Switzerland)
+## Explore the variables in Switzerland
+  str(Switzerland)
+
+## Histogram of the response variable yield
+  hist(Switzerland$yield)
+## Explore the marginal relationship between yield and each predictor
+  plot(Switzerland$p1, Switzerland$yield)
+  plot(Switzerland$p2, Switzerland$yield)
+  plot(Switzerland$p3, Switzerland$yield)
+  plot(Switzerland$p4, Switzerland$yield)
+  boxplot(yield ~ nitrogen, data = Switzerland)
+  boxplot(yield ~ density, data = Switzerland)
+  
+## Check that the proportions sum to 1 (required for DI models)
+## p1 to p4 are in the 4th to 7th columns in Switzerland
+  Switzerlandsums &lt;- rowSums(Switzerland[4:7])
+  summary(Switzerlandsums)
+  
+## Model selection by F-test
+  auto1 &lt;- autoDI(y = "yield", density = "density", prop = c("p1","p2","p3","p4"), 
+                  treat = "nitrogen", FG = c("G","G","L","L"), data = Switzerland, 
+                  selection = "Ftest")
+  summary(auto1)
+  
+## Fit the model chosen by autoDI using DI
+  m1 &lt;- DI(y = "yield", density = "density", prop = 4:7, DImodel = "FG", FG = c("G","G","L","L"), 
+           data = Switzerland)
+  summary(m1)  
+  plot(m1)
+  
+
+## Check goodness-of-fit using a half-normal plot with a simulated envelope
+  library(hnp)
+  hnp(m1)
+
+  
+## Set up the functional group interactions and add to a new Switzerland2 dataset
+  FG_matrix &lt;- DI_data(prop = 4:7, FG = c("G","G","L","L"), 
+                          data = Switzerland, what = "FG")
+  Switzerland2 &lt;- data.frame(Switzerland, FG_matrix)
+  
+## Additional model testing using DI to test for interactions with nitrogen
+  m2 &lt;- DI(y = "yield", block = "density", prop = 4:7, DImodel = "FG", FG = c("G","G","L","L"), 
+           data = Switzerland2, extra_formula = ~ nitrogen:bfg_G_L)
+  summary(m2) 
+
+</code></pre>
+
+
+</div>

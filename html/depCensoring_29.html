@@ -1,0 +1,129 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>NonParTrans</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a semiparametric transformation model for dependent censoring</h2>
+
+<h3>Description</h3>
+
+<p>This function allows to estimate the dependency parameter along all other model parameters. First, estimates a non-parametric transformation function, and
+then at the second stage it estimates other model parameters assuming that the non-parametric function is known. The details for
+implementing the dependent censoring methodology can be found in Deresa and Van Keilegom (2021).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">NonParTrans(
+  resData,
+  X,
+  W,
+  start = NULL,
+  n.iter = 15,
+  bootstrap = FALSE,
+  n.boot = 50,
+  eps = 0.001
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resData</code></td>
+<td>
+<p>Data matrix with three columns;  Z = the observed survival time, d1 = the censoring indicator of T
+and  d2 =  the censoring indicator of C.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Data matrix with covariates related to T</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>W</code></td>
+<td>
+<p>Data matrix with covariates related to C</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>Initial values for the finite dimensional parameters. If <code>start</code> is NULL, the initial values will be obtained
+by fitting an Accelerated failure time models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.iter</code></td>
+<td>
+<p>Number of iterations; the default is <code>n.iter = 20</code>. The larger the number of iterations, the longer the computational time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bootstrap</code></td>
+<td>
+<p>A boolean indicating whether to compute bootstrap standard errors for making inferences.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.boot</code></td>
+<td>
+<p>Number of bootstrap samples to use in the estimation of bootstrap standard errors if <code>bootstrap = TRUE</code>. The default is n.boot = 50. But, higher
+values  of <code>n.boot</code> are recommended for obtaining good estimates of bootstrap standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Convergence error. This is set by the user in such away that the desired convergence is met; the default is <code>eps = 1e-3</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>This function returns a fit of a semiparametric transformation model; parameter estimates, estimate of the non-parametric transformation function, bootstrap standard
+errors for finite-dimensional parameters, the nonparametric cumulative hazard function, etc.
+</p>
+
+
+<h3>References</h3>
+
+<p>Deresa, N. and Van Keilegom, I. (2021). On semiparametric modelling, estimation and inference for survival data subject to dependent censoring, Biometrika, 108, 965–979.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Toy data example to illustrate implementation
+n = 300
+beta = c(0.5, 1); eta = c(1,1.5); rho = 0.70
+sigma = matrix(c(1,rho,rho,1),ncol=2)
+err = MASS::mvrnorm(n, mu = c(0,0) , Sigma=sigma)
+err1 = err[,1]; err2 = err[,2]
+x1 = rbinom(n,1,0.5); x2 = runif(n,-1,1)
+X = matrix(c(x1,x2),ncol=2,nrow=n); W = X   # data matrix
+T1 = X%*%beta+err1
+C =  W%*%eta+err2
+T1 = exp(T1); C = exp(C)
+A = runif(n,0,8); Y = pmin(T1,C,A)
+d1 = as.numeric(Y==T1)
+d2 = as.numeric(Y==C)
+resData = data.frame("Z" = Y,"d1" = d1, "d2" = d2)   # should be data frame
+colnames(X) = c("X1", "X2")
+colnames(W) = c("W1","W2")
+
+#  Bootstrap is false by default
+output = NonParTrans(resData = resData, X = X, W = W, n.iter = 2)
+output$parameterEstimates
+
+
+</code></pre>
+
+
+</div>

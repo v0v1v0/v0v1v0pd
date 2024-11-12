@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>train</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Train models for forest detection</h2>
+
+<h3>Description</h3>
+
+<p>As input data, the function needs two folders- Nonforestdir with images of non-forest and Forestdir with ones of forest.
+train() uses all images in both folders to train a model. Putting an image into an incorrect folder is equivalent to
+tagging the image incorrectly.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">train(
+  n_pts,
+  model = c("fr_Non-Param", "fr_Param"),
+  Forestdir,
+  Nonforestdir,
+  train_method = c("cv", "train"),
+  k_folds,
+  parallel = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>n_pts</code></td>
+<td>
+<p>matters only when train_method='cv'. Defines the size of the square sub-frames into which images would be split during cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>which model to train</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Forestdir</code></td>
+<td>
+<p>path to the directory with (only) forest images</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Nonforestdir</code></td>
+<td>
+<p>path to the directory with (only) non-forest images</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>train_method</code></td>
+<td>
+<p>how to train the model: simple training, cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k_folds</code></td>
+<td>
+<p>matters only when train_method='cv'. The number of folds in the k-fold cross-validation setup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>matters only when train_method='cv'. Boolean. whether or not use a parallel setting during cross-validation</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Currently, both fr_Non-Param and fr_Param use parameter n_pts only in the testing part of cross-validation, not during training.
+Training is always done on whole original images in the training folders.
+</p>
+
+
+<h3>Value</h3>
+
+<p>object of class ForestTrain potentially with a sub-class. See <code>Class_ForestTrain</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(deforestable)
+n_pts &lt;- 20
+
+# Choosing folders with training data
+Forestdir &lt;- system.file('extdata/Forest/', package = "deforestable")
+Nonforestdir &lt;- system.file('extdata/Non-forest/', package = "deforestable")
+
+k_folds=3;
+
+#### Read the target image ####
+tg_dir &lt;- system.file('extdata/', package = "deforestable")
+test_image &lt;- read_data_raster('smpl_1.jpeg', dir = tg_dir)
+
+
+#### Models ####
+
+
+# Simple training of the non-parametric model
+Model_nonP_tr &lt;- train(model='fr_Non-Param', Forestdir=Forestdir, Nonforestdir=Nonforestdir,
+                       train_method='train', parallel=FALSE)
+
+res &lt;- classify(data=test_image, Model=Model_nonP_tr,
+                n_pts=n_pts, parallel=FALSE, progress = 'text')
+
+tmp_d &lt;- tempdir(); tmp_d
+jpeg::writeJPEG(image=res, target=paste(tmp_d,'Model_nonP_tr.jpeg', sep='/'))
+
+
+# Cross-validation of the non-parametric model
+Model_nonP_cv &lt;- train(n_pts=n_pts, model='fr_Non-Param', Forestdir=Forestdir,
+                       Nonforestdir=Nonforestdir, train_method='cv',
+                       k_folds=k_folds, parallel=FALSE)
+
+res &lt;- classify(data=test_image, Model=Model_nonP_cv,
+                n_pts=n_pts, parallel=FALSE, progress = 'text')
+
+tmp_d &lt;- tempdir(); tmp_d
+jpeg::writeJPEG(image=res, target=paste(tmp_d,'Model_nonP_cv.jpeg', sep='/'))
+
+
+
+
+# Cross-validation of the parametric model
+Model_P_cv &lt;- train(n_pts=n_pts, model='fr_Param', Forestdir=Forestdir,
+                    Nonforestdir=Nonforestdir, train_method='cv',
+                    k_folds=k_folds, parallel=FALSE)
+
+res &lt;- classify(data=test_image, Model=Model_P_cv,
+                n_pts=n_pts, parallel=FALSE, progress = 'text')
+
+tmp_d &lt;- tempdir(); tmp_d
+jpeg::writeJPEG(image=res, target=paste(tmp_d,'Model_P_cv.jpeg', sep='/'))
+
+
+# Simple training of the parametric model
+Model_P_tr &lt;- train(model='fr_Param', Forestdir=Forestdir, Nonforestdir=Nonforestdir,
+                    train_method='train', parallel=FALSE)
+res &lt;- classify(data=test_image, Model=Model_P_tr,
+                n_pts=n_pts, parallel=FALSE, progress = 'text')
+
+tmp_d &lt;- tempdir(); tmp_d
+jpeg::writeJPEG(image=res, target=paste(tmp_d,'Model_P_tr.jpeg', sep='/'))
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,283 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>correctSigns</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Correct sign errors and value interchanges in data records</h2>
+
+<h3>Description</h3>
+
+<p>Correct sign errors and value interchanges in data records.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">correctSigns(E, dat, ...)
+
+## S3 method for class 'editset'
+correctSigns(E, dat, ...)
+
+## S3 method for class 'editmatrix'
+correctSigns(E, dat, flip = getVars(E), swap = list(),
+  maxActions = length(flip) + length(swap), maxCombinations = 1e+05,
+  eps = sqrt(.Machine$double.eps), weight = rep(1, length(flip) +
+  length(swap)), fixate = NA, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>An object of class <code>editmatrix</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p><code>data.frame</code>, the records to correct.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>arguments to be passed to other methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flip</code></td>
+<td>
+<p>A <code>character</code> vector of variable names who's values may be sign-flipped</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>swap</code></td>
+<td>
+<p>A <code>list</code> of <code>character</code> 2-vectors of variable combinations who's values may be swapped</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxActions</code></td>
+<td>
+<p>The maximum number of flips and swaps that may be performed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxCombinations</code></td>
+<td>
+<p>The number of possible flip/swap combinations in each step of the algorithm is <code>choose(n,k)</code>, with <code>n</code>
+the number of <code>flips+swaps</code>, and <code>k</code> the number of actions taken in that step. If <code>choose(n,k)</code> exceeds <code>maxCombinations</code>,
+the algorithm returns a record uncorrected.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>Tolerance to check equalities against. Use this to account for sign errors masked by rounding errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight</code></td>
+<td>
+<p>weight vector. Weights can be assigned either to actions (flips and swap) or to variables.
+If <code>length(weight)==length(flip)+length(swap)</code>, weights are assiged to actions, if <code>length(weight)==ncol(E)</code>, weights
+are assigned to variables. In the first case, the first <code>length{flip}</code> weights correspond to flips, the rest to swaps.
+A warning is issued in the second case when the weight vector is not named. See the examples for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixate</code></td>
+<td>
+<p>a <code>character</code> vector with names of variables whos values may not be changed</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This algorithm tries to correct records violating linear equalities by sign flipping and/or value interchanges.
+Linear inequalities are taken into account when judging possible solutions. If one or more inequality restriction
+is violated, the solution is rejected. It is important to note that the <code>status</code> of a record has
+the following meaning:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>valid</code> </td>
+<td style="text-align: left;"> The record obeys all equality constraints on entry. No error correction is performed. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      </td>
+<td style="text-align: left;"> It may therefore still contain inequality errors.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>corrected</code> </td>
+<td style="text-align: left;"> Equality errors were found, and all of them are solved without violating inequalities.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>partial</code>
+</td>
+<td style="text-align: left;"> Does not occur</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>invalid</code> </td>
+<td style="text-align: left;"> The record contains equality violations which could not be solved with this algorithm</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>NA</code> </td>
+<td style="text-align: left;"> record could not be checked. It contained missings.
+</td>
+</tr>
+</table>
+<p>The algorithm applies all combinations of (user-allowed) flip- and swap combinations to find a solution, and minimizes
+the number of actions (flips+swaps) that have to be taken to correct a record. When multiple solutions are found, the
+solution of minimal weight is chosen. The user may provide a weight vector with weights for every flip and every swap,
+or a named weight vector with a weight for every variable. If the weights do not single out a solution, the first one
+found is chosen.
+</p>
+<p>If arguments <code>flip</code> or <code>swap</code> contain a variable not in <code>E</code>, these variables will be ignored by the algorithm.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a <code>deducorrect-object</code>. The <code>status</code> slot has the following columns for every records in <code>dat</code>.
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+     <code>status</code>
+</td>
+<td style="text-align: left;"> a <code>status</code> factor, showing the status of the treated record.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>degeneracy</code>
+</td>
+<td style="text-align: left;"> the number of solutions found, <em>after</em> applying the weight</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>weight</code>
+</td>
+<td style="text-align: left;"> the weight of the chosen solution</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>nflip</code>
+</td>
+<td style="text-align: left;"> the number of applied sign flips</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>nswap</code>
+</td>
+<td style="text-align: left;"> the number of applied value interchanges</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+ </td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Scholtus S (2008). Algorithms for correcting some obvious
+inconsistencies and rounding errors in business survey data. Technical
+Report 08015, Netherlands.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>deducorrect-object</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# some data 
+dat &lt;- data.frame(
+    x = c( 3,14,15,  1, 17,12.3),
+    y = c(13,-4, 5,  2,  7, -2.1),
+    z = c(10,10,-10, NA,10,10 ))
+# ... which has to obey
+E &lt;- editmatrix(c("z == x-y"))
+
+# All signs may be flipped, no swaps.
+
+correctSigns(E, dat)
+
+# Allow for rounding errors
+correctSigns(E, dat, eps=2)
+
+# Limit the number of combinations that may be tested 
+correctSigns(E, dat, maxCombinations=2)
+
+# fix z, flip everything else
+correctSigns(E, dat,fixate="z")
+
+# the same result is achieved with
+correctSigns(E, dat, flip=c("x","y"))
+
+# make x and y swappable, allow no flips
+correctSigns(E, dat, flip=c(), swap=list(c("x","y")))
+
+# make x and y swappable, swap a counts as one flip
+correctSigns(E, dat, flip="z", swap=list(c("x","y")))
+
+# same, but now, swapping is preferred (has lower weight)
+correctSigns(E, dat, flip="z", swap=list(c("x","y")), weight=c(2,1))
+
+# same, but now becayse x any y carry lower weight. Also allow for rounding errors
+correctSigns(E, dat, flip="z", swap=list(c("x","y")), eps=2, weight=c(x=1, y=1, z=3))
+
+# demand that solution has y&gt;0
+E &lt;- editmatrix(c("z==x-y", "y&gt;0"))
+correctSigns(E,dat)
+
+# demand that solution has y&gt;0, taking acount of roundings in equalities
+correctSigns(E,dat,eps=2)
+
+# example with editset
+E &lt;- editset(expression(
+    x + y == z,
+    x &gt;= 0,
+    y &gt; 0,
+    y &lt; 2,
+    z &gt; 1,
+    z &lt; 3,
+    A %in% c('a','b'),
+    B %in% c('c','d'),
+    if ( A == 'a' ) B == 'b',
+    if ( B == 'b' ) x &lt; 1
+))
+
+x &lt;- data.frame(
+    x = -1,
+    y = 1,
+    z = 2,
+    A = 'a',
+    B = 'b'
+)
+
+correctSigns(E,x)
+
+
+
+   
+   
+</code></pre>
+
+
+</div>

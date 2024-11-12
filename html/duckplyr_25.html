@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>config</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Configuration options</h2>
+
+<h3>Description</h3>
+
+<p>The behavior of duckplyr can be fine-tuned with several environment variables,
+and one option.
+</p>
+
+
+<h3>Options</h3>
+
+<p><code>duckdb.materialize_message</code>: Set to <code>FALSE</code> to turn off diagnostic output from duckdb
+on data frame materialization.
+Currenty set to <code>TRUE</code> when duckplyr is loaded.
+</p>
+
+
+<h3>Environment variables</h3>
+
+<p><code>DUCKPLYR_OUTPUT_ORDER</code>: If <code>TRUE</code>, row output order is preserved.
+The default may change the row order where dplyr would keep it stable.
+</p>
+<p><code>DUCKPLYR_FORCE</code>: If <code>TRUE</code>, fail if duckdb cannot handle a request.
+</p>
+<p><code>DUCKPLYR_FALLBACK_INFO</code>: If <code>TRUE</code>, print a message when a fallback to dplyr occurs
+because duckdb cannot handle a request.
+</p>
+<p><code>DUCKPLYR_CHECK_ROUNDTRIP</code>: If <code>TRUE</code>, check if all columns are roundtripped perfectly
+when creating a relational object from a data frame,
+This is slow, and mostly useful for debugging.
+The default is to check roundtrip of attributes.
+</p>
+<p><code>DUCKPLYR_EXPERIMENTAL</code>: If <code>TRUE</code>, pass <code>experimental = TRUE</code>
+to certain duckdb functions.
+Currently unused.
+</p>
+<p><code>DUCKPLYR_METHODS_OVERWRITE</code>: If <code>TRUE</code>, call <code>methods_overwrite()</code>
+when the package is loaded.
+</p>
+<p>See fallback for more options related to logging and uploading of fallback events.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># options(duckdb.materialize_message = FALSE)
+data.frame(a = 3:1) %&gt;%
+  as_duckplyr_df() %&gt;%
+  inner_join(data.frame(a = 1:4), by = "a")
+
+rlang::with_options(duckdb.materialize_message = FALSE, {
+  data.frame(a = 3:1) %&gt;%
+    as_duckplyr_df() %&gt;%
+    inner_join(data.frame(a = 1:4), by = "a") %&gt;%
+    print()
+})
+
+# Sys.setenv(DUCKPLYR_OUTPUT_ORDER = TRUE)
+data.frame(a = 3:1) %&gt;%
+  as_duckplyr_df() %&gt;%
+  inner_join(data.frame(a = 1:4), by = "a")
+
+withr::with_envvar(c(DUCKPLYR_OUTPUT_ORDER = "TRUE"), {
+  data.frame(a = 3:1) %&gt;%
+    as_duckplyr_df() %&gt;%
+    inner_join(data.frame(a = 1:4), by = "a")
+})
+
+# Sys.setenv(DUCKPLYR_FORCE = TRUE)
+add_one &lt;- function(x) {
+  x + 1
+}
+
+data.frame(a = 3:1) %&gt;%
+  as_duckplyr_df() %&gt;%
+  mutate(b = add_one(a))
+
+try(withr::with_envvar(c(DUCKPLYR_FORCE = "TRUE"), {
+  data.frame(a = 3:1) %&gt;%
+    as_duckplyr_df() %&gt;%
+    mutate(b = add_one(a))
+}))
+
+# Sys.setenv(DUCKPLYR_FALLBACK_INFO = TRUE)
+withr::with_envvar(c(DUCKPLYR_FALLBACK_INFO = "TRUE"), {
+  data.frame(a = 3:1) %&gt;%
+    as_duckplyr_df() %&gt;%
+    mutate(b = add_one(a))
+})
+</code></pre>
+
+
+</div>

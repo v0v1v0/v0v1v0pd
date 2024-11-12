@@ -1,0 +1,212 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>store_in_DB</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Store data in SQLite database</h2>
+
+<h3>Description</h3>
+
+<p>Write, read and delete tables from SQLite database.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">list_DB(database)
+
+write_to_DB(
+  database,
+  data,
+  table,
+  overwrite = FALSE,
+  append = FALSE,
+  verbose = TRUE
+)
+
+index_DB(database, table, index.unique, index.column.name, verbose = TRUE)
+
+read_from_DB(
+  database,
+  table,
+  choose.columns = FALSE,
+  column.names,
+  select = FALSE,
+  select.column.name,
+  select.val,
+  unique = FALSE
+)
+
+delete_from_DB(database, table, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>database</code></td>
+<td>
+<p>character; SQLite database name and path.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data frame that should be stored as database table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table</code></td>
+<td>
+<p>character; table name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>logical; use <code>overwrite = TRUE</code> if you want to overwrite a table that already exists in database</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>append</code></td>
+<td>
+<p>logical; append rows to table</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index.unique</code></td>
+<td>
+<p>logical; vector of indicators to create unique or not unique indexes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>index.column.name</code></td>
+<td>
+<p>vector of indexed columns' names</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>choose.columns</code></td>
+<td>
+<p>logical; return chosen columns only</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>column.names</code></td>
+<td>
+<p>character; vector of name of columns that are chosen to be returned</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select</code></td>
+<td>
+<p>logical; return only rows that contain selected values in one column</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select.column.name</code></td>
+<td>
+<p>character; name of column that contains selected values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select.val</code></td>
+<td>
+<p>vector of values that define rows that should be returned</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unique</code></td>
+<td>
+<p>logical; delete duplicated rows</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This functions help to store big data frames in SQLite database which makes it faster to save and read the data.
+</p>
+<p>This function creates SQLlite connection to database, fulfills the task and then disconnects.
+If no database has been created yet, creates one.
+</p>
+<p>Do not use <code>overwrite = TRUE</code> if table does not exists.
+Do not use <code>append = TRUE</code> and <code>overwrite = TRUE</code> at the same time, no append is possible while overwriting.
+</p>
+<p>If multiple indexes are created in one table, they are unrelated.
+</p>
+<p>Do not use dots in data frame character variables, use underscore.
+</p>
+<p>Parameters <code>choose.columns=FALSE, column.names, select, select.column.name, select.val, unique</code> are only used with
+linkread_from_DB function. Those parameters define rows and columns that will be returned.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>list_DB</code> returns character vector of names of database tables.
+</p>
+<p><code>read_from_DB</code> returns a data frame with the content of SQLite table.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>list_DB</code>: Lists all tables from SQLite database
+</p>
+</li>
+<li> <p><code>write_to_DB</code>: Writes data frame into SQLite database table
+</p>
+</li>
+<li> <p><code>index_DB</code>: Creates SQLite indexes in database table
+</p>
+</li>
+<li> <p><code>read_from_DB</code>: Reads table from SQLite database and writes it into data frame.
+</p>
+</li>
+<li> <p><code>delete_from_DB</code>: Deletes table from SQLite database.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">mydata &lt;- as.data.frame (matrix(1:10, 2, 5))
+database &lt;- tempfile()
+write_to_DB (database, data = mydata, table = "table1", overwrite = FALSE)
+list_DB (database)
+mydata2 &lt;- as.data.frame (matrix(11:20, 2, 5))
+write_to_DB (database, data = mydata2, table = "table1", overwrite = TRUE)
+mydata3 &lt;- read_from_DB (database, table = "table1")
+delete_from_DB (database, table = "table1")
+file.remove (database)
+
+# example with reading table with restricted columns and rows.
+mydata &lt;- data.frame(ids = c(1:6), titles = c("A", "B", "C", "D", "E", "E"),
+                    other = rep("other", 6))
+database &lt;- tempfile()
+write_to_DB (database, data = mydata, table = "table1", overwrite = FALSE)
+read_from_DB(database, "table1", choose.columns = TRUE, column.names = c("ids", "titles", "other"),
+            select = TRUE, select.column.name = "ids",  select.val = 3:6, unique = TRUE)
+read_from_DB(database, "table1", choose.columns = TRUE, column.names = c("titles", "other"),
+            select = TRUE, select.column.name = "ids",  select.val = 3:6, unique = TRUE)
+file.remove (database)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,203 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>scenario_mc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform a Monte Carlo simulation for predefined scenarios.</h2>
+
+<h3>Description</h3>
+
+<p>This function is a wrapper around the <code>mc_Simulation</code> function that facilitates
+implementation of scenarios. The standard <code>mc_Simulation</code> function only allows
+specifying one set of estimates (i.e. distribution, lower and upper bounds) for each random
+variable. This is inconvenient when we want to run simulations for heterogeneous populations
+that include subsets with particular characteristics, e.g. small and large farms. It may
+then make sense to specify separate distributions for input variables for each of the subsets.
+The <code>scenario_mc</code> function facilitates this.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">scenario_mc(
+  base_estimate,
+  scenarios,
+  model_function,
+  ...,
+  numberOfModelRuns = NA,
+  randomMethod = "calculate",
+  functionSyntax = "data.frameNames",
+  relativeTolerance = 0.05,
+  verbosity = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>base_estimate</code></td>
+<td>
+<p><code>estimate</code>: this object corresponds to the <code>estimate</code> object
+in <code>mc_Simulation</code>. The distributions that are specified through <code>base_estimate</code>
+are used as default distributions in the simulation, but their parameters can be overridden by
+information in the <code>scenarios</code> data.frame. In brief, this is an estimate of the joint probability distribution of
+the input variables. This can be read from a csv file and calculated with the
+<code>estimate_read_csv</code> function. It can also be generated with the 
+<code>as.estimate</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scenarios</code></td>
+<td>
+<p><code>data.frame</code>: Specifies values that should be adjusted in each scenario.
+Must contain columns <code>Variable</code> and <code>param</code> and one column for each scenario. The
+<code>Variable</code> column can only contain variable names that appear in <code>base_estimate</code>, as well 
+as a <code>Runs</code> element. The <code>param</code> column can only contain the strings <code>distribution</code>,
+<code>lower</code> and <code>upper</code>, except for the row corresponding to <code>Runs</code> in the <code>Variable</code>
+column (for this the entry doesn't matter). For each scenario column (whose name is the scenario
+name), the scenario-specific values must be specified. If the value in the <code>Runs</code> row is NA,
+the <code>numberOfModelRuns</code> object will be used instead (if that's also NA, you get an error). <code>param</code>
+can also be "both", in which case both lower and upper bounds are set to the respective number, and
+the distribution is set to "const".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_function</code></td>
+<td>
+<p><code>function</code>: The function that transforms the input distribution. It 
+has to return a single <code>numeric</code> value or a <code>list</code> with named <code>numeric</code> values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Optional arguments of <code>model_function</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numberOfModelRuns</code></td>
+<td>
+<p>The number of times to run the model function. This doesn't need to be
+provided when the <code>scenarios</code> data.frame contains a <code>Runs</code> line that specifies a
+particular number of runs for each scenario.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>randomMethod</code></td>
+<td>
+<p><code>character</code>: The method to be used to sample the distribution
+representing the input estimate. For details see option <code>method</code> in 
+<code>random.estimate</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>functionSyntax</code></td>
+<td>
+<p><code>character</code>: The syntax which has to be used to implement the model
+function. Possible values are <code>"data.frameNames"</code>,
+<code>"matrixNames"</code> or <code>"plainNames"</code>. Details are given below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>relativeTolerance</code></td>
+<td>
+<p><code>numeric</code>: the relative tolerance level of deviation of the
+generated confidence interval from the specified interval. If this deviation is greater than
+<code>relativeTolerance</code> a warning is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbosity</code></td>
+<td>
+<p><code>integer</code>: if <code>0</code> the function is silent; the larger the value the
+more verbose is output information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See documentation of the <code>mc_Simulation</code> function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of <code>class mcSimulation</code>, which is a <code>list</code> with elements:
+</p>
+
+<dl>
+<dt><code>$x</code></dt>
+<dd>
+<p><code>data.frame</code> containing the sampled <code class="reqn">x -</code> (input) values which are generated 
+from <code>base_estimate</code> and possibly modified by <code>scenarios</code>. To identify the scenario, the scenario name is provided in the
+<code>scenario</code> column.
+</p>
+</dd>
+<dt><code>$y</code></dt>
+<dd>
+<p><code>data.frame</code> containing the simulated <code class="reqn">y -</code> (output) values, i.e. the model 
+function values for <code>x</code>.The return of the decision model function may include the
+assignment of names for the output variables, e.g. like this:
+</p>
+<pre>
+           profit &lt;- function(x){
+            revenue - costs
+            return(list(Revenue = revenue,
+                   Costs = cost))
+         }
+       </pre>
+</dd>
+</dl>
+<h3>See Also</h3>
+
+<p><code>mcSimulation</code>, <code>print.mcSimulation</code>, <code>summary.mcSimulation</code>, <code>hist.mcSimulation</code>, <code>estimate</code>, <code>random.estimate</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> 
+ ### define a model_function
+ 
+ profit&lt;-function(x)
+ {profit&lt;-benefit_1+benefit_2-cost_1-cost_2
+   return(Profit=profit)}
+   
+ ### define a base_estimate, to be used when no other information is provided
+ # through the scenario data.frame
+   
+ base_estimate&lt;-as.estimate(variable=c("cost_1","cost_2","benefit_1","benefit_2"),
+                              distribution=c("norm","posnorm","norm","posnorm"),
+                              lower=c(40,10,50,30),
+                              upper=c(100,200,300,100))
+            
+ ### define a scenario data.frame, which will override values in the base_estimate
+                                     
+ scenarios&lt;-data.frame(Variable=c("Runs","cost_1","cost_1","cost_1","cost_2","cost_2",
+                                  "benefit_1","benefit_1","benefit_2"),
+                       param=c("x","lower","upper","distribution","lower","upper",
+                               "lower","upper","lower"),
+                       Scenario_1=c(100,40,70,"posnorm",30,90,20,35,10),
+                       Scenario_2=c(50,100,200,"norm",10,40,35,75,5),
+                       Scenario_3=c(10,400,750,"norm",400,600,30,70,60))
+                       
+ ### run a simulation
+              
+ results&lt;-scenario_mc(base_estimate, scenarios, model_function=profit,
+                      functionSyntax="plainNames")
+                      
+ ### plot and inspect results
+ 
+ hist(results)
+ summary(results)
+ print(results)
+ 
+ 
+ 
+</code></pre>
+
+
+</div>

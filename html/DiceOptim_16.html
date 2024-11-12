@@ -1,0 +1,321 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EGO.nsteps</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sequential EI maximization and model re-estimation, with a number of
+iterations fixed in advance by the user</h2>
+
+<h3>Description</h3>
+
+<p>Executes <em>nsteps</em> iterations of the EGO method to an object of class
+<code>km</code>.  At each step, a kriging model is
+re-estimated (including covariance parameters re-estimation) based on the
+initial design points plus the points visited during all previous
+iterations; then a new point is obtained by maximizing the Expected
+Improvement criterion (<code>EI</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EGO.nsteps(
+  model,
+  fun,
+  nsteps,
+  lower,
+  upper,
+  parinit = NULL,
+  control = NULL,
+  kmcontrol = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code> ,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>the objective function to be minimized,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>an integer representing the desired number of iterations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parinit</code></td>
+<td>
+<p>optional vector of initial values for the variables to be
+optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>an optional list of control parameters for optimization. One
+can control
+</p>
+<p><code>"pop.size"</code> (default : [4+3*log(nb of variables)]),
+</p>
+<p><code>"max.generations"</code> (default :5),
+</p>
+<p><code>"wait.generations"</code> (default :2),
+</p>
+<p><code>"BFGSburnin"</code> (default :0),
+</p>
+<p>of the function <code>genoud</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kmcontrol</code></td>
+<td>
+<p>an optional list representing the control variables for
+the re-estimation of the kriging model.  The items are the same as in
+<code>km</code> :
+</p>
+<p><code>penalty</code>, <code>optim.method</code>, <code>parinit</code>, <code>control</code>.
+</p>
+<p>The default values are those contained in <code>model</code>, typically
+corresponding to the variables used in <code>km</code> to
+estimate a kriging model from the initial design points.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>a data frame representing the additional points visited during
+the algorithm,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>a data frame representing the response values at the points
+given in <code>par</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npoints</code></td>
+<td>
+<p>an integer representing the number of parallel computations
+(=1 here),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>an integer representing the desired number of iterations
+(given in argument),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastmodel</code></td>
+<td>
+<p>an object of class <code>km</code>
+corresponding to the last kriging model fitted.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Most EGO-like methods (EI algorithms) usually work with Ordinary
+Kriging (constant trend), by maximization of the expected improvement.
+Here, the EI maximization is also possible with any linear trend. However,
+note that the optimization may perform much faster and better when the
+trend is a constant since it is the only case where the analytical gradient
+is available.
+</p>
+<p>For more details on <code>kmcontrol</code>, see the documentation of
+<code>km</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>David Ginsbourger 
+</p>
+<p>Olivier Roustant
+</p>
+
+
+<h3>References</h3>
+
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global
+optimization of expensive black-box functions, <em>Journal of Global
+Optimization</em>, 13, 455-492.
+</p>
+<p>J. Mockus (1988), <em>Bayesian Approach to Global Optimization</em>. Kluwer
+academic publishers.
+</p>
+<p>T.J. Santner, B.J. Williams, and W.J. Notz (2003), <em>The design and
+analysis of computer experiments</em>, Springer.
+</p>
+<p>M. Schonlau (1997), <em>Computer experiments and global optimization</em>,
+Ph.D. thesis, University of Waterloo.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EI</code>, <code>max_EI</code>, <code>EI.grad</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+set.seed(123)
+###############################################################
+### 	10 ITERATIONS OF EGO ON THE BRANIN FUNCTION, 	   ####
+###	 STARTING FROM A 9-POINTS FACTORIAL DESIGN         ####
+###############################################################
+
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+names(response.branin) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.branin, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# EGO n steps
+library(rgenoud)
+nsteps &lt;- 5 # Was 10, reduced to 5 for speeding up compilation
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)     
+oEGO &lt;- EGO.nsteps(model=fitted.model1, fun=branin, nsteps=nsteps, 
+lower=lower, upper=upper, control=list(pop.size=20, BFGSburnin=2))
+print(oEGO$par)
+print(oEGO$value)
+
+# graphics
+n.grid &lt;- 15 # Was 20, reduced to 15 for speeding up compilation
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, branin)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid, y.grid, z.grid, 40)
+title("Branin function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par, pch=19, col="red")
+text(oEGO$par[,1], oEGO$par[,2], labels=1:nsteps, pos=3)
+
+
+###############################################################
+### 	20 ITERATIONS OF EGO ON THE GOLDSTEIN-PRICE,  	   ####
+###	 STARTING FROM A 9-POINTS FACTORIAL DESIGN   	   ####
+###############################################################
+## Not run: 
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2 
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.goldsteinPrice &lt;- apply(design.fact, 1, goldsteinPrice)
+response.goldsteinPrice &lt;- data.frame(response.goldsteinPrice) 
+names(response.goldsteinPrice) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.goldsteinPrice, 
+covtype="gauss", control=list(pop.size=50, max.generations=50, 
+wait.generations=5, BFGSburnin=10,trace=FALSE), parinit=c(0.5, 0.5), optim.method="BFGS")
+
+# EGO n steps
+library(rgenoud)
+nsteps &lt;- 10 # Was 20, reduced to 10 for speeding up compilation
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)     
+oEGO &lt;- EGO.nsteps(model=fitted.model1, fun=goldsteinPrice, nsteps=nsteps, 
+lower, upper, control=list(pop.size=20, BFGSburnin=2))
+print(oEGO$par)
+print(oEGO$value)
+
+# graphics
+n.grid &lt;- 15 # Was 20, reduced to 15 for speeding up compilation
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, goldsteinPrice)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid, y.grid, z.grid, 40)
+title("Goldstein-Price Function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par, pch=19, col="red")
+text(oEGO$par[,1], oEGO$par[,2], labels=1:nsteps, pos=3)
+
+## End(Not run)
+
+#######################################################################
+### 	nsteps ITERATIONS OF EGO ON THE HARTMAN6 FUNCTION,  	   ####
+###	  STARTING FROM A 10-POINTS UNIFORM DESIGN      	   ####
+#######################################################################
+
+## Not run: 
+fonction&lt;-hartman6
+data(mydata)
+a &lt;- mydata
+nb&lt;-10
+nsteps &lt;- 3 # Maybe be changed to a larger value 
+x1&lt;-a[[1]][1:nb];x2&lt;-a[[2]][1:nb];x3&lt;-a[[3]][1:nb]
+x4&lt;-a[[4]][1:nb];x5&lt;-a[[5]][1:nb];x6&lt;-a[[6]][1:nb]
+design &lt;- data.frame(cbind(x1,x2,x3,x4,x5,x6)) 
+names(design)&lt;-c("x1", "x2","x3","x4","x5","x6")
+n &lt;- nrow(design)
+
+response &lt;- data.frame(q=apply(design,1,fonction)) 
+names(response) &lt;- "y" 
+fitted.model1 &lt;- km(~1, design=design, response=response, covtype="gauss", 
+control=list(pop.size=50, max.generations=20, wait.generations=5, BFGSburnin=5,
+trace=FALSE), optim.method="gen", parinit=rep(0.8,6))
+
+res.nsteps &lt;- EGO.nsteps(model=fitted.model1, fun=fonction, nsteps=nsteps, 
+lower=rep(0,6), upper=rep(1,6), parinit=rep(0.5,6), control=list(pop.size=50, 
+max.generations=20, wait.generations=5, BFGSburnin=5), kmcontrol=NULL)
+print(res.nsteps)
+plot(res.nsteps$value,type="l")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

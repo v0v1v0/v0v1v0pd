@@ -1,0 +1,190 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lsConstrain.fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Minimize Inequality Constrained Mahalanobis Distance 
+</h2>
+
+<h3>Description</h3>
+
+<p>Find the vector z that solves:
+</p>
+<p>min{ (x - z)'inv(S)(x - z); Az &lt;= b },
+</p>
+<p>where x is an input vector, S its covariance matrix,
+A is a matrix of known contrasts, and b is a vector
+of known constraint constants.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lsConstrain.fit(x, b, s, a, iflag, itmax=4000, eps=1e-06, eps2=1e-06)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>vector of length n
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+
+<p>vector of length k, containing constraint constants
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+
+<p>matrix of dim n x n, the covariance matrix for vector x
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+
+<p>matrix of dim k x n, for the contraints
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iflag</code></td>
+<td>
+
+<p>vector of length k; an item = 0 if inequality constraint, 1 if equality constraint
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itmax</code></td>
+<td>
+
+<p>scalar for number of max interations
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+
+<p>scalar of accuracy for convergence
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps2</code></td>
+<td>
+
+<p>scalar to determine close to zero
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List with the following components:
+</p>
+<p>itmax:   (defined above)
+</p>
+<p>eps:     (defined above)
+</p>
+<p>eps2:    (defined above)
+</p>
+<p>iflag:   (defined above)
+</p>
+<p>xkt:     vector of length k, for the Kuhn-Tucker coefficients.
+</p>
+<p>iter:    number of completed iterations.
+</p>
+<p>supdif:  greatest difference between estimates across a full cycle
+</p>
+<p>ifault:  error indicator:
+0 = no error
+1 = itmax exceeded
+3 = invalid constraint function for some row ASA'=0.
+</p>
+<p>a:       (defined above)
+</p>
+<p>call:    function call
+</p>
+<p>x.init:  input vector x.
+</p>
+<p>x.final: the vector "z" that solves the equation (see z in description).
+</p>
+<p>s:       (defind above)
+</p>
+<p>min.dist: the minimum value of the function (see description).
+</p>
+
+
+<h3>References</h3>
+
+<p>Wollan PC, Dykstra RL. Minimizing inequality constrained
+mahalanobis distances. Applied Statistics Algorithm AS 225 (1987).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># An simulation example with linear regression with 3 beta's, 
+# where we have the contraints:
+#
+# b[1] &gt; 0
+# b[2] - b[1] &lt; 0
+# b[3] &lt; 0
+
+
+set.seed(111)
+
+n &lt;- 100
+x &lt;- rep(1:3,rep(n,3))
+x &lt;- 1*outer(x,1:3,"==")
+
+beta &lt;- c(2,1,1)
+
+y &lt;- x%*%beta + rnorm(nrow(x))
+
+fit &lt;- lm(y ~-1 + x)
+
+s &lt;- solve( t(x) %*% x )
+
+bhat &lt;- fit$coef
+
+
+a &lt;-  rbind(c(-1, 0, 0),
+            c(-1, 1, 0),
+            c( 0, 0, 1))
+
+# View expected constraints (3rd not met):
+
+a %*% bhat
+#            [,1] 
+# [1,] -1.8506811
+# [2,] -0.9543320
+# [3,]  0.8590827
+
+b &lt;- rep(0, nrow(a))
+iflag &lt;- rep(0,length(b))
+
+save &lt;- lsConstrain.fit(x=bhat,b=b, s=s, a=a, iflag=iflag, itmax=500, 
+                        eps=1e-6, eps2=1e-6)
+
+save
+</code></pre>
+
+
+</div>

@@ -1,0 +1,482 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drgee</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Doubly Robust Generalized Estimating Equations</h2>
+
+<h3>Description</h3>
+
+<p><code>drgee</code> is used to estimate an exposure-outcome effect adjusted
+for  additional covariates. The estimation is based on regression
+models for the outcome, exposure or a combination of both.
+For clustered data the models may
+have cluster-specific intercepts.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drgee(outcome, exposure,
+      oformula, eformula, iaformula = formula(~1),
+      olink = c("identity", "log", "logit"),
+      elink = c("identity", "log", "logit"),
+      data, subset = NULL, estimation.method = c("dr", "o", "e"),
+      cond = FALSE, clusterid, clusterid.vcov, rootFinder = findRoots,
+      intercept = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>outcome</code></td>
+<td>
+
+<p>The outcome as variable or as a character string naming a variable
+in the <code>data</code> argument. If missing, the outcome is assumed
+to be the response of <code>oformula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exposure</code></td>
+<td>
+
+<p>The exposure as variable or as a character string naming a variable
+in the <code>data</code> argument. If missing, the exposure is assumed
+to be the response of <code>eformula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oformula</code></td>
+<td>
+
+<p>An expression or formula for the outcome nuisance model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eformula</code></td>
+<td>
+
+<p>An expression or formula for the exposure nuisance model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iaformula</code></td>
+<td>
+
+<p>An expression or formula where the RHS should contain the variables
+that "interact" (i.e. are supposed to be multiplied with) with the
+exposure in the main model. "1" will always added. Default value is no
+interactions, i.e. <code>iaformula = formula(~1)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>olink</code></td>
+<td>
+
+<p>A character string naming the link function in the outcome nuisance
+model. Has to be <code>"identity"</code>, <code>"log"</code> or
+<code>"logit"</code>.Default is <code>"identity"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elink</code></td>
+<td>
+
+<p>A character string naming the link function in the exposure nuisance
+model. Has to be <code>"identity"</code>, <code>"log"</code> or
+<code>"logit"</code>. Default is <code>"identity"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame or environment containing the variables used.
+If missing, variables are expected to be found in the
+calling environment of the calling environment.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>An optional vector defining a subset of the data to be used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimation.method</code></td>
+<td>
+
+<p>A character string naming the desired estimation method. Choose
+<code>"o"</code> for O-estimation,
+<code>"e"</code> for E-estimation or
+<code>"dr"</code> for DR-estimation. Default is <code>"dr"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cond</code></td>
+<td>
+
+<p>A logical value indicating whether the nuisance models should have
+cluster-specific intercepts. Requires a <code>clusterid</code> argument.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rootFinder</code></td>
+<td>
+
+<p>A function to solve a system of non-linear equations. Default
+is <code>findRoots</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusterid</code></td>
+<td>
+
+<p>A cluster-defining variable or a character string naming a
+cluster-defining variable in the <code>data</code> argument. If it is not
+found in the <code>data</code> argument, it will be searched for in the
+calling frame. If missing, each observation will be considered to be
+a separate cluster. This argument is required when <code>cond = TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusterid.vcov</code></td>
+<td>
+
+<p>A cluster-defining variable or a character string naming a
+cluster-defining variable in the <code>data</code> argument to be used for
+adding contributions from the same cluster. These clusters can be
+different from the clusters defined by <code>clusterid</code>. However,
+each cluster defined by <code>clusterid</code> needs to be contained in
+exactly one cluster defined by <code>clusterid.vcov</code>. This variable
+is useful when the clusters are hierarchical.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+
+<p>A boolean to choose whether the nuisance parameters in doubly robust
+conditional logistic regression should be fitted with a model with an
+intercept. Only used for doubly robust condtional logistic regression.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Further arguments to be passed to the function <code>rootFinder</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>drgee</code> estimates the parameter <code class="reqn">\beta</code> in a main
+model <code class="reqn">g\{E(Y|A,L)\}-g\{E(Y|A=0,L)\}=\beta^T \{A\cdot X(L)\}</code>,
+where <code class="reqn">Y</code> is the outcome of interest, <code class="reqn">A</code> is the exposure of
+interest, and <code class="reqn">L</code> is a vector of covariates that we wish to
+adjust for. <code class="reqn">X(L)</code> is a vector valued function of <code class="reqn">L</code>. Note that <code class="reqn">A
+    \cdot X(L)</code> should be interpreted as a columnwise
+multiplication and that <code class="reqn">X(L)</code> will always contain a column of 1's.
+Given a specification of an outcome nuisance model <code class="reqn">g\{E(Y|A=0,L)=\gamma^T
+    V(L)</code> (where <code class="reqn">V(L)</code> is a function of <code class="reqn">L</code>)
+O-estimation is performed. Alternatively, leaving <code class="reqn">g\{E(Y|A=0,L)</code>
+unspecified and using an exposure nuisance model <code class="reqn">h\{E(A|L)\}=\alpha^T
+    Z(L)</code> (where <code class="reqn">h</code> is a link
+function and <code class="reqn">Z(L)</code> is a function of <code class="reqn">L</code>) E-estimation
+is performed.  When <code class="reqn">g</code> is logit, the exposure nuisance
+model is required be of the form
+<code class="reqn">logit\{E(A|Y=0,L)\}=\alpha^T Z(L)</code>.
+In this case the exposure needs to binary.
+</p>
+<p>Given both an outcome and an exposure nuisance model, DR-estimation can be
+performed. DR-estimation gives a consistent estimate of the parameter
+<code class="reqn">\beta</code> when either the outcome nuisance model or
+the exposure nuisance model
+is correctly specified, not necessarily both.
+</p>
+<p>Usage is best explained through an example. Suppose that we are
+interested in the parameter vector <code class="reqn">(\beta_0,
+    \beta_1)</code> in a main model
+<code class="reqn">logit\{E(Y|A,L_1,L_2)\}-logit\{E(Y|A=0,L_1,L_2)\}=\beta_0 A + \beta_1
+    A \cdot L_1</code> where <code class="reqn">L_1</code> and <code class="reqn">L_2</code> are the covariates that we wish
+to adjust for. To adjust for  <code class="reqn">L_1</code> and <code class="reqn">L_2</code>, we can use an outcome
+nuisance model <code class="reqn">E(Y|A=0,L_1,L_2;\gamma_0, \gamma_1)=\gamma_0 + \gamma_1
+  L_1</code> or an
+exposure nuisance model <code class="reqn">logit\{E(A|Y=0,L_1,L_2)\}=\alpha_0+\alpha_1
+  L_1+\alpha_2 L_2</code> to calculate estimates of <code class="reqn">\beta_0</code> and <code class="reqn">\beta_1</code>
+in the main model. We specify the outcome nuisance model as <code>oformula=Y~L_1</code>
+and <code>olink = "logit"</code>. The exposure nuisance model is specified as
+<code>eformula = A~L_1+L_2</code> and <code>elink = "logit"</code>.
+Since the outcome <code class="reqn">Y</code> and the exposure <code class="reqn">A</code> are
+identified as the LHS of <code>oformula</code> and <code>eformla</code>
+respectively and since the outcome link is specified in the
+<code>olink</code> argument,
+the only thing left to specify for the main model is the
+(multiplicative) interactions <code class="reqn">A\cdot X(L)=A\cdot
+  (1,L_1)^T</code>. This
+is done by specifying <code class="reqn">X(L)</code> as
+<code>iaformula = ~L_1</code>, since <code class="reqn">1</code> is always included in <code class="reqn">X(L)</code>.
+We can then perform O-estimation, E-estimation or DR-estimation by
+setting <code>estimation.method</code> to <code>"o"</code>,
+<code>"e"</code> or <code>"dr"</code> respectively. O-estimation uses only the
+outcome nuisance model, and E-estimation uses only the exposure
+nuisance model. DR-estimation uses both nuisance models, and gives a
+consistent estimate of <code class="reqn">(\beta_0,\beta_1)</code> if either nuisance model is correct, not necessarily both.
+</p>
+<p>When <code>estimation.method = "o"</code>, the RHS of <code>eformula</code> will be
+ignored. The <code>eformula</code> argument can also be replaced by an <code>exposure</code>
+argument specifying what the exposure of interest is.
+</p>
+<p>When <code>estimation.method = "e"</code>, the RHS of <code>oformula</code> will be
+ignored.  The <code>oformula</code> argument can also be replaced by an <code>outcome</code>
+argument specifying what the outcome of interest is.
+</p>
+<p>When <code>cond = TRUE</code> the nuisance models will be assumed to have
+cluster-specific intercept. These intercepts will not estimated.
+</p>
+<p>When E-estimation or DR-estimation is chosen with
+<code>olink = "logit"</code>, the exposure link will be
+changed to <code>"logit"</code>. Note that this choice
+of outcome link does not work for DR-estimation
+when <code>cond = TRUE</code>.
+</p>
+<p>Robust variance for the estimated parameter is calculated
+using the function <code>robVcov</code>. A cluster robust variance is calculated when
+a character string naming a cluster variable is
+supplied in the <code>clusterid</code> argument.
+</p>
+<p>For E-estimation when <code>cond = FALSE</code> and <code class="reqn">g</code> is the identity
+or log link, see Robins et al. (1992).
+</p>
+<p>For DR-estimation when <code>cond = TRUE</code> and <code class="reqn">g</code> is the identity
+or log link, see Robins (1999). For DR-estimation when
+<code class="reqn">g</code> is the logit link, see Tchetgen et al. (2010).
+</p>
+<p>O-estimation can also be performed using the <code>gee</code> function.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>drgee</code> returns an object of class <code>drgee</code> containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficients </code></td>
+<td>
+<p>Estimates of the parameters in the main model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov </code></td>
+<td>
+<p>Robust variance for all main model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients.all </code></td>
+<td>
+<p>Estimates of all estimated parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov.all </code></td>
+<td>
+<p>Robust variance of the all parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.object </code></td>
+<td>
+<p>An estimation object returned from the function specified
+in the <code>rootFinder</code>, if this function is called for the
+estimation of the main model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.object.o </code></td>
+<td>
+<p>An estimation object returned from the function specified
+in the <code>rootFinder</code>, if this function is called for the
+estimation of the outcome nuisance parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.object.e </code></td>
+<td>
+<p>An estimation object returned from the function specified
+in the <code>rootFinder</code>, if this function is called for the
+estimation of the outcome nuisance parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>The matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimation.method </code></td>
+<td>
+<p>The value of the input argument <code>estimation.method</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The original data object, if given as an input argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oformula</code></td>
+<td>
+<p>The original oformula object, if given as an input argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eformula</code></td>
+<td>
+<p>The original eformula object, if given as an input argument</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iaformula</code></td>
+<td>
+<p>The original iaformula object, if given as an input argument</p>
+</td>
+</tr>
+</table>
+<p>The class methods <code>coef</code> and <code>vcov</code> can be used to extract
+the estimated parameters and their covariance matrix from a
+<code>drgee</code> object. <code>summary.drgee</code> produces a summary of the
+calculations.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Johan Zetterqvist, Arvid Sjölander
+</p>
+
+
+<h3>References</h3>
+
+<p>Orsini N., Belocco R., Sjölander A. (2013), Doubly
+Robust Estimation in Generalized Linear Models, <em>Stata Journal</em>,
+<b>13</b>, 1, pp. 185–205
+</p>
+<p>Robins J.M., Mark S.D., Newey W.K. (1992), Estimating Exposure
+Effects by Modelling the Expectation of Exposure Conditional
+on Confounders, <em>Biometrics</em>, <b>48</b>, pp. 479–495
+</p>
+<p>Robins JM (1999), Robust Estimation in Sequentially Ignorable
+Missing Data and Causal Inference Models, <em>Proceedings of the
+American Statistical Association Section on Bayesian Statistical
+Science</em>, pp. 6–10
+</p>
+<p>Tchetgen E.J.T., Robins J.M., Rotnitzky A. (2010), On Doubly Robust
+Estimation in a Semiparametric Odds Ratio Model, <em>Biometrika</em>,
+<b>97</b>, 1, 171–180
+</p>
+<p>Zetterqvist J., Vansteelandt S., Pawitan Y.,
+Sjölander (2016), Doubly Robust Methods for Handling
+Confounding by Cluster, <em>Biostatistics</em>, <b>17</b>, 2, 264–276
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>gee</code> for O-estimation, <code>findRoots</code> for
+nonlinear equation solving and <code>robVcov</code> for
+estimation of variance.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## DR-estimation when
+## the main model is
+## E(Y|A,L1,L2)-E(Y|A=0,L1,L2)=beta0*A+beta1*A*L1
+## and the outcome nuisance model is
+## E(Y|A=0,L1,L2)=gamma0+gamma1*L1+gamma2*L2
+## and the exposure nuisance model is
+## E(A|Y=0,L1,L2)=expit(alpha0+alpha1*L1+alpha2*l2)
+
+library(drgee)
+
+expit&lt;-function(x) exp(x)/(1+exp(x))
+
+n&lt;-5000
+
+## nuisance
+l1&lt;-rnorm(n, mean = 0, sd = 1)
+l2&lt;-rnorm(n, mean = 0, sd = 1)
+
+beta0&lt;-1.5
+beta1&lt;-1
+gamma0&lt;--1
+gamma1&lt;--2
+gamma2&lt;-2
+alpha0&lt;-1
+alpha1&lt;-5
+alpha2&lt;-3
+
+## Exposure generated from the exposure nuisance model
+a&lt;-rbinom(n,1,expit(alpha0 + alpha1*l1 + alpha2*l2))
+## Outcome generated from the main model and the
+## outcome nuisance model
+y&lt;-rnorm(n,
+mean = beta0 * a + beta1 * a * l1 + gamma0 + gamma1 * l1 + gamma2 * l2,
+sd = 1)
+
+simdata&lt;-data.frame(y,a,l1,l2)
+
+## outcome nuisance model misspecified and
+## exposure nuisance model correctly specified
+
+## DR-estimation
+dr.est &lt;- drgee(oformula = formula(y~l1),
+eformula = formula(a~l1+l2),
+iaformula = formula(~l1),
+olink = "identity", elink = "logit",
+data = simdata, estimation.method = "dr")
+summary(dr.est)
+
+## O-estimation
+o.est &lt;- drgee(exposure = "a", oformula = formula(y~l1),
+iaformula = formula(~l1), olink = "identity",
+data = simdata, estimation.method = "o")
+summary(o.est)
+
+## E-estimation
+e.est &lt;- drgee(outcome = "y", eformula = formula(a~l1+l2),
+iaformula = formula(~l1), elink="logit",
+data = simdata, estimation.method = "e")
+summary(e.est)
+</code></pre>
+
+
+</div>

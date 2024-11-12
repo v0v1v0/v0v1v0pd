@@ -1,0 +1,268 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>xbart</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Crossvalidation For Bayesian Additive Regression Trees</h2>
+
+<h3>Description</h3>
+
+<p>Fits the BART model against varying <code>k</code>, <code>power</code>, <code>base</code>, and <code>ntree</code> parameters using <code class="reqn">K</code>-fold or repeated random subsampling crossvalidation, sharing burn-in between parameter settings. Results are given an array of evalulations of a loss functions on the held-out sets.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">xbart(
+    formula, data, subset, weights, offset, verbose = FALSE, n.samples = 200L,
+    method = c("k-fold", "random subsample"), n.test = c(5, 0.2),
+    n.reps = 40L, n.burn = c(200L, 150L, 50L),
+    loss = c("rmse", "log", "mcr"), n.threads = dbarts::guessNumCores(), n.trees = 75L,
+    k = NULL, power = 2, base = 0.95, drop = TRUE,
+    resid.prior = chisq, control = dbarts::dbartsControl(), sigma = NA_real_,
+    seed = NA_integer_)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+
+<p>An object of class <code>formula</code> following an analogous model description syntax as <code>lm</code>. For backwards compatibility, can also be the <code>bart</code> matrix <code>x.train</code>. See <code>dbarts</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>An optional data frame, list, or environment containing predictors to be used with the model. For backwards compatibility, can also be the <code>bart</code> vector <code>y.train</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>An optional vector specifying a subset of observations to be used in the fitting process.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+
+<p>An optional vector of weights to be used in the fitting process. When present, BART fits a model with observations <code class="reqn">y \mid x \sim N(f(x), \sigma^2 / w)</code>, where <code class="reqn">f(x)</code> is the unknown function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>offset</code></td>
+<td>
+
+<p>An optional vector specifying an offset from 0 for the relationship between the underyling function, <code class="reqn">f(x)</code>, and the response <code class="reqn">y</code>. Only is useful for binary responses, in which case the model fit is to assume <code class="reqn">P(Y = 1 \mid X = x) = \Phi(f(x) + \mathrm{offset})</code>, where <code class="reqn">\Phi</code> is the standard normal cumulative distribution function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>A logical determining if additional output is printed to the console.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.samples</code></td>
+<td>
+
+<p>A positive integer, setting the number of posterior samples drawn for each fit of training data and used by the loss function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>Character string, either <code>"k-fold"</code> or <code>"random subsample"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.test</code></td>
+<td>
+
+<p>For each fit, the test sample size or proportion. For method <code>"k-fold"</code>, is expected to be the number of folds, and in <code class="reqn">[2, n]</code>. For method <code>"random subsample"</code>, can be a real number in <code class="reqn">(0, 1)</code> or a positive integer in <code class="reqn">(1, n)</code>. When a given as proportion, the number of test observations used is the proportion times the sample size rounded to the nearest integer.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.reps</code></td>
+<td>
+
+<p>A positive integer setting the number of cross validation steps that will be taken. For <code>"k-fold"</code>, each replication corresponds to fitting each of the <code class="reqn">K</code> folds in turn, while for <code>"random subsample"</code> a replication is a single fit.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.burn</code></td>
+<td>
+
+<p>Between one and three positive integers, specifying the 1) initial burn-in, 2) burn-in when moving from one parameter setting to another, and 3) the burn-in between each random subsample replication. The third parameter is also the burn in when moving between folds in <code>"k-fold"</code> crossvalidation.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss</code></td>
+<td>
+
+<p>Either a one of the pre-set loss functions as character-strings (<code>mcr</code> - missclassification rate for binary responses, <code>rmse</code> - root-mean-squared-error for continuous response), <code>log</code> - negative log-loss for binary response (<code>rmse</code> serves this purpose for continuous responses), a function, or a function-evaluation environment list-pair. Functions should have prototypes of the form <code>function(y.test, y.test.hat, weights)</code>, where <code>y.test</code> is the held out test subsample, <code>y.test.hat</code> is a matrix of dimension <code>length(y.test) * n.samples</code>, and <code>weights</code> are an optional vector of user-supplied weights. See examples.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.threads</code></td>
+<td>
+
+<p>Across different sets of parameters (<code>k</code> <code class="reqn">\times</code> <code>power</code> <code class="reqn">\times</code> <code>base</code> <code class="reqn">\times</code> <code>n.trees</code>) and <code>n.reps</code>, results are independent. For <code>n.threads &gt; 1</code>, evaluations of the above are divided into approximately equal size evaluations chunks and executed in parallel. The default uses <code>link{guessNumCores}</code>, which should work across the most common operating system/hardware pairs. A value of <code>NA</code> is interpretted as 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.trees</code></td>
+<td>
+
+<p>A vector of positive integers setting the BART hyperparameter for the number of trees in the sum-of-trees formulation. See <code>bart</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>A vector of positive real numbers, setting the BART hyperparameter for the node-mean prior standard deviation. If <code>NULL</code>, the default of <code>bart2</code> will be used - 2 for continuous response and a Chi hyperprior for binary. Hyperprior crossvalidation not possible at this time.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>power</code></td>
+<td>
+
+<p>A vector of real numbers greater than one, setting the BART hyperparameter for the tree prior's growth probability, given by <code class="reqn">{base} / (1 + depth)^{power}</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+
+<p>A vector of real numbers in <code class="reqn">(0, 1)</code>, setting the BART hyperparameter for the tree prior's growth probability.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+
+<p>Logical, determining if dimensions with a single value are dropped from the result.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resid.prior</code></td>
+<td>
+
+<p>An expression of the form <code>chisq</code> or <code>chisq(df, quant)</code> that sets the prior used on the residual/error variance.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>An object inheriting from <code>dbartsControl</code>, created by the <code>dbartsControl</code> function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+
+<p>A positive numeric estimate of the residual standard deviation. If <code>NA</code>, a linear model is used with all of the predictors to obtain one.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Optional integer specifying the desired pRNG seed. It should not be needed when running single-threaded - <code>set.seed</code>  will suffice, and can be used to obtain reproducible results when multi-threaded. See Reproducibility section of <code>bart</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Crossvalidates <code>n.reps</code> replications against the crossproduct of given hyperparameter vectors <code>n.trees</code> <code class="reqn">\times</code> <code>k</code> <code class="reqn">\times</code> <code>power</code> <code class="reqn">\times</code> <code>base</code>. For each fit, either one fold is withheld as test data and <code>n.test - 1</code> folds are used as training data or <code>n * n.test</code> observations are withheld as test data and <code>n * (1 - n.test)</code> used as training. A replication corresponds to fitting all <code class="reqn">K</code> folds in <code>"k-fold"</code> crossvalidation or a single fit with <code>"random subsample"</code>. The training data is used to fit a model and make predictions on the test data which are used together with the test data itself to evaluate the <code>loss</code> function.
+</p>
+<p><code>loss</code> functions are either the default of average negative log-loss for binary outcomes and root-mean-squared error for continuous outcomes, missclassification rates for binary outcomes, or a <code>function</code> with arguments <code>y.test</code> and <code>y.test.hat</code>. <code>y.test.hat</code> is of dimensions equal to <code>length(y.test)</code> <code class="reqn">\times</code> <code>n.samples</code>. A third option is to pass a list of <code>list(function, evaluationEnvironment)</code>, so as to provide default bindings. RMSE is a monotonic transformation of the average log-loss for continuous outcomes, so specifying log-loss in that case calculates RMSE instead.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An array of dimensions <code>n.reps</code> <code class="reqn">\times</code> <code>length(n.trees)</code> <code class="reqn">\times</code> <code>length(k)</code> <code class="reqn">\times</code> <code>length(power)</code> <code class="reqn">\times</code> <code>length(base)</code>. If <code>drop</code> is <code>TRUE</code>, dimensions of length 1 are omitted. If all hyperparameters are of length 1, then the result will be a vector of length <code>n.reps</code>. When the result is an array, the <code>dimnames</code> of the result shall be set to the corresponding hyperparameters.
+</p>
+<p>For method <code>"k-fold"</code>, each element is an average across the <code class="reqn">K</code> fits. For <code>"random subsample"</code>, each element represents a single fit.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Vincent Dorie: <a href="mailto:vdorie@gmail.com">vdorie@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>bart</code>, <code>dbarts</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">f &lt;- function(x) {
+    10 * sin(pi * x[,1] * x[,2]) + 20 * (x[,3] - 0.5)^2 +
+        10 * x[,4] + 5 * x[,5]
+}
+
+set.seed(99)
+sigma &lt;- 1.0
+n     &lt;- 100
+
+x  &lt;- matrix(runif(n * 10), n, 10)
+Ey &lt;- f(x)
+y  &lt;- rnorm(n, Ey, sigma)
+
+mad &lt;- function(y.train, y.train.hat, weights) {
+    # note, weights are ignored
+    mean(abs(y.train - apply(y.train.hat, 1L, mean)))
+}
+
+
+
+## low iteration numbers to to run quickly
+xval &lt;- xbart(x, y, n.samples = 15L, n.reps = 4L, n.burn = c(10L, 3L, 1L),
+              n.trees = c(5L, 7L),
+              k = c(1, 2, 4),
+              power = c(1.5, 2),
+              base = c(0.75, 0.8, 0.95), n.threads = 1L,
+              loss = mad)
+</code></pre>
+
+
+</div>

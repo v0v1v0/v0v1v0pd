@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gzc.departure</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>departure of instantaneous frequency to generalized zero-crossing</h2>
+
+<h3>Description</h3>
+
+<p>departure of instantaneous frequency to generalized
+zero-crossing of instantaneous freqeuncy. The departure is calculated as the
+exponential of the absolute difference of logarithms
+of frequencies obtained using a robust generalized zero-crossing method
+through the <code>gzc</code> function (where the components are simplified
+into extrema separated by zero-crossings) and instantaneous frequency
+computed from another method
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gzc.departure(
+  pulse = NULL,
+  dt = NULL,
+  m = NULL,
+  f = NULL,
+  repl = 1,
+  mode = NULL,
+  simplify = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pulse</code></td>
+<td>
+<p>a pulse object object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>the depth or time. Is overridden by pulse.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>a matrix of the modes to calculate the gzc frequency from. Is
+overridden by pulse.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>a matrix of the frequencies to compare to gzc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repl</code></td>
+<td>
+<p>the amount of replicates in m. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>the mode sequence index to give to each replicated IMFs.
+Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify</code></td>
+<td>
+<p>whether to average the value for each component of each
+replicate</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If simplify is TRUE, the function returns the average gzc departure
+as a data frame where the columns stand for the modes and the rows for the
+replicates. If simplify if FALSE, the function returns the functions returns
+local gzc departure.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+  rnorm(n, sd = 0.5) + t * 0.01
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+
+dec1 &lt;- extricate(xy, dt, nimf = 5, repl = 1, comb = 10, sifting = 1,
+                 factor_noise = 10, bind = TRUE, speak = TRUE)
+
+dec2 &lt;- extricate(xy, dt, nimf = 6, repl = 1, comb = 100, sifting = 5,
+                  factor_noise = 50, bind = TRUE, speak = TRUE)
+
+## Not run: 
+plot_emd(dec1, name = "EMD 1", dir = tempdir())
+plot_emd(dec2, name = "EMD 2", dir = tempdir())
+## End(Not run)
+
+parsimony(dec1)
+parsimony(dec2)
+
+f1 &lt;- inst.pulse(dec1, plot = FALSE)
+f2 &lt;- inst.pulse(dec2, plot = FALSE)
+
+gzc.departure(f1)
+gzc.departure(f2)
+
+</code></pre>
+
+
+</div>

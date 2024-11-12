@@ -1,0 +1,132 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>devRateModel</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute non-linear regression</h2>
+
+<h3>Description</h3>
+
+<p>Determine the nonlinear least-squares estimates of the parameters of a
+nonlinear model, on the basis of the <code>nls</code> function from package
+<code>stats</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">devRateModel(eq, temp, devRate, startValues, dfData = NULL, algo = "GN", ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eq</code></td>
+<td>
+<p>The name of the equation. See <code>devRateEqList</code> for the list
+of equations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temp</code></td>
+<td>
+<p>The temperature (vector).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>devRate</code></td>
+<td>
+<p>The development rate <code>(days)^-1</code> (vector).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startValues</code></td>
+<td>
+<p>Starting values for the regression (list).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dfData</code></td>
+<td>
+<p>A data.frame with the temperature in the first column and the
+development rate in the second column (alternative to the use of temp and
+devRate).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>algo</code></td>
+<td>
+<p>The abbreviated name of the algorithm used for model fitting (
+"GN" for Gauss-Newton algorithm, "LM" for Levenberg-Marquardt algorithm;
+"GN" is the default value).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments for the <code>nls</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>startValues</code> for equations by Stinner et al. 1974 and Lamb
+1992 are composed of two equations: one for the temperatures below the
+optimal temperature and another for the temperatures above the optimal
+temperature. For these equations, <code>startValues</code> should be a list
+of two lists, where the second element only contain starting estimates not
+specified in the first element, e.g., for Stinner et al.:
+<code>startValues &lt;- list(list(C = 0.05, k1 = 5, k2 = -0.3), list(Topt = 30))</code>,
+and for Lamb 1992:
+<code>startValues &lt;- list(list(Rm = 0.05, Tmax = 35, To = 15), list(T1 = 4))</code>
+</p>
+<p>The temperature should be provided as a vector in argument <code>temp</code> and
+development rate in another vector in argument <code>devRate</code>. However, it is
+possible to use the function with a data.frame containing the temperature in the
+first column and the development rate in the sceond column, using the argument
+<code>dfData</code>
+</p>
+<p>NULL is returned when an unknown algorithm is entered.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>nls</code> (except for Stinner et al. 1974 and
+Lamb 1992 where the function returns a list of two objects of class
+<code>nls</code>).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Example with a linear model (no starting estimates)
+myT &lt;- 5:15
+myDev &lt;- -0.05 + rnorm(n = length(myT), mean = myT, sd = 1) * 0.01
+myNLS &lt;- devRateModel(
+  eq = campbell_74,
+  temp = myT,
+  devRate = myDev)
+## Example with a non-linear model (starting estimates)
+myT &lt;- seq(from = 0, to = 50, by = 10)
+myDev &lt;- c(0.001, 0.008, 0.02, 0.03, 0.018, 0.004)
+myNLS &lt;- devRateModel(
+  eq = stinner_74,
+  temp = myT,
+  devRate = myDev,
+  startValues = list(
+    list(C = 0.05, k1 = 5, k2 = -0.3),
+    list(Topt = 30)))
+## Example with a data.frame instead of two vectors for temperature and
+## development rate
+myDF &lt;- data.frame(myT, myDev)
+myNLS &lt;- devRateModel(
+  eq = campbell_74,
+  dfData = myDF)
+</code></pre>
+
+
+</div>

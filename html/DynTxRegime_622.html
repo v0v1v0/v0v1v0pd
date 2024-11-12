@@ -1,0 +1,285 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>optimalClass</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Classification Perspective</h2>
+
+<h3>Description</h3>
+
+<p>Classification Perspective
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">optimalClass(
+  ...,
+  moPropen,
+  moMain,
+  moCont,
+  moClass,
+  data,
+  response,
+  txName,
+  iter = 0L,
+  fSet = NULL,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Included to require named inputs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moPropen</code></td>
+<td>
+<p>An object of class modelObj, which defines the models and R
+methods to be used to obtain parameter estimates and
+predictions for the propensity for treatment. 
+See ?moPropen for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moMain</code></td>
+<td>
+<p>An object of class modelObj, which defines the models and R
+methods to be used to obtain parameter estimates and
+predictions for for the main effects component of the 
+outcome regression. 
+See ?modelObj for details.
+NULL is an appropriate value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moCont</code></td>
+<td>
+<p>An object of class modelObj, which defines the models and R
+methods to be used to obtain parameter estimates and
+predictions for for the contrasts component of the
+outcome regression. 
+See ?modelObj for details.
+NULL is an appropriate value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>moClass</code></td>
+<td>
+<p>An object of class modelObj, which defines the
+models and R methods to be used to obtain parameter 
+estimates and predictions for the classification. 
+See ?modelObj for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame of the covariates and tx histories</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>The response vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>txName</code></td>
+<td>
+<p>An character giving the column header of the column in data
+that contains the tx covariate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>An integer
+See ?iter for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fSet</code></td>
+<td>
+<p>A function or NULL. 
+This argument allows the user to specify the subset of tx 
+options available to a patient. 
+See ?fSet for details of allowed structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>A logical 
+If FALSE, screen prints are suppressed.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an object of class OptimalClass
+</p>
+
+
+<h3>References</h3>
+
+<p>Baqun Zhang, Anastasios A. Tsiatis, Marie Davidian, Min Zhang and
+Eric B. Laber. "Estimating optimal tx regimes from a classification
+perspective." Stat 2012; 1: 103-114. 
+</p>
+<p>Note that this method is a single decision point, binary treatment
+method. For multiple decision points, can be called repeatedly.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other statistical methods: 
+<code>bowl()</code>,
+<code>earl()</code>,
+<code>iqLearn</code>,
+<code>optimalSeq()</code>,
+<code>owl()</code>,
+<code>qLearn()</code>,
+<code>rwl()</code>
+</p>
+<p>Other single decision point methods: 
+<code>earl()</code>,
+<code>optimalSeq()</code>,
+<code>owl()</code>,
+<code>qLearn()</code>,
+<code>rwl()</code>
+</p>
+<p>Other multiple decision point methods: 
+<code>bowl()</code>,
+<code>iqLearn</code>,
+<code>optimalSeq()</code>,
+<code>qLearn()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Load and process data set
+data(bmiData)
+
+# define the negative 12 month change in BMI from baseline
+y12 &lt;- -100*(bmiData[,6L] - bmiData[,4L])/bmiData[,4L]
+
+# Define the propensity for treatment model and methods.
+moPropen &lt;- buildModelObj(model =  ~ 1, 
+                          solver.method = 'glm', 
+                          solver.args = list('family'='binomial'),
+                          predict.method = 'predict.glm',
+                          predict.args = list(type='response'))
+
+# classification model
+library(rpart)
+moClass &lt;- buildModelObj(model = ~parentBMI+month4BMI+race+gender,
+                         solver.method = 'rpart',
+                         solver.args = list(method="class"),
+                         predict.args = list(type='class'))
+
+#### Second-Stage Analysis using IPW
+fitSS_IPW &lt;- optimalClass(moPropen = moPropen, 
+                          moClass = moClass,
+                          data = bmiData, response = y12,  txName = 'A2')
+
+# outcome model
+moMain &lt;- buildModelObj(model = ~parentBMI+month4BMI,
+                        solver.method = 'lm')
+
+moCont &lt;- buildModelObj(model = ~race + parentBMI+month4BMI,
+                        solver.method = 'lm')
+
+#### Second-Stage Analysis using AIPW
+fitSS_AIPW &lt;- optimalClass(moPropen = moPropen, 
+                           moMain = moMain, moCont = moCont,
+                           moClass = moClass,
+                           data = bmiData, response = y12,  txName = 'A2')
+
+##Available methods
+
+  # Retrieve the classification regression object
+  classif(object = fitSS_AIPW)
+
+  # Coefficients of the outcome regression objects
+  coef(object = fitSS_AIPW)
+
+  # Description of method used to obtain object
+  DTRstep(object = fitSS_AIPW)
+
+  # Estimated value of the optimal treatment regime for training set
+  estimator(x = fitSS_AIPW)
+
+  # Value object returned by outcome regression method
+  fitObject(object = fitSS_AIPW)
+
+  # Estimated optimal treatment and decision functions for training data
+  optTx(x = fitSS_AIPW)
+
+  # Estimated optimal treatment and decision functions for new data
+  optTx(x = fitSS_AIPW, newdata = bmiData)
+
+  # Value object returned by outcome regression method
+  outcome(object = fitSS_AIPW)
+  outcome(object = fitSS_IPW)
+
+  # Plots if defined by outcome regression method
+  dev.new()
+  par(mfrow = c(2,4))
+
+  plot(x = fitSS_AIPW)
+  plot(x = fitSS_AIPW, suppress = TRUE)
+
+  # Retrieve the value object returned by propensity regression method
+  propen(object = fitSS_AIPW)
+
+  # Show main results of method
+  show(object = fitSS_AIPW)
+
+  # Show summary results of method
+  summary(object = fitSS_AIPW)
+ 
+#### First-stage Analysis using AIPW
+
+ # Define the propensity for treatment model and methods.
+ moPropen &lt;- buildModelObj(model =  ~ 1, 
+                           solver.method = 'glm', 
+                           solver.args = list('family'='binomial'),
+                           predict.method = 'predict.glm',
+                           predict.args = list(type='response'))
+
+# classification model
+moClass &lt;- buildModelObj(model = ~parentBMI+baselineBMI+race+gender,
+                         solver.method = 'rpart',
+                         solver.args = list(method="class"),
+                         predict.args = list(type='class'))
+
+# outcome model
+moMain &lt;- buildModelObj(model = ~parentBMI+baselineBMI,
+                        solver.method = 'lm')
+
+moCont &lt;- buildModelObj(model = ~race + parentBMI+baselineBMI,
+                        solver.method = 'lm')
+
+fitFS_AIPW &lt;- optimalClass(moPropen = moPropen, 
+                           moMain = moMain, moCont = moCont,
+                           moClass = moClass,
+                           data = bmiData, response = fitSS_AIPW,  
+                           txName = 'A1')
+
+##Available methods for fitFS_AIPW are as shown above for fitSS_AIPW
+
+</code></pre>
+
+
+</div>

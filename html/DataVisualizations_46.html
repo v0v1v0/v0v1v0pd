@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ParetoDensityEstimation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pareto Density Estimation V3</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the Pareto Density for the distribution of one variable. In the default setting the functions estimates internally the appropriate number and position of kernels to estimate the density properly. However, the user can set the <code>kernels</code> manually. In this case density will only be estimated only around these values even if data exists outside the range of kernels or the internally estimated <code>paretoRadius</code> does not contain all datapoints between each kernel. See example for details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ParetoDensityEstimation(Data, paretoRadius, kernels = NULL,
+  MinAnzKernels = 100,PlotIt=FALSE,Silent=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>[1:n] numeric vector of data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>paretoRadius</code></td>
+<td>
+<p>Optional scalar, numeric value, see <code>ParetoRadius</code>.If not given it is estimated internally. Please do not set manually</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernels</code></td>
+<td>
+<p>Optional,[1:m] numeric vector data values where pareto density is measured at. If 0 (by default) kernels will be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>MinAnzKernels</code></td>
+<td>
+<p>Optional, minimal number of kernels, default MinAnzKernels==100</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PlotIt</code></td>
+<td>
+<p>Optional, if TRUE: raw basic r plot of density estimation of debugging purposes. Usually please use <span class="pkg">ggplot2</span> interface via <code>PDEplot</code> or <code>MDplot</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Silent</code></td>
+<td>
+<p>Optional, if TRUE: disables all warnings</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Pareto Density Estimation (PDE) is a method for the estimation of probability density functions using hyperspheres. The Pareto-radius of the hyperspheres is derived from the optimization of information for minimal set size. It is shown, that Pareto Density is the best estimate for clusters of Gaussian structure. The method is shown to be robust when cluster overlap and when the variances differ across clusters.
+This is the best density estimation to judge Gaussian Mixtures of the data see [Ultsch 2003].
+</p>
+<p>If input argument <code>kernels</code> is set manually the output arguments <code>paretoDensity_internal</code> and <code>kernels_internal</code> provide the internally estimated density and kernels. Otherwise these arguments are NULL. The function provides a message if range of kernels and range of data does not overlap completly.
+</p>
+<p>Typically it is not advisable to set <code>paretoRadius</code> manually. However in specific cases, the function <code>ParetoRadius</code> is used prior to calling this function. In such cases the input argument can use a priorly estimated <code>paretoRadius</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>List With 
+</p>
+
+<dl>
+<dt>kernels</dt>
+<dd>
+<p>[1:m] numeric vector. data values at with Pareto Density is measured.</p>
+</dd>
+<dt>paretoDensity</dt>
+<dd>
+<p>[1:m] numeric vector containing the determined density by <code>paretoRadius</code>.</p>
+</dd>
+<dt>paretoRadius</dt>
+<dd>
+<p>numeric value of defining the radius</p>
+</dd>
+<dt>kernels_internal</dt>
+<dd>
+<p>Either NULL or internally estimated [1:p] numeric vector of kernels if input argument <code>kernels</code> was set by the user</p>
+</dd>
+<dt>paretoDensity_internal</dt>
+<dd>
+<p>Either NULL or internally estimated density if input argument <code>kernels</code> was set by the user</p>
+</dd>
+</dl>
+<h3>Note</h3>
+
+<p>This the second version of the function prior available in <span class="pkg">AdaptGauss</span>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Thrun
+</p>
+
+
+<h3>References</h3>
+
+<p>Ultsch, A.: Pareto density estimation: A density estimation for knowledge discovery, in Baier, D.; Werrnecke, K. D., (Eds), Innovations in classification, data science, and information systems, Proc Gfkl 2003, pp 91-100, Springer, Berlin, 2005.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ParetoRadius</code>
+</p>
+<p><code>PDEplot</code>
+</p>
+<p><code>MDplot</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">   
+   #kernels are estimated internally
+   data = c(rnorm(1000),rnorm(2000)+2,rnorm(1000)*2-1)
+   pdeVal        &lt;- ParetoDensityEstimation(data)
+   plot(pdeVal$kernels,pdeVal$paretoDensity,type='l',xaxs='i',
+   yaxs='i',xlab='Data',ylab='PDE')
+   
+   ##data exist outside of the range kernels
+   kernels=seq(from=-3,to=3,by=0.01) 
+   pdeVal        &lt;- ParetoDensityEstimation(data,  kernels=kernels)
+   plot(pdeVal$kernels,pdeVal$paretoDensity,type='l',xaxs='i',
+   yaxs='i',xlab='Data',ylab='PDE')
+   
+   #data exists in-between kernels that is not measured
+   pdeVal$paretoRadius#0.42
+   kernels=seq(from=-8,to=8,by=1)
+   pdeVal        &lt;- ParetoDensityEstimation(data,  kernels=kernels)
+   plot(pdeVal$kernels,pdeVal$paretoDensity,type='l',xaxs='i',
+   yaxs='i',xlab='Data',ylab='PDE')
+   
+   
+</code></pre>
+
+
+</div>

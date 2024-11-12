@@ -1,0 +1,73 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>build_sql</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build a SQL string.</h2>
+
+<h3>Description</h3>
+
+<p>This is a convenience function that should prevent sql injection attacks
+(which in the context of dplyr are most likely to be accidental not
+deliberate) by automatically escaping all expressions in the input, while
+treating bare strings as sql. This is unlikely to prevent any serious
+attack, but should make it unlikely that you produce invalid sql.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">build_sql(..., .env = parent.frame(), con = sql_current_con())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>input to convert to SQL. Use <code>sql()</code> to preserve
+user input as is (dangerous), and <code>ident()</code> to label user
+input as sql identifiers (safe)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.env</code></td>
+<td>
+<p>the environment in which to evaluate the arguments. Should not
+be needed in typical use.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>con</code></td>
+<td>
+<p>database connection; used to select correct quoting characters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function should be used only when generating <code>SELECT</code> clauses,
+other high level queries, or for other syntax that has no R equivalent.
+For individual function translations, prefer <code>sql_expr()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">con &lt;- simulate_dbi()
+build_sql("SELECT * FROM TABLE", con = con)
+x &lt;- "TABLE"
+build_sql("SELECT * FROM ", x, con = con)
+build_sql("SELECT * FROM ", ident(x), con = con)
+build_sql("SELECT * FROM ", sql(x), con = con)
+
+# http://xkcd.com/327/
+name &lt;- "Robert'); DROP TABLE Students;--"
+build_sql("INSERT INTO Students (Name) VALUES (", name, ")", con = con)
+</code></pre>
+
+
+</div>

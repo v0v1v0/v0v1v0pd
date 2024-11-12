@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>desctable</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generate a statistics table</h2>
+
+<h3>Description</h3>
+
+<p>Generate a statistics table with the chosen statistical functions, and tests if given a <code>"grouped"</code> dataframe.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">desctable(data, stats, tests, labels)
+
+## Default S3 method:
+desctable(data, stats = stats_auto, tests, labels = NULL)
+
+## S3 method for class 'grouped_df'
+desctable(data, stats = stats_auto, tests = tests_auto, labels = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The dataframe to analyze</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stats</code></td>
+<td>
+<p>A list of named statistics to apply to each element of the dataframe, or a function returning a list of named statistics</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tests</code></td>
+<td>
+<p>A list of statistical tests to use when calling desctable with a grouped_df</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>A named character vector of labels to use instead of variable names</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A desctable object, which prints to a table of statistics for all variables
+</p>
+
+
+<h3>Labels</h3>
+
+<p>labels is an option named character vector used to make the table prettier.
+</p>
+<p>If given, the variable names for which there is a label will be replaced by their corresponding label.
+</p>
+<p>Not all variables need to have a label, and labels for non-existing variables are ignored.
+</p>
+<p>labels must be given in the form c(unquoted_variable_name = "label")
+</p>
+
+
+<h3>Stats</h3>
+
+<p>The stats can be a function which takes a dataframe and returns a list of statistical functions to use.
+</p>
+<p>stats can also be a named list of statistical functions, or purrr::map like formulas.
+</p>
+<p>The names will be used as column names in the resulting table. If an element of the list is a function, it will be used as-is for the stats.
+</p>
+
+
+<h3>Tests</h3>
+
+<p>The tests can be a function which takes a variable and a grouping variable, and returns an appropriate statistical test to use in that case.
+</p>
+<p>tests can also be a named list of statistical test functions, associating the name of a variable in the data and a test to use specifically for that variable.
+</p>
+<p>That test name must be expressed as a single-term formula (e.g. <code>~t.test</code>), or a purrr::map like formula
+(e.g. <code>~t.test(., var.equal = T)</code>). You don't have to specify tests for all the variables: a default test for
+all other variables can be defined with the name <code>.default</code>, and an automatic test can be defined with the name <code>.auto</code>.
+</p>
+<p>If data is a grouped dataframe (using <code>group_by</code>), subtables are created and statistic tests are performed over each sub-group.
+</p>
+
+
+<h3>Output</h3>
+
+<p>The output is a desctable object, which is a list of named dataframes that can be further manipulated. Methods for printing, using in <span class="pkg">pander</span> and <span class="pkg">DT</span> are present. Printing reduces the object to a dataframe.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>stats_auto</code>
+</p>
+<p><code>tests_auto</code>
+</p>
+<p><code>print.desctable</code>
+</p>
+<p><code>pander.desctable</code>
+</p>
+<p><code>datatable.desctable</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">iris %&gt;%
+  desctable()
+
+# Does the same as stats_auto here
+iris %&gt;%
+  desctable(stats = list("N"      = length,
+                         "Mean"   = ~ if (is.normal(.)) mean(.),
+                         "sd"     = ~ if (is.normal(.)) sd(.),
+                         "Med"    = stats::median,
+                         "IQR"    = ~ if(!is.factor(.)) IQR(.)))
+
+# With labels
+mtcars %&gt;% desctable(labels = c(hp  = "Horse Power",
+                                cyl = "Cylinders",
+                                mpg = "Miles per gallon"))
+
+# With grouping on a factor
+iris %&gt;%
+  group_by(Species) %&gt;%
+  desctable(stats = stats_default)
+
+# With nested grouping, on arbitrary variables
+mtcars %&gt;%
+  group_by(vs, cyl) %&gt;%
+  desctable()
+
+# With grouping on a condition, and choice of tests
+iris %&gt;%
+  group_by(Petal.Length &gt; 5) %&gt;%
+  desctable(tests = list(.auto = tests_auto, Species = ~chisq.test))
+</code></pre>
+
+
+</div>

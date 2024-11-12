@@ -1,0 +1,84 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>join_mpa_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Detect fishing vessel presence within Marine Protected Areas polygons in Mexico</h2>
+
+<h3>Description</h3>
+
+<p>The function spatially joins the Vessels Monitoring System, VMS, points with the Marine Protected Area, MPAs, polygons in Mexico.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">join_mpa_data(x, all_mpas = all_mpas)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A data.frame with VMS data that must contain columns longitude and latitude</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>all_mpas</code></td>
+<td>
+<p>A shape file that contains all MPA polygons in Mexico you can upload this using <code>data("all_mpas")</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>It adds three columns <code>zone</code>, <code>mpa_decree</code>, <code>state</code>, <code>municipality</code>, <code>region</code>, which are data from the
+MPAs polygon. <code>zone</code> contains the name of the MPA (in Spanish) and when the vessel is outside an MPA polygon is dubbed as <code style="white-space: pre;">⁠open area⁠</code>,
+<code>mpa_decree</code> contains the type of MPA (such as National Park, etc.),
+<code>state</code> contains the Mexican state with jurisdiction on the MPA, <code>municipality</code> contains the Mexican municipality with jurisdiction over the MPA,
+and <code>region</code> contains the overall location of the MPA (in Spanish)
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.frame
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+# Use sample_dataset
+data("sample_dataset")
+data("all_mpas")
+vms_cleaned &lt;- vms_clean(sample_dataset)
+vms_mpas &lt;- join_mpa_data(vms_cleaned, all_mpas)
+
+
+# Plotting data
+# Points NOT inside MPA are removed to reduce data size
+vms_mpas_sub &lt;- vms_mpas  |&gt;
+  dplyr::filter(zone != "open area")
+
+vms_mpas_sf &lt;- sf::st_as_sf(vms_mpas_sub, coords = c("longitude", "latitude"), crs = 4326)
+
+# Loading Mexico shapefile
+data("mx_shape")
+
+# Map
+library(ggplot2)
+ggplot(mx_shape, col = "gray90") +
+  geom_sf(data = all_mpas, fill = "gray60") +
+  geom_sf(data = vms_mpas_sf, aes(col = zone)) +
+  theme_void() +
+  theme(legend.position = "")
+</code></pre>
+
+
+</div>

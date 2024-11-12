@@ -1,0 +1,101 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>condense.dmmarray</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Condense an object of type <code>dmmarray</code> to an object of type <code>dmm</code>
+</h2>
+
+<h3>Description</h3>
+
+<p>An object of type <code>dmmarray</code> is an array of objects of type <code>dmm</code>, with each array element representing the reult of a <code>dmm()</code> analysis for one pair of traits. The function <code>condense.dmmarray</code> will recombine these results into a single object of class <code>dmm</code> with the variance component and genetic parameter estimates matrices being for all traits, and other elements of the <code>dmm</code> object being appropriately pooled.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">condense.dmmarray(da)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>da</code></td>
+<td>
+
+<p>An object of class <code>dmmarray</code>
+</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>In bringing together the results of several <code>traitspairwise</code> analyses into a single matrix of (for example) individual additive genetic variance/covariance components, one is putting together into one matrix elements estimated with different precisions due to differnt replication for each pair of traits. The resulting matrix may not be positive definite even if all the contributing traitspairwise 2 x 2 matrices are forced positive definite. 
+</p>
+<p>If the argument <code>da</code> contains results from a <code>dmm</code> run with <code>gls=T</code> then the GLS results for each traitpair will also be condensed. In this case the GLS results must be present for every traitpair. It can be quite difficult to get <code>gls=T</code> runs to converge successfully for every trait pair.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>dmm</code>, containing the recombined results for all traits.
+</p>
+
+
+<h3>Note</h3>
+
+<p>An object of class <code>dmmarray</code> can be manipulated as is without using the <code>condense.dmmarray()</code> function. For example one element of the array can be printed with
+</p>
+<p>print(objectname[[i,j]])
+</p>
+<p>where <code>i</code> and <code>j</code> are subscripts indicating the row and column position of the element to be printed. The <code>summary()</code>  and <code>gsummary()</code> functions are also available for use in this manner.  It is necessary that the <code>library(dmm)</code> statement be made, otherwise one will get the standard <code>print()</code> and <code>summary()</code> functions instead of those appropriate for an object of class <code>dmm</code>. The double square brackets are necessary because each element of the array is a list object, and you want its contents, not its name attribute.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Neville Jackson
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Functions <code>dmm()</code>, <code>condense.dmmblockarray()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dmm)
+# prepare the dataset sheep.df
+data(sheep.df)
+# add a matrix 'Ymat' to the dataframe,
+#    which is required for traitspairwise
+# keep=TRUE is required
+sheep.mdf &lt;- mdf(sheep.df,pedcols=c(1:3),factorcols=c(4:6),ycols=c(7:9),
+             sexcode=c("M","F"),keep=TRUE)
+# make sheep.fit as a class dmmarray object
+sheep.fit &lt;- dmm(sheep.mdf, Ymat ~ 1 + Year + Sex,
+    components=c("VarE(I)","VarG(Ia)"),traitspairwise=TRUE)
+#  look at one element of the dmmarray
+summary(sheep.fit[["Cww","Diam"]])
+# condense the dmmarray to a class dmm object
+sheep.condense &lt;- condense.dmmarray(sheep.fit)
+# compute a response to selection
+sheep.resp &lt;- gresponse(sheep.condense,
+       psd=list(dp=c(1,1,1)),effects=c("G(Ia)"))
+# look at response object
+summary(sheep.resp)
+#cleanup
+rm(sheep.df)
+rm(sheep.mdf)
+rm(sheep.fit)
+rm(sheep.condense)
+rm(sheep.resp)
+
+</code></pre>
+
+
+</div>

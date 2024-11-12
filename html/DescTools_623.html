@@ -1,0 +1,240 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>RunsTest</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Runs Test for Randomness</h2>
+
+<h3>Description</h3>
+
+<p>Performs a test whether the elements of <code>x</code> are serially independent - say, whether
+they occur in a random order - by counting how many runs there are above and below a threshold.
+If <code>y</code> is supplied a two sample Wald-Wolfowitz-Test testing the equality of two distributions against general alternatives will be computed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">RunsTest(x, ...)
+
+## Default S3 method:
+RunsTest(x, y = NULL, alternative = c("two.sided", "less", "greater"),
+         exact = NULL, correct = TRUE, na.rm = FALSE, ...)
+
+## S3 method for class 'formula'
+RunsTest(formula, data, subset, na.action, ...)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a dichotomous vector of data values or a (non-empty) numeric vector of data values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>an optional (non-empty) numeric vector of data values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a formula of the form <code>lhs ~ rhs</code> where <code>lhs</code> gives the data values and rhs the corresponding groups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>an optional matrix or data frame (or similar: see <code>model.frame</code>) containing the variables in the formula <code>formula</code>.
+By default the variables are taken from <code>environment(formula)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations to be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen when the data contain NAs. Defaults to <code>getOption("na.action")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>a character string specifying the alternative hypothesis, must be one of <code>"two.sided"</code> (default), <code>"less"</code> or <code>"greater"</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact</code></td>
+<td>
+<p>a logical indicating whether an exact p-value should be computed. By default exact values will be calculated for small vectors with a total length &lt;= 30 and the normal approximation for longer ones.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct</code></td>
+<td>
+<p>a logical indicating whether to apply continuity correction when computing the test statistic. Default is <code>TRUE</code>. Ignored if <code>exact</code> is set to <code>TRUE</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>defines if <code>NA</code>s should be omitted. Default is <code>FALSE</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments to be passed to or from methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><b>The runs test for randomness</b> <code style="white-space: pre;">⁠     ⁠</code>  is used to test the hypothesis
+that a series of numbers is random. <br></p>
+<p>For a categorical variable, the number of runs correspond to the number of times the category changes, that is,
+where <code class="reqn">x_{i}</code> belongs to one category and  <code class="reqn">x_{i+1}</code>  belongs to the other. The number of runs is the number of sign changes plus one.<br></p>
+<p>For a numeric variable x containing more than two values, a run is a set of sequential values that are either all above or below a specified cutpoint, typically the median. This is not necessarily the best choice. If another threshold should be used use a code like: <code>RunsTest(x &gt; mean(x))</code>.
+</p>
+<p>The exact distribution of runs and the p-value based on it are described in the manual of SPSS "Exact tests"
+<a href="https://www.sussex.ac.uk/its/pdfs/SPSS_Exact_Tests_21.pdf">https://www.sussex.ac.uk/its/pdfs/SPSS_Exact_Tests_21.pdf</a>.
+</p>
+<p>The normal approximation of the runs test is calculated with the expected number of runs under the null
+</p>
+<p style="text-align: center;"><code class="reqn">\mu_r=\frac{2 n_0 n_1}{n_0 + n_1} + 1</code>
+</p>
+
+<p>and its variance
+</p>
+<p style="text-align: center;"><code class="reqn">\sigma_r^2 = \frac{2 n_0 n_1 (2 n_0 n_1 - n_0 - n_1) }{(n_0 + n_1)^2 \cdot (n_0 + n_1 - 1)}</code>
+</p>
+
+<p>as
+</p>
+<p style="text-align: center;"><code class="reqn">\hat{z}=\frac{r - \mu_r + c}{\sigma_r}</code>
+</p>
+
+<p>where <code class="reqn">n_0, n_1</code> the number of values below/above the threshold and <code class="reqn">r</code> the number of runs.
+</p>
+<p>Setting the continuity correction <code>correct = TRUE</code> will yield the normal approximation as SAS (and SPSS if n &lt; 50) does it, see <a href="http://support.sas.com/kb/33/092.html">http://support.sas.com/kb/33/092.html</a>.
+The c is set to <code class="reqn">c = 0.5</code> if <code class="reqn">r &lt; \frac{2 n_0 n_1}{n_0 + n_1} + 1</code>
+and to <code class="reqn">c = -0.5</code> if <code class="reqn">r &gt; \frac{2 n_0 n_1}{n_0 + n_1} + 1</code>.
+</p>
+<p><b>The Wald-Wolfowitz test</b> <code style="white-space: pre;">⁠     ⁠</code>  is a  2-sample nonparametric test to  evaluate if two continuous cumulative distributions are significantly different or not. Ideally there should be no ties in the data. In practice there is no problem with ties within a group, but if ties occur between members of the different groups then there is no unique sequence of observations. For example the data sets A: 10,14,17,19,34 and B: 12,13,17,19,22 can give four possible sequences, with two possible values for r (7 or 9). The "solution" to this is to list every possible combination, and calculate the test statistic for each one. If all test statistics are significant at the chosen level, then one can reject the null hypothesis. If only some are significant, then Siegel (1956) suggests that the average of the P-values is taken.
+Help for finding all permutations of ties can be found at:  <a href="https://stackoverflow.com/questions/47565066/all-possible-permutations-in-factor-variable-when-ties-exist-in-r">https://stackoverflow.com/questions/47565066/all-possible-permutations-in-factor-variable-when-ties-exist-in-r</a>
+</p>
+<p>However this solutions seems quite coarse and in general, the test should not be used if there are more than one or two ties. We have better tests to distinguish between two samples!
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with the following components.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+<p>z, the value of the standardized runs statistic, if not exact p-values are computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameter</code></td>
+<td>
+<p>the number of runs, the total number of zeros (m) and ones (n)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the p-value for the test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.name</code></td>
+<td>
+<p>a character string giving the names of the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>a character string describing the alternative hypothesis.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Andri Signorell &lt;andri@signorell.net&gt;, exact p-values by Detlew Labes &lt;detlewlabes@gmx.de&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Wackerly, D., Mendenhall, W. Scheaffer, R. L. (1986) <em>Mathematical Statistics with Applications</em>, 3rd Ed., Duxbury Press, CA.
+</p>
+<p>Wald, A. and Wolfowitz, J. (1940): On a test whether two samples are from the same population,  <em>Ann. Math Statist</em>. 11, 147-162.
+</p>
+<p>Siegel, S. (1956) <em>Nonparametric Statistics for the Behavioural Sciences</em>, McGraw-Hill Kogakusha, Tokyo.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Run Length Encoding <code>rle</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># x will be coerced to a dichotomous variable
+x &lt;- c("S","S", "T", "S", "T","T","T", "S", "T")
+RunsTest(x)
+
+
+x &lt;- c(13, 3, 14, 14, 1, 14, 3, 8, 14, 17, 9, 14, 13, 2, 16, 1, 3, 12, 13, 14)
+RunsTest(x)
+# this will be treated as
+RunsTest(x &gt; median(x))
+
+plot( (x &lt; median(x)) - 0.5, type="s", ylim=c(-1,1) )
+abline(h=0)
+
+set.seed(123)
+x &lt;- sample(0:1, size=100, replace=TRUE)
+RunsTest(x)
+# As you would expect of values from a random number generator, the test fails to reject
+# the null hypothesis that the data are random.
+
+
+# SPSS example
+x &lt;- c(31,23,36,43,51,44,12,26,43,75,2,3,15,18,78,24,13,27,86,61,13,7,6,8)
+RunsTest(x, exact=TRUE)       # exact probability
+RunsTest(x, exact=FALSE)      # normal approximation
+
+# SPSS example small dataset
+x &lt;- c(1, 1, 1, 1, 0, 0, 0, 0, 1, 1)
+RunsTest(x)
+RunsTest(x, exact=FALSE)
+
+# if y is not NULL, the Wald-Wolfowitz-Test will be performed
+A &lt;- c(35,44,39,50,48,29,60,75,49,66)
+B &lt;- c(17,23,13,24,33,21,18,16,32)
+
+RunsTest(A, B, exact=TRUE)
+RunsTest(A, B, exact=FALSE)
+</code></pre>
+
+
+</div>

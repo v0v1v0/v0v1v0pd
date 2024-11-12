@@ -1,0 +1,147 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbGetRowsAffected</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The number of rows affected</h2>
+
+<h3>Description</h3>
+
+<p>This method returns the number of rows that were added, deleted, or updated
+by a data manipulation statement.
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbGetRowsAffected(res, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p>An object inheriting from DBIResult.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments passed on to methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>dbGetRowsAffected()</code> returns a scalar number (integer or numeric),
+the number of rows affected by a data manipulation statement
+issued with <code>dbSendStatement()</code>.
+The value is available directly after the call
+and does not change after calling <code>dbFetch()</code>.
+<code>NA_integer_</code> or <code>NA_numeric_</code> are allowed if the number of rows affected is not known.
+</p>
+<p>For queries issued with <code>dbSendQuery()</code>,
+zero is returned before
+and after the call to <code>dbFetch()</code>.
+<code>NA</code> values are not allowed.
+</p>
+
+
+<h3>The command execution flow</h3>
+
+<p>This section gives a complete overview over the flow
+for the execution of SQL statements that have side effects
+such as stored procedures, inserting or deleting data,
+or setting database or connection options.
+Most of this flow, except repeated calling of <code>dbBindArrow()</code>,
+is implemented by <code>dbExecute()</code>, which should be sufficient
+for non-parameterized queries.
+This flow requires an active connection established by <code>dbConnect()</code>.
+See also <code>vignette("dbi-advanced")</code> for a walkthrough.
+</p>
+
+<ol>
+<li>
+<p> Use <code>dbSendStatement()</code> to create a result set object of class
+DBIResult.
+For some queries you need to pass <code>immediate = TRUE</code>.
+</p>
+</li>
+<li>
+<p> Optionally, bind query parameters with<code>dbBind()</code> or <code>dbBindArrow()</code>.
+This is required only if the query contains placeholders
+such as <code style="white-space: pre;">⁠?⁠</code> or <code style="white-space: pre;">⁠$1⁠</code>, depending on the database backend.
+</p>
+</li>
+<li>
+<p> Optionally, use <code>dbGetRowsAffected()</code> to retrieve the number
+of rows affected by the query.
+</p>
+</li>
+<li>
+<p> Repeat the last two steps as necessary.
+</p>
+</li>
+<li>
+<p> Use <code>dbClearResult()</code> to clean up the result set object.
+This step is mandatory even if no rows have been fetched
+or if an error has occurred during the processing.
+It is good practice to use <code>on.exit()</code> or <code>withr::defer()</code>
+to ensure that this step is always executed.
+</p>
+</li>
+</ol>
+<h3>Failure modes</h3>
+
+<p>Attempting to get the rows affected for a result set cleared with
+<code>dbClearResult()</code> gives an error.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other DBIResult generics: 
+<code>DBIResult-class</code>,
+<code>dbBind()</code>,
+<code>dbClearResult()</code>,
+<code>dbColumnInfo()</code>,
+<code>dbFetch()</code>,
+<code>dbGetInfo()</code>,
+<code>dbGetRowCount()</code>,
+<code>dbGetStatement()</code>,
+<code>dbHasCompleted()</code>,
+<code>dbIsReadOnly()</code>,
+<code>dbIsValid()</code>,
+<code>dbQuoteLiteral()</code>,
+<code>dbQuoteString()</code>
+</p>
+<p>Other command execution generics: 
+<code>dbBind()</code>,
+<code>dbClearResult()</code>,
+<code>dbExecute()</code>,
+<code>dbSendStatement()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+con &lt;- dbConnect(RSQLite::SQLite(), ":memory:")
+
+dbWriteTable(con, "mtcars", mtcars)
+rs &lt;- dbSendStatement(con, "DELETE FROM mtcars")
+dbGetRowsAffected(rs)
+nrow(mtcars)
+
+dbClearResult(rs)
+dbDisconnect(con)
+
+</code></pre>
+
+
+</div>

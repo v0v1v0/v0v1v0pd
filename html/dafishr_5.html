@@ -1,0 +1,81 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>join_ports_locations</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Label points when vessel is at port</h2>
+
+<h3>Description</h3>
+
+<p>The function joins ports locations using data from ports buffers. <code>mx_ports</code> data is used which is
+provided by INEGI https://en.www.inegi.org.mx/
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">join_ports_locations(x, mx_ports = mx_ports, buffer_size = 0.15)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data.frame with latitude and longitude coordinates</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mx_ports</code></td>
+<td>
+<p>is a shapefile of point data storing coordinates of ports and marina in Mexico, you can upload this using <code>data("mx_ports")</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>buffer_size</code></td>
+<td>
+<p>a number (double) indicating the size of the buffer for the ports to implement</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function adds a <code>location</code> column indicating if the vessel was at port or at sea.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data.frame
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# With sample data
+
+data("sample_dataset")
+data("mx_ports")
+vms_cleaned &lt;- vms_clean(sample_dataset)
+
+# It is a good idea to subsample when testing... it takes a while on the full data!
+
+vms_subset &lt;- dplyr::sample_n(vms_cleaned, 1000)
+with_ports &lt;- join_ports_locations(vms_subset)
+with_ports_sf &lt;- sf::st_as_sf(with_ports, coords = c("longitude", "latitude"), crs = 4326)
+
+data("mx_shape")
+library(ggplot2)
+ggplot(mx_shape) +
+  geom_sf(col = "gray90") +
+  geom_sf(data = with_ports_sf, aes(col = location)) +
+  facet_wrap(~location) +
+  theme_bw()
+</code></pre>
+
+
+</div>

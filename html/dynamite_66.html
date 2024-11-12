@@ -1,0 +1,271 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.dynamitefit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict Method for a Dynamite Model</h2>
+
+<h3>Description</h3>
+
+<p>Obtain counterfactual predictions for a <code>dynamitefit</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynamitefit'
+predict(
+  object,
+  newdata = NULL,
+  type = c("response", "mean", "link"),
+  funs = list(),
+  impute = c("none", "locf", "nocb"),
+  new_levels = c("none", "bootstrap", "gaussian", "original"),
+  global_fixed = FALSE,
+  n_draws = NULL,
+  thin = 1,
+  expand = TRUE,
+  df = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>[<code>dynamitefit</code>]<br> The model fit object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>[<code>data.frame</code>]<br> Data used in predictions. Predictions are
+computed for missing (<code>NA</code>) values in the response variable columns, and
+non-missing values are assumed fixed.
+If <code>NULL</code> (default), the data used in model estimation is used for
+predictions as well, after all values in the response variable columns
+after the first <code>fixed</code> time point are converted to <code>NA</code> values.
+Missing values in predictor columns can be imputed (argument <code>impute</code>).
+There should be no new time points that were not present in the data that
+were used to fit the model. New group levels can be included, but if the
+model contains random effects, an option for the random
+effects for the new levels must be chosen (argument <code>new_levels</code>).
+If the grouping variable of the original data is missing, it is assumed
+that all observations in <code>newdata</code> belong to the first group in the
+original data. New group levels are not allowed for models using latent
+factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>[<code>character(1)</code>]<br> Type of prediction,
+<code>"response"</code> (default), <code>"mean"</code>, or <code>"link"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funs</code></td>
+<td>
+<p>[<code>list()</code>]<br> A named list whose names should correspond to the
+response variables of the model. Each element of <code>funs</code> should be a
+a named <code>list</code> of functions that will be applied to the
+corresponding predicted <code>type</code> of the channel over the individuals
+for each combination of the posterior draws and time points.
+In other words, the resulting predictions will be averages
+over the individuals. The functions should take the corresponding
+<code>type</code> variable values as their only argument.
+If <code>funs</code> is empty, the full individual level values are returned
+instead. Note that this argument can only be used
+if there are multiple individuals (i.e., <code>group</code> was not <code>NULL</code> in the
+<code>dynamite</code> call).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>impute</code></td>
+<td>
+<p>[<code>character(1)</code>]<br> Which imputation scheme to use for
+missing exogenous predictor values. Currently supported options are
+no imputation: <code>"none"</code> (default), last observation carried forward:
+<code>"locf"</code>, and next observation carried backward: <code>"nocb"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_levels</code></td>
+<td>
+<p>[<code>character(1)</code>]<br>
+Defines if and how to sample the random effects for observations whose
+group level was not present in the original data. The options are:
+</p>
+
+<ul>
+<li> <p><code>"none"</code> (the default) which will signal an error if new levels
+are encountered.
+</p>
+</li>
+<li> <p><code>"bootstrap"</code> which will randomly draw from the posterior samples of
+the random effects across all original levels.
+</p>
+</li>
+<li> <p><code>"gaussian"</code> which will randomly draw from a gaussian
+distribution using the posterior samples of the random effects
+standard deviation (and correlation matrix if applicable).
+</p>
+</li>
+<li> <p><code>"original"</code> which will randomly match each new level to one of
+the original levels. The posterior samples of the random effects of
+the matched levels will then be used for the new levels.
+</p>
+</li>
+</ul>
+<p>This argument is ignored if the model does not contain random effects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>global_fixed</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>FALSE</code> (the default),
+the first non-fixed time point is counted from the the first non-NA
+observation for each group member separately. Otherwise, the first
+non-fixed time point is counted from the first time point globally.
+If there are no groups, then the options are equivalent.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_draws</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> Number of posterior samples to use,
+default is <code>NULL</code> which uses all samples without permuting (with chains
+concatenated). If <code>n_draws</code>is smaller than <code>ndraws(object)</code>, a random
+subset of <code>n_draws</code> posterior samples are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thin</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> Use only every <code>thin</code> posterior sample.
+This can be beneficial with when the model object contains
+large number of samples. Default is <code>1</code> meaning that all samples are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code> (the default), the output
+is a single <code>data.frame</code> containing the original <code>newdata</code> and the
+predicted values. Otherwise, a <code>list</code> is returned with two components,
+<code>simulated</code> and <code>observed</code>, where the first contains only the
+predicted values, and the second contains the original <code>newdata</code>.
+Setting <code>expand</code> to <code>FALSE</code> can help conserve memory because <code>newdata</code>
+is not replicated <code>n_draws</code> times in the output.
+This argument is ignored if <code>funs</code> are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code> (default) the output
+consists of <code>data.frame</code> objects, and <code>data.table</code> objects otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that forecasting (i.e., predictions for time indices beyond the last
+time index in the original data) is not supported by the <span class="pkg">dynamite</span>
+package. However, such predictions can be obtained by augmenting the
+original data with <code>NA</code> values before model estimation.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.frame</code> containing the predicted values or a <code>list</code> of two
+<code>data.frames</code>. See the <code>expand</code> argument for details. Note that the
+<code>.draw</code> column is not the same as <code>.draw</code> from <code>as.data.frame</code> and
+<code>as_draws</code> methods as <code>predict</code> uses permuted samples. A mapping between
+these variables can be done using information in
+<code>object$stanfit@sim$permutation</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Obtaining predictions
+<code>fitted.dynamitefit()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data.table::setDTthreads(1) # For CRAN
+out &lt;- predict(gaussian_example_fit, type = "response", n_draws = 2L)
+head(out)
+
+# using summary functions
+sumr &lt;- predict(multichannel_example_fit, type = "mean",
+  funs = list(g = list(m = mean, s = sd), b = list(sum = sum)),
+  n_draws = 2L)
+head(sumr$simulated)
+
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  # Simulate from the prior predictive distribution
+
+  f &lt;- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
+    splines(df = 10, noncentered = TRUE)
+
+  # Create data with missing observations
+  # Note that due to the lagged term in the model,
+  # we need to fix the first time point
+  d &lt;- data.frame(y = c(0, rep(NA, 49)), x = rnorm(50), time = 1:50)
+
+  # Suppress warnings due to the lack of data
+  suppressWarnings(
+    priors &lt;- get_priors(f, data = d, time = "time")
+  )
+
+  # Modify default priors which can produce exploding behavior when used
+  # without data
+  priors$prior &lt;- c(
+    "normal(0, 1)",
+    "normal(0.6, 0.1)",
+    "normal(-0.2, 0.5)",
+    "normal(0.2, 0.1)",
+    "normal(0.5, 0.1)"
+  )
+
+  # Samples from the prior conditional on the first time point and x
+  fit &lt;- dynamite(
+    dformula = f,
+    data = d,
+    time = "time",
+    verbose = FALSE,
+    priors = priors,
+    chains = 1
+  )
+
+  # Simulate new data
+  pp &lt;- predict(fit)
+
+  ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
+    ggplot2::geom_line(alpha = 0.1) +
+    ggplot2::theme_bw()
+}
+
+
+</code></pre>
+
+
+</div>

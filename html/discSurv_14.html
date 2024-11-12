@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataLongMultiSpell</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data long transformation for multi spell analysis</h2>
+
+<h3>Description</h3>
+
+<p>Transform data from short format into long format for discrete multi spell
+survival analysis and right censoring.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataLongMultiSpell(
+  dataSemiLong,
+  timeColumn,
+  eventColumn,
+  idColumn,
+  timeAsFactor = FALSE,
+  spellAsFactor = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataSemiLong</code></td>
+<td>
+<p>Original data in semi-long format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character giving the column name of the observed times. It
+is required that the observed times are discrete ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumn</code></td>
+<td>
+<p>Column name of the event status ("character vector"). The
+events can take multiple values on a discrete scale (0, 1, 2, ...) and
+repetition of events is allowed (integer vector or class factor). 
+It is assumed that the number zero corresponds to censoring and all number &gt; 0 
+represent the observed states between transitions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idColumn</code></td>
+<td>
+<p>Name of column of identification number of persons as
+character("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeAsFactor</code></td>
+<td>
+<p>Should the time intervals be coded as factor ("logical vector")? Default is FALSE. 
+In the default settings the discrete time intervals are treated as quantitative ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spellAsFactor</code></td>
+<td>
+<p>Should the spells be coded as factor ("logical vector")? Default is
+not to use factor. If the argument is false, the column is coded as numeric.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the data has continuous survival times, the response may be transformed
+to discrete intervals using function <code>contToDisc</code>. The discrete
+time variable needs to be strictly increasing for each person, because
+otherwise the order of the events is not distinguishable. Here is an example
+data structure in short format prior augmentation with three possible
+states: \ idColumn=1, 1, ... , 1, 2, 2, ... , n \ timeColumn= t_ID1_1 &lt;
+t_ID1_1 &lt; ... &lt; t_ID1_k, t_ID2_1 &lt; t_ID2_2 &lt; ... &lt; t_ID2_k, ... \
+eventColumn = 0, 1, ... , 2, 1, 0, ... , 0
+</p>
+<p>The starting state of each individual is assumed to given with time interval
+equals zero. For example in an illness-death model with three states ("healthy", "illness", "death")
+if an individual was healthy at the beginning of the study this has to be encoded with
+discrete time interval set to zero and event state "healthy".
+</p>
+
+
+<h3>Value</h3>
+
+<p>Original data.frame with three additional columns: </p>
+ <ul>
+<li>
+<p>obj Index of persons as integer vector </p>
+</li>
+<li> <p>timeInt Index of time
+intervals (factor or integer vector) </p>
+</li>
+<li> <p>spell The spell gives the actual 
+state of each individual within a given discrete interval.
+</p>
+</li>
+<li> <p>e0 Response transition in long format as binary vector. Column <em>e0</em> represents censoring. 
+If <em>e0</em> is coded one in the in the last observed time interval <em>timeInt</em> of a person, 
+then this observation was censored. </p>
+</li>
+<li> <p>e1 Response in long format as binary vector. 
+The column <em>e1</em> represents the transition to the first event state. 
+</p>
+</li>
+<li> <p>eX Response in long format as binary vector. 
+The column <em>eX</em> represents the transition to the last event state out of the set of possible states 
+"1, 2, 3, ..., X". </p>
+</li>
+<li>
+<p> ... Expanded columns of original data set.</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Fahrmeir L (2005).
+“Discrete Survival-Time Models.”
+In <em>Encyclopedia of Biostatistics</em>, chapter Survival Analysis.
+John Wiley \&amp; Sons. <br><br>
+Thompson Jr. WA (1977).
+“On the Treatment of Grouped Observations in Life Studies.”
+<em>Biometrics</em>, <b>33</b>, 463-470.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contToDisc</code>, <code>dataLongTimeDep</code>,
+<code>dataLongCompRisks</code>, <code>dataLongCompRisks</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+################################
+# Example with unemployment data
+data(unempMultiSpell)
+
+# Select subsample of first 500 persons
+unempSub &lt;- unempMultiSpell[unempMultiSpell$id %in% 1:250,]
+
+# Expansion from semi-long to long format
+unempLong &lt;- dataLongMultiSpell(dataSemiLong=unempSub, timeColumn = "year",
+                                eventColumn="spell", idColumn="id", 
+                                spellAsFactor=TRUE, timeAsFactor=FALSE)
+
+head(unempLong, 25)
+
+# Fit discrete multi-state model regression model
+library(VGAM)
+
+model &lt;- vgam(cbind(e0, e1, e2, e3, e4) ~ 0 + s(timeInt) + age:spell, 
+data = unempLong, family = multinomial(refLevel="e0"))
+             
+############################
+# Example with artificial data
+
+# Seed specification
+set.seed(-2578)
+
+# Construction of data set
+# Censoring and three possible states (0, 1, 2, 3)
+# Discrete time intervals (1, 2, ... , 10)
+# Noninfluential variable x ~ N(0, 1)
+datFrame &lt;- data.frame(
+ ID = c(rep(1, 6), rep(2, 4), rep(3, 3), rep(4, 2), rep(5, 4), 
+      rep(6, 5), rep(7, 7), rep(8, 8)),
+ time = c(c(0, 2, 5, 6, 8, 10), c(0, 1, 6, 7), c(0, 9, 10), c(0, 6), c(0, 2, 3, 4), 
+        c(0, 3, 4, 7, 9), c(0, 2, 3, 5, 7, 8, 10), c(0, 1, 3, 4, 6, 7, 8, 9) ),
+ state = c(c(2, 1, 3, 2, 1, 0), c(3, 1, 2, 2), c(2, 2, 1), c(1, 2), c(3, 2, 2, 0), 
+         c(1, 3, 2, 1, 3), c(1, 1, 2, 3, 2, 1, 3), c(3, 2, 3, 2, 1, 1, 2, 3) ),
+ x = rnorm(n=6+4+3+2+4+5+7+8) )
+
+# Transformation to long format
+datFrameLong &lt;- dataLongMultiSpell(dataSemiLong=datFrame, timeColumn="time",
+                                   eventColumn="state", idColumn="ID", 
+                                   spellAsFactor=TRUE)
+head(datFrameLong, 25)
+library(VGAM)
+cRm &lt;- vglm(cbind(e0, e1, e2, e3) ~ 0 + timeInt + x:spell, 
+data = datFrameLong, family = "multinomial")
+summary(cRm)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>acc_varcomp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimates variance components</h2>
+
+<h3>Description</h3>
+
+<p>Variance based models and intraclass correlations (ICC) are approaches to
+examine the impact of so-called process variables on the measurements. This
+implementation is model-based.
+</p>
+<p><strong>NB:</strong> The term ICC is frequently used to describe the agreement between
+different observers, examiners or even devices. In respective settings a good
+agreement is pursued. ICC-values can vary between <code style="white-space: pre;">⁠[-1;1]⁠</code> and an ICC close
+to 1 is desired (Koo and Li 2016, Müller and Büttner 1994).
+</p>
+<p>However, in multi-level analysis the ICC is interpreted differently. Please
+see Snijders et al. (Sniders and Bosker 1999). In this context the proportion
+of variance explained by respective group levels indicate an influence of (at
+least one) level of the respective group_vars. An ICC close to 0 is desired.
+</p>
+<p>Indicator
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">acc_varcomp(
+  resp_vars = NULL,
+  group_vars,
+  co_vars = NULL,
+  min_obs_in_subgroup = 30,
+  min_subgroups = 5,
+  label_col = NULL,
+  threshold_value = 0.05,
+  study_data,
+  meta_data
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resp_vars</code></td>
+<td>
+<p>variable list the names of the continuous measurement
+variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_vars</code></td>
+<td>
+<p>variable list the names of the resp. observer, device or
+reader variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>co_vars</code></td>
+<td>
+<p>variable list a vector of covariables, e.g. age and sex for
+adjustment</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_obs_in_subgroup</code></td>
+<td>
+<p>integer from=0. optional argument if a
+"group_var" is used. This argument
+specifies the minimum no. of observations
+that is required to include a subgroup
+(level) of the "group_var" in the analysis.
+Subgroups with fewer observations are
+excluded. The default is 30.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_subgroups</code></td>
+<td>
+<p>integer from=0. optional argument if a "group_var" is
+used. This argument specifies the
+minimum no. of subgroups (levels)
+included "group_var". If the variable
+defined in "group_var" has fewer
+subgroups it is not used for analysis.
+The default is 5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold_value</code></td>
+<td>
+<p>numeric from=0 to=1. a numerical value ranging
+from 0-1</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list with:
+</p>
+
+<ul>
+<li> <p><code>SummaryTable</code>: data frame with ICCs per <code>rvs</code>
+</p>
+</li>
+<li> <p><code>SummaryData</code>: data frame with ICCs per <code>rvs</code>
+</p>
+</li>
+<li> <p><code>ScalarValue_max_icc</code>: maximum variance contribution value by group_vars
+</p>
+</li>
+<li> <p><code>ScalarValue_argmax_icc</code>: variable with maximum variance contribution by
+group_vars
+</p>
+</li>
+</ul>
+<h3>ALGORITHM OF THIS IMPLEMENTATION:</h3>
+
+
+<ul>
+<li>
+<p> This implementation is yet restricted to data of type float.
+</p>
+</li>
+<li>
+<p> Missing codes are removed from resp_vars (if defined in the metadata)
+</p>
+</li>
+<li>
+<p> Deviations from limits, as defined in the metadata, are removed
+</p>
+</li>
+<li>
+<p> A linear mixed-effects model is estimated for resp_vars using co_vars and
+group_vars for adjustment.
+</p>
+</li>
+<li>
+<p> An output data frame is generated for group_vars indicating the ICC.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><a href="https://dataquality.qihs.uni-greifswald.de/VIN_acc_impl_varcomp.html">Online Documentation</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# runs spuriously slow on rhub
+load(system.file("extdata/study_data.RData", package = "dataquieR"))
+load(system.file("extdata/meta_data.RData", package = "dataquieR"))
+co_vars &lt;- c("SEX_0", "AGE_0")
+min_obs_in_subgroup &lt;- 30
+min_subgroups &lt;- 3
+label_col &lt;- LABEL
+rvs &lt;- c("DBP_0", "SBP_0")
+group_vars &lt;- prep_map_labels(rvs, meta_data = meta_data, from = label_col,
+  to = VAR_NAMES)
+group_vars &lt;- prep_map_labels(group_vars, meta_data = meta_data,
+  to = GROUP_VAR_OBSERVER)
+group_vars &lt;- prep_map_labels(group_vars, meta_data = meta_data)
+acc_varcomp(
+  resp_vars = rvs, group_vars = group_vars, co_vars = co_vars,
+  min_obs_in_subgroup = min_obs_in_subgroup,
+  min_subgroups = min_subgroups, label_col = label_col,
+  study_data = study_data, meta_data = meta_data
+)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

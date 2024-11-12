@@ -1,0 +1,177 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estND</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate nondecision density</h2>
+
+<h3>Description</h3>
+
+<p>Estimate nondecision density
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estND(
+  res,
+  tt = NULL,
+  data = NULL,
+  h = res$h,
+  zp = 5,
+  upper.bound = 1,
+  lower.bound = 0,
+  Optim = list(),
+  verbose = TRUE,
+  dist = NULL,
+  NDindex,
+  max = 100,
+  useRcpp = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>res</code></td>
+<td>
+<p>an object of class <code>D*M</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tt</code></td>
+<td>
+<p>optional timegrid if the nondecision density is to be estimated at a different grid than the model density.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>if <code>tt</code> is specified then the original dataset must be supplied too.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>Optional smoothing parameter to be used when estimating the nondecision model on a
+different time grid than the decision model. If omitted, the smoothing parameter of the decision model
+is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zp</code></td>
+<td>
+<p>Zero padding the estimated nondecision density by this amount to avoid numerical artefacts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper.bound</code></td>
+<td>
+<p>An upper bound for the nondecision density. Defaults to one.
+Lowering this bound can increase estimation speed,
+at the cost of assuming that the density of the nondecision distribution is zero past this value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.bound</code></td>
+<td>
+<p>A lower bound for the nondecision density. Defaults to zero.
+Increasing this bound can increase estimation speed,
+at the cost of assuming that the density of the nondecision distribution is zero past this value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Optim</code></td>
+<td>
+<p>a named list with identical arguments to <code>DEoptim.control</code>.
+In addition, if <code>verbose</code> == TRUE <code>Optim$steptol</code> can be a vector, i.e. <code>c(200, 50, 10)</code> means:
+Do 200 iterations then check for convergence, do 50 iterations then check for convergence,
+check every 10 iterations for convergence until itermax is reached.
+If there are multiple nondecision distributions to estimate, one can supply different estimation
+parameters for every nondecision distribution by supplying Optim as a list of lists. Every sublists
+then corresponds to parameters for one nondecision distribution and should consist of arguments for
+<code>DEoptim.control</code>.
+Defaults to <code>Optim = list(reltol = 1e-6, itermax = 1e4, steptol = 200, CR = .9, trace = 0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Numeric, should intermediate output be printed? Defaults to 1, higher values result in more progress output.
+Estimation will speed up if set to 0. If nonzero, <code>Optim$trace</code> will be
+forced to 0, hereby disabling the build in printing of <code>DEoptim</code>. To enable the
+printing of <code>DEoptim</code>, set <code>verbose</code> to 0 and specify <code>Optim$trace</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>A matrix where columns represent nondecision distributions.
+If this argument is supplied then the objective function will be evaluated in these values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NDindex</code></td>
+<td>
+<p>A vector containing indices of which nondecision distributions to estimate.
+If omitted, all nondecision distributions that complement the results in <code>res</code> are estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max</code></td>
+<td>
+<p>A positive float which indicates the maximum height of the nondecision distribution.
+If estimated nondecision distributions appear chopped of or have a lot of values at this <code>max</code>
+value it is recommended to re-estimate the nondecision distributions with a higher max value. Increasing
+the <code>max</code> value without reason will increase the size of the parameter space and slow the estimation
+procedure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useRcpp</code></td>
+<td>
+<p>Logical, setting this to true will make use of an Rcpp implementation of the objective function.
+This gains speed at the cost of flexibility.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When verbose is set to 1, the ETA is an estimated of the time it takes to execute ALL iterations.
+Convergence can (and is usually) reached before then.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># simulate data with three stimuli of different difficulty.
+# this implies different drift rates across conditions.
+# define a time grid. A more reasonable stepsize is .01; this is just for speed.
+tt = seq(0, 5, .1)
+pars = c(.8, 2, .5, .5, .5, # condition 1
+        .8, 3, .5, .5, .5, # condition 2
+        .8, 4, .5, .5, .5) # condition 3
+pdfND = dbeta(tt, 10, 30)
+# simulate data
+dat = simData(n = 3e5, pars = pars, tt = tt, pdfND = pdfND)
+# define restriction matrix
+restr = matrix(1:5, 5, 3)
+restr[2, 2:3] = 6:7 # allow drift rates to differ
+# fix variance parameters
+fixed = matrix(c('sz1', .5, 'sv1', .5), 2, 2)
+## Not run: 
+# Run D*M analysis
+res = estDstarM(data = dat, tt = tt, restr = restr, fixed = fixed)
+# Estimate nondecision density
+resND = estND(res)
+plot(resND)
+lines(tt, pdfND, type = 'b', col = 2)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,104 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>runIHW</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply Independent Hypothesis Weighting (IHW) to a list of topTable dataframes</h2>
+
+<h3>Description</h3>
+
+<p>This is a wrapper around the independent hypothesis weighting package that
+takes a list of topTable data frames and applies Independent Hypothesis
+Weighting (IHW) to each topTable data frame in the list.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">runIHW(contrastList, alpha = 0.1, FDRthreshold = 0.1, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>contrastList</code></td>
+<td>
+<p>A named list of topTable dataframes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Alpha should be the desired FDR level to interrogate (range 0-1; Default = 0.1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FDRthreshold</code></td>
+<td>
+<p>Threshold value for the p-values of a dataframe (Default = 0.1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other arguments are passed directly to the ihw function (see ?ihw)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>IHW is a method developed by N. Ignatiadis (http://dx.doi.org/10.1101/034330)
+to weight FDR values based on a covariate (AveExpr in this case).
+</p>
+<p>The IHW FDR values are added as additional columns to the topTable data frames.
+</p>
+<p>Function runIHW is normally called by runContrasts with argument IHW=T.  It
+can also be used independently on a list of topTable dataframes.  A list of
+topTable dataframes is conveniently retrieved with the DGEobj::getType
+function with the type argument set to "topTable".
+</p>
+<p>This function expects the following columns are present in each data frame:
+P.value, adj.P.Val, AveExpr.
+</p>
+<p>Note that it is impractical to run IHW on a list of genes less than ~5000.
+Operationally, IHW breaks the data into bins of 1500 genes for the analysis.
+If bins = 1, IHW converges on the BH FDR value. Instead, run IHW on the
+complete set of detected genes from topTable (not topTreat) results.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of lists.  The first element is the original contrastList with
+additional IHW columns added to each dataframe. The topTable dataframes
+will contain additional columns added by the IHW analysis and prefixed with
+"ihw." The second list element is the IHW result dataframe.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+   # NOTE: Requires the IHW package
+
+   dgeObj &lt;- readRDS(system.file("exampleObj.RDS", package = "DGEobj"))
+   contrastList &lt;- DGEobj::getType(dgeObj, type = "topTable")
+   contrastList &lt;- lapply(contrastList, dplyr::select,
+                          -ihw.adj_pvalue,
+                          -ihw.weight,
+                          -ihw.weighted_pvalue)
+   colnames(contrastList[[1]])
+   contrastList &lt;- runIHW(contrastList)
+
+   # note new columns added
+   colnames(contrastList[["contrasts"]][[1]])
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

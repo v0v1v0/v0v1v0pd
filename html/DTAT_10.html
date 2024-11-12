@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtat1000</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Precomputed neutrophil-guided chemotherapy dose titration for 1000 simulated
+subjects.</h2>
+
+<h3>Description</h3>
+
+<p>This dataset is provided to support fast reproduction of a forthcoming
+pharmacoeconomic paper that includes examination of the empirical
+distribution of MTDi in N=1000 simulated subjects.
+</p>
+
+
+<h3>Format</h3>
+
+<p>A data frame showing end-of-cycle state of neutrophil-guided dose
+titration for 1000 simulated subjects, across 10 cycles of chemotherapy.
+</p>
+
+<dl>
+<dt>cycle</dt>
+<dd>
+<p>Cycle number 1..10</p>
+</dd>
+<dt>id</dt>
+<dd>
+<p>Subject identifiers; an ordered factor with levels
+<code>id1</code> &lt; ... &lt; <code>id1000</code></p>
+</dd>
+<dt>Cc</dt>
+<dd>
+<p>Central-compartment drug concentration</p>
+</dd>
+<dt>Cp</dt>
+<dd>
+<p>Peripheral-compartment drug concentration</p>
+</dd>
+<dt>Prol</dt>
+<dd>
+<p>Progenitor cells in proliferating compartment of
+Friberg et al. (2002) model</p>
+</dd>
+<dt>Tx.1</dt>
+<dd>
+<p>Transit compartment 1</p>
+</dd>
+<dt>Tx.2</dt>
+<dd>
+<p>Transit compartment 1</p>
+</dd>
+<dt>Tx.3</dt>
+<dd>
+<p>Transit compartment 1</p>
+</dd>
+<dt>Circ</dt>
+<dd>
+<p>Concentration (cells/mm^3) of circulating neutrophils</p>
+</dd>
+<dt>dose</dt>
+<dd>
+<p>Dose of 1-hour infusion administered this cycle</p>
+</dd>
+<dt>CircMin</dt>
+<dd>
+<p>Neutrophil nadir (cells/mm^3)</p>
+</dd>
+<dt>tNadir</dt>
+<dd>
+<p>Time (days) of neutrophil nadir</p>
+</dd>
+<dt>scaled.dose</dt>
+<dd>
+<p>Fourth root of dose</p>
+</dd>
+<dt>time</dt>
+<dd>
+<p>Time (weeks) of dose administration</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>Running the examples interactively, you can verify the reproducibility of
+this dataset. (That demo is included in a <code>donttest</code> block to spare the
+CRAN servers.)
+</p>
+
+
+<h3>References</h3>
+
+
+<ol>
+<li>
+<p> Norris DC. Dose Titration Algorithm Tuning (DTAT) should
+supersede ‘the’ Maximum Tolerated Dose (MTD) in oncology dose-finding
+trials. <em>F1000Research</em>. 2017;6:112. <a href="https://doi.org/10.12688/f1000research.10624.3">doi:10.12688/f1000research.10624.3</a>.
+<a href="https://f1000research.com/articles/6-112/v3">https://f1000research.com/articles/6-112/v3</a>
+</p>
+</li>
+<li>
+<p> Norris DC. Costing ‘the’ MTD. <em>bioRxiv</em>. August 2017:150821.
+<a href="https://doi.org/10.1101/150821">doi:10.1101/150821</a>.
+<a href="https://www.biorxiv.org/content/10.1101/150821v3">https://www.biorxiv.org/content/10.1101/150821v3</a>
+</p>
+</li>
+</ol>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(dtat1000)
+# 1. Extract the N final doses, assuming convergence by the tenth course
+MTD_i &lt;- with(dtat1000, dose[time==27])
+MTD_i &lt;- MTD_i[MTD_i &lt; 5000] # Exclude few outliers
+# 2. Do a kernel density plot
+library(Hmisc)
+library(latticeExtra)
+hist &lt;- histogram(~MTD_i, breaks=c(0,100,200,300,400,600,900,1500,2500,4000,5000)
+                  , xlab=expression(MTD[i]))
+approx &lt;- data.frame(mtd_i=seq(0, 5000, 10))
+approx &lt;- upData(approx,
+                 gamma = dgamma(mtd_i, shape=1.75, scale=200))
+dist &lt;- xyplot(gamma ~ mtd_i, data=approx, type='l', col='black', lwd=2)
+library(grid)
+hist + dist
+grid.text(expression(MTD[i] %~%
+                     paste("Gamma(", alpha==1.75, ", ", beta==1/200,")"))
+         , x=unit(0.5,"npc")
+         , y=unit(0.75,"npc")
+         )
+## A very long repro, which a user of this package may well wish to verify
+## by running the examples interactively, although it takes many minutes
+## to compute.  (Enclosed in a dontest block to avoid overburdening CRAN.)
+
+# Demonstrate close reproduction of original titration (the titration takes many minutes!)
+set.seed(2016)
+library(pomp)
+Onoue.Friberg(N=1000)
+# This titration may take an hour to run ...
+chemo &lt;- titrate(doserange = c(50, 3000),
+                 dta=newton.raphson(dose1 = 100,
+                                    omega = 0.75,
+                                    slope1 = -2.0,
+                                    slopeU = -0.2)
+)
+
+dtat1k &lt;- upData(chemo$course
+                , time = 3*(cycle-1)
+                , labels = c(time="Time")
+                , units = c(time="weeks")
+                , print = FALSE)
+
+c10dose1k &lt;- subset(dtat1k, cycle==10)$scaled.dose
+c10dose1000 &lt;- subset(dtat1000, cycle==10)$scaled.dose
+stopifnot(0.999 &lt; cor(c10dose1k, c10dose1000))
+
+
+</code></pre>
+
+
+</div>

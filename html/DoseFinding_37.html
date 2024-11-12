@@ -1,0 +1,403 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>MCPMod</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+MCPMod - Multiple Comparisons and Modeling
+</h2>
+
+<h3>Description</h3>
+
+<p>Tests for a dose-response effect using a model-based multiple contrast
+test (see <code>MCTtest</code>), selects one (or several) model(s)
+from the significant shapes, fits them using <code>fitMod</code>.
+For details on the method see Bretz et al. (2005).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">MCPMod(dose, resp, data, models, S = NULL, type = c("normal", "general"),
+       addCovars = ~1, placAdj = FALSE, selModel = c("AIC", "maxT", "aveAIC"),
+       alpha = 0.025, df = NULL, critV = NULL, doseType = c("TD", "ED"),
+       Delta, p, pVal = TRUE, alternative = c("one.sided", "two.sided"),
+       na.action = na.fail, mvtcontrol = mvtnorm.control(),
+       bnds, control = NULL)
+
+## S3 method for class 'MCPMod'
+predict(object,
+        predType = c("full-model", "ls-means", "effect-curve"),
+        newdata = NULL, doseSeq = NULL, se.fit = FALSE, ...)
+
+
+
+## S3 method for class 'MCPMod'
+plot(x, CI = FALSE, level = 0.95,
+       plotData = c("means", "meansCI", "raw", "none"),
+       plotGrid = TRUE, colMn = 1, colFit = 1, ...)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dose, resp</code></td>
+<td>
+
+<p>Either vectors of equal length specifying dose and response values,
+or names of variables in the data frame specified in ‘<span class="samp">⁠data⁠</span>’.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame containing the variables referenced in dose and resp if
+‘<span class="samp">⁠data⁠</span>’ is not specified it is assumed that ‘<span class="samp">⁠dose⁠</span>’ and
+‘<span class="samp">⁠resp⁠</span>’ are variables referenced from data (and no vectors)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>models</code></td>
+<td>
+
+<p>An object of class ‘<span class="samp">⁠"Mods"⁠</span>’, see <code>Mods</code> for
+details
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>S</code></td>
+<td>
+
+<p>The covariance matrix of ‘<span class="samp">⁠resp⁠</span>’ when ‘<span class="samp">⁠type = "general"⁠</span>’,
+see Description.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>Determines whether inference is based on an ANCOVA model under a
+homoscedastic normality assumption (when ‘<span class="samp">⁠type = "normal"⁠</span>’), or
+estimates at the doses and their covariance matrix and degrees of
+freedom are specified directly in ‘<span class="samp">⁠resp⁠</span>’, ‘<span class="samp">⁠S⁠</span>’ and
+‘<span class="samp">⁠df⁠</span>’. See also <code>fitMod</code> and Pinheiro et al. (2014).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>addCovars</code></td>
+<td>
+
+<p>Formula specifying additive linear covariates (for ‘<span class="samp">⁠type = "normal"⁠</span>’)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>placAdj</code></td>
+<td>
+
+<p>Logical, if true, it is assumed that placebo-adjusted estimates are
+specified in ‘<span class="samp">⁠resp⁠</span>’ (only possible for ‘<span class="samp">⁠type = "general"⁠</span>’).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>selModel</code></td>
+<td>
+
+<p>Optional character vector specifying the model selection criterion for
+dose estimation.  Possible values are 
+</p>
+
+<ul>
+<li> <p><code>AIC</code>: Selects model with smallest AIC (this is the default)
+</p>
+</li>
+<li> <p><code>maxT</code>: Selects the model corresponding to the largest t-statistic.
+</p>
+</li>
+<li> <p><code>aveAIC</code>: Uses a weighted average of the models corresponding to the
+significant contrasts.  The model weights are chosen by the formula:
+<code class="reqn">w_i = \exp(-0.5AIC_i)/\sum_i(\exp(-0.5AIC_i))</code>
+See Buckland et al. (1997) for details.
+</p>
+</li>
+</ul>
+<p>For ‘<span class="samp">⁠type = "general"⁠</span>’ the "gAIC" is used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+
+<p>Significance level for the multiple contrast test
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+
+<p>Specify the degrees of freedom to use in case ‘<span class="samp">⁠type = "general"⁠</span>’,
+for the call to <code>MCTtest</code> and <code>fitMod</code>.
+Infinite degrees of (‘<span class="samp">⁠df=Inf⁠</span>’) correspond to the multivariate
+normal distribution.
+For type = "normal" the degrees of freedom deduced from the AN(C)OVA fit are
+used and this argument is ignored.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>critV</code></td>
+<td>
+
+<p>Supply a pre-calculated critical value. If this argument is NULL, no
+critical value will be calculated and the test decision is based on
+the p-values. If ‘<span class="samp">⁠critV = TRUE⁠</span>’ the critical value will be calculated. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doseType, Delta, p</code></td>
+<td>
+
+<p>‘<span class="samp">⁠doseType⁠</span>’ determines the dose to estimate, ED or TD (see also
+<code>Mods</code>), and ‘<span class="samp">⁠Delta⁠</span>’ and ‘<span class="samp">⁠p⁠</span>’ need to be
+specified depending on whether TD or ED is to be estimated.
+See <code>TD</code> and <code>ED</code> for details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pVal</code></td>
+<td>
+
+<p>Logical determining, whether p-values should be calculated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+
+<p>Character determining the alternative for the multiple contrast
+trend test. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+
+<p>A function which indicates what should happen when
+the data contain NAs.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mvtcontrol</code></td>
+<td>
+
+<p>A list specifying additional control parameters for the ‘<span class="samp">⁠qmvt⁠</span>’
+and ‘<span class="samp">⁠pmvt⁠</span>’ calls in the code, see also <code>mvtnorm.control</code>
+for details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bnds</code></td>
+<td>
+
+<p>Bounds for non-linear parameters. This needs to be a list with list
+entries corresponding to the selected bounds. The names of the list
+entries need to correspond to the model names. The
+<code>defBnds</code> function provides the default selection.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+
+<p>Control list for the optimization.<br>
+A list with entries: "nlminbcontrol", "optimizetol" and "gridSize".
+</p>
+<p>The entry nlminbcontrol needs to be a list and is passed directly to
+control argument in the nlminb function, that is used internally for
+models with 2 nonlinear parameters (e.g. sigmoid Emax or beta model).
+</p>
+<p>The entry optimizetol is passed directly to the tol argument of the
+optimize function, which is used for models with 1 nonlinear
+parameters (e.g. Emax or exponential model).
+</p>
+<p>The entry gridSize needs to be a list with entries dim1 and dim2
+giving the size of the grid for the gridsearch in 1d or 2d models.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object, x</code></td>
+<td>
+
+<p>MCPMod object
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predType, newdata, doseSeq, se.fit, ...</code></td>
+<td>
+
+<p>predType determines whether predictions are returned for the full
+model (including potential covariates), the ls-means (SAS type) or the
+effect curve (difference to placebo).
+</p>
+<p>newdata gives the covariates to use in producing the predictions (for
+‘<span class="samp">⁠predType = "full-model"⁠</span>’), if missing the covariates used for fitting
+are used.
+</p>
+<p>doseSeq dose-sequence on where to produce predictions (for
+‘<span class="samp">⁠predType = "effect-curve"⁠</span>’ and ‘<span class="samp">⁠predType = "ls-means"⁠</span>’). If
+missing the doses used for fitting are used.
+</p>
+<p>se.fit: logical determining, whether the standard error should be
+calculated.
+</p>
+<p>...: Additional arguments, for plot.MCPMod these are passed to
+plot.DRMod.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CI, level, plotData, plotGrid, colMn, colFit</code></td>
+<td>
+
+<p>Arguments for plot method: ‘<span class="samp">⁠CI⁠</span>’ determines whether confidence
+intervals should be plotted. ‘<span class="samp">⁠level⁠</span>’ determines the level of the
+confidence intervals. ‘<span class="samp">⁠plotData⁠</span>’ determines how the data are plotted:
+Either as means or as means with CI, raw data or none. In case of
+‘<span class="samp">⁠type = "normal"⁠</span>’ and covariates the ls-means are displayed, when
+‘<span class="samp">⁠type = "general"⁠</span>’ the option "raw" is not available.
+‘<span class="samp">⁠colMn⁠</span>’ and ‘<span class="samp">⁠colFit⁠</span>’ determine the colors of fitted model
+and the raw means.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class ‘<span class="samp">⁠MCPMod⁠</span>’, which contains the fitted
+‘<span class="samp">⁠MCTtest⁠</span>’ object as well as the ‘<span class="samp">⁠DRMod⁠</span>’ objects and
+additional information (model selection criteria, dose estimates,
+selected models).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bjoern Bornkamp
+</p>
+
+
+<h3>References</h3>
+
+<p>Bretz, F., Pinheiro, J. C., and Branson, M. (2005), Combining
+multiple comparisons and modeling techniques in dose-response
+studies, <em>Biometrics</em>, <b>61</b>, 738–748
+</p>
+<p>Pinheiro, J. C., Bornkamp, B., and Bretz, F. (2006). Design and analysis of dose finding studies
+combining multiple comparisons and modeling procedures, <em>Journal of Biopharmaceutical
+Statistics</em>, <b>16</b>, 639–656
+</p>
+<p>Pinheiro, J. C., Bretz, F., and Branson, M. (2006). Analysis of dose-response studies - modeling 
+approaches, <em>in</em> N. Ting (ed.). <em>Dose Finding in Drug Development</em>, Springer, New York,
+pp. 146–171
+</p>
+<p>Pinheiro, J. C., Bornkamp, B., Glimm, E. and Bretz, F. (2014)
+Model-based dose finding under model uncertainty using general
+parametric models, <em>Statistics in Medicine</em>, <b>33</b>,
+1646–1661
+</p>
+<p>Schorning, K., Bornkamp, B., Bretz, F., &amp; Dette, H. (2016). Model
+selection versus model averaging in dose finding
+studies. <em>Statistics in Medicine</em>, <b>35</b>, 4021–4040
+</p>
+<p>Xun, X. and Bretz, F. (2017) The MCP-Mod methodology: 
+Practical Considerations and The DoseFinding R package, 
+in O'Quigley, J., Iasonos, A. and Bornkamp, B. (eds)
+Handbook of methods for designing, monitoring, and analyzing 
+dose-finding trials, CRC press
+</p>
+<p>Buckland, S. T., Burnham, K. P. and Augustin, N. H. (1997). Model selection an integral part
+of inference, <em>Biometrics</em>, <b>53</b>, 603–618
+</p>
+<p>Seber, G.A.F. and Wild, C.J. (2003). Nonlinear Regression, Wiley.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>MCTtest</code>, <code>fitMod</code>, <code>drmodels</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(biom)
+## first define candidate model set (only need "standardized" models)
+models &lt;- Mods(linear = NULL, emax=c(0.05,0.2), linInt=c(1, 1, 1, 1),
+               doses=c(0,0.05,0.2,0.6,1))
+plot(models)
+## perform MCPMod procedure
+MM &lt;- MCPMod(dose, resp, biom, models, Delta=0.5)
+## a number of things can be done with an MCPMod object
+MM # print method provides basic information
+summary(MM) # more information
+## predict all significant dose-response models
+predict(MM, se.fit=TRUE, doseSeq=c(0,0.2,0.4, 0.9, 1),
+        predType="ls-means")
+## display all model functions 
+plot(MM, plotData="meansCI", CI=TRUE)
+
+## now perform model-averaging
+MM2 &lt;- MCPMod(dose, resp, biom, models, Delta=0.5, selModel = "aveAIC")
+sq &lt;- seq(0,1,length=11)
+pred &lt;- predict(MM, doseSeq=sq, predType="ls-means")
+modWeights &lt;- MM2$selMod
+## model averaged predictions
+pred &lt;- do.call("cbind", pred)%*%modWeights
+## model averaged dose-estimate
+TDEst &lt;- MM2$doseEst%*%modWeights
+
+## now an example using a general fit and fitting based on placebo
+## adjusted first-stage estimates
+data(IBScovars)
+## ANCOVA fit model including covariates
+anovaMod &lt;- lm(resp~factor(dose)+gender, data=IBScovars)
+drFit &lt;- coef(anovaMod)[2:5] # placebo adjusted estimates at doses
+vCov &lt;- vcov(anovaMod)[2:5,2:5]
+dose &lt;- sort(unique(IBScovars$dose))[-1] # no estimate for placebo
+## candidate models
+models &lt;- Mods(emax = c(0.5, 1), betaMod=c(1,1), doses=c(0,4))
+plot(models)
+## hand over placebo-adjusted estimates drFit to MCPMod
+MM3 &lt;- MCPMod(dose, drFit, S=vCov, models = models, type = "general",
+              placAdj = TRUE, Delta=0.2)
+plot(MM3, plotData="meansCI")
+
+## The first example, but with critical value handed over
+## this is useful, e.g. in simulation studies
+MM4 &lt;- MCPMod(dose, resp, biom, models, Delta=0.5, critV = 2.31)
+</code></pre>
+
+
+</div>

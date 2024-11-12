@@ -1,0 +1,102 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ComputeWeightedDifference</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Percentage weighted difference between power curves</h2>
+
+<h3>Description</h3>
+
+<p>Computes percentage weighted difference between power curves based on user provided weights instead of the weights computed from the data. Please see <code>details</code> for more information.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ComputeWeightedDifference(
+  muDiff,
+  weights,
+  base,
+  statDiff = FALSE,
+  confBand = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>muDiff</code></td>
+<td>
+<p>a vector of pointwise difference between two power curves on a testset as obtained from <code>ComparePCurve()</code> or <code>funGP()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>a vector of user specified weights for each element of <code>muDiff</code>. It can be based on any probability distribution of user's choice. The weights must sum to 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>base</code></td>
+<td>
+<p>a vector of predictions from a power curve; to be used as the denominator in computing the percentage difference. It can be either <code>mu1</code> or <code>mu2</code> as obtained from <code>ComparePCurve()</code> or <code>funGP()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statDiff</code></td>
+<td>
+<p>a boolean specifying whether to compute the statistical significant difference or not. Default is set to <code>FALSE</code>, i.e. statistical significant difference is not computed. If set to <code>TRUE</code>, <code>confBand</code> must be provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>confBand</code></td>
+<td>
+<p>a vector of pointwise confidence band for all the points in the testset as obtained from <code>ComparePCurve()</code> or <code>funGP()</code> function, named as <code>band</code>. Should only be provided when <code>statDiff</code> is set to <code>TRUE</code>. Default value is <code>NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function is a modification to the percentage weighted difference defined in Ding et al. (2021). It computes a weighted difference between power curves on a testset, where the weights have to be provided by the user based on any probability distribution of their choice rather than the weights being computed from the data. The weights must sum to 1 to be valid.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric percentage weighted difference or statistical significant percetage weighted difference based on whether statDiff is set to <code>FALSE</code> or <code>TRUE</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>For details, see Ding et al. (2021) available at <a href="https://doi.org/10.1016/j.renene.2021.02.136">doi:10.1016/j.renene.2021.02.136</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+ws_test = as.matrix(seq(4.5,8.5,length.out = 10))
+
+userweights = dweibull(ws_test, shape = 2.25, scale = 6.5) 
+userweights = userweights/sum(userweights) 
+data1 = data1[1:100, ]
+data2 = data2[1:100, ]
+datalist = list(data1, data2)
+xCol = 2
+xCol.circ = NULL
+yCol = 7
+testCol = 2
+output = ComparePCurve(data = datalist, xCol = xCol, yCol = yCol, 
+testCol = testCol, testSet = ws_test) 
+weightedDiff = ComputeWeightedDifference(output$muDiff, userweights, output$mu1)
+weightedStatDiff = ComputeWeightedDifference(output$muDiff, userweights, output$mu1, 
+statDiff = TRUE, confBand = output$band)
+
+</code></pre>
+
+
+</div>

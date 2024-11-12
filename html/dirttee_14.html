@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>modreg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mode-regression for right-censored data</h2>
+
+<h3>Description</h3>
+
+<p>This function implements semiparametric kernel-based mode regression for right-censored or full data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">modreg(
+  formula,
+  data = NULL,
+  bw = c("Pseudo", "Plugin"),
+  lambda = NULL,
+  KMweights = NULL,
+  control = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula object, with the response on the left of the ‘~’
+operator, and the terms on the right.  The response must be a
+<code>Surv</code> object as returned by the <code>Surv</code>
+function. Only right censored data are allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data set on which the regression should be performed on.
+It should consist of columns that have the names of the specific variables
+defined in <code>formula</code>. If <code>NULL</code>, the function will look for the
+data in the environment given by the <code>formula</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>String, either "<code>Pseudo</code>", "<code>Plugin</code>" or a fixed numerical value. This determines how
+bandwidth should be estimated. "<code>Plugin</code>" only recommended for uncensored linear mode regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>Penalty term for penalized splines. Will be estimated if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>KMweights</code></td>
+<td>
+<p>numerical vector, should be the same length as the response. Inverse probability of censoring weights can be provided here. They will be calculated if <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>A call to <code>control</code>. Various control parameters can be supplied here.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Fits mode regression in an iteratively weighted least squares approach. A detailed description of
+the approach and algorithm can be found in Seipp et al. (2022). In short, kernel-based mode regression leads
+to minimization of weighted least squares, if the normal kernel is assumed. We use gam for estimation in each iteration.
+Mode regression is extended to right-censored time-to event data with inverse probability of censoring weights.
+Hyperparameters (bandwidth, penalty) are determined with a pseudo-likelihood approach for <code>bw = "Pseudo"</code>.
+For "Plugin", plug-in bandwidth selection is performed, as described in Yao and Li (2014). However, this is only justified for uncensored data
+and mode regression with linear covariate trends or known transformations.
+</p>
+<p>The event time has to be supplied using the <code>Surv</code> function. Positive event times with multiplicative relationships should be logarithmized
+beforehand. Nonlinear trends can be estimated with P-splines, indicated by using <code>s(covariate, bs = "ps")</code>. This will be passed down to gam, which is why
+the same notation is used. Other smooth terms are not tested yet. The whole gam object will be returned but standard errors and other information are not
+valid. <code>boot.modreg</code> can be used for calculation of standard errors and confidence intervals.
+</p>
+
+
+<h3>Value</h3>
+
+<p>This function returns a list with the following properties:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>reg</code></td>
+<td>
+<p>object of class gam. Should be interpreted with care.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bw</code></td>
+<td>
+<p>The used bandwidth.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>converged</code></td>
+<td>
+<p>logical. Whether or not the iteratively weighted least squares algorithm converged.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iterations</code></td>
+<td>
+<p>the number of iterations of the final weighted least squares fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cova</code></td>
+<td>
+<p>Covariance matrix. Only supplied in case of linear terms and plug-in bandwidth.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>KMweights</code></td>
+<td>
+<p>double vector. Weights used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>called</code></td>
+<td>
+<p>list. The arguments that were provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aic</code></td>
+<td>
+<p>Pseudo AIC.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pseudologlik</code></td>
+<td>
+<p>Pseudo log-likelihood.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edf</code></td>
+<td>
+<p>Effective degrees of freedom</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>vector. Indicating whether an event has occured (1) or not (0) in the input data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>vector with response values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hp_opt</code></td>
+<td>
+<p>Summary of hyperparameter estimation.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Seipp, A., Uslar, V., Weyhe, D., Timmer, A., &amp; Otto-Sobotka, F. (2022). Flexible Semiparametric Mode Regression for Time-to-Event Data. Manuscript submitted for publication.<br>
+Yao, W., &amp; Li, L. (2014). A new regression model: modal linear regression. Scandinavian Journal of Statistics, 41(3), 656-671.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data(colcancer)
+colcancer80 &lt;- colcancer[1:80, ]
+
+# linear trend
+regL &lt;- modreg(Surv(logfollowup, death) ~ sex + age, data = colcancer80)
+summary(regL)
+
+# mode regression with P-splines. Convergence criteria are changed to speed up the function
+reg &lt;- modreg(Surv(logfollowup, death) ~ sex + s(age, bs = "ps"), data = colcancer80, 
+control = modreg.control(tol_opt = 10^-2, tol_opt2 = 10^-2, tol = 10^-3))
+summary(reg)
+plot(reg)
+
+# with a fixed penalty
+reg2 &lt;- modreg(Surv(logfollowup, death) ~ sex + s(age, bs = "ps"), data = colcancer80, lambda = 0.1)
+
+# for linear effects and uncensored data, we can use the plug-in bandwidth
+regP &lt;- modreg(age ~ sex, data = colcancer, bw = "Plugin")
+
+
+
+</code></pre>
+
+
+</div>

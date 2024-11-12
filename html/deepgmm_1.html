@@ -1,0 +1,281 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deepgmm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Fits Deep Gaussian Mixture Models Using
+Stochastic EM algorithm.
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a deep Gaussian mixture model to multivariate data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deepgmm(y, layers, k, r,
+        it = 250, eps = 0.001, init = "kmeans", init_est = "factanal",
+        seed = NULL, scale = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+
+<p>A matrix or a data frame in which the rows correspond to
+observations and the columns to variables.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>layers</code></td>
+<td>
+
+<p>The number of layers in the deep Gaussian mixture model.
+Limited to 1, 2 or 3.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+
+<p>A vector of integers of length <code>layers</code>
+containing the number of groups in the different layers.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r</code></td>
+<td>
+
+<p>A vector of integers of length <code>layers</code>
+containing the dimensions at the different layers.
+Dimension of the layers must be in decreasing
+size. See details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>it</code></td>
+<td>
+
+<p>Maximum number of EM iterations.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+
+<p>The EM algorithm terminates if the relative increment of the log-likelihood
+falls below this value.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init</code></td>
+<td>
+
+<p>Procedure to obtain an initial partition of the observations. See Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init_est</code></td>
+<td>
+
+<p>Procedure for computing the initial parameter values for the given initial
+partition of the data. See Details.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Integer value to be passed to the <code>set.seed</code> function at the biginning of
+the <code>deepgmm</code> function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+
+<p>If <code>scale = TRUE</code>, the columns of data, <code>y</code>, will be scaled to
+zero mean and unit variance.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The deep Gaussian mixture model is an hierarchical model organized
+in a multilayered architecture where, at each layer,
+the variables follow a mixture of Gaussian distributions.
+This set of nested mixtures of linear models provides a globally
+nonlinear model that can model the data in a very flexible way.
+In order to avoid overparameterized solutions,
+dimension reduction by factor models can be applied at each layer of
+the architecture, thus resulting in deep mixtures of factor analyzers.
+</p>
+<p>The data <code>y</code> must be a matrix or a data frame containing
+numerical values, with no missing values. The rows must correspond to
+observations and the columns to variables.
+</p>
+<p>Presently, the maximum number of layers <code>layers</code> implemented
+is 3.
+</p>
+<p>The ith element of <code>k</code> contain number of groups in the ith layer. Thus
+the length <code>k</code> must equal to <code>layers</code>.
+</p>
+<p>The parameter vector <code>r</code> contains the latent variable dimension of
+each layer.
+Variables at different layers have progressively decreasing dimension,
+<code class="reqn">r_1</code>, <code class="reqn">r_2</code>, ..., <code class="reqn">r_h</code>, where <code class="reqn">p &gt; r_1 &gt; r_2 &gt;
+\dots &gt; r_h \geq 1</code>.
+</p>
+<p>The EM algorithm used by <code>dgmm</code> requires initialization.
+The initialization is done by first partitioning the dataset,
+and then estimating the initial values for model parameters
+based on the partition.
+There are four options available in <code>dgmm</code> for the
+initial partitioning of the data;
+random partitioning (<code>init = "random"</code>),
+clustering using the <em>k</em>-means algorithm of "Hartigan-Wong"
+(<code>init = "kmeans"</code>),
+agglomerative hierarchical clustering (<code>init = "hclass"</code>).
+and Gaussian mixture model based clustering
+(<code>init = "mclust"</code>).
+</p>
+<p>After the initial partitioning has been chosen, initial values of
+the parameters in the component analyzers need to be
+calculated. Curently only one option available.
+This default option, <code>init_est = "factanal"</code> provides initial
+estimates of the parameters based on factor analysis.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"dgmm"</code> containing fitted values.
+It contains
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>A list in which the <em>i</em>th element is the loading
+matrix for the <em>i</em>th layer</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>w</code></td>
+<td>
+<p>A list containing mixing proportions for each layer. (i.e.
+the element w[[i]][j] contain the mixing proportion of the <em>j</em>th
+component in the <em>i</em> layer.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>A list of matrices containing components means in the columns.
+(i.e. the element mu[[i]][, j] contain the component mean of the <em>j</em>th
+component in the <em>i</em> layer.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>psi</code></td>
+<td>
+<p>A list of arrays which contain covariance matrices for
+the random error components of each component (i.e. the element
+psi[[i]][j, ,, ] contain the error covariance matrix
+for the <em>j</em>th component in the <em>i</em> layer.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lik</code></td>
+<td>
+<p>The log-likelihood after each EM iteration</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bic</code></td>
+<td>
+<p>The Bayesian information criterion for the model fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>acl</code></td>
+<td>
+<p>The Akaike information criterion for the model fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clc</code></td>
+<td>
+<p>The Classification likelihood information criterion for the model fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>icl.bic</code></td>
+<td>
+<p>The integrated classification criterion for the model fit</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>Clustering of the observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Value of the seed used</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Cinzia Viroli, Geoffrey J. McLachlan
+</p>
+
+
+<h3>References</h3>
+
+<p>Viroli, C. and McLachlan, G.J. (2019). Deep Gaussian mixture models. Statistics and Computing 29, 43-51.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+layers &lt;- 2
+k &lt;- c(3, 4)
+r &lt;- c(3, 2)
+it &lt;- 50
+eps &lt;- 0.001
+y &lt;- scale(mtcars)
+
+set.seed(1)
+fit &lt;-deepgmm(y = y, layers = layers, k = k, r = r,
+                  it = it, eps = eps)
+fit
+
+summary(fit)
+
+</code></pre>
+
+
+</div>

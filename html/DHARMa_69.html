@@ -1,0 +1,106 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>testUniformity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test for overall uniformity</h2>
+
+<h3>Description</h3>
+
+<p>This function tests the overall uniformity of the simulated residuals in a DHARMa object
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">testUniformity(simulationOutput, alternative = c("two.sided", "less",
+  "greater"), plot = T)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>an object of class DHARMa, either created via <code>simulateResiduals</code> for supported models or by <code>createDHARMa</code> for simulations created outside DHARMa, or a supported model. Providing a supported model directly is discouraged, because simulation settings cannot be changed in this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>a character string specifying whether the test should test if observations are "greater", "less" or "two.sided" compared to the simulated null hypothesis. See <code>ks.test</code> for details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>if T, plots calls <code>plotQQunif</code> as well</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function applies a <code>ks.test</code> for uniformity on the simulated residuals.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Florian Hartig
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>testResiduals</code>, <code>testUniformity</code>, <code>testOutliers</code>, <code>testDispersion</code>, <code>testZeroInflation</code>, <code>testGeneric</code>, <code>testTemporalAutocorrelation</code>, <code>testSpatialAutocorrelation</code>, <code>testQuantiles</code>, <code>testCategorical</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">testData = createData(sampleSize = 100, overdispersion = 0.5, randomEffectVariance = 0)
+fittedModel &lt;- glm(observedResponse ~ Environment1 , family = "poisson", data = testData)
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+
+# the plot function runs 4 tests
+# i) KS test i) Dispersion test iii) Outlier test iv) quantile test
+plot(simulationOutput, quantreg = TRUE)
+
+# testResiduals tests distribution, dispersion and outliers
+# testResiduals(simulationOutput)
+
+####### Individual tests #######
+
+# KS test for correct distribution of residuals
+testUniformity(simulationOutput)
+
+# KS test for correct distribution within and between groups
+testCategorical(simulationOutput, testData$group)
+
+# Dispersion test - for details see ?testDispersion
+testDispersion(simulationOutput) # tests under and overdispersion
+
+# Outlier test (number of observations outside simulation envelope)
+# Use type = "boostrap" for exact values, see ?testOutliers
+testOutliers(simulationOutput, type = "binomial")
+
+# testing zero inflation
+testZeroInflation(simulationOutput)
+
+# testing generic summaries
+countOnes &lt;- function(x) sum(x == 1)  # testing for number of 1s
+testGeneric(simulationOutput, summary = countOnes) # 1-inflation
+testGeneric(simulationOutput, summary = countOnes, alternative = "less") # 1-deficit
+
+means &lt;- function(x) mean(x) # testing if mean prediction fits
+testGeneric(simulationOutput, summary = means)
+
+spread &lt;- function(x) sd(x) # testing if mean sd fits
+testGeneric(simulationOutput, summary = spread)
+</code></pre>
+
+
+</div>

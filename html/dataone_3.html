@@ -1,0 +1,108 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>archive</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Archive an object on a Member Node or Coordinating Node, which hides it from casual searches.</h2>
+
+<h3>Description</h3>
+
+<p>This method provides the ability to archive a data or metadata object on the Member Node
+provided in the <code>'mnode'</code> parameter.  Archiving removes the object from DataONE search functions,
+thereby making it more difficult to find without completely removing the object.  Archive is intended
+for objects that should not be used by current researchers, but for which there is a desire to maintain
+a historical record, such as when journal articles might cite the object.  Users can still obtain the
+contents of archived objects if they have the identifier, but will not discover it through searches.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">archive(x, ...)
+
+## S4 method for signature 'D1Node'
+archive(x, pid)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The MNode or CNode instance on which the object will be created</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>(Not yet used)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pid</code></td>
+<td>
+<p>The identifier of the object to be created</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This operation requires an X.509 certificate to be present in the default location of the file 
+system. This certificate provides authentication credentials from 
+CILogon <a href="https://cilogon.org/?skin=DataONE">https://cilogon.org/?skin=DataONE</a>.  See <code>CertificateManager</code> for details.
+For DataONE Version 2.0, an authentication token can also be used for authentication. 
+Also, administrator privilege is required to run archive() on a DataONE Coordinating Node.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The pid that was archived if successful, otherwise NULL
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>D1Node</code> class description.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+library(dataone)
+library(uuid)
+library(digest)
+library(datapack)
+# First create a new object
+cn &lt;- CNode("STAGING")
+mn &lt;- getMNode(cn, "urn:node:mnStageUCSB2")
+testdf &lt;- data.frame(x=1:10,y=11:20)
+csvfile &lt;- paste(tempfile(), ".csv", sep="")
+write.csv(testdf, csvfile, row.names=FALSE)
+\dontrun{
+newid &lt;- generateIdentifier(mn, "UUID")
+}
+# Create an identifier manually
+newid &lt;- paste("urn:uuid:", UUIDgenerate(), sep="") 
+format &lt;- "text/csv"
+size &lt;- file.info(csvfile)$size
+sha256 &lt;- digest(csvfile, algo="sha256", serialize=FALSE, file=TRUE)
+sysmeta &lt;- new("SystemMetadata", identifier=newid, formatId=format, size=size, checksum=sha256)
+sysmeta &lt;- addAccessRule(sysmeta, "public", "read")
+# Create (upload) the object to DataONE (requires authentication)
+\dontrun{
+create(mn, newid, csvfile, sysmeta)
+# Now for demonstration purposes, archive the object
+# Archive the object (requires authentication)
+archivedId &lt;- archive(mn, newid)
+}
+
+## End(Not run)
+</code></pre>
+
+
+</div>

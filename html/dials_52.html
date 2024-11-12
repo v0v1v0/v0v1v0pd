@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>grid_regular</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create grids of tuning parameters</h2>
+
+<h3>Description</h3>
+
+<p>Random and regular grids can be created for any number of parameter objects.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">grid_regular(x, ..., levels = 3, original = TRUE, filter = NULL)
+
+## S3 method for class 'parameters'
+grid_regular(x, ..., levels = 3, original = TRUE, filter = NULL)
+
+## S3 method for class 'list'
+grid_regular(x, ..., levels = 3, original = TRUE, filter = NULL)
+
+## S3 method for class 'param'
+grid_regular(x, ..., levels = 3, original = TRUE, filter = NULL)
+
+grid_random(x, ..., size = 5, original = TRUE, filter = NULL)
+
+## S3 method for class 'parameters'
+grid_random(x, ..., size = 5, original = TRUE, filter = NULL)
+
+## S3 method for class 'list'
+grid_random(x, ..., size = 5, original = TRUE, filter = NULL)
+
+## S3 method for class 'param'
+grid_random(x, ..., size = 5, original = TRUE, filter = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>param</code> object, list, or <code>parameters</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>One or more <code>param</code> objects (such as <code>mtry()</code> or
+<code>penalty()</code>). None of the objects can have <code>unknown()</code> values in
+the parameter ranges or values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>levels</code></td>
+<td>
+<p>An integer for the number of values of each parameter to use
+to make the regular grid. <code>levels</code> can be a single integer or a vector of
+integers that is the same length as the number of parameters in <code>...</code>.
+<code>levels</code> can be a named integer vector, with names that match the id values
+of parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>original</code></td>
+<td>
+<p>A logical: should the parameters be in the original units or
+in the transformed space (if any)?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>filter</code></td>
+<td>
+<p>A logical: should the parameters be filtered prior to
+generating the grid. Must be a single expression referencing parameter
+names that evaluates to a logical vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>size</code></td>
+<td>
+<p>A single integer for the total number of parameter value
+combinations returned for the random grid. If duplicate combinations are
+generated from this size, the smaller, unique set is returned.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that there may a difference in grids depending on how the function
+is called. If the call uses the parameter objects directly the possible
+ranges come from the objects in <code>dials</code>. For example:
+</p>
+<div class="sourceCode r"><pre>mixture()
+</pre></div>
+<div class="sourceCode"><pre>## Proportion of Lasso Penalty (quantitative)
+## Range: [0, 1]
+</pre></div>
+<div class="sourceCode r"><pre>set.seed(283)
+mix_grid_1 &lt;- grid_random(mixture(), size = 1000)
+range(mix_grid_1$mixture)
+</pre></div>
+<div class="sourceCode"><pre>## [1] 0.001490161 0.999741096
+</pre></div>
+<p>However, in some cases, the <code>parsnip</code> and <code>recipe</code> packages overrides
+the default ranges for specific models and preprocessing steps. If the
+grid function uses a <code>parameters</code> object created from a model or recipe,
+the ranges may have different defaults (specific to those models). Using
+the example above, the <code>mixture</code> argument above is different for
+<code>glmnet</code> models:
+</p>
+<div class="sourceCode r"><pre>library(parsnip)
+library(tune)
+
+# When used with glmnet, the range is [0.05, 1.00]
+glmn_mod &lt;-
+  linear_reg(mixture = tune()) %&gt;%
+  set_engine("glmnet")
+
+set.seed(283)
+mix_grid_2 &lt;- grid_random(extract_parameter_set_dials(glmn_mod), size = 1000)
+range(mix_grid_2$mixture)
+</pre></div>
+<div class="sourceCode"><pre>## [1] 0.05141565 0.99975404
+</pre></div>
+
+
+<h3>Value</h3>
+
+<p>A tibble. There are columns for each parameter and a row for every
+parameter combination.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># filter arg will allow you to filter subsequent grid data frame based on some condition.
+p &lt;- parameters(penalty(), mixture())
+grid_regular(p)
+grid_regular(p, filter = penalty &lt;= .01)
+
+# Will fail due to unknowns:
+# grid_regular(mtry(), min_n())
+
+grid_regular(penalty(), mixture())
+grid_regular(penalty(), mixture(), levels = 3:4)
+grid_regular(penalty(), mixture(), levels = c(mixture = 4, penalty = 3))
+grid_random(penalty(), mixture())
+
+</code></pre>
+
+
+</div>

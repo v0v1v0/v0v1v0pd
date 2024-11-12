@@ -1,0 +1,193 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>guess_datetime</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Guess Timestamp Format
+</h2>
+
+<h3>Description</h3>
+
+<p>Tries to convert a character vector to POSIXct.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">guess_datetime(s, date.only = FALSE, within = FALSE, tz = "",
+               try.patterns = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>character</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>date.only</code></td>
+<td>
+<p>logical: try to guess dates only (if
+<code>TRUE</code>) or times as well (if <code>FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>within</code></td>
+<td>
+<p>logical: ignore surrounding text? Note
+that trailing text is always ignored, see
+<code>as.Date</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tz</code></td>
+<td>
+<p>character: timezone to assume for
+times. Default is the current timezone. See argument
+<code>tz</code> in <code>as.POSIXct</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>try.patterns</code></td>
+<td>
+<p>either <code>NULL</code> or a
+character vector. See Details and Examples.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function first coerces its argument to character.
+It then applies a list of patterns to each element of
+<code>s</code>. Let <code>d</code> be a numeric digit; then the
+rules are roughly those in the table below. (For the
+precise rules, see Examples below.)
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+    <em>original pattern</em>     </td>
+<td style="text-align: left;"> <em>assumed format</em>          </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>dddd-dd-dd dd:dd:dd</code>  </td>
+<td style="text-align: left;"> <code>%Y-%m-%d %H:%M:%S</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>dd/dd/dddd dd:dd:dd</code>  </td>
+<td style="text-align: left;"> <code>%m/%d/%Y %H:%M:%S</code> </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+    <code>dd.dd.dddd dd:dd:dd</code>  </td>
+<td style="text-align: left;"> <code>%d.%m.%Y %H:%M:%S</code>
+  </td>
+</tr>
+</table>
+<p>The rules are followed in the given order; an element
+will be matched only once. If there is a match,
+<code>strptime</code> will be tried with the
+<em>assumed format</em> (when date.only is <code>TRUE</code>,
+<code>as.Date</code> will be tried).
+For elements that do not match any pattern or for
+which <code>strptime</code> fails, <code>NA</code> is returned.
+</p>
+<p>Additional patterns can be specified as
+<code>try.patterns</code>.  This must be a character vector
+with an even number of elements: the first of each
+pair of elements is used as the pattern in a regular
+expression; the second as the format string passed to
+<code>strptime</code>. See Examples.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>POSIXct</code>
+</p>
+
+
+<h3>Warning</h3>
+
+<p>If you know the format of a timestamp, then <b>do
+not use this function</b> (use <code>strptime</code>
+instead). If you have no idea at all about the format
+of a timestamp, then <b>do not use this function</b>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Enrico Schumann
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>strptime</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">s &lt;- c("  1999-08-19     10:00:31   ",
+       "   1999-08-19 10:00",
+       "19.8.1999 10:00",
+       "8/19/99      10:00:31",
+       "8/19/1999 10:00:31",
+       "19.8.1999 10:00:31")
+
+guess_datetime(s)
+
+## the actual rules
+rules &lt;- as.data.frame(matrix(datetimeutils:::.dt_patterns,
+                              byrow = TRUE, ncol = 2),
+                       stringsAsFactors = FALSE)
+names(rules) &lt;- c("pattern", "assumed_format")
+rules
+
+
+
+## ----------------------------------
+
+## a function for finding old files by looking at the
+## dates in filenames (e.g. in a backup directory)
+old_files &lt;- function(min.age = 365,   ## in days
+                      path = ".",
+                      recursive = FALSE,
+                      full.names = FALSE) {
+
+    files &lt;- dir(path, recursive = recursive, full.names = full.names)
+    dates &lt;- guess_datetime(files, date.only = TRUE, within = TRUE)
+
+    age &lt;- as.numeric(Sys.Date() - dates)
+    old &lt;- age &gt;= min.age
+
+    files[ !is.na(old) &amp; old ]
+}
+
+
+## ----------------------------------
+
+## specifying additional formats
+
+s &lt;- c("19-08-99",
+       "29-2-00")
+guess_datetime(s, date.only = TRUE)
+## NA NA
+guess_datetime(s, date.only = TRUE,
+               try.patterns = c("[0-9]+-[0-9]+-[0-9]+", "%d-%m-%y"))
+## "1999-08-19" "2000-02-29"
+</code></pre>
+
+
+</div>

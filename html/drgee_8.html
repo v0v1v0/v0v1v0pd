@@ -1,0 +1,359 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drgeeData</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Extracting Variables and Model Matrices for Generalized Estimating equations
+</h2>
+
+<h3>Description</h3>
+
+<p>Given a main model, an outcome nuisance model and an
+exposure nuisance model <code>drgeeData</code> extracts the model
+variables and matrices from a <code>data.frame</code> or an <code>environment</code>
+object. It also performs some data cleaning and error checking.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drgeeData(outcome, exposure,
+          oformula, eformula, iaformula = formula(~1),
+          olink = c("identity", "log", "logit"),
+          elink = c("identity", "log", "logit"),
+          data, subset = NULL,
+          estimation.method = c("dr", "o", "e"),
+          cond = FALSE, clusterid, clusterid.vcov)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>outcome </code></td>
+<td>
+
+<p>The outcome as a variable or as a character string naming a variable in the
+<code>data</code> argument. If it is not found in the <code>data</code>
+argument, it will be searched for in the calling frame. If missing,
+the outcome is assumed to be the response of <code>oformula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exposure </code></td>
+<td>
+
+<p>The exposure as a variable or as a character string naming a variable in the
+<code>data</code> argument. If it is not found in the <code>data</code>
+argument, it will be searched for in the calling frame. If missing,
+the outcome is assumed to be the response of <code>eformula</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oformula </code></td>
+<td>
+
+<p>An expression or formula for the outcome nuisance model. The outcome
+is identified as the response in this formula.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eformula </code></td>
+<td>
+
+<p>An expression or formula for the exposure nuisance model. The
+exposure is identified as the response in this formula.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iaformula </code></td>
+<td>
+
+<p>An expression or formula where the RHS should contain the variables
+that "interact" (i.e. are supposed to be multiplied with) with the
+exposure in the main model to create the terms associated with the
+parameters of interest. "1" will always added. Default value is no
+interactions, i.e. <code>formula(~1)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>olink </code></td>
+<td>
+
+<p>A character string naming the link function in the outcome nuisance
+model. Have to be <code>"identity"</code>, <code>"log"</code> or
+<code>"logit"</code>. Default is <code>"identity"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elink </code></td>
+<td>
+
+<p>A character string naming the link function in the exposure nuisance
+model. Have to be <code>"identity"</code>, <code>"log"</code> or
+<code>"logit"</code>. Default is <code>"identity"</code>. When
+<code>olink="logit"</code> this is replaced by <code>"logit"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>A data frame or environment containing the variables in <code>iaformula</code>,
+<code>oformula</code> and <code>eformula</code>. If missing, variables are
+expected to be found in the calling frame.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+
+<p>An optional vector defining a subset of the data to be used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimation.method</code></td>
+<td>
+
+<p>A character string naming the desired estimation method. Choose
+<code>"o"</code> for O-estimation,
+<code>"e"</code> for E-estimation or
+<code>"dr"</code> for DR-estimation. Default is <code>"dr"</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cond </code></td>
+<td>
+
+<p>A logical value indicating whether the nuisance models should have
+cluster-specific intercepts. If <code>cond=TRUE</code> the design matrices
+for the nuisance models do not have an intercept. Requires a
+<code>clusterid</code> argument.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusterid</code></td>
+<td>
+
+<p>A cluster-defining variable or a character string naming a cluster-defining variable in the
+<code>data</code> argument. If it is not found in the <code>data</code>
+argument, it will be searched for in the calling frame. If missing,
+each observation will be considered to be a separate cluster. This
+argument is required when <code>cond = TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clusterid.vcov</code></td>
+<td>
+
+<p>A cluster-defining variable or a character string naming a
+cluster-defining variable in the <code>data</code> argument to be used for
+adding contributions from the same cluster. These clusters can be
+different from the clusters defined by <code>clusterid</code>. However,
+each cluster defined by <code>clusterid</code> needs to be contained in
+exactly one cluster defined by <code>clusterid.vcov</code>. This variable
+is useful when the clusters are hierarchical.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>drgeeData</code> is called by <code>drgee</code> and <code>gee</code> to extract
+data from a <code>data.frame</code> or <code>environment</code>
+object. The data can then be used to for O-estimation, E-estimation or
+DR-estimation. <code>drgeeData</code> uses
+<code>model.frame</code> and <code>model.matrix</code> to remove incomplete
+observations and to convert factors to dummy variables. It also
+performs check the supplied data for errors or inconsistencies.
+</p>
+<p>The class method <code>summary.drgeeData</code> produces strings for the
+formulas with terms referring to the columns in the produced design
+matrices.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>drgee.data </code> returns an object of class <code>drgeeData</code>
+containing
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>used.rows </code></td>
+<td>
+<p>The rows numbers in the original data for the used
+rows (after subset selection and exlusions). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orig.order </code></td>
+<td>
+<p>The original order of the observations. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y </code></td>
+<td>
+<p>The outcome matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a </code></td>
+<td>
+<p>The exposure matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x </code></td>
+<td>
+<p>The matrix of of interactions defined in <code>iaformula</code>.
+This matrix will always contain a column with 1's.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ax </code></td>
+<td>
+<p>The matrix of elementwise product(s) of <code>a</code> and
+each column in <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v </code></td>
+<td>
+<p>The matrix of terms in the outcome nuisance model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z </code></td>
+<td>
+<p>The matrix of terms in the exposure nuisance model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yx </code></td>
+<td>
+<p>The matrix of elementwise product(s) of <code>y</code> and each
+column in <code>x</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id </code></td>
+<td>
+<p>A factor defining clusters. For independent observations,
+the number of levels equals the number of complete observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clustname </code></td>
+<td>
+<p>A string for the name of the cluster defining variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y.names </code></td>
+<td>
+<p>A string for the name of the outcome.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a.names </code></td>
+<td>
+<p>A string for the name of the exposure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.names </code></td>
+<td>
+<p>A string vector for the variable names in <code>x</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ax.names </code></td>
+<td>
+<p>A string vector for the variable names in <code>ax</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v.names </code></td>
+<td>
+<p>A string vector for the variable names in <code>v</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z.names </code></td>
+<td>
+<p>A string vector for the variable names in <code>z</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yx.names </code></td>
+<td>
+<p>A string vector for the variable names in <code>yx</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>olink </code></td>
+<td>
+<p>A character string naming the link function in the outcome nuisance
+model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elink </code></td>
+<td>
+<p>A character string naming the link function in the outcome nuisance
+model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cond </code></td>
+<td>
+<p>A logical value indicating whether cluster-specific intercepts should
+be assumed. If <code>TRUE</code>, the is no column for the intercept in
+<code>v</code> and <code>z</code>. Outcome concordant will also be removed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oterms </code></td>
+<td>
+<p>The <code>terms</code> object corresponding to the outcome
+nuisance model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eterms </code></td>
+<td>
+<p>The <code>terms</code> object corresponding to the exposure
+nuisance model.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Johan Zetterqvist, Arvid Sjölander
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>drgee</code>, <code>gee</code>, <code>model.frame</code> and <code>model.matrix</code>.
+</p>
+
+
+</div>

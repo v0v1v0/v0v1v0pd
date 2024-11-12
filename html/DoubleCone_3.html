@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>agconst</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test null hypothesis of constant regression function against a general, high-dimensional alternative</h2>
+
+<h3>Description</h3>
+
+<p>Given a response and 1-3 predictors, the function will test the null hypothesis that the response and predictors are not related (i.e., regression function is constant), against the alternative that the regression function is monotone in each of the predictors.   For one predictor, the alternative set is a double cone; for two predictors the alternative set is a quadruple cone, and an octuple cone alternative is used when there are three predictors.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">agconst(y, xmat, nsim = 1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>A numeric response vector, length n
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xmat</code></td>
+<td>
+<p>an n by k design matrix, full column rank, where k=1,2, or 3.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>The number of data sets simulated under the null hypothesis, to estimate the null distribution of the test statistic.  The default is 1000, make this larger if a more precise p-value is desired.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For one predictor, the set of non-decreasing regression functions can be described by an n-dimensional convex polyhedral cone, and the set of non-increasing regression functions is the "opposite" cone.  The one-dimensional null space is the intersection of these cones.   For two predictors, the alternative set consists of four cones, defined by combinations of increasing/decreasing assumptions, and for three predictors we have eight cones.</p>
+
+
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pval</code></td>
+<td>
+<p>The p-value for the test: H0: constant regression function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p1 through p8</code></td>
+<td>
+<p>monotone fits – only p1 and p2 are returned for one predictor, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thetahat</code></td>
+<td>
+<p>The least-squares alternative fit – i.e., the projection onto the multiple-cone alternative</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Mary C Meyer and Bodhisattva Sen</p>
+
+
+<h3>References</h3>
+
+<p>TBA
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>doubconetest</code>,<code>partlintest</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">	n=100
+	x1=runif(n);x2=runif(n);xmat=cbind(x1,x2)
+	mu=1:n;for(i in 1:n){mu[i]=20*max(x1[i]-2/3,x2[i]-2/3,0)^2}
+	x1g=1:21/22;x2g=x1g
+	par(mar=c(1,1,1,1))
+	y=mu+rnorm(n)
+	ans=agconst(y,xmat,nsim=0)
+	grfit=matrix(nrow=21,ncol=21)
+	for(i in 1:21){for(j in 1:21){
+			if(sum(x1&gt;=x1g[i]&amp;x2&gt;=x2g[j])&gt;0){
+				if(sum(x1&lt;=x1g[i]&amp;x2&lt;=x2g[j])&gt;0){
+					f1=min(ans$thetahat[x1&gt;=x1g[i]&amp;x2&gt;=x2g[j]])
+					f2=max(ans$thetahat[x1&lt;=x1g[i]&amp;x2&lt;=x2g[j]])
+					grfit[i,j]=(f1+f2)/2
+				}else{
+					grfit[i,j]=min(ans$thetahat)
+				}
+			}else{grfit[i,j]=max(ans$thetahat)}
+	}}
+	persp(x1g,x2g,grfit,th=-50,tick="detailed",xlab="x1",ylab="x2",zlab="mu")
+##to get p-value for test against constant function:
+#	ans=agconst(y,xmat,nsim=1000)
+#	ans$pval
+</code></pre>
+
+
+</div>

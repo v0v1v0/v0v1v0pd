@@ -1,0 +1,121 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>logknots</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Define Knots for Lag Space at Equally-Spaced Log-Values </h2>
+
+<h3>Description</h3>
+
+<p>This function defines the position of knot or cut-off values at equally-spaced log-values for spline or strata functions, respectively. It is expressely created for lag-response functions to set the knots or cut-offs placements accordingly with the default of versions of <span class="pkg">dlnm</span> earlier than 2.0.0.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">logknots(x, nk=NULL, fun="ns", df=1, degree=3, intercept=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x </code></td>
+<td>
+<p> an integer scalar or vector of length 2, defining the the maximum lag or the lag range, respectively, or a vector variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nk </code></td>
+<td>
+<p> number of knots or cut-offs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun </code></td>
+<td>
+<p> character scalar with the name of the function for which the knots or cut-offs must be created. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df </code></td>
+<td>
+<p> degree of freedom.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>degree </code></td>
+<td>
+<p> degree of the piecewise polynomial. Only for <code>fun="bs"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept </code></td>
+<td>
+<p> logical. If an intercept is included in the basis function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This functions has been included for consistency with versions of <span class="pkg">dlnm</span> earlier than 2.0.0, where the default knots or cut-off placements in the lag space for functions <code>ns</code>, <code>bs</code> and <code>strata</code> used to be at equally-spaced values in the log scale. Since version 2.0.0 on, the default is equally-spaced quantiles, similarly to functions defined for the space of predictor. This function can be used to replicate the results obtained with old versions.
+</p>
+<p>The argument <code>x</code> is usually assumed to represent the maximum lag (if a scalar) or the lag range (if a vector of length 2). Otherwise is interpreted as a vector variable for which the range is computed internally.
+</p>
+<p>The number of knots is set with the argument <code>nk</code>, or otherwise determined by the choice of function and number of degrees of freedom through the arguments <code>fun</code> and <code>df</code>. Specifically, the number of knots is set to <code>df-1-intercept</code> for <code>"ns"</code>, <code>df-degree-intercept</code> for <code>"bs"</code>, or <code>df-intercept</code> for <code>"strata"</code>.
+</p>
+<p>An intercept is included by default (<code>intercept=TRUE</code>), consistently with the default for the lag space.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A numeric vector of knot or cut-off values, to be used in the <code>arglag</code> list argument of <code>crossbasis</code> for reproducing the default of versions of <span class="pkg">dlnm</span> earlier than 2.0.0.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Antonio Gasparrini &lt;<a href="mailto:antonio.gasparrini@lshtm.ac.uk">antonio.gasparrini@lshtm.ac.uk</a>&gt;</p>
+
+
+<h3>See Also</h3>
+
+<p><code>equalknots</code> for placing the knots at equally-spaced values. <code>crossbasis</code> to generate cross-basis matrices.
+</p>
+<p>See <code>dlnm-package</code> for an introduction to the package and for links to package vignettes providing more detailed information.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### setting 3 knots for lag 0-20
+logknots(20, 3)
+logknots(c(0,20), 3)
+
+### setting knots and cut-offs for different functions
+logknots(20, fun="ns", df=4)
+logknots(20, fun="bs", df=4, degree=2)
+logknots(20, fun="strata", df=4)
+
+### with and without without intercept
+logknots(20, fun="ns", df=4)
+logknots(20, fun="ns", df=4, intercept=FALSE)
+
+### replicating an old example in time series analysis
+lagknots &lt;- logknots(30, 3)
+cb &lt;- crossbasis(chicagoNMMAPS$temp, lag=30, argvar=list(fun="bs",df=5,
+  degree=2), arglag=list(knots=lagknots))
+summary(cb)
+library(splines)
+model &lt;- glm(death ~  cb + ns(time, 7*14) + dow, 
+  family=quasipoisson(), chicagoNMMAPS)
+pred &lt;- crosspred(cb, model, cen=21, by=1)
+plot(pred, xlab="Temperature", col="red", zlab="RR", shade=0.6,
+  main="3D graph of temperature effect")
+</code></pre>
+
+
+</div>

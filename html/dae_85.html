@@ -1,0 +1,128 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mat.random</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculates the variance matrix for the random effects from a mixed model, based  on a supplied formula or a matrix.</h2>
+
+<h3>Description</h3>
+
+<p>For <code>n</code> observations, compute the variance matrix of the random effects. 
+The <code>matrix</code> can be specified using a <code>formula</code> 
+for the <code>random</code> effects and a <code>list</code> of values of the  
+variance components for the terms specified in the <code>random</code> <code>formula</code>. 
+If a  <code>matrix</code> specifying the variances of 
+the nuisance random effects is supplied then it is returned as the value 
+from the function.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mat.random(random, G, design, keep.order = TRUE)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>random</code></td>
+<td>
+<p>A <code>formula</code> or a <code>matrix</code>. If a 
+<code>formula</code>, it specifies the random effects from which 
+the <code>matrix</code> for the contribution of the random effects 
+to the variance matrix can be generated. If it is a <code>matrix</code>, 
+it must be an <code>n x n</code> <code>matrix</code> and will be passed 
+through as the required variance matrix for the random effects. 
+The default is 0, which implies that there are no random effects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>This term only needs to be set if <code>random</code> is a 
+<code>formula</code>. Then it is set to a <code>list</code>, in which 
+each component is either a single value or a <code>matrix</code>; 
+there needs to be a component for each term in the expanded 
+<code>formula</code>, with the order of the terms and components 
+matching. If it is a single value, a diagonal matrix of dimension 
+equal to the product of the numbers of levels of the factors in 
+its term. If it is a matrix, its dimension must be equal to the 
+product of the numbers of levels of the factors in its term.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>A <code>data.frame</code> containing the design to be used in an 
+experiment and for which the variane matrix is required. It is not required  
+when the only <code>formula</code> specified is an intercept-only 
+<code>formula</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keep.order</code></td>
+<td>
+<p>A <code>logical</code> indicating whether the terms should keep 
+their position in the expanded <code>formula</code> projector, or 
+reordered so that main effects precede two-factor 
+interactions, which precede three-factor interactions and 
+so on.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code class="reqn">\bold{Z}_i</code> is the is incidence matrix for the <code>random</code> nuisance effects 
+in  <code class="reqn">\bold{u}_i</code> for a term in <code>random</code> and <code class="reqn">\bold{u}_i</code> has 
+variance matrix  <code class="reqn">\bold{G}_i</code> so that the contribution of the random effectst to 
+the variance matrix for <code class="reqn">\bold{Y}</code> is  
+<code class="reqn">\bold{V}_u =  \Sigma (\bold{Z}_i\bold{G}_i(\bold{Z}_i)^T)</code>.   
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>n x n</code> <code>matrix</code> containing the variance matrix for the random effects.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Chris Brien</p>
+
+
+<h3>See Also</h3>
+
+<p><code>mat.Vpredicts</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Reduced example from Smith et al. (2015)
+## Generate two-phase design
+mill.fac &lt;- fac.gen(list(Mrep = 2, Mday = 2, Mord = 3))
+field.lay &lt;- fac.gen(list(Frep = 2, Fplot = 4))
+field.lay$Variety &lt;- factor(c("D","E","Y","W","G","D","E","M"), 
+                            levels = c("Y","W","G","M","D","E"))
+start.design &lt;- cbind(mill.fac, field.lay[c(3,4,5,8,1,7,3,4,5,8,6,2),])
+rownames(start.design) &lt;- NULL
+
+## Set gammas
+terms &lt;- c("Variety", "Frep", "Frep:Fplot", "Mrep", "Mrep:Mday", "Mrep:Mday:Mord")
+gammas &lt;- c(1, 0.1, 0.2, 0.3, 0.2, 1)
+names(gammas) &lt;- terms
+
+## Specify matrices to calculate the variance matrix of the predicted fixed Variety effects 
+Vu &lt;- with(start.design, fac.vcmat(Mrep, gammas["Mrep"]) + 
+                         fac.vcmat(fac.combine(list(Mrep,Mday)), gammas["Mrep:Mday"]) + 
+                         fac.vcmat(Frep, gammas["Frep"]) + 
+                         fac.vcmat(fac.combine(list(Frep,Fplot)), gammas["Frep:Fplot"]))
+
+## Calculate the variance matrix of the predicted random Variety effects using formulae
+Vu &lt;- mat.random(random = ~ -1 + Mrep/Mday + Frep/Fplot, 
+                 G = as.list(gammas[c(4,5,2,3)]), 
+                 design = start.design)
+</code></pre>
+
+
+</div>

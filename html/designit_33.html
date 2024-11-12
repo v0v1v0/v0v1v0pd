@@ -1,0 +1,100 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mk_plate_scoring_functions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a list of scoring functions (one per plate) that quantify the spatially homogeneous distribution of conditions across the plate</h2>
+
+<h3>Description</h3>
+
+<p>Create a list of scoring functions (one per plate) that quantify the spatially homogeneous distribution of conditions across the plate
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mk_plate_scoring_functions(
+  batch_container,
+  plate = NULL,
+  row,
+  column,
+  group,
+  p = 2,
+  penalize_lines = "soft"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>batch_container</code></td>
+<td>
+<p>Batch container (bc) with all columns that denote plate related information</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plate</code></td>
+<td>
+<p>Name of the bc column that holds the plate identifier (may be missing or NULL in case just one plate is used)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>row</code></td>
+<td>
+<p>Name of the bc column that holds the plate row number (integer values starting at 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>column</code></td>
+<td>
+<p>Name of the bc column that holds the plate column number (integer values starting at 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>Name of the bc column that denotes a group/condition that should be distributed on the plate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>p parameter for minkowski type of distance metrics. Special cases: p=1 - Manhattan distance; p=2 - Euclidean distance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalize_lines</code></td>
+<td>
+<p>How to penalize samples of the same group in one row or column of the plate. Valid options are:
+'none' - there is no penalty and the pure distance metric counts, 'soft' - penalty will depend on the well distance within the
+shared plate row or column, 'hard' - samples in the same row/column will score a zero distance</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>List of scoring functions, one per plate, that calculate a real valued measure for the quality of the group distribution (the lower the better).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data("invivo_study_samples")
+bc &lt;- BatchContainer$new(
+  dimensions = c("column" = 6, "row" = 10)
+)
+bc &lt;- assign_random(bc, invivo_study_samples)
+scoring_f &lt;- mk_plate_scoring_functions(
+  bc,
+  row = "row", column = "column", group = "Sex"
+)
+bc &lt;- optimize_design(bc, scoring = scoring_f, max_iter = 100)
+plot_plate(bc$get_samples(), .col = Sex)
+
+</code></pre>
+
+
+</div>

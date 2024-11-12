@@ -1,0 +1,149 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>combdist_plt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combined coefficients of power-law transformed combined distribution</h2>
+
+<h3>Description</h3>
+
+<p>Coefficients of a power-law transformed combined distribution
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">combdist_plt(
+  dist,
+  prior = NULL,
+  coeff,
+  a = 1,
+  b = 1,
+  inv = FALSE,
+  nested = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dist</code></td>
+<td>
+<p>character vector denoting the distribution(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>Numeric vector of prior coefficients, defaults to single vector with value one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coeff</code></td>
+<td>
+<p>list of parameters for the distribution(s).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a, b</code></td>
+<td>
+<p>constant and power of power-law transformation, defaults to 1 and 1 respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inv</code></td>
+<td>
+<p>logical indicating whether coefficients of the outcome variable of the power-law transformation should be returned (FALSE) or whether coefficients of the input variable being power-law transformed should be returned (TRUE). Defaults to FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nested</code></td>
+<td>
+<p>logical indicating whether results should be returned in a nested list or flat list, defaults to FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a nested or flat list containing
+</p>
+
+<dl>
+<dt>coefficients</dt>
+<dd>
+<p>Named vector of coefficients</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+# Load necessary tools
+data("fit_US_cities")
+library(tidyverse)
+
+
+## Comparing probabilites of power-law transformed transformed variables
+prob &lt;- fit_US_cities %&gt;%
+  filter(!(dist %in% c(
+    "exp", "invpareto_exp_pareto", "exp_pareto", "invpareto_exp",
+    "gamma", "invpareto_gamma_pareto", "gamma_pareto", "invpareto_gamma"
+  ))) %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(prob = pcombdist(q = 1.1, dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]])) %&gt;%
+  unnest(cols = c(prob))
+fit_US_cities_plt &lt;- fit_US_cities %&gt;%
+  filter(!(dist %in% c(
+    "exp", "invpareto_exp_pareto", "exp_pareto", "invpareto_exp",
+    "gamma", "invpareto_gamma_pareto", "gamma_pareto", "invpareto_gamma"
+  ))) %&gt;%
+  group_by(dist, components, np, n, convergence) %&gt;%
+  do(results = as_tibble(combdist_plt(dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]], a = 2, b = 0.5, nested = TRUE))) %&gt;%
+  unnest(cols = c(results))
+prob$prob_plt &lt;- fit_US_cities_plt %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(prob_plt = pcombdist(q = 2 * 1.1^0.5, dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]])) %&gt;%
+  unnest(cols = c(prob_plt)) %&gt;%
+  .$prob_plt
+prob &lt;- prob %&gt;%
+  mutate(check = abs(prob - prob_plt))
+
+prob &lt;- fit_US_cities %&gt;%
+  filter(!(dist %in% c(
+    "exp", "invpareto_exp_pareto", "exp_pareto", "invpareto_exp",
+    "gamma", "invpareto_gamma_pareto", "gamma_pareto", "invpareto_gamma"
+  ))) %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(prob = pcombdist(q = 2 * 1.1^0.5, dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]])) %&gt;%
+  unnest(cols = c(prob))
+fit_US_cities_plt &lt;- fit_US_cities %&gt;%
+  filter(!(dist %in% c(
+    "exp", "invpareto_exp_pareto", "exp_pareto", "invpareto_exp",
+    "gamma", "invpareto_gamma_pareto", "gamma_pareto", "invpareto_gamma"
+  ))) %&gt;%
+  group_by(dist, components, np, n, convergence) %&gt;%
+  do(results = as_tibble(combdist_plt(dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]], a = 2, b = 0.5, nested = TRUE, inv = TRUE))) %&gt;%
+  unnest(cols = c(results))
+prob$prob_plt &lt;- fit_US_cities_plt %&gt;%
+  group_by(dist, components, np, n) %&gt;%
+  do(prob_plt = pcombdist(q = 1.1, dist = .[["dist"]], prior = .[["prior"]][[1]],
+  coeff = .[["coefficients"]][[1]])) %&gt;%
+  unnest(cols = c(prob_plt)) %&gt;%
+  .$prob_plt
+prob &lt;- prob %&gt;%
+  mutate(check = abs(prob - prob_plt))
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>max_crit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximization of the Expected Improvement criterion</h2>
+
+<h3>Description</h3>
+
+<p>For a number of <code>control$restarts</code>, generates a large number of random samples,
+then picks the one with best EI value to start L-BFGS.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">max_crit(
+  model,
+  type = "UK",
+  lower,
+  upper,
+  minimization = TRUE,
+  control = NULL,
+  proxy = FALSE,
+  trcontrol = NULL,
+  n.cores = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code> ,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Kriging type: "SK" or "UK"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower, upper</code></td>
+<td>
+<p>vectors of lower and upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimization</code></td>
+<td>
+<p>logical specifying if EI is used in minimiziation or in
+maximization,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optional list of control parameters for optimization. For now only the number of <code>restarts</code> can be set.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proxy</code></td>
+<td>
+<p>Boolean, if TRUE, then EI maximization is replaced by the minimization of the kriging mean.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trcontrol</code></td>
+<td>
+<p>an optional list to activate the Trust-region management (see <code>TREGO.nsteps</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.cores</code></td>
+<td>
+<p>Number of cores if parallel computation is used</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>The best set of parameters found.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>The value of expected improvement at par.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Victor Picheny
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(123)
+library(parallel)
+##########################################################
+### "ONE-SHOT" EI-MAXIMIZATION OF THE BRANIN FUNCTION ####
+### 	KNOWN AT A 9-POINTS FACTORIAL DESIGN          ####
+##########################################################
+
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2 
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact) &lt;- c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact) &lt;- c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+names(response.branin) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.branin, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# EGO one step
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)     # domain for Branin function
+oEGO &lt;- max_crit(fitted.model1, lower=lower, upper=upper)
+print(oEGO)
+
+# graphics
+n.grid &lt;- 20
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, branin)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid,y.grid,z.grid,40)
+title("Branin Function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par[1], oEGO$par[2], pch=19, col="red")
+</code></pre>
+
+
+</div>

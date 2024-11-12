@@ -1,0 +1,87 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>LinearOsc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulated time series data for a deterministic linear damped oscillator model</h2>
+
+<h3>Description</h3>
+
+<p>The variables are as follows:
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(LinearOsc)
+</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 1000 rows and 3 variables</p>
+
+
+<h3>Details</h3>
+
+
+<ul>
+<li>
+<p> ID. ID of the systems (1 to 10)
+</p>
+</li>
+<li>
+<p> x. Latent level variable
+</p>
+</li>
+<li>
+<p> theTimes. Measured time Points
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R"># The following was used to generate the data
+#--------------------------------------
+## Not run: 
+Osc &lt;- function(t, prevState, parms) {
+  x1 &lt;- prevState[1] # x1[t]
+  x2 &lt;- prevState[2] # x2[t]
+  eta1 = parms[1]
+  zeta1 = parms[2]
+  with(as.list(parms), {
+   dx1 &lt;- x2
+    dx2 &lt;- eta1*x1 + zeta1*x2 
+    res&lt;-c(dx1,dx2)
+    list(res)
+  }
+  )
+}
+n = 10 #Number of subjects
+T = 100 #Number of time points
+deltaT = .1 #dt
+lastT = deltaT*T #Value of t_{i,T}
+theTimes  = seq(0, lastT, length=T)  #A list of time values
+
+eta = -.8
+zeta = -.1
+out1 = matrix(NA,T*n,1)
+trueOut = matrix(NA,T*n,1)
+parms = c(eta, zeta)
+  for (i in 1:n){
+  xstart = c(rnorm(1,0,2),rnorm(1,0,.5))
+  out &lt;- lsoda(as.numeric(xstart), theTimes, Osc, parms)
+  trueOut[(1+(i-1)*T):(i*T)] = out[,2]
+  out1[(1+(i-1)*T):(i*T)] = out[,2]+rnorm(T,0,1)
+  }
+
+LinearOsc= data.frame(ID=rep(1:n,each=T),x=out1[,1],
+                  theTimes=rep(theTimes,n))
+save(LinearOsc,file="LinearOsc.rda")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

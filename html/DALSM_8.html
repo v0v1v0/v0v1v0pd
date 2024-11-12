@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>densityLPS</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Constrained density estimation from censored data with given mean and variance using Laplace P-splines</h2>
+
+<h3>Description</h3>
+
+<p>P-spline estimation of the density (pdf), cumulative distribution (cdf),
+hazard and cumulative hazard functions from interval- or right-censored data under possible marginal
+mean and/or variance constraints. The penalty parameter <code class="reqn">\tau</code> tuning the smoothness of
+the log-hazard can be selected using the Laplace P-splines (LPS) method maximizing an approximation to the marginal posterior
+of <code class="reqn">\tau</code> (also named the 'evidence')  or using Schall's method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">densityLPS(obj.data,
+       is.density=TRUE, Mean0=NULL, Var0=NULL,
+       fixed.penalty=FALSE, method=c("LPS","Schall"),
+       fixed.phi=FALSE,phi.ref=NULL, phi0=NULL,tau0=exp(5),tau.min=.1,
+       verbose=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obj.data</code></td>
+<td>
+<p>a list created from potentially right- or interval-censored data using <code>Dens1d</code>. It includes summary statistics, the assumed density support, the knots for the B-spline basis, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is.density</code></td>
+<td>
+<p>(optional) logical indicating whether the estimated density should integrate to 1.0 over the range of the knots in obj.data$knots (default: TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Mean0</code></td>
+<td>
+<p>(optional) constrained value for the mean of the fitted density (defaut: NULL).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Var0</code></td>
+<td>
+<p>(optional) constrained value for the variance of the fitted density (defaut: NULL).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.penalty</code></td>
+<td>
+<p>(optional) logical indicating whether the penalty parameter should be selected from the data (<code>fixed.penalty</code>=FALSE) or fixed (<code>fixed.penalty</code>=TRUE) at its initial value <code class="reqn">\tau_0</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>method used for the selection of the penalty parameter: "LPS" (by maximizing the marginal posterior for <code class="reqn">\tau</code>, cf. "Laplace P-splines") or "Schall" (Schall's method).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed.phi</code></td>
+<td>
+<p>(optional) logical indicating whether the spline parameters are fixed (<code>fixed.phi</code>=TRUE) or estimated from the data (default: <code>fixed.phi</code>=FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi.ref</code></td>
+<td>
+<p>(optional) reference value for the spline parameters with respect to which deviations are penalized (default: zero vector).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi0</code></td>
+<td>
+<p>starting value for the spline parameters (default: spline parameters corresponding to a Student density with 5 DF).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau0</code></td>
+<td>
+<p>(optional) initial value for the penalty parameter <code class="reqn">\tau</code> (default: exp(5)).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tau.min</code></td>
+<td>
+<p>(optional) minimal value for the penalty parameter <code class="reqn">\tau</code> (default: .1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>(optional) logical indicating whether estimation step details should be displayed (default: FALSE).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a <code>densLPS.object</code> containing the density estimation results.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Philippe Lambert <a href="mailto:p.lambert@uliege.be">p.lambert@uliege.be</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Lambert, P. (2021). Fast Bayesian inference using Laplace approximations
+in nonparametric double additive location-scale models with right- and
+interval-censored data.
+<em>Computational Statistics and Data Analysis</em>, 161: 107250.
+&lt;doi:10.1016/j.csda.2021.107250&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>densLPS.object</code>, <code>print.densLPS</code>, <code>plot.densLPS</code>, <code>Dens1d.object</code>, <code>Dens1d</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DALSM)
+
+## Example 1: estimation of the error density in a DALSM model
+require(DALSM)
+data(DALSM_IncomeData)
+resp = DALSM_IncomeData[,1:2]
+fit = DALSM(y=resp,
+            formula1 = ~twoincomes+s(age)+s(eduyrs),
+            formula2 = ~twoincomes+s(age)+s(eduyrs),
+            data = DALSM_IncomeData)
+plot(fit$derr)  ## Plot the estimated error density
+print(fit$derr) ## ... and provide summary statistics for it
+
+## Example 2: density estimation from censored income data
+data(DALSM_IncomeData)
+resp = DALSM_IncomeData[,1:2]
+head(resp,n=20)
+temp = Dens1d(y=resp,ymin=0) ## Create Dens1d object from positive censored data
+obj = densityLPS(temp) ## Density estimation from IC &amp; RC data
+print(obj) ## Summary information on the estimated density
+plot(obj,hist=TRUE) ## Visualize the estimated density
+legend("topright",col=c("black","grey"),lwd=c(2,20),
+       legend=c("Fitted density","Pseudo-data"),bty="n")
+
+## Example 3: density estimation from simulated RC and IC data
+## Data generation
+set.seed(123)
+n = 500 ## Sample size
+x = rgamma(n,10,2) ## Exact (unobserved) data
+width = runif(n,1,3) ## Width of the IC data (mean width = 2)
+w = runif(n) ## Positioning of the exact data within the interval
+xmat = cbind(pmax(0,x-w*width),x+(1-w)*width) ## Generated IC data
+t.cens = rexp(n,1/15) ## Right-censoring values
+idx.RC = (1:n)[t.cens&lt;x] ## Id's of the right-censored units
+xmat[idx.RC,] = cbind(t.cens[idx.RC],Inf) ## Data for RC units: (t.cens,Inf)
+head(xmat,15)
+## Density estimation with mean and variance constraints
+obj.data = Dens1d(xmat,ymin=0) ## Prepare the data for estimation
+obj = densityLPS(obj.data,Mean0=10/2,Var0=10/4) ## Density estimation
+print(obj)
+plot(obj) ## Plot the estimated density
+curve(dgamma(x,10,2), ## ... and compare it to the true density (in red)
+      add=TRUE,col="red",lwd=2,lty=2)
+legend("topright",col=c("black","red"),lwd=c(2,2),lty=c(1,2),
+       legend=c("Estimated density","True density"),bty="n")
+## Same story for the cdf
+with(obj, curve(pdist(x),ymin,ymax,lwd=2,xlab="",ylab="F(x)"))
+curve(pgamma(x,10,2),add=TRUE,col="red",lwd=2,lty=2)
+legend("right",col=c("black","red"),lwd=c(2,2),lty=c(1,2),
+       legend=c("Estimated cdf","True cdf"),bty="n")
+
+</code></pre>
+
+
+</div>

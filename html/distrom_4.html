@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dmr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distributed Multinomial Regression</h2>
+
+<h3>Description</h3>
+
+<p>Gamma-lasso path estimation for a multinomial logistic regression factorized into independent  Poisson log regressions.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dmr(cl, covars, counts, mu=NULL, bins=NULL, verb=0, cv=FALSE, ...)
+## S3 method for class 'dmr'
+coef(object, ...)
+## S3 method for class 'dmr'
+predict(object, newdata,
+	type=c("link","response","class"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>A <code>parallel</code> library socket cluster.  If <code>is.null(cl)</code>,
+everything is done in serial.  See
+<code>help(parallel)</code>, <code>help(makeCluster)</code>, and our examples here for details. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covars</code></td>
+<td>
+<p>A dense <code>matrix</code> 
+or sparse <code>Matrix</code> of covariates.
+This should not include the intercept.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>counts</code></td>
+<td>
+<p>A dense <code>matrix</code> 
+or sparse <code>Matrix</code> of
+response counts. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+
+<p>Pre-specified fixed effects for each observation in the Poisson regression linear equation.  If <code>mu=NULL</code>, then we use <code>log(rowSums(x))</code>.  Note that if <code>bins</code> is non-null then this argument is ignored and <code>mu</code> is recalculated on the collapsed data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bins</code></td>
+<td>
+<p>Number of bins into which we will attempt to collapse each column of <code>covars</code>.  Since sums of multinomials 
+with equal probabilities are also multinomial, the model is then fit to these collapsed ‘observations’. <code>bins=NULL</code>
+does no collapsing. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>Whether to print some info.  <code>max(0,verb-1)</code> is passed
+on to gamlr and will print if you created an <code>outfile</code> when specifying <code>cl</code>.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv</code></td>
+<td>
+<p>A flag for whether to use <code>cv.gamlr</code> instead of <code>gamlr</code> for each Poisson regression. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+
+<p>For <code>predict.dmr</code>, this is the scale upon which you want prediction. Under "link", just the linear map <code>newdata</code> times <code>object</code>, under "response" the fitted multinomial probabilities, under "class" the max-probability class label.  For sufficient reductions see the <code>srproj</code> function of the textir library.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>A Matrix with the same number of columns as <code>covars</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to <code>gamlr</code>, <code>cv.gamlr</code>, and their associated methods.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>A <code>dmr</code> list of fitted <code>gamlr</code> models for each response category. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>dmr</code> fits multinomial logistic regression by assuming that, unconditionally on the ‘size’ (total count across categories) each individual category count has been generated as a Poisson
+</p>
+<p style="text-align: center;"><code class="reqn">
+	x_{ij} \sim Po(exp[\mu_i + \alpha_j + \beta v_i ]).
+	</code>
+</p>
+
+<p>We [default] plug-in estimate <code class="reqn">\hat\mu_i = log(m_i)</code>, where <code class="reqn">m_i = \sum_j x_{ij}</code> and <code class="reqn">p</code> is the dimension of <code class="reqn">x_i</code>.  Then each individual is outsourced to Poisson regression in the <code>gamlr</code> package via the <code>parLapply</code> function of the <code>parallel</code> library.  The output from <code>dmr</code> is a list of <code>gamlr</code> fitted models.
+</p>
+<p><code>coef.dmr</code> builds a matrix of multinomial logistic regression
+coefficients from the <code>length(object)</code> list of <code>gamlr</code> fits.  Default selection under <code>cv=FALSE</code> uses an
+information criteria via <code>AICc</code> on Poisson deviance for each
+individual response dimension (see <code>gamlr</code>).  Combined coefficients
+across all dimensions are then returned as a <code>dmrcoef</code> s4-class
+object.
+</p>
+<p><code>predict.dmr</code> takes either a <code>dmr</code> or <code>dmrcoef</code> object and returns predicted values for <code>newdata</code> on the scale defined by the <code>type</code> argument.  
+</p>
+
+
+<h3>Value</h3>
+
+  <p><code>dmr</code> returns the <code>dmr</code> s3 object: an <code>ncol(counts)</code>-length list of fitted <code>gamlr</code> objects, with the added attributes <code>nlambda</code>, <code>mu</code>, and <code>nobs</code>. </p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matt Taddy <a href="mailto:mataddy@gmail.com">mataddy@gmail.com</a></p>
+
+
+<h3>References</h3>
+
+<p>Taddy (2015 AoAS) Distributed Multinomial Regression
+</p>
+<p>Taddy (2017 JCGS) One-step Estimator Paths for Concave Regularization, the Journal of Computational and Graphical Statistics
+</p>
+<p>Taddy (2013 JASA) Multinomial Inverse Regression for Text Analysis
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dmrcoef-class</code>, <code>cv.dmr</code>, <code>AICc</code>,  and the <code>gamlr</code> and <code>textir</code> packages.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(MASS)
+data(fgl)
+
+## make your cluster 
+## FORK is faster but memory heavy, and doesn't work on windows.
+cl &lt;- makeCluster(2,type=ifelse(.Platform$OS.type=="unix","FORK","PSOCK")) 
+print(cl)
+
+## fit in parallel
+fits &lt;- dmr(cl, fgl[,1:9], fgl$type, verb=1)
+
+## its good practice stop the cluster once you're done
+stopCluster(cl)
+
+## Individual Poisson model fits and AICc selection
+par(mfrow=c(3,2))
+for(j in 1:6){
+	plot(fits[[j]])
+	mtext(names(fits)[j],font=2,line=2) }
+
+##  AICc model selection
+B &lt;- coef(fits)
+
+## Fitted probability by true response
+par(mfrow=c(1,1))
+P &lt;- predict(B, fgl[,1:9], type="response")
+boxplot(P[cbind(1:214,fgl$type)]~fgl$type, 
+	ylab="fitted prob of true class")
+
+
+</code></pre>
+
+
+</div>

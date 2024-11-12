@@ -1,0 +1,189 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>consensus_evaluate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Evaluate, trim, and reweigh algorithms</h2>
+
+<h3>Description</h3>
+
+<p>Evaluates algorithms on internal/external validation indices. Poor performing
+algorithms can be trimmed from the ensemble. The remaining algorithms can be
+given weights before use in consensus functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">consensus_evaluate(
+  data,
+  ...,
+  cons.cl = NULL,
+  ref.cl = NULL,
+  k.method = NULL,
+  plot = FALSE,
+  trim = FALSE,
+  reweigh = FALSE,
+  n = 5,
+  lower = 0,
+  upper = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>data matrix with rows as samples and columns as variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>any number of objects outputted from <code>consensus_cluster()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cons.cl</code></td>
+<td>
+<p>matrix of cluster assignments from consensus functions such as
+<code>kmodes</code> and <code>majority_voting</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref.cl</code></td>
+<td>
+<p>reference class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k.method</code></td>
+<td>
+<p>determines the method to choose k when no reference class is
+given. When <code>ref.cl</code> is not <code>NULL</code>, k is the number of distinct classes of
+<code>ref.cl</code>. Otherwise the input from <code>k.method</code> chooses k. The default is to
+use the PAC to choose the best k(s). Specifying an integer as a
+user-desired k will override the best k chosen by PAC. Finally, specifying
+"all" will produce consensus results for all k. The "all" method is
+implicitly performed when there is only one k used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, <code>graph_all</code> is called</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, algorithms that score low on internal indices
+will be trimmed out</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reweigh</code></td>
+<td>
+<p>logical; if <code>TRUE</code>, after trimming out poor performing
+algorithms, each algorithm is reweighed depending on its internal indices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>an integer specifying the top <code>n</code> algorithms to keep after trimming
+off the poor performing ones using Rank Aggregation. If the total number of
+algorithms is less than <code>n</code> no trimming is done.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>the lower bound that determines what is ambiguous</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>the upper bound that determines what is ambiguous</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function always returns internal indices. If <code>ref.cl</code> is not <code>NULL</code>,
+external indices are additionally shown. Relevant graphical displays are also
+outputted. Algorithms are ranked across internal indices using Rank
+Aggregation. Only the top <code>n</code> algorithms are kept, the rest are trimmed.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>consensus_evaluate</code> returns a list with the following elements
+</p>
+
+<ul>
+<li> <p><code>k</code>: if <code>ref.cl</code> is not <code>NULL</code>, this is the number of distinct classes
+in the reference; otherwise the chosen <code>k</code> is determined by the one giving
+the largest mean PAC across algorithms
+</p>
+</li>
+<li> <p><code>pac</code>: a data frame showing the PAC for each combination of algorithm
+and cluster size
+</p>
+</li>
+<li> <p><code>ii</code>: a list of data frames for all k showing internal evaluation
+indices
+</p>
+</li>
+<li> <p><code>ei</code>: a data frame showing external evaluation indices for <code>k</code>
+</p>
+</li>
+<li> <p><code>trim.obj</code>: A list with 4 elements
+</p>
+
+<ul>
+<li> <p><code>alg.keep</code>: algorithms kept
+</p>
+</li>
+<li> <p><code>alg.remove</code>: algorithms removed
+</p>
+</li>
+<li> <p><code>rank.matrix</code>: a matrix of ranked algorithms for every internal
+evaluation index
+</p>
+</li>
+<li> <p><code>top.list</code>: final order of ranked algorithms
+</p>
+</li>
+<li> <p><code>E.new</code>: A new version of a <code>consensus_cluster</code> data object
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Consensus clustering for multiple algorithms
+set.seed(911)
+x &lt;- matrix(rnorm(500), ncol = 10)
+CC &lt;- consensus_cluster(x, nk = 3:4, reps = 10, algorithms = c("ap", "km"),
+progress = FALSE)
+
+# Evaluate algorithms on internal/external indices and trim algorithms:
+# remove those ranking low on internal indices
+set.seed(1)
+ref.cl &lt;- sample(1:4, 50, replace = TRUE)
+z &lt;- consensus_evaluate(x, CC, ref.cl = ref.cl, n = 1, trim = TRUE)
+str(z, max.level = 2)
+
+</code></pre>
+
+
+</div>

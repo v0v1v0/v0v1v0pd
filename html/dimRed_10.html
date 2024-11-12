@@ -1,0 +1,232 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>AutoEncoder-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>AutoEncoder</h2>
+
+<h3>Description</h3>
+
+<p>An S4 Class implementing an Autoencoder
+</p>
+
+
+<h3>Details</h3>
+
+<p>Autoencoders are neural networks that try to reproduce their input. Consider
+this method unstable, as the internals may still be changed.
+</p>
+
+
+<h3>Slots</h3>
+
+
+<dl>
+<dt><code>fun</code></dt>
+<dd>
+<p>A function that does the embedding and returns a
+dimRedResult object.</p>
+</dd>
+<dt><code>stdpars</code></dt>
+<dd>
+<p>The standard parameters for the function.</p>
+</dd>
+</dl>
+<h3>General usage</h3>
+
+<p>Dimensionality reduction methods are S4 Classes that either be used
+directly, in which case they have to be initialized and a full
+list with parameters has to be handed to the <code>@fun()</code>
+slot, or the method name be passed to the embed function and
+parameters can be given to the <code>...</code>, in which case
+missing parameters will be replaced by the ones in the
+<code>@stdpars</code>.
+</p>
+
+
+<h3>Parameters</h3>
+
+<p>Autoencoder can take the following parameters:
+</p>
+
+<dl>
+<dt>ndim</dt>
+<dd>
+<p>The number of dimensions for reduction.</p>
+</dd>
+<dt>n_hidden</dt>
+<dd>
+<p>The number of neurons in the hidden
+layers, the length specifies the number of layers,
+the length must be impair, the middle number must
+be the same as ndim.</p>
+</dd>
+<dt>activation</dt>
+<dd>
+<p>The activation functions for the layers,
+one of "tanh", "sigmoid", "relu", "elu", everything
+else will silently be ignored and there will be no
+activation function for the layer.</p>
+</dd>
+<dt>weight_decay</dt>
+<dd>
+<p>the coefficient for weight decay,
+set to 0 if no weight decay desired.</p>
+</dd>
+<dt>learning_rate</dt>
+<dd>
+<p>The learning rate for gradient descend</p>
+</dd>
+<dt>graph</dt>
+<dd>
+<p>Optional: A list of bits and pieces that define the
+autoencoder in tensorflow, see details.</p>
+</dd>
+<dt>keras_graph</dt>
+<dd>
+<p>Optional: A list of keras layers that define
+the encoder and decoder, specifying this, will ignore all
+other topology related variables, see details.</p>
+</dd>
+<dt>batchsize</dt>
+<dd>
+<p>If NA, all data will be used for training,
+else only a random subset of size batchsize will be used</p>
+</dd>
+<dt>n_steps</dt>
+<dd>
+<p>the number of training steps.</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>There are several ways to specify an autoencoder, the simplest is to pass the
+number of neurons per layer in <code>n_hidden</code>, this must be a vector of
+integers of impair length and it must be symmetric and the middle number must
+be equal to <code>ndim</code>, For every layer an activation function can be
+specified with <code>activation</code>.
+</p>
+<p>For regularization weight decay can be specified by setting
+<code>weight_decay</code> &gt; 0.
+</p>
+<p>Currently only a gradient descent optimizer is used, the learning rate can be
+specified by setting <code>learning_rate</code>.
+The learner can operate on batches if <code>batchsize</code> is not <code>NA</code>.
+The number of steps the learner uses is specified using <code>n_steps</code>.
+</p>
+
+
+<h3>Further training a model</h3>
+
+<p>If the model did not converge in the first training phase or training with
+different data is desired, the <code>dimRedResult</code> object may be
+passed as <code>autoencoder</code> parameter; In this case all topology related
+parameters will be ignored.
+</p>
+
+
+<h3>Using Keras layers</h3>
+
+<p>The encoder and decoder part can be specified using a list of <span class="pkg">keras</span>
+layers. This requires a list with two entries, <code>encoder</code> should contain
+a LIST of keras layers WITHOUT the <code>layer_input</code>
+that will be concatenated in order to form the encoder part.
+<code>decoder</code> should be
+defined accordingly, the output of <code>decoder</code> must have the same number
+of dimensions as the input data.
+</p>
+
+
+<h3>Using Tensorflow</h3>
+
+<p>The model can be entirely defined in <span class="pkg">tensorflow</span>, it must contain a
+list with the following entries:
+</p>
+
+<dl>
+<dt>encoder</dt>
+<dd>
+<p>A tensor that defines the encoder.</p>
+</dd>
+<dt>decoder</dt>
+<dd>
+<p>A tensor that defines the decoder.</p>
+</dd>
+<dt>network</dt>
+<dd>
+<p>A tensor that defines the reconstruction (encoder + decoder).</p>
+</dd>
+<dt>loss</dt>
+<dd>
+<p>A tensor that calculates the loss (network + loss function).</p>
+</dd>
+<dt>in_data</dt>
+<dd>
+<p>A <code>placeholder</code> that points to the data input of
+the network AND the encoder.</p>
+</dd>
+<dt>in_decoder</dt>
+<dd>
+<p>A <code>placeholder</code> that points to the input of
+the decoder.</p>
+</dd>
+<dt>session</dt>
+<dd>
+<p>A <span class="pkg">tensorflow</span> <code>Session</code> object that holds
+the values of the tensors.</p>
+</dd>
+</dl>
+<h3>Implementation</h3>
+
+<p>Uses <span class="pkg">tensorflow</span> as a backend, for details an
+problems relating tensorflow, see <a href="https://tensorflow.rstudio.com">https://tensorflow.rstudio.com</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other dimensionality reduction methods: 
+<code>DRR-class</code>,
+<code>DiffusionMaps-class</code>,
+<code>DrL-class</code>,
+<code>FastICA-class</code>,
+<code>FruchtermanReingold-class</code>,
+<code>HLLE-class</code>,
+<code>Isomap-class</code>,
+<code>KamadaKawai-class</code>,
+<code>MDS-class</code>,
+<code>NNMF-class</code>,
+<code>PCA-class</code>,
+<code>PCA_L1-class</code>,
+<code>UMAP-class</code>,
+<code>dimRedMethod-class</code>,
+<code>dimRedMethodList()</code>,
+<code>kPCA-class</code>,
+<code>nMDS-class</code>,
+<code>tSNE-class</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+dat &lt;- loadDataSet("3D S Curve")
+
+emb &lt;- embed(dat, "AutoEncoder")
+
+# predicting is possible:
+samp &lt;- sample(floor(nrow(dat) / 10))
+emb2 &lt;- embed(dat[samp])
+emb3 &lt;- predict(emb2, dat[-samp])
+
+plot(emb, type = "2vars")
+plot(emb2, type = "2vars")
+points(getData(emb3))
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DCluster</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>A Package for the Detection of Spatial Clusters of Diseases
+for Count Data</h2>
+
+<h3>Description</h3>
+
+<p>DCluster is a collection of several methods related to the detection
+of spatial clusters of diseases. Many widely used methods, such as Openshaw's
+GAM, Besag and Newell, Kulldorff and Nagarwalla, and others
+have been implemented.
+</p>
+<p>Besides the calculation of these statistic, bootstrap can be used
+to test its departure from the null hypotheses, which will be
+no clustering in the study area. For possible sampling methods can be used to perform the
+simulations: permutation, Multinomial, Poisson and Poisson-Gamma.
+</p>
+<p>Minor modifications have been made to the methods to use standardized expected
+number of cases instead of population, since it provides a better approach to
+the expected number of cases.
+</p>
+
+
+<h3>Introduction</h3>
+
+<p>We'll always suppose that we are working on a study region which is divided
+into <em>n</em> non-overlaping smaller areas where data are measured. Data
+measured are usually people suffering from a disease or even deaths. This will
+be refered as <em>Observed number of cases</em>. For a given area, its observed
+number of cases will be denoted by <code class="reqn">O_i</code> and the sum of these
+quantities over the whole study region will be <code class="reqn">O_+</code>.
+</p>
+<p>In the same way can be defined <em>Population</em> and <em>Standardized
+Expected number of cases</em>, which will be denoted by <code class="reqn">P_i</code> and
+<code class="reqn">E_i</code>, respectively. The sum of all these quantities 
+are represented by <code class="reqn">P_+</code> and <code class="reqn">E_+</code>.
+</p>
+<p>The basic assumption for the data is that they are independant
+observations from a Poisson distribution, whose mean is 
+<code class="reqn">\theta_iE_i</code>, where <code class="reqn">\theta_i</code>
+is the relative risk. That is,
+</p>
+<p style="text-align: center;"><code class="reqn">O_i \sim Po(\theta_i E_i); \ i=1, \ldots , n</code>
+</p>
+
+
+
+<h3>Null hypotheses</h3>
+
+<p>Null hypotheses is usually equal relative risks, that is
+</p>
+<p style="text-align: center;"><code class="reqn">H_0: \theta_1= \ldots = \theta_n = \lambda</code>
+</p>
+
+<p><code class="reqn">\lambda</code> may be considered to be known (one, which means standard
+risk) or unknown. In the last case, <code class="reqn">E_i</code> must slightly be corrected
+by multiplying it by the overall relative risk <code class="reqn">\frac{O_+}{E_+}</code>.
+</p>
+
+
+<h3>Code structure</h3>
+
+<p>Function names follow a common format, which is a follows:
+</p>
+
+<dl>
+<dt>
+<em>method name</em>.stat</dt>
+<dd>
+<p>Calculate the statistic itself.</p>
+</dd>
+<dt>
+<em>method name</em>.boot</dt>
+<dd>
+<p>Perform a non-parametric bootstrap.</p>
+</dd>
+<dt>
+<em>method name</em>.pboot</dt>
+<dd>
+<p>Perform a parametric bootstrap.</p>
+</dd>
+</dl>
+<p>Openshaw's G.A.M. has generally been implemented in a function called
+<em>gam</em>, which some methods ( Kulldorff &amp; Nagarwalla, Besag &amp; Newell) also
+use, since they are based on a window scan of the whole region. At every point
+of the grid, a function is called to determine whether that point is a cluster
+or not. The name of this function is <em>shorten method name.iscluster</em>.
+</p>
+<p>This function calculates the local value of the statistic involved and
+its signifiance by means of bootstrap. The interface provided, through
+function <em>gam</em>, is quite straightforward to use and it can handle the 
+three methods mentioned and other supplied by the users.
+</p>
+
+
+<h3>Bootstrap procedures</h3>
+
+<p>Four possible bootstrap models have been provided in order to estimate
+sampling distributions of the statistics provided. The first one is a
+non-parametric bootstrap, which performs permutations over the observed number
+of cases, while the three others are parametric bootstrap based on
+Multinomial, Poisson and Poisson-Gamma distributions.
+</p>
+<p>Permutation method just takes observed number of cases and permute them among
+all regions, to know whether risk in uniform across the whole study area.
+It just should be used with care since we'll face the problem of having
+more observed cases than population in very small populated areas.
+</p>
+<p>Multinomial sampling is based on conditioning the Poisson framework
+to <code class="reqn">O_+</code>. THis way <code class="reqn">(O_1, \ldots, O_n)</code>
+follows a multinomial distribution of size <code class="reqn">O_+</code> and 
+probabilities <code class="reqn">(\frac{E_1}{E_+}, \ldots, \frac{E_n}{E_+})</code>.
+</p>
+<p>Poisson sampling just generates observed number of cases from a Poisson
+distribution whose mean is <code class="reqn">E_i</code>.
+</p>
+<p>Poisson-Gamma sampling is based on the Poisson-Gamma model proposed
+by <em>Clayton and Kaldor</em> (1984):
+</p>
+<p style="text-align: center;"><code class="reqn">O_i|\theta_i \sim Po(\theta_i E_i)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\theta_i \sim Ga(\nu, \alpha)</code>
+</p>
+
+<p>The distribution of <code class="reqn">O_i</code> unconditioned to <code class="reqn">\theta_i</code> is
+Negative Binomial with size <code class="reqn">\nu</code> and probability
+<code class="reqn">\frac{\alpha}{\alpha+E_i}</code>. The two parameters can be
+estimated using an Empirical Bayes approach from the Expected and Observed
+number of cases. Function <em>empbaysmooth</em> is provided for this purpose.
+</p>
+
+
+<h3>Data</h3>
+
+<p>One of the parameters, which is usually called <em>data</em>, passed to many of
+the functions in this package is a dataframe which contains the data for each
+of the regions used in the analysis. Besides, its columns must be labeled:
+</p>
+
+<dl>
+<dt><b>Observed</b></dt>
+<dd>
+<p>Observed number of cases.</p>
+</dd>
+<dt><b>Expected</b></dt>
+<dd>
+<p>Standardised expected number of cases.</p>
+</dd>
+<dt><b>Population</b></dt>
+<dd>
+<p>Population at risk.</p>
+</dd>
+<dt><b>x</b></dt>
+<dd>
+<p>Easting coordinate of the region centroid.</p>
+</dd>
+<dt><b>y</b></dt>
+<dd>
+<p>Northing coordinate of the region centroid.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Clayton, David and Kaldor, John (1987). Empirical Bayes Estimates of Age-standardized Relative Risks for Use in Disease Mapping. Biometrics 43, 671-681.
+</p>
+<p>Lawson et al (eds.) (1999). Disease Mapping and Risk Assessment for Public
+Health. John Wiley and Sons, Inc.
+</p>
+<p>Lawson, A. B. (2001). Statistical Methods in Spatial Epidemiology. John Wiley and Sons, Inc.
+</p>
+
+
+</div>

@@ -1,0 +1,374 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dfba_mann_whitney</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Independent Samples Test (Mann Whitney U)</h2>
+
+<h3>Description</h3>
+
+<p>Given two independent vectors <code>E</code> and <code>C</code>, the function computes
+the sample Mann-Whitney <code class="reqn">U</code> statistics <code>U_E</code> and <code>U_C</code> and
+provides a Bayesian analysis for the population parameter <code>omega_E</code>,
+which is the population ratio of <code class="reqn">U_E/(U_E+U_C)</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dfba_mann_whitney(
+  E,
+  C,
+  a0 = 1,
+  b0 = 1,
+  prob_interval = 0.95,
+  samples = 30000,
+  method = NULL,
+  hide_progress = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p>Data for independent sample 1 ("Experimental")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>Data for independent sample 2 ("Control")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>The first shape parameter for the prior beta distribution for <code>omega_E</code> (default is 1). Must be positive and finite.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b0</code></td>
+<td>
+<p>The second shape parameter for the prior beta distribution for <code>omega_E</code> (default is 1). Must be positive and finite.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob_interval</code></td>
+<td>
+<p>Desired probability value for the interval estimate for <code>omega_E</code> (default is 95%)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>The number of Monte Carlo samples for <code>omega_E</code> when <code>method = "small"</code> (default is 30000)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>(Optional) The method option is either "small" or "large". The "small" algorithm is based on a discrete Monte Carlo solution for cases where n is typically less than 20. The "large" algorithm is based on beta approximation model for the posterior distribution for the omega_E parameter. This approximation is reasonable when n &gt; 19. Regardless of <code class="reqn">n</code>, the user can stipulate <code>method</code>. When the <code>method</code> argument is omitted, the program selects the appropriate procedure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hide_progress</code></td>
+<td>
+<p>(Optional) If <code>TRUE</code>, hide percent progress while Monte Carlo sampling is running when <code>method = SMALL</code>. (default is <code>FALSE</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Mann-Whitney <em>U</em> test is the frequentist nonparametric counterpart
+to the independent-groups <code class="reqn">t</code>-test. The sample <code>U_E</code> statistic is
+the number of times that the <em>E</em> variate is larger than the
+<em>C</em> variate, whereas <code>U_C</code> is the converse number.
+</p>
+<p>This test uses only rank information, so it is robust with respect to
+outliers, and it does not depend on the assumption of a normal model for the
+variates. The Bayesian version for the Mann-Whitney is focused on the
+population parameter <code>omega_E</code>, which is the population ratio
+<code>U_E/(U_E+U_C)</code>.
+</p>
+<p>While the frequentist test effectively assumes the sharp null hypothesis that
+<code>omega_E</code> is .5, the Bayesian analysis has a prior and posterior
+distribution for <code>omega_E</code> on the [0, 1] interval. The prior is a beta
+distribution with shape parameters <code>a0</code> and <code>b0</code>. The default is
+the flat prior (<code class="reqn">a0 = b0 =</code> 1), but this prior can be altered by the
+user.
+</p>
+<p>The <code>prob_interval</code> input is the value for probability interval estimates for
+omega_E. There are two cases depending on the sample size for the <em>E</em>
+and <em>C</em> variates. When the samples sizes are small, there is a discrete
+approximation method used. In this case, the Bayesian analysis considers 200
+discrete values for <code>omega_E</code> from .0025 to .9975 in steps of .005. For
+each discrete value, a prior and a posterior probability are obtained. The
+posterior probabilities are based on Monte Carlo sampling to approximate the
+likelihood of obtaining the observed <code>U_E</code> and <code>U_C</code> values for each candidate
+value for omega_E. For each candidate value for omega_E, the likelihood for
+the observed sample U statistics does not depend on the true distributions of
+the <em>E</em> and <em>C</em> variates in the population. For each candidate
+<code>omega_E</code>, the software constructs two exponential variates that have
+the same omega_E value. The argument <code>samples</code> specifies the number of
+Monte Carlo samples used for each candidate value of <code>omega_E</code>.
+</p>
+<p>For large sample sizes of the <em>E</em> and <em>C</em> variates,
+the Bayesian posterior distribution is closely approximated by a beta
+distribution where the shape parameters are a function of the sample
+<code>U_E</code> and <code>U_C</code> statistics. The large-sample beta approximation was
+developed from extensive previous empirical studies designed to approximate
+the quantiles of the discrete approach with the corresponding quantiles for a
+particular beta distribution. The large-<em>n</em> solution also uses Lagrange
+polynomials for interpolation. The large-<em>n</em> approximation is reasonably
+accurate when <code class="reqn">n &gt; 19</code> for each condition. When the <code>method</code> input
+is omitted, the function selects the appropriate procedure (<em>i.e.</em>,
+either the discrete case for a small sample size or the large-<em>n</em>
+approach). Nonetheless, the user can stipulate which method they desire
+regardless of sample size by inputting either <code>method="small"</code> or
+<code>method="large"</code>. The large-<em>n</em> solution is rapid compared
+to the small-sample solution, so care should be executed when choosing the
+<code>method="small"</code>, even for large sample sizes.
+</p>
+<p>Technical details of the analysis are explained in the Chechile (2020)
+Communications in Statistics paper cited below.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Emean</code></td>
+<td>
+<p>Mean of the independent sample 1 ("Experimental") data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Cmean</code></td>
+<td>
+<p>Mean of the independent sample 1 ("Control") data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_E</code></td>
+<td>
+<p>Number of observations of the independent sample 1 ("Experimental") data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_C</code></td>
+<td>
+<p>Mean of observations of the independent sample 2 ("Control") data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U_E</code></td>
+<td>
+<p>Total number of comparisons for which observations from independent sample 1 ("Experimental") data exceed observations from independent sample 2 ("Control") data)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U_C</code></td>
+<td>
+<p>Total number of comparisons for which observations from independent sample 2 ("Control") data exceed observations from independent sample 1 ("Experimental") data)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob_interval</code></td>
+<td>
+<p>User-defined width of <code>omega_E</code> interval estimate (default is 0.95)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>First shape parameter for the prior beta distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b0</code></td>
+<td>
+<p>Second shape parameter for the prior beta distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_post</code></td>
+<td>
+<p>First shape parameter for the posterior beta distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b_post</code></td>
+<td>
+<p>Second shape parameter for the posterior beta distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>The number of desired Monte Carlo samples (default is 30000)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>A character string indicating the calculation method used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omega_E</code></td>
+<td>
+<p>A vector of values representing candidate values for <code>omega_E</code> when <code>method = "small"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omegapost</code></td>
+<td>
+<p>A vector of values representing discrete probabilities for candidate values of <code>omega_E</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priorvector</code></td>
+<td>
+<p>A vector of values representing prior discrete probabilities of candidate values of <code>omega_E</code> when <code>method = "small"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priorprH1</code></td>
+<td>
+<p>Prior probability of the alternative model that omega_E exceeds 0.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prH1</code></td>
+<td>
+<p>Posterior probability of the alternative model that omega_E exceeds 0.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BF10</code></td>
+<td>
+<p>Bayes Factor describing the relative increase in the posterior odds for the alternative model that <code>omega_E</code> exceeds 0.5 over the null model of <code>omega_E</code> less than or equal to 0.5</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omegabar</code></td>
+<td>
+<p>Posterior mean estimate for <code>omega_E</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eti_lower</code></td>
+<td>
+<p>Lower limit of the equal-tail probability interval for <code>omega_E</code> with probability width indicated by <code>prob_interval</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eti_upper</code></td>
+<td>
+<p>Upper limit of the equal-tail probability interval for <code>omega_E</code> with probability width indicated by <code>prob_interval</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hdi_lower</code></td>
+<td>
+<p>Lower limit of the highest-density probability interval for <code>omega_E</code> with probability width indicated by <code>prob_interval</code> when <code>method = "small"</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>hdi_upper</code></td>
+<td>
+<p>Upper limit of the highest-density probability interval for <code>omega_E</code> with probability width indicated by <code>prob_interval</code> when <code>method = "small"</code></p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Chechile, R.A. (2020). Bayesian Statistics for Experimental
+Scientists: A General Introduction Using Distribution-Free Methods.
+Cambridge: MIT Press.
+</p>
+<p>Chechile, R.A. (2020). A Bayesian analysis for the Mann-Whitney
+statistic. Communications in Statistics – Theory and Methods 49(3): 670-696.
+https://doi.org/10.1080/03610926.2018.1549247.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Note: examples with method = "small" have long runtimes due to Monte Carlo
+# sampling; please feel free to run them in the console.
+
+# Examples with large n per group
+# The data for each condition are presorted only for the user convenience if
+# checking the U stats by hand
+
+groupA &lt;- c(43, 45, 47, 50, 54, 58, 60, 63, 69, 84, 85, 91, 99, 127, 130,
+            147, 165, 175, 193, 228, 252, 276)
+groupB &lt;- c(0, 01, 02, 03, 05, 14, 15, 23, 23, 25, 27, 32, 57, 105, 115, 158,
+            161, 181, 203, 290)
+
+dfba_mann_whitney(E = groupA,
+                  C = groupB)
+
+# The following uses a Jeffreys prior instead of a default flat prior:
+dfba_mann_whitney(E = groupA,
+                  C = groupB,
+                  a0 = .5,
+                  b0 =.5)
+
+# The following also uses a Jeffreys prior but the analysis reverses the
+# variates:
+dfba_mann_whitney(E = groupB,
+                  C = groupA,
+                  a0 = .5,
+                  b0 = .5)
+
+# Note that BF10 from the above analysis is 1/BF10 from the original order
+# of the variates.
+
+# The next analysis constructs 99% interval estimates with the Jeffreys
+# prior.
+
+AB &lt;- dfba_mann_whitney(E = groupA,
+                        C = groupB,
+                        a0 = .5,
+                        b0 = .5,
+                        prob_interval=.99)
+
+AB
+
+# Plot with prior and posterior curves
+plot(AB)
+
+# Plot with posterior curve only
+plot(AB,
+     plot.prior = FALSE)
+
+# Example with small n per group
+
+groupC &lt;- c(96.49, 96.78, 97.26, 98.85, 99.75, 100.14, 101.15, 101.39,
+            102.58, 107.22, 107.70, 113.26)
+groupD &lt;- c(101.16, 102.09, 103.14, 104.70, 105.27, 108.22, 108.32, 108.51,
+            109.88, 110.32, 110.55, 113.42)
+
+
+dfba_mann_whitney(E = groupC,
+                  C = groupD,
+                  samples = 250,
+                  hide_progress = TRUE)
+
+
+
+</code></pre>
+
+
+</div>

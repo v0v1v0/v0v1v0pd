@@ -1,0 +1,292 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>RNAseqdata</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Import, check and normalization and transformation of RNAseq data</h2>
+
+<h3>Description</h3>
+
+<p>RNAseq data in raw counts (integer values) are imported from a .txt file 
+(internally imported using the function <code>read.table</code>), 
+checked or from a R object of class <code>data.frame</code> 
+(see the description 
+of argument <code>file</code> for the required format
+of data), 
+normalized with respect to library size and tranformed in 
+a log2 scale using
+variance stabilizing transformation or regularized logarithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">RNAseqdata(file, backgrounddose, check = TRUE, transfo.method, 
+          transfo.blind = TRUE, round.counts = FALSE)
+
+## S3 method for class 'RNAseqdata'
+print(x, ...)
+## S3 method for class 'RNAseqdata'
+plot(x, range4boxplot = 0, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+<p>The name of the .txt file (e.g. <code>"mydata.txt"</code>)
+containing one row per item, with the first column corresponding to the identifier of each item, 
+and the other columns giving the responses
+of the item for each replicate at each dose or concentration. 
+In the first line, after a name for the identifier column, we must have the tested
+doses or concentrations in a numeric format for the corresponding replicate 
+(for example, if there are triplicates for each treatment, 
+the first line could be "item", 0, 0, 0, 0.1, 0.1, 0.1, etc.). 
+This file is imported within the function using the function
+<code>read.table</code> with its default field separator (sep argument) and 
+its default decimal separator (dec argument at ".").
+Alternatively an R object of class <code>data.frame</code> can be directly given in input, 
+corresponding to the output
+of <code>read.table(file, header = FALSE)</code> on a file described as above. The two
+alternatives are illustrated below in examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>backgrounddose</code></td>
+<td>
+<p>This argument must be used when there is no dose at zero in the data, to prevent the calculation of the BMD by extrapolation. All doses below  or equal to the value given in backgrounddose will be fixed at 0, so as to be considered at the background level of exposition.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check</code></td>
+<td>
+<p>If TRUE the format of the input file is checked.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transfo.method</code></td>
+<td>
+<p>The method chosen to transform raw counts in a log2 scale
+using the
+<code>DESeq2</code>: <code>"rlog"</code> for regularized logarithm or
+<code>"vst"</code> for variance stabilizing transformation. If missing, default value
+defined at <code>"rlog"</code> for datasets with less than 30 samples and at <code>"vst"</code> if not</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transfo.blind</code></td>
+<td>
+<p>Argument given to function <code>rlog</code> or <code>vst</code>,
+see <code>rlog</code> and <code>vst</code> for an explaination, by default
+at <code>TRUE</code> as in the <code>DESeq2</code> package .</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>round.counts</code></td>
+<td>
+<p>Put it to TRUE if your counts come from Kallisto or Salmon
+in order to round them before treatment with <code>DESeq2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>"RNAseqdata"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range4boxplot</code></td>
+<td>
+<p>An argument passed to boxplot(), fixed by default at 0 
+to prevent the producing of very large plot files due to many outliers. 
+Can be put at 1.5 to obtain more classical boxplots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> further arguments passed to print or plot functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function imports the data, checks their format (see the description 
+of argument <code>file</code> for the required format
+of data) and gives in the <code>print</code> information
+that should help the user to check that the coding of data is correct : the tested doses (or concentrations) 
+the number of replicates for each dose, the number of items, the identifiers 
+of the first 20 items. Data are normalized with respect to library size
+and tranformed using functions <code>rlog</code> or <code>vst</code> of the 
+<code>DESeq2</code> package depending on the specified method : <code>"rlog"</code> 
+(recommended default choice) or 
+<code>"vst"</code>.
+</p>
+
+
+<h3>Value</h3>
+
+ 
+<p><code>RNAseqdata</code> returns an object of class "RNAseqdata", a list with 9 components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> the numeric matrix of normalized and transformed
+responses of each item in each replicate
+(one line per item, one column per replicate)  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p> the numeric vector of the tested doses or concentrations corresponding
+to each column of data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>item</code></td>
+<td>
+<p> the character vector of the identifiers of the items, corresponding to
+each line of data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> a table with the experimental design (tested doses and number of 
+replicates for each dose) for control by the user</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.mean</code></td>
+<td>
+<p> the numeric matrix of mean responses of each item per dose (mean 
+of the corresponding replicates) (one line per item, one column per unique value 
+of the dose)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.sd</code></td>
+<td>
+<p> the numeric matrix of standard deviations of the response of each 
+item per dose (sd of the corresponding replicates, NA if no replicate) 
+(one line per item, one column per unique value of the dose)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>transfo.method</code></td>
+<td>
+<p>The transformation method specified in input</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>raw.counts</code></td>
+<td>
+<p> the numeric matrix of non transformed responses (raw counts)
+of each item in each replicate
+(one line per item, one column per replicate) before normalization  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>containsNA</code></td>
+<td>
+<p>always at FALSE as RNAseq data are not allowed to contain 
+NA values</p>
+</td>
+</tr>
+</table>
+<p>The print of a <code>RNAseqdata</code> object gives the tested doses (or concentrations) 
+and number of replicates for each dose, the number of items, the identifiers 
+of the first 20 items (for check of good coding of data) and the tranformation method.
+The plot of a <code>RNAseqdata</code> object shows the data distribution for each dose or concentration and replicate before and after normalization and tranformation.
+</p>
+
+
+<h3>Author(s)</h3>
+
+ 
+<p>Marie-Laure Delignette-Muller
+</p>
+
+
+<h3>References</h3>
+
+ 
+<p>Love MI, Huber W, and Anders S (2014), <em>Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2</em>. Genome biology, 15(12), 550.</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>read.table</code> the function used to import data,
+<code>rlog</code> and <code>vst</code> for details about the 
+transformation methods and 
+<code>microarraydata</code>, <code>continuousomicdata</code> and
+<code>continuousanchoringdata</code> for other types of data.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># (1) import, check, normalization and transformation of RNAseq data 
+# An example on a subsample of a data set published by Zhou et al. 2017
+# Effect on mouse kidney transcriptomes of tetrachloroethylene
+# (see ? Zhou for details)
+#
+datafilename &lt;- system.file("extdata", "RNAseq_sample.txt", package="DRomics")
+(o &lt;- RNAseqdata(datafilename, check = TRUE, transfo.method = "vst"))
+plot(o)
+
+# If you want to use your own data set just replace datafilename, 
+# the first argument of RNAseqdata(), 
+# by the name of your data file (e.g. "mydata.txt")
+# 
+# You should take care that the field separator of this data file is one
+# of the default field separators recognised by the read.table() function
+# when it is used with its default field separator (sep argument)
+# Tabs are recommended.
+
+# Use of an R object of class data.frame
+# below the same example taking a subsample of the data set
+# Zhou_kidney_pce (see ?Zhou for details)
+data(Zhou_kidney_pce)
+subsample &lt;- Zhou_kidney_pce[1:1000, ]
+(o &lt;- RNAseqdata(subsample, check = TRUE, transfo.method = "vst"))
+plot(o)
+PCAdataplot(o)
+
+
+# (2) transformation with two methods on the whole data set
+
+data(Zhou_kidney_pce)
+
+# variance stabilizing tranformation
+(o1 &lt;- RNAseqdata(Zhou_kidney_pce, check = TRUE, transfo.method = "vst"))
+plot(o1)
+
+# regularized logarithm
+(o2 &lt;- RNAseqdata(Zhou_kidney_pce, check = TRUE, transfo.method = "rlog"))
+plot(o2)
+
+# variance stabilizing tranformation (blind to the experimental design)
+(o3 &lt;- RNAseqdata(Zhou_kidney_pce, check = TRUE, transfo.method = "vst",
+      transfo.blind = TRUE))
+plot(o3)
+
+# regularized logarithm
+(o4 &lt;- RNAseqdata(Zhou_kidney_pce, check = TRUE, transfo.method = "rlog",
+      transfo.blind = TRUE))
+plot(o4)
+
+
+
+
+</code></pre>
+
+
+</div>

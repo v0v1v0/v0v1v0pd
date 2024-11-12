@@ -1,0 +1,97 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sdtw</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Soft-DTW distance</h2>
+
+<h3>Description</h3>
+
+<p>Soft-DTW distance measure as proposed in Cuturi and Blondel (2017).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sdtw(x, y, gamma = 0.01, ..., error.check = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>Time series. Multivariate series must have time spanning the rows and variables
+spanning the columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>Positive regularization parameter, with lower values resulting in less smoothing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Currently ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Unlike other distances, soft-DTW can return negative values, and <code>sdtw(x, x)</code> is not always equal
+to zero. Like DTW, soft-DTW does not fulfill the triangle inequality, but it is always symmetric.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The Soft DTW distance.
+</p>
+
+
+<h3>Proxy version</h3>
+
+<p>The version registered with <code>proxy::dist()</code> is custom (<code>loop = FALSE</code> in proxy::pr_DB).
+The custom function handles multi-threaded parallelization directly with RcppParallel.
+It uses all available threads by default (see <code>RcppParallel::defaultNumThreads()</code>),
+but this can be changed by the user with <code>RcppParallel::setThreadOptions()</code>.
+</p>
+<p>An exception to the above is when it is called within a <code>foreach</code> parallel loop <strong>made by dtwclust</strong>.
+If the parallel workers do not have the number of threads explicitly specified,
+this function will default to 1 thread per worker.
+See the parallelization vignette for more information - <code>browseVignettes("dtwclust")</code>
+</p>
+<p>It also includes symmetric optimizations to calculate only half a distance matrix when appropriate—only one list of series should be provided in <code>x</code>.
+Starting with version 6.0.0, this optimization means that the function returns an array with the lower triangular values of the distance matrix,
+similar to what <code>stats::dist()</code> does;
+see DistmatLowerTriangular for a helper to access elements as it if were a normal matrix.
+If you want to avoid this optimization, call proxy::dist by giving the same list of series in both <code>x</code> and <code>y</code>.
+</p>
+<p>Note that, due to the fact that this distance is not always zero when a series is compared
+against itself, this optimization is likely problematic for soft-DTW, as the <code>dist</code> object will
+be handled by many functions as if it had only zeroes in the diagonal. An exception is
+<code>tsclust()</code> when using partitional clustering with PAM centroids—actual diagonal values will
+be calculated and considered internally in that case.
+</p>
+
+
+<h3>References</h3>
+
+<p>Cuturi, M., &amp; Blondel, M. (2017). Soft-DTW: a Differentiable Loss Function for Time-Series. arXiv
+preprint arXiv:1703.01541.
+</p>
+
+
+</div>

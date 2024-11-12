@@ -1,0 +1,377 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ddml_late</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimator of the Local Average Treatment Effect.</h2>
+
+<h3>Description</h3>
+
+<p>Estimator of the local average treatment effect.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ddml_late(
+  y,
+  D,
+  Z,
+  X,
+  learners,
+  learners_DXZ = learners,
+  learners_ZX = learners,
+  sample_folds = 10,
+  ensemble_type = "nnls",
+  shortstack = FALSE,
+  cv_folds = 10,
+  custom_ensemble_weights = NULL,
+  custom_ensemble_weights_DXZ = custom_ensemble_weights,
+  custom_ensemble_weights_ZX = custom_ensemble_weights,
+  cluster_variable = seq_along(y),
+  subsamples_byZ = NULL,
+  cv_subsamples_byZ = NULL,
+  trim = 0.01,
+  silent = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The outcome variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>The binary endogenous variable of interest.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>Binary instrumental variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A (sparse) matrix of control variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>learners</code></td>
+<td>
+<p>May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+conditional expectation functions.
+If a single learner is used, <code>learners</code> is a list with two named
+elements:
+</p>
+
+<ul>
+<li>
+<p><code>what</code> The base learner function. The function must be
+such that it predicts a named input <code>y</code> using a named input
+<code>X</code>.
+</p>
+</li>
+<li>
+<p><code>args</code> Optional arguments to be passed to <code>what</code>.
+</p>
+</li>
+</ul>
+<p>If stacking with multiple learners is used, <code>learners</code> is a list of
+lists, each containing four named elements:
+</p>
+
+<ul>
+<li>
+<p><code>fun</code> The base learner function. The function must be
+such that it predicts a named input <code>y</code> using a named input
+<code>X</code>.
+</p>
+</li>
+<li>
+<p><code>args</code> Optional arguments to be passed to <code>fun</code>.
+</p>
+</li>
+<li>
+<p><code>assign_X</code> An optional vector of column indices
+corresponding to control variables in <code>X</code> that are passed to
+the base learner.
+</p>
+</li>
+<li>
+<p><code>assign_Z</code> An optional vector of column indices
+corresponding to instruments in <code>Z</code> that are passed to the
+base learner.
+</p>
+</li>
+</ul>
+<p>Omission of the <code>args</code> element results in default arguments being
+used in <code>fun</code>. Omission of <code>assign_X</code> (and/or <code>assign_Z</code>)
+results in inclusion of all variables in <code>X</code> (and/or <code>Z</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>learners_DXZ, learners_ZX</code></td>
+<td>
+<p>Optional arguments to allow for different
+estimators of <code class="reqn">E[D \vert X, Z]</code>, <code class="reqn">E[Z \vert X]</code>. Setup is
+identical to <code>learners</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_folds</code></td>
+<td>
+<p>Number of cross-fitting folds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensemble_type</code></td>
+<td>
+<p>Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+</p>
+
+<ul>
+<li>
+<p><code>"nnls"</code> Non-negative least squares.
+</p>
+</li>
+<li>
+<p><code>"nnls1"</code> Non-negative least squares with the constraint
+that all weights sum to one.
+</p>
+</li>
+<li>
+<p><code>"singlebest"</code> Select base learner with minimum MSPE.
+</p>
+</li>
+<li>
+<p><code>"ols"</code> Ordinary least squares.
+</p>
+</li>
+<li>
+<p><code>"average"</code> Simple average over base learners.
+</p>
+</li>
+</ul>
+<p>Multiple ensemble types may be passed as a vector of strings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shortstack</code></td>
+<td>
+<p>Boolean to use short-stacking.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv_folds</code></td>
+<td>
+<p>Number of folds used for cross-validation in ensemble
+construction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_ensemble_weights</code></td>
+<td>
+<p>A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in <code>learners</code>
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_ensemble_weights_DXZ, custom_ensemble_weights_ZX</code></td>
+<td>
+<p>Optional
+arguments to allow for different
+custom ensemble weights for <code>learners_DXZ</code>,<code>learners_ZX</code>. Setup
+is identical to <code>custom_ensemble_weights</code>. Note:
+<code>custom_ensemble_weights</code> and
+<code>custom_ensemble_weights_DXZ</code>,<code>custom_ensemble_weights_ZX</code> must
+have the same number of columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_variable</code></td>
+<td>
+<p>A vector of cluster indices.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subsamples_byZ</code></td>
+<td>
+<p>List of two lists corresponding to the two instrument
+levels. Each list contains vectors with sample indices for
+cross-fitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv_subsamples_byZ</code></td>
+<td>
+<p>List of two lists, each corresponding to one of the
+two instrument levels. Each of the two lists contains lists, each
+corresponding to a subsample and contains vectors with subsample indices
+for cross-validation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trim</code></td>
+<td>
+<p>Number in (0, 1) for trimming the estimated propensity scores at
+<code>trim</code> and <code>1-trim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Boolean to silence estimation updates.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>ddml_late</code> provides a double/debiased machine learning
+estimator for the local average treatment effect in the interactive model
+given by
+</p>
+<p><code class="reqn">Y = g_0(D, X) + U,</code>
+</p>
+<p>where <code class="reqn">(Y, D, X, Z, U)</code> is a random vector such that
+<code class="reqn">\operatorname{supp} D = \operatorname{supp} Z = \{0,1\}</code>,
+<code class="reqn">E[U\vert X, Z] = 0</code>, <code class="reqn">E[Var(E[D\vert X, Z]\vert X)] \neq 0</code>,
+<code class="reqn">\Pr(Z=1\vert X) \in (0, 1)</code> with probability 1,
+<code class="reqn">p_0(1, X) \geq p_0(0, X)</code> with probability 1 where
+<code class="reqn">p_0(Z, X) \equiv \Pr(D=1\vert Z, X)</code>, and
+<code class="reqn">g_0</code> is an unknown nuisance function.
+</p>
+<p>In this model, the local average treatment effect is defined as
+</p>
+<p><code class="reqn">\theta_0^{\textrm{LATE}} \equiv
+    E[g_0(1, X) - g_0(0, X)\vert p_0(1, X) &gt; p(0, X)]</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>ddml_late</code> returns an object of S3 class
+<code>ddml_late</code>. An object of class <code>ddml_late</code> is a list
+containing the following components:
+</p>
+
+<dl>
+<dt><code>late</code></dt>
+<dd>
+<p>A vector with the average treatment effect
+estimates.</p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>A list of matrices, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedure.</p>
+</dd>
+<dt><code>mspe</code></dt>
+<dd>
+<p>A list of matrices, providing the MSPE of each
+base learner (in chronological order) computed by the
+cross-validation step in the ensemble construction.</p>
+</dd>
+<dt>
+<code>psi_a</code>, <code>psi_b</code>
+</dt>
+<dd>
+<p>Matrices needed for the computation
+of scores. Used in <code>summary.ddml_late()</code>.</p>
+</dd>
+<dt><code>oos_pred</code></dt>
+<dd>
+<p>List of matrices, providing the reduced form
+predicted values.</p>
+</dd>
+<dt>
+<code>learners</code>,<code>learners_DXZ</code>,<code>learners_ZX</code>,
+<code>cluster_variable</code>,<code>subsamples_Z0</code>,
+<code>subsamples_Z1</code>,<code>cv_subsamples_list_Z0</code>,
+<code>cv_subsamples_list_Z1</code>,<code>ensemble_type</code>
+</dt>
+<dd>
+<p>Pass-through
+of selected user-provided arguments. See above.</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+machine learning in Stata." <a href="https://arxiv.org/abs/2301.09397">https://arxiv.org/abs/2301.09397</a>
+</p>
+<p>Chernozhukov V, Chetverikov D, Demirer M, Duflo E, Hansen C B, Newey W,
+Robins J (2018). "Double/debiased machine learning for treatment and
+structural parameters." The Econometrics Journal, 21(1), C1-C68.
+</p>
+<p>Imbens G, Angrist J (1004). "Identification and Estimation of Local Average
+Treatment Effects." Econometrica, 62(2), 467-475.
+</p>
+<p>Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>summary.ddml_late()</code>
+</p>
+<p>Other ddml: 
+<code>ddml_ate()</code>,
+<code>ddml_fpliv()</code>,
+<code>ddml_pliv()</code>,
+<code>ddml_plm()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Construct variables from the included Angrist &amp; Evans (1998) data
+y = AE98[, "worked"]
+D = AE98[, "morekids"]
+Z = AE98[, "samesex"]
+X = AE98[, c("age","agefst","black","hisp","othrace","educ")]
+
+# Estimate the local average treatment effect using a single base learner,
+#     ridge.
+late_fit &lt;- ddml_late(y, D, Z, X,
+                      learners = list(what = mdl_glmnet,
+                                      args = list(alpha = 0)),
+                      sample_folds = 2,
+                      silent = TRUE)
+summary(late_fit)
+
+# Estimate the local average treatment effect using short-stacking with base
+#     learners ols, lasso, and ridge. We can also use custom_ensemble_weights
+#     to estimate the ATE using every individual base learner.
+weights_everylearner &lt;- diag(1, 3)
+colnames(weights_everylearner) &lt;- c("mdl:ols", "mdl:lasso", "mdl:ridge")
+late_fit &lt;- ddml_late(y, D, Z, X,
+                      learners = list(list(fun = ols),
+                                      list(fun = mdl_glmnet),
+                                      list(fun = mdl_glmnet,
+                                           args = list(alpha = 0))),
+                      ensemble_type = 'nnls',
+                      custom_ensemble_weights = weights_everylearner,
+                      shortstack = TRUE,
+                      sample_folds = 2,
+                      silent = TRUE)
+summary(late_fit)
+</code></pre>
+
+
+</div>

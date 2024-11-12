@@ -1,0 +1,248 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drdimont_settings</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create global settings variable for DrDimont pipeline</h2>
+
+<h3>Description</h3>
+
+<p>Allows creating a global ‘settings' variable used in DrDimont’s
+<code>run_pipeline</code> function and step-wise execution.
+Default parameters can be changed within the function call.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drdimont_settings(
+  saving_path = tempdir(),
+  save_data = FALSE,
+  correlation_method = "spearman",
+  handling_missing_data = "all.obs",
+  reduction_method = "pickHardThreshold",
+  r_squared_cutoff = 0.85,
+  cut_vector = seq(0.2, 0.8, by = 0.01),
+  mean_number_edges = NULL,
+  edge_density = NULL,
+  p_value_adjustment_method = "BH",
+  reduction_alpha = 0.05,
+  n_threads = 1,
+  parallel_chunk_size = 10^6,
+  print_graph_info = TRUE,
+  conda = FALSE,
+  max_path_length = 3,
+  int_score_mode = "auto",
+  cluster_address = "auto",
+  median_drug_response = FALSE,
+  absolute_difference = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>saving_path</code></td>
+<td>
+<p>[string] Path to save intermediate output of DrDimont's functions. Default is temporary folder.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save_data</code></td>
+<td>
+<p>[bool] 
+Save intermediate data such as correlation_matrices, individual_graphs, etc. during exectution of DrDimont. (default: FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correlation_method</code></td>
+<td>
+<p>["pearson"|"spearman"|"kendall"] 
+Correlation method used for graph generation. Argument is passed to <code>cor</code>. 
+(default: spearman)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>handling_missing_data</code></td>
+<td>
+<p>["all.obs"|"pairwise.complete.obs"] 
+Method for handling of missing data during correlation matrix computation. Argument is passed 
+to <code>cor</code>. Can be a single character string if the same for all layers, else 
+a named list mapping layer names to methods, e.g, 
+<code>handling_missing_data=list(mrna="all.obs", protein="pairwise.complete.obs")</code>.
+Layers may be omitted if a method is mapped to 'default', e.g,
+<code>handling_missing_data=list(default="pairwise.complete.obs")</code>. (default: all.obs)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reduction_method</code></td>
+<td>
+<p>["pickHardThreshold"|"p_value"]
+Reduction method for reducing networks. 'p_value' for hard thresholding based on the statistical
+significance of the computed correlation. 'pickHardThreshold' for a cutoff based on the scale-freeness
+criterion (calls <code>pickHardThreshold</code>). Can be a single character string if the same
+for all layers, else a named list mapping layer names to methods (see <code>handling_missing_data</code> setting).
+Layers may be omitted if a method is mapped to 'default'. (default: pickHardThreshold)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_squared_cutoff</code></td>
+<td>
+<p>pickHardThreshold setting: [float|named list]
+Minimum scale free topology fitting index R^2 for reduction using
+<code>pickHardThreshold</code>.
+Can be a single float number if the same for all layers, else a named list mapping layer names to a cutoff
+(see <code>handling_missing_data</code> setting) or a named list in a named list mapping groupA or groupB and layer
+names to a cutoff, e.g., 
+<code>r_squared_cutoff=list(groupA=list(mrna=0.85, protein=0.8), groupB=list(mrna=0.9, protein=0.85))</code>.
+Layers/groups may be omitted if a cutoff is mapped to 'default'. (default: 0.85)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_vector</code></td>
+<td>
+<p>pickHardThreshold setting: [sequence of float|named list]
+Vector of hard threshold cuts for which the scale free topology fit indices are calculated during
+reduction with <code>pickHardThreshold</code>.
+Can be a single regular sequence if the same for all layers, else a named list mapping layer names 
+to a cut vector or a named list in a named list mapping groupA or groupB and layer names to a cut 
+vector (see <code>r_squared_cutoff</code> setting). Layers/groups may be omitted if a vector is mapped
+to 'default'. (default: seq(0.2, 0.8, by = 0.01))</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean_number_edges</code></td>
+<td>
+<p>pickHardThreshold setting: [int|named list] 
+Maximal mean number edges threshold to find a suitable edge weight cutoff employing
+<code>pickHardThreshold</code> to reduce the network to at most the specified mean number of edges.
+Can be a single int number if the same for all layers, else a named list mapping layer names to a mean number of edges or
+a named list in a named list mapping groupA or groupB and layer names to a cutoff (see <code>r_squared_cutoff</code> setting).
+Attention: This parameter overwrites the 'r_squared_cutoff' and 'edge_density' parameters if not set to NULL. (default: NULL)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>edge_density</code></td>
+<td>
+<p>pickHardThreshold setting: [float|named list] 
+Maximal network edge density to find a suitable edge weight cutoff employing
+<code>pickHardThreshold</code> to reduce the network to at most the specified edge density.
+Can be a single float number if the same for all layers, else a named list mapping layer names to a mean number of edges or
+a named list in a named list mapping groupA or groupB and layer names to a cutoff (see <code>r_squared_cutoff</code> setting).
+Attention: This parameter overwrites the 'r_squared_cutoff' parameter if not set to NULL. (default: NULL)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p_value_adjustment_method</code></td>
+<td>
+<p>p_value setting: ["holm"|"hochberg"|"hommel"|"bonferroni"|"BH"|"BY"|"fdr"|"none"]
+Correction method applied to p-values. Passed to p.adjust. (default: "BH")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reduction_alpha</code></td>
+<td>
+<p>p_value setting: [float] 
+Significance value for correlation p-values
+during reduction. Not-significant edges are dropped. (default: 0.05)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_threads</code></td>
+<td>
+<p>p_value setting: [int] 
+Number of threads for parallel computation of p-values during p-value reduction. (default: 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel_chunk_size</code></td>
+<td>
+<p>p_value setting: [int] 
+Number of p-values in smallest work unit when computing in parallel
+during network reduction with method 'p_value'. (default: 10^6)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>print_graph_info</code></td>
+<td>
+<p>[bool] 
+Print summary of the reduced graph to the console after network generation. (default: TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conda</code></td>
+<td>
+<p>[bool] 
+Python installation in conda environment. Set TRUE if Python is installed with conda. (default: FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_path_length</code></td>
+<td>
+<p>[int] 
+Integer of maximum length of simple paths to include in the
+<code>generate_interaction_score_graphs</code> computation. (default: 3)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>int_score_mode</code></td>
+<td>
+<p>["auto"|"sequential"|"ray"] 
+Interaction score sequential or parallel ("ray") computation. For parallel computation the Python library Ray ist used. 
+When set to 'auto' computation depends on the  graph sizes. (default: "auto")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_address</code></td>
+<td>
+<p>[string] Local node IP-address of Ray if executed on a cluster.
+On a cluster: Start ray with <code>ray start --head --num-cpus 32</code> on the console before DrDimont execution.
+It should work with "auto", if it does not specify IP-address given by the <code>ray start</code> command. (default: "auto")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>median_drug_response</code></td>
+<td>
+<p>[bool] 
+Computation of median (instead of mean) of a drug's targets differential scores (default: FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>absolute_difference</code></td>
+<td>
+<p>[bool] 
+Computation of drug response scores based on absolute differential scores (instead of the actual differential
+scores) (default: FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Supply additional settings.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Named list of the settings for the pipeline
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">settings &lt;- drdimont_settings(
+                correlation_method="spearman",
+                handling_missing_data=list(
+                    default="pairwise.complete.obs",
+                    mrna="all.obs"),
+                reduction_method="pickHardThreshold",
+                max_path_length=3)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>correct_typos</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Correct typos in restricted numeric data</h2>
+
+<h3>Description</h3>
+
+<p>Attempt to fix violations of linear (in)equality restrictions imposed on a
+record by replacing values with values that differ from the original values
+by typographical errors.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">correct_typos(dat, x, ...)
+
+## S4 method for signature 'data.frame,validator'
+correct_typos(dat, x, fixate = NULL, eps = 1e-08, maxdist = 1, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>An R object holding numeric (integer) data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An R object holding linear data validation rules</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Options to be passed to <code>stringdist</code>
+which is used to determine the typographic distance between the original
+value and candidate solutions. By default, the optimal string alignment distance
+is used, with all weights equal to one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixate</code></td>
+<td>
+<p><code>[character]</code> vector of variable names that may not be changed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p><code>[numeric]</code> maximum roundoff error</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxdist</code></td>
+<td>
+<p><code>[numeric]</code> maximum allowd typographical distance</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>dat</code>, with values corrected.
+</p>
+
+
+<h3>Details</h3>
+
+<p>The algorithm works by proposing candidate replacement values and checking
+whether they are likely to be the result of a typographical error. A value is
+accepted as a solution when it resolves at least one equality violation. An
+equality restriction <code>a.x=b</code> is considered satisfied when
+<code>abs(a.x-b)&lt;eps</code>. Setting <code>eps</code> to one or two units of measurement
+allows for robust typographical error detection in the presence of 
+roundoff-errors.
+</p>
+<p>The algorithm is meant to be used on numeric data representing integers.
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p>The first version of the algorithm was described by S. Scholtus (2009). Automatic
+correction of simple typing errors in numerical data with balance edits. Statistics 
+Netherlands, Discussion Paper <a href="https://www.cbs.nl/nl-nl/achtergrond/2009/48/automatic-correction-of-simple-typing-errors-in-numerical-data-with-balance-edits">09046</a>
+
+</p>
+</li>
+<li>
+<p>The generalized version of this algorithm that is implemented for this package is
+described in M. van der Loo, E. de Jonge and S. Scholtus (2011). Correction of rounding, typing and sign errors with the deducorrect package.
+Statistics Netherlands, Discussion Paper <a href="https://www.cbs.nl/nl-nl/achtergrond/2011/51/deductive-imputation-with-the-deducorrect-package">2011019</a>
+
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(validate)
+
+# example from section 4 in Scholtus (2009)
+
+v &lt;-validate::validator( 
+   x1 + x2 == x3
+ , x2 == x4
+ , x5 + x6 + x7 == x8
+ , x3 + x8 == x9
+ , x9 - x10 == x11
+ )
+ 
+
+dat &lt;- read.csv(textConnection(
+"x1, x2 , x3  , x4 , x5 , x6, x7, x8 , x9   , x10 , x11
+1452, 116, 1568, 116, 323, 76, 12, 411,  1979, 1842, 137
+1452, 116, 1568, 161, 323, 76, 12, 411,  1979, 1842, 137
+1452, 116, 1568, 161, 323, 76, 12, 411, 19979, 1842, 137
+1452, 116, 1568, 161,   0,  0,  0, 411, 19979, 1842, 137
+1452, 116, 1568, 161, 323, 76, 12,   0, 19979, 1842, 137"
+))
+cor &lt;- correct_typos(dat,v)
+dat - cor
+
+
+
+
+</code></pre>
+
+
+</div>

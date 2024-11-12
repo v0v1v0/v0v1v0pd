@@ -1,0 +1,144 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DEAnalysisMAST</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DEAnalysisMAST</h2>
+
+<h3>Description</h3>
+
+<p>Perform DE analysis using MAST.
+Dampened weighted least squares (DLWS) is an estimation
+method for gene expression deconvolution, in which the cell-type
+composition of a bulk RNA-seq data set is computationally inferred.
+This method corrects common biases towards cell types that are
+characterized by highly expressed genes and/or are highly prevalent,
+to provide accurate detection across diverse cell types. To begin,
+the user must input a bulk RNA-seq data set, along with a labeled
+representative single-cell RNA-seq data set that will serve to generate
+cell-type-specific gene expression profiles. Ideally, the single-cell
+data set will contain cells from all cell types that may be found in the
+bulk data. DWLS will return the cell-type composition of the bulk data.
+First, solve OLS then use the solution to find a starting point for the
+weights. Next, the dampened weighted least squares is performed. The weights
+are iterated until convergence then the dampening constant for weights is
+found using cross-validation (with decreasing step size for convergence).
+</p>
+<p>DWLS captures ISC composition changes across conditions.
+One of the most important applications of deconvolution methods is in
+the identification of cell-type composition variations across conditions.
+</p>
+<p>Note: The function uses solveDampenedWLSj() and findDampeningConstant().
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DEAnalysisMAST(scdata, id, path)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>scdata</code></td>
+<td>
+<p>The gene expression datafarme</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>The unique identities within the data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>The path for the RData results</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>matrix
+The resulting matrix is a gene by cell-type signature matrix.
+The cell-type signature matrix is constructed using a representative
+single-cell data set, such that all cell types expected in the bulk
+data are also represented in the single-cell data (the converse need not be
+true). The single-cell data is first clustered to reveal
+its constituent cell types.The function will return 3 different files:
+an RData file, an rds file, and a csv file.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+#dataSC
+#url &lt;- "https://github.com/sistia01/DWLS/raw/main/inst/extdata/dataSC.RData"
+#dest &lt;- "data/dataSC.RData"
+#load(download.file(url, tempfile(data/dataSC.RData))
+#load("dataSC.RData")
+#SOLUTION
+load(system.file("extdata", "dataSC.RData", package = "DWLS"))
+
+#dataBulk
+url &lt;- "https://github.com/sistia01/DWLS/raw/main/inst/extdata/dataBulk.RData"
+dest &lt;- "data/dataBulk.RData"
+load(download.file(url, tempfile(dest)))
+#load("data/dataBulk.RData")
+load(system.file("extdata", "dataBulk.RData", package = "DWLS"))
+
+#labels
+#url &lt;- "https://github.com/sistia01/DWLS/raw/main/inst/extdata/labels.RData"
+#dest &lt;- "data/labels.RData"
+#download.file(url, dest)
+#load("data/labels.RData")
+load(system.file("extdata", "labels.RData", package = "DWLS"))
+
+#data('trueLabels', package = "DWLS")
+#url &lt;- "https://github.com/sistia01/DWLS/raw/main/inst/extdata/trueLabels.RData"
+#dest &lt;- "data/trueLabels.RData"
+#download.file(url, dest)
+#load("data/trueLabels.RData")
+load(system.file("extdata", "trueLabels.RData", package = "DWLS"))
+
+labels&lt;-trueLabels
+
+#Old Method
+#load("data/dataBulk.RData") #read in bulk data for WT1 (control condition #1)
+#load("data/labels.RData") #read in single-cell labels from clustering
+#data('dataSC_3', package = "DWLS")
+#dataSC &lt;- dataSC_3
+
+labels&lt;-trueLabels
+
+#Old Method
+#load("data/dataBulk.RData") #read in bulk data for WT1 (control condition #1)
+#load("data/labels.RData") #read in single-cell labels from clustering
+#data('dataSC_3', package = "DWLS")
+#dataSC &lt;- dataSC_3
+
+labels&lt;-trueLabels
+
+#Change to real labels
+newcat&lt;-c("NonCycISC","CycISC","TA","Ent","PreEnt","Goblet","Paneth","Tuft",
+ "EE")
+for (i in 1:length(newcat)){
+  labels[which(labels==(i-1))]&lt;-newcat[i]
+  }
+
+#Run deconvolution
+#Results are in inst/extdata/results folder -- run on local
+#Example code below
+Mast_test &lt;- DEAnalysisMAST(dataSC, labels, "inst/extdata/results")
+
+
+</code></pre>
+
+
+</div>

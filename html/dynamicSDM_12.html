@@ -1,0 +1,148 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>extract_coords_combine</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combine extracted explanatory variable data for occurrence records into single data frame.</h2>
+
+<h3>Description</h3>
+
+<p>Combines the split output files from functions <code>extract_dynamic_coords()</code> and
+<code>extract_buffered_coords()</code> into single data frame containing all occurrence records and
+explanatory variables.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">extract_coords_combine(
+  varnames,
+  local.directory,
+  set_class = FALSE,
+  col_classes
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>varnames</code></td>
+<td>
+<p>a character string, the unique names for each explanatory variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>local.directory</code></td>
+<td>
+<p>a character string or vector, the path to local directory or directories to
+read extracted explanatory data frames from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>set_class</code></td>
+<td>
+<p>a logical indicating whether to set the classes of each column in the data
+before merging to avoid error. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>col_classes</code></td>
+<td>
+<p>optional; a named vector specifying the classes for columns within occ.data.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When functions <code>extract_dynamic_coords()</code> and <code>extract_buffered_coords()</code> have been used
+to extract dynamic explanatory variables for occurrence records, the output for individual
+records and each variable will be split into separate “csv” files.
+</p>
+<p>This function reads in these files and combines data into a single data frame containing each
+occurrence records and associated explanatory data from each variable.
+</p>
+<p>To prevent error, the “csv” files must be uniquely named within the folder(s) and include an
+exact character match for the varnames provided. All “csv” files matching the varnames should
+have the same number and names of columns. This is the default output
+of<code>extract_dynamic_coords()</code> and <code>extract_buffered_coords()</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a data frame containing all occurrence records with associated explanatory
+variable data.
+</p>
+
+
+<h3>Column classes</h3>
+
+<p>When co-ordinate data have been extracted using the <code>split</code> method in <code>extract_dynamic_coords()</code>
+and <code>extract_buffered_coords()</code>, sometimes the classes of columns in the separate exported data
+frames can vary. For instance, one split row may contain an NA value in one column, whilst
+another split contains a numerical value. When <code>extract_coords_combine()</code> attempts to read these
+in and bind them together, an error can occur due to the class mismatch (logical compared to
+numeric).
+</p>
+<p>There are two arguments that can help to resolve this error:
+</p>
+
+<ul>
+<li>
+<p> If <code>set_class = TRUE</code> and <code>col_classes</code> is given, then the column classes for each split data
+frame will be set as the classes in <code>col_classes</code>.
+</p>
+</li>
+<li>
+<p> If <code>set_class = TRUE</code> and <code>col_classes</code> is not given, then the column classes for each split
+data frame will be set by the classes of columns in the first read in csv. Be aware that this
+approach may be inaccurate and lead to parsing warnings, as it depends on the first split
+containing the correct classes (e.g. numeric not a logical in the example above).
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(sample_filt_data)
+
+
+dynamicSDM::extract_dynamic_coords(
+ occ.data = sample_filt_data,
+ datasetname = "UCSB-CHG/CHIRPS/DAILY",
+ bandname = "precipitation",
+ spatial.res.metres = 10000,
+ GEE.math.fun = "sum",
+ temporal.direction = "prior",
+ temporal.res = 56,
+ save.method = "split",
+ varname = "eightweekprec",
+ save.directory = tempdir()
+)
+dynamicSDM::extract_dynamic_coords(
+ occ.data = sample_filt_data,
+ datasetname = "UCSB-CHG/CHIRPS/DAILY",
+ bandname = "precipitation",
+ spatial.res.metres = 10000,
+ GEE.math.fun = "sum",
+ temporal.direction = "prior",
+ temporal.res = 364,
+ save.method = "combined",
+ varname = "annualweekprec",
+ save.directory = tempdir()
+)
+
+extract_coords_combine(varnames = c("eightweekprec", "annualweekprec"),
+                      local.directory = tempdir(),
+                      set_class = TRUE,
+                      col_classes = c(sapply(sample_filt_data,class),
+                                    eightweekprec = "numeric",
+                                    annualweekprec="numeric"))
+
+</code></pre>
+
+
+</div>

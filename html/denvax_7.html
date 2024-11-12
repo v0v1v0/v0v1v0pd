@@ -1,0 +1,110 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ROI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute the ROI surfaces given test and vaccine cost fractions.</h2>
+
+<h3>Description</h3>
+
+<p>Compute the ROI surfaces given test and vaccine cost fractions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ROI(rcoeffs, nus = seq(0.3, 0.9, by = 0.05), taus = 10^seq(-2, -0.5, by
+  = 0.05))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>rcoeffs, </code></td>
+<td>
+<p>a data.frame with the ROI surface coefficients from ROIcoeffs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nus, </code></td>
+<td>
+<p>the series of normalized vaccine costs to use for ROI calcs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>taus, </code></td>
+<td>
+<p>the series of normalized test costs to use for ROI calcs</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>tabulates ROI
+</p>
+
+
+<h3>Value</h3>
+
+<p>a 'data.frame' ('data.table', if available) with columns:
+</p>
+
+<dl>
+<dt>nu</dt>
+<dd>
+<p>numeric, the normalized vaccine cost used</p>
+</dd>
+<dt>tau</dt>
+<dd>
+<p>numeric, the normalized test cost used</p>
+</dd>
+<dt>mechanism</dt>
+<dd>
+<p>character, either "ordinal" or "binary" corresponding to the type of test</p>
+</dd>
+<dt>A</dt>
+<dd>
+<p>integer; the age when routine test-then-vaccinate strategy starts (from <code>As</code>)</p>
+</dd>
+<dt>L</dt>
+<dd>
+<p>integer; the maximum number of tests for routine test-then-vaccinate strategy (from <code>Ls</code>)</p>
+</dd>
+<dt>cost</dt>
+<dd>
+<p>numeric; the intervention cost (as a fraction of second infection cost)</p>
+</dd>
+<dt>benefit</dt>
+<dd>
+<p>numeric; the difference in health outcome cost (as a fraction of second infection cost) minus 'cost';
+positive values indicate positive net benefit
+</p>
+</dd>
+<dt>roi</dt>
+<dd>
+<p>numeric; return on investment: 'benefit' over 'cost'</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">require(denvax);
+data(morrison2010) # has counts by age
+fit &lt;- with(morrison2010, serofit(sero=Seropositive, N=Number, age.min=Age))
+m2010pop &lt;- synthetic.pop(fit, runs = 10, popsize = 10) # small sample size for example run time
+m2010lh &lt;- nPxA(m2010pop)
+L &lt;- 5
+rc &lt;- ROIcoeffs(m2010lh, As=5:10, Ls=L)
+rois &lt;- ROI(rc, nus = 0.5, taus = 0.01)
+srois &lt;- subset(rois, mechanism == "binary")
+mrois &lt;- matrix(srois$roi, nrow = L)
+contour(x=unique(srois$L), y=unique(srois$A), z=mrois,
+  xlab = "Max # of Tests", ylab = "Initial Age", main="ROI Contour"
+)
+
+</code></pre>
+
+
+</div>

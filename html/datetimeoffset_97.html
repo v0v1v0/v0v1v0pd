@@ -1,0 +1,122 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>datetimeoffset-invalid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Invalid datetimeoffset datetimes</h2>
+
+<h3>Description</h3>
+
+<p><code>invalid_detect()</code> detects invalid datetimes.
+<code>invalid_any()</code> returns TRUE if any datetimes are invalid.
+<code>invalid_count()</code> returns number of invalid datetimes.
+<code>invalid_remove()</code> removes invalid datetimes.
+<code>invalid_resolve()</code> resolves invalid datetimes.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'datetimeoffset'
+invalid_detect(x)
+
+## S3 method for class 'datetimeoffset'
+invalid_resolve(x, ..., invalid = "NA", nonexistent = "NA")
+
+## S3 method for class 'datetimeoffset'
+invalid_any(x)
+
+## S3 method for class 'datetimeoffset'
+invalid_count(x)
+
+## S3 method for class 'datetimeoffset'
+invalid_remove(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>datetimeoffset()</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>invalid</code></td>
+<td>
+<p>Invalid date resolution strategy.  See <code>clock::invalid_resolve()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nonexistent</code></td>
+<td>
+<p>Nonexistent (because of DST spring forward) time resolution strategy.
+See <code>clock::as_zoned_time.clock_naive_time()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>datetimeoffset()</code> datetimes can be considered invalid for three main reasons:
+</p>
+
+<ol>
+<li>
+<p> An invalid "calendar date" such as <code>"2020-02-30"</code> (there are less than 30 days in February).
+</p>
+</li>
+<li>
+<p> A "nonexistent" datetime due to a Daylight Savings Time "spring forward" such as <code>"2020-03-08T02:59:59[America/Los_Angeles]"</code>
+</p>
+</li>
+<li>
+<p> Incorrect UTC offsets such as <code>"2020-03-08T01:59:59-08[America/New_York]"</code> (that particular Eastern time has a UTC offset of <code>-05</code>)
+</p>
+</li>
+</ol>
+<h3>Value</h3>
+
+<p><code>invalid_detect()</code>, <code>invalid_remove()</code>, and <code>invalid_resolve()</code> return <code>datetimeoffset()</code> vectors.
+<code>invalid_count()</code> returns an integer and <code>invalid_any()</code> returns a logical value.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># invalid date because April only has 30 days
+dts &lt;- c("2019-04-30T03:30:00", "2019-04-31T02:30:00")
+dts &lt;- as_datetimeoffset(dts)
+clock::invalid_detect(dts)
+clock::invalid_any(dts)
+clock::invalid_count(dts)
+clock::invalid_remove(dts)
+clock::invalid_resolve(dts)
+clock::invalid_resolve(dts, invalid = "previous")
+clock::invalid_resolve(dts, invalid = "previous-day")
+
+# non-existent time because of DST "spring forward"
+if ("America/Los_Angeles" %in% OlsonNames()) {
+  dt &lt;- as_datetimeoffset("2020-03-08T02:59:59[America/Los_Angeles]")
+  print(clock::invalid_detect(dt))
+  clock::invalid_resolve(dt, nonexistent = "roll-forward")
+}
+
+# incorrect UTC offsets
+if ("America/New_York" %in% OlsonNames()) {
+  dt &lt;- as_datetimeoffset("2020-03-08T01:59:59-08[America/New_York]")
+  print(clock::invalid_detect(dt))
+  clock::invalid_resolve(dt)
+}
+</code></pre>
+
+
+</div>

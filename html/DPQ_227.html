@@ -1,0 +1,201 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qnormAsymp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymptotic Approximation to Outer Tail of qnorm()</h2>
+
+<h3>Description</h3>
+
+<p>Implementing new asymptotic tail approximations of normal quantiles,
+i.e., the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> function <code>qnorm()</code>, mostly useful when
+<code>log.p=TRUE</code> and log-scale <code>p</code> is relatively large negative,
+i.e., <code class="reqn">p \ll -1</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+qnormAsymp(p,
+           lp = .DT_Clog(p, lower.tail = lower.tail, log.p = log.p),
+           order, lower.tail = TRUE, log.p = missing(p))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>numeric vector of probabilities, possibly transformed, depending
+on <code>log.p</code>.  Does not need to be specified, if <code>lp</code> is used instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lp</code></td>
+<td>
+<p>numeric (vector) of <code>log(1-p)</code> values; if not specified,
+computed from <code>p</code>, depending on <code>lower.tail</code> and <code>log.p</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>an integer in <code class="reqn">\{0,1,\dots,5\}</code>, specifying the
+approximation order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if true, probabilities are <code class="reqn">P[X \le x]</code>,
+otherwise upper tail probabilities, <code class="reqn">P[X &gt; x]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.p</code></td>
+<td>
+<p>logical; if <code>TRUE</code> (as typical here!), probabilities
+<code class="reqn">p</code> are given as <code class="reqn">\log(p)</code> in argument <code>p</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>These <em>asymptotic</em> approximations have been derived by Maechler (2022)
+via iterative plug-in to the well known asymptotic approximations of
+<code class="reqn">Q(x) = 1 - \Phi(x)</code> from Abramowitz and Stegun (26.2.13), p.932,
+which are provided in our package <span class="pkg">DPQ</span> as <code>pnormAsymp()</code>.
+
+They will be used in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> &gt;= 4.3.0's <code>qnorm()</code> to provide very accurate
+quantiles in the extreme tails.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector like <code>p</code> or <code>lp</code> if that was specified instead.
+</p>
+<p>The simplemost (for extreme tails) is <code>order = 0</code>, where the
+asymptotic approximation is simply <code class="reqn">\sqrt{-2s}</code> and
+<code class="reqn">s</code> is <code>-lp</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Martin Maechler (2022). Asymptotic Tail Formulas For Gaussian Quantiles;
+<a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a> vignette, see
+<a href="https://CRAN.R-project.org/package=DPQ/vignettes/qnorm-asymp.pdf">https://CRAN.R-project.org/package=DPQ/vignettes/qnorm-asymp.pdf</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>The upper tail approximations in Abramowitz &amp; Stegun, in <span class="pkg">DPQ</span>
+available as <code>qnormUappr()</code> and <code>qnormUappr6()</code>,
+are less accurate than our <code>order &gt;= 1</code> formulas in the tails.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+lp &lt;- -c(head(c(outer(c(5,2,1), 10^(18:1))), -2), 20:10, seq(9.75, 2, by = -1/8))
+qnU6 &lt;- qnormUappr6(lp=lp) # 'p' need not be specified if 'lp' is
+qnAsy &lt;- sapply(0:5, function(ord) qnormAsymp(lp=lp, lower.tail=FALSE, order=ord))
+matplot(-lp, cbind(qnU6, qnAsy), type = "b", log = "x", pch=1:7)# all "the same"
+legend("center", c("qnormUappr6()",
+                paste0("qnormAsymp(*, order=",0:5,")")),
+       bty="n", col=1:6, lty=1:5, pch=1:7) # as in matplot()
+
+p.ver &lt;- function() mtext(R.version.string, cex=3/4, adj=1)
+matplot(-lp, cbind(qnU6, qnAsy) - qnorm(lp, lower.tail=TRUE, log.p=TRUE),
+        pch=1:7, cex = .5, xaxt = "n", # and use eaxis() instead
+        main = "absolute Error of qnorm() approximations", type = "b", log = "x")
+sfsmisc::eaxis(1, sub10=2); p.ver()
+legend("bottom", c("qnormUappr6()",
+                paste0("qnormAsymp(*, order=",0:5,")")),
+       bty="n", col=1:6, lty=1:5, pch=1:7, pt.cex=.5)
+
+## If you look at the numbers, in versions of R &lt;= 4.2.x,
+## qnorm() is *worse* for large -lp than the higher order approximations
+## ---&gt; using qnormR() here:
+absP &lt;- function(re) pmax(abs(re), 2e-17) # not zero, so log-scale "shows" it
+qnT &lt;- qnormR(lp, lower.tail=TRUE, log.p=TRUE, version="2022") # ~= TRUE qnorm()
+matplot(-lp, absP(cbind(qnU6, qnAsy) / qnT - 1),
+        ylim = c(2e-17, .01), xaxt = "n", yaxt = "n", col=1:7, lty=1:7,
+        main = "relative |Error| of qnorm() approximations", type = "l", log = "xy")
+abline(h = .Machine$double.eps * c(1/2, 1, 2), col=adjustcolor("bisque",3/4),
+       lty=c(5,2,5), lwd=c(1,3,1))
+sfsmisc::eaxis(1, sub10 = 2, nintLog=20)
+sfsmisc::eaxis(2, sub10 = c(-3, 2), nintLog=16)
+mtext("qnT &lt;- qnormR(*, version=\"2022\")", cex=0.9, adj=1)# ; p.ver()
+legend("topright", c("qnormUappr6()",
+                paste0("qnormAsymp(*, order=",0:5,")")),
+       bty="n", col=1:7, lty=1:7, cex = 0.8)
+
+
+###=== Optimal cut points / regions for different approximation orders k =================
+
+## Zoom into each each cut-point region :
+p.qnormAsy2 &lt;- function(r0, k, # use k-1 and k in region around r0
+                        n = 2048, verbose=TRUE, ylim = c(-1,1) * 2.5e-16,
+                        rr = seq(r0 * 0.5, r0 * 1.25, length = n), ...)
+{
+  stopifnot(is.numeric(rr), !is.unsorted(rr), # the initial 'r'
+            length(k) == 1L, is.numeric(k), k == as.integer(k), k &gt;= 1)
+  k.s &lt;- (k-1L):k; nks &lt;- paste0("k=", k.s)
+  if(missing(r0)) r0 &lt;- quantile(rr, 2/3)# allow specifying rr instead of r0
+  if(verbose) cat("Around r0 =", r0,";  k =", deparse(k.s), "\n")
+  lp &lt;- (-rr^2) # = -r^2 = -s  &lt;==&gt; rr = sqrt(- lp)
+  q. &lt;- qnormR(lp, lower.tail=FALSE, log.p=TRUE, version="2022-08")# *not* depending on R ver!
+  pq &lt;- pnorm(q., lower.tail=FALSE, log.p=TRUE) # ~= lp
+  ## the arg of pnorm() is the true qnorm(pq, ..) == q.  by construction
+  ## cbind(rr, lp, q., pq)
+  r &lt;- sqrt(- pq)
+  stopifnot(all.equal(rr, r, tol=1e-15))
+  qnAsy &lt;- sapply(setNames(k.s, nks), function(ord)
+                  qnormAsymp(pq, lower.tail=FALSE, log.p=TRUE, order=ord))
+  relE &lt;- qnAsy / q. - 1
+  m &lt;- cbind(r, pq, relE)
+  if(verbose) {
+    print(head(m, 9)); for(j in 1:2) cat(" ..........\n")
+    print(tail(m, 4))
+  }
+  ## matplot(r, relE, type = "b", main = paste("around r0 = ", r0))
+  matplot(r, relE, type = "l", ylim = ylim,
+     main = paste("Relative error of qnormAsymp(*, k) around r0 = ", r0,
+                  "for  k =", deparse(k.s)),
+     xlab = quote(r == sqrt(-log(p))), ...)
+  legend("topleft", nks, col=1:2, lty=1:2, bty="n", lwd=2)
+  for(j in seq_along(k.s))
+    lines(smooth.spline(r, relE[,j]), col=adjustcolor(j, 2/3), lwd=4, lty=2)
+  cc &lt;- "blue2"; lab &lt;- substitute(r[0] == R, list(R = r0))
+  abline(v  = r0, lty=2, lwd=2, col=cc)
+  axis(3, at= r0, labels=lab, col=cc, col.axis=cc, line=-1)
+  abline(h = (-1:1)*.Machine$double.eps, lty=c(3,1,3),
+         col=c("green3", "gray", "tan2"))
+  invisible(cbind(r = r, qn = q., relE))
+}
+
+r0 &lt;- c(27, 55, 109, 840, 36000, 6.4e8) # &lt;--&gt; in ../R/norm_f.R {and R's qnorm.c eventually}
+## use k =   5   4    3    2      1       0    e.g.  k = 0  good for r &gt;= 6.4e8
+for(ir in 2:length(r0)) {
+  p.qnormAsy2(r0[ir], k = 5 +2-ir) # k = 5, 4, ..
+  if(interactive() &amp;&amp; ir &lt; length(r0)) {
+       cat("[Enter] to continue: "); cat(readLines(stdin(), n=1), "\n") }
+}
+
+</code></pre>
+
+
+</div>

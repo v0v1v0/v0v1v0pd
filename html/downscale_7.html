@@ -1,0 +1,286 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>upgrain</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Upgraining of atlas data to larger grain sizes</h2>
+
+<h3>Description</h3>
+
+<p>Takes presence-absence atlas data and aggregates data to larger grain sizes, returning occupancy at each grain size for use in  <code>downscale</code> modelling. Atlas data may be in the form of raster data or as a data frame with presence-absence information and cell coordinates.
+</p>
+<p>The extent for all scales is standardised to that of the largest grain size by applying a threshold for the proportion of unsampled atlas cells allowed within a cell at the largest grain size. The threshold can be chosen by the user or one of four threshold selections methods apply. See <code>upgrain.threshold</code> for a visualisation of the thresholds.
+</p>
+<p>The function outputs a data frame of occupancies suitable as input for <code>downscale</code>, and will also plot the original atlas data along with the standardised data for each upgrained scale. In all plots presence = red, absence = white, and NA = grey.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">upgrain(atlas.data, cell.width = NULL, scales, threshold = NULL,
+        method = "All_Sampled", plot = TRUE, return.rasters = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>atlas.data</code></td>
+<td>
+<p>either a raster file of presence-absence; a spatial points object of class sf where the data frame contains a single column of presence (1) and absences (0); or a data frame of sampled cells, which must contain columns named 'x', 'y' and 'presence'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cell.width</code></td>
+<td>
+<p>if data is a data frame or sf spatial points object, the cell widths of sampled cells. If data is a raster then leave as default (<code>= NULL</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>the number of cells to upgrain. Upgraining will happen by factors of 2 - ie if scales = 3, the atlas data will be aggregated in 2x2 cells, 4x4 cells and 8x8 cells.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>default = <code>NULL</code>. A user defined threshold for the proportion of unsampled atlas cells allowed within a cell at the largest grain size. Note: if a <code>method</code> is selected then threshold must be <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>one of <code>"All_Sampled"</code>, <code>"All_Occurrences"</code>, <code>"Gain_Equals_Loss"</code> or <code>"Sampled_Only"</code> (default = <code>"All_Sampled"</code>). If the user wishes to define their own <code>threshold</code> then method must equal <code>NULL</code>. See <code>details</code> and <code>upgrain.threshold</code> for descriptions of the different methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>default = <code>TRUE</code>. Plots the original atlas data alongside the standardised atlas data at each grain size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.rasters</code></td>
+<td>
+<p>default = <code>FALSE</code>. If <code>TRUE</code> returns the extent-standardised atlas data upgrained to all grain sizes (NOTE: the extent-standardised atlas data at the original grain size is always returned regardless).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When aggregating data to larger grain sizes, the extent of all grain sizes is set to the extent of the largest grain size. At the atlas scale, unsampled NA cells that fall within this extent are assigned as absences. This ensures that there are subsequently equal extents across all scales and therefore consistency of occupancy estimates. Therefore, it is necessary to apply a threshold whereby only those cells at the largest grain size are retained if a certain proportion of them are sampled at the altas scale. However, there is a trade-off between assigning unsampled cells as absences, and discarding sampled cells and presences.
+</p>
+<p>It is highly advisable before selecting a threshold to explore this trade-off on a case-by-case basis with <code>upgrain.threshold</code> and to read the help file therein as well as referring to <code>vignette("Upgraining", package = "downscale")</code>.
+</p>
+
+<p>The user may input their own threshold or use one of four suggested threshold criteria:
+
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+      Threshold </td>
+<td style="text-align: left;">  Method </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      0  </td>
+<td style="text-align: left;"> All_Sampled	</td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> All of the original atlas data is included. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      Species specific </td>
+<td style="text-align: left;">	All_Occurrences </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">	The threshold where no occurrences in the atlas data are excluded. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      Atlas specific </td>
+<td style="text-align: left;">	Gain_Equals_Loss </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">	The threshold where the number of sampled atlas cells reclassified as No Data equals the number of unsampled exterior cells reclassified as absence. In this threshold the new standardised extent also equals the extent of the original atlas data. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      1 </td>
+<td style="text-align: left;">	Sampled_Only </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">	Only cells that contain 100% sampled atlas data are included. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      </td>
+</tr>
+</table>
+<p><img src="../help/figures/Maps.png" width="75%" alt="Figure: Maps.png"></p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list of class <code>"upgrain"</code> that can be used as a direct input to <code>downscale</code> and <code>hui.downscale</code>. The list contains five objects:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>threshold</code></td>
+<td>
+<p>The proportion of unsampled atlas cells allowed within a cell at the largest grain size, either defined by the user through <code>threshold</code> or calculated according to <code>method</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extent.stand</code></td>
+<td>
+<p>The standardised extent after upgraining (equal to the extent of the largest grain size)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occupancy.stand</code></td>
+<td>
+<p>Occupancy for each grain size where extent has been standardised. The data frame contains three columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+     <code>Cell.area</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Grain sizes for for each upgrained scale.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Extent</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Extent for each grain size.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Occupancy</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Observed area of occupancy for each grain
+       size.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     </td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>occupancy.orig</code></td>
+<td>
+<p>Original occupancies for each grain size before extent has been standardised. The data frame contains three columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+     <code>Cell.area</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Grain sizes for for each upgrained scale.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Extent</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Extent for each grain size.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Occupancy</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Observed area of occupancy for each grain
+       size.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     </td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>atlas.raster.stand</code></td>
+<td>
+<p>A raster layer of the extent-standardised atlas data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scaled.rasters</code></td>
+<td>
+<p>If <code>return.rasters = TRUE</code>. A list containing the extent-standardised atlas data upgrained to all grain sizes</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Charles Marsh &lt;<a href="mailto:charlie.marsh@mailbox.org">charlie.marsh@mailbox.org</a>&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Groom, Q., Marsh, C.J., Gavish, Y. Kunin, W.E. (2018). How to predict fine resolution occupancy from coarse occupancy data, <em>Methods in Ecology and Evolution</em>. 9(11), 2273-2284.
+</p>
+<p>Marsh, C.J, Barwell, L.J., Gavish, Y., Kunin, W.E. (2018). downscale: An R package for downscaling species occupancy from coarse-grain data to predict occupancy at fine-grain sizes, <em>Journal of Statistical Software</em> 86(Code Snippet 3), 1-20.
+</p>
+<p>Marsh, C.J, Gavish, Y., Kunin, W.E., Brummitt N.A. (2019). Mind the gap: Can downscaling Area of Occupancy overcome sampling gaps when assessing IUCN Red List status?, <em>Diversity and Distributions</em> 25, 1832-1845.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example species data
+data.file &lt;- system.file("extdata", "atlas_data.txt", package = "downscale")
+atlas.data &lt;- read.table(data.file, header = TRUE)
+
+## if the input data is a data frame it must have the columns "x", "y"
+## and "presence"
+head(atlas.data)
+
+## explore thresholds using upgrain.threshold
+thresh &lt;- upgrain.threshold(atlas.data = atlas.data,
+                            cell.width = 10,
+                            scales = 3,
+                            thresholds = seq(0, 1, 0.1))
+
+## use a specified threshold - method must equal NULL
+upgrain(atlas.data = atlas.data,
+        cell.width= 10,
+        scales = 3,
+        threshold = 0.15,
+        method = NULL)
+        
+## use one of the suggested methods - do not specify a threshold
+all_sampled &lt;- upgrain(atlas.data = atlas.data,
+                       cell.width= 10,
+                       scales = 3,
+                       method = "All_Sampled")
+        
+
+## input data for downscale for All Sampled threshold
+all_sampled$occupancy.stand
+
+## and the original occupancies (note that extent varies with scale)
+all_sampled$occupancy.orig
+
+## if data is an sf spatial points object
+presence &lt;- data.frame(presence = atlas.data$presence)
+spdf &lt;- sf::st_as_sf(atlas.data, coords = c("x", "y"))
+                               
+all_sampled &lt;- upgrain(atlas.data = spdf,
+                       cell.width= 10,
+                       scales = 3,
+                       method = "All_Sampled")
+</code></pre>
+
+
+</div>

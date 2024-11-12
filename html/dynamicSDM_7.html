@@ -1,0 +1,350 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynamic_proj_covariates</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Combine explanatory variable rasters into covariates for each projection date.</h2>
+
+<h3>Description</h3>
+
+<p>Explanatory variable rasters are imported, resampled to a given spatial resolution and extent,
+stacked and then exported as a covariate data frame or raster stack for each projection date.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynamic_proj_covariates(
+  dates,
+  varnames,
+  drive.folder,
+  user.email,
+  local.directory,
+  spatial.ext,
+  spatial.mask,
+  spatial.res.degrees,
+  resample.method,
+  cov.file.type,
+  prj = "+proj=longlat +datum=WGS84",
+  cov.prj,
+  save.directory,
+  save.drive.folder,
+  static.rasters,
+  static.varnames,
+  static.resample.method,
+  static.moving.window.matrix,
+  static.GEE.math.fun
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dates</code></td>
+<td>
+<p>a character string, vector of dates in format "YYYY-MM-DD".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>varnames</code></td>
+<td>
+<p>a character string, the unique names for each explanatory variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drive.folder</code></td>
+<td>
+<p>optional; a character string or vector, Google Drive folder or folders to read
+projection covariate rasters from. Folder must be uniquely named within Google Drive. Do not
+provide path.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>user.email</code></td>
+<td>
+<p>optional; a character string, user email for initialising Google Drive. Required
+if <code>drive.folder</code> or <code>save.drive.folder</code> used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>local.directory</code></td>
+<td>
+<p>optional; a character string or vector, path to local directory or
+directories to read projection covariate rasters from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.ext</code></td>
+<td>
+<p>optional; the spatial extent to crop explanatory variable
+rasters to. Object of class <code>SpatExtent</code>, <code>SpatRaster</code>, an <code>sf</code> polygon or
+numeric vector listing xmin, xmax, ymin and ymax in order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.mask</code></td>
+<td>
+<p>an object of class <code>Raster</code>, <code>sf</code> or <code>Spatial</code>, representing a mask in which
+NA cells in the mask layer are removed from the projection covariates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>spatial.res.degrees</code></td>
+<td>
+<p>optional; a numeric value, the spatial resolution in degrees for
+projection rasters to be resampled to. Required if <code>spatial.ext</code> given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resample.method</code></td>
+<td>
+<p>a character string or vector length of varnames, specifying resampling
+method to use. One of <code>near</code> and <code>bilinear</code>. See details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.file.type</code></td>
+<td>
+<p>a character string, the type of file to export projection covariates as. One
+of: <code>tif</code> (SpatRaster with multiple layers) or <code>csv</code>(data frame).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prj</code></td>
+<td>
+<p>a character string, the coordinate reference system desired for projection covariates.
+Default is "+proj=longlat +datum=WGS84".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cov.prj</code></td>
+<td>
+<p>a character string, the coordinate reference system desired for output projection
+covariates. Default is assumed to be the same as <code>prj</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.directory</code></td>
+<td>
+<p>optional; a character string, path to local directory to save projection
+covariates to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.drive.folder</code></td>
+<td>
+<p>optional; a character string, Google Drive folder to save projection
+covariates to. Folder must be uniquely named within Google Drive. Do not provide path.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>static.rasters</code></td>
+<td>
+<p>a RasterStack of one or more rasters to be added to covariates for each date.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>static.varnames</code></td>
+<td>
+<p>a character string or vector, the unique names for each
+explanatory variable in order of rasters in <code>static.raster</code> stack.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>static.resample.method</code></td>
+<td>
+<p>a character string or vector length of <code>static.varnames</code>, specifying resampling
+method to use on static rasters provided. One of <code>near</code> and <code>bilinear</code>. See details for more information..</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>static.moving.window.matrix</code></td>
+<td>
+<p>optional; a matrix of weights with an odd number
+of sides, representing the spatial neighbourhood of cells (“moving
+window”) to calculate <code>GEE.math.fun</code> across from record co-ordinate. See
+details for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>static.GEE.math.fun</code></td>
+<td>
+<p>optional; a character string, the mathematical function to
+compute across the specified spatial matrix for each cell in <code>spatial.ext</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Exports combined covariates in "csv" or "tif" file for each projection date to the local
+directory or Google Drive folder.
+</p>
+
+
+<h3>Input variable rasters</h3>
+
+<p>For each projection date, the rasters for each explanatory variable are imported from a local
+directory or Google Drive folder.
+</p>
+<p>Such rasters should be uniquely named "tif" files within the directory or drive folder and
+contain the variable name (as stated in <code>varnames</code>) and projection date in format "YYYY-MM-DD".
+If more than one “tif” file in the Google Drive folder or local directory matches the projection
+date and explanatory variable name, then the function will error.
+</p>
+
+
+<h3>Processing rasters</h3>
+
+<p>If required, rasters are cropped and resampled to the same spatial extent and
+resolution. If <code>spatial.mask</code> is given, then cells with NA in this mask layer
+are removed from the returned projection covariates. See <code>terra::mask()</code> in R
+package <code>terra</code> for details (Hijmans et al., 2022).
+</p>
+<p>Rasters are then stacked and reprojected if <code>cov.prj</code> is different to <code>prj</code>.
+</p>
+<p>Note: if explanatory variable rasters are not of the same spatial resolution and extent, then the
+function will error. Resample methods (<code>resample.method</code>) include:
+</p>
+
+<ul>
+<li> <p><code>near</code>:  Each cell acquires the value of its nearest neighbour cell in the original raster. This
+is typically used for categorical variables.
+</p>
+</li>
+<li> <p><code>bilinear</code>: the distance-weighted average of the four nearest cells are used to estimate a new
+cell value. This is typically used for continuous variables.
+</p>
+</li>
+</ul>
+<p>If only one <code>resample.method</code> is given, but these are more than one explanatory variables, the
+same <code>resample.method</code> is used for all.
+</p>
+
+
+<h3>Output covariates</h3>
+
+<p>The raster stacks are then converted into data frames or remain as raster stacks depending on
+<code>cov.file.type</code>. Column names or raster layer names will be the unique explanatory variable names
+(<code>varnames</code>). These are exported to the local directory or Google Drive folder with file names
+containing the relevant projection date in "YYYY-MM-DD" format.
+</p>
+
+
+<h3>Google Drive compatibility</h3>
+
+<p>If <code>drive.folder</code> or <code>save.drive.folder</code> given, please ensure the folder name is unique within
+your Google Drive. Do not provide the path if the folder is nested within others.
+</p>
+<p>If one of <code>drive.folder</code> or <code>save.drive.folder</code> are used then user.email is required to access the
+appropriate Google Drive user account. This requires users to have installed R package
+<code>googledrive</code> and initialised Google Drive with valid log-in credentials. Please follow
+instructions on <a href="https://googledrive.tidyverse.org/">https://googledrive.tidyverse.org/</a>.
+</p>
+
+
+<h3>Static rasters</h3>
+
+<p>If static datasets are to be added into the dynamic projection covariates,
+then five arguments are available to specify their inclusion.
+</p>
+<p>Please provide the static rasters in RasterStack format, specifying any
+spatial buffering needed (using <code>static.moving.window.matrix</code> and
+<code>static.GEE.math.fun</code> as described below).
+</p>
+<p>The resample method or methods for rasters within the static raster stack need
+to be specified too using <code>static.resample.method</code>. Please also provide
+<code>static.varnames</code> to name the static variables in the covariate data exported.
+</p>
+<p>#' # Spatial buffering of static rasters (optional)
+</p>
+<p>Using the <code>focal</code> function from <code>terra</code> R package (Hijmans et al., 2022),
+<code>GEE.math.fun</code> is calculated across the spatial buffer area from the record
+co-ordinate. The spatial buffer area used is specified by the argument
+<code>moving.window.matrix</code>, which dictates the neighbourhood of cells
+surrounding the cell containing the occurrence record to include in this
+calculation.
+</p>
+<p>See function <code>get_moving_window()</code> to generate appropriate
+<code>moving.window.matrix</code>.
+</p>
+
+
+<h3>Mathematical function</h3>
+
+<p><code>GEE.math.fun</code> specifies the mathematical function to be calculated over the
+spatial buffered area and temporal period. Options are limited to Google
+Earth Engine ImageCollection Reducer functions
+(<a href="https://developers.google.com/earth-engine/apidocs/">https://developers.google.com/earth-engine/apidocs/</a>) for which an
+analogous R function is available. This includes: "allNonZero","anyNonZero",
+"count", "first","firstNonNull", "last", "lastNonNull", "max","mean",
+"median","min", "mode","product", "sampleStdDev", "sampleVariance",
+"stdDev", "sum" and "variance".
+</p>
+
+
+<h3>References</h3>
+
+<p>Hijmans, R.J., Bivand, R., Forner, K., Ooms, J., Pebesma, E. and Sumner, M.D.,
+2022. Package 'terra'. Maintainer: Vienna, Austria.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+data("sample_extent_data")
+
+# Set extraction variables
+projectiondates &lt;- dynamic_proj_dates("2018-01-01", "2018-12-01", interval = 3,interval.level =
+"month")
+variablenames &lt;- c("eight_sum_prec", "year_sum_prec")
+spatial.res.metres &lt;- 500
+cov_resolution &lt;- 0.05
+
+# Get Google Drive email
+user.email&lt;-as.character(gargle::gargle_oauth_sitrep()$email)
+
+extract_dynamic_raster(dates=projectiondates,
+                      datasetname = "UCSB-CHG/CHIRPS/DAILY",
+                      bandname="precipitation",
+                      user.email = user.email,
+                      spatial.res.metres = spatial.res.metres,
+                      GEE.math.fun = "sum",
+                      temporal.direction = "prior",
+                      temporal.res = 56,
+                      spatial.ext = sample_extent_data,
+                      varname = variablenames[1],
+                      save.directory = tempdir())
+
+
+extract_dynamic_raster(dates=projectiondates,
+                     datasetname = "UCSB-CHG/CHIRPS/DAILY",
+                     bandname="precipitation",
+                     user.email = user.email,
+                     spatial.res.metres = spatial.res.metres,
+                     GEE.math.fun = "sum",
+                     temporal.direction = "prior",
+                     temporal.res = 364,
+                     spatial.ext = sample_extent_data,
+                     varname = variablenames[2],
+                     save.directory = tempdir())
+
+dynamic_proj_covariates(dates = projectiondates,
+                       varnames = variablenames,
+                       local.directory = tempdir(),
+                       spatial.ext = sample_extent_data,
+                       spatial.mask = sample_extent_data,
+                       spatial.res.degrees = cov_resolution,
+                       resample.method = c("bilinear","bilinear"),
+                       cov.file.type = "csv",
+                       prj="+proj=longlat +datum=WGS84",
+                       save.directory = tempdir())
+
+</code></pre>
+
+
+</div>

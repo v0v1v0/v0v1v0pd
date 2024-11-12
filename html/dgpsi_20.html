@@ -1,0 +1,163 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lgp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Linked (D)GP emulator construction</h2>
+
+<h3>Description</h3>
+
+<p>This function constructs a linked (D)GP emulator.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lgp(struc, B = 10, id = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>struc</code></td>
+<td>
+<p>a list contains <em>L</em> (the number of layers in a systems of computer models) sub-lists,
+each of which represents a layer and contains (D)GP emulators (represented by
+instances of S3 class <code>gp</code> or <code>dgp</code>) of computer models. The sub-lists are placed in the list
+in the same order of the specified computer model system's hierarchy.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>the number of imputations to produce the predictions. Increase the value to account for more
+imputation uncertainties. Decrease the value for lower imputation uncertainties but faster predictions.
+If the system consists only GP emulators, <code>B</code> is set to <code>1</code> automatically. Defaults to <code>10</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>an ID to be assigned to the linked (D)GP emulator. If an ID is not provided (i.e., <code>id = NULL</code>), a UUID
+(Universally Unique Identifier) will be automatically generated and assigned to the emulator. Default to <code>NULL</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An S3 class named <code>lgp</code> that contains three slots:
+</p>
+
+<ul>
+<li> <p><code>id</code>: A number or character string assigned through the <code>id</code> argument.
+</p>
+</li>
+<li> <p><code>constructor_obj</code>: a list of 'python' objects that stores the information of the constructed linked emulator.
+</p>
+</li>
+<li> <p><code>emulator_obj</code>, a 'python' object that stores the information for predictions from the linked emulator.
+</p>
+</li>
+<li> <p><code>specs</code>: a list that contains
+</p>
+
+<ol>
+<li> <p><code>seed</code>: the random seed generated to produce the imputations. This information is stored for the reproducibility
+when the linked (D)GP emulator (that was saved by <code>write()</code> with the light option <code>light = TRUE</code>) is loaded back
+to R by <code>read()</code>.
+</p>
+</li>
+<li> <p><code>B</code>: the number of imputations used to generate the linked (D)GP emulator.
+</p>
+</li>
+</ol>
+</li>
+</ul>
+<p>The returned <code>lgp</code> object can be used by
+</p>
+
+<ul>
+<li> <p><code>predict()</code> for linked (D)GP predictions.
+</p>
+</li>
+<li> <p><code>validate()</code> for the OOS validation.
+</p>
+</li>
+<li> <p><code>plot()</code> for the validation plots.
+</p>
+</li>
+<li> <p><code>summary()</code> to summarize the constructed linked (D)GP emulator.
+</p>
+</li>
+<li> <p><code>write()</code> to save the linked (D)GP emulator to a <code>.pkl</code> file.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# load the package and the Python env
+library(dgpsi)
+
+# model 1
+f1 &lt;- function(x) {
+  (sin(7.5*x)+1)/2
+}
+# model 2
+f2 &lt;- function(x) {
+  2/3*sin(2*(2*x - 1))+4/3*exp(-30*(2*(2*x-1))^2)-1/3
+}
+# linked model
+f12 &lt;- function(x) {
+  f2(f1(x))
+}
+
+# training data for Model 1
+X1 &lt;- seq(0, 1, length = 9)
+Y1 &lt;- sapply(X1, f1)
+# training data for Model 2
+X2 &lt;- seq(0, 1, length = 13)
+Y2 &lt;- sapply(X2, f2)
+
+# emulation of model 1
+m1 &lt;- gp(X1, Y1, name = "matern2.5", linked_idx = c(1))
+# emulation of model 2
+m2 &lt;- dgp(X2, Y2, depth = 2, name = "matern2.5")
+# assign linking information after the emulation construction
+m2 &lt;- set_linked_idx(m2, c(1))
+
+# emulation of the linked model
+struc &lt;- combine(list(m1), list(m2))
+m_link &lt;- lgp(struc)
+
+# summarizing
+summary(m_link)
+
+# prediction
+test_x &lt;- seq(0, 1, length = 300)
+m_link &lt;- predict(m_link, x = test_x)
+
+# OOS validation
+validate_x &lt;- sample(test_x, 20)
+validate_y &lt;- sapply(validate_x, f12)
+plot(m_link, validate_x, validate_y, style = 2)
+
+# write and read the constructed linked emulator
+write(m_link, 'linked_emulator')
+m_link &lt;- read('linked_emulator')
+
+## End(Not run)
+</code></pre>
+
+
+</div>

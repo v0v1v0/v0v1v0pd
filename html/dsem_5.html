@@ -1,0 +1,207 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dsem</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit dynamic structural equation model</h2>
+
+<h3>Description</h3>
+
+<p>Fits a dynamic structural equation model
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dsem(
+  sem,
+  tsdata,
+  family = rep("fixed", ncol(tsdata)),
+  estimate_delta0 = FALSE,
+  control = dsem_control(),
+  covs = colnames(tsdata)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sem</code></td>
+<td>
+<p>Specification for time-series structural equation model structure
+including lagged or simultaneous effects.  See Details section in
+<code>make_dsem_ram</code> for more description</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tsdata</code></td>
+<td>
+<p>time-series data, as outputted using <code>ts</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>Character-vector listing the distribution used for each column of <code>tsdata</code>, where
+each element must be <code>fixed</code> or <code>normal</code>.
+<code>family="fixed"</code> is default behavior and assumes that a given variable is measured exactly.
+Other options correspond to different specifications of measurement error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estimate_delta0</code></td>
+<td>
+<p>Boolean indicating whether to estimate deviations from equilibrium in initial year
+as fixed effects, or alternatively to assume that dynamics start at some stochastic draw away from
+the stationary distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>Output from <code>dsem_control</code>, used to define user
+settings, and see documentation for that function for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covs</code></td>
+<td>
+<p>optional: a character vector of one or more elements, with each element giving a string of variable 
+names, separated by commas. Variances and covariances among all variables in each such string are 
+added to the model. Warning: covs="x1, x2" and covs=c("x1", "x2") are not equivalent: 
+covs="x1, x2" specifies the variance of x1, the variance of x2, and their covariance, 
+while covs=c("x1", "x2") specifies the variance of x1 and the variance of x2 but not their covariance.
+These same covariances can be added manually via argument 'sem', but using argument 'covs' might
+save time for models with many variables.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A DSEM involves (at a minimum):
+</p>
+
+<dl>
+<dt>Time series</dt>
+<dd>
+<p>a matrix <code class="reqn">\mathbf X</code> where column <code class="reqn">\mathbf x_c</code> for variable c is
+a time-series;</p>
+</dd>
+<dt>Path diagram</dt>
+<dd>
+<p>a user-supplied specification for the path coefficients, which
+define the precision (inverse covariance) <code class="reqn">\mathbf Q</code> for a matrix of state-variables
+and see <code>make_dsem_ram</code> for more details on the math involved.</p>
+</dd>
+</dl>
+<p>The model also estimates the time-series mean <code class="reqn"> \mathbf{\mu}_c </code> for each variable.
+The mean and precision matrix therefore define a Gaussian Markov random field for <code class="reqn">\mathbf X</code>:
+</p>
+<p style="text-align: center;"><code class="reqn"> \mathrm{vec}(\mathbf X) \sim \mathrm{MVN}( \mathrm{vec}(\mathbf{I_T} \otimes \mathbf{\mu}), \mathbf{Q}^{-1}) </code>
+</p>
+
+<p>Users can the specify
+a distribution for measurement errors (or assume that variables are measured without error) using
+argument <code>family</code>.  This defines the link-function <code class="reqn">g_c(.)</code> and distribution <code class="reqn">f_c(.)</code>
+for each time-series <code class="reqn">c</code>:
+</p>
+<p style="text-align: center;"><code class="reqn"> y_{t,c} \sim f_c( g_c^{-1}( x_{t,c} ), \theta_c )</code>
+</p>
+
+<p><code>dsem</code> then estimates all specified coefficients, time-series means <code class="reqn">\mu_c</code>, and distribution
+measurement errors <code class="reqn">\theta_c</code> via maximizing a log-marginal likelihood, while
+also estimating state-variables <code class="reqn">x_{t,c}</code>.
+<code>summary.dsem</code> then assembles estimates and standard errors in an easy-to-read format.
+Standard errors for fixed effects (path coefficients, exogenoux variance parameters, and measurement error parameters)
+are estimated from the matrix of second derivatives of the log-marginal likelihod,
+and standard errors for random effects (i.e., missing or state-space variables) are estimated
+from a generalization of this method (see <code>sdreport</code> for details).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object (list) of class 'dsem'. Elements include:
+</p>
+
+<dl>
+<dt>obj</dt>
+<dd>
+<p>TMB object from <code>MakeADFun</code></p>
+</dd>
+<dt>ram</dt>
+<dd>
+<p>RAM parsed by <code>make_dsem_ram</code></p>
+</dd>
+<dt>model</dt>
+<dd>
+<p>SEM structure parsed by <code>make_dsem_ram</code> as intermediate description of model linkages</p>
+</dd>
+<dt>tmb_inputs</dt>
+<dd>
+<p>The list of inputs passed to <code>MakeADFun</code></p>
+</dd>
+<dt>opt</dt>
+<dd>
+<p>The output from <code>nlminb</code></p>
+</dd>
+<dt>sdrep</dt>
+<dd>
+<p>The output from <code>sdreport</code></p>
+</dd>
+<dt>interal</dt>
+<dd>
+<p>Objects useful for package function, i.e., all arguments
+passed during the call</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>**Introducing the package, its features, and comparison with other software
+(to cite when using dsem):**
+</p>
+<p>Thorson, J. T., Andrews, A., Essington, T., Large, S. (In review).
+Dynamic structural equation models synthesize
+ecosystem dynamics constrained by ecological mechanisms.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Define model
+sem = "
+  # Link, lag, param_name
+  cprofits -&gt; consumption, 0, a1
+  cprofits -&gt; consumption, 1, a2
+  pwage -&gt; consumption, 0, a3
+  gwage -&gt; consumption, 0, a3
+  cprofits -&gt; invest, 0, b1
+  cprofits -&gt; invest, 1, b2
+  capital -&gt; invest, 0, b3
+  gnp -&gt; pwage, 0, c2
+  gnp -&gt; pwage, 1, c3
+  time -&gt; pwage, 0, c1
+"
+
+# Load data
+data(KleinI, package="AER")
+TS = ts(data.frame(KleinI, "time"=time(KleinI) - 1931))
+tsdata = TS[,c("time","gnp","pwage","cprofits",'consumption',
+               "gwage","invest","capital")]
+
+# Fit model
+fit = dsem( sem=sem,
+            tsdata = tsdata,
+            estimate_delta0 = TRUE,
+            control = dsem_control(quiet=TRUE) )
+summary( fit )
+plot( fit )
+plot( fit, edge_label="value" )
+
+</code></pre>
+
+
+</div>

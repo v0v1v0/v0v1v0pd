@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>EI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analytical expression of the Expected Improvement criterion</h2>
+
+<h3>Description</h3>
+
+<p>Computes the Expected Improvement at current location. The current minimum
+of the observations can be replaced by an arbitrary value (plugin), which
+is usefull in particular in noisy frameworks.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">EI(
+  x,
+  model,
+  plugin = NULL,
+  type = "UK",
+  minimization = TRUE,
+  envir = NULL,
+  proxy = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a vector representing the input for which one wishes to calculate
+EI,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plugin</code></td>
+<td>
+<p>optional scalar: if provided, it replaces the minimum of the
+current observations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>"SK" or "UK" (by default), depending whether uncertainty
+related to trend estimation has to be taken into account,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimization</code></td>
+<td>
+<p>logical specifying if EI is used in minimiziation or in
+maximization,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>an optional environment specifying where to assign
+intermediate values for future gradient calculations. Default is NULL.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proxy</code></td>
+<td>
+<p>an optional Boolean, if TRUE EI is replaced by the kriging mean (to minimize)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The expected improvement, defined as </p>
+<p style="text-align: center;"><code class="reqn">EI(x) := E[( min(Y(X)) -
+Y(x))^{+} | Y(X)=y(X)],</code>
+</p>
+<p> where X is the current design of experiments and Y
+is the random process assumed to have generated the objective function y.
+If a plugin is specified, it replaces </p>
+<p style="text-align: center;"><code class="reqn">min(Y(X))</code>
+</p>
+<p> in the previous
+formula.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>David Ginsbourger 
+</p>
+<p>Olivier Roustant 
+</p>
+<p>Victor Picheny
+</p>
+
+
+<h3>References</h3>
+
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global
+optimization of expensive black-box functions, <em>Journal of Global
+Optimization</em>, 13, 455-492.
+</p>
+<p>J. Mockus (1988), <em>Bayesian Approach to Global Optimization</em>. Kluwer
+academic publishers.
+</p>
+<p>T.J. Santner, B.J. Williams, and W.J. Notz (2003), <em>The design and
+analysis of computer experiments</em>, Springer.
+</p>
+<p>M. Schonlau (1997), <em>Computer experiments and global optimization</em>,
+Ph.D. thesis, University of Waterloo.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>max_EI</code>, <code>EGO.nsteps</code>, <code>qEI</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(123)
+##########################################################################
+### 	  EI SURFACE ASSOCIATED WITH AN ORDINARY KRIGING MODEL        ####
+###    OF THE BRANIN FUNCTION KNOWN AT A 9-POINTS FACTORIAL DESIGN    ####
+##########################################################################
+
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2; n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3))
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+names(response.branin) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.branin, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# graphics
+n.grid &lt;- 12
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+#response.grid &lt;- apply(design.grid, 1, branin)
+EI.grid &lt;- apply(design.grid, 1, EI,fitted.model1)
+z.grid &lt;- matrix(EI.grid, n.grid, n.grid)
+contour(x.grid,y.grid,z.grid,25)
+title("Expected Improvement for the Branin function known at 9 points")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+
+</code></pre>
+
+
+</div>

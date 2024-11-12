@@ -1,0 +1,212 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Cor</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Covariance and Correlation (Matrices)</h2>
+
+<h3>Description</h3>
+
+<p><code>Cov</code> and <code>Cor</code> compute the covariance or correlation of <code>x</code> and <code>y</code> if these
+are vectors.   If <code>x</code> and <code>y</code> are matrices then the
+covariances (or correlations) between the columns of <code>x</code> and the
+columns of <code>y</code> are computed.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+Cov(x, y = NULL, use = "everything",
+    method = c("pearson", "kendall", "spearman"))
+
+Cor(x, y = NULL, use = "everything",
+    method = c("pearson", "kendall", "spearman"))
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a numeric vector, matrix or data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p><code>NULL</code> (default) or a vector, matrix or data frame with
+compatible dimensions to <code>x</code>.   The default is equivalent to
+<code>y = x</code> (but more efficient).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use</code></td>
+<td>
+<p>an optional character string giving a
+method for computing covariances in the presence
+of missing values.  This must be (an abbreviation of) one of the strings
+<code>"everything"</code>, <code>"all.obs"</code>, <code>"complete.obs"</code>,
+<code>"na.or.complete"</code>, or <code>"pairwise.complete.obs"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>a character string indicating which correlation
+coefficient (or covariance) is to be computed.  One of
+<code>"pearson"</code> (default), <code>"kendall"</code>, or <code>"spearman"</code>:
+can be abbreviated.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For <code>Cov</code> and <code>Cor</code> one must <em>either</em> give a matrix or
+data frame for <code>x</code> <em>or</em> give both <code>x</code> and <code>y</code>.
+</p>
+<p>The inputs must be numeric (as determined by <code>is.numeric</code>:
+logical values are also allowed for historical compatibility): the
+<code>"kendall"</code> and <code>"spearman"</code> methods make sense for ordered
+inputs but <code>xtfrm</code> can be used to find a suitable prior
+transformation to numbers.
+</p>
+<p>If <code>use</code> is <code>"everything"</code>, <code>NA</code>s will
+propagate conceptually, i.e., a resulting value will be <code>NA</code>
+whenever one of its contributing observations is <code>NA</code>.<br>
+If <code>use</code> is <code>"all.obs"</code>, then the presence of missing
+observations will produce an error.  If <code>use</code> is
+<code>"complete.obs"</code> then missing values are handled by casewise
+deletion (and if there are no complete cases, that gives an error).
+<br><code>"na.or.complete"</code> is the same unless there are no complete
+cases, that gives <code>NA</code>.
+Finally, if <code>use</code> has the value <code>"pairwise.complete.obs"</code>
+then the correlation or covariance between each pair of variables is
+computed using all complete pairs of observations on those variables.
+This can result in covariance or correlation matrices which are not positive
+semi-definite, as well as <code>NA</code> entries if there are no complete
+pairs for that pair of variables.   For <code>Cov</code> and <code>Var</code>,
+<code>"pairwise.complete.obs"</code> only works with the <code>"pearson"</code>
+method.
+Note that (the equivalent of) <code>Var(double(0), use = *)</code> gives
+<code>NA</code> for <code>use = "everything"</code> and <code>"na.or.complete"</code>,
+and gives an error in the other cases.
+</p>
+<p>The denominator <code class="reqn">n - 1</code> is used which gives an unbiased estimator
+of the (co)variance for i.i.d. observations.
+These functions return <code>NA</code> when there is only one
+observation (whereas S-PLUS has been returning <code>NaN</code>), and
+fail if <code>x</code> has length zero.
+</p>
+<p>For <code>Cor()</code>, if <code>method</code> is <code>"kendall"</code> or
+<code>"spearman"</code>, Kendall's <code class="reqn">\tau</code> or Spearman's
+<code class="reqn">\rho</code> statistic is used to estimate a rank-based measure of
+association.  These are more robust and have been recommended if the
+data do not necessarily come from a bivariate normal distribution.<br>
+For <code>Cov()</code>, a non-Pearson method is unusual but available for
+the sake of completeness.  Note that <code>"spearman"</code> basically
+computes <code>Cor(R(x), R(y))</code> (or <code>Cov(., .)</code>) where <code>R(u)
+  := rank(u, na.last = "keep")</code>. In the case of missing values, the
+ranks are calculated depending on the value of <code>use</code>, either
+based on complete observations, or based on pairwise completeness with
+reranking for each pair.
+</p>
+<p>Scaling a covariance matrix into a correlation one can be achieved in
+many ways, mathematically most appealing by multiplication with a
+diagonal matrix from left and right, or more efficiently by using
+<code>sweep(.., FUN = "/")</code> twice.
+</p>
+
+
+<h3>Value</h3>
+
+<p>For <code>r &lt;- Cor(*, use = "all.obs")</code>, it is now guaranteed that
+<code>all(abs(r) &lt;= 1)</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Some people have noted that the code for Kendall's tau is slow for
+very large datasets (many more than 1000 cases).  It rarely makes
+sense to do such a computation, but see function
+<code>cor.fk</code> in package <a href="https://CRAN.R-project.org/package=pcaPP"><span class="pkg">pcaPP</span></a>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
+<em>The New S Language</em>.
+Wadsworth &amp; Brooks/Cole.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cor.test</code> for confidence intervals (and tests).
+</p>
+<p><code>cov.wt</code> for <em>weighted</em> covariance computation.
+</p>
+<p><code>Var</code>, <code>SD</code> for variance and standard deviation (vectors).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Two simple vectors
+Cor(1:10, 2:11) # == 1
+
+## Correlation Matrix of Multivariate sample:
+(Cl &lt;- Cor(longley))
+## Graphical Correlation Matrix:
+symnum(Cl) # highly correlated
+
+## Spearman's rho  and  Kendall's tau
+symnum(clS &lt;- Cor(longley, method = "spearman"))
+symnum(clK &lt;- Cor(longley, method = "kendall"))
+## How much do they differ?
+i &lt;- lower.tri(Cl)
+Cor(cbind(P = Cl[i], S = clS[i], K = clK[i]))
+
+
+##--- Missing value treatment:
+
+C1 &lt;- Cov(swiss)
+range(eigen(C1, only.values = TRUE)$values) # 6.19        1921
+
+## swM := "swiss" with  3 "missing"s :
+swM &lt;- swiss
+colnames(swM) &lt;- abbreviate(colnames(swiss), min=6)
+swM[1,2] &lt;- swM[7,3] &lt;- swM[25,5] &lt;- NA # create 3 "missing"
+
+## Consider all 5 "use" cases :
+(C. &lt;- Cov(swM)) # use="everything"  quite a few NA's in cov.matrix
+try(Cov(swM, use = "all")) # Error: missing obs...
+C2 &lt;- Cov(swM, use = "complete")
+stopifnot(identical(C2, Cov(swM, use = "na.or.complete")))
+range(eigen(C2, only.values = TRUE)$values) # 6.46   1930
+C3 &lt;- Cov(swM, use = "pairwise")
+range(eigen(C3, only.values = TRUE)$values) # 6.19   1938
+
+## Kendall's tau doesn't change much:
+symnum(Rc &lt;- Cor(swM, method = "kendall", use = "complete"))
+symnum(Rp &lt;- Cor(swM, method = "kendall", use = "pairwise"))
+symnum(R. &lt;- Cor(swiss, method = "kendall"))
+
+## "pairwise" is closer componentwise,
+summary(abs(c(1 - Rp/R.)))
+summary(abs(c(1 - Rc/R.)))
+
+## but "complete" is closer in Eigen space:
+EV &lt;- function(m) eigen(m, only.values=TRUE)$values
+summary(abs(1 - EV(Rp)/EV(R.)) / abs(1 - EV(Rc)/EV(R.)))
+
+</code></pre>
+
+
+</div>

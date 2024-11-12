@@ -1,0 +1,61 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>diseasemapping-package</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Disease Mapping
+</h2>
+
+<h3>Description</h3>
+
+<p>Functions for calculating observed and expected counts by region, and manipulating posterior 
+samples from Bayesian models produced by glmmBUGS.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Patrick Brown
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># creating SMR's
+data('kentucky')
+kentucky = terra::unwrap(kentucky)
+
+
+kentucky2 = getSMR(kentucky, larynxRates, larynx, 
+		regionCode="County")
+
+if(require('mapmisc', quietly=TRUE)) {
+	mycol = colourScale(kentucky2$SMR, breaks=9, 
+	dec=-log10(0.5), style='equal', transform='sqrt')
+	plot(kentucky2, col=mycol$plot)
+	legendBreaks('topleft', mycol)
+}
+
+if(require("INLA", quietly=TRUE)) {
+
+if(requireNamespace('INLA')) {
+  INLA::inla.setOption(num.threads=2)
+  # not all versions of INLA support blas.num.threads
+  try(INLA::inla.setOption(blas.num.threads=2), silent=TRUE)
+}
+
+kBYM = bym(observed ~ offset(logExpected) + poverty, 
+	data= kentucky2, 
+	prior = list(sd=c(0.1, 0.5), propSpatial=c(0.5, 0.5))
+)
+
+kBYM$par$summary
+
+}
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,104 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>testQuantiles</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Test for quantiles</h2>
+
+<h3>Description</h3>
+
+<p>This function tests
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">testQuantiles(simulationOutput, predictor = NULL, quantiles = c(0.25, 0.5,
+  0.75), plot = T)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulationOutput</code></td>
+<td>
+<p>an object of class DHARMa, either created via <code>simulateResiduals</code> for supported models or by <code>createDHARMa</code> for simulations created outside DHARMa, or a supported model. Providing a supported model directly is discouraged, because simulation settings cannot be changed in this case.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predictor</code></td>
+<td>
+<p>an optional predictor variable to be used, instead of the predicted response (default)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantiles</code></td>
+<td>
+<p>the quantiles to be tested</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>if T, the function will create an additional plot</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function fits quantile regressions (via package qgam) on the residuals, and compares their location to the expected location (because of the uniform distributionm, the expected location is 0.5 for the 0.5 quantile).
+</p>
+<p>A significant p-value for the splines means the fitted spline deviates from a flat line at the expected location (p-values of intercept and spline are combined via Benjamini &amp; Hochberg adjustment to control the FDR)
+</p>
+<p>The p-values of the splines are combined into a total p-value via Benjamini &amp; Hochberg adjustment to control the FDR.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Florian Hartig
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>testResiduals</code>, <code>testUniformity</code>, <code>testOutliers</code>, <code>testDispersion</code>, <code>testZeroInflation</code>, <code>testGeneric</code>, <code>testTemporalAutocorrelation</code>, <code>testSpatialAutocorrelation</code>, <code>testQuantiles</code>, <code>testCategorical</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">testData = createData(sampleSize = 200, overdispersion = 0.0, randomEffectVariance = 0)
+fittedModel &lt;- glm(observedResponse ~ Environment1, family = "poisson", data = testData)
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+
+# run the quantile test
+x = testQuantiles(simulationOutput)
+x # the test shows a combined p-value, corrected for multiple testing
+
+## Not run: 
+# accessing results of the test
+x$pvals # pvalues for the individual quantiles
+x$qgamFits # access the fitted quantile regression 
+summary(x$qgamFits[[1]]) # summary of the first fitted quantile
+
+# possible to test user-defined quantiles
+testQuantiles(simulationOutput, quantiles = c(0.7))
+
+#  example with missing environmental predictor
+fittedModel &lt;- glm(observedResponse ~ 1 , family = "poisson", data = testData)
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+testQuantiles(simulationOutput, predictor = testData$Environment1)
+
+plot(simulationOutput)
+plotResiduals(simulationOutput)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

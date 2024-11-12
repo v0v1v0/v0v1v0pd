@@ -1,0 +1,741 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sequential design of a (D)GP emulator or a bundle of (D)GP emulators</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the sequential design of a (D)GP emulator or a bundle of (D)GP emulators.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">design(
+  object,
+  N,
+  x_cand,
+  y_cand,
+  n_cand,
+  limits,
+  int,
+  f,
+  reps,
+  freq,
+  x_test,
+  y_test,
+  reset,
+  target,
+  method,
+  eval,
+  verb,
+  autosave,
+  new_wave,
+  cores,
+  ...
+)
+
+## S3 method for class 'gp'
+design(
+  object,
+  N,
+  x_cand = NULL,
+  y_cand = NULL,
+  n_cand = 200,
+  limits = NULL,
+  int = FALSE,
+  f = NULL,
+  reps = 1,
+  freq = c(1, 1),
+  x_test = NULL,
+  y_test = NULL,
+  reset = FALSE,
+  target = NULL,
+  method = vigf,
+  eval = NULL,
+  verb = TRUE,
+  autosave = list(),
+  new_wave = TRUE,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'dgp'
+design(
+  object,
+  N,
+  x_cand = NULL,
+  y_cand = NULL,
+  n_cand = 200,
+  limits = NULL,
+  int = FALSE,
+  f = NULL,
+  reps = 1,
+  freq = c(1, 1),
+  x_test = NULL,
+  y_test = NULL,
+  reset = FALSE,
+  target = NULL,
+  method = vigf,
+  eval = NULL,
+  verb = TRUE,
+  autosave = list(),
+  new_wave = TRUE,
+  cores = 1,
+  train_N = 100,
+  refit_cores = 1,
+  pruning = TRUE,
+  control = list(),
+  ...
+)
+
+## S3 method for class 'bundle'
+design(
+  object,
+  N,
+  x_cand = NULL,
+  y_cand = NULL,
+  n_cand = 200,
+  limits = NULL,
+  int = FALSE,
+  f = NULL,
+  reps = 1,
+  freq = c(1, 1),
+  x_test = NULL,
+  y_test = NULL,
+  reset = FALSE,
+  target = NULL,
+  method = vigf,
+  eval = NULL,
+  verb = TRUE,
+  autosave = list(),
+  new_wave = TRUE,
+  cores = 1,
+  train_N = 100,
+  refit_cores = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>can be one of the following:
+</p>
+
+<ul>
+<li>
+<p> the S3 class <code>gp</code>.
+</p>
+</li>
+<li>
+<p> the S3 class <code>dgp</code>.
+</p>
+</li>
+<li>
+<p> the S3 class <code>bundle</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>N</code></td>
+<td>
+<p>the number of steps for the sequential design.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_cand</code></td>
+<td>
+<p>a matrix (with each row being a design point and column being an input dimension) that gives a candidate set
+in which the next design point is determined. If <code>x_cand = NULL</code>, the candidate set will be generated using <code>n_cand</code>,
+<code>limits</code>, and <code>int</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_cand</code></td>
+<td>
+<p>a matrix (with each row being a simulator evaluation and column being an output dimension) that gives the realizations
+from the simulator at input positions in <code>x_cand</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_cand</code></td>
+<td>
+<p>an integer that gives
+</p>
+
+<ul>
+<li>
+<p> the size of the candidate set in which the next design point is determined, if <code>x_cand = NULL</code>;
+</p>
+</li>
+<li>
+<p> the size of a sub-set to be sampled from the candidate set <code>x_cand</code> at each step of the sequential design to determine the next
+design point, if <code>x_cand</code> is not <code>NULL</code>.
+</p>
+</li>
+</ul>
+<p>Defaults to <code>200</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>limits</code></td>
+<td>
+<p>a two-column matrix that gives the ranges of each input dimension, or a vector of length two if there is only one
+input dimension. If a vector is provided, it will be converted to a two-column row matrix. The rows of the matrix correspond to input
+dimensions, and its first and second columns correspond to the minimum and maximum values of the input dimensions. Set
+<code>limits = NULL</code> if <code>x_cand</code> is supplied. This argument is only used when <code>x_cand</code> is not supplied, i.e., <code>x_cand = NULL</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>int</code></td>
+<td>
+<p>a bool or a vector of bools that indicates if an input dimension is an integer type. If a bool is given, it will be applied to
+all input dimensions. If a vector is provided, it should have a length equal to the input dimensions and will be applied to individual
+input dimensions. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>an R function that represents the simulator. <code>f</code> needs to be specified with the following basic rules:
+</p>
+
+<ul>
+<li>
+<p> the first argument of the function should be a matrix with rows being different design points and columns being input dimensions.
+</p>
+</li>
+<li>
+<p> the output of the function can either
+</p>
+
+<ul>
+<li>
+<p> a matrix with rows being different outputs (corresponding to the input design points) and columns being output dimensions. If there is
+only one output dimension, the matrix still needs to be returned with a single column.
+</p>
+</li>
+<li>
+<p> a list with the first element being the output matrix described above and, optionally, additional named elements which will update values
+of any arguments with the same names passed via <code>...</code>. The list output can be useful if some additional arguments of <code>f</code> and <code>aggregate</code>
+need to be updated after each step of the sequential design.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>See <em>Note</em> section below for further information. This argument is used when <code>y_cand = NULL</code>. Defaults to <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reps</code></td>
+<td>
+<p>an integer that gives the number of repetitions of the located design points to be created and used for evaluations of <code>f</code>. Set the
+argument to an integer greater than <code>1</code> if <code>f</code> is a stochastic function that can generate different responses given a same input and the
+supplied emulator <code>object</code> can deal with stochastic responses, e.g., a (D)GP emulator with <code>nugget_est = TRUE</code> or a DGP emulator with a
+likelihood layer. The argument is only used when <code>f</code> is supplied. Defaults to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>freq</code></td>
+<td>
+<p>a vector of two integers with the first element giving the frequency (in number of steps) to re-fit the
+emulator, and the second element giving the frequency to implement the emulator validation (for RMSE). Defaults to <code>c(1, 1)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_test</code></td>
+<td>
+<p>a matrix (with each row being an input testing data point and each column being an input dimension) that gives the testing
+input data to evaluate the emulator after each step of the sequential design. Set to <code>NULL</code> for the LOO-based emulator validation.
+Defaults to <code>NULL</code>. This argument is only used if <code>eval = NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y_test</code></td>
+<td>
+<p>the testing output data that correspond to <code>x_test</code> for the emulator validation after each step of the sequential design:
+</p>
+
+<ul>
+<li>
+<p> if <code>object</code> is an instance of the <code>gp</code> class, <code>y_test</code> is a matrix with only one column and each row being an testing output data point.
+</p>
+</li>
+<li>
+<p> if <code>object</code> is an instance of the <code>dgp</code> class, <code>y_test</code> is a matrix with its rows being testing output data points and columns being
+output dimensions.
+</p>
+</li>
+</ul>
+<p>Set to <code>NULL</code> for the LOO-based emulator validation. Defaults to <code>NULL</code>. This argument is only used if <code>eval = NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reset</code></td>
+<td>
+<p>a bool or a vector of bools indicating whether to reset hyperparameters of the emulator to their initial values when it was initially
+constructed after the input-output update and before the re-fit. If a bool is given, it will be applied to
+every step of the sequential design. If a vector is provided, its length should be equal to <code>N</code> and will be applied to individual
+steps of the sequential design. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>a numeric or a vector that gives the target RMSEs at which the sequential design is terminated. Defaults to <code>NULL</code>, in which
+case the sequential design stops after <code>N</code> steps. See <em>Note</em> section below for further information about <code>target</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>an R function that give indices of designs points in a candidate set. The function must satisfy the following basic rules:
+</p>
+
+<ul>
+<li>
+<p> the first argument is an emulator object that can be either an instance of
+</p>
+
+<ul>
+<li>
+<p> the <code>gp</code> class (produced by <code>gp()</code>);
+</p>
+</li>
+<li>
+<p> the <code>dgp</code> class (produced by <code>dgp()</code>);
+</p>
+</li>
+<li>
+<p> the <code>bundle</code> class (produced by <code>pack()</code>).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> the second argument is a matrix with rows representing a set of different design points.
+</p>
+</li>
+<li>
+<p> the output of the function
+</p>
+
+<ul>
+<li>
+<p> is a vector of indices if the first argument is an instance of the <code>gp</code> class;
+</p>
+</li>
+<li>
+<p> is a matrix of indices if the first argument is an instance of the <code>dgp</code> class. If there are different design points to be added with
+respect to different outputs of the DGP emulator, the column number of the matrix should equal to the number of the outputs. If design
+points are common to all outputs of the DGP emulator, the matrix should be single-columned. If more than one design points are determined
+for a given output or for all outputs, the indices of these design points are placed in the matrix with extra rows.
+</p>
+</li>
+<li>
+<p> is a matrix of indices if the first argument is an instance of the <code>bundle</code> class. Each row of the matrix gives the indices of the design
+points to be added to individual emulators in the bundle.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>See <code>alm()</code>, <code>mice()</code>, <code>pei()</code>, and <code>vigf()</code> for examples on customizing <code>method</code>. Defaults to <code>vigf()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eval</code></td>
+<td>
+<p>an R function that calculates the customized evaluating metric of the emulator. The function must satisfy the following basic rules:
+</p>
+
+<ul>
+<li>
+<p> the first argument is an emulator object that can be either an instance of
+</p>
+
+<ul>
+<li>
+<p> the <code>gp</code> class (produced by <code>gp()</code>);
+</p>
+</li>
+<li>
+<p> the <code>dgp</code> class (produced by <code>dgp()</code>);
+</p>
+</li>
+<li>
+<p> the <code>bundle</code> class (produced by <code>pack()</code>).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> the output of the function can be
+</p>
+
+<ul>
+<li>
+<p> a single metric value, if the first argument is an instance of the <code>gp</code> class;
+</p>
+</li>
+<li>
+<p> a single metric value or a vector of metric values with the length equal to the number of output dimensions, if the first argument is an
+instance of the <code>dgp</code> class;
+</p>
+</li>
+<li>
+<p> a single metric value metric or a vector of metric values with the length equal to the number of emulators in the bundle, if the first
+argument is an instance of the <code>bundle</code> class.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>If no customized function is provided, the built-in evaluation metric, RMSE, will be calculated. Defaults to <code>NULL</code>. See <em>Note</em> section below for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verb</code></td>
+<td>
+<p>a bool indicating if the trace information will be printed during the sequential design.
+Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>autosave</code></td>
+<td>
+<p>a list that contains configuration settings for the automatic saving of the emulator:
+</p>
+
+<ul>
+<li> <p><code>switch</code>: a bool indicating whether to enable the automatic saving of the emulator during the sequential design. When set to <code>TRUE</code>,
+the emulator in the final iteration is always saved. Defaults to <code>FALSE</code>.
+</p>
+</li>
+<li> <p><code>directory</code>: a string specifying the directory path where the emulators will be stored. Emulators will be stored in a sub-directory
+of <code>directory</code> named 'emulator-<code>id</code>'. Defaults to './check_points'.
+</p>
+</li>
+<li> <p><code>fname</code>: a string representing the base name for the saved emulator files. Defaults to 'check_point'.
+</p>
+</li>
+<li> <p><code>freq</code>: an integer indicating the frequency of automatic savings, measured in the number of iterations. Defaults to <code>5</code>.
+</p>
+</li>
+<li> <p><code>overwrite</code>: a bool value controlling the file saving behavior. When set to <code>TRUE</code>, each new automatic saving overwrites the previous one,
+keeping only the latest version. If <code>FALSE</code>, each automatic saving creates a new file, preserving all previous versions. Defaults to <code>FALSE</code>.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_wave</code></td>
+<td>
+<p>a bool indicating if the current execution of <code>design()</code> will create a new wave of sequential designs or add the sequential designs to
+the last existing wave. This argument is only used if there are waves existing in the emulator. By creating new waves, one can better visualize the performance
+of the sequential designs in different executions of <code>design()</code> in <code>draw()</code> and can specify a different evaluation frequency in <code>freq</code>. However, it can be
+beneficiary to turn this option off to restrict a large number of waves to be visualized in <code>draw()</code> that could run out of colors. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>an integer that gives the number of cores to be used for emulator validations. If set to <code>NULL</code>, the number of cores is
+set to <code style="white-space: pre;">⁠(max physical cores available - 1)⁠</code>. Defaults to <code>1</code>. This argument is only used if <code>eval = NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>any arguments (with names different from those of arguments used in <code>design()</code>) that are used by <code>f</code>, <code>method</code>, and <code>eval</code>
+can be passed here. <code>design()</code> will pass relevant arguments to <code>f</code>, <code>method</code>, and <code>eval</code> based on the names of additional arguments provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>train_N</code></td>
+<td>
+<p>an integer or a vector of integers that gives the number of training iterations to be used to re-fit the DGP emulator at each step
+of the sequential design:
+</p>
+
+<ul>
+<li>
+<p> If <code>train_N</code> is an integer, then at each step the DGP emulator will re-fitted (based on the frequency of re-fit specified in <code>freq</code>) with <code>train_N</code> iterations.
+</p>
+</li>
+<li>
+<p> If <code>train_N</code> is a vector, then its size must be <code>N</code> even the re-fit frequency specified in <code>freq</code> is not one.
+</p>
+</li>
+</ul>
+<p>Defaults to <code>100</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refit_cores</code></td>
+<td>
+<p>the number of cores/workers to be used to re-fit GP components (in the same layer of a DGP emulator)
+at each M-step during the re-fitting. If set to <code>NULL</code>, the number of cores is set to <code style="white-space: pre;">⁠(max physical cores available - 1)⁠</code>.
+Only use multiple cores when there is a large number of GP components in different layers and optimization of GP components
+is computationally expensive. Defaults to <code>1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pruning</code></td>
+<td>
+<p>a bool indicating if dynamic pruning of DGP structures will be implemented during the sequential design after the total number of
+design points exceeds <code>min_size</code> in <code>control</code>. The argument is only applicable to DGP emulators (i.e., <code>object</code> is an instance of <code>dgp</code> class)
+produced by <code>dgp()</code> with <code>struc = NULL</code>. Defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>a list that can supply any of the following components to control the dynamic pruning of the DGP emulator:
+</p>
+
+<ul>
+<li> <p><code>min_size</code>, the minimum number of design points required to trigger the dynamic pruning. Defaults to 10 times of the input dimensions.
+</p>
+</li>
+<li> <p><code>threshold</code>, the R2 value above which a GP node is considered redundant. Defaults to <code>0.97</code>.
+</p>
+</li>
+<li> <p><code>nexceed</code>, the minimum number of consecutive iterations that the R2 value of a GP node must exceed <code>threshold</code> to trigger the removal of that node from
+the DGP structure. Defaults to <code>3</code>.
+</p>
+</li>
+</ul>
+<p>The argument is only used when <code>pruning = TRUE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See further examples and tutorials at <a href="https://mingdeyu.github.io/dgpsi-R/">https://mingdeyu.github.io/dgpsi-R/</a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An updated <code>object</code> is returned with a slot called <code>design</code> that contains:
+</p>
+
+<ul>
+<li> <p><em>S</em> slots, named <code style="white-space: pre;">⁠wave1, wave2,..., waveS⁠</code>, that contain information of <em>S</em> waves of sequential designs that have been applied to the emulator.
+Each slot contains the following elements:
+</p>
+
+<ul>
+<li> <p><code>N</code>, an integer that gives the numbers of steps implemented in the corresponding wave;
+</p>
+</li>
+<li> <p><code>rmse</code>, a matrix that gives the RMSEs of emulators constructed during the corresponding wave, if <code>eval = NULL</code>;
+</p>
+</li>
+<li> <p><code>metric</code>, a matrix that gives the customized evaluating metric values of emulators constructed during the corresponding wave,
+if a customized function is supplied to <code>eval</code>;
+</p>
+</li>
+<li> <p><code>freq</code>, an integer that gives the frequency that the emulator validations are implemented during the corresponding wave.
+</p>
+</li>
+<li> <p><code>enrichment</code>, a vector of size <code>N</code> that gives the number of new design points added after each step of the sequential design (if <code>object</code> is
+an instance of the <code>gp</code> or <code>dgp</code> class), or a matrix that gives the number of new design points added to emulators in a bundle after each step of
+the sequential design (if <code>object</code> is an instance of the <code>bundle</code> class).
+</p>
+</li>
+</ul>
+<p>If <code>target</code> is not <code>NULL</code>, the following additional elements are also included:
+</p>
+
+<ul>
+<li> <p><code>target</code>, the target RMSE(s) to stop the sequential design.
+</p>
+</li>
+<li> <p><code>reached</code>, a bool (if <code>object</code> is an instance of the <code>gp</code> or <code>dgp</code> class) or a vector of bools (if <code>object</code> is an instance of the <code>bundle</code>
+class) that indicate if the target RMSEs are reached at the end of the sequential design.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> a slot called <code>type</code> that gives the type of validations:
+</p>
+
+<ul>
+<li>
+<p> either LOO ('loo') or OOS ('oos') if <code>eval = NULL</code>. See <code>validate()</code> for more information about LOO and OOS.
+</p>
+</li>
+<li>
+<p> 'customized' if a customized R function is provided to <code>eval</code>.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> two slots called <code>x_test</code> and <code>y_test</code> that contain the data points for the OOS validation if the <code>type</code> slot is 'oos'.
+</p>
+</li>
+<li>
+<p> If <code>y_cand = NULL</code> and there are <code>NA</code>s returned from the supplied <code>f</code> during the sequential design, a slot called <code>exclusion</code> is included
+that records the located design positions that produced <code>NA</code>s via <code>f</code>. The sequential design will use this information to
+avoid re-visiting the same locations (if <code>x_cand</code> is supplied) or their neighborhoods (if <code>x_cand</code> is <code>NULL</code>) in later runs of <code>design()</code>.
+</p>
+</li>
+</ul>
+<p>See <em>Note</em> section below for further information.
+</p>
+
+
+<h3>Note</h3>
+
+
+<ul>
+<li>
+<p> The validation of an emulator is forced after the final step of a sequential design even <code>N</code> is not multiples of the second element in <code>freq</code>.
+</p>
+</li>
+<li>
+<p> Any <code>loo</code> or <code>oos</code> slot that already exists in <code>object</code> will be cleaned, and a new slot called <code>loo</code> or <code>oos</code> will be created in the returned object
+depending on whether <code>x_test</code> and <code>y_test</code> are provided. The new slot gives the validation information of the emulator constructed in the final step of
+the sequential design. See <code>validate()</code> for more information about the slots <code>loo</code> and <code>oos</code>.
+</p>
+</li>
+<li>
+<p> If <code>object</code> has previously been used by <code>design()</code> for sequential designs, the information of the current wave of the sequential design will replace
+those of old waves and be contained in the returned object, unless
+</p>
+
+<ul>
+<li>
+<p> the validation type (LOO or OOS depending on whether <code>x_test</code> and <code>y_test</code> are supplied or not) of the current wave of the sequential design is the
+same as the validation types (shown in the <code>type</code> of the <code>design</code> slot of <code>object</code>) in previous waves, and if the validation type is OOS,
+<code>x_test</code> and <code>y_test</code> in the current wave must also be identical to those in the previous waves;
+</p>
+</li>
+<li>
+<p> both the current and previous waves of the sequential design supply customized evaluation functions to <code>eval</code>. Users need to ensure the customized evaluation
+functions are consistent among different waves. Otherwise, the trace plot of RMSEs produced by <code>draw()</code> will show values of different evaluation metrics in
+different waves.
+</p>
+</li>
+</ul>
+<p>In above two cases, the information of the current wave of the sequential design will be added to the <code>design</code> slot of the returned object under the name <code>waveS</code>.
+</p>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>gp</code> class and <code>eval = NULL</code>, the matrix in the <code>rmse</code> slot is single-columned. If <code>object</code> is an instance of
+the <code>dgp</code> or <code>bundle</code> class and <code>eval = NULL</code>, the matrix in the <code>rmse</code> slot can have multiple columns that correspond to different output dimensions
+or different emulators in the bundle.
+</p>
+</li>
+<li>
+<p> If <code>object</code> is an instance of the <code>gp</code> class and <code>eval = NULL</code>, <code>target</code> needs to be a single value giving the RMSE threshold. If <code>object</code> is an instance
+of the <code>dgp</code> or <code>bundle</code> class and <code>eval = NULL</code>, <code>target</code> can be a vector of values that gives the RMSE thresholds for different output dimensions or
+different emulators. If a single value is provided, it will be used as the RMSE threshold for all output dimensions (if <code>object</code> is an instance of the <code>dgp</code>) or all emulators
+(if <code>object</code> is an instance of the <code>bundle</code>). If a customized function is supplied to <code>eval</code>, the user needs to ensure that the length of <code>target</code> is equal
+to that of the output from <code>eval</code>.
+</p>
+</li>
+<li>
+<p> When defining <code>f</code>, it is important to ensure that:
+</p>
+
+<ul>
+<li>
+<p> the column order of the first argument of <code>f</code> is consistent with the training input used for the emulator;
+</p>
+</li>
+<li>
+<p> the column order of the output matrix of <code>f</code> is consistent with the order of emulator output dimensions (if <code>object</code> is an instance of the <code>dgp</code> class),
+or the order of emulators placed in <code>object</code> (if <code>object</code> is an instance of the <code>bundle</code> class).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> The output matrix produced by <code>f</code> may include <code>NA</code>s. This is especially beneficial as it allows the sequential design process to continue without interruption,
+even if errors or <code>NA</code> outputs are encountered from <code>f</code> at certain input locations identified by the sequential designs. Users should ensure to handle any errors
+within <code>f</code> by appropriately returning <code>NA</code>s.
+</p>
+</li>
+<li>
+<p> When defining <code>eval</code>, the output metric needs to be positive if <code>draw()</code> is used with <code>log = T</code>. And one needs to ensure that a lower metric value indicates
+a better emulation performance if <code>target</code> is set.
+</p>
+</li>
+<li>
+<p> Any R vector detected in <code>x_test</code> and <code>y_test</code> will be treated as a column vector and automatically converted into a single-column
+R matrix. Thus, if <code>x_test</code> or <code>y_test</code> is a single testing data point with multiple dimensions, it must be given as a matrix.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+# load packages and the Python env
+library(lhs)
+library(dgpsi)
+
+# construct a 2D non-stationary function that takes a matrix as the input
+f &lt;- function(x) {
+  sin(1/((0.7*x[,1,drop=F]+0.3)*(0.7*x[,2,drop=F]+0.3)))
+}
+
+# generate the initial design
+X &lt;- maximinLHS(5,2)
+Y &lt;- f(X)
+
+# generate the validation data
+validate_x &lt;- maximinLHS(30,2)
+validate_y &lt;- f(validate_x)
+
+# training a 2-layered DGP emulator with the initial design
+m &lt;- dgp(X, Y)
+
+# specify the ranges of the input dimensions
+lim_1 &lt;- c(0, 1)
+lim_2 &lt;- c(0, 1)
+lim &lt;- rbind(lim_1, lim_2)
+
+# 1st wave of the sequential design with 10 steps
+m &lt;- design(m, N=10, limits = lim, f = f, x_test = validate_x, y_test = validate_y)
+
+# 2nd wave of the sequential design with 10 steps
+m &lt;- design(m, N=10, limits = lim, f = f, x_test = validate_x, y_test = validate_y)
+
+# 3rd wave of the sequential design with 10 steps
+m &lt;- design(m, N=10, limits = lim, f = f, x_test = validate_x, y_test = validate_y)
+
+# draw the design created by the sequential design
+draw(m,'design')
+
+# inspect the trace of RMSEs during the sequential design
+draw(m,'rmse')
+
+# reduce the number of imputations for faster OOS
+m_faster &lt;- set_imp(m, 5)
+
+# plot the OOS validation with the faster DGP emulator
+plot(m_faster, x_test = validate_x, y_test = validate_y)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

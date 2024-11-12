@@ -1,0 +1,138 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stepwise_replacement</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>implementation of the decomposition algorithm of stepwise replacement</h2>
+
+<h3>Description</h3>
+
+<p>This implements the algorithm described in Andreev et al (2002), with defaults set
+to approximate their recommendations for replacement ordering and result averaging.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">stepwise_replacement(
+  func,
+  pars1,
+  pars2,
+  symmetrical = TRUE,
+  direction = "up",
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>func</code></td>
+<td>
+<p>A function specified by the user. This must be able to take the vectors <code>pars1</code> or 
+<code>pars2</code> as its argument, and to return the value of the function, <code>y</code>, when evaluated for 
+these rates. It may also have additional arguments, not to be decomposed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars1</code></td>
+<td>
+<p>vector of covariates to be passed on as arguments to <code>func()</code>. Covariates
+can be in any order, as long as <code>func()</code> knows what to do with them. <code>pars1</code> is for time 1 
+(or population 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars2</code></td>
+<td>
+<p>is the same as <code>pars1</code> but for time/population 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>symmetrical</code></td>
+<td>
+<p>logical. default <code>TRUE</code> as recommended by authors. Shall we average the results of replacing 1 with 2 and 2 with 1?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direction</code></td>
+<td>
+<p>character. One of <code>"up"</code>, <code>"down"</code>, or <code>"both"</code>. Default <code>"up"</code>, as recommended by authors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional parameters to pass on to <code>func()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>symmetrical</code> argument toggles whether or not we replace pars1 with pars2 (<code>FALSE</code>), 
+or take the arithmetic average or replacement in both directions. <code>direction</code> refers to whether we go 
+from the bottom up or top down, or take the arithmetic average of these when replacing vector elements. 
+Although the total difference will always sum correctly, the calculated contribution from individual components 
+can vary greatly depending on the order in general. Defaults are set to symmetrically replace from the bottom 
+up, per the authors' suggestion.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a matrix of the variable effects that is organized in the same way as 
+<code>pars1</code> and <code>pars2</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Horiuchi S, Wilmoth JR, Pletcher SD (2008).
+“A decomposition method based on a model of continuous change.”
+<em>Demography</em>, <b>45</b>(4), 785–801.
+Andreev EM, Shkolnikov VM (2012).
+“An Excel spreadsheet for the decomposition of a difference between two values of an aggregate demographic measure by stepwise replacement running from young to old ages.”
+<em>Max Planck Institute for Demographic Research (MPIDR Technical Report TR–2012–002)</em>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(Mxc1)
+data(Mxc2)
+# we'll want to pass in these dimensions
+dims  &lt;- dim(Mxc1)
+# we need parameters in vec form
+Mxc1v &lt;- c(Mxc1)
+Mxc2v &lt;- c(Mxc2)
+B     &lt;- stepwise_replacement(func = Mxc2e0abrvec, 
+		pars1 = Mxc1v, pars2 = Mxc2v, dims = dims, 
+		# authors' recommendations:
+		symmetrical = TRUE, direction = "up")
+dim(B) &lt;- dims
+# the output, B, is also a single vector. Each element corresponds 
+# to the effect of changes in that particular covariate toward the 
+# overall change in the function value. sum(B) should equal the
+# original difference
+(check1 &lt;- Mxc2e0abr(Mxc2) - Mxc2e0abr(Mxc1))
+(check2 &lt;- sum(B))
+
+
+# This package does not supply default plotting functions, but one 
+# strategy might be the following:
+## Not run: 
+Age &lt;- c(0, 1, seq(5, 85, by = 5))
+matplot(Age, B, type = 'l', 
+xlab = "Age", ylab = "Contrib to diff in e(0)", col = 1:6)
+legend("bottomleft",lty=1:5,col=1:6, 
+         legend = c("Neoplasms","Circulatory","Respiratory",
+			     "Digestive","Acc/viol","Other"))
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,207 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qEI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Analytical expression of the multipoint expected improvement (qEI)
+criterion</h2>
+
+<h3>Description</h3>
+
+<p>Computes the multipoint expected improvement criterion.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qEI(
+  x,
+  model,
+  plugin = NULL,
+  type = "UK",
+  minimization = TRUE,
+  fastCompute = TRUE,
+  eps = 10^(-5),
+  envir = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a matrix representing the set of input points (one row corresponds
+to one point) where to evaluate the qEI criterion,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plugin</code></td>
+<td>
+<p>optional scalar: if provided, it replaces the minimum of the
+current observations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>"SK" or "UK" (by default), depending whether uncertainty
+related to trend estimation has to be taken into account,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimization</code></td>
+<td>
+<p>logical specifying if EI is used in minimiziation or in
+maximization,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fastCompute</code></td>
+<td>
+<p>if TRUE, a fast approximation method based on a
+semi-analytic formula is used (see [Marmin 2014] for details),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>the value of <em>epsilon</em> of the fast computation trick.
+Relevant only if <code>fastComputation</code> is TRUE,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>an optional environment specifying where to get intermediate
+values calculated in <code>qEI</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The multipoint Expected Improvement, defined as </p>
+<p style="text-align: center;"><code class="reqn">qEI(X_{new})
+:= E[ ( min(Y(X)) - min(Y( X_{new} )) )_{+} | Y(X)=y(X)],</code>
+</p>
+
+<p>where <code class="reqn">X</code> is the current design of experiments, <code class="reqn"> X_{new} </code> is a
+new candidate design, and <code class="reqn">Y</code> is a random process assumed to have
+generated the objective function <code class="reqn">y</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastien Marmin 
+</p>
+<p>Clement Chevalier 
+</p>
+<p>David Ginsbourger
+</p>
+
+
+<h3>References</h3>
+
+<p>C. Chevalier and D. Ginsbourger (2014) Learning and Intelligent
+Optimization - 7th International Conference, Lion 7, Catania, Italy,
+January 7-11, 2013, Revised Selected Papers, chapter Fast computation of
+the multipoint Expected Improvement with applications in batch selection,
+pages 59-69, Springer.
+</p>
+<p>D. Ginsbourger, R. Le Riche, L. Carraro (2007), A Multipoint Criterion for
+Deterministic Parallel Global Optimization based on Kriging. The
+International Conference on Non Convex Programming, 2007.
+</p>
+<p>S. Marmin. Developpements pour l'evaluation et la maximisation du critere
+d'amelioration esperee multipoint en optimisation globale (2014). Master's
+thesis, Mines Saint-Etienne (France) and University of Bern (Switzerland).
+</p>
+<p>D. Ginsbourger, R. Le Riche, and L. Carraro. Kriging is well-suited to
+parallelize optimization (2010), 
+In Lim Meng Hiot, Yew Soon Ong, Yoel
+Tenne, and Chi-Keong Goh, editors, <em>Computational Intelligence in
+Expensive Optimization Problems</em>, Adaptation Learning and Optimization,
+pages 131-162. Springer Berlin Heidelberg.
+</p>
+<p>J. Mockus (1988), <em>Bayesian Approach to Global Optimization</em>. Kluwer
+academic publishers.
+</p>
+<p>M. Schonlau (1997), <em>Computer experiments and global optimization</em>,
+Ph.D. thesis, University of Waterloo.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EI</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+set.seed(007)
+
+# Monte-Carlo validation
+
+# a 4-d, 81-points grid design, and the corresponding response
+d &lt;- 4; n &lt;- 3^d
+design &lt;- do.call(expand.grid,rep(list(seq(0,1,length=3)),d))
+names(design) &lt;- paste("x",1:d,sep="")
+y &lt;- data.frame(apply(design, 1, hartman4))
+names(y) &lt;- "y"
+
+# learning
+model &lt;- km(~1, design=design, response=y, control=list(trace=FALSE))
+
+# pick up 10 points sampled from the 1-point expected improvement
+q &lt;- 10
+X &lt;- sampleFromEI(model,n=q)
+# simulation of the minimum of the kriging random vector at X
+t1 &lt;- proc.time()
+newdata &lt;- as.data.frame(X)
+colnames(newdata) &lt;- colnames(model@X)
+
+krig  &lt;- predict(object=model, newdata=newdata,type="UK",se.compute=TRUE, cov.compute=TRUE)
+mk &lt;- krig$mean
+Sigma.q &lt;- krig$cov
+mychol &lt;- chol(Sigma.q)
+nsim &lt;- 300000
+white.noise &lt;- rnorm(n=nsim*q)
+minYsim &lt;- apply(crossprod(mychol,matrix(white.noise,nrow=q)) + mk,2,min)
+# simulation of the improvement (minimization)
+qImprovement &lt;- (min(model@y)-minYsim)*((min(model@y)-minYsim) &gt; 0)
+
+# empirical expectation of the improvement and confident interval (95%)
+eiMC &lt;- mean(qImprovement)
+confInterv &lt;- c(eiMC - 1.96*sd(qImprovement)*1/sqrt(nsim),eiMC + 1.96*sd(qImprovement)*1/sqrt(nsim))
+
+# MC estimation of the qEI
+print(eiMC) 
+t2 &lt;- proc.time()
+# qEI with analytical formula
+qEI(X,model,fastCompute= FALSE)
+t3 &lt;- proc.time()
+# qEI with fast computation trick
+qEI(X,model)
+t4 &lt;- proc.time()
+t2-t1  # Time of MC computation
+t3-t2  # Time of normal computation
+t4-t3  # Time of fast computation
+
+
+</code></pre>
+
+
+</div>

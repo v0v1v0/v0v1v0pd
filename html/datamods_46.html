@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>select-group</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Select Group Input Module</h2>
+
+<h3>Description</h3>
+
+<p>Group of mutually dependent select menus for filtering <code>data.frame</code>'s columns (like in Excel).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">select_group_ui(
+  id,
+  params,
+  label = NULL,
+  btn_reset_label = "Reset filters",
+  inline = TRUE,
+  vs_args = list()
+)
+
+select_group_server(id, data_r, vars_r)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module's id.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>A list of parameters passed to each <code>shinyWidgets::virtualSelectInput()</code>,
+you can use :
+</p>
+
+<ul>
+<li> <p><code>inputId</code>: mandatory, must correspond to variable name.
+</p>
+</li>
+<li> <p><code>label</code>: Display label for the control.
+</p>
+</li>
+<li> <p><code>placeholder</code>: Text to show when no options selected.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label</code></td>
+<td>
+<p>Character, global label on top of all labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>btn_reset_label</code></td>
+<td>
+<p>Character, reset button label. If <code>NULL</code> no button is added.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inline</code></td>
+<td>
+<p>If <code>TRUE</code> (the default),
+select menus are horizontally positioned, otherwise vertically.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vs_args</code></td>
+<td>
+<p>Arguments passed to all <code>shinyWidgets::virtualSelectInput()</code> created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data_r</code></td>
+<td>
+<p>Either a <code>data.frame()</code> or a <code>shiny::reactive()</code>
+function returning a <code>data.frame</code> (do not use parentheses).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vars_r</code></td>
+<td>
+<p>character, columns to use to create filters,
+must correspond to variables listed in <code>params</code>. Can be a
+<code>shiny::reactive()</code> function, but values must be included in the initial ones (in <code>params</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>shiny::reactive()</code> function containing data filtered with an attribute <code>inputs</code> containing a named list of selected inputs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Default -----------------------------------------------------------------
+
+library(shiny)
+library(datamods)
+library(shinyWidgets)
+
+
+ui &lt;- fluidPage(
+  # theme = bslib::bs_theme(version = 5L),
+  fluidRow(
+    column(
+      width = 10, offset = 1,
+      tags$h3("Filter data with select group module"),
+      shinyWidgets::panel(
+        select_group_ui(
+          id = "my-filters",
+          params = list(
+            list(inputId = "Manufacturer", label = "Manufacturer:"),
+            list(inputId = "Type", label = "Type:"),
+            list(inputId = "AirBags", label = "AirBags:"),
+            list(inputId = "DriveTrain", label = "DriveTrain:")
+          ), vs_args = list(disableSelectAll = FALSE)
+        ),
+        status = "primary"
+      ),
+      reactable::reactableOutput(outputId = "table"),
+      tags$b("Inputs values:"),
+      verbatimTextOutput("inputs")
+    )
+  )
+)
+
+server &lt;- function(input, output, session) {
+  res_mod &lt;- select_group_server(
+    id = "my-filters",
+    data = reactive(MASS::Cars93),
+    vars = reactive(c("Manufacturer", "Type", "AirBags", "DriveTrain"))
+  )
+
+  output$table &lt;- reactable::renderReactable({
+    reactable::reactable(res_mod())
+  })
+
+  output$inputs &lt;- renderPrint({
+    attr(res_mod(), "inputs")
+  })
+}
+
+if (interactive())
+  shinyApp(ui, server)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,165 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pqnormAsymp</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymptotic Approximations of Extreme Tail 'pnorm()' and 'qnorm()'</h2>
+
+<h3>Description</h3>
+
+<p>These functions provide the first terms of asymptotic series approximations to
+<code>pnorm()</code>'s (extreme) tail, from Abramawitz and Stegun's
+26.2.13 (p.932),
+or <code>qnorm()</code> where the approximations have been derived via
+iterative plugin using Abramowitz and Stegun's formula.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+pnormAsymp(x, k, lower.tail = FALSE, log.p = FALSE)
+qnormAsymp(p, lp = .DT_Clog(p, lower.tail = lower.tail, log.p = log.p),
+           order, M_2PI =,
+           lower.tail = TRUE, log.p = missing(p))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>positive (at least non-negative) numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>integer <code class="reqn">\ge 0</code> indicating how many terms the approximation
+should use; currently <code class="reqn">k \le 5</code>.</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>numeric vector of probabilities, possibly transformed, depending
+on <code>log.p</code>.  Does not need to be specified, if <code>lp</code> is instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lp</code></td>
+<td>
+<p>numeric (vector) of <code>log(1-p)</code> values; if not specified,
+computed from <code>p</code>, depending on <code>lower.tail</code> and <code>log.p</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>order</code></td>
+<td>
+<p>an integer in <code class="reqn">\{0,1,\dots,5\}</code>, specifying the
+approximation order.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M_2PI</code></td>
+<td>
+<p>the number <code class="reqn">2\pi</code> in the same precision as <code>p</code> or
+<code>lp</code>, i.e., <code>numeric</code> or of class
+<code>"mpfr"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if true, probabilities are <code class="reqn">P[X \le x]</code>,
+otherwise upper tail probabilities, <code class="reqn">P[X &gt; x]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.p</code></td>
+<td>
+<p>logical; if <code>TRUE</code> (default for <code>qnormAsymp</code> !!), probabilities
+<code class="reqn">p</code> are given as <code class="reqn">\log(p)</code> in argument <code>p</code>
+or <code class="reqn">\log{(1-p)}</code> in <code>lp</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>see <em>both</em> help pages <code>pnormAsymp</code> and
+<code>qnormAsymp</code> from our package <a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>vector/array/mpfr like first argument <code>x</code> or <code>p</code> or <code>lp</code>, respectively.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pnorm</code>.  The same functions  “numeric-only” are in my
+<a href="https://CRAN.R-project.org/package=DPQ"><span class="pkg">DPQ</span></a> package with more extensive documentation.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+require("Rmpfr") # (in strong dependencies of this pkg {DPQmpfr})
+x &lt;- seq(1/64, 10, by=1/64)
+xm  &lt;- mpfr( x, 96)
+"TODO"
+
+## More extreme tails: ----------------------------------------------
+##
+## 1. pnormAsymp() ---------------------
+lx &lt;- c((2:10)*2, 25, (3:9)*10, (1:9)*100, (1:8)*1000, (2:7)*5000)
+lxm &lt;- mpfr(lx, 256)
+Px &lt;- pnorm(lxm, lower.tail = FALSE, log.p=TRUE)
+PxA &lt;- sapplyMpfr(setNames(0:5, paste("k =",0:5)),
+                  pnormAsymp, x=lxm, lower.tail = FALSE, log.p=TRUE)
+if(interactive())
+  roundMpfr(PxA, 40)
+# rel.errors :
+relE &lt;- asNumeric(1 - PxA/Px)
+options(width = 99) -&gt; oop # (nicely printing the matrices)
+cbind(lx, relE)
+matplot(lx, abs(relE), type="b", cex = 1/2, log="xy", pch=as.character(0:5),
+        axes=FALSE,
+        main = "|relE( &lt;pnormAsymp(lx, k=*, lower.tail=FALSE, log.p=TRUE) )|")
+sfsmisc::eaxis(1, sub10=2); sfsmisc::eaxis(2)
+legend("bottom", paste("k =", 0:5), col=1:6, lty=1:5,
+       pch = as.character(0:5), pt.cex=1/2, bty="n")
+## NB: rel.Errors go down to  7e-59 ==&gt; need precision of  -log2(7e-59) ~ 193.2 bits
+
+## 2. qnormAsymp() ---------------------
+QPx &lt;- sapplyMpfr(setNames(0:5, paste("k =",0:5)),
+                  function(k) qnormAsymp(Px, order=k, lower.tail = FALSE, log.p=TRUE))
+(relE.q &lt;- asNumeric(QPx/lx - 1))
+         # note how consistent the signs are (!) &lt;==&gt; have upper/lower bounds
+
+matplot(-asNumeric(Px), abs(relE.q), type="b", cex = 1/2, log="xy", pch=as.character(0:5),
+        xlab = quote(-Px), axes=FALSE,
+        main = "|relE( &lt;qnormAsymp(Px, k=*, lower.tail=FALSE, log.p=TRUE) )|")
+sfsmisc::eaxis(1, sub10=2); sfsmisc::eaxis(2)
+legend("bottom", paste("k =", 0:5), col=1:6, lty=1:5,
+       pch = as.character(0:5), pt.cex=1/2, bty="n")
+
+options(oop) # {revert to previous state}
+</code></pre>
+
+
+</div>

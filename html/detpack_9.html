@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>det.construct</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distribution Element Tree (DET) Construction</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>det.construct</code> generates a distribution element tree DET from available data. The DET can be used firstly in connection with <code>det.query</code> for density estimation. Secondly, with <code>det.rnd</code>, DETs can be used for smooth bootstrapping or more specifically conditional or unconditional random number generation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">det.construct(dta, mode = 2, lb = NA, ub = NA, alphag = 0.001,
+  alphad = 0.001, progress = TRUE, dtalim = Inf, cores = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dta</code></td>
+<td>
+<p>matrix with <code>d</code> rows representing components or dimensions and <code>n</code> columns corresponding to data points or samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>order of distribution elements applied, default is <code>mode = 2</code>. Use <code>+/-1</code> for constant or <code>+/-2</code> for linear elements. <code>mode &gt; 0</code> and <code>mode &lt; 0</code> lead to equal-size and -score splits, respectively, in the element-refinement process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lb, ub</code></td>
+<td>
+<p>vectors of length <code>d</code> with lower and upper sample-space bounds. If not provided or set to <code>NA</code> or <code>0</code>, the bounds are determined from the data <code>dta</code>. If bounds are provided or given as <code>0</code>, the data is not pre-whitened before the DET is computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alphag, alphad</code></td>
+<td>
+<p>significance levels for goodness-of-fit and independence tests, respectively, in element refinement or splitting process. Default is <code>alphag = alphad = 1.0e-3</code>. <code>alphad</code> is irrelevant for univariate data <code>dta</code> with <code>d = 1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>optional logical, if set to <code>TRUE</code>, a progress report about the DET construction process is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtalim</code></td>
+<td>
+<p>for large datasets, <code>det.construct</code> can be accelerated (with negligible impact on the resulting DET if <code>dtalim</code> is sufficiently large) by using only up to <code>dtalim</code> samples for element splitting tests. Setting <code>dtalim &lt; n</code> impacts mainly the splitting at the tree root, with elements being large and thus containing many samples. Default is <code>dtalim = Inf</code>, which corresponds to using all available samples (no acceleration). When using <code>dtalim &lt; n</code>, the samples have to be randomly arranged in <code>dta</code>: use for example <code>dta[,sample(1:ncol(dta), ncol(dta), replace = FALSE)]</code> to randomly rearrange the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p><code>&gt; 1</code> allows for parallel tree construction or branch splitting using the indicated number of cores. With <code>cores = Inf</code>, half of the available cores (see <code>detectCores</code>) are allocated. <code>cores = 1</code> corresponds to serial tree construction (default).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A DET object, which reflects the tree and pre-white transform, is returned.
+</p>
+
+
+<h3>References</h3>
+
+<p>Meyer, D.W. (2016) <a href="http://arxiv.org/abs/1610.00345">http://arxiv.org/abs/1610.00345</a> or Meyer, D.W., Statistics and Computing (2017) <a href="https://doi.org/10.1007/s11222-017-9751-9">https://doi.org/10.1007/s11222-017-9751-9</a> and Meyer, D.W. (2017) <a href="http://arxiv.org/abs/1711.04632">http://arxiv.org/abs/1711.04632</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Gaussian mixture data
+require(stats)
+det &lt;- det.construct(t(c(rnorm(1e5),rnorm(1e4)/100+2))) # default linear det (mode = 2)
+x &lt;- t(seq(-4,6,0.01)); p &lt;- det.query(det, x); plot(x, p, type = "l")
+
+## piecewise uniform data with peaks
+x &lt;- matrix(c(rep(0,1e3),rep(1,1e3), 2*runif(1e4),
+              rep(0,5e2),rep(1,25e2),2*runif(9e3)), nrow = 2, byrow = TRUE)
+det &lt;- det.construct(x, mode = 1, lb = 0, ub = 0) # constant elements, no pre-whitening
+</code></pre>
+
+
+</div>

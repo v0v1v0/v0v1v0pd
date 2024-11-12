@@ -1,0 +1,147 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>summarize</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Summarize a variable/dataset</h2>
+
+<h3>Description</h3>
+
+<p>Generic shell function that produces a summary of a variable (or for each
+variable in an entire dataset), given a number of summary functions and 
+depending on its data class.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">summarize(v, reportstyleOutput = FALSE, summaries = setSummaries(), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>The variable (vector) or dataset (data.frame) to be summarized.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reportstyleOutput</code></td>
+<td>
+<p>Logical indicating whether the output should
+be formatted for inclusion in the report (escaped matrix) or not. Defaults to not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summaries</code></td>
+<td>
+<p>A list of summaries to use on each supported variable type. We recommend
+using <code>setSummaries</code> for creating this list and refer to the documentation
+of this function for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional argument passed to data class specific methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Summary functions are supplied using their
+names (in character strings) in the class-specific argument, e.g.
+<code>characterSummaries = c("countMissing", "uniqueValues")</code> for character variables and
+similarly for the remaining 7 data classes (factor, Date, labelled, haven_labelled, numeric, integer, logical).
+Note that an overview of all available <code>summaryFunction</code>s can be obtained by calling
+<code>allSummaryFunctions</code>. 
+</p>
+<p>The default choices of <code>summaryFunctions</code> are available in data class specific functions, e.g.
+<code>defaultCharacterSummaries()</code> and <code>defaultNumericSummaries()</code>. 
+A complete overview of all default options can be obtained by calling setSummaries()
+</p>
+<p>A user defined summary function can be supplied using its function name. Note
+however that it should take a vector as argument and return a list on the form
+<code>list(feature="Feature name", result="The result")</code>. More details on how to construct 
+valid summary functions are found in <code>summaryFunction</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The return value depends on the value of <code>reportstyleOutput</code>. 
+</p>
+<p>If <code>reportstyleOutput = FALSE</code> (the default): If <code>v</code> is a varibale, 
+a list of <code>summaryResult</code> objects, one <code>summaryResult</code> for each summary
+function called on <code>v</code>. If <code>v</code> is a dataset, then <code>summarize()</code> returns 
+a list of lists of <code>summaryResult</code> objects instead; one list for each variable
+in <code>v</code>.  
+</p>
+<p>If <code>reportstyleOutput = TRUE</code>: 
+If <code>v</code> is a single variable: A matrix with two columns, <code>feature</code> and 
+<code>result</code> and one row for each summary function that was called. Character
+strings in this matrix are escaped such that they are ready for Rmarkdown rendering.
+</p>
+<p>If <code>v</code> is a full dataset: A list of matrices as described above, one for each
+variable in the dataset.
+</p>
+
+
+<h3>References</h3>
+
+<p>Petersen AH, Ekstrøm CT (2019). “dataMaid: Your Assistant for Documenting Supervised Data Quality Screening in R.” _Journal of Statistical Software_, *90*(6), 1-38. doi: 10.18637/jss.v090.i06 (doi: <a href="https://doi.org/10.18637/jss.v090.i06">10.18637/jss.v090.i06</a>).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>setSummaries</code>,
+<code>summaryFunction</code>, <code>allSummaryFunctions</code>, 
+<code>summaryResult</code>,
+<code>defaultCharacterSummaries</code>, <code>defaultFactorSummaries</code>,
+<code>defaultLabelledSummaries</code>, <code>defaultHavenlabelledSummaries</code>,
+<code>defaultNumericSummaries</code>, <code>defaultIntegerSummaries</code>,
+<code>defaultLogicalSummaries</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Default summary for a character vector:
+   charV &lt;- c("a", "b", "c", "a", "a", NA, "b", "0")
+   summarize(charV)
+
+#Inspect default character summary functions:
+   defaultCharacterSummaries()
+
+#Define a new summary function and add it to the summary for character vectors:
+   countZeros &lt;- function(v, ...) {
+     res &lt;- length(which(v == 0))
+     summaryResult(list(feature="No. zeros", result = res, value = res))
+   }
+   summarize(charV, 
+     summaries = setSummaries(character = defaultCharacterSummaries(add = "countZeros")))
+
+ #Does nothing, as intV is not affected by characterSummaries
+   intV &lt;- c(0:10)
+   summarize(intV, 
+     summaries = setSummaries(character = defaultCharacterSummaries(add = "countZeros")))
+
+ #But supplying the argument for integer variables changes the summary:
+   summarize(intV, summaries = setSummaries(integer = "countZeros"))
+   
+ #Summarize a full dataset:
+  data(cars)
+  summarize(cars)
+  
+ #Summarize a variable and obtain report-style output (formatted for markdown)
+  summarize(charV, reportstyleOutput = TRUE)
+
+</code></pre>
+
+
+</div>

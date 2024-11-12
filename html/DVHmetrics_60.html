@@ -1,0 +1,265 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>readDVH</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read DVH text files</h2>
+
+<h3>Description</h3>
+
+<p>Reads single or multiple DVH text files as exported from Varian Eclipse(TM), CadPlan(TM), OnCentra MasterPlan(TM), Philipps Pinnacle3 (TM), Elekta Monaco (TM), Tomo HiArt (TM), RaySearch Labs RayStation (TM), or Medcom ProSoma (TM). Supports cumulative and differential DVHs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">readDVH(x,
+        type=c("Eclipse", "Cadplan", "Masterplan",
+               "Pinnacle", "Monaco", "HiArt",
+               "RayStation", "ProSoma", "PRIMO"),
+        planInfo=FALSE, courseAsID=FALSE, add, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p><code>character</code> vector giving paths to DVH text files. May contain globbing symbols understood by <code>Sys.glob</code>. If missing and in interactive mode, <code>readDVH</code> opens a file selector widget. Under Windows, this widget allows selecting multiple files simultaneously. For <code>type="Pinnacle"</code>, <code>x</code> should be one of the following: A directory with information for one patient, a directory with several sub-directories (one for each patient), or a zip file of such directories. Under Windows, if <code>x</code> is missing and <code>type="Pinnacle"</code>, <code>readDVH</code> opens a folder selector widget.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p><code>character</code>. Indicates which program the DVH text files were exported from. Supported: <code>"Cadplan"</code> (tested with version 6.4.7), <code>"Eclipse"</code> (tested with Varian Eclipse version 10-15), <code>"Masterplan"</code> (tested with OnCentra MasterPlan version 4.3), <code>"Pinnacle"</code> (tested with Pinnacle3 version 9, see Details), <code>"Monaco"</code> (tested with Elekta Monaco version 5), <code>"HiArt"</code> (TomoTherapy HiArt), <code>"RayStation"</code> (tested with RaySearch Labs RayStation version 9A), <code>"ProSoma"</code> (Medcom ProSoma), <code>"PRIMO"</code> (tested with version 0.3.1.1558).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>planInfo</code></td>
+<td>
+<p>Experimental: Either <code>FALSE</code> or <code>character</code> string. In the latter case, <code>readDVH</code> tries to extract additional information from the <code>Plan</code> field in the DVH file, e.g., the prescription dose for a sum plan or the boost quadrant. Undocumented, see source.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>courseAsID</code></td>
+<td>
+<p><code>logical</code>. If <code>TRUE</code>, the <code>Course</code> entry in the header section of a DVH file is appended to the regular patient ID. Currently supported only for <code>type="Eclipse"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add</code></td>
+<td>
+<p><code>DVHLstLst</code> object. Existing object that should be merged with the new data from the files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed on to <code>file</code>. Specify UTF-8 file encoding with <code>encoding="UTF-8"</code> or <code>encoding="UTF-8-BOM"</code> (when a byte-order-mark is used). Passing additional arguments is currently not supported when reading Pinnacle files. Additional arguments are also used for <code>type="HiArt"</code> where a list <code>hiart</code> may be supplied that specifies patient IDs, absolute structure volumes, and prescription dose. Same for <code>type="RayStation"</code> with a list <code>"raystation"</code>. If Eclipse uncertainty plans are present, specify <code>uncertainty=TRUE</code> (see Details).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Absolute dose values need to be given in Gy, cGy, or eV/g for uncalibrated dose in DVHs exported by PRIMO. Absolute volume values need to be given in in cm^3.
+</p>
+<p>Differential DVHs are automatically converted to cumulative DVHs, but the differential DVH information is kept.
+</p>
+<p>Sum plans are supported.
+</p>
+<p>For Eclipse starting with version 13, the date format is locale dependent as it uses words for day and month. Importing those dates as class <code>Date</code> requires that the correct locale is set (see <code>Sys.setlocale</code>), and that files containing accents are read using the correct encoding (see above). Otherwise, date is stored as a character string.
+</p>
+<p>For RayStation, only cumulative DVHs with absolute volume are currently supported. Volume is assumed to be measured in cm^3.
+</p>
+<p>For files with absolute volume exported from Masterplan and Tomo HiArt, you can specify <code>volume_from_dvh=TRUE</code> if the structure volume should be guessed from the maximal volume given in the DVH for each structure.
+</p>
+<p>Since files from HiArt, ProSoma and PRIMO do not contain info on patient ID, the current workaround is to generate a random ID.
+</p>
+<p>To export data from Tomo HiArt, copy to clipboard and then save to file from a text editor. Support for Tomo HiArt files is currently limited to those with absolute dose. Please send an anonymized sample file if you need to read files with relative dose. You can provide a list <code>hiart</code> with more information about patients and structures. The list should have one component for each file you import. Each component itself has to be a named list with optional components
+</p>
+
+<ul>
+<li>
+<p><code>date</code> - a character string like <code>"2022-01-16"</code> for the date
+</p>
+</li>
+<li>
+<p><code>patName</code> - a character string for patient name
+</p>
+</li>
+<li>
+<p><code>patID</code> - a character string for patient ID
+</p>
+</li>
+<li>
+<p><code>doseRx</code> - a character string like <code>"50.4Gy"</code> for prescription dose in the same dose unit as used in the DVHs
+</p>
+</li>
+<li>
+<p><code>structVol</code> - a named character vector like <code>c("PTV"=750, "LUNG"=1250)</code> giving the absolute structure volumes with names equal to structure names
+</p>
+</li>
+<li>
+<p><code>volumeUnit</code> - a character string, either <code>"CC"</code> or <code>"cm3"</code>, for the structure volume unit)
+</p>
+</li>
+</ul>
+<p>The same approach can be used for RayStation files with a list <code>raystation</code>.
+</p>
+<p>Pinnacle3 files have to be exported using its own scripting facility such that information from one patient is contained in one directory. A suitable export script is available on request from the package authors. The directory layout for one patient has to be as follows (experimental, likely to change in future versions):
+</p>
+
+<ul>
+<li>
+<p>Files (CSV format with column headers):
+</p>
+
+<ul>
+<li>
+<p><code>DoseInfo.csv</code> (variables <code>"PrescriptionDose cGy"</code>, <code>"NumberOfFractions"</code>, <code>"Dosis cGy"</code>)
+</p>
+</li>
+<li>
+<p><code>PatInfo.csv</code> (variables <code>"LastName"</code>, <code>"FirstName"</code>, <code>"MedicalRecordNumber"</code>)
+</p>
+</li>
+<li>
+<p><code>PlanInfo.csv</code> (variable <code>"PlanName"</code>)</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Directory: <code>Data</code>:
+</p>
+
+<ul>
+<li>
+<p><code>Info.csv</code> (variables <code>"Filename"</code>, <code>"RegionOfInterestName"</code>,  <code>"DoseMin cGy"</code>, <code>"DoseMax cGy"</code>, <code>"DoseMean cGy"</code>, <code>"Volume ccm"</code>)
+</p>
+</li>
+<li>
+<p>DVH1.csv, DVH2.csv, ...  - the actual DVH data files with names defined in <code>Info.csv</code> variable <code>"Filename"</code>. They should look like
+<code style="white-space: pre;">⁠NumberOfDimensions = 2;
+NumberOfPoints = 431;
+Points[] ={
+  0,0
+  10,0
+  ...
+  4000,100
+};
+  ⁠</code>
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Returns an object of class <code>DVHLstLst</code>. This is a list (one component with class <code>DVHLst</code> for each original file from one patient) of lists (each component is an object of class <code>DVHs</code>). A <code>DVHs</code> object is a list with the following components:
+</p>
+
+<dl>
+<dt><code>dvh</code></dt>
+<dd>
+<p><code>matrix</code> - cumulative DVH values</p>
+</dd>
+<dt><code>dvhDiff</code></dt>
+<dd>
+<p><code>matrix</code> - differential DVH values, only created a) if original file contained a differential DVH or b) by <code>convertDVH</code></p>
+</dd>
+<dt><code>patID</code></dt>
+<dd>
+<p><code>character</code> string - patient ID</p>
+</dd>
+<dt><code>date</code></dt>
+<dd>
+<p><code>character</code> string - date of DVH export</p>
+</dd>
+<dt><code>type</code></dt>
+<dd>
+<p><code>character</code> string - cumulative or differential DVH</p>
+</dd>
+<dt><code>plan</code></dt>
+<dd>
+<p><code>character</code> string - plan name</p>
+</dd>
+<dt><code>course</code></dt>
+<dd>
+<p><code>character</code> string - course - currently Eclipse only</p>
+</dd>
+<dt><code>structure</code></dt>
+<dd>
+<p><code>character</code> string - structure name</p>
+</dd>
+<dt><code>structVol</code></dt>
+<dd>
+<p><code>numeric</code> - structure volume</p>
+</dd>
+<dt><code>doseUnit</code></dt>
+<dd>
+<p><code>character</code> string - measurement unit dose</p>
+</dd>
+<dt><code>volumeUnit</code></dt>
+<dd>
+<p><code>character</code> string - measurement unit volume</p>
+</dd>
+<dt><code>doseRx</code></dt>
+<dd>
+<p><code>numeric</code> - prescription dose</p>
+</dd>
+<dt><code>isoDoseRx</code></dt>
+<dd>
+<p><code>numeric</code> - iso-dose percentage</p>
+</dd>
+<dt><code>doseMin</code></dt>
+<dd>
+<p><code>numeric</code> - minimum dose from DVH file</p>
+</dd>
+<dt><code>doseMax</code></dt>
+<dd>
+<p><code>numeric</code> - maximum dose from DVH file</p>
+</dd>
+<dt><code>doseAvg</code></dt>
+<dd>
+<p><code>numeric</code> - average dose from DVH file</p>
+</dd>
+<dt><code>doseMed</code></dt>
+<dd>
+<p><code>numeric</code> - median dose from DVH file</p>
+</dd>
+<dt><code>doseSD</code></dt>
+<dd>
+<p><code>numeric</code> - dose standard deviation from DVH file</p>
+</dd>
+</dl>
+<h3>See Also</h3>
+
+<p><code>Sys.glob</code>,
+<code>readLines</code>,
+<code>print.DVHs</code>,
+<code>showDVH</code>,
+<code>getMetric</code>,
+<code>checkConstraint</code>,
+<code>convertDVH</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# pick DVH files interactively
+res &lt;- readDVH()
+res
+
+# read all txt files in subdirectory DVH
+res &lt;- readDVH("DVH/*.txt", type="Eclipse")
+res
+
+## End(Not run)
+</code></pre>
+
+
+</div>

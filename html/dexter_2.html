@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ability</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate abilities</h2>
+
+<h3>Description</h3>
+
+<p>Computes estimates of ability for persons or for booklet scores
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ability(
+  dataSrc,
+  parms,
+  predicate = NULL,
+  method = c("MLE", "EAP", "WLE"),
+  prior = c("normal", "Jeffreys"),
+  parms_draw = "average",
+  mu = 0,
+  sigma = 4,
+  merge_within_persons = FALSE
+)
+
+ability_tables(
+  parms,
+  design = NULL,
+  method = c("MLE", "EAP", "WLE"),
+  prior = c("normal", "Jeffreys"),
+  parms_draw = "average",
+  mu = 0,
+  sigma = 4
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataSrc</code></td>
+<td>
+<p>a connection to a dexter database, a matrix, or a data.frame with columns: person_id, item_id, item_score</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms</code></td>
+<td>
+<p>object produced by <code>fit_enorm</code> or a data.frame with columns item_id, item_score and, 
+depending on parametrization, a column named either beta/delta, eta or b</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predicate</code></td>
+<td>
+<p>An optional expression to subset data, if NULL all data is used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>Maximum Likelihood (MLE), Expected A posteriori (EAP) or Weighted Likelihood (WLE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prior</code></td>
+<td>
+<p>If an EAP estimate is produced one can choose a normal prior or
+Jeffreys prior; i.e., a prior proportional to the square root of test information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms_draw</code></td>
+<td>
+<p>When parms is Bayesian, parms_draw can be the index of the posterior sample of the item 
+parameters that will be used for generating abilities. If parms_draw='average', the posterior mean is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+<p>Mean of the normal prior</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>Standard deviation of the normal prior</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>merge_within_persons</code></td>
+<td>
+<p>for persons who were administered multiple booklets, 
+whether to provide just one ability value (TRUE) or one per booklet(FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>A data.frame with columns item_id and optionally booklet_id. If the column booklet_id is not included, the score 
+transformation table will be based on all items found in the design. If design is NULL
+and parms is an enorm fit object the score transformation table will be computed based on the test design 
+that was used to fit the items.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>MLE estimates of ability will produce -Inf and Inf estimates for
+the minimum (=0) and the maximum score on a booklet. If this is undesirable, 
+we advise to use WLE. The WLE was proposed by Warm (1989) to reduce bias in the MLE and is also known
+as the Warm estimator.
+</p>
+
+
+<h3>Value</h3>
+
+
+<dl>
+<dt>ability</dt>
+<dd>
+<p>a data.frame with columns: booklet_id, person_id, booklet_score, theta and optionally se (standard error) </p>
+</dd>
+<dt>ability_tables</dt>
+<dd>
+<p>a data.frame with columns: booklet_id, booklet_score, theta and optionally se (standard error)</p>
+</dd>
+</dl>
+<h3>References</h3>
+
+<p>Warm, T. A. (1989). Weighted likelihood estimation of ability in item response theory. 
+Psychometrika, 54(3), 427-450.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+db = start_new_project(verbAggrRules, ":memory:")
+add_booklet(db, verbAggrData, "agg")
+
+f = fit_enorm(db)
+
+mle = ability_tables(f, method="MLE")
+eap = ability_tables(f, method="EAP", mu=0, sigma=1)
+wle = ability_tables(f, method="WLE")
+
+plot(wle$booklet_score, wle$theta, xlab="test-score", ylab="ability est.", pch=19)
+points(mle$booklet_score, mle$theta, col="red", pch=19,)
+points(eap$booklet_score, eap$theta, col="blue", pch=19)
+legend("topleft", legend = c("WLE", "MLE", "EAP N(0,1)"), 
+        col = c("black", "red", "blue"), bty = "n",pch = 19)
+
+close_project(db)
+
+
+
+</code></pre>
+
+
+</div>

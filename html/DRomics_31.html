@@ -1,0 +1,236 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>itemselect</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Selection of significantly responsive items</h2>
+
+<h3>Description</h3>
+
+<p>Significantly responsive items are selected using one of the three proposed methods: 
+a quadratic trend test, a linear trend test or an ANOVA-based test.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">itemselect(omicdata, select.method = c("quadratic", "linear", "ANOVA"), 
+  FDR = 0.05, max.ties.prop = 0.2)   
+
+## S3 method for class 'itemselect'
+print(x, nfirstitems = 20, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>omicdata</code></td>
+<td>
+<p>An object of class <code>"microarraydata"</code>, <code>"RNAseqdata"</code>,
+<code>"metabolomicdata"</code> or <code>"continuousanchoringdata"</code> respectively returned by 
+functions <code>microarraydata</code>, <code>RNAseqdata</code>, 
+<code>metabolomicdata</code> or <code>continuousanchoringdata</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select.method</code></td>
+<td>
+<p><code>"quadratic"</code> for a 
+quadratic trend test on dose ranks, <code>"linear"</code> for a linear trend test on dose ranks and <code>"ANOVA"</code> for 
+an ANOVA-type test (see details for further explaination).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FDR</code></td>
+<td>
+<p>The threshold in term of FDR (False Discovery Rate) for selecting responsive items.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.ties.prop</code></td>
+<td>
+<p>The maximal tolerated proportion of tied values for each item, 
+above which the item cannot be selected (must be in ]0, 0.5], 
+and by default fixed at 0.2 - see details for a description of this filtering step).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>"itemselect"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfirstitems</code></td>
+<td>
+<p>The maximum number of selected items to print.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p> further arguments passed to print function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The selection of responsive items is performed using the <code>limma</code> package
+for microarray and continuous omics data (such as metabolomics), the <code>DESeq2</code> package for
+RNAseq data and the <code>lm</code> function for continuous anchoring data. 
+Three methods are proposed (as described below). Within <code>limma</code> those methods are implemented using functions <code>lmFit</code>,  
+<code>eBayes</code> and <code>topTable</code> with p-values ajusted for multiple 
+testing using the Benjamini-Hochberg method (also called q-values), with the false discovery rate given in
+input (argument <code>FDR</code>). 
+Within <code>DESeq2</code> those methods
+are implemented using functions <code>DESeqDataSetFromMatrix</code>,  
+<code>DESeq</code> and <code>results</code> with p-values ajusted for multiple 
+testing using the Benjamini-Hochberg method (also called q-values), with the false discovery rate given in
+input (argument <code>FDR</code>). 
+For continuous anchoring data, the <code>lm</code> and <code>anova</code> functions are used 
+to fit the model and compare it to the null model, and the pvalues are then corrected using
+the function <code>p.adjust</code> with the Benjamini-Hochberg method.
+</p>
+
+<ul>
+<li>
+<p> The ANOVA_based test (<code>"ANOVA"</code>) is classically used for 
+selection of omics data in the general case but it requires many replicates per dose
+to be efficient, and is thus not really suited for a dose-response design.
+</p>
+</li>
+<li>
+<p> The linear trend test (<code>"linear"</code>) aims at detecting monotonic trends from dose-response designs,
+whatever the number of replicates per dose. 
+As proposed by Tukey (1985), it tests the global significance of
+a linear model describing the response as a function of the dose in rank-scale.
+</p>
+</li>
+<li>
+<p> The quadratic trend test (<code>"quadratic"</code>)  
+tests the global significance of a quadratic model describing the response as a function of the dose in rank-scale.
+It is a variant of the linear trend method that aims at detecting monotonic and non monotonic trends from a dose-response designs, whatever the number of replicates per dose (default chosen method).
+</p>
+</li>
+</ul>
+<p>After the use of one this previously described tests, 
+a filter based on the proportion of tied values is also performed whatever the type of data, assuming 
+tied values correspond to a minimal common value at which non detections were imputed. 
+All items having a proportion of such tied minimal values above the input argument
+<code>max.ties.prop</code> are eliminated from the selection.
+</p>
+
+
+<h3>Value</h3>
+
+ 
+<p><code>itemselect</code> returns an object of class <code>"itemselect"</code>, a list with 5 components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code> adjpvalue </code></td>
+<td>
+<p> the vector of the p-values adjusted by the Benjamini-Hochberg method 
+(also called q-values) for selected items 
+(adjpvalue inferior to FDR) sorted in ascending order</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code> selectindex </code></td>
+<td>
+<p> the corresponding vector of row indices of selected items in the object omicdata </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>omicdata</code></td>
+<td>
+<p>The corresponding object of class <code>"microarraydata"</code>,
+<code>"RNAseqdata"</code>, <code>"continuousomicdata"</code> or <code>"continuousanchoringdata"</code>
+given in input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>select.method</code></td>
+<td>
+<p>The selection method given in input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FDR</code></td>
+<td>
+<p>The threshold in term of FDR given in input.</p>
+</td>
+</tr>
+</table>
+<p>The print of a <code>"itemselect"</code> object gives the number of selected items and the 
+identifiers of the 20 most responsive items.
+</p>
+
+
+<h3>Author(s)</h3>
+
+ 
+<p>Marie-Laure Delignette-Muller
+</p>
+
+
+<h3>References</h3>
+
+ 
+<p>Tukey JW, Ciminera JL and Heyse JF (1985), <em>Testing the statistical certainty of a response to increasing doses of a drug</em>. Biometrics, 295-301.
+</p>
+<p>Ritchie ME, Phipson B, Wu D, Hu Y, Law CW, Shi W, and Smyth, GK (2015), <em>limma powers differential expression analyses for RNA-sequencing and microarray studies</em>. Nucleic Acids Research 43, e47.
+</p>
+<p>Love MI, Huber W, and Anders S (2014), <em>Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2</em>. Genome biology, 15(12), 550.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>lmFit</code>, <code>eBayes</code> and <code>topTable</code>
+for details about the used functions of the <code>limma</code> package and 
+<code>DESeqDataSetFromMatrix</code>,
+<code>DESeq</code> and <code>results</code>
+for details about the used functions of the <code>DESeq2</code> package.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# (1) an example on a microarray data set (a subsample of a greater data set) 
+#     
+datafilename &lt;- system.file("extdata", "transcripto_sample.txt", package="DRomics")
+
+(o &lt;- microarraydata(datafilename, check = TRUE, norm.method = "cyclicloess"))
+
+# 1.a using the quadratic trend test
+#
+(s_quad &lt;- itemselect(o, select.method = "quadratic", FDR = 0.05))
+print(s_quad, nfirstitems = 30)
+
+# to get the names of all the selected items
+(selecteditems &lt;- s_quad$omicdata$item[s_quad$selectindex]) 
+
+
+
+# 1.b using the linear trend test
+#
+(s_lin &lt;- itemselect(o, select.method = "linear", FDR = 0.05))
+
+# 1.c using the ANOVA-based test
+#
+(s_ANOVA &lt;- itemselect(o, select.method = "ANOVA", FDR = 0.05))
+
+# 1.d using the quadratic trend test with a smaller false discovery rate
+#
+(s_quad.2 &lt;- itemselect(o, select.method = "quadratic", FDR = 0.001))
+
+
+</code></pre>
+
+
+</div>

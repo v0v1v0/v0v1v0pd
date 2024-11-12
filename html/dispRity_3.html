@@ -1,0 +1,146 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>adonis.dispRity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>adonis dispRity (from <code>vegan::adonis2</code>)</h2>
+
+<h3>Description</h3>
+
+<p>Passing <code>dispRity</code> objects to the <code>adonis2</code> function from the <code>vegan</code> package.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">adonis.dispRity(
+  data,
+  formula = matrix ~ group,
+  method = "euclidean",
+  ...,
+  warn = TRUE,
+  matrix = 1
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>dispRity</code> object with subsets</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>The model formula (default is <code>matrix ~ group</code>, see details)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The distance method to be passed to <code>adonis2</code> and eventually to <code>vegdist</code> (see details - default <code>method ="euclidean"</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any optional arguments to be passed to <code>adonis2</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn</code></td>
+<td>
+<p><code>logical</code>, whether to print internal warnings (<code>TRUE</code>; default - advised) or not (<code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>matrix</code></td>
+<td>
+<p><code>numeric</code>, which matrix to use (default is <code>1</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The first element of the formula (the response) must be called <code>matrix</code> and the predictors must be existing in the subsets of the <code>dispRity</code> object.
+</p>
+<p>If <code>data$matrix[[1]]</code> is not a distance matrix, distance is calculated using the <code>dist</code> function. The type of distance can be passed via the standard <code>method</code> argument that will be recycled by <code>adonis2</code>.
+</p>
+<p>If the <code>dispRity</code> data has custom subsets with a single group, the formula is set to <code>matrix ~ group</code>.
+</p>
+<p>If the <code>dispRity</code> data has custom subsets with multiple group categories (separated by a dot, e.g. <code>c("group1.cat1", "group1.cat2", "group2.catA", "group2.catB")</code> being two groups with two categories each), the default formula is <code>matrix ~ first_group</code> but can be set to any combination (e.g. <code>matrix ~ first_group + second_group</code>).
+</p>
+<p>If the <code>dispRity</code> data has time subsets, the predictor is automatically set to <code>time</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>adonis2</code>, <code>test.dispRity</code>, <code>custom.subsets</code>, <code>chrono.subsets</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Adonis with one groups 
+
+## Generating a random character matrix
+character_matrix &lt;- sim.morpho(rtree(20), 50, rates = c(rnorm, 1, 0))
+## Calculating the distance matrix
+distance_matrix &lt;- as.matrix(dist(character_matrix))
+## Creating two groups
+random_groups &lt;- list("group1" = 1:10, "group2" = 11:20)
+
+## Generating a dispRity object
+random_disparity &lt;- custom.subsets(distance_matrix, random_groups)
+## Running a default NPMANOVA
+adonis.dispRity(random_disparity)
+
+
+## Adonis with multiple groups
+
+## Creating a random matrix
+random_matrix &lt;- matrix(data = rnorm(90), nrow = 10, 
+                     dimnames = list(letters[1:10]))
+## Creating two groups with two states each
+groups &lt;- as.data.frame(matrix(data = c(rep(1,5), rep(2,5), rep(c(1,2), 5)),
+         nrow = 10, ncol = 2, dimnames = list(letters[1:10], c("g1", "g2"))))
+
+## Creating the dispRity object
+multi_groups &lt;- custom.subsets(random_matrix, groups)
+
+## Running the NPMANOVA
+adonis.dispRity(multi_groups, matrix ~ g1 + g2)
+
+## Adonis with time
+
+## Creating time series
+data(BeckLee_mat50)
+data(BeckLee_tree)
+data(BeckLee_ages)
+time_subsets &lt;- chrono.subsets(BeckLee_mat50, BeckLee_tree, 
+     method = "discrete", inc.nodes = FALSE, time = c(100, 85, 65, 0),
+     FADLAD = BeckLee_ages)
+
+## Running the NPMANOVA with time as a predictor
+adonis.dispRity(time_subsets, matrix ~ time)
+
+## Running the NPMANOVA with each time bin as a predictor
+adonis.dispRity(time_subsets, matrix ~ chrono.subsets)
+
+
+</code></pre>
+
+
+</div>

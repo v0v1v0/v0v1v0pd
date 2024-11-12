@@ -1,0 +1,193 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dag.sim2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Simulate data based on a DAG.
+</h2>
+
+<h3>Description</h3>
+
+<p>Simulates data according to a DAG object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dag.sim2(dag, b = rep(0, nrow(dag$arc)), bxy = 0, n, 
+                      distr  = rep(0, length(dag$x)),
+                      mu     = rep(0, length(dag$x)),
+                      stdev  = rep(0, length(dag$x)),
+                      nu     = NA,
+                      lambda = NA,
+                      binary = NA,
+                      naming = 2, seed = NA, verbose = FALSE) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dag</code></td>
+<td>
+
+<p>The DAG object according to which data is to be simulated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+
+<p>Vector of coefficients defining the direct effects of the DAG arcs (on linear scale).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bxy</code></td>
+<td>
+
+<p>Coefficient defining the direct effect of main exposure X on outcome Y (on linear scale).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+
+<p>Number of observations to be simulated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distr</code></td>
+<td>
+
+<p>0 for Normal distribution continuous nodes,<br>
+1 for binary nodes simulated from logistic model,<br>
+1.1 for binary nodes simulated from logistic model (see mu),<br>
+2 for binary nodes simulated from linear risk difference model,<br>
+2.1 for binary nodes simulated from linear risk difference model (see mu)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mu</code></td>
+<td>
+
+<p>Vector of means that are to be simulated for the different DAG nodes:<br>
+For normally distributed continuous variables, the overall mean simulated.<br>
+For binary variables w/ distr=1 or distr=2, overall proportion of successes simulated.<br>
+For binary variables w/ distr=1.1 or distr=2.1, proportion of successes simulated in the reference category (sum of coef-weighted predictors =0).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stdev</code></td>
+<td>
+
+<p>Vector of standard deviations for each node.<br>
+For nodes without ancestors, continuous data are drawn from a Normal distribution with this standard deviation.
+For continuous nodes with ancestors, this is the standard deviation of the residual noise that is added to the calculated observation value.<br>
+If used on binary variables with ancestors, this would analogously add residual noise to the calculated predictor, diluting the direct effects.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nu</code></td>
+<td>
+
+<p>Not used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+
+<p>Not used.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>binary</code></td>
+<td>
+
+<p>For backwards compatibility: Vector indicating which nodes are to be continuous (=0) and binary (=1). If given, this is passed to argument "distr" and a warning is issued.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>naming</code></td>
+<td>
+
+<p>If =2, the alternative DAG node symbols are used for naming the variables in the output dataframe.
+Otherwise, the output dataframe variables are named X1...Xn.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Seed to initialize the random number generator.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>If =TRUE, additional output is given during the simulation, in particular showing the different calculation steps.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A dataframe with n (rows) observations featuring simulated data for each node (columns) in the DAG.<br><br>
+Simulation steps:<br>
+1. simulate data for nodes i without ancestors, drawing from Normal distribution with mean mu[i] and stdev[i]
+(continuous node), or drawing from Bernoulli events with probability mu[i] (binary node).<br>
+2. simulate data for nodes i for which all ancestors already have been simulated by multiplying the ancestor values
+with the corresponding arc coefficients and summing them up, shifting the resulting values to the mean mu[i] (exceptions: distr=1.1 or
+distr=2.1, as detailed in "mu" above) specified for the
+currently simulated node (logit-transformed if binary based on logistic model), then adding noise drawn from a Normal distribution with mean 0
+and standard deviation stdev[i], finally using the resulting values (inverse logit, if binary based on logistic model) as success probabilities
+for simulating binary data if node is binary.<br><br>
+As the noise is added after shifting to the mean, the mean of the simulated data will not be exact. Also, the noise is added before calculating descendant nodes, i.e. it is sort of true inter-individual variation, rather than measurement error.<br><br>
+For the risk difference model, the success probability calculated by summing the weighted ancestors can easily be &lt;0 (or &gt;1).
+If this happens, the probability is set to 0 (or 1), and a warning is issued.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Undirected arcs are ignored in these simulations.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Lutz P Breitling &lt;l.breitling@posteo.de&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Breitling LP, Duan C, Dragomir AD, Luta G (2022). Using dagR to identify minimal sufficient adjustment sets and
+to simulate data based on directed acyclic graphs. Int J Epidemiol 50(6):1772-1777.<br>
+Duan C, Dragomir AD, Luta G, Breitling LP (2022). Reflection on modern methods: Understanding bias and data
+analytical strategies through DAG-based data simulations. Int J Epidemiol 50(6):2091-2097.<br></p>
+
+
+<h3>See Also</h3>
+
+<p><code>dag.sim</code>
+</p>
+
+
+</div>

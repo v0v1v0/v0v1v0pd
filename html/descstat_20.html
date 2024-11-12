@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bin</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bin series</h2>
+
+<h3>Description</h3>
+
+<p>A new class called <code>bin</code> is provided, along with different
+functions which enable to deal easily with bins, ie creating <code>bin</code>
+objects (<code>as_bin</code>) coercing bins to numerical values
+(<code>as_numeric</code>), merging bins (<code>cut</code>) and checking than an object is
+a bin (<code>is_bin</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">as_bin(x)
+
+is_bin(x)
+
+as_numeric(x, pos = 0, xfirst = NULL, xlast = NULL, wlast = NULL)
+
+## S3 method for class 'bin'
+cut(x, breaks = NULL, ...)
+
+## S3 method for class 'character'
+cut(x, breaks = NULL, ...)
+
+## S3 method for class 'factor'
+cut(x, breaks = NULL, ...)
+
+## S3 method for class 'character'
+extract(data, ..., .name_repair = "check_unique")
+
+## S3 method for class 'factor'
+extract(data, ..., .name_repair = "check_unique")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a character or a factor: the first and last characters
+should be any of <code>[</code>, <code>(</code>, <code style="white-space: pre;">⁠]⁠</code>, <code style="white-space: pre;">⁠)⁠</code> and the other characters
+should be interpreted as two numerical values separated by a
+comma,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos</code></td>
+<td>
+<p>a numeric between 0 and 1, 0 for the lower bond, 1 for
+the upper bond, 0.5 for the center of the class (or any other
+value between 0 and 1), which indicates to <code>as_numeric</code> how the
+bins should be coerced to numerical values,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xfirst, xlast</code></td>
+<td>
+<p>the center of the first (last) class, if one
+wants to specify something different from the average of the
+lower and the upper bonds,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wlast</code></td>
+<td>
+<p>in the case where the upper bond is infinite and
+<code>xlast</code> is not provided, the width of the last class is set to
+the one of the before last class. If <code>wlast</code> is provided, it is
+set to the width of the before last class times <code>wlast</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>breaks</code></td>
+<td>
+<p>a numerical vector of breaks which should be a subset
+of the initial set of breaks. If only one break is provided,
+all the bins with greater values are merged,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>see <code>base::cut()</code> for the <code>cut</code> method and
+<code>tidyr::extract()</code> for the <code>extract</code> method,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a character or a factor containing bins,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.name_repair</code></td>
+<td>
+<p>see <code>tidyr::extract()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<ul>
+<li> <p><code>extract</code> methods for characters and factors are provided which
+split the character strings in a four tibble columns: the open
+bracket, the lower bound, the upper bound and the closing bracket.
+</p>
+</li>
+<li> <p><code>as_bin</code> takes as argument a character or a factor that
+represents a bin, check the consistency of the string and return a
+bin object with levels in the correct order and NAs when the
+strings are malformed,
+</p>
+</li>
+<li>
+<p> the default <code>cut</code> method takes a numerical series as argument and
+returns a factor containing bins according to a <code>break</code> vector; for
+the bin's method, the break should be a subset of the original
+set of breaks and a bin with fewer levels results,
+</p>
+</li>
+<li> <p><code>as_numeric</code> converts a bin to a value of the underlying variable
+defined by its relative position (from 0 lower bound to 1 upper
+bound in the bin),
+</p>
+</li>
+<li> <p><code>is_bin</code> check if the argument is a bin.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p><code>as_bin</code> returns a <code>bin</code> object, <code>is_bin</code> a logical, the
+<code>extract</code> method a tibble, <code>as_numeric</code> a numeric and the <code>cut</code>
+method a <code>bin</code> object with fewer levels.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yves Croissant
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># create a factor containing bins using cut on a numeric
+z &lt;- c(1, 5, 10, 12, 4, 9, 8)
+bin1 &lt;- cut(z, breaks = c(1, 8, 12, Inf), right = FALSE)
+# extract the elements of the levels in a tibble
+extract(bin1)
+# coerce to a bin object
+bin2 &lt;- as_bin(bin1)
+# coerce to a numeric using the center of the bins
+as_numeric(bin2, pos = 0.5)
+# special values for the center of the first and of the last bin
+as_numeric(bin2, pos = 0.5, xfirst = 5, xlast = 16)
+# same, but indicating that the width of the last class should be
+# twice the one of the before last
+as_numeric(bin2, pos = 0.5, xfirst = 5, wlast = 2)
+# merge in order to get only two bins
+cut(bin2, breaks = c(1, 12))
+# if length of breaks is 1, this is the value for which all the bins
+# containing greater values are merged
+cut(bin2, breaks = 8)
+# check that bin1 and bin2 are objects of class bin
+is_bin(bin1)
+is_bin(bin2)
+</code></pre>
+
+
+</div>

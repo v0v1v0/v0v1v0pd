@@ -1,0 +1,257 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mleDb</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Maximum likelihood estimates of db parameters.
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculates maximum likelihood estimates of the <code>alpha</code> and
+<code>beta</code> parameters of a db distribution.  Calls upon
+<code>optim()</code> with the <code>"BFGS"</code> method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mleDb(x, ntop, zeta=FALSE, par0=NULL, UB=10, maxit=1000,
+      covmat=TRUE, useGinv=FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A random sample from the db distribution whose parameters are
+being estimated.  Missing values are <em>allowed</em>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ntop</code></td>
+<td>
+
+<p>The <code>ntop</code> parameter of the db distribution whose parameters are
+being estimated.  I.e. it is the maximum possible value of the distribution,
+whose values are integers between 1 and <code>ntop</code>, or between 0 and
+<code>ntop</code> if <code>zeta</code> (see below) is <code>TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zeta</code></td>
+<td>
+
+<p>See <code>ddb()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>par0</code></td>
+<td>
+
+<p>Optional starting values for the iterative estimation procedure.
+A vector with entries <code>alpha</code> and <code>beta</code>.  Ideally this
+vector should be named; if not it is <em>assumed</em> that the
+entries are in the order <code>alpha</code>, <code>beta</code>.  If not
+supplied starting values are calculated using <code>meDb()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>UB</code></td>
+<td>
+
+<p>Positive numeric scalar, providing an upper bound on the starting
+values used by <code>mleDb()</code>.  It appears that if these starting
+values are too large (it is not clear <em>how</em> large) then <code>optim()</code>
+will throw an error.  This bound is ignored if <code>par0</code> is
+supplied.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Integer scalar.  The maximum number of iterations to be undertaken
+by <code>optim()</code>.  What happens if this number is exceeded
+depends on the value of <code>options()[["maxitErrorOrWarning"]]</code>.
+This may be <code>"error"</code> (in which case an error is thrown if
+<code>maxit</code> is exceeded) or <code>"warning"</code> (in which case a
+warning is issued).  The values is set equal to <code>"error"</code> at
+startup.  It may be switched, from on possibility to the other,
+by means of the function <code>set.eow()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covmat</code></td>
+<td>
+
+<p>Logical scalar.  Should the covariance matrix of the parameter
+estimates be calculated?  In simulation studies, in which the
+covariance matrix is not of interest, calculations might be
+speeded up a bit by setting <code>covmat=FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useGinv</code></td>
+<td>
+
+<p>Logical scalar.  Should the <code>ginv()</code> (generalised inverse)
+function from the <code>MASS</code> package be used to calculate a
+surrogate covariance matrix if the hessian is numerically singular?
+This is probably not advisable; the possibility of using the
+generalised inverse is provided for the sake of completeness.
+<em>Caveat utilitor</em>.  This argument is ignored if <code>covmat</code>
+is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>ntop</code> and <code>zeta</code> parameters must be supplied; they
+are not formally estimated (although the choice of <code>ntop</code>
+may be influenced by the data — see below).  The parameter
+<code>zeta</code> has a default value, <code>FALSE</code>.
+</p>
+<p>If the generating mechanism from which the observed data <code>x</code>
+arose has a (known) theoretical least upper bound, then <code>ntop</code>
+should probably be set equal to this upper bound.  If the data
+are theoretically unbounded, then <code>ntop</code> should probably
+be set equal to <code>1 + max(x)</code>.  In this case <code class="reqn">\Pr(X =
+  \textrm{ntop})</code> should probably be interpreted
+as <code class="reqn">\Pr(X \geq \textrm{ntop})</code>.  Otherwise
+<code>ntop</code> should should probably be set equal to <code>max(x)</code>.
+The choice depends on circumstances and is up to the user.
+</p>
+<p>Missing values are removed from <code>x</code> before it is passed to
+<code>optim()</code>.  (Note that <code>ddb()</code> doesn't mind missing
+values but returns missing values when evaluated at them.
+This in turn produces a missing value for the log likelihood.)
+</p>
+<p>In previous versions of this package (0.1-17 and earlier)
+<code>optim()</code> was called with method <code>"L-BFGS-B"</code>.
+The change was made possible by the fact that, with the new
+“direct” version of <code>ddb()</code>, it is no longer
+necessary to bound the parameters away from (above) zero.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>"mleDb"</code>.  Such an object consists of a
+named vector with entries <code>"alpha"</code> and <code>"beta"</code>, which
+are the estimates of the corresponding parameters.  It has a
+number of attributes:
+</p>
+
+<ul>
+<li> <p><code>"ntop"</code> The value of the <code>ntop</code> argument.
+</p>
+</li>
+<li> <p><code>"zeta"</code> The value of the <code>zeta</code> argument.
+</p>
+</li>
+<li> <p><code>"log.like"</code> The (maximised) value of the log likelihood
+of the data.
+</p>
+</li>
+<li> <p><code>"covMat"</code> An estimate of the (<code class="reqn">2 \times 2</code>)
+covariance matrix of the parameter estimates.  This is formed
+as the inverse of the hessian (of the negative log likelihood)
+calculated by <code>aHess()</code>.
+</p>
+</li>
+<li> <p><code>ndata</code> The number of <em>non-missing</em> values
+in the data set for which the likelihood was maximised,
+i.e. <code>sum(!is.na(x))</code>.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ddb</code>
+<code>meDb()</code>
+<code>optim()</code>
+<code>aHess()</code>
+<code>vcov.mleDb()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+x &lt;- rdb(500,3,5,2)
+ests &lt;- mleDb(x,2)  # Bad!  Mind you, 2 is a "bad" value for ntop!
+                    # Hessian is singular; covMat is NA.
+# Get much better results using true parameter values
+# as starting values; pity we can't do this in real life!
+ests &lt;- mleDb(x,2,par0=c(alpha=3,beta=5))
+x &lt;- rdb(500,3,5,20)
+ests &lt;- mleDb(x,20) # Pretty good.
+print(vcov(ests))
+
+# Binomial, n = 10, p = 0.3.
+set.seed(42)
+x   &lt;- rbinom(1000,10,0.3)
+fit &lt;- mleDb(x,10,zeta=TRUE)
+print(vcov(fit))
+p1  &lt;- dbinom(0:10,10,0.3)
+p2  &lt;- dbinom(0:10,10,mean(x)/10)
+p3  &lt;- table(factor(x,levels=0:10))/1000
+plot(fit,obsd=x,legPos=NULL,ylim=c(0,max(p1,p2,p3,
+     ddb(0:10,fit[1],fit[2],10,zeta=TRUE))))
+lines(0.2+(0:10),p1,col="orange",type="h",ylim=c(0,max(p1,p2)))
+lines(0.3+(0:10),p2,col="green",type="h")
+legend("topright",lty=1,col=c("red","blue","orange","green"),
+       legend=c("db","observed","true binomial","fitted binomial"),bty="n")
+print(attr(fit,"log.like")) # -1778.36
+print(sum(dbinom(x,10,mean(x)/10,log=TRUE))) # -1777.36
+# Slightly better fit with only one estimated parameter,
+# but then binomial is the true distribution, so you'd
+# kind of expect a better fit.
+print(sum(dbinom(x,10,0.3,log=TRUE))) # -1778.37
+
+# Poisson mean = 5
+set.seed(42)
+x    &lt;- rpois(1000,5)
+fit  &lt;- mleDb(x,14,zeta=TRUE) # max(x) = 13, take ntop = 1+13
+print(vcov(fit))
+p1   &lt;- c(dpois(0:13,5),1-ppois(13,5))
+lhat &lt;- mean(x)
+p2   &lt;- c(dpois(0:13,lhat),1-ppois(13,lhat))
+plot(fit,obsd=x,legPos=NULL,ylim=c(0,max(p1,p2,p3,
+     ddb(0:14,fit[1],fit[2],14,zeta=TRUE))))
+lines(0.2+0:14,p1,col="orange",type="h")
+lines(0.3+(0:14),p2,col="green",type="h")
+legend("topright",lty=1,col=c("red","blue","orange","green"),
+       legend=c("db","observed","true Poisson","fitted Poisson"),bty="n")
+print(attr(fit,"log.like")) # -2198.594
+print(sum(dpois(x,lhat,log=TRUE))) # -2197.345
+# Slightly better fit with only one estimated parameter,
+# but then Poisson is the true distribution, so you'd
+# kind of expect a better fit.
+print(sum(dpois(x,5,log=TRUE))) # -2198.089
+</code></pre>
+
+
+</div>

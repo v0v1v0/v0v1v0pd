@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>register_methods</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Registering as user-supplied RNG</h2>
+
+<h3>Description</h3>
+
+<p>The random-number generators (RNG) from this package can be
+registered as user-supplied RNG. This way all <code>r&lt;dist&gt;</code> functions make
+use of the provided fast RNGs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">register_methods(kind = c("both", "rng"))
+
+restore_methods()
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>kind</code></td>
+<td>
+<p>Which methods should be registered? Either <code>"both"</code> or <code>"rng"</code>.</p>
+</td>
+</tr></table>
+<h3>Details</h3>
+
+<p>Caveats:
+</p>
+
+<ul>
+<li>
+<p> While <code>runif</code> and <code>dqrunif</code> as well as <code>rnorm</code> and
+<code>dqrnorm</code> will produce the same results, this is not the case for
+<code>rexp</code> and <code>dqrexp</code>.
+</p>
+</li>
+<li>
+<p> The <code>dqr&lt;dist&gt;</code> functions are still faster than <code>r&lt;dist&gt;</code>
+when many random numbers are generated.
+</p>
+</li>
+<li>
+<p> You can use only the RNG from this package using
+<code>register_method("rng")</code> or both the RNG and the Ziggurat method
+for normal draws with  <code>register_method("both")</code>. The latter
+approach is used by default. Using only the Ziggurat method will give
+<em>undefined</em> behavior and is not supported!
+</p>
+</li>
+<li>
+<p> Calling <code>dqset.seed(NULL)</code> re-initializes the RNG from R's RNG.
+This no longer makes sense when the RNG has been registered as user-supplied
+RNG. In that case <code>set.seed{NULL}</code> needs to be used.
+</p>
+</li>
+<li>
+<p> With R's in-build RNGs one can get access to the internal state using
+<code>.Random.seed</code>. This is not possible here, since the internal state
+is a private member of the used C++ classes.
+</p>
+</li>
+</ul>
+<p>You can automatically register these methods when loading this package by
+setting the option <code>dqrng.register_methods</code> to <code>TRUE</code>, e.g.
+with <code>options(dqrng.register_methods=TRUE)</code>.
+</p>
+<p>Notes on seeding:
+</p>
+
+<ul>
+<li>
+<p> When a user-supplied RNG is registered, it is also seeded from the
+previously used RNG. You will therefore get reproducible (but different)
+whether you call <code>set.seed()</code> before or after <code>register_methods()</code>.
+</p>
+</li>
+<li>
+<p> When called with a single integer as argument, both <code>set.seed()</code>
+and <code>dqset.seed()</code> have the same effect. However, <code>dqset.seed()</code>
+allows you to call it with two integers thereby supplying 64 bits of
+initial state instead of just 32 bits.
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>Invisibly returns a three-element character vector of the RNG, normal
+and sample kinds <em>before</em> the call.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>RNGkind</code> and <code>Random.user</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">register_methods()
+# set.seed and dqset.seed influence both (dq)runif and (dq)rnorm
+set.seed(4711); runif(5)
+set.seed(4711); dqrunif(5)
+dqset.seed(4711); rnorm(5)
+dqset.seed(4711); dqrnorm(5)
+# similarly for other r&lt;dist&gt; functions
+set.seed(4711); rt(5, 10)
+dqset.seed(4711); rt(5, 10)
+# but (dq)rexp give different results
+set.seed(4711); rexp(5, 10)
+set.seed(4711); dqrexp(5, 10)
+restore_methods()
+</code></pre>
+
+
+</div>

@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>rollapply.DTSg</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Rolling window function</h2>
+
+<h3>Description</h3>
+
+<p>Applies an arbitrary function to a rolling window of selected columns of a
+<code>DTSg</code> object with recognised periodicity.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DTSg'
+rollapply(
+  x,
+  fun,
+  ...,
+  cols = self$cols(class = "numeric")[1L],
+  before = 1L,
+  after = before,
+  weights = "inverseDistance",
+  parameters = list(power = 1),
+  resultCols = NULL,
+  suffix = NULL,
+  helpers = TRUE,
+  memoryOverCPU = TRUE,
+  clone = getOption("DTSgClone")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>A <code>DTSg</code> object (S3 method only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>A <code>function</code>. Its return value must be of length one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to <code>fun</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cols</code></td>
+<td>
+<p>A character vector specifying the columns whose rolling window
+<code>fun</code> shall be applied to. Another possibility is a character string
+containing either comma separated column names, for example, <code>"x,y,z"</code>, or
+the start and end column separated by a colon, for example, <code>"x:z"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>before</code></td>
+<td>
+<p>An integerish value specifying the size of the window in time
+steps before the “center” of the rolling window.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>after</code></td>
+<td>
+<p>An integerish value specifying the size of the window in time
+steps after the “center” of the rolling window.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>A character string specifying the method applied to calculate
+the weights handed over to <code>fun</code>. These are useful for functions like
+<code>weighted.mean</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parameters</code></td>
+<td>
+<p>A <code>list</code> specifying parameters for the weight calculation
+method. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resultCols</code></td>
+<td>
+<p>An optional character vector of the same length as <code>cols</code>
+specifying the column names for the return values of <code>fun</code>. Another
+possibility is a character string containing comma separated column names,
+for example, <code>"x,y,z"</code>. Non-existing columns are added and existing columns
+are overwritten. Columns are matched element-wise between <code>cols</code> and
+<code>resultCols</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>suffix</code></td>
+<td>
+<p>An optional character string. The return values of <code>fun</code> are
+added as new columns with names consisting of the columns specified in
+<code>cols</code> and this suffix. Existing columns are never overwritten. Only used
+when <code>resultCols</code> is not specified.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helpers</code></td>
+<td>
+<p>A logical specifying if helper data shall be handed over to
+<code>fun</code>. See corresponding section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>memoryOverCPU</code></td>
+<td>
+<p>A logical specifying if memory usage shall be preferred
+over CPU usage for this method call. The former is generally faster for
+smaller windows and shorter time series, the latter for bigger windows and
+longer time series or might even be the only one which works depending on
+the available hardware.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clone</code></td>
+<td>
+<p>A logical specifying if the object shall be modified in place or
+if a deep clone (copy) shall be made beforehand.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a <code>DTSg</code> object.
+</p>
+
+
+<h3>Weights</h3>
+
+<p>Currently, only one method to calculate weights is supported:
+<code>"inverseDistance"</code>. The distance <code class="reqn">d</code> of the “center” is one and
+each time step further away from the “center” adds one to it. So, for
+example, the distance of a timestamp three steps away from the
+“center” is four. Additionally, the calculation of the weights accepts
+a power parameter <code class="reqn">p</code> as a named element of a <code>list</code> provided through
+the <code>parameters</code> argument: <code class="reqn">\frac{1}{d^p}</code>.
+</p>
+
+
+<h3>Helper data</h3>
+
+<p>In addition to the <code>...</code> argument, this method optionally hands over the
+weights as a numeric vector (<code>w</code> argument) and a <code>list</code> argument with
+helper data called <code>.helpers</code> to <code>fun</code>. This <code>list</code> contains the following
+elements:
+</p>
+
+<ul>
+<li> <p><em>before:</em> Same as the <code>before</code> argument.
+</p>
+</li>
+<li> <p><em>after:</em> Same as the <code>after</code> argument.
+</p>
+</li>
+<li> <p><em>windowSize:</em> Size of the rolling window (<code>before + 1L + after</code>).
+</p>
+</li>
+<li> <p><em>centerIndex:</em> Index of the “center” of the rolling window
+(<code>before + 1L</code>).
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>cols</code>, <code>getOption</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># new DTSg object
+x &lt;- DTSg$new(values = flow)
+
+# calculate a moving average
+## R6 method
+x$rollapply(
+  fun = mean,
+  na.rm = TRUE,
+  before = 2,
+  after = 2
+)$print()
+
+## S3 method
+print(rollapply(
+  x = x,
+  fun = mean,
+  na.rm = TRUE,
+  before = 2,
+  after = 2
+))
+
+</code></pre>
+
+
+</div>

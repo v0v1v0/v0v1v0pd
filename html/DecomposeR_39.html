@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>normalise</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Empirical AM and FM decomposition</h2>
+
+<h3>Description</h3>
+
+<p>Applies the normalisation scheme of Huang et al., 2009 to
+decompose any Intrinsic Mode Functions obtained (usually via Empirical Mode
+Decomposition) into an Frequency Modulated component of amplitude 1, also
+called carrier, and its Amplitude Modulated enveloppe. The carrier can then
+be used to compute the instantaneous frequency via the Normalised Hilbert
+Transform (NHT) or by calculating its Direct Quadrature (DQ) (Huang et al.,
+2009). HOWEVER THIS FUNCTION CAN FAIL due to overshoot or undershoot of the
+spline fitting. Additional research is necessary.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">normalise(emd = NULL, m = NULL, dt = NULL, repl = 1, last = TRUE, speak = TRUE)
+
+normalize(emd = NULL, m = NULL, dt = NULL, repl = 1, last = TRUE, speak = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emd</code></td>
+<td>
+<p>an emd object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>a matrix of the modes to calculate the amplitude and the frequency
+carrier from. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>the depth or time. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repl</code></td>
+<td>
+<p>the amount of replicates in m. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>last</code></td>
+<td>
+<p>whether to use the last mode (trend/residue).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>speak</code></td>
+<td>
+<p>whether to print a sentence at each iteration</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list of two matrices: $fc (frequency carrier) and $a (instantaneous
+amplitude)
+</p>
+
+
+<h3>References</h3>
+
+<p>Huang, Norden E., Zhaohua Wu, Steven R. Long, Kenneth C. Arnold,
+Xianyao Chen, and Karin Blank. 2009. ‘On Instantaneous Frequency’. Advances
+in Adaptive Data Analysis 01 (02): 177–229.
+https://doi.org/10.1142/S1793536909000096.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+        rnorm(n, sd = 0.5)
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+
+dec &lt;- extricate(xy, dt, nimf = 7, sifting = 10,
+               repl = 1, comb = 100, factor_noise = 10,
+               speak = TRUE)
+
+plot_emd(dec, pdf = FALSE, select = 4)
+
+integrity(xy, dec)
+parsimony(dec)
+
+m  &lt;- dec$m
+
+res &lt;- normalise(dt = dt, m = m, last = FALSE)
+
+numb &lt;- 4
+
+opar &lt;- par('mfrow')
+
+par(mfrow = c(1,2))
+
+plot(m[,numb], dt, type = "l", xlab = "xy",
+     main = paste("Mode", numb, "and AM enveloppe"))
+lines(res$a[,numb], dt, col = "red", lty = 5, lwd = 2)
+
+plot(res$fc[,numb], dt, type = "l", xlab = "xy",
+     main = "FM carrier")
+
+par(mfrow = opar)
+
+</code></pre>
+
+
+</div>

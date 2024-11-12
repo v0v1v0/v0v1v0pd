@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>zebraf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Transcriptomic dose-response to ionizing radiation in zebrafish with batch effect</h2>
+
+<h3>Description</h3>
+
+<p>A sample of an RNAseq data set of the dose-response to the chronic exposure to ionizing radiation of zebrafish embryo from fertilization and up to 48 hours post-fertilization with the corresponding batch effect of the experiment.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(zebraf)
+</code></pre>
+
+
+<h3>Format</h3>
+
+ 
+<p><code>zebraf</code> contains a list of three objects, <code>zebraf$counts</code> an integer matrix of counts of reads 
+(1000 rows for a sample pf 1000 transcripts and 16 columns for the 16 sampels), <code>zebraf$dose</code>, a numeric vector coding for the dose of each sample 
+and <code>zebraf$batch</code> a factor coding for the batch of each sample.
+</p>
+
+
+<h3>Source</h3>
+
+ 
+<p>Murat El Houdigui, S., Adam-Guillermin, C., Loro, G., Arcanjo, C., Frelon, S., Floriani, M., ... &amp; Armant, O. 2019. A systems biology approach reveals neuronal and muscle developmental defects after chronic exposure to ionising radiation in zebrafish. <em>Scientific reports</em>, <b>9(1)</b>, 1-15.
+</p>
+
+
+<h3>References</h3>
+
+ 
+<p>Zhang, Y., Parmigiani, G., &amp; Johnson, W. E. (2020). ComBat-seq: batch effect adjustment for RNA-seq count data. NAR genomics and bioinformatics, 2(3), lqaa078.</p>
+
+
+<h3>See Also</h3>
+
+<p>See <a href="https://github.com/zhangyuqing/ComBat-seq">https://github.com/zhangyuqing/ComBat-seq</a> for indication of use 
+of the ComBat_seq function of the sva package 
+for batch effect correction and <code>formatdata4DRomics</code> a function 
+that can be used to format those data before use of the DRomics workflow.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># (1) load of data
+#
+data(zebraf)
+str(zebraf)
+
+# (2) formating of data for use in DRomics
+# 
+data4DRomics &lt;- formatdata4DRomics(signalmatrix = zebraf$counts, 
+                           dose = zebraf$dose)
+
+# (3) Normalization and transformation of data followed
+# by PCA plot with vizualisation of the batch effect
+#
+o &lt;- RNAseqdata(data4DRomics, transfo.method = "vst")
+PCAdataplot(o, batch = zebraf$batch)
+
+
+PCAdataplot(o, label = TRUE)
+
+# (4) Batch effect correction using ComBat_seq{sva}
+#
+
+if(!requireNamespace("sva", quietly = TRUE)) {
+BECcounts &lt;- ComBat_seq(as.matrix(o$raw.counts), 
+                        batch = as.factor(zebraf$batch), 
+                        group = as.factor(o$dose)) 
+BECdata4DRomics &lt;- formatdata4DRomics(signalmatrix = BECcounts, 
+                                   dose = o$dose)
+(o.BEC &lt;- RNAseqdata(BECdata4DRomics, transfo.method = "vst"))
+plot(o.BEC)
+PCAdataplot(o.BEC, batch = zebraf$batch)
+PCAdataplot(o.BEC, label = TRUE)
+}
+
+
+
+</code></pre>
+
+
+</div>

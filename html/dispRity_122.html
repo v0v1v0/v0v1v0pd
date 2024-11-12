@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>test.dispRity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Testing disparity hypotheses</h2>
+
+<h3>Description</h3>
+
+<p>Applying statistical tests to dispRity objects
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">test.dispRity(
+  data,
+  test,
+  comparisons = "pairwise",
+  rarefaction = NULL,
+  correction = "none",
+  concatenate = TRUE,
+  conc.quantiles = c(mean, c(95, 50)),
+  details = FALSE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>dispRity</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>test</code></td>
+<td>
+<p>A test <code>function</code> to apply to the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>comparisons</code></td>
+<td>
+<p>If data contains more than two subsets, the type of comparisons to apply: either <code>"pairwise"</code> (default), <code>"referential"</code>, <code>"sequential"</code>, <code>"all"</code> or a list of pairs of subset names/number to compare (see details).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rarefaction</code></td>
+<td>
+<p>A <code>numeric</code> value indicating whether to use a specific rarefaction level (default = <code>NULL</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction</code></td>
+<td>
+<p>Which p-value correction to apply to <code>htest</code> category test (see <code>p.adjust</code>; default = <code>"none"</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>concatenate</code></td>
+<td>
+<p>Logical, whether to concatenate bootstrapped disparity values (<code>TRUE</code>; default) or to apply the test to each bootstrapped value individually (<code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conc.quantiles</code></td>
+<td>
+<p>If <code>concatenate = TRUE</code>, must be a central tendency function and a vector of quantiles (default = <code>c(mean, c(95, 50))</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>details</code></td>
+<td>
+<p>Whether to output the details of each test (non-formatted; default = <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional options to pass to the test <code>function</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>comparison</code> argument can be:
+</p>
+
+<ul>
+<li> <p><code>"pairwise"</code>: pairwise comparisons of all the subsets (default).
+</p>
+</li>
+<li> <p><code>"referential"</code>: compares the first subset to all the others.
+</p>
+</li>
+<li> <p><code>"sequential"</code>: compares each subset sequentially (e.g. first against second, second against third, etc.).
+</p>
+</li>
+<li> <p><code>"all"</code>: compares all the subsets simultaneously to the data (i.e. <code>bootstrapped disparity ~ subsets names</code>). This argument is used for <code>lm</code> or <code>glm</code> type tests.
+</p>
+</li>
+<li>
+<p> A list of pairs of number of subsets to compare. Each element of the list must contain two elements
+(e.g. <code>list(c("a","b"), ("b", "a"))</code> to compare "a" to "b" and then "b" to "a").
+</p>
+</li>
+<li> <p>If the called test is <code>null.test</code>, the comparison argument is ignored. 
+</p>
+</li>
+</ul>
+<p>IMPORTANT: if you are performing multiple comparisons (e.g. when using <code>"pairwise"</code>, <code>"referential"</code> or <code>"sequential"</code>),  don't forget about the Type I error rate inflation. You might want to use a <em>p-value</em> correction (see <code>p.adjust</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Guillerme
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dispRity</code>, <code>null.test</code>, <code>bhatt.coeff</code>, <code>pair.plot</code>, <code>adonis.dispRity</code>, <code>randtest.dispRity</code>, <code>test.dispRity</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Load the Beck &amp; Lee 2014 data
+data(BeckLee_mat50)
+data(BeckLee_tree)
+
+## Calculating the disparity from customised subsets
+## Generating the subsets
+groups &lt;- crown.stem(BeckLee_tree, inc.nodes = FALSE)
+customised_subsets &lt;- custom.subsets(BeckLee_mat50, groups)
+## Bootstrapping the data
+bootstrapped_data &lt;- boot.matrix(customised_subsets, bootstraps = 100)
+## Calculating the sum of variances
+sum_of_variances &lt;- dispRity(bootstrapped_data, metric = c(sum, variances))
+
+## Measuring the subset overlap
+test.dispRity(sum_of_variances, bhatt.coeff, "pairwise")
+
+## Measuring differences from a reference subset
+test.dispRity(sum_of_variances, wilcox.test, "referential")
+
+## Measuring disparity as a distribution
+disparity_var &lt;- dispRity(bootstrapped_data, metric = variances)
+## Differences between the concatenated bootstrapped values of the subsets
+test.dispRity(disparity_var, test = t.test, comparisons = "pairwise",
+     concatenate = TRUE, correction = "bonferroni")
+## Differences between the subsets bootstrapped
+test.dispRity(disparity_var, test = t.test, comparisons = "pairwise",
+     concatenate = FALSE, correction = "bonferroni",
+     conc.quantiles = c(mean, c(95, 5)))
+
+</code></pre>
+
+
+</div>

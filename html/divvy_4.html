@@ -1,0 +1,195 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>clustr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cluster localities within regions of nearest neighbours</h2>
+
+<h3>Description</h3>
+
+<p>Spatially subsample a dataset based on minimum spanning trees connecting
+points within regions of set extent, with optional rarefaction to a site quota.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">clustr(
+  dat,
+  xy,
+  iter,
+  nSite = NULL,
+  distMax,
+  nMin = 3,
+  crs = "epsg:4326",
+  output = "locs"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dat</code></td>
+<td>
+<p>A <code>data.frame</code> or <code>matrix</code> containing the coordinate
+columns <code>xy</code> and any associated variables, e.g. taxon names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>A vector of two elements, specifying the name or numeric position
+of columns in <code>dat</code> containing coordinates, e.g. longitude and latitude.
+Coordinates for any shared sampling sites should be identical, and where sites
+are raster cells, coordinates are usually expected to be cell centroids.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>The number of spatial subsamples to return</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nSite</code></td>
+<td>
+<p>The quota of unique locations to include in each subsample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distMax</code></td>
+<td>
+<p>Numeric value for maximum diameter (km) allowed across
+locations in a subsample</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nMin</code></td>
+<td>
+<p>Numeric value for the minimum number of sites to be included in
+every returned subsample. If <code>nSite</code> supplied, <code>nMin</code> ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>Coordinate reference system as a GDAL text string, EPSG code,
+or object of class <code>crs</code>. Default is latitude-longitude (<code>EPSG:4326</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>Whether the returned data should be two columns of
+subsample site coordinates (<code>output = 'locs'</code>) or the subset of rows
+from <code>dat</code> associated with those coordinates (<code>output = 'full'</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Lagomarcino and Miller (2012) developed an iterative approach of aggregating
+localities to build clusters based on convex hulls, inspired by species-area
+curve analysis (Scheiner 2003). Close et al. (2017, 2020) refined the approach and
+changed the proximity metric from minimum convex hull area to minimum spanning
+tree length. The present implementation adapts code from Close et al. (2020)
+to add an option for site rarefaction after cluster construction and to grow
+trees at random starting points <code>iter</code> number of times (instead of a
+deterministic, exhaustive iteration at every unique location).
+</p>
+<p>The function takes a single location as a starting (seed) point; the seed
+and its nearest neighbour initiate a spatial cluster. The distance between
+the two points is the first branch in a minimum spanning tree for the cluster.
+The location that has the shortest distance to any points already within the
+cluster is grouped in next, and its distance (branch) is added to the sum
+tree length. This iterative process continues until the largest distance
+between any two points in the cluster would exceed <code>distMax</code> km.
+In the rare case multiple candidate points are tied for minimum distance
+from the cluster, one point is selected at random as the next to include.
+Any tree with fewer than <code>nMin</code> points is prohibited.
+</p>
+<p>In the case that <code>nSite</code> is supplied, <code>nMin</code> argument is ignored,
+and any tree with fewer than <code>nSite</code> points is prohibited.
+After building a tree as described above, a random set of <code>nSite</code> points
+within the cluster is taken (without replacement).
+The <code>nSite</code> argument makes <code>clustr()</code> comparable with <code>cookies()</code>
+in that it spatially standardises both extent and area/locality number.
+</p>
+<p>The performance of <code>clustr()</code> is designed on the assumption <code>iter</code>
+is much larger than the number of unique localities. Internal code first
+calculates the full minimum spanning tree at every viable starting point
+before it then samples those trees (i.e. resamples and optionally rarefies)
+for the specified number of iterations. This sequence means the total
+run-time increases only marginally even as <code>iter</code> increases greatly.
+However, if there are a large number of sites, particularly a large number
+of densely-spaced sites, the calculations will be slow even for a
+small number of iterations.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of length <code>iter</code>. Each element is a <code>data.frame</code>
+(or <code>matrix</code>, if <code>dat</code> is a <code>matrix</code> and <code>output = 'full'</code>).
+If <code>nSite</code> is supplied, each element contains <code>nSite</code> observations.
+If <code>output = 'locs'</code> (default), only the coordinates of subsampling
+locations are returned.
+If <code>output = 'full'</code>, all <code>dat</code> columns are returned for the
+rows associated with the subsampled locations.
+</p>
+
+
+<h3>References</h3>
+
+<p>Antell GT, Kiessling W, Aberhan M, Saupe EE (2020).
+“Marine biodiversity and geographic distributions are independent on large scales.”
+<em>Current Biology</em>, <b>30</b>(1), 115-121.
+<a href="https://doi.org/10.1016/j.cub.2019.10.065">doi:10.1016/j.cub.2019.10.065</a>.
+</p>
+<p>Close RA, Benson RB, Upchurch P, Butler RJ (2017).
+“Controlling for the species–area effect supports constrained long-term Mesozoic terrestrial vertebrate diversification.”
+<em>Nature Communications</em>, <b>8</b>(1), 1–11.
+<a href="https://doi.org/10.1038/ncomms15381">doi:10.1038/ncomms15381</a>.
+</p>
+<p>Close RA, Benson RB, Saupe EE, Clapham ME, Butler RJ (2020).
+“The spatial structure of Phanerozoic marine animal diversity.”
+<em>Science</em>, <b>368</b>(6489), 420-424.
+<a href="https://doi.org/10.1126/science.aay8309">doi:10.1126/science.aay8309</a>.
+</p>
+<p>Lagomarcino AJ, Miller AI (2012).
+“The relationship between genus richness and geographic area in Late Cretaceous marine biotas: Epicontinental sea versus open-ocean-facing settings.”
+<em>PloS One</em>, <b>7</b>(8), e40472.
+<a href="https://doi.org/10.1371/journal.pone.0040472">doi:10.1371/journal.pone.0040472</a>.
+</p>
+<p>Scheiner SM (2003).
+“Six types of species–area curves.”
+<em>Global Ecology and Biogeography</em>, <b>12</b>(6), 441-447.
+<a href="https://doi.org/10.1046/j.1466-822X.2003.00061.x">doi:10.1046/j.1466-822X.2003.00061.x</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cookies()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># generate occurrences: 10 lat-long points in modern Australia
+n &lt;- 10
+x &lt;- seq(from = 140, to = 145, length.out = n)
+y &lt;- seq(from = -20, to = -25, length.out = n)
+pts &lt;- data.frame(x, y)
+
+# sample 5 sets of 4 locations no more than 400km across
+clustr(dat = pts, xy = 1:2, iter = 5,
+       nSite = 4, distMax = 400)
+
+</code></pre>
+
+
+</div>

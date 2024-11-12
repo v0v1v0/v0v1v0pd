@@ -1,0 +1,257 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deming</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit a generalized Deming regression</h2>
+
+<h3>Description</h3>
+
+<p>Find the MLE line relating x and y when both are measured with
+error.  When the variances of x and y are constant and equal, this is the
+special case of Deming regression.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deming(formula, data, subset, weights, na.action, cv=FALSE,
+       xstd, ystd, stdpat, conf=.95, jackknife=TRUE, dfbeta=FALSE,
+       id, x=FALSE, y=FALSE, model=TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a model formula with a single continuous response on the left
+and a single continuous predictor on the right.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>an optional data frame, list or environment containing the variables in the model.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations to be 
+used in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>an optional vector of weights to be used in the fitting process. 
+Should be NULL or a numeric vector.</p>
+</td>
+</tr>
+</table>
+<p> I
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen when the data 
+contain NAs. The default is set by the na.action setting of <code>options</code>.
+The 'factory fresh' default is <code>na.omit</code>, the <code>na.exclude</code> option
+is often useful.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xstd</code></td>
+<td>
+<p>optional, the variable name of a vector that contains explicit
+error values for each of the predictor values. This data overrides
+the <code>cv</code> option if both are present.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ystd</code></td>
+<td>
+<p>optional, the variable name of a vector that contains explicit
+error values for each of the response values. This data overrides
+the <code>cv</code> option if both are present.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cv</code></td>
+<td>
+<p>constant coefficient of variation?  The default of
+false corresponds to ordinary Deming regression, i.e., an assumption
+of constant error.  A value of <code>cv=TRUE</code> corresponds to the
+assumption of constant coefficient of variation. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stdpat</code></td>
+<td>
+<p>pattern for the standard deviation, see comments below.
+If this is missing the default is based on the <code>cv</code> option.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf</code></td>
+<td>
+<p>confidence level for the confidence interval</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jackknife</code></td>
+<td>
+<p>compute a jackknife estimate of variance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dfbeta</code></td>
+<td>
+<p>return the dfbeta matrix from the jackknife
+computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>grouping values for the grouped jackknife</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x,y, model</code></td>
+<td>
+<p>logicals. If TRUE the corresponding components of the fit 
+(the model frame, the model matrix, or the response) is returned.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Ordinary least squares regression minimizes the sum of distances between
+the y values and the regression line, Deming regression minimizes the
+sum of distances in both the x and y direction.
+As such it is often appropriate when both x and y are measured with
+error.  A common use is in comparing two assays, each of which is designed
+to quantify the same compound.
+</p>
+<p>The standard deviation of the x variate variate will often be of the form
+<code class="reqn">\sigma(c + dx)</code> for c and d some constants,
+where <code class="reqn">\sigma</code> is the overal scale factor; similarly for y with
+constants e and f.
+Ordinary Deming regression corresponds to c=1 and d=0, i.e., constant
+variation over the range of the data.
+A more realistic assumption for many laboratory measurments is c=0 and
+d=1, i.e., constant coefficient of variation.
+Laboratory tests are often assumed to have constant coefficient of
+variation rather than constant variance.
+</p>
+<p>There are 3 ways to specify the variation.  The first is to directly
+set the pattern of (c,d,e,f) for the $x$ and $y$ standard deviations.
+If this is omitted, a default of (0,1,0,1) or (1,0,1,0) is chosen, based
+on whether the <code>cv</code> option is TRUE or FALSE, respectively.
+As a third option, the user can specifiy <code>xstd</code> and <code>ystd</code>
+directly as vectors of data values.  In this last case any values for
+the <code>stdpat</code> or <code>ccs</code> options are ignored.
+Note that the two calls <code>deming(y ~ x, cv=TRUE)</code> and
+<code>deming(y ~ x, xstd=x, ystd=y)</code> are subtly different.  In the second
+the standard deviation values are based on the data, and in the first
+they will be based on the fitted values.  The two outcomes will often be
+nearly identical.
+</p>
+<p>Although a <code>cv</code> option of TRUE is often much better
+justified than an assumption of constant variance,
+assumpting a perfectly constant CV can also be questionable.
+Most actual biologic assays will have both a constant and a
+proportional component of error, with the former becoming dominant for values
+near zero and the latter dominant elsewhere.
+If all of the results are far from zero, however, the constant part may
+be ignored.
+</p>
+<p>Many times an assay will be done in duplicate, in which case the paired
+results can have correlated errors due to sample handling or
+manipulation that preceeds splitting it into separate aliquots for
+assay, and the ordinary variance will be too small (as it also is when
+the duplicate values are averaged together before fitting the regression
+line.)  A correct grouped jackknife estimate of variance is obtained in
+this case by setting <code>id</code> to a vector of sample identifiers.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a object of class 'deming' containing the components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>coefficient</code></td>
+<td>
+<p>the coefficient vector, containing the intercept and 
+slope.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>variance</code></td>
+<td>
+<p>The jackknife or bootstrap estimate of variance</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>bootstrap confidence intervals, if nboot &gt;0</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dfbeta</code></td>
+<td>
+<p>pptionally, the dfbeta residuals.  A 2 column matrix,
+each row is the change in the coefficient vector if that observation is
+removed from the data.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Terry Therneau</p>
+
+
+<h3>References</h3>
+
+<p>BD Ripley and M Thompson, Regression techniques for the detection
+of analytical bias, Analyst 112:377-383, 1987.
+</p>
+<p>K Linnet, Estimation of the linear relationship between the
+measurements of two methods with proportional errors.  
+Statistics in Medicine 9:1463-1473, 1990.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Data from Ripley and Thompson
+fit &lt;- deming(aes ~ aas, data=arsenate, xstd=se.aas, ystd=se.aes)
+print(fit)
+## Not run: 
+            Coef se(coef) lower 0.95 upper 0.95
+Intercept 0.1064   0.2477    -0.3790     0.5919
+Slope     0.9730   0.1430     0.6928     1.2532
+
+   Scale= 1.358 
+
+## End(Not run)
+plot(1:30, fit$dfbeta[,2]) #subject 22 has a large effect on the slope
+
+# Constant proportional error fit (constant CV)
+fit2 &lt;- deming(new.lot ~ old.lot, ferritin, cv=TRUE,
+                subset=(period==3))
+</code></pre>
+
+
+</div>

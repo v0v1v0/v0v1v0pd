@@ -1,0 +1,129 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>calcDuration</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate the study duration based on Weibull distributions.</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the study duration based on Weibull distributions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">calcDuration(
+  d,
+  n,
+  proportion,
+  SHAPEV,
+  SCALEV,
+  LAMW,
+  A,
+  BETA,
+  conf.level = 0.9,
+  nsim = 10000
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>- scalar, target number of events.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>- scalar, sample size.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proportion</code></td>
+<td>
+<p>- vector of percentages of the subgroup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SHAPEV</code></td>
+<td>
+<p>- vector of shape parameters of Weibull survival distributions of the subgroups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SCALEV</code></td>
+<td>
+<p>- vector of scale parameters of Weibull survival distributions of the subgroups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LAMW</code></td>
+<td>
+<p>- vector of exponential drop-out distribution parameters of the subgroups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>- vector of enrollment durations of the subgroups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>BETA</code></td>
+<td>
+<p>- vector of beta distribution parameters of the subgroups.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conf.level</code></td>
+<td>
+<p>- scalar, confidence level, default 0.9.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+<p>- scalar, number of repetitions, default 1e4.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>study duration estimate, d_med, and the confidence interval (d_lower, d_upper), as well as all the realizations, Z_d, of the study duration from the simulation.
+</p>
+
+
+<h3>References</h3>
+
+<p>Hong Zhang, Jie Pu, Shibing Deng, Satrajit Roychoudhury, Haitao Chu and Douglas Robinson. "Study Duration Prediction for Clinical Trials with Time-to-Event Endpoints Using Mixture Distributions Accounting for Heterogeneous Population", arXiv:2401.00540.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">res_weibull = getWeilbull(dat_udca)
+res_beta = getBeta(as.numeric(dat_udca$entry.dt))
+prop = c(table(dat_udca$group)/length(dat_udca$group))
+SHAPEV = res_weibull$shape
+SCALEV = res_weibull$scale
+LAMW = rep(-log(1 - 0.1)/6, 4)
+A = rep(res_beta$a/30.416, 4) # convert days to months
+BETA = rep(res_beta$b_Mean, 4)
+myres1 = calcDuration(d=50, n=169, proportion=prop, SHAPEV, SCALEV, LAMW=LAMW, A, BETA)
+c(myres1$d_lower, myres1$d_med, myres1$d_upper)
+# drop-out will make the target number of events not achievable
+myres2 = calcDuration(d=80, n=169, proportion=prop, SHAPEV, SCALEV, LAMW=LAMW, A, BETA)
+c(myres2$d_lower, myres2$d_med, myres2$d_upper)
+# If there is no drop-out
+myres3 = calcDuration(d=80, n=169, proportion=prop, SHAPEV, SCALEV, LAMW=rep(0, 4), A, BETA)
+c(myres3$d_lower, myres3$d_med, myres3$d_upper)
+</code></pre>
+
+
+</div>

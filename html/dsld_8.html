@@ -1,0 +1,158 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dsldFairUtilTrade</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>dsldFairUtilTrade</h2>
+
+<h3>Description</h3>
+
+ 
+<p>Exploration of the Fairness-Utility Tradeoff.  Finds predictive accuracy
+and correlation between S and predicted Y.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dsldFairUtilTrade(data,yName,sName,dsldFtnName,
+   unfairness=NULL,deweightPars=NULL,yesYVal=NULL,yesSVal=NULL,
+   corrType='kendall', holdout = floor(min(1000, 0.1 * nrow(data))))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Data frame. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yName</code></td>
+<td>
+
+<p>Name of the response variable Y column. Y must be numeric or
+binary (two-level R factor).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sName</code></td>
+<td>
+
+<p>Name of the sensitive attribute S column. S must be numeric or
+binary (two-level R factor).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dsldFtnName</code></td>
+<td>
+
+<p>Quoted name of one of the <span class="pkg">fairML</span> or EDF functions.   
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unfairness</code></td>
+<td>
+
+<p>Nonnull for the <span class="pkg">fairML</span> functions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deweightPars</code></td>
+<td>
+
+<p>Nonnull for the EDF functions.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yesYVal</code></td>
+<td>
+
+<p>Y value to be treated as Y = 1 for binary Y.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yesSVal</code></td>
+<td>
+
+<p>S value to be treated as S = 1 for binary S.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>corrType</code></td>
+<td>
+
+<p>Either 'kendall' or 'probs'.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>holdout</code></td>
+<td>
+
+<p>Size of holdout set.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Tool for exploring tradeoff between utility (predictive accuracy, Mean
+Absolute Prediction Error or overall probability of misclassification)
+and fairness. Roughly speaking, the latter is defined as the strength of
+relation between S and predicted Y (the smaller, the better). The main
+issue is definition of "relation" in the case of binary Y or S:
+</p>
+<p>In the 'kendall' case, binary predicted Y or S is recoded to 1s and 0s,
+and Kendall correlation is used. In the 'probs' case, binary Y or S is
+replaced by P(Y = 1 | X) and P(S = 1 | X); squared Pearson correlation
+is then computed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A two-component vector, consisting of predictive accuracy and strength
+of relation between S and predicted Y.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>N. Matloff
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  
+
+data(svcensus)
+dsldFairUtilTrade(svcensus,'wageinc','gender','dsldFrrm',0.2,yesSVal='male')
+data(lsa)
+race1 &lt;- lsa$race1
+lsabw &lt;- lsa[race1 == 'black' | race1 == 'white',]
+# need to get rid of excess levels
+race1 &lt;- lsabw$race1
+race1 &lt;- as.character(race1)
+lsabw$race1 &lt;- as.factor(race1)
+dsldFairUtilTrade(lsabw,'bar','race1','dsldQeFairRidgeLog',
+   deweightPars=list(fam_inc=0.1),yesYVal='TRUE',yesSVal='white')
+
+</code></pre>
+
+
+</div>

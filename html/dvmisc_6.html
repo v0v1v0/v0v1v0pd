@@ -1,0 +1,96 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_qgroups</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create Quantile Groups</h2>
+
+<h3>Description</h3>
+
+<p>Combines <code>quantile</code> and <code>cut</code> into a 
+single function, with strata-specific quantiles possible. For example, you 
+could create sex-specific height tertiles with 
+<code>create_qgroups(height, groups = 3, strata = sex)</code>. Compatible with 
+<strong>dplyr</strong> functions like <code>mutate</code> and 
+<code>transmute</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_qgroups(x, groups = 4, probs = seq(1/groups, 1 - 1/groups,
+  1/groups), strata = NULL, quantile_list = list(na.rm = TRUE),
+  cut_list = list(include.lowest = TRUE))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>Numeric value, e.g. 3 for tertiles, 4 for quartiles, etc.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>Numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata</code></td>
+<td>
+<p>Factor specifying subgroups to calculate quantiles within. For 
+multivariable subgroups, you can use <code>interaction</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantile_list</code></td>
+<td>
+<p>Arguments to pass to <code>quantile</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cut_list</code></td>
+<td>
+<p>Arguments to pass to <code>cut</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Factor variable.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># In mtcars dataset, create tertiles for mpg
+mtcars$mpg_tertiles &lt;- create_qgroups(mtcars$mpg, groups = 3)
+table(mtcars$mpg_tertiles)
+
+# Define tertile cutpoints separately for 4-, 6-, and 8-cylinder vehicles
+mtcars$mpg_tertiles &lt;- create_qgroups(mtcars$mpg, groups = 3, strata = mtcars$cyl)
+table(mtcars$mpg_tertiles)
+
+# Works with dplyr functions like mutate
+mtcars &lt;- mtcars %&gt;% 
+  dplyr::mutate(mpg_tertiles = create_qgroups(mpg, groups = 3, strata = cyl))
+table(mtcars$mpg_tertiles)
+
+# Can embed in lm, glm, etc.
+summary(lm(mpg ~ create_qgroups(wt), data = mtcars))
+
+</code></pre>
+
+
+</div>

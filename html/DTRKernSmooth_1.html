@@ -1,0 +1,282 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DTR.Boots.KernSmooth</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Make inference about the linear treatment regime vector and the optimal value</h2>
+
+<h3>Description</h3>
+
+<p>This function estimates the optimal treatment regime among all
+linear regimes with smoothed estimation methods and doubly robust correction,
+and construct element-wise 100(1-alpha)% confidence intervals for the optimal
+linear treatment regime vector, and the 100(1-alpha)% confidence interval for
+the optimal value if the population follows treatments recommended by the optimal
+linear regime. It outputs a 'DTR.Boots.KernSmooth' model object
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DTR.Boots.KernSmooth(
+  X,
+  y,
+  a,
+  intercept = TRUE,
+  prob = 0.5,
+  B = 500,
+  alpha = 0.05,
+  m0 = mean(y[a == 0]),
+  m1 = mean(y[a == 1]),
+  kernel = "normal",
+  phi0 = 1,
+  gamma = 2,
+  err_tol = 1e-04,
+  iter_tol = 200
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Input matrix, of dimension n_obs x n_vars; each row is an observation vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>Response variable to be maximized on average if every subject follows
+the treatment recommended by the optimal regime.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>Received treatments for n_obs subjects. Must be bivariate, and labeled as {0,1}.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercept</code></td>
+<td>
+<p>Logical. <code>TRUE</code> (default) if the intercept is included in estimating
+the optimal treatment regime and <code>FALSE</code> if not.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob</code></td>
+<td>
+<p>The propensity score for n_obs subjects, i.e., P(a=1|X). If <code>NULL</code>,
+it would be estimated by logistic regression a~X.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>The number of repetitions in the inference procedure by weighted
+bootstrap. The default value is 500.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The confidence level of the confidence interval. The default value is 0.05.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m0</code></td>
+<td>
+<p>The estimated response values if the subjects receive treatment 0.
+The default is the average response value of all subjects who receive treatment 0.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m1</code></td>
+<td>
+<p>The estimated response values if the subjects receive treatment 1.
+The default is the average response value of all subjects who receive treatment 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>The kernel function to be used in smoothed estimation. Should be
+one of "normal", "poly1" and "poly2". The default value is "normal". See more details in
+the "Details" section of <code>DTR.KernSmooth</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>phi0</code></td>
+<td>
+<p>The initial step size to be used in the Proximal Algorithm. The default value is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>The multiplier of the step sizes to be used in the Proximal
+Algorithm. Must be gamma &gt; 1. The default value is 2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>err_tol</code></td>
+<td>
+<p>The desired accuracy in the estimation. The default value is 1e-4.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter_tol</code></td>
+<td>
+<p>The maximum number of iterations in the estimation algorithm.
+The default value is 200.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function constructs confidence intervals for the optimal linear
+treatment regime vector by wild bootstrap procedures. The bootstrapped estimate
+of the smoothed robust estimator is defined as the vector <code class="reqn">\widehat{\bm{\beta}}^*</code>
+that maximizes
+</p>
+<p style="text-align: center;"><code class="reqn">n^{-1}\sum_{i=1}^n \frac{\left[A_i K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)+(1-A_i)\left\{1-K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)\right\}\right]r_iY_i}{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}-
+n^{-1}\sum_{i=1}^n \frac{\left[A_i-\pi_a(\bm{x}_i, \widehat{\bm{\xi}})\right]r_i\widehat{m}_1(\bm{x}_i)K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)+\left[1-A_i-\pi_a(\bm{x}_i, \widehat{\bm{\xi}})\right]r_i \widehat{m}_0(\bm{x}_i) \left\{1-K\left(\frac{\bm{x}_i^T\bm{\beta}}{h_n}\right)\right\}}
+{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})},</code>
+</p>
+
+<p>with the second term as the doubly correction, where <code class="reqn">r_i</code>'s are i.i.d N(1,1). <br>
+Let <code class="reqn">\xi_j^{\circ(\alpha/2)}</code> and <code class="reqn">\xi_j^{\circ(1-\alpha/2)}</code> be the <code class="reqn">(\alpha/2)</code>-th
+and <code class="reqn">(1-\alpha/2)</code>-th quantile of the bootstrap distribution of
+<code class="reqn">(nh_n)^{1/2}(\widehat{\beta}_j^*-\widehat{\beta}_j)</code>, respectively,
+where <code class="reqn">\alpha</code> is a small positive number. We can estimate <code class="reqn">\xi_j^{\circ(\alpha/2)}</code>
+and <code class="reqn">\xi_j^{\circ(1-\alpha/2)}</code> from a large number of bootstrap samples. An asymptotic
+<code class="reqn">100(1-\alpha)\%</code> bootstrap confidence interval for <code class="reqn">\beta_{0j}</code>, is given by
+</p>
+<p style="text-align: center;"><code class="reqn">\left\{\widehat{\beta}_j-(nh_n)^{-1/2}\xi_j^{\circ(1-\alpha/2)}, \widehat{\beta}_j-(nh_n)^{-1/2}\xi_j^{\circ(\alpha/2)}\right\}.</code>
+</p>
+
+<p>To construct confidence intervals for the optimal value <code class="reqn">V(\bm{\beta}_0)</code>, we define
+</p>
+<p style="text-align: center;"><code class="reqn">V_n^*(\widehat{\bm{\beta}}) = n^{-1}\sum_{i=1}^n \frac{\left[A_i I\left(\bm{x}_i^T\widehat{\bm{\beta}}&gt;0\right)+(1-A_i)I\left(\bm{x}_i^T\widehat{\bm{\beta}}\leq 0 \right) \right]r_iY_i}{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})}-
+n^{-1}\sum_{i=1}^n \frac{\left[A_i-\pi_a(\bm{x}_i, \widehat{\bm{\xi}})\right]r_i \widehat{m}_1(\bm{x}_i)I\left(\bm{x}_i^T\bm{\beta}&gt;0\right)+\left[1-A_i-\pi_a(\bm{x}_i, \widehat{\bm{\xi}})\right]r_i \widehat{m}_0(\bm{x}_i)I\left(\bm{x}_i^T\bm{\beta}\leq 0\right)}
+{\pi_a(\bm{x}_i, \widehat{\bm{\xi}})},</code>
+</p>
+
+<p>where <code class="reqn">r_i</code>'s are i.i.d N(1,1). Let <code class="reqn">d^{\circ(\alpha/2)}</code> and <code class="reqn">d^{\circ(1-\alpha/2)}</code>
+be the <code class="reqn">(\alpha/2)</code>-th and <code class="reqn">(1-\alpha/2)</code>-th quantile of the bootstrap
+distribution of <code class="reqn">n^{1/2}\{V_n^*(\widehat{\bm{\beta}})-V_n(\widehat{\bm{\beta}})\}</code>,
+respectively. An asymptotic <code class="reqn">100(1-\alpha)\%</code> bootstrap confidence interval for
+<code class="reqn">V(\bm{\beta}_0)</code> is
+</p>
+<p style="text-align: center;"><code class="reqn">\left\{V_n(\widehat{\bm{\beta}})-n^{-1/2}d^{\circ(1-\alpha/2)}, V_n(\widehat{\bm{\beta}})-n^{-1/2}d^{\circ(\alpha/2)}\right\}.</code>
+</p>
+
+<p>See more details in the reference.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class "DTR.Boots.KernSmooth", which is a list containing
+the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>The confidence level of the confidence interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p>The number of repetitions in the inference procedure by weighted
+bootstrap.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth_est</code></td>
+<td>
+<p>The fitted "DTR.KernSmooth" object based on the input data
+and parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Beta_CI</code></td>
+<td>
+<p>The 100(1-alpha)% confidence intervals for each element of
+the optimal treatment regime vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value_CI</code></td>
+<td>
+<p>The 100(1-alpha)% confidence interval for the optimal average
+response value among all linear treatment regimes.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Yunan Wu and Lan Wang<br> Maintainer:
+Yunan Wu &lt;yunan.wu@utdallas.edu&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Wu, Y. and Wang, L. (2021),
+<em>Resampling-based Confidence Intervals for Model-free Robust Inference
+on Optimal Treatment Regimes, Biometrics, 77: 465– 476</em>, <a href="https://doi.org/10.1111/biom.13337">doi:10.1111/biom.13337</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict.DTR.Boots.KernSmooth</code>, <code>obj_value</code>,
+<code>DTR.KernSmooth</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">n &lt;- 500; p &lt;- 3
+beta &lt;- c(0.2,1,-0.5,-0.8)*0.7
+beta1 &lt;- c(1,-0.5,-0.5,0.5)
+
+set.seed(12345)
+X &lt;- matrix(rnorm(n*p),n)
+a &lt;- rbinom(n,1,0.7)
+mean1 &lt;- exp(cbind(1,X) %*% beta1)
+mean2 &lt;- 8/(1 + exp(-cbind(1,X) %*% beta)) - 4
+y &lt;- mean1 + a * mean2 + rnorm(n)
+
+boots_smooth_model_ci &lt;- DTR.Boots.KernSmooth(X, y, a, prob = 0.4*a+0.3, B = 100)
+boots_smooth_model_ci$Beta_CI
+boots_smooth_model_ci$value_CI
+
+## Not run: 
+boots_smooth_model_ic &lt;- DTR.Boots.KernSmooth(X, y, a, B = 100, m0 = mean1,
+                                              m1 = mean1 + mean2)
+boots_smooth_model_ic$Beta_CI
+boots_smooth_model_ic$value_CI
+
+boots_smooth_model_cc &lt;- DTR.Boots.KernSmooth(X, y, a, prob = 0.4*a+0.3, B = 100,
+                                              m0 = mean1, m1 = mean1 + mean2)
+boots_smooth_model_cc$Beta_CI
+boots_smooth_model_cc$value_CI
+
+boots_smooth_model_ii &lt;- DTR.Boots.KernSmooth(X, y, a, B = 100)
+boots_smooth_model_ii$Beta_CI
+boots_smooth_model_ii$value_CI
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,168 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>embed</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>dispatches the different methods for dimensionality reduction</h2>
+
+<h3>Description</h3>
+
+<p>wraps around all dimensionality reduction functions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">embed(.data, ...)
+
+## S4 method for signature 'formula'
+embed(
+  .formula,
+  .data,
+  .method = dimRedMethodList(),
+  .mute = character(0),
+  .keep.org.data = TRUE,
+  ...
+)
+
+## S4 method for signature 'ANY'
+embed(
+  .data,
+  .method = dimRedMethodList(),
+  .mute = character(0),
+  .keep.org.data = TRUE,
+  ...
+)
+
+## S4 method for signature 'dimRedData'
+embed(
+  .data,
+  .method = dimRedMethodList(),
+  .mute = character(0),
+  .keep.org.data = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>object of class <code>dimRedData</code>, will be converted to
+be of class <code>dimRedData</code> if necessary; see examples for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>the parameters, internally passed as a list to the dimensionality
+reduction method as <code>pars = list(...)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.formula</code></td>
+<td>
+<p>a formula, see <code>as.dimRedData</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.method</code></td>
+<td>
+<p>character vector naming one of the dimensionality reduction
+techniques.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.mute</code></td>
+<td>
+<p>a character vector containing the elements you want to mute
+(<code>c("message", "output")</code>), defaults to <code>character(0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.keep.org.data</code></td>
+<td>
+<p><code>TRUE</code>/<code>FALSE</code> keep the original data.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Method must be one of <code>dimRedMethodList()</code>, partial matching
+is performed. All parameters start with a dot, to avoid clashes
+with partial argument matching (see the R manual section 4.3.2), if
+there should ever occur any clashes in the arguments, call the
+function with all arguments named, e.g. <code>embed(.data = dat,
+.method = "mymethod", .d = "some parameter")</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>an object of class <code>dimRedResult</code>
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>formula</code>: embed a data.frame using a formula.
+</p>
+</li>
+<li> <p><code>ANY</code>: Embed anything as long as it can be coerced to
+<code>dimRedData</code>.
+</p>
+</li>
+<li> <p><code>dimRedData</code>: Embed a dimRedData object
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## embed a data.frame using a formula:
+as.data.frame(
+  embed(Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,
+        iris, "PCA")
+)
+
+## embed a data.frame and return a data.frame
+as.data.frame(embed(iris[, 1:4], "PCA"))
+
+## embed a matrix and return a data.frame
+as.data.frame(embed(as.matrix(iris[, 1:4]), "PCA"))
+
+## Not run: 
+## embed dimRedData objects
+embed_methods &lt;- dimRedMethodList()
+quality_methods &lt;- dimRedQualityList()
+dataset &lt;- loadDataSet("Iris")
+
+quality_results &lt;- matrix(NA, length(embed_methods), length(quality_methods),
+                              dimnames = list(embed_methods, quality_methods))
+embedded_data &lt;- list()
+
+for (e in embed_methods) {
+  message("embedding: ", e)
+  embedded_data[[e]] &lt;- embed(dataset, e, .mute = c("message", "output"))
+  for (q in quality_methods) {
+    message("  quality: ", q)
+    quality_results[e, q] &lt;- tryCatch(
+      quality(embedded_data[[e]], q),
+      error = function(e) NA
+    )
+  }
+}
+
+print(quality_results)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>buildModelObjSubset</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create Model Objects for Subsets of Data</h2>
+
+<h3>Description</h3>
+
+<p>Extends the buildModelObj() function of package <span class="pkg">modelObj</span>. Here,
+the returned model object includes a specification of the 
+decision point and subset of the data to which the model is to 
+be applied.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">buildModelObjSubset(
+  ...,
+  model,
+  solver.method,
+  solver.args = NULL,
+  predict.method = NULL,
+  predict.args = NULL,
+  dp = 1L,
+  subset = NA
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>ignored. Included to require named input.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>An object of class <code>formula</code>. The symbolic description
+of the model to be fitted. If the regression method specified in
+solver.method accepts as input a <code>formula</code> object,
+model is passed to the solver.method function. If the regression method
+instead accepts a matrix of covariates as the model to fit, <code>model</code> is
+used to obtain the model matrix that is passed to the solver.method
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solver.method</code></td>
+<td>
+<p>An object of class <code>character</code>. The name of 
+the R function to be used to obtain parameter estimates, e.g., 'lm', 
+'glm', or 'rpart'. The specified function MUST have a 
+corresponding predict method, which can be the generic predict() function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solver.args</code></td>
+<td>
+<p>An object of class <code>list</code>. Additional arguments 
+to be sent to the function specified in solver.method. This 
+argument must be provided as a named list, where the name of each element 
+matches a formal argument of the function specified in 
+solver.method. For example, if a logistic regression using 
+'glm' is desired, 
+</p>
+<pre>
+solver.method = "glm"
+solver.args = list("family"=binomial)
+</pre>
+<p>See Details section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predict.method</code></td>
+<td>
+<p>An object of class <code>character</code>. The name of 
+the R function to be used to obtain  predictions, e.g., 'predict.lm', 
+'predict', or 'predict.glm'.  If no function is explicitly 
+given, the generic <code>predict()</code> is assumed. For many regression 
+methods, the generic <code>predict()</code> method is appropriate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>predict.args</code></td>
+<td>
+<p>An object of class <code>list</code>. Additional arguments 
+to be sent to the function specified in predict.method. This 
+argument must be provided as a named list, where the name of each 
+element matches a formal argument of the function specified in 
+predict.method. For example, if a logistic regression using 
+'glm' was used to fit the model and predictions on the scale of the 
+response are desired, 
+</p>
+<pre>
+predict.method = "predict.glm"
+predict.args = list("type"="response").
+</pre>
+<p>See Details section for further information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dp</code></td>
+<td>
+<p>An object of class <code>integer</code>. The decision point for which 
+this model and subset are defined.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>An object of class <code>character</code>. A nickname for the 
+subset for which model and methods are to be used. This argument will 
+be used by the methods of <span class="pkg">DynTxRegime</span> to "link" input arguments. 
+In the event that a model is to be fit using more than 1 subset, 
+collapse the subset names into a single character string separating 
+each with a comma. For example, if the model is to be fit using patients 
+in both subsets "a" and "b," the subset nickname should be "a,b" (no space).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In some settings, an analyst may want to use different models for unique 
+subsets of the data. <code>buildModelObjSubset()</code> provides a mechanism for 
+users to define models for such subset. Specifically, models are specified 
+in connection with the decision point and subset to which they are to be 
+applied. 
+</p>
+<p>See ?modelObj for further details
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class <code>ModelObjSubset</code>, which contains a  
+complete description of the conditions under which a model  is to be  
+used and the R methods to be used to obtain parameter estimates and  
+predictions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Consider a 2 decision point trial. At the 1st decision point, the subset of 
+# treatment options available to each patient is always set "set1."
+# At the 2nd decision point, some patients are eligible to receive
+# treatment from set "set2a" and others from set "set2b." The outcome
+# for these subsets will be modeled as ~ x1 + x2 and ~ x2 + x3, respectively.
+#
+# All parameter estimates are to be obtained used lm and predictions obtained using predict.
+#
+# The following illustrates how to build these model objects.
+
+  model &lt;- list()
+
+  model[[1]] &lt;- buildModelObjSubset(dp = 1, subset = "set1",
+                                    model = ~ x1 + x2 + x3, solver.method = 'lm')
+
+  model[[2]] &lt;- buildModelObjSubset(dp = 2, subset = "set2a",
+                                    model = ~ ~ x1 + x2, solver.method = 'lm')
+
+  model[[3]] &lt;- buildModelObjSubset(dp = 2, subset = "set2b",
+                                    model = ~ x2 + x3, solver.method = 'lm')
+
+</code></pre>
+
+
+</div>

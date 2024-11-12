@@ -1,0 +1,198 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drdid_imp_rc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Improved locally efficient doubly robust DiD estimator for the ATT, with repeated cross-section data</h2>
+
+<h3>Description</h3>
+
+<p><code>drdid_imp_rc</code> is used to compute the locally efficient doubly robust estimators for the ATT
+in difference-in-differences (DiD) setups with stationary repeated cross-sectional data. The resulting estimator is
+also doubly robust for inference; see Section 3.2 of Sant'Anna and Zhao (2020).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drdid_imp_rc(
+  y,
+  post,
+  D,
+  covariates,
+  i.weights = NULL,
+  boot = FALSE,
+  boot.type = "weighted",
+  nboot = NULL,
+  inffunc = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>An <code class="reqn">n</code> x <code class="reqn">1</code> vector of outcomes from the both pre and post-treatment periods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post</code></td>
+<td>
+<p>An <code class="reqn">n</code> x <code class="reqn">1</code> vector of Post-Treatment dummies (post = 1 if observation belongs to post-treatment period,
+and post = 0 if observation belongs to pre-treatment period.)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D</code></td>
+<td>
+<p>An <code class="reqn">n</code> x <code class="reqn">1</code> vector of Group indicators (=1 if observation is treated in the post-treatment, =0 otherwise).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>An <code class="reqn">n</code> x <code class="reqn">k</code> matrix of covariates to be used in the propensity score and regression estimation. Please add a vector of constants if you want to include an intercept in the models.
+If covariates = NULL, this leads to an unconditional DiD estimator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i.weights</code></td>
+<td>
+<p>An <code class="reqn">n</code> x <code class="reqn">1</code> vector of weights to be used. If NULL, then every observation has the same weights. The weights are normalized and therefore enforced to have mean 1 across all observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot</code></td>
+<td>
+<p>Logical argument to whether bootstrap should be used for inference. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot.type</code></td>
+<td>
+<p>Type of bootstrap to be performed (not relevant if <code>boot = FALSE</code>). Options are "weighted" and "multiplier".
+If <code>boot = TRUE</code>, default is "weighted".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nboot</code></td>
+<td>
+<p>Number of bootstrap repetitions (not relevant if <code>boot = FALSE</code>). Default is 999.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inffunc</code></td>
+<td>
+<p>Logical argument to whether influence function should be returned. Default is FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>drdid_imp_rc</code> function implements the locally efficient doubly robust difference-in-differences (DiD)
+estimator for the average treatment effect on the treated (ATT) defined in equation (3.4)
+in Sant'Anna and Zhao (2020). This estimator makes use of a logistic propensity score model for the probability
+of being in the treated group, and of (separate) linear regression models for the outcome of both
+treated and comparison units, in both pre and post-treatment periods.
+</p>
+<p>The nuisance parameters (propensity score and outcome regression parameters) are estimated using the methods
+described in Sections 3.2 of Sant'Anna and Zhao (2020). In short, the propensity score parameters are estimated
+using the inverse probability tilting estimator proposed by Graham, Pinto and Pinto (2012), and the outcome
+regression coefficients are estimated using weighted least squares,where the weights depend on
+the propensity score estimates; see Sant'Anna and Zhao (2020) for details.
+</p>
+<p>The resulting estimator is not only locally efficient and doubly robust for the ATT,
+but it is also doubly robust for inference; see Sant'Anna and Zhao (2020) for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ATT</code></td>
+<td>
+<p>The DR DiD point estimate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p> The DR DiD standard error</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uci</code></td>
+<td>
+<p>Estimate of the upper bound of a 95% CI for the ATT</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lci</code></td>
+<td>
+<p>Estimate of the lower bound of a 95% CI for the ATT</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boots</code></td>
+<td>
+<p>All Bootstrap draws of the ATT, in case bootstrap was used to conduct inference. Default is NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ps.flag</code></td>
+<td>
+<p>Convergence Flag for the propensity score estimation: =0 if <code>trust</code> algorithm converged,
+=1 if IPW algorithm converged (in case it was used), =2 if GLM logit estimator was used (i.e., if both <code>trust</code> and IPT
+did not converged).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>att.inf.func</code></td>
+<td>
+<p>Estimate of the influence function. Default is NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call.param</code></td>
+<td>
+<p>The matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>argu</code></td>
+<td>
+<p>Some arguments used (explicitly or not) in the call (panel = FALSE, estMethod = "imp", boot, boot.type, nboot, type="dr")</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p><cite>Graham, Bryan, Pinto, Cristine, and Egel, Daniel (2012),
+"Inverse Probability Tilting for Moment Condition Models with Missing Data."
+Review of Economic Studies, vol. 79 (3), pp. 1053-1079, <a href="https://doi.org/10.1093/restud/rdr047">doi:10.1093/restud/rdr047</a></cite>
+</p>
+<p><cite>Sant'Anna, Pedro H. C. and Zhao, Jun. (2020),
+"Doubly Robust Difference-in-Differences Estimators." Journal of Econometrics, Vol. 219 (1), pp. 101-122,
+<a href="https://doi.org/10.1016/j.jeconom.2020.06.003">doi:10.1016/j.jeconom.2020.06.003</a></cite>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># use the simulated data
+covX = as.matrix(cbind(1, sim_rc[,5:8]))
+# Implement the improved, locally efficient DR DiD estimator
+drdid_imp_rc(y = sim_rc$y, post = sim_rc$post, D = sim_rc$d,
+             covariates= covX)
+
+</code></pre>
+
+
+</div>

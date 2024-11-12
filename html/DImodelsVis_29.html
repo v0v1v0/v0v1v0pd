@@ -1,0 +1,258 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simplex_path_data</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creating data for visualising the change in a response variable between two
+points in the simplex space</h2>
+
+<h3>Description</h3>
+
+<p>This is the helper function to prepare the underlying data for visualising
+the change in a response variable between two points in a simplex space. The
+two points specified by the 'starts' and 'ends' parameters are joined by a
+straight line across the simplex space and the response is predicted for the
+starting, ending and intermediate communities along this line. The associated
+uncertainty along this prediction is also returned. The output of this function
+can be passed to the <code>simplex_path_plot</code> function to visualise the
+change in response.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simplex_path_data(starts, ends, prop, add_var = list(), prediction = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>starts</code></td>
+<td>
+<p>A data-frame specifying the starting proportions of the
+compositional variables.
+If a model object is specified then this data should contain all the
+variables present in the model object including any additional non-compositional variables.
+If a coefficient vector is specified then data should contain same number of
+columns as the number of elements in the coefficient vector and a one-to-one
+positional mapping would be assumed between the data columns and the
+elements of the coefficient vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ends</code></td>
+<td>
+<p>A data-frame specifying the ending proportions of the
+compositional variables.
+If a model object is specified then this data should contain all the
+variables present in the model object including any additional non-compositional variables.
+If a coefficient vector is specified then data should contain same number of
+columns as the number of elements in the coefficient vector and a one-to-one
+positional mapping would be assumed between the data columns and the
+elements of the coefficient vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop</code></td>
+<td>
+<p>A vector of column names identifying the columns containing the
+variable proportions (i.e., compositional columns) in the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>add_var</code></td>
+<td>
+<p>A list or data-frame specifying values for additional variables
+in the model other than the proportions (i.e. not part of the
+simplex design).
+This could be useful for comparing the predictions across
+different values for a non-compositional variable.
+If specified as a list, it will be expanded to show a plot
+for each unique combination of values specified, while if specified
+as a data-frame, one plot would be generated for each row in the
+data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prediction</code></td>
+<td>
+<p>A logical value indicating whether to pass the final data
+to the 'add_prediction' function and append the
+predictions to the data. Default value is <code>TRUE</code>, but
+often it would be desirable to make additional changes to
+the data before making any predictions, so the user can set this to
+<code>FALSE</code> and manually call the 'add_prediction'
+function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Arguments passed on to <code>add_prediction</code>
+</p>
+
+<dl>
+<dt><code>model</code></dt>
+<dd>
+<p>A regression model object which will be used to make predictions
+for the observations in 'data'. Will override 'coefficients'
+if specified.</p>
+</dd>
+<dt><code>coefficients</code></dt>
+<dd>
+<p>If a regression model is not available (or can't be fit in R),
+the regression coefficients from a model fit in some other
+language can be used to calculate predictions. However, the
+user would have to ensure there's an appropriate one-to-one
+positional mapping between the data columns and the
+coefficient values. Further, they would also have to provide
+a variance-covariance matrix of the coefficients in the 'vcov'
+parameter if they want the associated CI for the prediction or
+it would not be possible to calculate confidence/prediction
+intervals using this method.</p>
+</dd>
+<dt><code>vcov</code></dt>
+<dd>
+<p>If regression coefficients are specified, then the variance-covariance
+matrix of the coefficients can be specified here to calculate the
+associated confidence interval around each prediction. Failure to do
+so would result in no confidence intervals being returned. Ensure
+'coefficients' and 'vcov' have the same positional mapping with the data.</p>
+</dd>
+<dt><code>coeff_cols</code></dt>
+<dd>
+<p>If 'coefficients' are specified and a one-to-one positional
+mapping between the data-columns and coefficient vector is
+not present. A character string or numeric index can be specified
+here to reorder the data columns and match the corresponding
+coefficient value to the respective data column. See the
+"Use model coefficients for prediction" section in examples.</p>
+</dd>
+<dt><code>conf.level</code></dt>
+<dd>
+<p>The confidence level for calculating confidence/prediction
+intervals. Default is 0.95.</p>
+</dd>
+<dt><code>interval</code></dt>
+<dd>
+<p>Type of interval to calculate:
+</p>
+
+<dl>
+<dt>"none" (default)</dt>
+<dd>
+<p>No interval to be calculated.</p>
+</dd>
+<dt>"confidence"</dt>
+<dd>
+<p>Calculate a confidence interval.</p>
+</dd>
+<dt>"prediction"</dt>
+<dd>
+<p>Calculate a prediction interval.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data frame with the following columns appended at the end
+</p>
+
+<dl>
+<dt>.InterpConst</dt>
+<dd>
+<p>The value of the interpolation constant for creating
+the intermediate compositions between the start and end compositions.</p>
+</dd>
+<dt>.Group</dt>
+<dd>
+<p>An identifier column to discern between the different curves.</p>
+</dd>
+<dt>.add_str_ID</dt>
+<dd>
+<p>An identifier column for grouping the cartesian product
+of all additional columns specified in 'add_var'
+parameter (if 'add_var' is specified).</p>
+</dd>
+<dt>.Pred</dt>
+<dd>
+<p>The predicted response for each observation.</p>
+</dd>
+<dt>.Lower</dt>
+<dd>
+<p>The lower limit of the prediction/confidence interval for each observation.</p>
+</dd>
+<dt>.Upper</dt>
+<dd>
+<p>The upper limit of the prediction/confidence interval for each observation.</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DImodels)
+
+## Load data
+data(sim2)
+
+## Fit model
+mod &lt;- glm(response ~ (p1 + p2 + p3 + p4)^2 + 0, data = sim2)
+
+## Create data for visualising change in response as we move from
+## a species dominated by 70% of one species to a monoculture of
+## same species
+head(simplex_path_data(starts = sim2[c(1, 5, 9, 13), 3:6],
+                       ends = sim2[c(48, 52, 56, 60), 3:6],
+                       prop = c("p1", "p2", "p3", "p4"),
+                       model = mod))
+
+## Create data for visualising change in response as we move from
+## the centroid mixture to each monoculture
+## If either of starts or ends have only row, then they'll be recycled
+## to match the number of rows in the other
+## Notice starts has only one row here, but will be recycled to have 4
+## since ends has 4 four rows
+head(simplex_path_data(starts = sim2[c(18),3:6],
+                       ends = sim2[c(48, 52, 56, 60),3:6],
+                       prop = c("p1", "p2", "p3", "p4"),
+                       model = mod))
+
+## Changing the confidence level for the prediction interval
+## Use `conf.level` parameter
+head(simplex_path_data(starts = sim2[c(18), 3:6],
+                       ends = sim2[c(48, 52, 56, 60),3:6],
+                       prop = c("p1", "p2", "p3", "p4"),
+                       model = mod, conf.level = 0.99))
+
+## Adding additional variables to the data using `add_var`
+## Notice the new .add_str_ID column in the output
+sim2$block &lt;- as.numeric(sim2$block)
+new_mod &lt;- update(mod, ~ . + block, data = sim2)
+head(simplex_path_data(starts = sim2[c(18), 3:6],
+                       ends = sim2[c(48, 52, 56, 60), 3:6],
+                       prop = c("p1", "p2", "p3", "p4"),
+                       model = new_mod, conf.level = 0.99,
+                       add_var = list("block" = c(1, 2))))
+
+## Use predict = FALSE to get raw data structure
+out_data &lt;- simplex_path_data(starts = sim2[c(18), 3:6],
+                              ends = sim2[c(48, 52, 56, 60), 3:6],
+                              prop = c("p1", "p2", "p3", "p4"),
+                              model = new_mod,
+                              prediction = FALSE)
+head(out_data)
+## Manually add block
+out_data$block = 3
+## Call `add_prediction` to get prediction
+head(add_prediction(data = out_data, model = new_mod, interval = "conf"))
+</code></pre>
+
+
+</div>

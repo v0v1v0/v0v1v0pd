@@ -1,0 +1,128 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>substitute2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Substitute expression </h2>
+
+<h3>Description</h3>
+
+<p>Experimental, more robust, and more user-friendly version of base R <code>substitute</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  substitute2(expr, env)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+<p> Unevaluated expression in which substitution has to take place. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>env</code></td>
+<td>
+<p> List, or an environment that will be coerced to list, from which variables will be taken to inject into <code>expr</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For convenience function will turn any character elements of <code>env</code> argument into symbols. In case if character is of length 2 or more, it will raise an error. It will also turn any list elements into list calls instead. Behaviour can be changed by wrapping <code>env</code> into <code>I</code> call. In such case any symbols must be explicitly created, for example using <code>as.name</code> function. Alternatively it is possible to wrap particular elements of <code>env</code> into <code>I</code> call, then only those elements will retain their original class.
+</p>
+<p>Comparing to base R <code>substitute</code>, <code>substitute2</code> function:
+</p>
+
+<ol>
+<li>
+<p> substitutes calls argument names as well
+</p>
+</li>
+<li>
+<p> by default converts character elements of <code>env</code> argument to symbols
+</p>
+</li>
+<li>
+<p> by default converts list elements of <code>env</code> argument to list calls
+</p>
+</li>
+<li>
+<p> does not accept missing <code>env</code> argument
+</p>
+</li>
+<li>
+<p> evaluates elements of <code>env</code> argument
+</p>
+</li>
+</ol>
+<h3>Value</h3>
+
+<p>Quoted expression having variables and call argument names substituted.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Conversion of <em>character to symbol</em> and <em>list to list call</em> works recursively for each list element in <code>env</code> list. If this behaviour is not desired for your use case, we would like to hear about that via our issue tracker. For the present moment there is an option to disable that: <code>options(datatable.enlist=FALSE)</code>. This option is provided only for debugging and will be removed in future. Please do not write code that depends on it, but use <code>I</code> calls instead.
+</p>
+
+
+<h3>See Also</h3>
+
+ <p><code>substitute</code>, <code>I</code>, <code>call</code>, <code>name</code>, <code>eval</code> </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## base R substitute vs substitute2
+substitute(list(var1 = var2), list(var1 = "c1", var2 = 5L))
+substitute2(list(var1 = var2), list(var1 = "c1", var2 = 5L)) ## works also on names
+
+substitute(var1, list(var1 = "c1"))
+substitute2(var1, list(var1 = I("c1"))) ## enforce character with I
+
+substitute(var1, list(var1 = as.name("c1")))
+substitute2(var1, list(var1 = "c1")) ## turn character into symbol, for convenience
+
+## mix symbols and characters using 'I' function, both lines will yield same result
+substitute2(list(var1 = var2), list(var1 = "c1", var2 = I("some_character")))
+substitute2(list(var1 = var2), I(list(var1 = as.name("c1"), var2 = "some_character")))
+
+## list elements are enlist'ed into list calls
+(cl1 = substitute(f(lst), list(lst = list(1L, 2L))))
+(cl2 = substitute2(f(lst), I(list(lst = list(1L, 2L)))))
+(cl3 = substitute2(f(lst), list(lst = I(list(1L, 2L)))))
+(cl4 = substitute2(f(lst), list(lst = quote(list(1L, 2L)))))
+(cl5 = substitute2(f(lst), list(lst = list(1L, 2L))))
+cl1[[2L]] ## base R substitute with list element
+cl2[[2L]] ## same
+cl3[[2L]] ## same
+cl4[[2L]] ## desired
+cl5[[2L]] ## automatically
+
+## character to name and list into list calls works recursively
+(cl1 = substitute2(f(lst), list(lst = list(1L, list(2L)))))
+(cl2 = substitute2(f(lst), I(list(lst = list(1L, list(2L)))))) ## unless I() used
+last(cl1[[2L]]) ## enlisted recursively
+last(cl2[[2L]]) ## AsIs
+
+## using substitute2 from another function
+f = function(expr, env) {
+  eval(substitute(
+    substitute2(.expr, env),
+    list(.expr = substitute(expr))
+  ))
+}
+f(list(var1 = var2), list(var1 = "c1", var2 = 5L))
+</code></pre>
+
+
+</div>

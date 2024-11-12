@@ -1,0 +1,121 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>distmat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build a rank-based Mahalanobis distance matrix</h2>
+
+<h3>Description</h3>
+
+<p>Function for building a normalized rank-based Mahalanobis distance matrix with a penalty for caliper violation.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">	distmat(t_ind, X_mat, calip_cov = NULL, calip_size = NULL, calip_penalty = NULL,
+	        near_exact_covs = NULL, near_exact_penalties = NULL, digits = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>t_ind</code></td>
+<td>
+<p>treatment indicator: a vector of zeros and ones indicating treatment (1 = treated; 0 = control).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X_mat</code></td>
+<td>
+<p>matrix of covariates: a matrix of covariates used to build the based Mahalanobis distance matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calip_cov</code></td>
+<td>
+<p>caliper covariate: a covariate vector used to define the caliper.  In most applications this is the propensity score, but a covariate can be used as well.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calip_size</code></td>
+<td>
+<p>caliper size: a scalar that determines the size of the caliper for which there will be no penalty.  Most applications use <code>0.2*sd(calip_cov)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calip_penalty</code></td>
+<td>
+<p>a scalar used to multiply the magnitude of the violation of the caliper.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>near_exact_covs</code></td>
+<td>
+<p>a matrix of covariates used for near-exact matching.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>near_exact_penalties</code></td>
+<td>
+<p>a vector of scalars used for near-exact matching.  The length of <code>near_exact_penalties</code> has to be equal to the number of columns of <code>near_exact_covs</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>a scalar indicating the number of digits used to produce each entry of the distance matrix.  The default is 1 digit.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>distmat</code> is a function for building a normalized rank-based Mahalanobis distance matrix with a penalty for caliper violations on a covariate (say, the propensity score) and penalties for near-exact matching. 
+</p>
+<p>As explained in Rosenbaum (2010), the use of a rank-based Mahalanobis distance prevents an outlier from inflating the variance for a variable, and it thus decreases its importance in the matching.  
+In the calculation of the matrix the variances are constrained to not decrease as ties become more common, so that it is not more important to match on a rare binary variable than on a common binary one.  
+The penalty for caliper violations ensures good balance on the propensity score or the covariate used.
+In this way the rank-based Mahalanobis distance with a penalty for caliper violations in the propensity score constitutes a robust distance for matching.
+</p>
+<p>As explained in Zubizarreta et al. (2011), the distance matrix can also be modified for near-exact matching. 
+Penalties are added to the distance matrix every time that a treated and a control unit have a different value for the corresponding near-exact matching covariate.  
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix that can be used for optimal matching with the <code>bmatch</code> functions in the <code>designmatch</code> package.
+</p>
+
+
+<h3>References</h3>
+
+	
+<p>Rosenbaum, P. R. (2010), <em>Design of Observational Studies</em>, Springer.
+</p>
+<p>Zubizarreta, J. R., Reinke, C. E., Kelz, R. R., Silber, J. H., and Rosenbaum, P. R. (2011), "Matching for Several Sparse Nominal Variables in a Case-Control Study of Readmission Following Surgery," <em>The American Statistician</em>, 65, 229-238.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">	# Load data
+	data(germancities)
+	attach(germancities)
+
+	# Treatment indicator
+	t_ind = treat
+
+	# Matrix of covariates
+	X_mat = cbind(log2pop, popgrowth1939, popgrowth3339, emprate, indrate, rubble, 
+	rubblemiss, flats, flatsmiss, refugees)
+
+	# Distance matrix
+	dist_mat = distmat(t_ind, X_mat)
+</code></pre>
+
+
+</div>

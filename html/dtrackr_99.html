@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>setdiff.trackr_df</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Set operations</h2>
+
+<h3>Description</h3>
+
+<p>These perform set operations on tracked dataframes. It merges the history
+of 2 (or more) dataframes and combines the rows (or columns). It calculates the total number of
+resulting rows as {.count.out} in other terms it performs exactly the same
+operation as the equivalent <code>dplyr</code> operation. See <code>dplyr::bind_rows()</code>,
+<code>dplyr::bind_cols()</code>, <code>dplyr::intersect()</code>, <code>dplyr::union()</code>,
+<code>dplyr::setdiff()</code>,<code>dplyr::intersect()</code>, or <code>dplyr::union_all()</code> for the
+underlying function details.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'trackr_df'
+setdiff(
+  x,
+  y,
+  ...,
+  .messages = "{.count.out} items in difference",
+  .headline = "Difference"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>Vectors to combine.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>a collection of tracked data frames to combine</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.messages</code></td>
+<td>
+<p>a set of glue specs. The glue code can use any global
+variable, or {.count.out}</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.headline</code></td>
+<td>
+<p>a glue spec. The glue code can use any global variable, or
+{.count.out}</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the dplyr output with the history graph updated.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dplyr::setdiff()
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(dtrackr)
+
+# Set operations
+people = starwars %&gt;% select(-films, -vehicles, -starships)
+chrs = people %&gt;% track("start")
+
+lhs = chrs %&gt;% include_any(
+  species == "Human" ~ "{.included} humans",
+  species == "Droid" ~ "{.included} droids"
+)
+
+# these are different subsets of the same data
+rhs = chrs %&gt;% include_any(
+  species == "Human" ~ "{.included} humans",
+  species == "Gungan" ~ "{.included} gungans"
+) %&gt;% comment("{.count} gungans &amp; humans")
+
+
+# Unions
+set = bind_rows(lhs,rhs) %&gt;% comment("{.count} 2*human,droids and gungans")
+# display the history of the result:
+set %&gt;% history()
+nrow(set)
+# not run - display the flowchart:
+# set %&gt;% flowchart()
+
+set = union(lhs,rhs) %&gt;% comment("{.count} human,droids and gungans")
+# display the history of the result:
+set %&gt;% history()
+nrow(set)
+# not run - display the flowchart:
+# set %&gt;% flowchart()
+
+set = union_all(lhs,rhs) %&gt;% comment("{.count} 2*human,droids and gungans")
+# display the history of the result:
+set %&gt;% history()
+nrow(set)
+# not run - display the flowchart:
+# set %&gt;% flowchart()
+
+# Intersections and differences
+
+set = setdiff(lhs,rhs) %&gt;% comment("{.count} droids and gungans")
+# display the history of the result:
+set %&gt;% history()
+nrow(set)
+# not run - display the flowchart:
+# set %&gt;% flowchart()
+
+set = intersect(lhs,rhs) %&gt;% comment("{.count} humans")
+# display the history of the result:
+set %&gt;% history()
+nrow(set)
+# not run - display the flowchart:
+# set %&gt;% flowchart()
+</code></pre>
+
+
+</div>

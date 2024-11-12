@@ -1,0 +1,120 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>covF2dfa</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Autocovariance function of the detrended variance</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the autocovariance of the detrended variance.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">covF2dfa(m = 3, nu = 0, h = 0, overlap = TRUE, G, Cumulants = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>an integer or integer valued vector indicating the size of the window for the polinomial fit. <code class="reqn">min(m)</code> must be greater or equal than <code class="reqn">nu</code> or else it will return an error.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nu</code></td>
+<td>
+<p>a non-negative integer denoting the degree of the polinomial fit applied on the integrated series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>an integer or integer valued vector indicating the lags for which the autocovariance function is to be calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overlap</code></td>
+<td>
+<p>logical: if true (the default), overlapping boxes are used for calculations. Otherwise, non-overlapping boxes are applied.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>the autocovariance matrix for the original time series. The dimension of <code class="reqn">G</code> must be <code class="reqn">(max(m)+max(h)+1)</code> by <code class="reqn">(max(m)+max(h)+1)</code> if overlap = TRUE and <code class="reqn">(max(m)+max(h))(max(h)+1)</code> by <code class="reqn">(max(m)+max(h))(max(h)+1)</code> otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Cumulants</code></td>
+<td>
+<p>The matrix containing the joint cumulants for lags. Dimension must be <code class="reqn">(max(m)+1)*nrow(G)</code>. If not provided, it is assumed that the cumulants are all zero.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A matrix with the autocovariance of lag <code class="reqn">h</code>, for each value of <code class="reqn">m</code> provided. This matrix is obtained from expressions (21) for <code class="reqn">h = 0</code> and (22) for <code class="reqn">h &gt; 0</code> in Prass and Pumi (2019).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Taiane Schaedler Prass</p>
+
+
+<h3>References</h3>
+
+<p>Prass, T.S. and Pumi, G. (2019). On the behavior of the DFA and DCCA in trend-stationary
+processes &lt;arXiv:1910.10589&gt;.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+ms = seq(3,100,1)
+hs = seq(0,50,1)
+overlap = TRUE
+nu = 0
+m_max = (max(ms)+1)*(max(hs)+1) - max(ms)*max(hs)*as.integer(overlap)
+
+theta = c(c(1,(20:1)/10), rep(0, m_max - 20))
+Gamma1 = diag(m_max+1)
+Gamma2 = matrix(0, ncol = m_max+1, nrow = m_max+1)
+Gamma12 = matrix(0, ncol = m_max+1, nrow = m_max+1)
+for(t in 1:(m_max+1)){
+    for(h in 0:(m_max+1-t)){
+        Gamma2[t,t+h] = sum(theta[1:(length(theta)-h)]*theta[(1+h):length(theta)])
+        Gamma2[t+h,t] = Gamma2[t,t+h]
+        Gamma12[t,t+h] = theta[h+1]
+    }
+}
+
+covdfa1 = covF2dfa(m = ms, nu = 0, h = hs,
+                   overlap = TRUE, G = Gamma1, Cumulants = NULL)
+
+covdfa2 = covF2dfa(m = ms, nu = 0, h = hs,
+                  overlap = TRUE, G = Gamma2, Cumulants = NULL)
+
+cr = rainbow(100)
+plot(ms, covdfa1[,1], type = "l", ylim = c(0,20),
+    xlab = "m", ylab = expression(gamma[DFA](h)), col = cr[1])
+for(i in 2:ncol(covdfa1)){
+  points(ms, covdfa1[,i],  type = "l", col = cr[i])
+}
+
+lattice::wireframe(covdfa1, drape = TRUE,
+    col.regions = rev(rainbow(150))[50:150],
+    zlab = expression(gamma[DFA]), xlab = "m", ylab = "h")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

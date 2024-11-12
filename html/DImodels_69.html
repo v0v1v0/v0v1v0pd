@@ -1,0 +1,166 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.DI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Predict Method for Diversity-Interactions (DI) Models
+</h2>
+
+<h3>Description</h3>
+
+<p>Generates predictions for a fitted DI models object and, optionally, the associated standard errors for those predictions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DI'
+predict(object, newdata, se.fit = FALSE,
+interval = c("none", "confidence", "prediction"), 
+level = 0.95, weights = 1,
+type = c("link", "response", "terms"), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>a <code>DI</code> or <code>autoDI</code> model object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>optionally, a data frame in which to look for variables with which to predict. If omitted, predictions will be made for data used to fit the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se.fit</code></td>
+<td>
+<p>A logical switch indicating whether to calculate the associated standard errors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+<p>The type of interval to be calculated. Accepts one of "none", "confidence" or "prediction", with "none"" being the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>The level (1 - <code class="reqn">\alpha</code>) at which to calculate the interval. Defaults to 0.95, giving a 95% interval.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>The variance weights for calculating the prediction intervals. By default all values get the same weight of 1. Can also specify a numeric vector of same length as number of rows in <code>newdata</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>the type of prediction required. One of "link", "response" or "terms". The default "link" is on the scale of the linear predictors while "response" is on the scale of the response variable. The "terms" option returns a matrix giving the fitted values of each term in the model formula on the linear predictor scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods. For eg: <code>dispersion</code> or <code>na.action</code> arguments from <code>predict.glm</code> function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>newdata</code> doesn't contain all predictors from the model, necessary numeric predictors will be added in with a value of 0, while categorical predictors will be added in with their baseline value. See examples for more information.
+</p>
+
+
+<h3>Value</h3>
+
+<p>if <code>se.fit = FALSE</code>, a vector of predictions is returned.
+</p>
+<p>if <code>se.fit = TRUE</code>, a list with the following components is returned.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>Predictions, as for <code>se.fit = FALSE.</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se.fit</code></td>
+<td>
+<p>Estimated standard error for each prediction</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>residual.scale</code></td>
+<td>
+<p>A scalar giving the square root of the dispersion used in computing the standard errors.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Rafael A. Moral, John Connolly, Rishabh Vishwakarma and Caroline Brophy
+</p>
+
+
+<h3>References</h3>
+
+<p>Connolly J, T Bell, T Bolger, C Brophy, T Carnus, JA Finn, L Kirwan, F Isbell, J Levine, A Luescher, V Picasso, C Roscher, MT Sebastia, M Suter and A Weigelt (2013) An improved model to predict the effects of changing biodiversity levels on ecosystem function. Journal of Ecology, 101, 344-355.
+</p>
+<p>Kirwan L, J Connolly, JA Finn, C Brophy, A Luescher, D Nyfeler and MT Sebastia (2009) Diversity-interaction modelling - estimating contributions of species identities and interactions to ecosystem function. Ecology, 90, 2032-2038.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>DI</code>
+<code>autoDI</code>
+<code>predict.glm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Load the Switzerland data
+  data(Switzerland)
+## Summarise the Switzerland data
+  summary(Switzerland)
+
+## Fit a DI model
+  m1 &lt;- DI(y = "yield", prop = 4:7, treat = 'nitrogen', DImodel = 'AV',
+  density = 'density', estimate_theta = TRUE, data = Switzerland)
+  summary(m1)
+  
+## Prediction without newdata, full dataset from model fit will be used
+  predict(m1, se.fit = TRUE)
+
+## Prediction with newdata
+  newdata1 &lt;- data.frame('p1' = c(1,0), 'p2' = c(0,1), 'p3' = c(0,0), 'p4' = c(0,0),
+                         'nitrogen' = c(50, 150), 'density' = c('low','high'))
+  predict(m1, newdata = newdata1, se.fit = TRUE)
+
+## If any categorical variable is missing, the baseline level
+## of the variable is used for prediction
+  newdata2 &lt;- newdata1[, -5]
+  print(newdata2)
+  predict(m1, newdata = newdata2)
+  
+## If a numerical variable is missing, the value 0 is used for it
+  newdata3 &lt;- newdata1[, -c(3,4)]
+  print(newdata3)
+  predict(m1, newdata = newdata3)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,130 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>whittermore.stat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute Whittermore's Statistic</h2>
+
+<h3>Description</h3>
+
+<p>Compute Whittermore's statistic. See <em>whittermore</em> manual page
+for more details.
+</p>
+<p>whittermore.stat computes the test statistic and the test using a hi-square
+distribution whilst whittermore.test performs a bootstrap test.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">whittermore.stat(data, listw, zero.policy=FALSE)
+whittermore.test(formula, data, model, R, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Formula that specifies the underlying model. The observed
+cases are the response and the expected number of cases must be specified
+as an offset in the log scale (see example below).  Note that now it
+is not necessary to use Observed and Expected and that any other
+names can be used to specify the observed and expected cases.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Parametric model to be used in the bootstrap test. One of
+"param", "multinom", "poisson" or "negbin". See the <b>DCluster</b> manpage for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>The remaining arguments in 'whittermore.stat' not included in
+'whittermore.test'. This is done so because whittermore.test calls whittermore.stat in order to perform the test.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>Number of replicates used in the test to compute the significance of
+the observed value of the test statistic.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe containing the data, as specified in the
+<b>DCluster</b> manpage.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>listw</code></td>
+<td>
+<p>Neighbours list with spatial weights created, for example,
+by 'nb2listw' (package <em>spdep</em>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>zero.policy</code></td>
+<td>
+<p>See <em>nb2listw</em> in package <em>spdep</em>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The value of the statistic.
+</p>
+
+
+<h3>References</h3>
+
+<p>Whittermore, A. S. and Friend, N. and Byron, W. and Brown, J. R. and Holly, E. A. (1987). A test to detect clusters of disease. Biometrika 74, 631-635.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>DCluster, whittermore, whittermore.boot, whittermore.pboot
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(spdep)
+data(nc.sids)
+col.W &lt;- nb2listw(ncCR85.nb, zero.policy=TRUE)
+
+sids&lt;-data.frame(Observed=nc.sids$SID74)
+sids&lt;-cbind(sids, Expected=nc.sids$BIR74*sum(nc.sids$SID74)/sum(nc.sids$BIR74) )
+sids&lt;-cbind(sids, x=nc.sids$x, y=nc.sids$y)
+
+#Calculate neighbours based on distance
+coords&lt;-as.matrix(sids[,c("x", "y")])
+
+dlist&lt;-dnearneigh(coords, 0, Inf)
+dlist&lt;-include.self(dlist)
+dlist.d&lt;-nbdists(dlist, coords)
+
+#Calculate weights. They are globally standardised but it doesn't
+#change significance.
+col.W.whitt&lt;-nb2listw(dlist, glist=dlist.d, style="C")
+
+
+whittermore.stat(sids, col.W.whitt, zero.policy=TRUE)
+
+whittermore.test(Observed~offset(log(Expected)), sids, model="poisson", R=99, 
+   listw=col.W.whitt, zero.policy=TRUE)
+</code></pre>
+
+
+</div>

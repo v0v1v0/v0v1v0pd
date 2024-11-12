@@ -1,0 +1,286 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ParamFamily</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Generating function for ParamFamily-class</h2>
+
+<h3>Description</h3>
+
+<p>Generates an object of class <code>"ParamFamily"</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">ParamFamily(name, distribution = Norm(), distrSymm, modifyParam,
+            main = main(param), nuisance = nuisance(param),
+            fixed = fixed(param), trafo = trafo(param),
+            param = ParamFamParameter(name = paste("Parameter of", 
+                          name),  main = main, nuisance = nuisance, 
+                                  fixed = fixed, trafo = trafo),
+            props = character(0),
+            startPar = NULL, makeOKPar = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p> character string: name of family </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distribution</code></td>
+<td>
+<p> object of class <code>"Distribution"</code>: 
+member of the family </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distrSymm</code></td>
+<td>
+<p> object of class <code>"DistributionSymmetry"</code>: 
+symmetry of <code>distribution</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startPar</code></td>
+<td>
+<p><code>startPar</code> is a function in the observations <code>x</code>
+returning initial information for <code>MCEstimator</code> used 
+by <code>optimize</code> resp. <code>optim</code>; i.e; if (total) parameter is of 
+length 1, <code>startPar</code> returns a search interval, else it returns an initial 
+parameter value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>makeOKPar</code></td>
+<td>
+<p><code>makeOKPar</code> is a function in the (total)
+parameter <code>param</code>; used if <code>optim</code> resp. <code>optimize</code>—
+try to use “illegal” parameter values; then <code>makeOKPar</code> makes
+a valid parameter value out of the illegal one; if <code>NULL</code>
+slot <code>makeOKPar</code> of <code>ParamFamily</code> is used to produce it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main</code></td>
+<td>
+<p> numeric vector: main parameter </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nuisance</code></td>
+<td>
+<p> numeric vector: nuisance parameter </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p> numeric vector: fixed part of the parameter </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trafo</code></td>
+<td>
+<p> function in <code>param</code> or matrix: transformation of the parameter </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>param</code></td>
+<td>
+<p> object of class <code>"ParamFamParameter"</code>:
+parameter of the family </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modifyParam</code></td>
+<td>
+<p> function: mapping from the parameter space 
+(represented by <code>"param"</code>) to the distribution space 
+(represented by <code>"distribution"</code>). </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>props</code></td>
+<td>
+<p> character vector: properties of the family </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>name</code> is missing, the default 
+“"parametric family of probability measures"” is used. 
+In case <code>distrSymm</code> is missing it is set to <code>NoSymmetry()</code>.
+If <code>param</code> is missing, the parameter is created via
+<code>main</code>, <code>nuisance</code> and <code>trafo</code> as described
+in <code>ParamFamParameter</code>.
+One has to specify a function which represents a mapping
+from the parameter space to the corresponding distribution
+space; e.g., in case of normal location a simple version of such
+a function would be <code>function(theta){ Norm(mean = theta) }</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class <code>"ParamFamily"</code></p>
+
+
+<h3>Author(s)</h3>
+
+<p>Matthias Kohl <a href="mailto:Matthias.Kohl@stamats.de">Matthias.Kohl@stamats.de</a>,<br>
+Peter Ruckdeschel <a href="mailto:peter.ruckdeschel@uni-oldenburg.de">peter.ruckdeschel@uni-oldenburg.de</a></p>
+
+
+<h3>See Also</h3>
+
+<p><code>ParamFamily-class</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## "default" (normal location)
+F1 &lt;- ParamFamily(modifyParam = function(theta){ Norm(mean = theta) })
+plot(F1)
+
+################################
+## Some examples:
+################################
+## 1. Normal location family
+theta &lt;- 0
+names(theta) &lt;- "mean"
+NL &lt;- ParamFamily(name = "Normal location family",
+          param = ParamFamParameter(name = "location parameter", main = theta),
+          distribution = Norm(mean = 0, sd = 1), ## sd known!
+          startPar = function(x,...) c(min(x),max(x)),
+          distrSymm &lt;- SphericalSymmetry(SymmCenter = 0),
+          modifyParam = function(theta){ Norm(mean = theta, sd = 1) },
+          props = paste(c("The normal location family is invariant under",
+                    "the group of transformations 'g(x) = x + mean'",
+                    "with location parameter 'mean'"), collapse = " "))
+NL
+
+## 2. Normal scale family
+theta &lt;- 1
+names(theta) &lt;- "sd"
+NS &lt;- ParamFamily(name = "Normal scale family",
+          param = ParamFamParameter(name = "scale parameter", main = theta,
+          .returnClsName = "ParamWithScaleFamParameter"),
+          distribution = Norm(mean = 0, sd = 1), ## mean known!
+          startPar = function(x,...) c(0,-min(x)+max(x)),
+          distrSymm &lt;- SphericalSymmetry(SymmCenter = 0),
+          modifyParam = function(theta){ Norm(mean = 0, sd = theta) },
+          props = paste(c("The normal scale family is invariant under",
+                    "the group of transformations 'g(y) = sd*y'",
+                    "with scale parameter 'sd'"), collapse = " "))
+NS
+
+## 3. Normal location and scale family
+theta &lt;- c(0, 1)
+names(theta) &lt;- c("mean", "sd")
+NLS &lt;- ParamFamily(name = "Normal location and scale family",
+          param = ParamFamParameter(name = "location and scale parameter",
+                                    main = theta,
+                                 .returnClsName = "ParamWithScaleFamParameter"),
+          distribution = Norm(mean = 0, sd = 1),
+          startPar = function(x,...) c(median(x),mad(x)),
+          makeOKPar = function(param) {param[2]&lt;-abs(param[2]); return(param)},
+          distrSymm &lt;- SphericalSymmetry(SymmCenter = 0),
+          modifyParam = function(theta){
+                            Norm(mean = theta[1], sd = theta[2])
+                        },
+          props = paste(c("The normal location and scale family is",
+                    "invariant under the group of transformations",
+                    "'g(x) = sd*x + mean' with location parameter",
+                    "'mean' and scale parameter 'sd'"),
+                    collapse = " "))
+NLS
+
+## 4. Binomial family
+theta &lt;- 0.3
+names(theta) &lt;- "prob"
+B &lt;- ParamFamily(name = "Binomial family",
+         param = ParamFamParameter(name = "probability of success", 
+                                   main = theta),
+         startPar = function(x,...) c(0,1),
+         distribution = Binom(size = 15, prob = 0.3), ## size known!
+         modifyParam = function(theta){ Binom(size = 15, prob = theta) },
+         props = paste(c("The Binomial family is symmetric with respect",
+                   "to prob = 0.5; i.e.,",
+                   "d(Binom(size, prob))(k)=d(Binom(size,1-prob))(size-k)"),
+                   collapse = " "))
+B
+
+## 5. Poisson family
+theta &lt;- 7
+names(theta) &lt;- "lambda"
+P &lt;- ParamFamily(name = "Poisson family",
+          param = ParamFamParameter(name = "positive mean", main = theta),
+          startPar = function(x,...) c(0,max(x)),
+          distribution = Pois(lambda = 7),
+          modifyParam = function(theta){ Pois(lambda = theta) })
+P
+
+
+## 6. Exponential scale family
+theta &lt;- 2
+names(theta) &lt;- "scale"
+ES &lt;- ParamFamily(name = "Exponential scale family",
+          param = ParamFamParameter(name = "scale parameter", main = theta,
+                           .returnClsName = "ParamWithScaleFamParameter"),
+          startPar = function(x,...) c(0,max(x)-min(x)),
+          distribution = Exp(rate = 1/2),
+          modifyParam = function(theta){ Exp(rate = 1/theta) },
+          props = paste(c("The Exponential scale family is invariant under",
+                    "the group of transformations 'g(y) = scale*y'",
+                    "with scale parameter 'scale = 1/rate'"),
+                    collapse = " " ))
+ES
+
+## 7. Lognormal scale family
+theta &lt;- 2
+names(theta) &lt;- "scale"
+LS &lt;- ParamFamily(name = "Lognormal scale family",
+          param = ParamFamParameter(name = "scale parameter", main = theta,
+                           .returnClsName = "ParamWithScaleFamParameter"),
+          startPar = function(x,...) c(0,max(x)-min(x)),
+          distribution = Lnorm(meanlog = log(2), sdlog = 2),## sdlog known!
+          modifyParam = function(theta){ 
+                            Lnorm(meanlog = log(theta), sdlog = 2) 
+                        },
+          props = paste(c("The Lognormal scale family is invariant under",
+                    "the group of transformations 'g(y) = scale*y'",
+                    "with scale parameter 'scale = exp(meanlog)'"),
+                    collapse = " "))
+LS
+
+## 8. Gamma family
+theta &lt;- c(1, 2)
+names(theta) &lt;- c("scale", "shape")
+G &lt;- ParamFamily(name = "Gamma family",
+        param = ParamFamParameter(name = "scale and shape", main = theta,
+                           withPosRestr = TRUE,
+                           .returnClsName = "ParamWithScaleAndShapeFamParameter"),
+        startPar = function(x,...) {E &lt;- mean(x); V &lt;- var(X); c(V/E,E^2/V)},
+        makeOKPar = function(param) abs(param),
+        distribution = Gammad(scale = 1, shape = 2),
+        modifyParam = function(theta){ 
+                          Gammad(scale = theta[1], shape = theta[2]) 
+                      },
+        props = paste(c("The Gamma family is scale invariant via the",
+                  "parametrization '(nu,shape)=(log(scale),shape)'"),
+                  collapse = " "))
+G
+</code></pre>
+
+
+</div>

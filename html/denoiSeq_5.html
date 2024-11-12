@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>results</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute the test statistic</h2>
+
+<h3>Description</h3>
+
+<p>Extracts  posterior samples of the  parameters which are returned by denoiseq
+function and  computes the summary and test statistics.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">results(RDobject, steps, burnin = floor(steps/3), rope_limit = 0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>RDobject</code></td>
+<td>
+<p>A readsData object with a filled output slot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steps</code></td>
+<td>
+<p>An integer representing the number of iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>An integer for the number of iterations to be considered as
+burn in values. A default value equivalent to a third of steps is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rope_limit</code></td>
+<td>
+<p>A float that delimits the range of the region of practical
+equivalence, ROPE. A default value of 0.5 is used.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>To calculate the  test statistic, this function  first log2 transforms the
+posterior samples of the two relevant parameters i.e <code class="reqn">N_{iA}</code> and
+<code class="reqn">N_{iB}</code>. It then randomly subtracts posterior samples of one of the
+parameters  from the other and determines the proportion of this
+distribution of differences that lies in the region of practical equivalence
+(ROPE) (Kruschke, 2011). The genes can then be arranged in an ascending
+order of  the ROPE_propn column and we can select the most differentially
+expressed genes as those whose ROPE_propn is less than a particular
+threshold value.
+</p>
+<p>Using both real and  simulated data, optimal values between 0.0007 and 0.4
+were obtained for the threshold.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A dataframe with 3 columns namely; the log2 fold change (log2FC),
+the standard error of the log2 fold change (lgfcSE) and the test static
+(ROPE_propn).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#pre -filtering to remove lowly expressed genes
+ERCC &lt;- ERCC[rowSums(ERCC) &gt; 0, ]
+RD &lt;- new('readsData', counts = ERCC)
+steps &lt;- 30
+#30 steps are just for illustration here. At least 5000 steps are adequate.
+BI &lt;- denoiseq(RD, steps)
+rez &lt;- results(BI, steps)
+head(rez)
+
+#Re-ordering according to most differentially expressed
+rez &lt;- rez[with(rez, order( ROPE_propn)), ]
+head(rez, 10)
+
+#Determine significant genes using a threshold of 0.38.
+sgf &lt;- rez[rez$ROPE_propn&lt;0.38, ]
+head(sgf)
+dim(sgf)
+</code></pre>
+
+
+</div>

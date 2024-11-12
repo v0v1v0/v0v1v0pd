@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pbetaRv1</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Pure R Implementation of Old pbeta()</h2>
+
+<h3>Description</h3>
+
+<p><code>pbetaRv1()</code> is an implementation of the original
+(“version 1” <code>pbeta()</code> function in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> (versions &lt;=
+2.2.x), before we started using TOMS 708 <code>bratio()</code> instead, see
+the current <code>pbeta</code> help page also for references.
+</p>
+<p><code>pbetaRv1()</code> is basically a manual translation from C to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> of the
+underlying <code>pbeta_raw()</code> C function, see in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s source tree at
+<a href="https://svn.r-project.org/R/branches/R-2-2-patches/src/nmath/pbeta.c">https://svn.r-project.org/R/branches/R-2-2-patches/src/nmath/pbeta.c</a>
+</p>
+<p>For consistency within <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, we are using <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s argument names
+<code>(q, shape1, shape2)</code> instead of C code's
+<code>(x, pin,    qin   )</code>.
+</p>
+<p>It is only for the <em>central</em> beta distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pbetaRv1(q, shape1, shape2, lower.tail = TRUE,
+         eps = 0.5 * .Machine$double.eps,
+         sml = .Machine$double.xmin,
+         verbose = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>q, shape1, shape2</code></td>
+<td>
+<p>non-negative numbers, q in <code class="reqn">[0,1]</code>, see
+<code>pbeta</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>indicating if <code class="reqn">F(q; *)</code> should be returned or
+the upper tail probability <code class="reqn">1 - F(q)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>the tolerance used to determine congerence.  <code>eps</code> has
+been hard coded in C code to <code>0.5 * .Machine$double.eps</code> which is
+equal to <code class="reqn">2^{-53}</code> or <code>1.110223e-16</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sml</code></td>
+<td>
+<p>the smallest positive number on the typical platform.  The
+default <code>.Machine$double.xmin</code> is hard coded in the C code (as
+<code>DBL_MIN</code>), and this is equal to <code class="reqn">2^{-1022}</code> or
+<code>2.225074e-308</code> on all current platforms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>integer indicating the amount of verbosity of
+diagnostic output, <code>0</code> means no output, <code>1</code> more, etc.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a number.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The C code contains <br><em>
+This routine is a translation into C of a Fortran subroutine
+by W. Fullerton of Los Alamos Scientific Laboratory.</em>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>(From the C code:)
+</p>
+<p>Nancy E. Bosten and E.L. Battiste (1974).
+Remark on Algorithm 179 (S14): Incomplete Beta Ratio.
+<em>Communications of the ACM</em>, <b>17</b>(3), 156–7.
+
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pbeta</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">all.equal(pbetaRv1(1/4, 2, 3),
+          pbeta   (1/4, 2, 3))
+set.seed(101)
+
+N &lt;- 1000
+x &lt;- sample.int(7, N, replace=TRUE) / 8
+a &lt;-   rlnorm(N)
+b &lt;- 5*rlnorm(N)
+pbt &lt;- pbeta(x, a, b)
+for(i in 1:N) {
+   stopifnot(all.equal(pbetaRv1(x[i], a[i], b[i]), pbt[i]))
+   cat(".", if(i %% 20 == 0) paste0(i, "\n"))
+}
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,208 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dfba_gamma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Goodman-Kruskal Gamma</h2>
+
+<h3>Description</h3>
+
+<p>Given bivariate data in the form of either a rank-ordered table or a matrix,
+returns the number of concordant and discordant changes between the variates,
+the Goodman-Kruskal gamma statistic, and a Bayesian analysis of the
+population concordance proportion parameter <em>phi</em>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dfba_gamma(x, a0 = 1, b0 = 1, prob_interval = 0.95)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Cross-tabulated matrix or table where cell [I, J] represents the frequency of observations where the rank of measure 1 is I and the rank of measure 2 is J.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>First shape parameter for the prior beta distribution (default is 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b0</code></td>
+<td>
+<p>Second shape parameter for the prior beta distribution (default is 1)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob_interval</code></td>
+<td>
+<p>Desired width for interval estimates (default is 0.95)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For bivariate data where two measures are restricted on an ordinal scale,
+such as when the two variates are ranked data over a limited set of integers,
+then an ordered contingency table is often a convenient data representation.
+For such a case the element in the <code class="reqn">[I, J]</code> cell of the matrix is the
+frequency of occasions where one variate has a rank value of <code class="reqn">I</code> and the
+corresponding rank for the other variate is <code class="reqn">J</code>. This situation is a
+special case of the more general case where there are two continuous
+bivariate measures. For the special case of a rank-order matrix with
+frequencies, there is a distribution-free concordance correlation that is in
+common usage: Goodman and Kruskal's gamma <code class="reqn">G</code> (Siegel &amp; Castellan, 1988).
+</p>
+<p>Chechile (2020) showed that Goodman and Kruskal's gamma is equivalent to the
+more general <code class="reqn">\tau_A</code> nonparametric correlation coefficient.
+Historically, gamma was considered a different metric from <code class="reqn">\tau</code> because
+typically the version of <code class="reqn">\tau</code> in standard use was <code class="reqn">\tau_B</code>, which
+is a flawed metric because it does not properly correct for ties. Note:
+<code>cor(... ,method = "kendall")</code> returns the <code class="reqn">\tau_B</code> correlation, which
+is incorrect when there are ties. The correct <code class="reqn">\tau_A</code> is computed by the
+<code>dfba_bivariate_concordance()</code> function.
+</p>
+<p>The gamma statistic is equal to <code class="reqn">(n_c-n_d)/(n_c+n_d)</code>, where <code class="reqn">n_c</code> is
+the number of occasions when the variates change in a concordant way and <code class="reqn">n_d</code>
+is the number of occasions when the variates change in a discordant fashion.
+The value of <code class="reqn">n_c</code> for an order matrix is the sum of terms for each <code class="reqn">[I, J]</code>
+that are equal to <code class="reqn">n_{ij}N^{+}_{ij}</code>, where <code class="reqn">n_{ij}</code> is the frequency
+for cell <code class="reqn">[I, J]</code> and <code class="reqn">N^{+}_{ij}</code> is the sum of a frequencies in the
+matrix where the row value is greater than <code class="reqn">I</code> and where the column value is
+greater than <code class="reqn">J</code>. The value <code class="reqn">n_d</code> is the sum of terms for each <code class="reqn">[I, J]</code> that
+are <code class="reqn">n_{ij}N^{-}_{ij}</code>, where <code class="reqn">N^{-}_{ij}</code> is the sum of the frequencies
+in the matrix where row value is greater than <code class="reqn">I</code> and the column value is
+less than <code class="reqn">J</code>. The <code class="reqn">n_c</code> and <code class="reqn">n_d</code> values computed in this fashion
+are, respectively, equal to <code class="reqn">n_c</code> and <code class="reqn">n_d</code> values found when the bivariate
+measures are entered as paired vectors into the <code>dfba_bivariate_concordance()</code> function.
+</p>
+<p>As with the <code>dfba_bivariate_concordance()</code> function, the Bayesian analysis focuses on the
+population concordance proportion phi <code class="reqn">(\phi)</code>; and <code class="reqn">G=2\phi-1</code>. The
+likelihood function is proportional to <code class="reqn">\phi^{n_c}(1-\phi)^{n_d}</code>. The
+prior distribution is a beta function, and the posterior distribution is the
+conjugate beta where <code>a = a0 + nc</code> and
+<code>b = b0 + nd</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>gamma</code></td>
+<td>
+<p>Sample Goodman-Kruskal gamma statistic; equivalent to the sample rank correlation coefficient tau_A</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a0</code></td>
+<td>
+<p>First shape parameter for prior beta</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b0</code></td>
+<td>
+<p>Second shape parameter for prior beta</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_p</code></td>
+<td>
+<p>Sample estimate for proportion concordance <code>nc/(nc+nd)</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nc</code></td>
+<td>
+<p>Number of concordant comparisons between the paired measures</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nd</code></td>
+<td>
+<p>Number of discordant comparisons between the paired measures</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a_post</code></td>
+<td>
+<p>First shape parameter for the posterior beta distribution for the phi parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b_post</code></td>
+<td>
+<p>Second shape parameter for the posterior beta distribution for the phi parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>post_median</code></td>
+<td>
+<p>Median of the posterior distribution for the phi concordance parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prob_interval</code></td>
+<td>
+<p>The probability of the interval estimate for the phi parameter</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eti_lower</code></td>
+<td>
+<p>Lower limit of the posterior equal-tail interval for the phi parameter where the width of the interval is specified by the <code>prob_interval</code> input</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eti_upper</code></td>
+<td>
+<p>Upper limit of the posterior equal-tail interval for the phi parameter where the width of the interval is specified by the <code>prob_interval</code> input</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Chechile, R.A. (2020). Bayesian Statistics for Experimental Scientists: A
+General Introduction Using Distribution-Free Methods. Cambridge: MIT Press.
+</p>
+<p>Siegel, S., &amp; Castellan, N. J. (1988) Nonparametric Statistics for the
+Behavioral Sciences. New York: McGraw Hill.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dfba_bivariate_concordance</code> for a more extensive discussion about the <code class="reqn">\tau_A</code>
+statistic and the flawed <code class="reqn">\tau_B</code> correlation
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Example with matrix input
+N &lt;- matrix(c(38, 4, 5, 0, 6, 40, 1, 2, 4, 8, 20, 30),
+            ncol = 4,
+            byrow = TRUE)
+colnames(N) &lt;- c('C1', 'C2', 'C3', 'C4')
+rownames(N) &lt;- c('R1', 'R2', 'R3')
+dfba_gamma(N)
+
+# Sample problem with table input
+NTable &lt;- as.table(N)
+dfba_gamma(NTable)
+</code></pre>
+
+
+</div>

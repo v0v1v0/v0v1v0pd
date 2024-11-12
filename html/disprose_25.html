@@ -1,0 +1,188 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_seq_info</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get NCBI sequence record</h2>
+
+<h3>Description</h3>
+
+<p>Retrieves information about sequences from NCBI records for given organism name or taxon identifier.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_seq_info(
+  org.name,
+  db,
+  n.start = 1,
+  n.stop = NULL,
+  step = 500,
+  return.dataframe = FALSE,
+  check.result = FALSE,
+  term = NULL,
+  verbose = TRUE
+)
+
+get_seq_info_fix(
+  info.list,
+  web.history = NULL,
+  org.name = NULL,
+  db,
+  n.start = 1,
+  n.stop = NULL,
+  step = 500,
+  term = NULL,
+  verbose = TRUE
+)
+
+info_listtodata(info.list, unlist = TRUE, verbose = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>org.name</code></td>
+<td>
+<p>character; scientific name or taxon identifier (written as "txid0000") of the organism/taxon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>db</code></td>
+<td>
+<p>character; NCBI database for search. See entrez_dbs() for possible values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.start</code></td>
+<td>
+<p>integer; download starting value. Default is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.stop</code></td>
+<td>
+<p>integer; download finishing value. Default is NULL, which provides retrieval of all available GIs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step</code></td>
+<td>
+<p>integer; download increment value. Maximum is 500.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.dataframe</code></td>
+<td>
+<p>integer; whether to return information as structured data frame (another variant is list of lists).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check.result</code></td>
+<td>
+<p>logical; check if download was done correctly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term</code></td>
+<td>
+<p>character; search query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>info.list</code></td>
+<td>
+<p>list of previously downloaded records.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>web.history</code></td>
+<td>
+<p>previously saved web_history object for use in calls to the NCBI. New web.history is created if none is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>unlist</code></td>
+<td>
+<p>logical; unlist result before transforming (only recommended if <code>step &gt; 1</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function sends the query to NCBI database and returns sequence records according to the query. By default the
+query is organism, so the function returns data of all sequences that are associated with the requested organism.
+For example, if <code>org.name = "Homo sapiens"</code> the function will download data for all records that answer the query
+"Homo sapiens[Organism]". For any other query use parameter <code>term</code>.
+</p>
+<p>The function downloads records by piecemeal, by several pieces in one block. The size of the block is defined by parameter
+<code>step</code>. It is useful if by any reason the download was interrupted, so later it is possible to reload only
+the missing blocks without the need to reload the entire amount of data. By default, all available records are downloaded,
+but you may also choose start and finish points by specifying the parameters <code>n.start</code> and <code>n.stop</code>. The numeration starts with 1, not 0.
+At the end the resulting list of blocks (list of lists if <code>step &gt; 1</code>) is unlisted into one data frame that contains information about record GI, UID,
+caption, source database, organism, strain etc. You may prevent this by setting <code>return.dataframe = FALSE</code>.
+Also, regardless of <code>return.dataframe</code> settings, the list of blocks is returned if the download was somehow compromised.
+Optionally, you can turn the resulting list into data frame later using the function <code>info_listtodata()</code>.
+Note that in this case, if parameter <code>info.list</code> was inherited from <code>get_seq_info()</code> function,
+the result must be unlisted first (use <code>unlist = TRUE</code>).
+</p>
+<p>If download was corrupted you may use <code>get_seq_info()</code> function to reload the missing block. The corrupted list of blocks
+should be set in <code>info.list</code> parameter. You may also check and reload data when <code>get_seq_infos()</code> function is running
+by specifying <code>check.result = TRUE</code>.
+</p>
+<p>In progress the functions turn off and on scientific notation.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>get_seq_info()</code> returns data frame that contains most of sequence information from NCBI records.
+If <code>return.dataframer = FALSE</code> or there are missing data, list of lists is returned. List contains full information
+from NCBI records.
+</p>
+<p><code>get_seq_info_fix()</code> returns list of lists.
+</p>
+<p><code>info_listtodata()</code> returns data frame.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>get_seq_info</code>: Retrieves NCBI sequence records for given organism name or taxon identifier.
+</p>
+</li>
+<li> <p><code>get_seq_info_fix</code>: Checks the downloads and tries to retrieve the compromised data.
+</p>
+</li>
+<li> <p><code>info_listtodata</code>: Transforms downloaded list into data frame.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">info.dataframe &lt;- get_seq_info (org.name = "txid9606", db = "nucleotide", n.start = 1,
+                               n.stop = 10, step = 5, return.dataframe = TRUE,
+                               check.result = TRUE)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cIndex</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Concordance index</h2>
+
+<h3>Description</h3>
+
+<p>Calculates the concordance index for discrete survival models, which does not depend on time. 
+This is the probability that, for a pair of randomly chosen comparable samples, the sample with the higher risk prediction will
+experience an event before the other sample or belongs to a higher binary class.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cIndex(marker, testTime, testEvent, trainTime, trainEvent)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>marker</code></td>
+<td>
+<p>Gives the predicted values of the linear predictor of a
+regression model ("numeric vector"). May also be on the response scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testTime</code></td>
+<td>
+<p>New time intervals in the test data ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testEvent</code></td>
+<td>
+<p>Event indicators in the test data ("binary vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainTime</code></td>
+<td>
+<p>Time intervals in the training data ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trainEvent</code></td>
+<td>
+<p>Event indicators in the training data ("binary vector").</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Value of discrete concordance index between zero and one ("numeric
+vector").
+</p>
+
+
+<h3>Note</h3>
+
+<p>It is assumed that all time points up to the last observed interval
+[a_q-1, a_q) are available.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Schmid M, Tutz G, Welchowski T (2018).
+“Discrimination Measures for Discrete Time-to-Event Predictions.”
+<em>Econometrics and Statistics</em>, <b>7</b>, 153-164. <br><br>
+Uno H, Cai T, Tian L, Wei LJ (2012).
+“Evaluating Prediction Rules fort-Year Survivors With Censored Regression Models.”
+<em>Journal of the American Statistical Association</em>, <b>102</b>, 527-537. <br><br>
+Heagerty PJ, Zheng Y (2005).
+“Survival Model Predictive Accuracy and ROC Curves.”
+<em>Biometrics</em>, <b>61</b>, 92-105.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##################################################
+# Example with unemployment data and prior fitting
+
+library(Ecdat)
+library(caret)
+library(mgcv)
+data(UnempDur)
+summary(UnempDur$spell)
+# Extract subset of data
+set.seed(635)
+IDsample &lt;- sample(1:dim(UnempDur)[1], 100)
+UnempDurSubset &lt;- UnempDur [IDsample, ]
+set.seed(-570)
+TrainingSample &lt;- sample(1:100, 75)
+UnempDurSubsetTrain &lt;- UnempDurSubset [TrainingSample, ]
+UnempDurSubsetTest &lt;- UnempDurSubset [-TrainingSample, ]
+
+# Convert to long format
+UnempDurSubsetTrainLong &lt;- dataLong(dataShort = UnempDurSubsetTrain, 
+timeColumn = "spell", eventColumn = "censor1")
+
+# Estimate gam with smooth baseline
+gamFit &lt;- gam(formula = y ~ s(I(as.numeric(as.character(timeInt)))) + 
+s(age) + s(logwage), data = UnempDurSubsetTrainLong, family = binomial())
+gamFitPreds &lt;- predict(gamFit, newdata = cbind(UnempDurSubsetTest, 
+timeInt = UnempDurSubsetTest$spell))
+
+# Evaluate C-Index based on short data format
+cIndex(marker = gamFitPreds, 
+testTime = UnempDurSubsetTest$spell, 
+testEvent = UnempDurSubsetTest$censor1, 
+trainTime = UnempDurSubsetTrain$spell, 
+trainEvent = UnempDurSubsetTrain$censor1)
+
+#####################################
+# Example National Wilm's Tumor Study
+
+library(survival)
+head(nwtco)
+summary(nwtco$rel)
+
+# Select subset
+set.seed(-375)
+Indices &lt;- sample(1:dim(nwtco)[1], 500)
+nwtcoSub &lt;- nwtco [Indices, ]
+
+# Convert time range to 30 intervals
+intLim &lt;- quantile(nwtcoSub$edrel, prob = seq(0, 1, length.out = 30))
+intLim [length(intLim)] &lt;- intLim [length(intLim)] + 1
+nwtcoSubTemp &lt;- contToDisc(dataShort = nwtcoSub, timeColumn = "edrel", intervalLimits = intLim)
+nwtcoSubTemp$instit &lt;- factor(nwtcoSubTemp$instit)
+nwtcoSubTemp$histol &lt;- factor(nwtcoSubTemp$histol)
+nwtcoSubTemp$stage &lt;- factor(nwtcoSubTemp$stage)
+
+# Split in training and test sample
+set.seed(-570)
+TrainingSample &lt;- sample(1:dim(nwtcoSubTemp)[1], round(dim(nwtcoSubTemp)[1]*0.75))
+nwtcoSubTempTrain &lt;- nwtcoSubTemp [TrainingSample, ]
+nwtcoSubTempTest &lt;- nwtcoSubTemp [-TrainingSample, ]
+
+# Convert to long format
+nwtcoSubTempTrainLong &lt;- dataLong(dataShort = nwtcoSubTempTrain, 
+timeColumn = "timeDisc", eventColumn = "rel", timeAsFactor=TRUE)
+
+# Estimate glm
+inputFormula &lt;- y ~ timeInt + histol + instit + stage
+glmFit &lt;- glm(formula = inputFormula, data = nwtcoSubTempTrainLong, family = binomial())
+linPreds &lt;- predict(glmFit, newdata = cbind(nwtcoSubTempTest, 
+timeInt = factor(nwtcoSubTempTest$timeDisc, levels=levels(nwtcoSubTempTrainLong$timeInt))))
+
+# Evaluate C-Index based on short data format
+cIndex(marker = linPreds, 
+testTime = as.numeric(as.character(nwtcoSubTempTest$timeDisc)), 
+testEvent = nwtcoSubTempTest$rel, 
+trainTime = as.numeric(as.character(nwtcoSubTempTrain$timeDisc)), 
+trainEvent = nwtcoSubTempTrain$rel) 
+
+
+</code></pre>
+
+
+</div>

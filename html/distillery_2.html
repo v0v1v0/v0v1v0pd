@@ -1,0 +1,246 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>booter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Bootstrap Resampling
+</h2>
+
+<h3>Description</h3>
+
+<p>Generate B bootstrap replicates of size rsize and apply a statistic to them.  Can do IID or Circular Block Bootstrap (CBB) methods.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">booter(x, statistic, B, rsize, block.length = 1, v.terms, shuffle = NULL,
+    replace = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Original data series.  May be a vector, matrix or data frame object.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic</code></td>
+<td>
+
+<p>Function that minimally takes arguments: <code>data</code> and <code>...</code>.  The argument <code>data</code> must be the input data for which resamples are taken.  Must return a vector of all desired statistics.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+
+<p>number of bootstrap resamples to make.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rsize</code></td>
+<td>
+
+<p>Number giving the resample size for each bootstrap sample.  Must be between 1 and the length of <code>x</code>, if <code>x</code> is a vector, else the number of rows of <code>x</code>.  Default is to use the size of the original data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.length</code></td>
+<td>
+
+<p>Number giving the desired block lengths.  Default (<code>block.length</code> = 1) is to do IID resamples.  Should be longer than the length of dependence in the data, but much shorter than the size of the data.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+
+<p>logical, should the resamples be taken with replacement?
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v.terms</code></td>
+<td>
+
+<p>If <code>statistic</code> returns variance estimates for other parameters, then use this argument to specify the indices returned that give the variance estimates.  There must be a component for every other parameter returned, and they must be in the same order as the other parameters (see examples below).  If an estimate does not exist, an NA should be returned for that spot.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code> shuffle</code></td>
+<td>
+ <p><code>rsize</code> by <code>B</code> matrix giving the indices for each bootstrap replication.  If provided, <code>B</code> may be missing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Optional arguments passed to <code>statistic</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Similar functionality to <code>boot</code> from package <span class="pkg">boot</span>, but allows for easier implementation of certain other approaches.  For example, m-out-of-n bootstrap resampling (appropriate for heavy-tail distributed data) can be performed via the <code>rsize</code> argument.  The <code>ci</code> function is used to obtain subsequent confidence limits.  For parameteric bootstrap resampling, see <code>pbooter</code>.
+</p>
+<p>For more complicated bootstrap resampling, e.g., Bayesian bootstrap sampling, the <code>shuffle</code> argument may prove useful.  That is, no weighting is allowed with this function through the standard mechanism, but the same result may be obtained by supplying your own indices through the <code>shuffle</code> argument.  For parametric bootstrap resampling, see the <code>pbooter</code> function, but for certain types of parametric resampling, the <code>shuffle</code> argument could prove useful.
+</p>
+<p>If the block length is &gt; 1, then <code>rsize</code> overlapping blocks of this length are sampled from the data.  In order to minimize over or under sampling of the end points, the blocks are circular (cf. Lahiri 2003).
+</p>
+<p>Many good books and other materials are available about bootstrap resampling.  One good text on IID bootstrap resampling is Efron and Tibshirani (1998) and for the block bootstrap, Lahiri (2003).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list object of class “booted” is returned with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call </code></td>
+<td>
+<p>the function call</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data </code></td>
+<td>
+<p>original data series</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic </code></td>
+<td>
+<p>statistic argument passed in</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>statistic.args</code></td>
+<td>
+<p>all other arguments passed by ...</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>B</code></td>
+<td>
+<p> Number of bootstrap replicate samples</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>block.length</code></td>
+<td>
+<p> The block length used</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>logical stating whether the samples are taken with replacement or not. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v.terms</code></td>
+<td>
+<p>if variance terms are returned by statistic, the argument is repeated in the returned object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rsize</code></td>
+<td>
+<p>the size of the bootstrap resamples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indices</code></td>
+<td>
+<p>rsize by B matrix giving the resample indices used (rows) for each bootstrap resample (columns).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>v</code></td>
+<td>
+<p>B length vector or B column matrix (if statistic returns a vector) giving the estimated parameter variances for each bootstrap replicate.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>orig.v</code></td>
+<td>
+<p>vector giving the parameter variances (i.e. se^2) of statistic when applied to the original data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>original.est</code></td>
+<td>
+<p>vector giving the estimated parameter values when statistic is applied to the original data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>results</code></td>
+<td>
+<p>B length vector or B column matrix giving the parameter estimates for each bootstrap resample.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character stating whether the resample method is iid or cbb.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Eric Gilleland
+</p>
+
+
+<h3>References</h3>
+
+<p>Efron, B. and Tibshirani, R. J. (1998) <em>An Introduction to the Bootstrap</em>.  Chapman \&amp; Hall, Boca Raton, Florida, 436 pp.
+</p>
+<p>Lahiri, S. N. (2003) <em>Resampling Methods for Dependent Data</em>.  Springer-Verlag, New York, New York, 374 pp.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pbooter</code>, <code>ci.booted</code>
+<code>tibber</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+z &lt;- rnorm( 100 )
+
+zfun &lt;- function( data, ... ) {
+
+    return( c( mean( data ), var( data ), mean( data^2 ), var( data^2 ) ) )
+
+} # end of 'zfun' function.
+
+res &lt;- booter( x = z, statistic = zfun, B = 500, v.terms = c(2, 4) )
+
+print( res )
+
+## Not run:  ci( res ) 
+</code></pre>
+
+
+</div>

@@ -1,0 +1,134 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dtWV</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Asymptotic Noncentral t Distribution Density by Viechtbauer</h2>
+
+<h3>Description</h3>
+
+<p>Compute the density function <code class="reqn">f(x)</code> of the t distribution with
+<code>df</code> degrees of freedom and non-centrality parameter <code>ncp</code>,
+according to Wolfgang Viechtbauer's proposal in 2002.
+This is an asymptotic formula for “large” <code>df</code><code class="reqn"> = \nu</code>,
+or mathematically <code class="reqn">\nu \to \infty</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+dtWV(x, df, ncp = 0, log = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>degrees of freedom (<code class="reqn">&gt; 0</code>, maybe non-integer).  <code>df
+      = Inf</code> is allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncp</code></td>
+<td>
+<p>non-centrality parameter <code class="reqn">\delta</code>;
+If omitted, use the central t distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log</code></td>
+<td>
+<p>logical; if TRUE, <code class="reqn">log(f(x))</code> is returned instead of <code class="reqn">f(x)</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The formula used is “asymptotic”: Resnikoff and Lieberman (1957),
+p.1 and p.25ff, proposed to use recursive polynomials for (<em>integer !</em>)
+degrees of freedom <code class="reqn">f = 1,2,\dots, 20</code>, and then, for
+<code>df</code><code class="reqn"> = f &gt; 20</code>, use the asymptotic approximation which
+Wolfgang Viechtbauer proposed as a first version of a non-central t
+density for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> (when <code>dt()</code> did not yet have an <code>ncp</code>
+argument).
+</p>
+
+
+<h3>Value</h3>
+
+<p>numeric vector of density values, properly recycled in <code>(x, df, ncp)</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Wolfgang Viechtbauer (2002) post to R-help
+(<a href="https://stat.ethz.ch/pipermail/r-help/2002-October/026044.html">https://stat.ethz.ch/pipermail/r-help/2002-October/026044.html</a>),
+and Martin Maechler (<code>log</code> argument; tweaks, notably recycling).
+</p>
+
+
+<h3>References</h3>
+
+<p>Resnikoff, George J. and Lieberman, Gerald J. (1957)
+<em>Tables of the non-central t-distribution</em>;
+Technical report no. 32 (<code>LIE ONR 32</code>), April 1, 1957;
+Applied Math. and Stat. Lab., Stanford University.
+<a href="https://statistics.stanford.edu/technical-reports/tables-non-central-t-distribution-density-function-cumulative-distribution">https://statistics.stanford.edu/technical-reports/tables-non-central-t-distribution-density-function-cumulative-distribution</a>
+
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dt</code>, <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s (C level) implementation of the (non-central) t density;
+<code>dntJKBf</code>, for Johnson et al.'s summation formula approximation.
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tt &lt;- seq(0, 10, len = 21)
+ncp &lt;- seq(0, 6, len = 31)
+dt3R  &lt;- outer(tt, ncp, dt  , df = 3)
+dt3WV &lt;- outer(tt, ncp, dtWV, df = 3)
+all.equal(dt3R, dt3WV) # rel.err 0.00063
+dt25R  &lt;- outer(tt, ncp, dt  , df = 25)
+dt25WV &lt;- outer(tt, ncp, dtWV, df = 25)
+all.equal(dt25R, dt25WV) # rel.err 1.1e-5
+
+x &lt;- -10:700
+fx  &lt;- dt  (x, df = 22, ncp =100)
+lfx &lt;- dt  (x, df = 22, ncp =100, log=TRUE)
+lfV &lt;- dtWV(x, df = 22, ncp =100, log=TRUE)
+
+head(lfx, 20) # shows that R's dt(*, log=TRUE) implementation is "quite suboptimal"
+
+## graphics
+opa &lt;- par(no.readonly=TRUE)
+par(mar=.1+c(5,4,4,3), mgp = c(2, .8,0))
+plot(fx ~ x, type="l")
+par(new=TRUE) ; cc &lt;- c("red", adjustcolor("orange", 0.4))
+plot(lfx ~ x, type = "o", pch=".", col=cc[1], cex=2, ann=FALSE, yaxt="n")
+sfsmisc::eaxis(4, col=cc[1], col.axis=cc[1], small.args = list(col=cc[1]))
+lines(x, lfV, col=cc[2], lwd=3)
+dtt1 &lt;- "      dt"; dtt2 &lt;- "(x, df=22, ncp=100"; dttL &lt;- paste0(dtt2,", log=TRUE)")
+legend("right", c(paste0(dtt1,dtt2,")"), paste0(c(dtt1,"dtWV"), dttL)),
+       lty=1, lwd=c(1,1,3), col=c("black", cc), bty = "n")
+par(opa) # reset
+</code></pre>
+
+
+</div>

@@ -1,0 +1,143 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pointdensity</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate Local Density at Each Data Point</h2>
+
+<h3>Description</h3>
+
+<p>Calculate the local density at each data point as either the number of
+points in the eps-neighborhood (as used in <code>dbscan()</code>) or perform kernel density
+estimation (KDE) using a uniform kernel. The function uses a kd-tree for fast
+fixed-radius nearest neighbor search.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">pointdensity(
+  x,
+  eps,
+  type = "frequency",
+  search = "kdtree",
+  bucketSize = 10,
+  splitRule = "suggest",
+  approx = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a data matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>radius of the eps-neighborhood, i.e., bandwidth of the uniform
+kernel).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p><code>"frequency"</code> or <code>"density"</code>. should the raw count of
+points inside the eps-neighborhood or the kde be returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>search, bucketSize, splitRule, approx</code></td>
+<td>
+<p>algorithmic parameters for
+<code>frNN()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>dbscan()</code> estimates the density around a point as the number of points in the
+eps-neighborhood of the point (including the query point itself).
+Kernel density estimation (KDE) using a uniform kernel, which is just this point
+count in the eps-neighborhood divided by <code class="reqn">(2\,eps\,n)</code>, where
+<code class="reqn">n</code> is the number of points in <code>x</code>.
+</p>
+<p>Points with low local density often indicate noise (see e.g., Wishart (1969)
+and Hartigan (1975)).
+</p>
+
+
+<h3>Value</h3>
+
+<p>A vector of the same length as data points (rows) in <code>x</code> with
+the count or density values for each data point.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Michael Hahsler
+</p>
+
+
+<h3>References</h3>
+
+<p>Wishart, D. (1969), Mode Analysis: A Generalization of Nearest
+Neighbor which Reduces Chaining Effects, in <em>Numerical Taxonomy,</em> Ed., A.J.
+Cole, Academic Press, 282-311.
+</p>
+<p>John A. Hartigan (1975), <em>Clustering Algorithms,</em> John Wiley &amp; Sons, Inc.,
+New York, NY, USA.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>frNN()</code>, <code>stats::density()</code>.
+</p>
+<p>Other Outlier Detection Functions: 
+<code>glosh()</code>,
+<code>kNNdist()</code>,
+<code>lof()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(665544)
+n &lt;- 100
+x &lt;- cbind(
+  x=runif(10, 0, 5) + rnorm(n, sd = 0.4),
+  y=runif(10, 0, 5) + rnorm(n, sd = 0.4)
+  )
+plot(x)
+
+### calculate density
+d &lt;- pointdensity(x, eps = .5, type = "density")
+
+### density distribution
+summary(d)
+hist(d, breaks = 10)
+
+### plot with point size is proportional to Density
+plot(x, pch = 19, main = "Density (eps = .5)", cex = d*5)
+
+### Wishart (1969) single link clustering after removing low-density noise
+# 1. remove noise with low density
+f &lt;- pointdensity(x, eps = .5, type = "frequency")
+x_nonoise &lt;- x[f &gt;= 5,]
+
+# 2. use single-linkage on the non-noise points
+hc &lt;- hclust(dist(x_nonoise), method = "single")
+plot(x, pch = 19, cex = .5)
+points(x_nonoise, pch = 19, col= cutree(hc, k = 4) + 1L)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>group_by.trackr_df</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Stratifying your analysis</h2>
+
+<h3>Description</h3>
+
+<p>Grouping a data set acts in the normal way. When tracking a dataframe
+sometimes a <code>group_by()</code> operation will create a lot of groups. This happens
+for example if you are doing a <code>group_by()</code>, <code>summarise()</code> step that is
+aggregating data on a fine scale, e.g. by day in a timeseries. This is
+generally a terrible idea when tracking a dataframe as the resulting
+flowchart will have many many branches and be illegible. <code>dtrackr</code> will detect this issue and
+pause tracking the dataframe with a warning. It is up to the user to the
+<code>resume()</code> tracking when the large number of groups have been resolved e.g.
+using a <code>dplyr::ungroup()</code>. This limit is configurable with
+<code>options("dtrackr.max_supported_groupings"=XX)</code>. The default is 16. See
+<code>dplyr::group_by()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'trackr_df'
+group_by(
+  .data,
+  ...,
+  .messages = "stratify by {.cols}",
+  .headline = NULL,
+  .tag = NULL,
+  .maxgroups = .defaultMaxSupportedGroupings()
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.data</code></td>
+<td>
+<p>A data frame, data frame extension (e.g. a tibble), or a
+lazy data frame (e.g. from dbplyr or dtplyr). See <em>Methods</em>, below, for
+more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>In <code>group_by()</code>, variables or computations to group by.
+Computations are always done on the ungrouped data frame.
+To perform computations on the grouped data, you need to use
+a separate <code>mutate()</code> step before the <code>group_by()</code>.
+Computations are not allowed in <code>nest_by()</code>.
+In <code>ungroup()</code>, variables to remove from the grouping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.messages</code></td>
+<td>
+<p>a set of glue specs. The glue code can use any global
+variable, or {.cols} which is the columns that are being grouped by.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.headline</code></td>
+<td>
+<p>a headline glue spec. The glue code can use any global
+variable, or {.cols}.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.tag</code></td>
+<td>
+<p>if you want the summary data from this step in the future then
+give it a name with .tag.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.maxgroups</code></td>
+<td>
+<p>the maximum number of subgroups allowed before the tracking
+is paused.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the .data but grouped.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>dplyr::group_by()
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(dtrackr)
+
+tmp = iris %&gt;% track() %&gt;% group_by(Species, .messages="stratify by {.cols}")
+tmp %&gt;% comment("{.strata}") %&gt;% history()
+</code></pre>
+
+
+</div>

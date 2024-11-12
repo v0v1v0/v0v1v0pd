@@ -1,0 +1,343 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>difLRT</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Likelihood-Ratio Test DIF method</h2>
+
+<h3>Description</h3>
+
+<p>Performs DIF detection using Likelihood Ratio Test (LRT) method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">difLRT(Data, group, focal.name, alpha = 0.05, purify = FALSE, nrIter = 10, 
+ 	p.adjust.method = NULL, save.output = FALSE, output = c("out", "default")) 
+## S3 method for class 'LRT'
+print(x, ...)
+## S3 method for class 'LRT'
+plot(x, pch = 8, number = TRUE, col = "red", save.plot = FALSE, 
+ 	save.options = c("plot", "default", "pdf"), ...)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>numeric: either the data matrix only, or the data matrix plus the vector of group membership. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>numeric or character: either the vector of group membership or the column indicator (within <code>data</code>) of group membership. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>focal.name</code></td>
+<td>
+<p>numeric or character indicating the level of <code>group</code> which corresponds to the focal group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>numeric: significance level (default is 0.05).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purify</code></td>
+<td>
+<p>logical: should the method be used iteratively to purify the set of anchor items? (default is FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrIter</code></td>
+<td>
+<p>numeric: the maximal number of iterations in the item purification process (default is 10).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.adjust.method</code></td>
+<td>
+<p>either <code>NULL</code> (default) or the acronym of the method for p-value adjustment for multiple comparisons. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.output</code></td>
+<td>
+<p>logical: should the output be saved into a text file? (Default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>character: a vector of two components. The first component is the name of the output file, the second component is either the file path or <code>"default"</code> (default value). See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the result from a <code>LRT</code> class object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pch, col</code></td>
+<td>
+<p>type of usual <code>pch</code> and <code>col</code> graphical options.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>number</code></td>
+<td>
+<p>logical: should the item number identification be printed (default is <code>TRUE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.plot</code></td>
+<td>
+<p>logical: should the plot be saved into a separate file? (default is <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.options</code></td>
+<td>
+<p>character: a vector of three components. The first component is the name of the output file, the second component is either the file path or <code>"default"</code> (default value),
+and the third component is the file extension, either <code>"pdf"</code> (default) or <code>"jpeg"</code>. See <b>Details</b>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other generic parameters for the <code>plot</code> or the <code>print</code> functions.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The likelihood-ratio test method (Thissen, Steinberg and Wainer, 1988) allows for detecting uniform differential item functioning 
+by fitting a closed-form Rasch model and by testing for extra interactions between group membership and item response. Currently only 
+the Rasch model can be used, so only uniform DIF can be detected. Moreover, items are tested one by one and the other items act as
+anchor items.
+</p>
+<p>The <code>Data</code> is a matrix whose rows correspond to the subjects and columns to the items. Missing values are allowed but must be coded as <code>NA</code> values.
+In addition, <code>Data</code> can hold the vector of group membership. If so, <code>group</code> indicates the column of <code>Data</code> which 
+corresponds to the group membership, either by specifying its name or by giving the column number. Otherwise, <code>group</code> must 
+be a vector of same length as <code>nrow(Data)</code>.
+</p>
+<p>The vector of group membership must hold only two different values, either as numeric or character. The focal group is defined by
+the value of the argument <code>focal.name</code>. 
+</p>
+<p>The function <code>glmer</code> from package <code>lme4</code> (Bates and Maechler, 2009) is used to fit the closed-form Rasch model. More precisely, the probability that 
+response <code class="reqn">Y_{ijg}</code> of subject <em>i</em> from group <em>g</em> (focal or reference) to item <em>j</em> is modeled as
+</p>
+<p style="text-align: center;"><code class="reqn">logit (Pr(Y_{ijg}=1) = \theta_{ig} + \gamma_g - \beta_j</code>
+</p>
+
+<p>where <code class="reqn">\theta_i</code> is subject's ability, <code class="reqn">\beta_j</code> is the item difficulty and <code class="reqn">\gamma_g</code> is the difference mean ability level between
+the focal and the reference groups. Subject abilities are treated as random effects, while item difficulties and <code class="reqn">\gamma_g</code> are treated as fixed effects.
+Each item is tested by incorporating an interaction term, <code class="reqn">\delta_{gj}</code>, and by testing its statistical significance using the traditional
+likelihood-ratio test.
+</p>
+<p>The threshold (or cut-score) for classifying items as DIF is computed as the quantile of the chi-squared distribution with lower-tail
+probability of one minus <code>alpha</code> and one degree of freedom.
+</p>
+<p>Item purification can be performed by setting <code>purify</code> to <code>TRUE</code>. In this case, items detected as DIF are iteratively
+removed from the set of tested items, and the procedure is repeated (using the remaining items) until no additional item is
+identified as functioning differently. The process stops when either there is no new item detected as DIF, or when <code>nrIter</code> iterations 
+are run and new DIF items are nevertheless detected. In the latter case a warning message is printed. 
+</p>
+<p>Adjustment for multiple comparisons is possible with the argument <code>p.adjust.method</code>. The latter must be an acronym of one of the available adjustment methods of the <code>p.adjust</code> function. According to Kim and Oshima (2013), Holm and Benjamini-Hochberg adjustments (set respectively by <code>"Holm"</code> and <code>"BH"</code>) perform best for DIF purposes. See <code>p.adjust</code> function for further details. Note that item purification is performed on original statistics and p-values; in case of adjustment for multiple comparisons this is performed <em>after</em> item purification.
+</p>
+<p>The output of the <code>difLRT</code>, as displayed by the <code>print.LRT</code> function, can be stored in a text file provided that <code>save.output</code> is set to <code>TRUE</code> 
+(the default value <code>FALSE</code> does not execute the storage). In this case, the name of the text file must be given as a character string into the first component
+of the <code>output</code> argument (default name is <code>"out"</code>), and the path for saving the text file can be given through the second component of <code>output</code>. The
+default value is <code>"default"</code>, meaning that the file will be saved in the current working directory. Any other path can be specified as a character string: see the 
+<b>Examples</b> section for an illustration.
+</p>
+<p>The <code>plot.LRT</code> function displays the DIF statistics in a plot, with each item on the X axis. The type of point and the color are fixed by the usual <code>pch</code> and 
+<code>col</code> arguments. Option <code>number</code> permits to display the item numbers instead. Also, the plot can be stored in a figure file, either in PDF or JPEG format.
+Fixing <code>save.plot</code> to <code>TRUE</code> allows this process. The figure is defined through the components of <code>save.options</code>. The first two components perform similarly 
+as those of the <code>output</code> argument. The third component is the figure format, with allowed values <code>"pdf"</code> (default) for PDF file and <code>"jpeg"</code> for JPEG file.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of class "LRT" with the following arguments:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>LRT</code></td>
+<td>
+<p>the values of the likelihood-ratio statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.value</code></td>
+<td>
+<p>the vector of p-values for the likelihood-ratio statistics.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>the value of <code>alpha</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thr</code></td>
+<td>
+<p>the threshold (cut-score) for DIF detection.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DIFitems</code></td>
+<td>
+<p>either the items which were detected as DIF items, or "No DIF item detected".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p.adjust.method</code></td>
+<td>
+<p>the value of the <code>p.adjust.method</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjusted.p</code></td>
+<td>
+<p>either <code>NULL</code> or the vector of adjusted p-values for multiple comparisons.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>purification</code></td>
+<td>
+<p>the value of <code>purify</code> option.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nrPur</code></td>
+<td>
+<p>the number of iterations in the item purification process. Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>logical indicating whether the iterative item purification process stopped before the maximal number of allowed iterations
+(10 by default). Returned only if <code>purify</code> is <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>names</code></td>
+<td>
+<p>the names of the items.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>save.output</code></td>
+<td>
+<p>the value of the <code>save.output</code> argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>the value of the <code>output</code> argument.</p>
+</td>
+</tr>
+</table>
+<h3>Note</h3>
+
+<p>Because of the fitting of the modified Rasch model with <code>glmer</code>, the process can be very time consuming. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastien Beland <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:sebastien.beland.1@hotmail.com">sebastien.beland.1@hotmail.com</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br>
+David Magis <br>
+Department of Psychology, University of Liege <br>
+Research Group of Quantitative Psychology and Individual Differences, KU Leuven <br><a href="mailto:David.Magis@uliege.be">David.Magis@uliege.be</a>, <a href="http://ppw.kuleuven.be/okp/home/">http://ppw.kuleuven.be/okp/home/</a> <br>
+Gilles Raiche <br>
+Collectif pour le Developpement et les Applications en Mesure et Evaluation (Cdame) <br>
+Universite du Quebec a Montreal <br><a href="mailto:raiche.gilles@uqam.ca">raiche.gilles@uqam.ca</a>, <a href="http://www.cdame.uqam.ca/">http://www.cdame.uqam.ca/</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Bates, D. and Maechler, M. (2009). lme4: Linear mixed-effects models using S4 classes. R package version 0.999375-31. http://CRAN.R-project.org/package=lme4
+</p>
+<p>Kim, J., and Oshima, T. C. (2013). Effect of multiple testing adjustment in differential item functioning detection. <em>Educational and Psychological Measurement, 73</em>, 458–470. doi: <a href="https://doi.org/10.1177/0013164412467033">10.1177/0013164412467033</a>
+</p>
+<p>Magis, D., Beland, S., Tuerlinckx, F. and De Boeck, P. (2010). A general framework and an R package for the detection
+of dichotomous differential item functioning. <em>Behavior Research Methods, 42</em>, 847-862. doi: <a href="https://doi.org/10.3758/BRM.42.3.847">10.3758/BRM.42.3.847</a>
+</p>
+<p>Thissen, D., Steinberg, L. and Wainer, H. (1988). Use of item response theory in the study of group difference in trace lines. 
+In H. Wainer and H. Braun (Eds.), <em>Test validity</em>. Hillsdale, NJ: Lawrence Erlbaum Associates.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>LRT</code>, <code>dichoDif</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+
+ # Loading of the verbal data
+ data(verbal)
+ attach(verbal)
+
+ # Excluding the "Anger" variable
+ verbal &lt;- verbal[colnames(verbal)!="Anger"]
+
+ # Keeping the first 5 items and the first 50 subjects
+ # (this is an artificial simplification to reduce the computational time)
+ verbal &lt;- verbal[1:50, c(1:5, 25)]
+
+ # Three equivalent settings of the data matrix and the group membership
+ r &lt;- difLRT(verbal, group = 6, focal.name = 1)
+ difLRT(verbal, group = "Gender", focal.name = 1)
+ difLRT(verbal[,1:5], group = verbal[,6], focal.name = 1)
+
+ # Multiple comparisons adjustment using Benjamini-Hochberg method
+ difLRT(verbal, group = 6, focal.name = 1, p.adjust.method = "BH")
+
+ # With item purification
+ difLRT(verbal, group = 6, focal.name = 1, purify = TRUE)
+
+ # Saving the output into the "LRTresults.txt" file (and default path)
+ r &lt;- difLRT(verbal, group = 6, focal.name = 1, save.output = TRUE, 
+            output = c("LRTresults", "default"))
+
+ # Graphical devices
+ plot(r)
+
+ # Plotting results and saving it in a PDF figure
+ plot(r, save.plot = TRUE, save.options = c("plot", "default", "pdf"))
+
+ # Changing the path, JPEG figure
+ path &lt;- "c:/Program Files/"
+ plot(r, save.plot = TRUE, save.options = c("plot", path, "jpeg"))
+
+ # WARNING: do not trust the results above since they are based on a selected 
+ # subset of the verbal data set!
+ 
+## End(Not run)
+ </code></pre>
+
+
+</div>

@@ -1,0 +1,222 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>con_contradictions_redcap</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Checks user-defined contradictions in study data</h2>
+
+<h3>Description</h3>
+
+<p>This approach considers a contradiction if impossible combinations of data
+are observed in one participant. For example, if age of a participant is
+recorded repeatedly the value of age is (unfortunately) not able to decline.
+Most cases of contradictions rest on comparison of two variables.
+</p>
+<p>Important to note, each value that is used for comparison may represent a
+possible characteristic but the combination of these two values is considered
+to be impossible. The approach does not consider implausible or inadmissible
+values.
+</p>
+<p>Indicator
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">con_contradictions_redcap(
+  study_data,
+  meta_data,
+  label_col,
+  threshold_value,
+  meta_data_cross_item = "cross-item_level",
+  use_value_labels,
+  summarize_categories = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold_value</code></td>
+<td>
+<p>numeric from=0 to=100. a numerical value
+ranging from 0-100</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data_cross_item</code></td>
+<td>
+<p>data.frame contradiction rules table.  Table
+defining contradictions. See details for
+its required structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_value_labels</code></td>
+<td>
+<p>logical Deprecated in favor of DATA_PREPARATION.
+If set to <code>TRUE</code>, labels can be used in the
+<code>REDCap</code> syntax to specify contraction checks for
+categorical variables. If set to <code>FALSE</code>,
+contractions have to be specified using the coded
+values. In case that this argument is not set in
+the function call, it will be set to <code>TRUE</code> if
+the metadata contains a column <code>VALUE_LABELS</code>
+which is not empty.
+</p>
+<p><code>inheritParams</code> <code>acc_distributions</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summarize_categories</code></td>
+<td>
+<p>logical Needs a column 'CONTRADICTION_TYPE' in
+the <code>meta_data_cross_item</code>.
+If set, a summary output is generated for the
+defined categories plus one plot per
+category. TODO: Not yet controllable by metadata.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Algorithm of this implementation:</h4>
+
+
+<ul>
+<li>
+<p> Remove missing codes from the study data (if defined in the metadata)
+</p>
+</li>
+<li>
+<p> Remove measurements deviating from limits defined in the metadata
+</p>
+</li>
+<li>
+<p> Assign label to levels of categorical variables (if applicable)
+</p>
+</li>
+<li>
+<p> Apply contradiction checks (given as <code>REDCap</code>-like rules in a separate
+metadata table)
+</p>
+</li>
+<li>
+<p> Identification of measurements fulfilling contradiction rules. Therefore
+two output data frames are generated:
+</p>
+
+<ul>
+<li>
+<p> on the level of observation to flag each contradictory value
+combination, and
+</p>
+</li>
+<li>
+<p> a summary table for each contradiction check.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> A summary plot illustrating the number of contradictions is generated.
+</p>
+</li>
+</ul>
+<p>List function.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>If <code>summarize_categories</code> is <code>FALSE</code>:
+A list with:
+</p>
+
+<ul>
+<li> <p><code>FlaggedStudyData</code>: The first output of the contradiction function is a
+data frame of similar dimension regarding the number
+of observations in the study data. In addition, for
+each applied check on the variables an additional
+column is added which flags observations with a
+contradiction given the applied check.
+</p>
+</li>
+<li> <p><code>SummaryData</code>: The second output summarizes this information into one
+data frame. This output can be used to provide an
+executive overview on the amount of contradictions.
+</p>
+</li>
+<li> <p><code>VariableGroupTable</code>: A subset of <code>SummaryData</code> used within the pipeline.
+</p>
+</li>
+<li> <p><code>SummaryPlot</code>: The third output visualizes summarized information
+of <code>SummaryData</code>.
+</p>
+</li>
+</ul>
+<p>If <code>summarize_categories</code> is <code>TRUE</code>, other objects are returned:
+One per category named by that category (e.g. "Empirical") containing a
+result for contradiction checks within that category only. Additionally, in the
+slot <code>all_checks</code>, a result as it would have been returned with
+<code>summarize_categories</code> set to <code>FALSE</code>. Finally, a slot <code>SummaryData</code> is
+returned containing sums per Category and an according ggplot in
+<code>SummaryPlot</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><a href="https://dataquality.qihs.uni-greifswald.de/VIN_con_impl_contradictions_redcap.html">Online Documentation</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run:  # slow
+load(system.file("extdata", "meta_data.RData", package = "dataquieR"))
+load(system.file("extdata", "study_data.RData", package = "dataquieR"))
+meta_data_cross_item &lt;- prep_get_data_frame("meta_data_v2|cross-item_level")
+label_col &lt;- "LABEL"
+threshold_value &lt;- 1
+con_contradictions_redcap(
+  study_data = study_data, meta_data = meta_data, label_col = label_col,
+  threshold_value = threshold_value, meta_data_cross_item = meta_data_cross_item
+)
+con_contradictions_redcap(
+  study_data = study_data, meta_data = meta_data, label_col = label_col,
+  threshold_value = threshold_value, meta_data_cross_item = meta_data_cross_item,
+  summarize_categories = TRUE
+)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,154 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>deductiveZeros</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Find out which variables can deductively be imputed with 0</h2>
+
+<h3>Description</h3>
+
+<p>Find out which variables can deductively be imputed with 0
+</p>
+<p>Interface for deductiveZeros for objects of class editmatrix. This interface
+is robust for variables in <code>x</code> not occuring in <code>E</code>.
+</p>
+<p>Suppose <code class="reqn">x</code> is a record under linear constraints <code class="reqn">Ax=b</code> and <code class="reqn">x\geq0</code>.
+In certain cases some missing values can be imputed uniquely with zeros. For example,
+in the case that <code class="reqn">x_1+x_2=x_3</code>, if <code class="reqn">x_2</code> is missing and <code class="reqn">x_1=x_3\geq 0</code>,
+then <code class="reqn">x_2</code> is uniquely determined to be 0. This function returns a boolean
+vector indicating which of the missing values are uniquely determined to be zero.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">deductiveZeros(E, x, ...)
+
+## S3 method for class 'editmatrix'
+deductiveZeros(E, x, ...)
+
+## S3 method for class 'matrix'
+deductiveZeros(E, x, b, adapt = logical(length(x)),
+  nonneg = rep(TRUE, length(x)), roundNearZeros = TRUE,
+  tol = sqrt(.Machine$double.eps), ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>E</code></td>
+<td>
+<p><code>editmatrix</code> or Equality constraint matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>named numeric vector. Naming is optional if <code>E</code> is an equality constraint matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>extra parameters to pass to <code>deductiveZeros,matrix</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>Equality constraint constant vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adapt</code></td>
+<td>
+<p>logical vector. Extra values to adapt, order must be the same as in <code>x</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nonneg</code></td>
+<td>
+<p>logical vector of length(x). Determines which x-values have to obey nonnegativity constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>roundNearZeros</code></td>
+<td>
+<p>Round near zero values of <code>A</code> before determining the sign?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol</code></td>
+<td>
+<p>tolerance used for zero-rounding.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>There is some added flexibility. Users my define 'extra missings' by specifying the <code>adapt</code> vector.
+</p>
+<p>By default it is assumed that all values must obey the nonnegativity constraint. However this
+can be determined by specifying <code>nonneg</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>deduImpute</code>, <code>solSpace</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# a simple example"
+E &lt;- editmatrix(c(
+    "x1 + x2 + x3 == xt",
+    "x1 &gt;= 0", "x2&gt;=0","x3&gt;=0", "xt&gt;=0"))
+x &lt;- c(x1=10,x2=NA,x3=5,xt=15)
+
+# with deductiveZeros we get:
+( I &lt;- deductiveZeros(E,x) )
+x[I] &lt;- 0
+
+any(violatedEdits(E,x))
+
+# This example is taken from De Waal et al (2011) (Examples 9.1-9.2)
+E &lt;- editmatrix(c(
+    "x1 + x2      == x3",
+    "x2           == x4",
+    "x5 + x6 + x7 == x8",
+    "x3 + x8      == x9",
+    "x9 - x10     == x11",
+    "x6 &gt;= 0",
+    "x7 &gt;= 0"
+))
+
+x &lt;- c(
+  x1 = 145, 
+  x2 = NA, 
+  x3 = 155, 
+  x4 = NA, 
+  x5 = 86, 
+  x6 = NA, 
+  x7 = NA, 
+  x8 = 86, 
+  x9 = NA, 
+  x10 = 217, 
+  x11 = NA)
+
+# determine zeros:
+I &lt;- deductiveZeros(E,x)
+# impute:
+x[I] &lt;- 0
+
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,199 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>as.Node.data.frame</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert a <code>data.frame</code> to a <code>data.tree</code> structure</h2>
+
+<h3>Description</h3>
+
+<p>Convert a <code>data.frame</code> to a <code>data.tree</code> structure
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'data.frame'
+as.Node(
+  x,
+  ...,
+  mode = c("table", "network"),
+  pathName = "pathString",
+  pathDelimiter = "/",
+  colLevels = NULL,
+  na.rm = TRUE
+)
+
+FromDataFrameTable(
+  table,
+  pathName = "pathString",
+  pathDelimiter = "/",
+  colLevels = NULL,
+  na.rm = TRUE,
+  check = c("check", "no-warn", "no-check")
+)
+
+FromDataFrameNetwork(network, check = c("check", "no-warn", "no-check"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The data.frame in the required format.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any other argument implementations of this might need</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>Either "table" (if x is a data.frame in tree or table format) or "network"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pathName</code></td>
+<td>
+<p>The name of the column in x containing the path of the row</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pathDelimiter</code></td>
+<td>
+<p>The delimiter used to separate nodes in <code>pathName</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>colLevels</code></td>
+<td>
+<p>Nested list of column names, determining on what node levels the attributes are written to.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.rm</code></td>
+<td>
+<p>If <code>TRUE</code>, then NA's are treated as NULL and values will not be set on nodes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table</code></td>
+<td>
+<p>a <code>data.frame</code> in table or tree format, i.e. having a row for each leaf (and optionally
+for additional nodes). There should be a column called <code>pathName</code>, separated by <code>pathDelimiter</code>,
+describing the path of each row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check</code></td>
+<td>
+<p>Either
+</p>
+
+<ul>
+<li>
+<p><code>"check"</code>: if the name conformance should be checked and warnings should be printed in case of non-conformance (the default)
+</p>
+</li>
+<li>
+<p><code>"no-warn"</code>: if the name conformance should be checked, but no warnings should be printed in case of non-conformance (if you expect non-conformance)
+</p>
+</li>
+<li>
+<p><code>"no-check" or FALSE</code>: if the name conformance should not be checked; use this if performance is critical. However, in case of non-conformance, expect cryptic follow-up errors
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>network</code></td>
+<td>
+<p>A <code>data.frame</code> in network format, i.e.
+it must adhere to the following requirements:
+</p>
+
+<ul>
+<li>
+<p>It must contain as many rows as there are nodes (excluding the root, there is no row for the root)
+</p>
+</li>
+<li>
+<p>Its first and second columns contain the network relationships. This can be either climbing (from parent to children) or descending (from child to parent)
+</p>
+</li>
+<li>
+<p>Its subsequent columns contain the attributes to be set on the nodes
+</p>
+</li>
+<li>
+<p>It must contain a single root
+</p>
+</li>
+<li>
+<p>There are no cycles in the network
+</p>
+</li>
+</ul>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The root <code>Node</code> of the <code>data.tree</code> structure
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>as.data.frame.Node</code>
+</p>
+<p>Other as.Node: 
+<code>as.Node.dendrogram()</code>,
+<code>as.Node.list()</code>,
+<code>as.Node.phylo()</code>,
+<code>as.Node.rpart()</code>,
+<code>as.Node()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(acme)
+
+#Tree
+x &lt;- ToDataFrameTree(acme, "pathString", "p", "cost")
+x
+xN &lt;- as.Node(x)
+print(xN, "p", "cost")
+
+#Table
+x &lt;- ToDataFrameTable(acme, "pathString", "p", "cost")
+x
+xN &lt;- FromDataFrameTable(x)
+print(xN, "p", "cost")
+
+#More complex Table structure, using colLevels
+acme$Set(floor = c(1, 2, 3),  filterFun = function(x) x$level == 2)
+x &lt;- ToDataFrameTable(acme, "pathString", "floor", "p", "cost")
+x
+xN &lt;- FromDataFrameTable(x, colLevels = list(NULL, "floor", c("p", "cost")), na.rm = TRUE)
+print(xN, "floor", "p", "cost")
+
+#Network
+x &lt;- ToDataFrameNetwork(acme, "p", "cost", direction = "climb")
+x
+xN &lt;- FromDataFrameNetwork(x)
+print(xN, "p", "cost")
+
+</code></pre>
+
+
+</div>

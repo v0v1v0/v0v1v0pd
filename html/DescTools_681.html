@@ -1,0 +1,172 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>StdCoef</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Standardized Model Coefficients</h2>
+
+<h3>Description</h3>
+
+<p>Standardize model coefficients by Standard Deviation or Partial Standard Deviation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+StdCoef(x, partial.sd = FALSE, ...)
+
+PartialSD(x)
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a fitted model object. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>partial.sd</code></td>
+<td>
+<p>logical, if set to <code>TRUE</code>, model coefficients are
+multiplied by partial <abbr><span class="acronym">SD</span></abbr>, otherwise they are multiplied by the
+ratio of the standard deviations of the independent variable and dependent
+variable. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional arguments passed to <code>coefTable</code>, e.g.
+<code>dispersion</code>. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The standardized coefficients are meant to allow for a comparison of the importance of explanatory
+variables that have different variances. Each of them shows the effect on the response of increasing
+its predictor X(j) by one standard deviation, as a multiple of the response's standard deviation.
+This is often a more meaningful comparison of the relevance of the input variables.
+</p>
+<p>Note, however, that increasing one X(j) without also changing others may not be possible in a
+given application, and therefore, interpretation of coefficients can always be tricky. Furthermore,
+for binary input variables, increasing the variable by one standard deviation is impossible, since an
+increase can only occur from 0 to 1, and therefore, the standardized coeffient is somewhat counterintuitive in this case.
+</p>
+<p>Standardizing model coefficients has the same effect as centring and
+scaling the input variables.
+</p>
+<p>“Classical” standardized coefficients
+are calculated as
+<code class="reqn">\betaᵢ* = \betaᵢ (sₓᵢ / Sᵧ)
+        </code>
+, where
+<code class="reqn">\beta</code> is the unstandardized coefficient,
+<code class="reqn">sₓᵢ</code>
+is the
+standard deviation of associated depenent variable
+<code class="reqn">Xᵢ</code>  and
+<code class="reqn">Sᵧ</code>
+is <abbr><span class="acronym">SD</span></abbr> of the response variable.
+</p>
+<p>If the variables are intercorrelated, the standard deviation of
+<code class="reqn">Xᵢ</code>
+used in computing the standardized coefficients
+<code class="reqn">\betaᵢ*</code> should be
+replaced by a partial standard deviation of
+<code class="reqn">Xᵢ</code> which is adjusted for
+the multiple correlation of
+<code class="reqn">Xᵢ</code>  with the other <code class="reqn">X</code> variables
+included in the regression equation. The partial standard deviation is
+calculated as
+<code class="reqn">s*ₓᵢ = sₓᵢ √(VIFₓᵢ⁻¹) √((n-1)/(n-p))
+        </code>,
+where VIF is the variance inflation factor,
+n is the number of observations and p number of predictors in
+the model. Coefficient is then transformed as
+<code class="reqn">\betaᵢ* = \betaᵢ s*ₓᵢ
+        </code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix with at least two columns for standardized coefficient estimate and
+its standard error. Optionally, third column holds degrees of freedom
+associated with the coefficients.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Kamil Bartoń
+</p>
+
+
+<h3>References</h3>
+
+<p>Cade, B.S. (2015) Model averaging and muddled multimodel inferences.
+<em>Ecology</em> 96, 2370-2382.
+</p>
+<p>Afifi A., May S., Clark V.A. (2011) <em>Practical Multivariate Analysis</em>,
+Fifth Edition. CRC Press.
+</p>
+<p>Bring, J. (1994). How to standardize regression coefficients. <em>The American
+Statistician</em> 48, 209-213.
+</p>
+
+
+<h3>See Also</h3>
+
+
+<p><code>coef</code> 
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Fit model to original data:
+fm  &lt;- lm(Fertility ~ Agriculture + Examination + Education + Catholic,
+          data = swiss)
+
+# Partial SD for the default formula:
+psd &lt;- PartialSD(lm(data = swiss))[-1] # remove first element for intercept
+
+# Standardize data:
+zswiss &lt;- scale(swiss, scale = c(NA, psd), center = TRUE)
+# Note: first element of 'scale' is set to NA to ignore the first column 'y'
+
+# Coefficients of a model fitted to standardized data:
+# zapsmall(coefTable(stdizeFit(fm, data = zGPA)))
+# Standardized coefficients of a model fitted to original data:
+# zapsmall(StdCoef(fm, partial = TRUE))
+
+
+# Standardizing nonlinear models:
+fam &lt;- Gamma("inverse")
+fmg &lt;- glm(log(Fertility) ~ Agriculture + Examination + Education + Catholic,
+           data = swiss, family = fam)
+
+psdg &lt;- PartialSD(fmg)
+# zGPA &lt;- stdize(GPA, scale = c(NA, psdg[-1]), center = FALSE)
+# fmgz &lt;- glm(log(y) ~ z.x1 + z.x2 + z.x3 + z.x4, zGPA, family = fam)
+
+# Coefficients using standardized data:
+# coef(fmgz) # (intercept is unchanged because the variables haven't been
+           #  centred)
+# Standardized coefficients:
+# coef(fmg) * psdg
+
+</code></pre>
+
+
+</div>

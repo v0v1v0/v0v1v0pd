@@ -1,0 +1,179 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prep.formulaDynamics</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recipe function for specifying dynamic functions using formulas</h2>
+
+<h3>Description</h3>
+
+<p>Recipe function for specifying dynamic functions using formulas
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prep.formulaDynamics(formula, startval = numeric(0),
+  isContinuousTime = FALSE, jacobian, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a list of formulas specifying the drift or state-transition 
+equations for the latent variables in continuous or discrete time, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>startval</code></td>
+<td>
+<p>a named vector of starting values of the parameters in the 
+formulas for estimation with parameter names as its name. If there are no free parameters in 
+the dynamic functions, leave startval as the default <code>numeric(0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>isContinuousTime</code></td>
+<td>
+<p>if True, the left hand side of the formulas represent 
+the first-order derivatives of the specified variables; if False, the left hand 
+side of the formulas represent the current state of the specified variable while 
+the same variable on the righ hand side is its previous state.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>jacobian</code></td>
+<td>
+<p>(optional) a list of formulas specifying the analytic jacobian matrices 
+containing the analytic differentiation function of the dynamic functions with respect to
+the latent variables. If this is not provided, dynr will invoke an automatic differentiation
+procedure to compute the jacobian functions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further named arguments. Some of these arguments may include:
+</p>
+<p><code>theta.formula</code> specifies a list consisting of formula(s) of the form 
+<code>list (par ~ 1 * b_0  + covariate_1 * b_1 + ... + covariate_p * b_p 
+ + 1 * rand_par)</code>, where <code>par</code> is a parameter is a unit- (e.g., person-) 
+specific that appears in a dynamic formula and is assumed to follow
+a linear mixed effects structure. Here, <code>b_p</code> are fixed effects 
+parameters; <code>covariate_1</code>, ..., <code>covariate_p</code> are known covariates as predeclared in
+<code>dynr.data</code>, and <code>rand_par</code> is a random effect component representing unit i's random deviation
+in <code>par</code> value from that predicted by <code>b_0 + covariate_1*b_1 + ... + covariate_p*b_p</code>. 
+</p>
+<p><code>random.names</code> specifies names of random effect components in the <code>theta.formula</code>
+</p>
+<p><code>random.params.inicov</code> specifies names of elements in the covariance matrix of the random effect components
+</p>
+<p><code>random.values.inicov</code> specifies starting values of elements in the covariance matrix of the random effect components</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function defines the dynamic functions of the model either in discrete time or in continuous time.
+The function can be either linear or nonlinear, with free or fixed parameters, numerical constants, 
+covariates, and other mathematical functions that define the dynamics of the latent variables.
+Every latent variable in the model needs to be defined by a differential (for continuous time model), or
+difference (for discrete time model) equation.  The names of the latent variables should match 
+the specification in <code>prep.measurement()</code>.
+For nonlinear models, the estimation algorithm generally needs a Jacobian matrix that contains
+elements of first differentiations of the dynamic functions with respect to the latent variables
+in the model. For most nonlinear models, such differentiations can be handled automatically by
+dynr. However, in some cases, such as when the absolute function (<code>abs</code>) is used, the automatic
+differentiation would fail and the user may need to provide his/her own Jacobian functions.
+When <code>theta.formula</code> and other accompanying elements in "<code>...</code>" are provided, the program
+automatically inserts the random effect components specified in random.names as additional
+latent (state) variables in the model, and estimate (cook) this expanded model. Do check
+that the expanded model satisfies conditions such as observability for the estimation to work.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class 'dynrDynamicsFormula'
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># In this example, we present how to define the dynamics of a bivariate dual change score model
+# (McArdle, 2009). This is a linear model and the user does not need to worry about 
+# providing any jacobian function (the default). 
+ 
+# We start by creating a list of formula that describes the model. In this model, we have four 
+# latent variables, which are "readLevel", "readSlope", "mathLevel", and "math Slope".  The right-
+# hand side of each formula gives a function that defines the dynamics.   
+ 
+ formula &lt;- list(
+          list(readLevel~ (1+beta.read)*readLevel + readSlope + gamma.read*mathLevel,
+          readSlope~ readSlope,
+          mathLevel~ (1+beta.math)*mathLevel + mathSlope + gamma.math*readLevel, 
+          mathSlope~ mathSlope
+          ))
+
+# Then we use prep.formulaDynamics() to define the formula, starting value of the parameters in
+# the model, and state the model is in discrete time by setting isContinuousTime=FALSE.
+ 
+dynm  &lt;- prep.formulaDynamics(formula=formula,
+                             startval=c(beta.read = -.5, beta.math = -.5, 
+                                        gamma.read = .3, gamma.math = .03
+                             ), isContinuousTime=FALSE)
+
+
+# For a full demo example of regime switching nonlinear discrete time model, you
+# may refer to a tutorial on 
+# \url{https://quantdev.ssri.psu.edu/tutorials/dynr-rsnonlineardiscreteexample}
+
+#Not run: 
+#For a full demo example that uses user-supplied analytic jacobian functions see:
+#demo(RSNonlinearDiscrete, package="dynr")
+formula &lt;- list(
+    list(
+      x1 ~ a1*x1,
+      x2 ~ a2*x2),
+    list(
+      x1 ~ a1*x1 + c12*(exp(abs(x2)))/(1+exp(abs(x2)))*x2,
+      x2 ~ a2*x2 + c21*(exp(abs(x1)))/(1+exp(abs(x1)))*x1)
+  )
+jacob &lt;- list(
+  list(x1~x1~a1,
+      x2~x2~a2),
+  list(x1~x1~a1,
+      x1~x2~c12*(exp(abs(x2))/(exp(abs(x2))+1)+x2*sign(x2)*exp(abs(x2))/(1+exp(abs(x2))^2)),
+      x2~x2~a2,
+      x2~x1~c21*(exp(abs(x1))/(exp(abs(x1))+1)+x1*sign(x1)*exp(abs(x1))/(1+exp(abs(x1))^2))))
+dynm &lt;- prep.formulaDynamics(formula=formula, startval=c( a1=.3, a2=.4, c12=-.5, c21=-.5),
+                             isContinuousTime=FALSE, jacobian=jacob)
+
+#For a full demo example that uses automatic jacobian functions (the default) see:
+#demo(RSNonlinearODE , package="dynr")
+formula=list(prey ~ a*prey - b*prey*predator, predator ~ -c*predator + d*prey*predator)
+dynm &lt;- prep.formulaDynamics(formula=formula,
+                          startval=c(a = 2.1, c = 0.8, b = 1.9, d = 1.1),
+                          isContinuousTime=TRUE)
+
+#For a full demo example that includes unit-specific random effects in theta.formula see:
+#demo(OscWithRand, package="dynr")
+formula &lt;- list(x ~ dx,
+               dx ~ eta_i * x + zeta*dx)
+theta.formula  = list (eta_i ~ 1 * eta0  + u1 * eta1 + u2 * eta2 + 1 * b_eta)
+dynm &lt;- prep.formulaDynamics(formula=formula,
+                           startval=c(eta0=-1, eta1=.1, eta2=-.1,zeta=-.02),
+                           isContinuousTime=TRUE,
+                           theta.formula=theta.formula,
+                           random.names=c('b_eta'),
+                           random.params.inicov=matrix(c('sigma2_b_eta'), ncol=1,byrow=TRUE),
+                           random.values.inicov=matrix(c(0.1), ncol=1,byrow=TRUE))
+</code></pre>
+
+
+</div>

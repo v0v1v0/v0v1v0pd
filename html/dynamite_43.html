@@ -1,0 +1,114 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lfactor</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Define a Common Latent Factor for the Dynamite Model.</h2>
+
+<h3>Description</h3>
+
+<p>This function can be used as part of <code>dynamiteformula()</code> to define
+a common latent factor component. The latent factor is modeled as a spline
+similarly as a time-varying intercept, but instead of having equal effect on
+each group, there is an additional loading variable for each group so that
+in the linear predictor we have a term <code class="reqn">\lambda_i \psi_t</code> for each
+group <code class="reqn">i</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lfactor(
+  responses = NULL,
+  nonzero_lambda = TRUE,
+  correlated = TRUE,
+  noncentered_psi = FALSE,
+  flip_sign = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>responses</code></td>
+<td>
+<p>[<code>character()</code>]<br> Names of the responses that the
+factor should affect. Default is all responses defined with
+<code>obs</code> except categorical responses, which do not (yet) support the factor
+component.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nonzero_lambda</code></td>
+<td>
+<p>[<code>logical()</code>]<br> If <code>TRUE</code> (the default), assumes
+that the mean of factor loadings is nonzero or not. Should be a logical
+vector matching the length of <code>responses</code> or a single logical value in
+case <code>responses</code> is <code>NULL</code>. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correlated</code></td>
+<td>
+<p>[<code>logical()</code>]<br> If <code>TRUE</code> (the default), the latent
+factors are assumed to be correlated between channels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>noncentered_psi</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code>, uses a
+noncentered parametrization for spline coefficients of all the factors.
+The number of knots is based <code>splines()</code> call. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flip_sign</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code> (default), try to avoid
+multimodality due to sign-switching by defining the sign of <code class="reqn">\lambda</code>
+and <code class="reqn">\psi</code> based on the mean of <code class="reqn">\omega_1,\ldots, \omega_D</code>
+coefficients. This only affects channels with <code>nonzero_lambda = FALSE</code>.
+If the true mean of <code class="reqn">\omega</code>s is close to zero, this might not help,
+in which case it is better to set <code>flip_sign = FALSE</code> and post-process the
+samples in other ways (or use only one chain and/or suitable initial
+values). This argument is common to all factors.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class <code>latent_factor</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Model formula construction
+<code>dynamite()</code>,
+<code>dynamiteformula()</code>,
+<code>lags()</code>,
+<code>random_spec()</code>,
+<code>splines()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data.table::setDTthreads(1) # For CRAN
+# three channel model with common factor affecting for responses x and y
+obs(y ~ 1, family = "gaussian") +
+  obs(x ~ 1, family = "poisson") +
+  obs(z ~ 1, family = "gaussian") +
+  lfactor(
+    responses = c("y", "x"), nonzero_lambda = c(TRUE, FALSE),
+    correlated = TRUE, noncentered_psi = FALSE
+  )
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,157 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>modify_design</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Modify a design after the fact</h2>
+
+<h3>Description</h3>
+
+<p>Insert, delete and replace steps in an (already declared) design object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">insert_step(design, new_step, before, after)
+
+delete_step(design, step)
+
+replace_step(design, step, new_step)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p>A design object, usually created using the + operator, <code>expand_design</code>, or the design library.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>new_step</code></td>
+<td>
+<p>The new step; Either a function or a partial call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>before</code></td>
+<td>
+<p>The step before which to add steps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>after</code></td>
+<td>
+<p>The step after which to add steps.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step</code></td>
+<td>
+<p>The quoted label of the step to be deleted or replaced.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>See <code>modify_design</code> for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A new design object.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+ my_model &lt;- 
+   declare_model(
+     N = 100, 
+     U = rnorm(N),
+     Y_Z_0 = U,
+     Y_Z_1 = U + rnorm(N, mean = 2, sd = 2)
+   )
+
+ my_assignment &lt;- declare_assignment(Z = complete_ra(N, m = 50))
+ my_assignment_2 &lt;- declare_assignment(Z = complete_ra(N, m = 25))
+
+ design &lt;- my_model + my_assignment
+
+ draw_data(design)
+ 
+ design_modified &lt;- replace_step(design, 2, my_assignment_2)
+ 
+ draw_data(design)
+ 
+ ## Not run: 
+ 
+ design &lt;- 
+   declare_model(
+     N = 100,
+     U = rnorm(N),
+     potential_outcomes(Y ~ 0.20 * Z + U)
+   ) + 
+     declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) + 
+     declare_assignment(Z = complete_ra(N, m = N/2)) + 
+     declare_measurement(Y = reveal_outcomes(Y ~ Z)) + 
+     declare_estimator(Y ~ Z, inquiry = "ATE")
+ 
+ insert_step(design, declare_sampling(S = complete_rs(N, n = 50)),
+             after = 1)
+
+ # If you are using a design created by a designer, for example from
+ #   the DesignLibrary package, you will not have access to the step
+ #   objects. Instead, you can always use the label of the step.
+ 
+ design &lt;- DesignLibrary::two_arm_designer()
+ 
+ # get the labels for the steps
+ names(design)
+ 
+ insert_step(design, 
+   declare_sampling(S = complete_rs(N, n = 50)),
+   after = "potential_outcomes")
+   
+ 
+## End(Not run)
+
+
+design &lt;- 
+  declare_model(
+    N = 100,
+    U = rnorm(N),
+    potential_outcomes(Y ~ 0.20 * Z + U)
+  ) + 
+    declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) + 
+    declare_assignment(Z = complete_ra(N, m = N/2)) + 
+    declare_measurement(Y = reveal_outcomes(Y ~ Z)) + 
+    declare_estimator(Y ~ Z, inquiry = "ATE")
+delete_step(design, step = 5)
+
+
+design &lt;- 
+  declare_model(
+    N = 100,
+    U = rnorm(N),
+    potential_outcomes(Y ~ 0.20 * Z + U)
+  ) + 
+    declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) + 
+    declare_assignment(Z = complete_ra(N, m = N/2)) + 
+    declare_measurement(Y = reveal_outcomes(Y ~ Z)) + 
+    declare_estimator(Y ~ Z, inquiry = "ATE")
+
+replace_step(
+  design, 
+  step = 3, 
+  new_step = declare_assignment(Z = simple_ra(N, prob = 0.5)))
+</code></pre>
+
+
+</div>

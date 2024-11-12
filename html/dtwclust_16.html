@@ -1,0 +1,298 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cvi</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cluster validity indices</h2>
+
+<h3>Description</h3>
+
+<p>Compute different cluster validity indices (CVIs) of a given cluster partition, using the
+clustering distance measure and centroid function if applicable.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cvi(a, b = NULL, type = "valid", ..., log.base = 10)
+
+## S4 method for signature 'matrix'
+cvi(a, b = NULL, type = "valid", ..., log.base = 10)
+
+## S4 method for signature 'PartitionalTSClusters'
+cvi(a, b = NULL, type = "valid", ..., log.base = 10)
+
+## S4 method for signature 'HierarchicalTSClusters'
+cvi(a, b = NULL, type = "valid", ..., log.base = 10)
+
+## S4 method for signature 'FuzzyTSClusters'
+cvi(a, b = NULL, type = "valid", ..., log.base = 10)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>An object returned by <code>tsclust()</code>, for crisp partitions a vector that can be coerced to
+integers which indicate the cluster memberships, or the membership matrix for soft clustering.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>b</code></td>
+<td>
+<p>If needed, a vector that can be coerced to integers which indicate the cluster
+memberships. The ground truth (if known) should be provided here.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Character vector indicating which indices are to be computed. See supported values
+below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to and from other methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log.base</code></td>
+<td>
+<p>Base of the logarithm to be used in the calculation of VI (see details).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Clustering is commonly considered to be an unsupervised procedure, so evaluating its performance
+can be rather subjective. However, a great amount of effort has been invested in trying to
+standardize cluster evaluation metrics by using cluster validity indices (CVIs).
+</p>
+<p>In general, CVIs can be either tailored to crisp or fuzzy partitions. CVIs can be classified as
+internal, external or relative depending on how they are computed. Focusing on the first two, the
+crucial difference is that internal CVIs only consider the partitioned data and try to define a
+measure of cluster purity, whereas external CVIs compare the obtained partition to the correct
+one. Thus, external CVIs can only be used if the ground truth is known.
+</p>
+<p>Note that even though a fuzzy partition can be changed into a crisp one, making it compatible
+with many of the existing crisp CVIs, there are also fuzzy CVIs tailored specifically to fuzzy
+clustering, and these may be more suitable in those situations. Fuzzy partitions usually have no
+ground truth associated with them, but there are exceptions depending on the task's goal.
+</p>
+<p>Each index defines their range of values and whether they are to be minimized or maximized. In
+many cases, these CVIs can be used to evaluate the result of a clustering algorithm regardless of
+how the clustering works internally, or how the partition came to be.
+</p>
+<p>Knowing which CVI will work best cannot be determined a priori, so they should be tested for each
+specific application. Usually, many CVIs are utilized and compared to each other, maybe using a
+majority vote to decide on a final result. Furthermore, it should be noted that many CVIs perform
+additional distance calculations when being computed, which can be very considerable if using DTW
+or GAK.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The chosen CVIs.
+</p>
+
+
+<h3>External CVIs</h3>
+
+
+<ul>
+<li>
+<p> Crisp partitions (the first 4 are calculated via <code>flexclust::comPart()</code>)
+</p>
+
+<ul>
+<li> <p><code>"RI"</code>: Rand Index (to be maximized).
+</p>
+</li>
+<li> <p><code>"ARI"</code>: Adjusted Rand Index (to be maximized).
+</p>
+</li>
+<li> <p><code>"J"</code>: Jaccard Index (to be maximized).
+</p>
+</li>
+<li> <p><code>"FM"</code>: Fowlkes-Mallows (to be maximized).
+</p>
+</li>
+<li> <p><code>"VI"</code>: Variation of Information (Meila (2003); to be minimized).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> Fuzzy partitions (based on Lei et al. (2017))
+</p>
+
+<ul>
+<li> <p><code>"RI"</code>: Soft Rand Index (to be maximized).
+</p>
+</li>
+<li> <p><code>"ARI"</code>: Soft Adjusted Rand Index (to be maximized).
+</p>
+</li>
+<li> <p><code>"VI"</code>: Soft Variation of Information (to be minimized).
+</p>
+</li>
+<li> <p><code>"NMIM"</code>: Soft Normalized Mutual Information based on Max entropy (to be maximized).
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Internal CVIs</h3>
+
+<p>The indices marked with an exclamation mark (!) calculate (or re-use if already available) the
+whole distance matrix between the series in the data. If you were trying to avoid this in the
+first place, then these CVIs might not be suitable for your application.
+</p>
+<p>The indices marked with a question mark (?) depend on the extracted centroids, so bear that in
+mind if a hierarchical procedure was used and/or the centroid function has associated
+randomness (such as <code>shape_extraction()</code> with series of different length).
+</p>
+<p>The indices marked with a tilde (~) require the calculation of a global centroid. Since <code>DBA()</code>
+and <code>shape_extraction()</code> (for series of different length) have some randomness associated,
+these indices might not be appropriate for those centroids.
+</p>
+
+<ul>
+<li>
+<p> Crisp partitions
+</p>
+
+<ul>
+<li> <p><code>"Sil"</code> (!): Silhouette index (Rousseeuw (1987); to be maximized).
+</p>
+</li>
+<li> <p><code>"D"</code> (!): Dunn index (Arbelaitz et al. (2013); to be maximized).
+</p>
+</li>
+<li> <p><code>"COP"</code> (!): COP index (Arbelaitz et al. (2013); to be minimized).
+</p>
+</li>
+<li> <p><code>"DB"</code> (?): Davies-Bouldin index (Arbelaitz et al. (2013); to be minimized).
+</p>
+</li>
+<li> <p><code>"DBstar"</code> (?): Modified Davies-Bouldin index (DB*) (Kim and Ramakrishna (2005); to be
+minimized).
+</p>
+</li>
+<li> <p><code>"CH"</code> (~): Calinski-Harabasz index (Arbelaitz et al. (2013); to be maximized).
+</p>
+</li>
+<li> <p><code>"SF"</code> (~): Score Function (Saitta et al. (2007); to be maximized; see notes).
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> Fuzzy partitions (using the nomenclature from Wang and Zhang (2007))
+</p>
+
+<ul>
+<li> <p><code>"MPC"</code>: to be maximized.
+</p>
+</li>
+<li> <p><code>"K"</code> (~): to be minimized.
+</p>
+</li>
+<li> <p><code>"T"</code>: to be minimized.
+</p>
+</li>
+<li> <p><code>"SC"</code> (~): to be maximized.
+</p>
+</li>
+<li> <p><code>"PBMF"</code> (~): to be maximized (see notes).
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Additionally</h3>
+
+
+<ul>
+<li> <p><code>"valid"</code>: Returns all valid indices depending on the type of <code>a</code> and whether <code>b</code> was
+provided or not.
+</p>
+</li>
+<li> <p><code>"internal"</code>: Returns all internal CVIs. Only supported for TSClusters objects.
+</p>
+</li>
+<li> <p><code>"external"</code>: Returns all external CVIs. Requires <code>b</code> to be provided.
+</p>
+</li>
+</ul>
+<h3>Note</h3>
+
+<p>In the original definition of many internal and fuzzy CVIs, the Euclidean distance and a mean
+centroid was used. <strong>The implementations here change this, making use of whatever
+distance/centroid was chosen during clustering</strong>. However, some of the CVIs assume that the
+distances are symmetric, since cross-distance matrices are calculated and only the upper/lower
+triangulars are considered. A warning will be given if the matrices are not symmetric and the CVI
+assumes so.
+</p>
+<p>Because of the above, calculating CVIs for clusterings made with <code>TADPole()</code> is a special case.
+Since TADPole uses 3 distances during its execution (DTW, LB_Keogh and Euclidean), it is not
+obvious which one should be used for the calculation of CVIs. Nevertheless, <code>dtw_basic()</code> is used
+by default.
+</p>
+<p>The formula for the SF index in Saitta et al. (2007) does not correspond to the one in Arbelaitz
+et al. (2013). The one specified in the former is used here.
+</p>
+<p>The formulas for the Silhouette index are not entirely correct in Arbelaitz et al. (2013), refer
+to Rousseeuw (1987) for the correct ones.
+</p>
+<p>The formulas for the PBMF index are not entirely unambiguous in the literature, the ones given in
+Lin (2013) are used here.
+</p>
+
+
+<h3>References</h3>
+
+<p>Arbelaitz, O., Gurrutxaga, I., Muguerza, J., Perez, J. M., &amp; Perona, I. (2013). An extensive
+comparative study of cluster validity indices. Pattern Recognition, 46(1), 243-256.
+</p>
+<p>Kim, M., &amp; Ramakrishna, R. S. (2005). New indices for cluster validity assessment. Pattern
+Recognition Letters, 26(15), 2353-2363.
+</p>
+<p>Lei, Y., Bezdek, J. C., Chan, J., Vinh, N. X., Romano, S., &amp; Bailey, J. (2017). Extending
+information-theoretic validity indices for fuzzy clustering. IEEE Transactions on Fuzzy Systems,
+25(4), 1013-1018.
+</p>
+<p>Lin, H. Y. (2013). Effective Feature Selection for Multi-class Classification Models. In
+Proceedings of the World Congress on Engineering (Vol. 3).
+</p>
+<p>Meila, M. (2003). Comparing clusterings by the variation of information. In Learning theory and
+kernel machines (pp. 173-187). Springer Berlin Heidelberg.
+</p>
+<p>Rousseeuw, P. J. (1987). Silhouettes: a graphical aid to the interpretation and validation of
+cluster analysis. Journal of computational and applied mathematics, 20, 53-65.
+</p>
+<p>Saitta, S., Raphael, B., &amp; Smith, I. F. (2007). A bounded index for cluster validity. In
+International Workshop on Machine Learning and Data Mining in Pattern Recognition (pp. 174-187).
+Springer Berlin Heidelberg.
+</p>
+<p>Wang, W., &amp; Zhang, Y. (2007). On fuzzy cluster validity indices. Fuzzy sets and systems, 158(19),
+2095-2117.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+cvi(CharTrajLabels, sample(CharTrajLabels), type = c("ARI", "VI"))
+
+</code></pre>
+
+
+</div>

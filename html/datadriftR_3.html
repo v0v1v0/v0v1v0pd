@@ -1,0 +1,396 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>HDDM_A</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>HDDM_A: Drift Detection Method based on Adaptive Windows</h2>
+
+<h3>Description</h3>
+
+<p>This class implements the HDDM_A drift detection method that uses adaptive windows
+to detect changes in the mean of a data stream. It is designed to monitor online streams
+of data and can detect increases or decreases in the process mean in a non-parametric and
+online manner.
+</p>
+
+
+<h3>Details</h3>
+
+<p>HDDM_A adapts to changes in the data stream by adjusting its internal windows to track
+the minimum and maximum values of the process mean. It triggers alerts when a significant
+drift from these benchmarks is detected.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>drift_confidence</code></dt>
+<dd>
+<p>Confidence level for detecting a drift.</p>
+</dd>
+<dt><code>warning_confidence</code></dt>
+<dd>
+<p>Confidence level for warning detection.</p>
+</dd>
+<dt><code>two_side_option</code></dt>
+<dd>
+<p>Boolean flag for one-sided or two-sided mean monitoring.</p>
+</dd>
+<dt><code>total_n</code></dt>
+<dd>
+<p>Total number of samples seen.</p>
+</dd>
+<dt><code>total_c</code></dt>
+<dd>
+<p>Total cumulative sum of the samples.</p>
+</dd>
+<dt><code>n_max</code></dt>
+<dd>
+<p>Maximum window end for sample count.</p>
+</dd>
+<dt><code>c_max</code></dt>
+<dd>
+<p>Maximum window end for cumulative sum.</p>
+</dd>
+<dt><code>n_min</code></dt>
+<dd>
+<p>Minimum window start for sample count.</p>
+</dd>
+<dt><code>c_min</code></dt>
+<dd>
+<p>Minimum window start for cumulative sum.</p>
+</dd>
+<dt><code>n_estimation</code></dt>
+<dd>
+<p>Number of samples since the last detected change.</p>
+</dd>
+<dt><code>c_estimation</code></dt>
+<dd>
+<p>Cumulative sum since the last detected change.</p>
+</dd>
+<dt><code>change_detected</code></dt>
+<dd>
+<p>Boolean indicating if a change was detected.</p>
+</dd>
+<dt><code>warning_detected</code></dt>
+<dd>
+<p>Boolean indicating if a warning has been detected.</p>
+</dd>
+<dt><code>estimation</code></dt>
+<dd>
+<p>Current estimated mean of the stream.</p>
+</dd>
+<dt><code>delay</code></dt>
+<dd>
+<p>Current delay since the last update.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-HDDM_A-new"><code>HDDM_A$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_A-add_element"><code>HDDM_A$add_element()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_A-mean_incr"><code>HDDM_A$mean_incr()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_A-mean_decr"><code>HDDM_A$mean_decr()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_A-reset"><code>HDDM_A$reset()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_A-update_estimations"><code>HDDM_A$update_estimations()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-HDDM_A-clone"><code>HDDM_A$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-HDDM_A-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+<p>Initializes the HDDM_A detector with specific settings.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$new(
+  drift_confidence = 0.001,
+  warning_confidence = 0.005,
+  two_side_option = TRUE
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>drift_confidence</code></dt>
+<dd>
+<p>Confidence level for drift detection.</p>
+</dd>
+<dt><code>warning_confidence</code></dt>
+<dd>
+<p>Confidence level for issuing warnings.</p>
+</dd>
+<dt><code>two_side_option</code></dt>
+<dd>
+<p>Whether to monitor both increases and decreases.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_A-add_element"></a>
+
+
+
+<h4>Method <code>add_element()</code>
+</h4>
+
+<p>Adds an element to the data stream and updates the detection status.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$add_element(prediction)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>prediction</code></dt>
+<dd>
+<p>Numeric, the new data value to add.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_A-mean_incr"></a>
+
+
+
+<h4>Method <code>mean_incr()</code>
+</h4>
+
+<p>Calculates if there is an increase in the mean.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$mean_incr(c_min, n_min, total_c, total_n, confidence)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>c_min</code></dt>
+<dd>
+<p>Minimum cumulative sum.</p>
+</dd>
+<dt><code>n_min</code></dt>
+<dd>
+<p>Minimum count of samples.</p>
+</dd>
+<dt><code>total_c</code></dt>
+<dd>
+<p>Total cumulative sum.</p>
+</dd>
+<dt><code>total_n</code></dt>
+<dd>
+<p>Total number of samples.</p>
+</dd>
+<dt><code>confidence</code></dt>
+<dd>
+<p>Confidence threshold for detection.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_A-mean_decr"></a>
+
+
+
+<h4>Method <code>mean_decr()</code>
+</h4>
+
+<p>Calculates if there is a decrease in the mean.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$mean_decr(c_max, n_max, total_c, total_n)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>c_max</code></dt>
+<dd>
+<p>Maximum cumulative sum.</p>
+</dd>
+<dt><code>n_max</code></dt>
+<dd>
+<p>Maximum count of samples.</p>
+</dd>
+<dt><code>total_c</code></dt>
+<dd>
+<p>Total cumulative sum.</p>
+</dd>
+<dt><code>total_n</code></dt>
+<dd>
+<p>Total number of samples.</p>
+</dd>
+</dl>
+</div>
+
+
+<hr>
+<a id="method-HDDM_A-reset"></a>
+
+
+
+<h4>Method <code>reset()</code>
+</h4>
+
+<p>Resets all internal counters and accumulators to their initial state.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$reset()</pre></div>
+
+
+<hr>
+<a id="method-HDDM_A-update_estimations"></a>
+
+
+
+<h4>Method <code>update_estimations()</code>
+</h4>
+
+<p>Updates estimations of the mean after detecting changes.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$update_estimations()</pre></div>
+
+
+<hr>
+<a id="method-HDDM_A-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>HDDM_A$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>References</h3>
+
+<p>Frías-Blanco I, del Campo-Ávila J, Ramos-Jimenez G, et al. Online and non-parametric drift
+detection methods based on Hoeffding’s bounds. IEEE Transactions on Knowledge and Data
+Engineering, 2014, 27(3): 810-823.
+</p>
+<p>Albert Bifet, Geoff Holmes, Richard Kirkby, Bernhard Pfahringer. MOA: Massive Online Analysis;
+Journal of Machine Learning Research 11: 1601-1604, 2010.
+</p>
+<p>Implementation: https://github.com/scikit-multiflow/scikit-multiflow/blob/a7e316d1cc79988a6df40da35312e00f6c4eabb2/src/skmultiflow/drift_detection/hddm_a.py
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(123)  # Setting a seed for reproducibility
+data_part1 &lt;- sample(c(0, 1), size = 100, replace = TRUE, prob = c(0.7, 0.3))
+
+# Introduce a change in data distribution
+data_part2 &lt;- sample(c(0, 1), size = 100, replace = TRUE, prob = c(0.3, 0.7))
+
+# Combine the two parts
+data_stream &lt;- c(data_part1, data_part2)
+
+# Initialize the hddm_a object
+hddm_a_instance &lt;- HDDM_A$new()
+
+# Iterate through the data stream
+for(i in seq_along(data_stream)) {
+  hddm_a_instance$add_element(data_stream[i])
+  if(hddm_a_instance$warning_detected) {
+    message(paste("Warning detected at index:", i))
+  }
+  if(hddm_a_instance$change_detected) {
+    message(paste("Concept drift detected at index:", i))
+  }
+}
+</code></pre>
+
+
+</div>

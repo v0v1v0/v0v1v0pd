@@ -1,0 +1,135 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>titrate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Perform neutrophil-guided dose titration of a chemotherapy drug.</h2>
+
+<h3>Description</h3>
+
+<p>This is included in package DTAT mainly for archival purposes, with the aim
+to document a reproduction of Figure 5 from the 2017 <em>F1000Research</em>
+paper (referenced below), using a clearer and more general software design
+than is found in the online code supplement available at https://osf.io/vwnqz/.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">titrate(draw.days = NULL, Ncycles = 10, doserange = c(50, 500), dta = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>draw.days</code></td>
+<td>
+<p>Integer days on which ANC is to be measured</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Ncycles</code></td>
+<td>
+<p>Number of chemo cycles through which to simulate titration</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doserange</code></td>
+<td>
+<p>Range of doses to consider</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dta</code></td>
+<td>
+<p>A Dose Titration Algorithm (DTA) to drive the titration</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with 2 components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>course</code></td>
+<td>
+<p>A data frame containing cycle-wise measures
+of each id's titration course</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anc.ts</code></td>
+<td>
+<p>A data frame detailing high-frequency ANC measures for each id</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David C. Norris
+</p>
+
+
+<h3>References</h3>
+
+<p>Norris DC. Dose Titration Algorithm Tuning (DTAT) should
+supersede ‘the’ Maximum Tolerated Dose (MTD) in oncology dose-finding
+trials. <em>F1000Research</em>. 2017;6:112. doi:10.12688/f1000research.10624.3.
+<a href="https://f1000research.com/articles/6-112/v3">https://f1000research.com/articles/6-112/v3</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">if(interactive()){
+# Reproduce Figure 5 from the F1000Research paper (run time &gt; 10 s).
+# 1. Set up sim$pop &amp; sim$pkpd by running the repro for Figures 1 &amp; 3:
+example(topic="Onoue.Friberg", package="DTAT", ask=FALSE)
+# 2. Do the neutrophil-nadir-guided dose titration:
+chemo &lt;- titrate(doserange = c(50, 3000),
+                 dta=newton.raphson(dose1 = 50,
+                                    omega = 0.75,
+                                    slope1 = -2.0,
+                                    slopeU = -0.2)
+                 )
+library(latticeExtra)
+newton &lt;- chemo$course
+new.ts &lt;- chemo$anc.ts
+anc.tics &lt;- c(200,500,1500,4000,10000)
+right &lt;- xYplot(ANC ~ time | id, data=new.ts
+                , as.table=TRUE, type="l"
+                , layout=c(5,5)
+                , scales=list(y=list(log=TRUE, lim=c(100,1.5e4)
+                                     , at=anc.tics
+                                     , lab=as.character(anc.tics)),
+                              x=list(at=seq(0,30,3)))
+)
+newton &lt;- upData(newton
+                 , time = 3*(cycle-1)
+                 , labels = c(time="Time")
+                 , units = c(time="weeks")
+                 , print = FALSE)
+dose.tics &lt;- c(50, 200, 600, 1500, 3000)
+left &lt;- xYplot(scaled.dose ~ time | id, data=newton
+               , as.table=TRUE, type='p', pch='+', cex=1.5
+               , layout=c(5,5)
+               , scales=list(y=list(lim=DTAT:::scaled(c(30,3200))
+                                    , at=DTAT:::scaled(dose.tics)
+                                    , lab=as.character(dose.tics)),
+                             x=list(lim=c(-1,31)
+                                    , at=seq(0,30,3)
+                                    , lab=c('0','','6','','12','','18','','24','','30')))
+)
+update(doubleYScale(left, right, add.ylab2=TRUE)
+       , par.settings = simpleTheme(col=brewer.pal(4,"PRGn")[c(4,1)])
+)
+}
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,194 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>skeleton</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Build a working model.            
+</h2>
+
+<h3>Description</h3>
+
+<p>The construction of the working model's skeleton.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">skeleton(doseChildren, doseAdult, dataTox, dataAuc = NULL, Clad,
+         Clch, nbSimu, graph = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+  
+<table>
+<tr style="vertical-align: top;">
+<td><code>doseChildren</code></td>
+<td>
+
+<p>The paediatric dose level.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>doseAdult</code></td>
+<td>
+ 
+<p>The adult dose level.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataTox</code></td>
+<td>
+ 
+<p>The database of the toxicities.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataAuc</code></td>
+<td>
+ 
+<p>The database of the AUC; defaults to NULL. 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Clad</code></td>
+<td>
+
+<p>The clearance of the adults.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Clch</code></td>
+<td>
+
+<p>Paediatric clearance (known or estimated). An estimate can be computed using maturation adjustment (MA), allometric adjustment (AA) or linear adjustment (LA) for a specific group of age.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nbSimu</code></td>
+<td>
+
+<p>The number of simulation using in meta analysis function <code>metaPhase</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+
+<p>A choice to plot the estimates using the function <code>plotEstimates</code> in the end of the working model. Indicates graph = TRUE to plot or otherwise graph = FALSE; defaults to TRUE.
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+ 
+<p>Artemis Toumazi <a href="mailto:artemis.toumazi@gmail.com">artemis.toumazi@gmail.com</a>,
+Caroline Petit <a href="mailto:caroline.petit@crc.jussieu.fr">caroline.petit@crc.jussieu.fr</a>, 
+Sarah Zohar <a href="mailto:sarah.zohar@inserm.fr">sarah.zohar@inserm.fr</a> 
+</p>
+
+
+<h3>References</h3>
+
+<p>Petit, C., et al, (2016) Unified approach for extrapolation and bridging of adult information in early phase dose-finding paediatric studies, Statistical Methods in Medical Research, &lt;doi:10.1177/0962280216671348&gt;.
+</p>
+
+
+<h3>See Also</h3>
+
+ 
+<p><code>plotEstimates</code>, <code>metaPhase</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> 
+## Not run: 
+    ########
+    # Note: For this example we are using a paediatric database that we have including data of 
+    # children from 0 to 19 years old.
+    ########
+    
+    children &lt;- read.csv("/Users/artemistoumazi/paediatric_data_p3m/children_0_19.csv")
+    AGE &lt;- children$Age
+    W &lt;- children$Weight
+
+    W_ad &lt;- 70
+    Cl_ad &lt;- 3.95
+
+    F_ad &lt;- 0.6
+    Eg &lt;- 0
+    Eh &lt;- 0.058
+    f_abs &lt;- F_ad/((1 - Eh)*(1-Eg))
+    fu_ad &lt;- 1
+    perc_CYPh &lt;- data.frame("CYP3A4_5" = 0.7, "CYP1A2" = 0.3)
+    perc_CYPg &lt;- data.frame("CYP3A4_5" = 1)
+    perc_alb &lt;- 1
+    perc_alpha1AG &lt;- 0 
+
+    data_molecule &lt;- list(F_ad, f_abs, Eg, Eh, fu_ad, perc_CYPg, perc_CYPh, 
+                          perc_alb, perc_alpha1AG)
+    Clch_mat &lt;- Clch.Mat(AGE, W, Cl_ad, W_ad, data_molecule)
+
+    ####################################
+    ########## WORKING MODEL ###########
+    ####################################
+
+    children &lt;- data.frame(children, Clch_mat)
+
+    ########## Children from 2 to 5 years old 
+    children2_5 &lt;- children[children$Age &gt;= 2 &amp; children$Age &lt;= 5  ,]                          
+    Cl_ch &lt;-  mean(children2_5$Clch_mat)                    
+
+    # Doses for paediatric using maturation adjustment
+    dCh_mat_2_5 &lt;- c(30, 45, 55, 70, 85)
+
+    Cl_ad &lt;- 3.95
+    AUCThomas &lt;- c(20,40, 60)
+    probaToxThomas &lt;- c(0.1,0.25, 0.55)
+
+
+    ################# Non-parametric PAVA estimate ###################
+
+    # data from the publications of toxicity in the erlotinib
+    pardos_2006 &lt;- rbind(c(100,0/3, 3), c(150, 1/3,3), c(200, 0/3, 3), c(250, 3/6, 6))
+    thepot_2014 &lt;- rbind(c(100, 0/5, 5), c(150,3/25, 25))
+    calvo_2007 &lt;- rbind(c(150, 1/25, 25))
+    raizer_2010 &lt;- rbind(c(150,11/99, 99))
+    vanDenBent_2009 &lt;- rbind( c(200, 6/54, 54))
+    sheikh_2012 &lt;- rbind(c(150, 0.544, 307)) 
+    rocheNTC00531934 &lt;- rbind(c(150, 0.186, 59)) 
+
+
+    dataTox &lt;- rbind(pardos_2006, thepot_2014, calvo_2007, raizer_2010, vanDenBent_2009, 
+                     rocheNTC00531934, sheikh_2012)
+    dataTox &lt;- data.frame(dataTox)
+    colnames(dataTox) &lt;- c("doses", "proba", "nbPatients")
+    nbTox &lt;- dataTox$proba*dataTox$nbPatients
+    dataTox &lt;- data.frame(dataTox, nbTox)
+
+    data_auc &lt;- data.frame(AUCThomas, probaToxThomas )
+    dose_children &lt;- dCh_mat_2_5[1:4]
+    dose_adult &lt;- c(100,150,200, 250)
+    graph &lt;- TRUE
+
+    skeleton(dose_children, dose_adult, dataTox, data_auc, Cl_ad, Cl_ch, nbSimu = 10, 
+             graph = TRUE)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

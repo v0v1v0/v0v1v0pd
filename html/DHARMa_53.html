@@ -1,0 +1,98 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>residuals.DHARMa</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Return residuals of a DHARMa simulation</h2>
+
+<h3>Description</h3>
+
+<p>Return residuals of a DHARMa simulation
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'DHARMa'
+residuals(object, quantileFunction = NULL,
+  outlierValues = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object with simulated residuals created by <code>simulateResiduals</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantileFunction</code></td>
+<td>
+<p>optional - a quantile function to transform the uniform 0/1 scaling of DHARMa to another distribution</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outlierValues</code></td>
+<td>
+<p>if a quantile function with infinite support (such as dnorm) is used, residuals that are 0/1 are mapped to -Inf / Inf. outlierValues allows to convert -Inf / Inf values to an optional min / max value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>optional arguments for compatibility with the generic function, no function implemented</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>the function accesses the slot $scaledResiduals in a fitted DHARMa object, and optionally transforms the standard DHARMa quantile residuals (which have a uniform distribution) to a particular pdf.
+</p>
+
+
+<h3>Note</h3>
+
+<p>some of the papers on simulated quantile residuals transforming the residuals (which are natively uniform) back to a normal distribution. I presume this is because of the larger familiarity of most users with normal residuals. Personally, I never considered this desirable, for the reasons explained in https://github.com/florianhartig/DHARMa/issues/39, but with this function, I wanted to give users the option to plot normal residuals if they so wish.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(lme4)
+
+testData = createData(sampleSize = 100, overdispersion = 0.5, family = poisson())
+fittedModel &lt;- glmer(observedResponse ~ Environment1 + (1|group), 
+                     family = "poisson", data = testData)
+
+simulationOutput &lt;- simulateResiduals(fittedModel = fittedModel)
+
+# standard plot 
+plot(simulationOutput)
+
+# one of the possible test, for other options see ?testResiduals / vignette
+testDispersion(simulationOutput)
+
+# the calculated residuals can be accessed via 
+residuals(simulationOutput)
+
+# transform residuals to other pdf, see ?residuals.DHARMa for details
+residuals(simulationOutput, quantileFunction = qnorm, outlierValues = c(-7,7))
+
+# get residuals that are outside the simulation envelope
+outliers(simulationOutput)
+
+# calculating aggregated residuals per group
+simulationOutput2 = recalculateResiduals(simulationOutput, group = testData$group)
+plot(simulationOutput2, quantreg = FALSE)
+
+# calculating residuals only for subset of the data
+simulationOutput3 = recalculateResiduals(simulationOutput, sel = testData$group == 1 )
+plot(simulationOutput3, quantreg = FALSE)
+</code></pre>
+
+
+</div>

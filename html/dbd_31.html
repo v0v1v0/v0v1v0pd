@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mcCovMat</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Monte Carlo estimation of a covariance matrix.
+</h2>
+
+<h3>Description</h3>
+
+<p>Calculate an estimate of the covariance matrix for the parameter
+estimates of a db or beta binomial distribution via simulation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mcCovMat(object, nsim = 100, seed=NULL, maxit=1000)
+## S3 method for class 'mleDb'
+mcCovMat(object, nsim = 100, seed=NULL, maxit=1000)
+## S3 method for class 'mleBb'
+mcCovMat(object, nsim = 100, seed=NULL, maxit=1000)
+## S3 method for class 'Dbdpars'
+mcCovMat(object, nsim = 100, seed=NULL, maxit=1000)
+## S3 method for class 'Bbdpars'
+mcCovMat(object, nsim = 100, seed=NULL, maxit=1000)
+## Default S3 method:
+mcCovMat(object, nsim = 100, seed=NULL, maxit=1000)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+
+<p>An object of class either <code>"mleDb"</code>, <code>"mleBb"</code>,
+<code>Dbdpars</code> or <code>Bbdpars</code>.  In the first two cases such an
+object would be returned by the function <code>mleDb()</code> or
+by <code>mleBb()</code>.  In the second two cases such an object
+would be returned by the function <code>makeDbdpars()</code>
+or by <code>makeBbdpars()</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsim</code></td>
+<td>
+
+<p>Integer scalar.  The number of simulations to be used to produce
+the Monte Carlo estimate of the covariance matrix.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Integer scalar.  The seed for the random number generator.  If not
+specified it is randomly sampled from the sequence <code>1:1e5</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Integer scalar.  The maximum number of iterations to be undertaken
+by <code>optim()</code> when fitting models to the simulated data.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The procedure is to simulate <code>nsim</code> data sets, all of
+the same size.  This will be the size of the data set to which
+<code>object</code> was fitted), in the case of the <code>"mleDb"</code> and
+<code>"mleBb"</code> methods, and will be the value of the <code>ndata</code>
+argument supplied to the “<code>make</code>” function in the
+case of the <code>"Dbdpars"</code> and <code>"Bbdpars"</code> methods. The
+simulations are from models determined by the parameter value
+contained in <code>object</code>.
+</p>
+<p>From each such simulated data, parameter estimates are obtained.
+The covariance matrix of these latter parameter estimates
+(adjusted for the fact that the true parameters are known in
+a simulation) is taken to be the required covariance matrix
+estimated.
+</p>
+<p>The default method simply throws an error.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A two-by-two positive definite (with any luck!) numeric matrix.
+It is an estimate of the covariance matrix of the parameter estimates.
+</p>
+<p>It has an attribute <code>"seed"</code> which is the seed that was used
+for the random number generator.  This is either the value of the
+argument <code>seed</code> or (if this argument was left <code>NULL</code>) the
+value that was randomly sampled from <code>1:1e5</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Rolf Turner
+<a href="mailto:r.turner@auckland.ac.nz">r.turner@auckland.ac.nz</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>link{aHess}()</code>
+<code>link{nHess}()</code>
+<code>link{vcov.mleDb}()</code>
+<code>link{vcov.mleBb}()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">X   &lt;- hmm.discnp::SydColDisc
+X$y &lt;- as.numeric(X$y)
+X   &lt;- split(X,f=with(X,interaction(locn,depth)))
+x   &lt;- X[[19]]$y
+fit &lt;- mleDb(x, ntop=5)
+set.seed(42)
+CM.m &lt;- mcCovMat(fit,nsim=500) # Lots of simulations!
+CM.a &lt;- vcov(fit)
+CM.n &lt;- solve(nHess(fit,x))
+cat("Monte Carlo:\n\n")
+print(CM.m)
+cat("Analytic:\n\n")
+print(CM.a)
+cat("Numeric:\n\n")
+print(CM.n)
+X     &lt;- hrsRcePred
+top1e &lt;- X[X$sbjType=="Expert","top1"]
+fit   &lt;- mleBb(top1e,size=10)
+CM.m  &lt;- mcCovMat(fit,nsim=500) # Lots of simulations!
+CM.a  &lt;- vcov(fit)
+CM.n  &lt;- solve(nHess(fit,top1e))
+cat("Monte Carlo:\n\n")
+print(CM.m)
+cat("Analytic:\n\n")
+print(CM.a)
+cat("Numeric:\n\n")
+print(CM.n)
+</code></pre>
+
+
+</div>

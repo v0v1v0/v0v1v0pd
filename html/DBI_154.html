@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbUnquoteIdentifier</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Unquote identifiers</h2>
+
+<h3>Description</h3>
+
+<p>Call this method to convert a SQL object created by <code>dbQuoteIdentifier()</code>
+back to a list of Id objects.
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbUnquoteIdentifier(conn, x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>A DBIConnection object, as returned by
+<code>dbConnect()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An SQL or Id object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments passed on to methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>dbUnquoteIdentifier()</code> returns a list of objects
+of the same length as the input.
+For an empty vector, this function returns a length-0 object.
+The names of the input argument are preserved in the output.
+If <code>x</code> is a value returned by <code>dbUnquoteIdentifier()</code>,
+calling <code>dbUnquoteIdentifier(..., dbQuoteIdentifier(..., x))</code>
+returns <code>list(x)</code>.
+If <code>x</code> is an object of class Id,
+calling <code>dbUnquoteIdentifier(..., x)</code> returns <code>list(x)</code>.
+(For backends it may be most convenient to return Id objects
+to achieve this behavior, but this is not required.)
+</p>
+<p>Plain character vectors can also be passed to <code>dbUnquoteIdentifier()</code>.
+</p>
+
+
+<h3>Failure modes</h3>
+
+<p>An error is raised if a character vectors with a missing value is passed
+as the <code>x</code> argument.
+</p>
+
+
+<h3>Specification</h3>
+
+<p>For any character vector of length one, quoting (with <code>dbQuoteIdentifier()</code>)
+then unquoting then quoting the first element is identical to just quoting.
+This is also true for strings that
+contain special characters such as a space,
+a dot,
+a comma,
+or quotes used to mark strings
+or identifiers,
+if the database supports this.
+</p>
+<p>Unquoting simple strings (consisting of only letters) wrapped with <code>SQL()</code> and
+then quoting via <code>dbQuoteIdentifier()</code> gives the same result as just
+quoting the string.
+Similarly, unquoting expressions of the form <code>SQL("schema.table")</code>
+and then quoting gives the same result as quoting the identifier
+constructed by <code>Id("schema", "table")</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other DBIConnection generics: 
+<code>DBIConnection-class</code>,
+<code>dbAppendTable()</code>,
+<code>dbAppendTableArrow()</code>,
+<code>dbCreateTable()</code>,
+<code>dbCreateTableArrow()</code>,
+<code>dbDataType()</code>,
+<code>dbDisconnect()</code>,
+<code>dbExecute()</code>,
+<code>dbExistsTable()</code>,
+<code>dbGetException()</code>,
+<code>dbGetInfo()</code>,
+<code>dbGetQuery()</code>,
+<code>dbGetQueryArrow()</code>,
+<code>dbIsReadOnly()</code>,
+<code>dbIsValid()</code>,
+<code>dbListFields()</code>,
+<code>dbListObjects()</code>,
+<code>dbListResults()</code>,
+<code>dbListTables()</code>,
+<code>dbQuoteIdentifier()</code>,
+<code>dbReadTable()</code>,
+<code>dbReadTableArrow()</code>,
+<code>dbRemoveTable()</code>,
+<code>dbSendQuery()</code>,
+<code>dbSendQueryArrow()</code>,
+<code>dbSendStatement()</code>,
+<code>dbWriteTable()</code>,
+<code>dbWriteTableArrow()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Unquoting allows to understand the structure of a
+# possibly complex quoted identifier
+dbUnquoteIdentifier(
+  ANSI(),
+  SQL(c('"Catalog"."Schema"."Table"', '"Schema"."Table"', '"UnqualifiedTable"'))
+)
+
+# The returned object is always a list,
+# also for Id objects
+dbUnquoteIdentifier(ANSI(), Id("Catalog", "Schema", "Table"))
+
+# Quoting and unquoting are inverses
+dbQuoteIdentifier(
+  ANSI(),
+  dbUnquoteIdentifier(ANSI(), SQL("UnqualifiedTable"))[[1]]
+)
+
+dbQuoteIdentifier(
+  ANSI(),
+  dbUnquoteIdentifier(ANSI(), Id("Schema", "Table"))[[1]]
+)
+</code></pre>
+
+
+</div>

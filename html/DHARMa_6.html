@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>createDHARMa</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a DHARMa object from hand-coded simulations or Bayesian posterior predictive simulations</h2>
+
+<h3>Description</h3>
+
+<p>Create a DHARMa object from hand-coded simulations or Bayesian posterior predictive simulations
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">createDHARMa(simulatedResponse, observedResponse,
+  fittedPredictedResponse = NULL, integerResponse = F, seed = 123,
+  method = c("PIT", "traditional"), rotation = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>simulatedResponse</code></td>
+<td>
+<p>matrix of observations simulated from the fitted model - row index for observations and colum index for simulations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observedResponse</code></td>
+<td>
+<p>true observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fittedPredictedResponse</code></td>
+<td>
+<p>optional fitted predicted response. For Bayesian posterior predictive simulations, using the median posterior prediction as fittedPredictedResponse is recommended. If not provided, the mean simulatedResponse will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>integerResponse</code></td>
+<td>
+<p>if T, noise will be added at to the residuals to maintain a uniform expectations for integer responses (such as Poisson or Binomial). Unlike in <code>simulateResiduals</code>, the nature of the data is not automatically detected, so this MUST be set by the user appropriately</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>the random seed to be used within DHARMa. The default setting, recommended for most users, is keep the random seed on a fixed value 123. This means that you will always get the same randomization and thus teh same result when running the same code. NULL = no new seed is set, but previous random state will be restored after simulation. FALSE = no seed is set, and random state will not be restored. The latter two options are only recommended for simulation experiments. See vignette for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the quantile randomization method used. The two options implemented at the moment are probability integral transform (PIT-) residuals (current default), and the "traditional" randomization procedure, that was used in DHARMa until version 0.3.0. For details, see <code>getQuantile</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rotation</code></td>
+<td>
+<p>optional rotation of the residual space to remove residual autocorrelation. See details in simulateResiduals, section <em>residual auto-correlation</em> for an extended explanation, and getQuantile for syntax.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The use of this function is to convert simulated residuals (e.g. from a point estimate, or Bayesian p-values) to a DHARMa object, to make use of the plotting / test functions in DHARMa
+</p>
+
+
+<h3>Note</h3>
+
+<p>Either scaled residuals or (simulatedResponse AND observed response) have to be provided
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## READING IN HAND-CODED SIMULATIONS
+
+testData = createData(sampleSize = 50, randomEffectVariance = 0)
+fittedModel &lt;- glm(observedResponse ~ Environment1, data = testData, family = "poisson")
+
+# in DHARMA, using the simulate.glm function of glm 
+sims = simulateResiduals(fittedModel)
+plot(sims, quantreg = FALSE)
+
+# Doing the same with a handcoded simulate function. 
+# of course this code will only work with a 1-par glm model
+simulateMyfit &lt;- function(n=10, fittedModel){
+  int = coef(fittedModel)[1]
+  slo = coef(fittedModel)[2]
+  pred = exp(int + slo * testData$Environment1)
+  predSim = replicate(n, rpois(length(pred), pred))
+  return(predSim)
+}
+
+sims = simulateMyfit(250, fittedModel)
+
+dharmaRes &lt;- createDHARMa(simulatedResponse = sims, 
+                          observedResponse = testData$observedResponse, 
+                          fittedPredictedResponse = predict(fittedModel, type = "response"), 
+                          integer = TRUE)
+plot(dharmaRes, quantreg = FALSE)
+</code></pre>
+
+
+</div>

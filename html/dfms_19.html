@@ -1,0 +1,342 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.dfm</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DFM Forecasts</h2>
+
+<h3>Description</h3>
+
+<p>This function produces h-step ahead forecasts of both the factors and the data,
+with an option to also forecast autocorrelated residuals with a univariate method and produce a combined forecast.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dfm'
+predict(
+  object,
+  h = 10L,
+  method = switch(object$em.method, none = "2s", "qml"),
+  standardized = TRUE,
+  resFUN = NULL,
+  resAC = 0.1,
+  ...
+)
+
+## S3 method for class 'dfm_forecast'
+print(x, digits = 4L, ...)
+
+## S3 method for class 'dfm_forecast'
+plot(
+  x,
+  main = paste(x$h, "Period Ahead DFM Forecast"),
+  xlab = "Time",
+  ylab = "Standardized Data",
+  factors = seq_len(ncol(x$F)),
+  scale.factors = TRUE,
+  factor.col = rainbow(length(factors)),
+  factor.lwd = 1.5,
+  fcst.lty = "dashed",
+  data.col = c("grey85", "grey65"),
+  legend = TRUE,
+  legend.items = paste0("f", factors),
+  grid = FALSE,
+  vline = TRUE,
+  vline.lty = "dotted",
+  vline.col = "black",
+  ...
+)
+
+## S3 method for class 'dfm_forecast'
+as.data.frame(
+  x,
+  ...,
+  use = c("factors", "data", "both"),
+  pivot = c("long", "wide"),
+  time = seq_len(nrow(x$F) + x$h),
+  stringsAsFactors = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of class 'dfm'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>integer. The forecast horizon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character. The factor estimates to use: one of <code>"qml"</code>, <code>"2s"</code> or <code>"pca"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>standardized</code></td>
+<td>
+<p>logical. <code>FALSE</code> will return data forecasts on the original scale.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resFUN</code></td>
+<td>
+<p>an (optional) function to compute a univariate forecast of the residuals.
+The function needs to have a second argument providing the forecast horizon (<code>h</code>) and return a vector or forecasts. See Examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resAC</code></td>
+<td>
+<p>numeric. Threshold for residual autocorrelation to apply <code>resFUN</code>: only residual series where AC1 &gt; resAC will be forecasted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>not used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object class 'dfm_forecast'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>digits</code></td>
+<td>
+<p>integer. The number of digits to print out.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>main, xlab, ylab</code></td>
+<td>
+<p>character. Graphical parameters passed to <code>ts.plot</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factors</code></td>
+<td>
+<p>integers indicating which factors to display. Setting this to <code>NA</code>, <code>NULL</code> or <code>0</code> will omit factor plots.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale.factors</code></td>
+<td>
+<p>logical. Standardize factor estimates, this usually improves the plot since the factor estimates corresponding to the greatest PCA eigenvalues tend to have a greater variance than the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>factor.col, factor.lwd</code></td>
+<td>
+<p>graphical parameters affecting the colour and line width of factor estimates plots. See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fcst.lty</code></td>
+<td>
+<p>integer or character giving the line type of the forecasts of factors and data. See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data.col</code></td>
+<td>
+<p>character vector of length 2 indicating the colours of historical data and forecasts of that data. Setting this to <code>NA</code>, <code>NULL</code> or <code>""</code> will not plot data and data forecasts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend</code></td>
+<td>
+<p>logical. <code>TRUE</code> draws a legend in the top-left of the chart.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>legend.items</code></td>
+<td>
+<p>character names of factors for the legend.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid</code></td>
+<td>
+<p>logical. <code>TRUE</code> draws a grid on the background of the plot.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vline</code></td>
+<td>
+<p>logical. <code>TRUE</code> draws a vertical line deliminating historical data and forecasts.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vline.lty, vline.col</code></td>
+<td>
+<p>graphical parameters affecting the appearance of the vertical line. See <code>par</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use</code></td>
+<td>
+<p>character. Which forecasts to use <code>"factors"</code>, <code>"data"</code> or <code>"both"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pivot</code></td>
+<td>
+<p>character. The orientation of the frame: <code>"long"</code> or <code>"wide"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>a vector identifying the time dimension, must be of length T + h, or <code>NULL</code> to omit a time variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stringsAsFactors</code></td>
+<td>
+<p>logical. If <code>TRUE</code> and <code>pivot = "long"</code> the 'Variable' column is created as a factor. Same as option to <code>as.data.frame.table</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list-like object of class 'dfm_forecast' with the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>X_fcst</code></td>
+<td>
+<p><code class="reqn">h \times n</code> matrix with the forecasts of the variables. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F_fcst</code></td>
+<td>
+<p><code class="reqn">h \times r</code> matrix with the factor forecasts. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p><code class="reqn">T \times n</code> matrix with the standardized (scaled and centered) data - with attributes attached allowing reconstruction of the original data:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+<code>"stats"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> is a <code class="reqn">n \times 5</code> matrix of summary statistics of class <code>"qsu"</code> (see <code>qsu</code>). Only attached if <code>standardized = TRUE</code>. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"attributes"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> contains the <code>attributes</code> of the original data input.</td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<code>"is.list"</code> </td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"> is a logical value indicating whether the original data input was a list / data frame. </td>
+</tr>
+<tr>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F</code></td>
+<td>
+<p><code class="reqn">T \times r</code> matrix of factor estimates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the factor estimation method used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>anyNA</code></td>
+<td>
+<p>logical indicating whether <code>X</code> contains any missing values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>the forecast horizon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resid.fc</code></td>
+<td>
+<p>logical indicating whether a univariate forecasting function was applied to the residuals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resid.fc.ind</code></td>
+<td>
+<p>indices indicating for which variables (columns of <code>X</code>) the residuals were forecasted using the univariate function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>call object obtained from <code>match.call()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(xts)
+library(collapse)
+
+# Fit DFM with 3 factors and 3 lags in the transition equation
+mod = DFM(diff(BM14_M), r = 3, p = 3)
+
+# 15 period ahead forecast
+fc = predict(mod, h = 15)
+print(fc)
+plot(fc, xlim = c(300, 370))
+
+# Also forecasting autocorrelated residuals with an AR(1)
+fcfun &lt;- function(x, h) predict(ar(na_rm(x)), n.ahead = h)$pred
+fcar = predict(mod, resFUN = fcfun, h = 15)
+plot(fcar, xlim = c(300, 370))
+
+# Retrieving a data frame of the forecasts
+head(as.data.frame(fcar, pivot = "wide")) # Factors
+head(as.data.frame(fcar, use = "data"))   # Data
+head(as.data.frame(fcar, use = "both"))   # Both
+
+</code></pre>
+
+
+</div>

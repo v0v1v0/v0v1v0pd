@@ -1,0 +1,361 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Main function for dimension reduction regression</h2>
+
+<h3>Description</h3>
+
+<p>This is the main function in the dr package.  It creates objects of class
+dr to estimate the central (mean) subspace and perform tests concerning
+its dimension.  Several helper functions that require a dr object can then
+be applied to the output from this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dr (formula, data, subset, group=NULL, na.action = na.fail, weights, ...)
+    
+dr.compute (x, y, weights, group=NULL, method = "sir", chi2approx="bx",...)
+ </code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a two-sided formula like <code>y~x1+x2+x3</code>, where the left-side
+variable is a vector or a matrix of the response variable(s), and the right-hand side
+variables represent the predictors.  While any legal formula in the Rogers-Wilkinson
+notation can appear, dimension reduction methods generally expect the predictors to be
+numeric, not factors, with no nesting.   Full rank models are
+recommended, although rank deficient models are permitted.
+</p>
+<p>The left-hand side of the formula will generally be a single vector, but it
+can also be a matrix, such as <code>cbind(y1+y2)~x1+x2+x3</code> if the <code>method</code>
+is <code>"save"</code> or <code>"sir"</code>.  Both of these methods are based on slicing,
+and for the multivariate case slices are determined by slicing on all the
+columns of the left-hand side variables.  
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> an optional data frame containing the variables in the model.
+By default the variables are taken from the environment from
+which ‘dr’ is called.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subset</code></td>
+<td>
+<p>an optional vector specifying a subset of observations to be
+used in the fitting process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>If used, this argument specifies a grouping variable so that 
+dimension reduction is done separately for each distinct level.  This is
+implemented only when <code>method</code> is one of <code>"sir"</code>, 
+<code>"save"</code>, or <code>"ire"</code>.  This argument must be a one-sided formula.
+For example, <code>~Location</code> would fit separately for each level of the variable
+<code>Location</code>.  The formula <code>~A:B</code> would fit separately for each combination of
+<code>A</code> and <code>B</code>, provided that both have been declared factors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>an optional vector of weights to be used where appropriate.  In the
+context of dimension reduction methods, weights are used to obtain
+elliptical symmetry, not constant variance. 
+
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>na.action</code></td>
+<td>
+<p>a function which indicates what should happen when the data
+contain ‘NA’s.  The default is ‘na.fail,’ which will stop calculations.
+The option 'na.omit' is also permitted, but it may not work correctly when
+weights are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The design matrix.  This will be computed from the formula by <code>dr</code> and then
+passed to <code>dr.compute</code>, or you can create it yourself.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The response vector or matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>This character string specifies the method of fitting.  The options
+include <code>"sir"</code>, <code>"save"</code>, <code>"phdy"</code>, <code>"phdres"</code> and 
+<code>"ire"</code>.  Each method may have its own additional arguments, or its
+own defaults; see the details below for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chi2approx</code></td>
+<td>
+<p>Several dr methods compute significance levels using 
+statistics that are asymptotically distributed as a linear combination of
+<code class="reqn">\chi^2(1)</code> random variables.  This keyword chooses the method for
+computing the chi2approx, either <code>"bx"</code>, the default for a method
+suggested by Bentler and Xie (2000) or <code>"wood"</code> for a method proposed
+by Wood (1989).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>For <code>dr</code>, all additional 
+arguments passed to <code>dr.compute</code>.  For 
+<code>dr.compute</code>, additional 
+arguments may be required for particular dimension reduction method.  For
+example, 
+<code>nslices</code> is the number of slices used by <code>"sir"</code> and <code>"save"</code>.
+<code>numdir</code> is the maximum number of directions to compute, with
+default equal to 4. Other methods may have other defaults.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The general regression problem studies <code class="reqn">F(y|x)</code>, the conditional
+distribution of a response <code class="reqn">y</code> given a set of predictors <code class="reqn">x</code>.  
+This function provides methods for estimating the dimension and central
+subspace of a general regression problem.  That is, we want to find a 
+<code class="reqn">p \times d</code> matrix <code class="reqn">B</code> of minimal rank <code class="reqn">d</code> such that 
+</p>
+<p style="text-align: center;"><code class="reqn">F(y|x)=F(y|B'x)</code>
+</p>
+  
+<p>Both the dimension <code class="reqn">d</code> and the subspace
+<code class="reqn">R(B)</code> are unknown.  These methods make few assumptions.  Many methods
+are based on the inverse distribution, <code class="reqn">F(x|y)</code>.  
+</p>
+<p>For the methods <code>"sir"</code>, <code>"save"</code>, <code>"phdy"</code> and 
+<code>"phdres"</code>, a kernel matrix <code class="reqn">M</code> is estimated such that the 
+column space of <code class="reqn">M</code> should be close to the central subspace 
+<code class="reqn">R(B)</code>.  The eigenvectors corresponding to the <code>d</code> largest 
+eigenvalues of <code class="reqn">M</code> provide an estimate of <code class="reqn">R(B)</code>.
+</p>
+<p>For the method <code>"ire"</code>, subspaces are estimated by minimizing 
+an objective function.
+</p>
+<p>Categorical predictors can be included using the <code>groups</code> 
+argument, with the methods <code>"sir"</code>, <code>"save"</code> and 
+<code>"ire"</code>, using the ideas from Chiaromonte, Cook and Li (2002).
+</p>
+<p>The primary output from this method is (1) a set of vectors whose 
+span estimates <code>R(B)</code>; and various tests concerning the 
+dimension <code>d</code>.  
+</p>
+<p>Weights can be used, essentially to specify the relative 
+frequency of each case in the data.  Empirical weights that make 
+the contours of the weighted sample closer to elliptical can be 
+computed using <code>dr.weights</code>.  
+This will usually result in zero weight for some 
+cases.  The function will set zero estimated weights to missing.
+</p>
+
+
+<h3>Value</h3>
+
+<p>dr returns an object that inherits from dr (the name of the type is the
+value of the <code>method</code> argument), with attributes:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>The design matrix</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The response vector</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weights</code></td>
+<td>
+<p>The weights used, normalized to add to n.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qr</code></td>
+<td>
+<p>QR factorization of x.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cases</code></td>
+<td>
+<p>Number of cases used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The initial call to <code>dr</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>A matrix that depends on the method of computing.  The column space
+of M should be close to the central subspace.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>evalues</code></td>
+<td>
+<p>The eigenvalues of M (or squared singular values if M is not
+symmetric).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>evectors</code></td>
+<td>
+<p>The eigenvectors of M (or of M'M if M is not square and
+symmetric) ordered according to the eigenvalues.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chi2approx</code></td>
+<td>
+<p>Value of the input argument of this name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>numdir</code></td>
+<td>
+<p>The maximum number of directions to be found.  The output
+value of numdir may be smaller than the input value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slice.info</code></td>
+<td>
+<p>output from 'sir.slice', used by sir and save.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>the dimension reduction method used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>terms</code></td>
+<td>
+<p>same as terms attribute in lm or glm.  Needed to make <code>update</code>
+work correctly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>If method=<code>"save"</code>, then <code>A</code> is a three dimensional array needed to
+compute test statistics.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Sanford Weisberg, &lt;sandy@stat.umn.edu&gt;.</p>
+
+
+<h3>References</h3>
+
+ 
+<p>Bentler, P. M. and Xie, J. (2000), Corrections to test statistics in 
+principal Hessian directions.  <em>Statistics and Probability 
+Letters</em>, 47, 381-389.  Approximate p-values.
+</p>
+<p>Cook, R. D. (1998).  <em>Regression Graphics</em>.  New York:  Wiley.  
+This book provides the basic results for dimension reduction 
+methods, including detailed discussion of the methods <code>"sir"</code>, 
+<code>"phdy"</code> and <code>"phdres"</code>.
+</p>
+<p>Cook, R. D. (2004). Testing predictor contributions in sufficient 
+dimension reduction. <em>Annals of Statistics</em>, 32, 1062-1092.  
+Introduced marginal coordinate tests.
+</p>
+<p>Cook, R. D. and Nachtsheim, C. (1994), Reweighting to achieve 
+elliptically contoured predictors in regression.  <em>Journal of 
+the American Statistical Association</em>, 89, 592–599.  Describes the 
+weighting scheme used by <code>dr.weights</code>.
+</p>
+<p>Cook, R. D. and Ni, L. (2004). Sufficient dimension reduction via 
+inverse regression:  A minimum discrrepancy approach, <em>Journal 
+of the American Statistical Association</em>, 100, 410-428. The 
+<code>"ire"</code> is described in this paper.
+</p>
+<p>Cook, R. D. and Weisberg, S. (1999).  <em>Applied Regression 
+Including Computing and Graphics</em>, New York:  Wiley, 
+<a href="http://www.stat.umn.edu/arc">http://www.stat.umn.edu/arc</a>.  The program <code>arc</code> described 
+in this book also computes most of the dimension reduction methods 
+described here.
+</p>
+<p>Chiaromonte, F., Cook, R. D. and Li, B. (2002). Sufficient dimension 
+reduction in regressions with categorical predictors. Ann. Statist. 
+30 475-497.  Introduced grouping, or conditioning on factors.
+</p>
+<p>Shao, Y., Cook, R. D. and Weisberg (2007).  Marginal tests with 
+sliced average variance estimation.  <em>Biometrika</em>.  Describes 
+the tests used for <code>"save"</code>. 
+</p>
+<p>Wen, X. and Cook, R. D. (2007).  Optimal Sufficient Dimension 
+Reduction in Regressions with Categorical Predictors, <em>Journal 
+of Statistical Inference and Planning</em>.   This paper extends the 
+<code>"ire"</code> method to grouping.  
+</p>
+<p>Wood, A. T. A. (1989) An <code class="reqn">F</code> approximation to the distribution 
+of a linear combination of chi-squared variables. 
+<em>Communications in Statistics: Simulation and Computation</em>, 18, 
+1439-1456.  Approximations for p-values. </p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ais)
+# default fitting method is "sir"
+s0 &lt;- dr(LBM~log(SSF)+log(Wt)+log(Hg)+log(Ht)+log(WCC)+log(RCC)+
+  log(Hc)+log(Ferr),data=ais) 
+# Refit, using a different function for slicing to agree with arc.
+summary(s1 &lt;- update(s0,slice.function=dr.slices.arc))
+# Refit again, using save, with 10 slices; the default is max(8,ncol+3)
+summary(s2&lt;-update(s1,nslices=10,method="save"))
+# Refit, using phdres.  Tests are different for phd, and not
+# Fit using phdres; output is similar for phdy, but tests are not justifiable. 
+summary(s3&lt;- update(s1,method="phdres"))
+# fit using ire:
+summary(s4 &lt;- update(s1,method="ire"))
+# fit using Sex as a grouping variable.  
+s5 &lt;- update(s4,group=~Sex)
+</code></pre>
+
+
+</div>

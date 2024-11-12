@@ -1,0 +1,114 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>custom_filter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Special custom filtering for compositional data</h2>
+
+<h3>Description</h3>
+
+<p>A handy wrapper around the dplyr <code>filter()</code> function
+enabling the user to filter rows which satisfy specific conditions
+for compositional data like all equi-proportional communities, or communities
+with a given value of richness without having to make any changes to the data
+or adding any additional columns. All other functionalities are same as the
+dplyr <code>filter()</code> function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">custom_filter(data, prop = NULL, special = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame containing the compositional variables which should
+be used to perform the filtering.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop</code></td>
+<td>
+<p>A character/numeric vector indicating the columns containing the
+compositional variables in 'data'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>special</code></td>
+<td>
+<p>A character string specifying the filtering condition.
+Four special keywords can be specified here for filtering
+1. richness: A positive integer value to filter communities with
+a specific number of compositional variables (variables with non-zero values).
+2. evenness: A numeric value between 0 and 1, to filter rows based on
+the relative abundances of the compositional variables where a higher
+value signifies a more even community with equal proportions
+of all variables.
+3. equi: A boolean variable indicating whether to filter rows containing
+equi-proportional communities, i.e., communities where all variables
+have the same non-zero proportion.
+4. monos: A boolean value indicating whether to filter communities
+containing a single compositional variable, i.e., richness == 1.
+These keywords can be combined using any logical operators and can even
+be combined with any other variables in the data. Please use the exact
+keywords (case-sensitive) in the query to get appropriate results. See
+examples for more details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Any additional arguments specified to the dplyr <code>filter()</code> function.
+Filtering conditions for any additional variables can also be specified here.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A subset of the original data which matches the specified filtering conditions.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(DImodels)
+library(dplyr)
+
+## Load data
+data(sim3)
+
+# The special filter keywords should be specified as a string
+# Filter communities containing 3 species
+head(custom_filter(data = sim3, prop = 4:12,
+                   special = "richness == 3"))
+
+# Filter communities at richness 6 OR evenness 0
+head(custom_filter(data = sim3, prop = 4:12,
+                   special = "richness == 6 | evenness == 0"), 12)
+
+# Filter all monoculture AND treatment "A" (treatment is column present in data)
+head(custom_filter(data = sim3, prop = 4:12,
+                   special = "monos == TRUE &amp; treatment == 'A'"), 10)
+
+# Filter all equi proportional communities but NOT monocultures
+head(custom_filter(data = sim3, prop = 4:12,
+                   special = "equi == TRUE &amp; monos == FALSE"))
+
+# Can also use normal filter
+sim3 %&gt;% custom_filter(p1 == 1, special = NULL, prop = NULL)
+
+# Both special filtering and normal filtering can be combined as well
+sim3 %&gt;% custom_filter(prop = paste0("p", 1:9),
+                       special = "richness == 1",
+                       community %in% c(7, 9))
+</code></pre>
+
+
+</div>

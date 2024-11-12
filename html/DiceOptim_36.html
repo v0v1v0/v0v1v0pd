@@ -1,0 +1,380 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>noisy.optimizer</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Optimization of homogenously noisy functions based on Kriging</h2>
+
+<h3>Description</h3>
+
+<p>Sequential optimization of kriging-based criterion conditional on noisy
+observations, with model update after each evaluation.  Eight criteria are
+proposed to choose the next observation: random search, sequential
+parameter optimization (SPO), reinterpolation, Expected Improvement (EI)
+with plugin, Expected Quantile Improvement (EQI), quantile minimization,
+Augmented Expected Improvement (AEI) and Approximate Knowledge Gradient
+(AKG). The criterion optimization is based on the package rgenoud.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">noisy.optimizer(
+  optim.crit,
+  optim.param = NULL,
+  model,
+  n.ite,
+  noise.var = NULL,
+  funnoise,
+  lower,
+  upper,
+  parinit = NULL,
+  control = NULL,
+  CovReEstimate = TRUE,
+  NoiseReEstimate = FALSE,
+  nugget.LB = 1e-05,
+  estim.model = NULL,
+  type = "UK"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>optim.crit</code></td>
+<td>
+<p>String defining the criterion to be optimized at each
+iteration. Possible values are: "random.search", "SPO", "reinterpolation",
+"EI.plugin", "EQI", "min.quantile", "AEI", "AKG".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>optim.param</code></td>
+<td>
+<p>List of parameters for the chosen criterion.  For
+"EI.plugin": optim.param$plugin.type is a string defining which plugin is
+to be used. Possible values are "ytilde", "quantile" and "other".  If
+"quantile" is chosen, optim.param$quantile defines the quantile level.  If
+"other" is chosen, optim.param$plugin directly sets the plugin value.
+</p>
+<p>For "EQI": optim.param$quantile defines the quantile level. If not
+provided, default value is 0.9.
+</p>
+<p>For "min.quantile": optim.param$quantile defines the quantile level. If not
+provided, default value is 0.1.
+</p>
+<p>For "AEI": optim.param$quantile defines the quantile level to choose the
+current best point. If not provided, default value is 0.75.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a Kriging model of "km" class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.ite</code></td>
+<td>
+<p>Number of iterations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>noise.var</code></td>
+<td>
+<p>Noise variance (scalar). If noiseReEstimate=TRUE, it is an
+initial guess for the unknown variance (used in optimization).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>funnoise</code></td>
+<td>
+<p>objective (noisy) function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector containing the lower bounds of the variables to be
+optimized over</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector containing the upper bounds of the variables to be
+optimized over</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parinit</code></td>
+<td>
+<p>optional vector of initial values for the variables to be
+optimized over</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optional list of control parameters for optimization.  One
+can control <code>"pop.size"</code> (default : [N=3*2^dim for dim&lt;6 and N=32*dim
+otherwise]]), <code>"max.generations"</code> (N), <code>"wait.generations"</code> (2)
+and <code>"BFGSburnin"</code> (0) of function <code>"genoud"</code> (see
+<code>genoud</code>).  Numbers into brackets are the default
+values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CovReEstimate</code></td>
+<td>
+<p>optional boolean specfiying if the covariance
+parameters should be re-estimated at every iteration (default value = TRUE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>NoiseReEstimate</code></td>
+<td>
+<p>optional boolean specfiying if the noise variance
+should be re-estimated at every iteration (default value = FALSE)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nugget.LB</code></td>
+<td>
+<p>optional scalar of minimal value for the estimated noise
+variance. Default value is 1e-5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estim.model</code></td>
+<td>
+<p>optional kriging model of "km" class with homogeneous
+nugget effect (no noise.var). Required if noise variance is reestimated and
+the initial "model" has heterogenenous noise variances.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>"SK" or "UK" for Kriging with known or estimated trend</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with components: </p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>the current (last) kriging
+model of "km" class</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>best.x</code></td>
+<td>
+<p> The best design found</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>best.y</code></td>
+<td>
+<p>The objective function value at best.x</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>best.index</code></td>
+<td>
+<p>The
+index of best.x in the design of experiments</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history.x</code></td>
+<td>
+<p> The added observations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history.y</code></td>
+<td>
+<p>The added
+observation values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history.hyperparam</code></td>
+<td>
+<p>The history of the kriging
+parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estim.model</code></td>
+<td>
+<p>If noiseReEstimate=TRUE, the current (last) kriging
+model of "km" class for estimating the noise variance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>history.noise.var</code></td>
+<td>
+<p>If noiseReEstimate=TRUE, the history of the noise
+variance estimate.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Victor Picheny
+</p>
+
+
+<h3>References</h3>
+
+<p>V. Picheny and D. Ginsbourger (2013), Noisy kriging-based optimization
+methods: A unified implementation within the DiceOptim package,
+<em>Computational Statistics &amp; Data Analysis</em>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+##########################################################################
+### EXAMPLE 1: 3 OPTIMIZATION STEPS USING EQI WITH KNOWN NOISE         ###
+### AND KNOWN COVARIANCE PARAMETERS FOR THE BRANIN FUNCTION            ###
+##########################################################################
+
+set.seed(10)
+library(DiceDesign)
+# Set test problem parameters
+doe.size &lt;- 9
+dim &lt;- 2
+test.function &lt;- get("branin2")
+lower &lt;- rep(0,1,dim)
+upper &lt;- rep(1,1,dim)
+noise.var &lt;- 0.1
+
+# Build noisy simulator
+funnoise &lt;- function(x)
+{     f.new &lt;- test.function(x) + sqrt(noise.var)*rnorm(n=1)
+      return(f.new)}
+
+# Generate DOE and response
+doe &lt;- as.data.frame(lhsDesign(doe.size, dim)$design)
+y.tilde &lt;- funnoise(doe)
+
+# Create kriging model
+model &lt;- km(y~1, design=doe, response=data.frame(y=y.tilde),
+     covtype="gauss", noise.var=rep(noise.var,1,doe.size), 
+     lower=rep(.1,dim), upper=rep(1,dim), control=list(trace=FALSE))
+
+# Optimisation with noisy.optimizer (n.ite can be increased)
+n.ite &lt;- 2 
+optim.param &lt;- list()
+optim.param$quantile &lt;- .9
+optim.result &lt;- noisy.optimizer(optim.crit="EQI", optim.param=optim.param, model=model,
+		n.ite=n.ite, noise.var=noise.var, funnoise=funnoise, lower=lower, upper=upper,
+		NoiseReEstimate=FALSE, CovReEstimate=FALSE)
+
+new.model &lt;- optim.result$model
+best.x    &lt;- optim.result$best.x
+new.doe   &lt;- optim.result$history.x
+
+## Not run: 
+##### DRAW RESULTS #####
+# Compute actual function on a grid
+n.grid &lt;- 12
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+names(design.grid) &lt;- c("V1","V2")
+nt &lt;- nrow(design.grid)
+func.grid &lt;- rep(0,1,nt)
+
+for (i in 1:nt)
+{ func.grid[i] &lt;- test.function(x=design.grid[i,])}
+
+# Compute initial and final kriging on a grid
+pred &lt;- predict(object=model, newdata=design.grid, type="UK", checkNames = FALSE)
+mk.grid1 &lt;- pred$m
+sk.grid1 &lt;- pred$sd
+
+pred &lt;- predict(object=new.model, newdata=design.grid, type="UK", checkNames = FALSE)
+mk.grid2 &lt;- pred$m
+sk.grid2 &lt;- pred$sd
+
+# Plot initial kriging mean
+z.grid &lt;- matrix(mk.grid1, n.grid, n.grid)
+filled.contour(x.grid,y.grid, z.grid, nlevels=50, color = topo.colors,
+plot.axes = {title("Initial kriging mean");
+points(model@X[,1],model@X[,2],pch=17,col="black"); 
+axis(1); axis(2)})
+
+# Plot initial kriging variance
+z.grid &lt;- matrix(sk.grid1^2, n.grid, n.grid)
+filled.contour(x.grid,y.grid, z.grid, nlevels=50, color = topo.colors,
+plot.axes = {title("Initial kriging variance");
+points(model@X[,1],model@X[,2],pch=17,col="black"); 
+axis(1); axis(2)})
+
+# Plot final kriging mean
+z.grid &lt;- matrix(mk.grid2, n.grid, n.grid)
+filled.contour(x.grid,y.grid, z.grid, nlevels=50, color = topo.colors,
+plot.axes = {title("Final kriging mean");
+points(new.model@X[,1],new.model@X[,2],pch=17,col="black"); 
+axis(1); axis(2)})
+
+# Plot final kriging variance
+z.grid &lt;- matrix(sk.grid2^2, n.grid, n.grid)
+filled.contour(x.grid,y.grid, z.grid, nlevels=50, color = topo.colors,
+plot.axes = {title("Final kriging variance");
+points(new.model@X[,1],new.model@X[,2],pch=17,col="black"); 
+axis(1); axis(2)})
+
+# Plot actual function and observations
+z.grid &lt;- matrix(func.grid, n.grid, n.grid)
+tit &lt;- "Actual function - Black: initial points; red: added points"
+filled.contour(x.grid,y.grid, z.grid, nlevels=50, color = topo.colors,
+plot.axes = {title(tit);points(model@X[,1],model@X[,2],pch=17,col="black"); 
+points(new.doe[1,],new.doe[2,],pch=15,col="red");
+axis(1); axis(2)})
+
+## End(Not run)
+
+##########################################################################
+### EXAMPLE 2: 3 OPTIMIZATION STEPS USING EQI WITH UNKNOWN NOISE       ###
+### AND UNKNOWN COVARIANCE PARAMETERS FOR THE BRANIN FUNCTION          ###
+##########################################################################
+# Same initial model and parameters as for example 1
+n.ite &lt;- 2 # May be changed to a larger value 
+res &lt;- noisy.optimizer(optim.crit="min.quantile", 
+optim.param=list(type="quantile",quantile=0.01),
+model=model, n.ite=n.ite, noise.var=noise.var, funnoise=funnoise, 
+lower=lower, upper=upper, 
+control=list(print.level=0),CovReEstimate=TRUE, NoiseReEstimate=TRUE)
+
+# Plot actual function and observations
+plot(model@X[,1], model@X[,2], pch=17,xlim=c(0,1),ylim=c(0,1))
+points(res$history.x[1,], res$history.x[2,], col="blue")
+
+# Restart: requires the output estim.model of the previous run
+# to deal with potential repetitions
+res2 &lt;- noisy.optimizer(optim.crit="min.quantile", 
+optim.param=list(type="quantile",quantile=0.01), 
+model=res$model, n.ite=n.ite, noise.var=noise.var, funnoise=funnoise, 
+lower=lower, upper=upper, estim.model=res$estim.model,
+control=list(print.level=0),CovReEstimate=TRUE, NoiseReEstimate=TRUE)
+
+# Plot new observations
+points(res2$history.x[1,], res2$history.x[2,], col="red")
+
+
+</code></pre>
+
+
+</div>

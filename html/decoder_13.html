@@ -1,0 +1,230 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>code</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Decode codes to plain text (and vice versa)</h2>
+
+<h3>Description</h3>
+
+<p>Translate coded values into meaningful plain text (or reversed).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">code(y, keyvalue, verbose = TRUE)
+
+decode(x, ...)
+
+## S3 method for class 'data.frame'
+decode(x, ...)
+
+## Default S3 method:
+decode(x, keyvalue, extra_functions = NULL, exact = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>value to be coded (to be matched against the <code>value</code> element) in 
+a keyvalue object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keyvalue</code></td>
+<td>
+<p>either a name (as character string) of a package internal 
+keyvalue object, or a user 
+defined keyvalue object (see as.keyvalue).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>(only for <code>code</code>) can be set to <code>FALSE</code> to avoid a 
+printed message to the console if an error occur (<code>TRUE</code> as default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>object to decode. Either a key vector to be matched against the 
+<code>key</code> column in <code>keyvalue</code>, or a data.frame (see section 
+<code>decode.data.frame</code>). object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>ignored</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extra_functions</code></td>
+<td>
+<p>is a list of functions (or names of functions as 
+character vector) to be applied to the decoded data after decoding (see 
+section "extra_functions" below).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact</code></td>
+<td>
+<p>Should <code>x</code> have an exact match from the key? Default is 
+<code>FALSE</code>. When <code>FALSE</code>, <code>x</code> might be transformed to fit the 
+key (punctuation might be removed, upper case changed to lower case or vice 
+versa and strings that are too long might be substringed). (<code>code</code> only
+accept exact matches.)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+ <ul>
+<li>
+<p> For default S3 method: A vector of the same length as 
+<code>x</code> but with all cells decoded (or coded) to plain text (or code) as 
+character. </p>
+</li>
+<li>
+<p> For S3 method for class 'data.frame': Data.frame <code>x</code>
+is returned, possibly with some extra columns (names ending in
+'_Beskrivning'), decoded from columns with names corresponding to attribute 
+<code>standard_var_names</code> for keyvalue objects listed by 
+<code>list_keyvalues()</code>. </p>
+</li>
+</ul>
+<h3>Vignette</h3>
+
+<p>See the vignette for a longer introduction to the package:
+<code>vignette("decoder")</code>
+</p>
+
+
+<h3>decode.data.frame</h3>
+
+<p>If <code>x</code> is a data.frame, all column names of 
+<code>x</code> are matched to attribute <code>standard_var_names</code> for all keyvalue
+objects in the package (see <code>list_keyvalues()</code>). If the column name is 
+a standard name used for a coding, the corresponding keyvalue object is used
+to decode the column and to add an extra column to <code>x</code> with its 
+original name with suffix <code>_Beskrivning</code>. This is done for all 
+identified columns.
+</p>
+
+
+<h3>extra_functions</h3>
+
+<p>The relationship between the key and the value in a 
+keyvalue object is either 1:1 or m:1. The mapping is straight forward for 
+1:1 but with m:1, different applications might require slightly different 
+groupings of the keys. One solution is to have several versions of the 
+keyvalue object. Another (which we prefer) is to use the same 
+keyvalue object (if possible) but to call one or several extra 
+function(s) to further process the result. These functions are either built 
+in package functions that should be called by quoted names or user defined 
+functions that can be called by either quoted or unquoted names (if 
+available in the current environment). Note that the order of the functions 
+could matter since they are called in turn (the output from the first 
+function is passed as input to the second function etc).
+</p>
+<p>Standard functions and how to use them:
+</p>
+<p>To use with sjukvardsomrade:
+</p>
+ <dl>
+<dt><code>kungalv2Fyrbodal</code></dt>
+<dd>
+<p>The default classification used in
+sjukvardsomrade is to make Kungalv a region of its own. Use this 
+function if Kungalv should be included in Fyrbodal. See example section 
+below.</p>
+</dd> <dt><code>kungalv2Storgoteborg</code></dt>
+<dd>
+<p>As <code>kungalv2Fyrbodal</code> but 
+classifies Kungalv as a part of Storgoteborg.</p>
+</dd> <dt><code>real_names</code></dt>
+<dd>
+<p>Give
+the area names with correct Swedish spelling (including spaces). This is not
+as default due to compatibility reasons and because names with spaces must be 
+back-ticked when referred to.</p>
+</dd> </dl>
+<p>To use with region </p>
+ 
+<dl>
+<dt><code>short_region_names</code></dt>
+<dd>
+<p>Exclude the prefix 'Region' from the region
+names, hence 'Syd' instead of 'Region Syd' etcetera.</p>
+</dd> </dl>
+<h3>Author(s)</h3>
+
+<p>Erik Bulow
+</p>
+
+
+<h3>See Also</h3>
+
+<p>keyvalue, extra_functions
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+KON_VALUE &lt;- sample(1:2, 20, replace = TRUE)
+(kon &lt;- decode(KON_VALUE, decoder::kon))
+code(kon, decoder::kon)
+
+# Get a sample of Snomed-codes (in the real world we obviously avoid this step) ...
+snomed2 &lt;- sample(decoder::snomed$key, 30, replace = TRUE)
+# ... then decode them:
+(snomed3 &lt;- decode(snomed2, "snomed"))
+
+
+# Health care regions can be defined in more than one way
+# By default Kungalv define a region of its own:
+set.seed(123456789)
+healtcare_areas_west &lt;- sample(unlist(decoder::sjukvardsomrade), 100, replace = TRUE)
+(areas &lt;- decode(healtcare_areas_west, "sjukvardsomrade"))
+table(areas)
+
+# But if we want Kungalv to be a part of Storgoteborg
+# (which is common practice for example with lung cancer data):
+(areas2 &lt;- decode(healtcare_areas_west, "sjukvardsomrade", "kungalv2Storgoteborg"))
+table(areas2)
+
+# We can also combine several extra_functions if we for example
+# also want the area names with correct Swedish spelling.
+(areas3 &lt;- decode(healtcare_areas_west, "sjukvardsomrade", c("kungalv2Storgoteborg", "real_names")))
+
+
+# The region names can be both with and without prefix:
+regs &lt;- sample(6, 10, replace = TRUE)
+decode(regs, "region") # With prefix
+decode(regs, "region", "short_region_names") # without prefix
+
+# Note that only the first four digits of the LKF-code were used abowe?
+# What if we use the full LKF-code?
+lkfs &lt;- sample(decoder::forsamling$key, 100, replace = TRUE)
+decode(lkfs, "sjukvardsomrade")
+# That work's just as fine when argument exact = FALSE (which it is by default).
+
+# decode can also be used for data.frames with recognised column names
+d &lt;- data.frame(
+     kon = sample(1:2, 10, replace = TRUE), 
+     sex = sample(1:2, 10, replace = TRUE),
+     lkf = sample(decoder::hemort$key, 10, replace = TRUE)
+ )
+ decode(d)
+</code></pre>
+
+
+</div>

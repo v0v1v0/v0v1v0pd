@@ -1,0 +1,282 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>max_EI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Maximization of the Expected Improvement criterion</h2>
+
+<h3>Description</h3>
+
+<p>Given an object of class <code>km</code> and a set of tuning
+parameters (<code>lower</code>,<code>upper</code>,<code>parinit</code>, and <code>control</code>),
+<code>max_EI</code> performs the maximization of the Expected Improvement
+criterion and delivers the next point to be visited in an EGO-like
+procedure.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">max_EI(
+  model,
+  plugin = NULL,
+  type = "UK",
+  lower,
+  upper,
+  parinit = NULL,
+  minimization = TRUE,
+  control = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code> ,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plugin</code></td>
+<td>
+<p>optional scalar: if provided, it replaces the minimum of the
+current observations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Kriging type: "SK" or "UK"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parinit</code></td>
+<td>
+<p>optional vector of initial values for the variables to be
+optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimization</code></td>
+<td>
+<p>logical specifying if EI is used in minimiziation or in
+maximization,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>optional list of control parameters for optimization.  One
+can control <code>"pop.size"</code> (default : [N=3*2^dim for dim&lt;6 and N=32*dim
+otherwise]), <code>"max.generations"</code> (12), <code>"wait.generations"</code> (2)
+and <code>"BFGSburnin"</code> (2) of function <code>"genoud"</code> (see
+<code>genoud</code>).  Numbers into brackets are the default
+values</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The latter maximization relies on a genetic algorithm using derivatives,
+<code>genoud</code>. This function plays a central role in the
+package since it is in constant use in the proposed algorithms. It is
+important to remark that the information needed about the objective
+function reduces here to the vector of response values embedded in
+<code>model</code> (no call to the objective function or simulator).
+</p>
+<p>The current minimum of the observations can be replaced by an arbitrary
+value (plugin), which is usefull in particular in noisy frameworks.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>The best set of parameters found.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>The value of expected improvement at par.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>David Ginsbourger 
+</p>
+<p>Olivier Roustant
+</p>
+<p>Victor Picheny
+</p>
+
+
+<h3>References</h3>
+
+<p>D. Ginsbourger (2009), <em>Multiples metamodeles pour l'approximation et
+l'optimisation de fonctions numeriques multivariables</em>, Ph.D. thesis, Ecole
+Nationale Superieure des Mines de Saint-Etienne, 2009.
+</p>
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global
+optimization of expensive black-box functions, <em>Journal of Global
+Optimization</em>, 13, 455-492.
+</p>
+<p>W.R. Jr. Mebane and J.S. Sekhon (2009), in press, Genetic optimization
+using derivatives: The rgenoud package for R, <em>Journal of Statistical
+Software</em>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(123)
+##########################################################
+### "ONE-SHOT" EI-MAXIMIZATION OF THE BRANIN FUNCTION ####
+### 	KNOWN AT A 9-POINTS FACTORIAL DESIGN          ####
+##########################################################
+
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2 
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact) &lt;- c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact) &lt;- c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+names(response.branin) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.branin, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# EGO one step
+library(rgenoud)
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)     # domain for Branin function
+oEGO &lt;- max_EI(fitted.model1, lower=lower, upper=upper, 
+control=list(pop.size=20, BFGSburnin=2))
+print(oEGO)
+
+# graphics
+n.grid &lt;- 20
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, branin)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid,y.grid,z.grid,40)
+title("Branin Function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par[1], oEGO$par[2], pch=19, col="red")
+
+
+#############################################################
+### "ONE-SHOT" EI-MAXIMIZATION OF THE CAMELBACK FUNCTION ####
+###	KNOWN AT A 16-POINTS FACTORIAL DESIGN            ####
+#############################################################
+## Not run: 
+# a 16-points factorial design, and the corresponding response
+d &lt;- 2 
+n &lt;- 16
+design.fact &lt;- expand.grid(seq(0,1,length=4), seq(0,1,length=4)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact) &lt;- c("x1", "x2")
+response.camelback &lt;- apply(design.fact, 1, camelback)
+response.camelback &lt;- data.frame(response.camelback) 
+names(response.camelback) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.camelback, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# EI maximization
+library(rgenoud)
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)   
+oEGO &lt;- max_EI(fitted.model1, lower=lower, upper=upper, 
+control=list(pop.size=20, BFGSburnin=2))
+print(oEGO)
+
+# graphics
+n.grid &lt;- 20
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, camelback)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid,y.grid,z.grid,40)
+title("Camelback Function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par[1], oEGO$par[2], pch=19, col="red")
+
+## End(Not run)
+
+####################################################################
+### "ONE-SHOT" EI-MAXIMIZATION OF THE GOLDSTEIN-PRICE FUNCTION #####
+### 	     KNOWN AT A 9-POINTS FACTORIAL DESIGN              #####
+####################################################################
+
+## Not run: 
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2 
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.goldsteinPrice &lt;- apply(design.fact, 1, goldsteinPrice)
+response.goldsteinPrice &lt;- data.frame(response.goldsteinPrice) 
+names(response.goldsteinPrice) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.goldsteinPrice, 
+covtype="gauss", control=list(pop.size=50, max.generations=50, 
+wait.generations=5, BFGSburnin=10, trace=FALSE), parinit=c(0.5, 0.5), optim.method="gen")
+
+# EI maximization
+library(rgenoud)
+lower &lt;- rep(0,d); upper &lt;- rep(1,d);     # domain for Branin function
+oEGO &lt;- max_EI(fitted.model1, lower=lower, upper=upper, control
+=list(pop.size=50, max.generations=50, wait.generations=5, BFGSburnin=10))
+print(oEGO)
+
+# graphics
+n.grid &lt;- 20
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, goldsteinPrice)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid,y.grid,z.grid,40)
+title("Goldstein-Price Function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par[1], oEGO$par[2], pch=19, col="red")
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

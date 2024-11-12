@@ -1,0 +1,384 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fit 'depmix' or 'mix' models</h2>
+
+<h3>Description</h3>
+
+<p><code>fit</code> optimizes parameters of <code>depmix</code> or
+<code>mix</code> models, optionally subject to general linear
+(in)equality constraints. 
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+	## S4 method for signature 'mix'
+fit(object, fixed=NULL, equal=NULL, 
+		conrows=NULL, conrows.upper=NULL, conrows.lower=NULL, 
+		method=NULL, verbose=FALSE,
+		emcontrol=em.control(),
+		solnpcntrl=list(rho = 1, outer.iter = 400, inner.iter = 800, 
+		delta = 1e-7, tol = 1e-8),
+		donlpcntrl=donlp2Control(),
+		...)
+	
+	## S4 method for signature 'mix.fitted'
+summary(object,which="all")
+	
+	## S4 method for signature 'depmix.fitted'
+summary(object,which="all")
+
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>An object of class <code>(dep-)mix</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>Vector of mode logical indicating which parameters should 
+be fixed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>equal</code></td>
+<td>
+<p>Vector indicating equality constraints; see Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conrows</code></td>
+<td>
+<p>Rows of a general linear constraint matrix; see Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conrows.upper, conrows.lower</code></td>
+<td>
+<p>Upper and lower bounds for the
+linear constraints; see Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>The optimization method; mostly determined by
+constraints.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Should optimization information be displayed on screen?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>emcontrol</code></td>
+<td>
+<p>Named list with control parameters for the EM
+algorithm (see <code>em.control</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>solnpcntrl</code></td>
+<td>
+<p>Control parameters passed to the 'rsolnp' optimizer;
+see <code>solnp</code> for explanation and defaults used there.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>donlpcntrl</code></td>
+<td>
+<p>Control parameters passed to 'donlp' optimizer; see
+<code>?donlp2Control</code> for explanation and defaults used there; this can 
+be used to tweak optimization but note that extra output is not 
+returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>which</code></td>
+<td>
+<p>Should summaries be provided for "all" submodels? Options 
+are "prior", "response", and for fitted depmix models also "transition".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed on to the optimization methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+ 
+<p>Models are fitted by the EM algorithm if there are no constraints on the
+parameters.  Aspects of the EM algorithm can be controlled through the
+<code>emcontrol</code> argument; see details in <code>em.control</code>.
+Otherwise the general optimizers <code>solnp</code>, the default (from package
+<code>Rsolnp</code>) or <code>donlp2</code> (from package <code>Rdonlp2</code>) are used
+which handle general linear (in-)equality constraints.  These optimizers
+are selected by setting method='rsolnp' or method='donlp' respectively.
+</p>
+<p>Three types of constraints can be specified on the parameters: fixed,
+equality, and general linear (in-)equality constraints.  Constraint
+vectors should be of length <code>npar(object)</code>; note that this hence
+includes redundant parameters such as the base category parameter in
+multinomial logistic models which is always fixed at zero.  See help on
+<code>getpars</code> and <code>setpars</code> about the ordering of
+parameters.
+</p>
+<p>The <code>equal</code> argument is used to specify equality constraints:
+parameters that get the same integer number in this vector are
+estimated to be equal. Any integers can be used in this way except 0
+and 1, which indicate fixed and free parameters, respectively. 
+</p>
+<p>Using <code>solnp</code> (or <code>donlp2</code>), a Newton-Raphson scheme is employed
+to estimate parameters subject to linear constraints by imposing:
+</p>
+<p>bl &lt;= A*x &lt;= bu,
+</p>
+<p>where x is the parameter vector, bl is a vector of lower bounds, bu is
+a vector of upper bounds, and A is the constraint matrix.
+</p>
+<p>The <code>conrows</code> argument is used to specify rows of A directly, and
+the conrows.lower and conrows.upper arguments to specify the bounds on
+the constraints.  <code>conrows</code> must be a matrix of npar(object) columns
+and one row for each constraint (a vector in the case of a single
+constraint).  Examples of these three ways of constraining parameters
+are provided below.
+</p>
+<p>Note that when specifying constraints that these should respect the
+fixed constraints inherent in e.g. the multinomial logit models for the
+initial and transition probabilities.  For example, the baseline
+category coefficient in a multinomial logit model is fixed on zero.
+</p>
+<p><code>llratio</code> performs a log-likelihood ratio test on two
+<code>fit</code>'ted models; the first object should have the largest degrees
+of freedom (find out by using <code>freepars</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>fit</code> returns an object of class
+<code>depmix.fitted</code> which contains the
+original <code>depmix</code> object, and further has slots:
+</p>
+
+<dl>
+<dt>
+<code>message</code>:</dt>
+<dd>
+<p>Convergence information.</p>
+</dd>
+<dt>
+<code>conMat</code>:</dt>
+<dd>
+<p>The constraint matrix A, see Details.</p>
+</dd>
+<dt>
+<code>posterior</code>:</dt>
+<dd>
+<p>The posterior state sequence (computed
+with the viterbi algorithm), and the posterior probabilities (delta
+probabilities in Rabiner, 1989, notation).</p>
+</dd>
+</dl>
+<p>The print method shows the <code>message</code> along with the likelihood and
+AIC and BIC; the summary method prints the parameter estimates.
+</p>
+<p>Posterior densities and the viterbi state sequence can be accessed
+through <code>posterior</code>.
+</p>
+<p>As fitted models are depmixS4 models, they can be used as starting
+values for new fits, for example with constraints added. Note that 
+when refitting already fitted models, the constraints, if any, are not
+added automatically, they have to be added again. 
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ingmar Visser &amp; Maarten Speekenbrink</p>
+
+
+<h3>References</h3>
+
+<p>Some of the below models for the <code>speed</code> data are reported in:
+</p>
+<p>Ingmar Visser, Maartje E. J. Raijmakers and Han L. J. van der Maas
+(2009).  Hidden Markov Models for Invdividual Time Series.  In: Jaan
+Valsiner, Peter C. M. Molenaar, M. C. D. P. Lyra, and N. Chaudhary
+(editors).  <em>Dynamic Process Methodology in the Social and
+Developmental Sciences</em>, chapter 13, pages 269–289.  New York:
+Springer.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(speed)
+
+# 2-state model on rt and corr from speed data set 
+# with Pacc as covariate on the transition matrix
+# ntimes is used to specify the lengths of 3 separate time-series
+mod1 &lt;- depmix(list(rt~1,corr~1),data=speed,transition=~Pacc,nstates=2,
+	family=list(gaussian(),multinomial("identity")),ntimes=c(168,134,137))
+# fit the model
+set.seed(3)
+fmod1 &lt;- fit(mod1)
+fmod1 # to see the logLik and optimization information
+# to see the parameters
+summary(fmod1)
+
+# to obtain the posterior most likely state sequence, as computed by the 
+# Viterbi algorithm
+pst_global &lt;- posterior(fmod1, type = "global")
+# local decoding provides a different method for state classification:
+pst_local &lt;- posterior(fmod1,type="local")
+identical(pst_global, pst_local)
+# smoothing probabilities are used for local decoding, and may be used as 
+# easily interpretable posterior state probabilities
+pst_prob &lt;- posterior(fmod1, type = "smoothing")
+
+# testing viterbi states for new data
+df &lt;- data.frame(corr=c(1,0,1),rt=c(6.4,5.5,5.3),Pacc=c(0.6,0.1,0.1))
+# define model with new data like above
+modNew &lt;- depmix(list(rt~1,corr~1),data=df,transition=~Pacc,nstates=2,
+	family=list(gaussian(),multinomial("identity")))
+# get parameters from estimated model
+modNew &lt;- setpars(modNew,getpars(fmod1))
+# check the state sequence and probabilities
+pst_new &lt;- posterior(modNew, type="global")
+
+# same model, now with missing data
+## Not run: 
+speed[2,1] &lt;- NA
+speed[3,2] &lt;- NA
+
+# 2-state model on rt and corr from speed data set 
+# with Pacc as covariate on the transition matrix
+# ntimes is used to specify the lengths of 3 separate series
+mod1ms &lt;- depmix(list(rt~1,corr~1),data=speed,transition=~Pacc,nstates=2,
+	family=list(gaussian(),multinomial("identity")),ntimes=c(168,134,137))
+# fit the model
+set.seed(3)
+fmod1ms &lt;- fit(mod1ms)
+
+## End(Not run)
+
+# instead of the normal likelihood, we can also maximise the "classification" likelihood
+# this uses the maximum a posteriori state sequence to assign observations to states
+# and to compute initial and transition probabilities. 
+
+fmod1b &lt;- fit(mod1,emcontrol=em.control(classification="hard"))
+fmod1b # to see the logLik and optimization information
+
+# FIX SOME PARAMETERS
+
+# get the starting values of this model to the optimized 
+# values of the previously fitted model to speed optimization
+
+pars &lt;- c(unlist(getpars(fmod1)))
+
+# constrain the initial state probs to be 0 and 1 
+# also constrain the guessing probs to be 0.5 and 0.5 
+# (ie the probabilities of corr in state 1)
+# change the ones that we want to constrain
+pars[1]=0
+pars[2]=1 # this means the process will always start in state 2
+pars[13]=0.5
+pars[14]=0.5 # the corr parameters are now both 0.5
+mod2 &lt;- setpars(mod1,pars)
+
+# fix the parameters by setting: 
+free &lt;- c(0,0,rep(c(0,1),4),1,1,0,0,1,1,1,1)
+# fit the model
+fmod2 &lt;- fit(mod2,fixed=!free)
+
+# likelihood ratio insignificant, hence fmod2 better than fmod1
+llratio(fmod1,fmod2)
+
+
+# ADDING SOME GENERAL LINEAR CONSTRAINTS
+
+# set the starting values of this model to the optimized 
+# values of the previously fitted model to speed optimization
+
+## Not run: 
+
+pars &lt;- c(unlist(getpars(fmod2)))
+pars[4] &lt;- pars[8] &lt;- -4
+pars[6] &lt;- pars[10] &lt;- 10
+mod3 &lt;- setpars(mod2,pars)
+
+# start with fixed and free parameters
+conpat &lt;- c(0,0,rep(c(0,1),4),1,1,0,0,1,1,1,1)
+# constrain the beta's on the transition parameters to be equal
+conpat[4] &lt;- conpat[8] &lt;- 2
+conpat[6] &lt;- conpat[10] &lt;- 3
+
+fmod3 &lt;- fit(mod3,equal=conpat)
+
+llratio(fmod2,fmod3)
+
+# above constraints can also be specified using the conrows argument as follows
+conr &lt;- matrix(0,2,18)
+# parameters 4 and 8 have to be equal, otherwise stated, their diffence should be zero,
+# and similarly for parameters 6 &amp; 10
+conr[1,4] &lt;- 1
+conr[1,8] &lt;- -1
+conr[2,6] &lt;- 1
+conr[2,10] &lt;- -1
+
+# note here that we use the fitted model fmod2 as that has appropriate 
+# starting values
+fmod3b &lt;- fit(mod3,conrows=conr,fixed=!free) # using free defined above
+
+
+## End(Not run)
+
+data(balance)
+# four binary items on the balance scale task
+mod4 &lt;- mix(list(d1~1,d2~1,d3~1,d4~1), data=balance, nstates=2,
+	family=list(multinomial("identity"),multinomial("identity"),
+	multinomial("identity"),multinomial("identity")))
+
+set.seed(1)
+fmod4 &lt;- fit(mod4)
+
+## Not run: 
+
+# add age as covariate on class membership by using the prior argument
+mod5 &lt;- mix(list(d1~1,d2~1,d3~1,d4~1), data=balance, nstates=2,
+	family=list(multinomial("identity"),multinomial("identity"),
+	multinomial("identity"),multinomial("identity")),
+	prior=~age, initdata=balance)
+
+set.seed(1)
+fmod5 &lt;- fit(mod5)
+
+# check the likelihood ratio; adding age significantly improves the goodness-of-fit
+llratio(fmod5,fmod4)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

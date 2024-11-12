@@ -1,0 +1,126 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>async_expr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply R expressions in a parallel way</h2>
+
+<h3>Description</h3>
+
+<p>Apply R expressions in a parallel way
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">async_expr(
+  .X,
+  .expr,
+  .varname = "x",
+  envir = parent.frame(),
+  .pre_run = NULL,
+  .ncore = future::availableCores(),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>.X</code></td>
+<td>
+<p>a vector or a list to apply evaluation on</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.expr</code></td>
+<td>
+<p>R expression, unquoted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.varname</code></td>
+<td>
+<p>variable name representing element of each <code>.X</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>environment to evaluate expressions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.pre_run</code></td>
+<td>
+<p>expressions to be evaluated before looping.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.ncore</code></td>
+<td>
+<p>number of CPU cores</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>passed to <code>future::future</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>async_expr</code> uses <code>lapply</code> and <code>future::future</code> internally.
+Within each loop, an item in <code>".X"</code> will be assigned to variable <code>"x"</code>
+(defined by <code>".varname"</code>) and enter the evaluation. During the evaluation,
+function <code>async</code> is provided. Expressions within <code>async</code> will be
+evaluated in another session, otherwise will be evaluated in current session.
+Below is the workflow:
+</p>
+
+<ul>
+<li>
+<p> Run <code>.pre_run</code>
+</p>
+</li>
+<li>
+<p> For <code>i</code> in <code>seq_along(.X)</code>:
+</p>
+
+<ul>
+<li>
+<p> 1. Assign <code>x</code> with <code>.X[[i]]</code>, variable name <code>x</code> is
+defined by <code>.varname</code>
+</p>
+</li>
+<li>
+<p> 2. Evaluate <code>expr</code> in current session.
+</p>
+
+<ul>
+<li>
+<p> a. If <code>async</code> is not called, return evaluated <code>expr</code>
+</p>
+</li>
+<li>
+<p> b. If <code>async(aync_expr)</code> is called, evaluate <code>aync_expr</code>
+in another session, and return the evaluation results if <code>aync_expr</code>
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>a list whose length equals to <code>.X</code>. The value of each item
+returned depends on whether <code>async</code> is called. See details for workflow.
+</p>
+
+
+</div>

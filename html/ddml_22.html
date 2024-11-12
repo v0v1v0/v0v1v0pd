@@ -1,0 +1,296 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>shortstacking</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predictions using Short-Stacking.</h2>
+
+<h3>Description</h3>
+
+<p>Predictions using short-stacking.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">shortstacking(
+  y,
+  X,
+  Z = NULL,
+  learners,
+  sample_folds = 2,
+  ensemble_type = "average",
+  custom_ensemble_weights = NULL,
+  compute_insample_predictions = FALSE,
+  subsamples = NULL,
+  silent = FALSE,
+  progress = NULL,
+  auxiliary_X = NULL,
+  shortstack_y = y
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The outcome variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>A (sparse) matrix of predictive variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Z</code></td>
+<td>
+<p>Optional additional (sparse) matrix of predictive variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>learners</code></td>
+<td>
+<p>May take one of two forms, depending on whether a single
+learner or stacking with multiple learners is used for estimation of the
+predictor.
+If a single learner is used, <code>learners</code> is a list with two named
+elements:
+</p>
+
+<ul>
+<li>
+<p><code>what</code> The base learner function. The function must be
+such that it predicts a named input <code>y</code> using a named input
+<code>X</code>.
+</p>
+</li>
+<li>
+<p><code>args</code> Optional arguments to be passed to <code>what</code>.
+</p>
+</li>
+</ul>
+<p>If stacking with multiple learners is used, <code>learners</code> is a list of
+lists, each containing four named elements:
+</p>
+
+<ul>
+<li>
+<p><code>fun</code> The base learner function. The function must be
+such that it predicts a named input <code>y</code> using a named input
+<code>X</code>.
+</p>
+</li>
+<li>
+<p><code>args</code> Optional arguments to be passed to <code>fun</code>.
+</p>
+</li>
+<li>
+<p><code>assign_X</code> An optional vector of column indices
+corresponding to predictive variables in <code>X</code> that are passed to
+the base learner.
+</p>
+</li>
+<li>
+<p><code>assign_Z</code> An optional vector of column indices
+corresponding to predictive in <code>Z</code> that are passed to the
+base learner.
+</p>
+</li>
+</ul>
+<p>Omission of the <code>args</code> element results in default arguments being
+used in <code>fun</code>. Omission of <code>assign_X</code> (and/or <code>assign_Z</code>)
+results in inclusion of all variables in <code>X</code> (and/or <code>Z</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sample_folds</code></td>
+<td>
+<p>Number of cross-fitting folds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ensemble_type</code></td>
+<td>
+<p>Ensemble method to combine base learners into final
+estimate of the conditional expectation functions. Possible values are:
+</p>
+
+<ul>
+<li>
+<p><code>"nnls"</code> Non-negative least squares.
+</p>
+</li>
+<li>
+<p><code>"nnls1"</code> Non-negative least squares with the constraint
+that all weights sum to one.
+</p>
+</li>
+<li>
+<p><code>"singlebest"</code> Select base learner with minimum MSPE.
+</p>
+</li>
+<li>
+<p><code>"ols"</code> Ordinary least squares.
+</p>
+</li>
+<li>
+<p><code>"average"</code> Simple average over base learners.
+</p>
+</li>
+</ul>
+<p>Multiple ensemble types may be passed as a vector of strings.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_ensemble_weights</code></td>
+<td>
+<p>A numerical matrix with user-specified
+ensemble weights. Each column corresponds to a custom ensemble
+specification, each row corresponds to a base learner in <code>learners</code>
+(in chronological order). Optional column names are used to name the
+estimation results corresponding the custom ensemble specification.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compute_insample_predictions</code></td>
+<td>
+<p>Indicator equal to 1 if in-sample
+predictions should also be computed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>subsamples</code></td>
+<td>
+<p>List of vectors with sample indices for cross-fitting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>Boolean to silence estimation updates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progress</code></td>
+<td>
+<p>String to print before learner and cv fold progress.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>auxiliary_X</code></td>
+<td>
+<p>An optional list of matrices of length
+<code>sample_folds</code>, each containing additional observations to calculate
+predictions for.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shortstack_y</code></td>
+<td>
+<p>Optional vector of the outcome variable to form
+short-stacking predictions for. Base learners are always trained on
+<code>y</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p><code>shortstack</code> returns a list containing the following components:
+</p>
+
+<dl>
+<dt><code>oos_fitted</code></dt>
+<dd>
+<p>A matrix of out-of-sample predictions,
+each column corresponding to an ensemble type (in chronological
+order).</p>
+</dd>
+<dt><code>weights</code></dt>
+<dd>
+<p>An array, providing the weight
+assigned to each base learner (in chronological order) by the
+ensemble procedures.</p>
+</dd>
+<dt><code>is_fitted</code></dt>
+<dd>
+<p>When <code>compute_insample_predictions = T</code>.
+a list of matrices with in-sample predictions by sample fold.</p>
+</dd>
+<dt><code>auxiliary_fitted</code></dt>
+<dd>
+<p>When <code>auxiliary_X</code> is not
+<code>NULL</code>, a list of matrices with additional predictions.</p>
+</dd>
+<dt><code>oos_fitted_bylearner</code></dt>
+<dd>
+<p>A matrix of
+out-of-sample predictions, each column corresponding to a base
+learner (in chronological order).</p>
+</dd>
+<dt><code>is_fitted_bylearner</code></dt>
+<dd>
+<p>When
+<code>compute_insample_predictions = T</code>, a list of matrices with
+in-sample predictions by sample fold.</p>
+</dd>
+<dt><code>auxiliary_fitted_bylearner</code></dt>
+<dd>
+<p>When <code>auxiliary_X</code> is
+not <code>NULL</code>, a
+list of matrices with additional predictions for each learner.</p>
+</dd>
+</dl>
+<p>Note that unlike <code>crosspred</code>, <code>shortstack</code> always computes
+out-of-sample predictions for each base learner (at no additional
+computational cost).
+</p>
+
+
+<h3>References</h3>
+
+<p>Ahrens A, Hansen C B, Schaffer M E, Wiemann T (2023). "ddml: Double/debiased
+machine learning in Stata." <a href="https://arxiv.org/abs/2301.09397">https://arxiv.org/abs/2301.09397</a>
+</p>
+<p>Wolpert D H (1992). "Stacked generalization." Neural Networks, 5(2), 241-259.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other utilities: 
+<code>crosspred()</code>,
+<code>crossval()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Construct variables from the included Angrist &amp; Evans (1998) data
+y = AE98[, "worked"]
+X = AE98[, c("morekids", "age","agefst","black","hisp","othrace","educ")]
+
+# Compute predictions using shortstacking with base learners ols and lasso.
+#     Two stacking approaches are simultaneously computed: Equally
+#     weighted (ensemble_type = "average") and MSPE-minimizing with weights
+#     in the unit simplex (ensemble_type = "nnls1"). Predictions for each
+#     learner are also calculated.
+shortstack_res &lt;- shortstacking(y, X,
+                                learners = list(list(fun = ols),
+                                                list(fun = mdl_glmnet)),
+                                ensemble_type = c("average",
+                                                  "nnls1",
+                                                  "singlebest"),
+                                sample_folds = 2,
+                                silent = TRUE)
+dim(shortstack_res$oos_fitted) # = length(y) by length(ensemble_type)
+dim(shortstack_res$oos_fitted_bylearner) # = length(y) by length(learners)
+</code></pre>
+
+
+</div>

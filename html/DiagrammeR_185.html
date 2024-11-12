@@ -1,0 +1,187 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mutate_node_attrs_ws</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Mutate node attribute values for a selection of nodes</h2>
+
+<h3>Description</h3>
+
+<p>Within a graph's internal node data frame (ndf), mutate node attribute values
+only for nodes in a selection by using one or more expressions.
+</p>
+<p>This function makes use of an active selection of nodes (and the function
+ending with <code style="white-space: pre;">⁠_ws⁠</code> hints at this).
+</p>
+<p>Selections of nodes can be performed using the following node selection
+(<code style="white-space: pre;">⁠select_*()⁠</code>) functions: <code>select_nodes()</code>, <code>select_last_nodes_created()</code>,
+<code>select_nodes_by_degree()</code>, <code>select_nodes_by_id()</code>, or
+<code>select_nodes_in_neighborhood()</code>.
+</p>
+<p>Selections of nodes can also be performed using the following traversal
+(<code style="white-space: pre;">⁠trav_*()⁠</code>) functions: <code>trav_out()</code>, <code>trav_in()</code>, <code>trav_both()</code>,
+<code>trav_out_node()</code>, <code>trav_in_node()</code>, <code>trav_out_until()</code>, or
+<code>trav_in_until()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mutate_node_attrs_ws(graph, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>A graph object of class <code>dgr_graph</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Expressions used for the mutation of node attributes. LHS of each
+expression is either an existing or new node attribute name. The RHS can
+consist of any valid R code that uses node attributes as variables.
+Expressions are evaluated in the order provided, so, node attributes
+created or modified are ready to use in subsequent expressions.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A graph object of class <code>dgr_graph</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other node creation and removal: 
+<code>add_n_node_clones()</code>,
+<code>add_n_nodes()</code>,
+<code>add_n_nodes_ws()</code>,
+<code>add_node()</code>,
+<code>add_node_clones_ws()</code>,
+<code>add_node_df()</code>,
+<code>add_nodes_from_df_cols()</code>,
+<code>add_nodes_from_table()</code>,
+<code>colorize_node_attrs()</code>,
+<code>copy_node_attrs()</code>,
+<code>create_node_df()</code>,
+<code>delete_node()</code>,
+<code>delete_nodes_ws()</code>,
+<code>drop_node_attrs()</code>,
+<code>join_node_attrs()</code>,
+<code>layout_nodes_w_string()</code>,
+<code>mutate_node_attrs()</code>,
+<code>node_data()</code>,
+<code>recode_node_attrs()</code>,
+<code>rename_node_attrs()</code>,
+<code>rescale_node_attrs()</code>,
+<code>set_node_attr_to_display()</code>,
+<code>set_node_attr_w_fcn()</code>,
+<code>set_node_attrs()</code>,
+<code>set_node_attrs_ws()</code>,
+<code>set_node_position()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Create a graph with 3 nodes
+# and then select node `1`
+graph &lt;-
+  create_graph() %&gt;%
+  add_path(n = 3) %&gt;%
+  set_node_attrs(
+    node_attr = width,
+    values = c(1.4, 0.3, 1.1)) %&gt;%
+  select_nodes(nodes = 1)
+
+# Get the graph's internal ndf
+# to show which node attributes
+# are available
+graph %&gt;% get_node_df()
+
+# Mutate the `width` node
+# attribute for the nodes
+# only in the active selection
+# of nodes (node `1`); here,
+# we divide each value in the
+# selection by 2
+graph &lt;-
+  graph %&gt;%
+  mutate_node_attrs_ws(
+    width = width / 2)
+
+# Get the graph's internal
+# ndf to show that the node
+# attribute `width` was
+# mutated only for node `1`
+graph %&gt;% get_node_df()
+
+# Create a new node attribute,
+# called `length`, that is the
+# log of values in `width` plus
+# 2 (and, also, round all values
+# to 2 decimal places)
+graph &lt;-
+  graph %&gt;%
+  clear_selection() %&gt;%
+  select_nodes(nodes = 2:3) %&gt;%
+  mutate_node_attrs_ws(
+    length = (log(width) + 2) %&gt;%
+               round(2))
+
+# Get the graph's internal ndf
+# to show that the node attribute
+# values had been mutated only
+# for nodes `2` and `3` (since
+# node `1` is excluded, an NA
+# value is applied)
+graph %&gt;% get_node_df()
+
+# Create a new node attribute
+# called `area`, which is the
+# product of the `width` and
+# `length` attributes
+graph &lt;-
+  graph %&gt;%
+  mutate_node_attrs_ws(
+    area = width * length)
+
+# Get the graph's internal ndf
+# to show that the node attribute
+# values had been multiplied
+# together (with new attr `area`)
+# for nodes `2` and `3`
+graph %&gt;% get_node_df()
+
+# We can invert the selection
+# and mutate node `1` several
+# times to get an `area` value
+# for that node
+graph &lt;-
+  graph %&gt;%
+  invert_selection() %&gt;%
+  mutate_node_attrs_ws(
+    length = (log(width) + 5) %&gt;%
+               round(2),
+    area = width * length)
+
+# Get the graph's internal ndf
+# to show that the 2 mutations
+# occurred for node `1`, yielding
+# non-NA values for its node
+# attributes without changing
+# those of the other nodes
+graph %&gt;% get_node_df()
+
+</code></pre>
+
+
+</div>

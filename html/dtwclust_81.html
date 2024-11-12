@@ -1,0 +1,594 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>tsclust</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Time series clustering</h2>
+
+<h3>Description</h3>
+
+<p>This is the main function to perform time series clustering. See the details and the examples for
+more information, as well as the included package vignettes (which can be found by typing
+<code>browseVignettes("dtwclust")</code>). A convenience wrapper is available in <code>compare_clusterings()</code>,
+and a shiny app in <code>interactive_clustering()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">tsclust(
+  series = NULL,
+  type = "partitional",
+  k = 2L,
+  ...,
+  preproc = NULL,
+  distance = "dtw_basic",
+  centroid = ifelse(type == "fuzzy", "fcm", "pam"),
+  control = do.call(paste0(type, "_control"), list()),
+  args = tsclust_args(),
+  seed = NULL,
+  trace = FALSE,
+  error.check = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>series</code></td>
+<td>
+<p>A list of series, a numeric matrix or a data frame. Matrices and data frames are
+coerced to a list row-wise (see <code>tslist()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>What type of clustering method to use: <code>"partitional"</code>, <code>"hierarchical"</code>, <code>"tadpole"</code>
+or <code>"fuzzy"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>k</code></td>
+<td>
+<p>Number of desired clusters. It can be a numeric vector with different values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to pass to preprocessing, centroid <strong>and</strong> distance functions (added to
+<code>args</code>). Also passed to <code>method</code> from <code>hierarchical_control()</code> if it happens to be a function,
+and to <code>stats::hclust()</code> if it contains the <code>members</code> parameter.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>preproc</code></td>
+<td>
+<p>Function to preprocess data. Defaults to <code>zscore()</code> <em>only</em> if <code>centroid</code> <code>=</code>
+<code>"shape"</code>, but will be replaced by a custom function if provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distance</code></td>
+<td>
+<p>A registered distance from <code>proxy::dist()</code>. Ignored for <code>type</code> <code>=</code> <code>"tadpole"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centroid</code></td>
+<td>
+<p>Either a supported string, or an appropriate function to calculate centroids when
+using partitional/hierarchical/tadpole methods. See Centroids section.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>An appropriate list of controls. See tsclust-controls.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args</code></td>
+<td>
+<p>An appropriate list of arguments for preprocessing, distance and centroid functions.
+See <code>tsclust_args()</code> and the examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Random seed for reproducibility.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Logical flag. If <code>TRUE</code>, more output regarding the progress is printed to screen.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error.check</code></td>
+<td>
+<p>Logical indicating whether the function should try to detect inconsistencies
+and give more informative errors messages. Also used internally to avoid repeating checks.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Partitional and fuzzy clustering procedures use a custom implementation. Hierarchical clustering
+is done with <code>stats::hclust()</code> by default. TADPole clustering uses the <code>TADPole()</code> function.
+Specifying <code>type</code> = <code>"partitional"</code>, <code>preproc</code> = <code>zscore</code>, <code>distance</code> = <code>"sbd"</code> and <code>centroid</code> =
+<code>"shape"</code> is equivalent to the k-Shape algorithm (Paparrizos and Gravano 2015).
+</p>
+<p>The <code>series</code> may be provided as a matrix, a data frame or a list. Matrices and data frames are
+coerced to a list, both row-wise. Only lists can have series with different lengths or multiple
+dimensions. Most of the optimizations require series to have the same length, so consider
+reinterpolating them to save some time (see Ratanamahatana and Keogh 2004; <code>reinterpolate()</code>). No
+missing values are allowed.
+</p>
+<p>In the case of multivariate time series, they should be provided as a list of matrices, where
+time spans the rows of each matrix and the variables span the columns (see CharTrajMV for an
+example). All included centroid functions should work with the aforementioned format, although
+<code>shape</code> is <em>not</em> recommended. Note that the <code>plot</code> method will simply append all dimensions
+(columns) one after the other.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object with an appropriate class from TSClusters.
+</p>
+<p>If <code>control$nrep &gt; 1</code> and a partitional procedure is used, <code>length(method)</code> <code style="white-space: pre;">⁠&gt; 1⁠</code> and
+hierarchical procedures are used, or <code>length(k)</code> <code>&gt;</code> <code>1</code>, a list of objects is returned.
+</p>
+
+
+<h3>Centroid Calculation</h3>
+
+<p>In the case of partitional/fuzzy algorithms, a suitable function should calculate the cluster
+centroids at every iteration. In this case, the centroids may also be time series. Fuzzy
+clustering uses the standard fuzzy c-means centroid by default.
+</p>
+<p>In either case, a custom function can be provided. If one is provided, it will receive the
+following parameters with the shown names (examples for partitional clustering are shown in
+parentheses):
+</p>
+
+<ul>
+<li> <p><code>x</code>: The <em>whole</em> data list (<code>list(ts1, ts2, ts3)</code>)
+</p>
+</li>
+<li> <p><code>cl_id</code>: An integer vector with length equal to the number of series in <code>data</code>, indicating
+which cluster a series belongs to (<code>c(1L, 2L, 2L)</code>)
+</p>
+</li>
+<li> <p><code>k</code>: The desired number of total clusters (<code>2L</code>)
+</p>
+</li>
+<li> <p><code>cent</code>: The current centroids in order, in a list (<code>list(centroid1, centroid2)</code>)
+</p>
+</li>
+<li> <p><code>cl_old</code>: The membership vector of the <em>previous</em> iteration (<code>c(1L, 1L, 2L)</code>)
+</p>
+</li>
+<li>
+<p> The elements of <code>...</code> that match its formal arguments
+</p>
+</li>
+</ul>
+<p>In case of fuzzy clustering, the membership vectors (2nd and 5th elements above) are matrices
+with number of rows equal to amount of elements in the data, and number of columns equal to the
+number of desired clusters. Each row must sum to 1.
+</p>
+<p>The other option is to provide a character string for the custom implementations. The following
+options are available:
+</p>
+
+<ul>
+<li>
+<p> "mean": The average along each dimension. In other words, the average of all <code class="reqn">x^j_i</code>
+among the <code class="reqn">j</code> series that belong to the same cluster for all time points <code class="reqn">t_i</code>.
+</p>
+</li>
+<li>
+<p> "median": The median along each dimension. Similar to mean.
+</p>
+</li>
+<li>
+<p> "shape": Shape averaging. By default, all series are z-normalized in this case, since the
+resulting centroids will also have this normalization. See <code>shape_extraction()</code> for more
+details.
+</p>
+</li>
+<li>
+<p> "dba": DTW Barycenter Averaging. See <code>DBA()</code> for more details.
+</p>
+</li>
+<li>
+<p> "sdtw_cent": Soft-DTW centroids, See <code>sdtw_cent()</code> for more details.
+</p>
+</li>
+<li>
+<p> "pam": Partition around medoids (PAM). This basically means that the cluster centroids are
+always one of the time series in the data. In this case, the distance matrix can be
+pre-computed once using all time series in the data and then re-used at each iteration. It
+usually saves overhead overall for small datasets (see tsclust-controls).
+</p>
+</li>
+<li>
+<p> "fcm": Fuzzy c-means. Only supported for fuzzy clustering and used by default in that case.
+</p>
+</li>
+<li>
+<p> "fcmdd": Fuzzy c-medoids. Only supported for fuzzy clustering. It <strong>always</strong> precomputes/uses
+the whole cross-distance matrix.
+</p>
+</li>
+</ul>
+<p>The <code>dba</code>, <code>shape</code> and <code>sdtw_cent</code> implementations check for parallelization. Note that only
+<code>shape</code>, <code>dba</code>, <code>sdtw_cent</code>, <code>pam</code> and <code>fcmdd</code> support series of different length. Also note
+that for <code>shape</code>, <code>dba</code> and <code>sdtw_cent</code>, this support has a caveat: the final centroids' length
+will depend on the length of those series that were randomly chosen at the beginning of the
+clustering algorithm. For example, if the series in the dataset have a length of either 10 or
+15, 2 clusters are desired, and the initial choice selects two series with length of 10, the
+final centroids will have this same length.
+</p>
+<p>As special cases, if hierarchical or tadpole clustering is used, you can provide a centroid
+function that takes a list of series as first input. It will also receive the contents of
+<code>args$cent</code> that match its formal arguments, and should return a single centroid series. These
+centroids are returned in the <code>centroids</code> slot. By default, the medoid of each cluster is
+extracted (similar to what <code>pam_cent()</code> does).
+</p>
+<p>In the following cases, the <code>centroids</code> list will have an attribute <code>series_id</code> with an integer
+vector indicating which <code>series</code> were chosen as centroids:
+</p>
+
+<ul>
+<li>
+<p> Partitional clustering using "pam" centroid.
+</p>
+</li>
+<li>
+<p> Fuzzy clustering using "fcmdd" centroid.
+</p>
+</li>
+<li>
+<p> Hierarchical clustering with the default centroid extraction.
+</p>
+</li>
+<li>
+<p> TADPole clustering with the default centroid extraction.
+</p>
+</li>
+</ul>
+<h3>Distance Measures</h3>
+
+<p>The distance measure to be used with partitional, hierarchical and fuzzy clustering can be
+modified with the <code>distance</code> parameter. The supported option is to provide a string, which must
+represent a compatible distance registered with <code>proxy</code>'s <code>proxy::dist()</code>. Registration is done
+via <code>proxy::pr_DB()</code>, and extra parameters can be provided in <code>args$dist</code> (see the examples).
+</p>
+<p>Note that you are free to create your own distance functions and register them. Optionally, you
+can use one of the following custom implementations (all registered with <code>proxy</code>):
+</p>
+
+<ul>
+<li> <p><code>"dtw"</code>: DTW, optionally with a Sakoe-Chiba/Slanted-band constraint. Done with <code>dtw::dtw()</code>.
+</p>
+</li>
+<li> <p><code>"dtw2"</code>: DTW with L2 norm and optionally a Sakoe-Chiba/Slanted-band constraint. See
+<code>dtw2()</code>.
+</p>
+</li>
+<li> <p><code>"dtw_basic"</code>: A custom version of DTW with less functionality, but faster. See
+<code>dtw_basic()</code>.
+</p>
+</li>
+<li> <p><code>"dtw_lb"</code>: DTW with L1 or L2 norm and a Sakoe-Chiba constraint. Some computations are
+avoided by first estimating the distance matrix with Lemire's lower bound and then
+iteratively refining with DTW. See <code>dtw_lb()</code>. Not suitable for <code>pam.precompute</code> = <code>TRUE</code> nor
+hierarchical clustering.
+</p>
+</li>
+<li> <p><code>"lbk"</code>: Keogh's lower bound for DTW with either L1 or L2 norm for the Sakoe-Chiba
+constraint. See <code>lb_keogh()</code>.
+</p>
+</li>
+<li> <p><code>"lbi"</code>: Lemire's lower bound for DTW with either L1 or L2 norm for the Sakoe-Chiba
+constraint. See <code>lb_improved()</code>.
+</p>
+</li>
+<li> <p><code>"sbd"</code>: Shape-based distance. See <code>sbd()</code>.
+</p>
+</li>
+<li> <p><code>"gak"</code>: Global alignment kernels. See <code>gak()</code>.
+</p>
+</li>
+<li> <p><code>"sdtw"</code>: Soft-DTW. See <code>sdtw()</code>.
+</p>
+</li>
+</ul>
+<p>Out of the aforementioned, only the distances based on DTW lower bounds <em>don't</em> support series
+of different length. The lower bounds are probably unsuitable for direct clustering unless
+series are very easily distinguishable.
+</p>
+<p>If you know that the distance function is symmetric, and you use a hierarchical algorithm, or a
+partitional algorithm with PAM centroids, or fuzzy c-medoids, some time can be saved by
+calculating only half the distance matrix. Therefore, consider setting the symmetric control
+parameter to <code>TRUE</code> if this is the case (see tsclust-controls).
+</p>
+
+
+<h3>Preprocessing</h3>
+
+<p>It is strongly advised to use z-normalization in case of <code>centroid = "shape"</code>, because the
+resulting series have this normalization (see <code>shape_extraction()</code>). Therefore, <code>zscore()</code> is
+the default in this case. The user can, however, specify a custom function that performs any
+transformation on the data, but the user must make sure that the format stays consistent, i.e.
+a list of time series.
+</p>
+<p>Setting to <code>NULL</code> means no preprocessing (except for <code>centroid = "shape"</code>). A provided function
+will receive the data as first argument, followed by the contents of <code>args$preproc</code> that match
+its formal arguments.
+</p>
+<p>It is convenient to provide this function if you're planning on using the <code>stats::predict()</code>
+generic (see also TSClusters-methods).
+</p>
+
+
+<h3>Repetitions</h3>
+
+<p>Due to their stochastic nature, partitional clustering is usually repeated several times with
+different random seeds to allow for different starting points. This function uses
+<code>parallel::nextRNGStream()</code> to obtain different seed streams for each repetition, utilizing the
+<code>seed</code> parameter (if provided) to initialize it. If more than one repetition is made, the
+streams are returned in an attribute called <code>rng</code>.
+</p>
+<p>Multiple values of <code>k</code> can also be provided to get different partitions using any <code>type</code> of
+clustering.
+</p>
+<p>Repetitions are greatly optimized when PAM centroids are used and the whole distance matrix is
+precomputed, since said matrix is reused for every repetition.
+</p>
+
+
+<h3>Parallel Computing</h3>
+
+<p>Please note that running tasks in parallel does <strong>not</strong> guarantee faster computations. The
+overhead introduced is sometimes too large, and it's better to run tasks sequentially.
+</p>
+<p>The user can register a parallel backend, e.g. with the <span class="pkg">doParallel</span> package, in order to
+attempt to speed up the calculations (see the examples). This relies on <code>foreach::foreach()</code>,
+i.e. it uses multi-processing.
+</p>
+<p>Multi-processing is used in partitional and fuzzy clustering for multiple values of <code>k</code> and/or
+<code>nrep</code> (in <code>partitional_control()</code>). See <code>TADPole()</code> to know how it uses parallelization. For
+cross-distance matrix calculations, the parallelization strategy depends on whether the
+distance is included with <span class="pkg">dtwclust</span> or not, see the caveats in tsclustFamily.
+</p>
+<p>If you register a parallel backend and special packages must be loaded, provide their names in
+the <code>packages</code> element of <code>control</code>. Note that "dtwclust" is always loaded in each parallel
+worker, so that doesn't need to be included. Alternatively, you may want to pre-load
+<span class="pkg">dtwclust</span> in each worker with <code>parallel::clusterEvalQ()</code>.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The lower bounds are defined only for time series of equal length. They are <strong>not</strong> symmetric,
+and <code>DTW</code> is not symmetric in general.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Alexis Sarda-Espinosa
+</p>
+
+
+<h3>References</h3>
+
+<p>Please refer to the package vignette references (which can be loaded by typing
+<code>vignette("dtwclust")</code>).
+</p>
+
+
+<h3>See Also</h3>
+
+<p>TSClusters, TSClusters-methods, tsclustFamily, tsclust-controls,
+<code>compare_clusterings()</code>, <code>interactive_clustering()</code>, <code>ssdtwclust()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#' NOTE: More examples are available in the vignette. Here are just some miscellaneous
+#' examples that might come in handy. They should all work, but some don't run
+#' automatically.
+
+# Load data
+data(uciCT)
+
+# ====================================================================================
+# Simple partitional clustering with Euclidean distance and PAM centroids
+# ====================================================================================
+
+# Reinterpolate to same length
+series &lt;- reinterpolate(CharTraj, new.length = max(lengths(CharTraj)))
+
+# Subset for speed
+series &lt;- series[1:20]
+labels &lt;- CharTrajLabels[1:20]
+
+# Making many repetitions
+pc.l2 &lt;- tsclust(series, k = 4L,
+                 distance = "L2", centroid = "pam",
+                 seed = 3247, trace = TRUE,
+                 control = partitional_control(nrep = 10L))
+
+# Cluster validity indices
+sapply(pc.l2, cvi, b = labels)
+
+# ====================================================================================
+# Hierarchical clustering with Euclidean distance
+# ====================================================================================
+
+# Re-use the distance matrix from the previous example (all matrices are the same)
+# Use all available linkage methods for function hclust
+hc.l2 &lt;- tsclust(series, type = "hierarchical",
+                 k = 4L, trace = TRUE,
+                 control = hierarchical_control(method = "all",
+                                                distmat = pc.l2[[1L]]@distmat))
+
+# Plot the best dendrogram according to variation of information
+plot(hc.l2[[which.min(sapply(hc.l2, cvi, b = labels, type = "VI"))]])
+
+# ====================================================================================
+# Multivariate time series
+# ====================================================================================
+
+# Multivariate series, provided as a list of matrices
+mv &lt;- CharTrajMV[1L:20L]
+
+# Using GAK distance
+mvc &lt;- tsclust(mv, k = 4L, distance = "gak", seed = 390,
+               args = tsclust_args(dist = list(sigma = 100)))
+
+# Note how the variables of each series are appended one after the other in the plot
+plot(mvc)
+
+## Not run: 
+# ====================================================================================
+# This function is more verbose but allows for more explicit fine-grained control
+# ====================================================================================
+
+tsc &lt;- tsclust(series, k = 4L,
+               distance = "gak", centroid = "dba",
+               preproc = zscore, seed = 382L, trace = TRUE,
+               control = partitional_control(iter.max = 30L),
+               args = tsclust_args(preproc = list(center = FALSE),
+                                   dist = list(window.size = 20L,
+                                               sigma = 100),
+                                   cent = list(window.size = 15L,
+                                               norm = "L2",
+                                               trace = TRUE)))
+
+# ====================================================================================
+# Registering a custom distance with the 'proxy' package and using it
+# ====================================================================================
+
+# Normalized asymmetric DTW distance
+ndtw &lt;- function(x, y, ...) {
+    dtw::dtw(x, y, step.pattern = asymmetric,
+             distance.only = TRUE, ...)$normalizedDistance
+}
+
+# Registering the function with 'proxy'
+if (!pr_DB$entry_exists("nDTW"))
+    proxy::pr_DB$set_entry(FUN = ndtw, names=c("nDTW"),
+                           loop = TRUE, type = "metric", distance = TRUE,
+                           description = "Normalized asymmetric DTW")
+
+# Subset of (original) data for speed
+pc.ndtw &lt;- tsclust(series[-1L], k = 4L,
+                   distance = "nDTW",
+                   seed = 8319,
+                   trace = TRUE,
+                   args = tsclust_args(dist = list(window.size = 18L)))
+
+# Which cluster would the first series belong to?
+# Notice that newdata is provided as a list
+predict(pc.ndtw, newdata = series[1L])
+
+# ====================================================================================
+# Custom hierarchical clustering
+# ====================================================================================
+
+require(cluster)
+
+hc.diana &lt;- tsclust(series, type = "h", k = 4L,
+                    distance = "L2", trace = TRUE,
+                    control = hierarchical_control(method = diana))
+
+plot(hc.diana, type = "sc")
+
+# ====================================================================================
+# TADPole clustering
+# ====================================================================================
+
+pc.tadp &lt;- tsclust(series, type = "tadpole", k = 4L,
+                   control = tadpole_control(dc = 1.5,
+                                             window.size = 18L))
+
+# Modify plot, show only clusters 3 and 4
+plot(pc.tadp, clus = 3:4,
+     labs.arg = list(title = "TADPole, clusters 3 and 4",
+                     x = "time", y = "series"))
+
+# Saving and modifying the ggplot object with custom time labels
+require(scales)
+t &lt;- seq(Sys.Date(), len = length(series[[1L]]), by = "day")
+gpc &lt;- plot(pc.tadp, time = t, plot = FALSE)
+
+gpc + ggplot2::scale_x_date(labels = date_format("%b-%Y"),
+                            breaks = date_breaks("2 months"))
+
+# ====================================================================================
+# Specifying a centroid function for prototype extraction in hierarchical clustering
+# ====================================================================================
+
+# Seed is due to possible randomness in shape_extraction when selecting a basis series
+hc.sbd &lt;- tsclust(CharTraj, type = "hierarchical",
+                  k = 20L, distance = "sbd",
+                  preproc = zscore, centroid = shape_extraction,
+                  seed = 320L)
+
+plot(hc.sbd, type = "sc")
+
+# ====================================================================================
+# Using parallel computation to optimize several random repetitions
+# and distance matrix calculation
+# ====================================================================================
+require(doParallel)
+
+# Create parallel workers
+cl &lt;- makeCluster(detectCores())
+invisible(clusterEvalQ(cl, library(dtwclust)))
+registerDoParallel(cl)
+
+## Use constrained DTW and PAM
+pc.dtw &lt;- tsclust(CharTraj, k = 20L, seed = 3251, trace = TRUE,
+                  args = tsclust_args(dist = list(window.size = 18L)))
+
+## Use constrained DTW with DBA centroids
+pc.dba &lt;- tsclust(CharTraj, k = 20L, centroid = "dba",
+                  seed = 3251, trace = TRUE,
+                  args = tsclust_args(dist = list(window.size = 18L),
+                                      cent = list(window.size = 18L)))
+
+#' Using distance based on global alignment kernels
+pc.gak &lt;- tsclust(CharTraj, k = 20L,
+                  distance = "gak",
+                  centroid = "dba",
+                  seed = 8319,
+                  trace = TRUE,
+                  control = partitional_control(nrep = 8L),
+                  args = tsclust_args(dist = list(window.size = 18L),
+                                      cent = list(window.size = 18L)))
+
+# Stop parallel workers
+stopCluster(cl)
+
+# Return to sequential computations. This MUST be done if stopCluster() was called
+registerDoSEQ()
+
+## End(Not run)
+</code></pre>
+
+
+</div>

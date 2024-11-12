@@ -1,0 +1,131 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>martingaleResid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Martingale Residuals</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the martingale residuals of discrete survival model.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">martingaleResid(hazards, dataSetLong)
+
+## S3 method for class 'discSurvMartingaleResid'
+plot(x, covariates, dataSetLong, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>hazards</code></td>
+<td>
+<p>Predicted hazards from a discrete survival model ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dataSetLong</code></td>
+<td>
+<p>Data in long format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Object of class "discSurvMartingaleResid"("class discSurvMartingaleResid")</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>Names of covariates to plot ("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to the plot function</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Gives a different plot of each marginal covariate against the martingale
+residuals. Additionally a nonparametric <code>loess</code> estimation is
+done.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Martingale residuals for each observation in long format ("numeric vector").
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Therneau TM, Grambsch PM, Fleming TR (1990).
+“Martingale-Based Residuals for Survival Models.”
+<em>Biometrika</em>, <b>70</b>, 147-160.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>glm</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with cross validation and unemployment data 
+library(Ecdat)
+data(UnempDur)
+summary(UnempDur$spell)
+
+# Extract subset of data
+set.seed(635)
+IDsample &lt;- sample(1:dim(UnempDur)[1], 100)
+UnempDurSubset &lt;- UnempDur [IDsample, ]
+
+# Conversion to long format
+UnempDurSubsetLong &lt;- dataLong(dataShort = UnempDurSubset,
+timeColumn = "spell", eventColumn = "censor1")
+
+# Estimate discrete survival continuation ratio model
+contModel &lt;- glm(y ~ timeInt + age + logwage, data = UnempDurSubsetLong,
+family = binomial(link = "logit"))
+
+# Fit hazards to the data set in long format
+hazPreds &lt;- predict(contModel, type = "response")
+
+# Calculate martingale residuals for the unemployment data subset
+MartResid &lt;- martingaleResid (hazards = hazPreds, dataSetLong = UnempDurSubsetLong)
+MartResid
+sum(MartResid)
+
+# Plot martingale residuals vs each covariate in the event interval
+# Dotted line represents the loess estimate
+plot(MartResid, covariates = c("age", "logwage"), dataSetLong = UnempDurSubsetLong)
+
+</code></pre>
+
+
+</div>

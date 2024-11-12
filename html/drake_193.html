@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>read_trace</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Read a trace of a dynamic target.
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>Read a target's dynamic trace from the cache.
+Best used on its own outside a <code>drake</code> plan.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">read_trace(
+  trace,
+  target,
+  cache = drake::drake_cache(path = path),
+  path = NULL,
+  character_only = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>Character, name of the trace
+you want to extract. Such trace names are declared
+in the <code>.trace</code> argument of <code>map()</code>, <code>cross()</code> or <code>group()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>Symbol or character,
+depending on the value of <code>character_only</code>.
+<code>target</code> is T=the name of a dynamic target with one or more traces
+defined using the <code>.trace</code> argument of dynamic <code>map()</code>, <code>cross()</code>,
+or <code>group()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cache</code></td>
+<td>
+<p>drake cache. See <code>new_cache()</code>.
+If supplied, <code>path</code> is ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>path</code></td>
+<td>
+<p>Path to a <code>drake</code> cache
+(usually a hidden <code style="white-space: pre;">⁠.drake/⁠</code> folder) or <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>character_only</code></td>
+<td>
+<p>Logical, whether <code>name</code> should be treated
+as a character or a symbol
+(just like <code>character.only</code> in <code>library()</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In dynamic branching, the trace keeps track
+of how the sub-targets were generated.
+It reminds us the values of grouping variables
+that go with individual sub-targets.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The dynamic trace of one target in another:
+a vector of values from a grouping variable.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>get_trace()</code>, <code>subtargets()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("demonstrate dynamic trace", {
+plan &lt;- drake_plan(
+  w = LETTERS[seq_len(3)],
+  x = letters[seq_len(2)],
+
+  # The first trace lets us see the values of w
+  # that go with the sub-targets of y.
+  y = target(paste0(w, x), dynamic = cross(w, x, .trace = w)),
+
+  # We can use the trace as a grouping variable for the next
+  # group().
+  w_tr = read_trace("w", y),
+
+  # Now, we use the trace again to keep track of the
+  # values of w corresponding to the sub-targets of z.
+  z = target(
+    paste0(y, collapse = "-"),
+    dynamic = group(y, .by = w_tr, .trace = w_tr)
+  )
+)
+make(plan)
+
+# We can read the trace outside make().
+# That way, we know which values of `w` correspond
+# to the sub-targets of `y`.
+readd(y)
+read_trace("w", y)
+
+# And we know which values of `w_tr` (and thus `w`)
+# match up with the sub-targets of `y`.
+readd(z)
+read_trace("w_tr", z)
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

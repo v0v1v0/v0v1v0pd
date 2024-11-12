@@ -1,0 +1,123 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>com_qualified_item_missingness</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute Indicators for Qualified Item Missingness</h2>
+
+<h3>Description</h3>
+
+<p>Indicator
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">com_qualified_item_missingness(
+  resp_vars,
+  study_data,
+  meta_data,
+  label_col = NULL,
+  expected_observations = c("HIERARCHY", "ALL", "SEGMENT")
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resp_vars</code></td>
+<td>
+<p>variable list the name of the measurement variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expected_observations</code></td>
+<td>
+<p>enum HIERARCHY | ALL | SEGMENT. Report the
+number of observations expected using
+the old <code>PART_VAR</code> concept. See
+com_item_missingness for an
+explanation.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>list list with entries:
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+prep_load_workbook_like_file("inst/extdata/Metadata_example_v3-6.xlsx")
+clean &lt;- prep_get_data_frame("item_level")
+clean &lt;- subset(clean, `Metadata name` == "Example" &amp;
+  !dataquieR:::util_empty(VAR_NAMES))
+clean$`Metadata name` &lt;- NULL
+clean[, "MISSING_LIST_TABLE"] &lt;- "missing_matchtable1"
+prep_add_data_frames(item_level = clean)
+clean &lt;- prep_get_data_frame("missing_matchtable1")
+clean &lt;- clean[clean$`Metadata name` == "Example", , FALSE]
+clean &lt;-
+  clean[suppressWarnings(as.character(as.integer(clean$CODE_VALUE)) ==
+    as.character(clean$CODE_VALUE)), , FALSE]
+clean$CODE_VALUE &lt;- as.integer(clean$CODE_VALUE)
+clean &lt;- clean[!is.na(clean$`Metadata name`), , FALSE]
+clean$`Metadata name` &lt;- NULL
+prep_add_data_frames(missing_matchtable1 = clean)
+ship &lt;- prep_get_data_frame("ship")
+number_of_mis &lt;- ceiling(nrow(ship) / 20)
+resp_vars &lt;- sample(colnames(ship), ceiling(ncol(ship) / 20), FALSE)
+mistab &lt;- prep_get_data_frame("missing_matchtable1")
+valid_replacement_codes &lt;-
+  mistab[mistab$CODE_INTERPRET != "I", "CODE_VALUE",
+    drop =
+    TRUE] # sample only replacement codes on item level. I uses the actual
+          # values
+for (rv in resp_vars) {
+  values &lt;- sample(as.numeric(valid_replacement_codes), number_of_mis,
+    replace = TRUE)
+  if (inherits(ship[[rv]], "POSIXct")) {
+    values &lt;- as.POSIXct(values, origin = min(as.POSIXct(Sys.Date()), 0))
+  }
+  ship[sample(seq_len(nrow(ship)), number_of_mis, replace = FALSE), rv] &lt;-
+    values
+}
+com_qualified_item_missingness(resp_vars = NULL, ship, "item_level", LABEL)
+com_qualified_item_missingness(resp_vars = "Diabetes Age onset", ship,
+  "item_level", LABEL)
+com_qualified_item_missingness(resp_vars = NULL, "study_data", "meta_data",
+  LABEL)
+study_data &lt;- ship
+meta_data &lt;- prep_get_data_frame("item_level")
+label &lt;- LABEL
+
+## End(Not run)
+</code></pre>
+
+
+</div>

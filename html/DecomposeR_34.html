@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mode.in</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add / Remove / Bind modes in emd objects</h2>
+
+<h3>Description</h3>
+
+<p>Add / Remove / Bind modes in emd objects
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mode.in(emd, xy, mode = NA, adjust = TRUE, name = "Added")
+
+mode.out(obj, keep = NULL, lose = NULL, adjust = F, reorder = F)
+
+mode.bind(emd, mode = NA, xy = NULL, adjust = T, name = "bound")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emd</code></td>
+<td>
+<p>emd-type object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xy</code></td>
+<td>
+<p>an Instrinsic Mode Function to add</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode, keep, lose</code></td>
+<td>
+<p>[mode.in] the position where to add the mode /
+[mode.out] the modes to keep or lose / [mode.bind] the modes to merge</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adjust</code></td>
+<td>
+<p>whether to adapt the initial signal of an emd object ($xy in
+the emd object) when adding or removing a mode</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+<p>the name of the new mode</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>emd or pulse type object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reorder</code></td>
+<td>
+<p>whether to reinitialise the index of modes when suppressing
+one</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+  rnorm(n, sd = 0.5)
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+
+dec &lt;- extricate(xy, dt, nimf = 7, sifting = 10,
+                 repl = 10, comb = 10, factor_noise = 10,
+                 speak = TRUE)
+
+opar &lt;- par('mfrow')
+
+par(mfrow = c(2,1))
+
+integrity(xy, dec)
+
+ht  &lt;- inst.pulse(dec, plot = FALSE)
+
+plot_hist(x = 1/ht$f, breaks = 500, id = ht$mode,
+          xlog = TRUE, text = TRUE, xlab = "Period",
+          main = "Initial Decomposition")
+
+bound &lt;- mode.bind(dec, mode = c(6,7))
+
+ht2  &lt;- inst.pulse(bound, plot = FALSE)
+
+plot_hist(x = 1/ht2$f, breaks = 500, id = ht2$mode,
+          xlog = TRUE, text = TRUE, xlab = "Period",
+          main = "Binding of modes 6 and 7")
+
+par(mfrow = opar)
+
+## Not run: 
+plot_emd(bound, dir = tempdir(), adapt.axis = TRUE)
+## End(Not run)
+
+</code></pre>
+
+
+</div>

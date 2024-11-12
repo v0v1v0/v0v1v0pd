@@ -1,0 +1,104 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbmc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>de-biased estimator</h2>
+
+<h3>Description</h3>
+
+<p>de-biased low-rank matrix completion estimator
+</p>
+<p>This function compute a de-biased estimator from a rank-r matrix completion using
+the algorithms from the package "softImpute".
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbmc(x, ximp, entries_miss, est_rank)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the initial matrix with missing entries</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ximp</code></td>
+<td>
+<p>an imputed matrix, output from the package "softImpute".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>entries_miss</code></td>
+<td>
+<p>the missing indices</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>est_rank</code></td>
+<td>
+<p>the rank of the matrix x, or the estimated rank from the package "softImpute".</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>x.db the de-baised estimation matrix.
+</p>
+
+
+<h3>References</h3>
+
+<p>Chen et al (2019). Inference and uncertainty quantification for noisy matrix completion. PNAS, 116(46), 22931-22937.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# simulated data
+require(softImpute)
+n = 100
+p = 100
+J = 2  # the true low-rank 
+np = n*p
+sig2 = 1
+missfrac = 0.5
+# xtrue is the underlying matrix that we do not know and want to recover it
+xtrue = matrix(rnorm(n*J),n,J)%*%matrix(rnorm(J*p),J,p) 
+# generating missing entries locations
+imiss = sample(np,np*missfrac,replace=FALSE)
+# xna is the observed matrix with missing entries
+xna = xtrue + matrix(rnorm(np, sd = sig2),nr = n,nc = p)
+xna[imiss] = NA
+lamda = 2.5*sig2*sqrt(n*p)
+
+# note that we only have xna as our initial data
+# first, fit a softImpute method
+fit1 = softImpute(xna, type = 'als')
+# complete the matrix by a softImpute method
+ximp = complete(xna,fit1)
+mean((ximp - xtrue)^2);rankMatrix(ximp,.1)[1]
+# now, de-biased the softImpute method
+x.db = dbmc(x = xna,
+            ximp = ximp,
+            entries_miss = imiss,
+            est_rank = 2)
+mean((x.db - xtrue)^2);rankMatrix(x.db,.1)[1]
+
+
+
+
+
+</code></pre>
+
+
+</div>

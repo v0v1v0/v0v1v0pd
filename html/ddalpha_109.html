@@ -1,0 +1,114 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>is.in.convex</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Check Outsiderness
+</h2>
+
+<h3>Description</h3>
+
+<p>Checks the belonging to at least one of class convex hulls of the training sample.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">is.in.convex(x, data, cardinalities, seed = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>Matrix of objects (numerical vector as one object) whose belonging to convex hulls is to be checked; each row contains a <code class="reqn">d</code>-variate point. Should have the same dimension as <code>data</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+
+<p>Matrix containing training sample where each row is a <code class="reqn">d</code>-dimensional object, and objects of each class are kept together so that the matrix can be thought of as containing blocks of objects, representing classes.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cardinalities</code></td>
+<td>
+
+<p>Numerical vector of cardinalities of each class in <code>data</code>, each entry corresponds to one class.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>the random seed. The default value <code>seed=0</code> makes no changes.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Checks are conducted w.r.t. each separate class in <code>data</code> using the simplex algorithm, taken from the C++ implementation of the zonoid depth calculation  by Rainer Dyckerhoff.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Matrix of <code>number of objects</code> rows and <code>number of classes</code> columns, containing <code>1</code> if an object belongs to the convex hull of the corresponding class, and <code>0</code> otherwise.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Implementation of the simplex algorithm is taken from the algorithm for computation of zonoid depth (Dyckerhoff, Koshevoy and Mosler, 1996) that has been implemented in C++ by Rainer Dyckerhoff.
+</p>
+
+
+<h3>References</h3>
+
+<p>Dyckerhoff, R., Koshevoy, G., and Mosler, K. (1996). Zonoid data depth: theory and computation. In: Prat A. (ed), <em>COMPSTAT 1996. Proceedings in computational statistics</em>, Physica-Verlag (Heidelberg), 235–240.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ddalpha.train</code> and <code>ddalpha.classify</code> for application.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Generate a bivariate normal location-shift classification task
+# containing 400 training objects and 1000 to test with
+class1 &lt;- mvrnorm(700, c(0,0), 
+                  matrix(c(1,1,1,4), nrow = 2, ncol = 2, byrow = TRUE))
+class2 &lt;- mvrnorm(700, c(2,2), 
+                  matrix(c(1,1,1,4), nrow = 2, ncol = 2, byrow = TRUE))
+trainIndices &lt;- c(1:200)
+testIndices &lt;- c(201:700)
+propertyVars &lt;- c(1:2)
+classVar &lt;- 3
+trainData &lt;- rbind(cbind(class1[trainIndices,], rep(1, 200)), 
+                   cbind(class2[trainIndices,], rep(2, 200)))
+testData &lt;- rbind(cbind(class1[testIndices,], rep(1, 500)), 
+                  cbind(class2[testIndices,], rep(2, 500)))
+data &lt;- list(train = trainData, test = testData)
+
+# Count outsiders
+numOutsiders = sum(rowSums(is.in.convex(data$test[,propertyVars], 
+                                data$train[,propertyVars], c(200, 200))) == 0)
+cat(numOutsiders, "outsiders found in the testing sample.\n")
+</code></pre>
+
+
+</div>

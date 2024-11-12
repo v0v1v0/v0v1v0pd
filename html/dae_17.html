@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>decomp.relate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Examines the relationship between the eigenvectors for two decompositions</h2>
+
+<h3>Description</h3>
+
+<p>Two decompositions produced by <code>proj2.eigen</code> are compared 
+by computing all pairs of crossproduct sums of eigenvectors from the 
+two decompositions. It is most useful when the calls to 
+<code>proj2.eigen</code> have the same Q1.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">decomp.relate(decomp1, decomp2)</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>decomp1</code></td>
+<td>
+<p>A <code>list</code> containing components efficiencies and eigenvectors such as 
+is produced by <code>proj2.eigen</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>decomp2</code></td>
+<td>
+<p>Another <code>list</code> containing components efficiencies and eigenvectors 
+such as is produced by <code>proj2.eigen</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Each element of the r1 x r2 <code>matrix</code> is the sum of crossproducts of a pair of 
+eigenvectors, one from each of the two decompositions. A sum is regarded as zero 
+if it is less than <code>daeTolerance</code>, which is initially set to 
+.Machine$double.eps ^ 0.5 (about 1.5E-08). The function <code>set.daeTolerance</code> 
+can be used to change <code>daeTolerance</code>.</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>matrix</code> that is r1 x r2 where r1 and r2 are the numbers of efficiencies 
+of <code>decomp1</code> and <code>decomp2</code>, respectively. The <code>rownames</code> 
+and <code>columnnames</code> of the <code>matrix</code> are the values of the 
+efficiency factors from <code>decomp1</code> and <code>decomp2</code>, respectively.</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Chris Brien</p>
+
+
+<h3>See Also</h3>
+
+<p><code>proj2.eigen</code>, <code>proj2.combine</code> in package <span class="pkg">dae</span>, 
+<code>eigen</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## PBIBD(2) from p. 379 of Cochran and Cox (1957) Experimental Designs. 
+## 2nd edn Wiley, New York
+PBIBD2.unit &lt;- list(Block = 6, Unit = 4)
+PBIBD2.nest &lt;- list(Unit = "Block")
+trt &lt;- factor(c(1,4,2,5, 2,5,3,6, 3,6,1,4, 4,1,5,2, 5,2,6,3, 6,3,4,1))
+PBIBD2.lay &lt;- designRandomize(allocated = trt, 
+                              recipient = PBIBD2.unit, 
+                              nested.recipients = PBIBD2.nest)
+
+##obtain sets of projectors
+unit.struct &lt;- pstructure(~ Block/Unit, data = PBIBD2.lay)
+trt.struct &lt;- pstructure(~ trt, data = PBIBD2.lay)
+
+## obtain intra- and inter-block decompositions
+decomp.inter &lt;- proj2.eigen(unit.struct$Q[["Block"]], trt.struct$Q[["trt"]])
+decomp.intra &lt;- proj2.eigen(unit.struct$Q[["Unit[Block]"]], trt.struct$Q[["trt"]])
+
+## check that intra- and inter-block decompositions are orthogonal
+decomp.relate(decomp.intra, decomp.inter) 
+</code></pre>
+
+
+</div>

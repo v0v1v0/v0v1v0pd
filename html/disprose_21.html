@@ -1,0 +1,186 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>get_GIs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get GenInfo Identifier numbers</h2>
+
+<h3>Description</h3>
+
+<p>Retrieves NCBI sequence identifiers (GIs) for given organism name or taxon identifier.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_GIs(
+  org.name,
+  db,
+  n.start = 1,
+  n.stop = NULL,
+  step = 99999,
+  return.vector = TRUE,
+  check.result = FALSE,
+  term = NULL,
+  temp.dir = NULL,
+  delete.temp = FALSE,
+  verbose = TRUE
+)
+
+get_GIs_fix(
+  gis.list,
+  org.name,
+  db,
+  n.start = 1,
+  n.stop = NULL,
+  step = 99999,
+  term = NULL,
+  temp.dir = NULL,
+  delete.temp = FALSE,
+  verbose = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>org.name</code></td>
+<td>
+<p>character; scientific name or taxon identifier (written as "txid0000") of the organism/taxon.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>db</code></td>
+<td>
+<p>character; NCBI database for search. See entrez_dbs() for possible values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.start</code></td>
+<td>
+<p>integer; download starting value. Default is 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.stop</code></td>
+<td>
+<p>integer; download finishing value. Default is NULL, which provides retrieval of all available GIs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step</code></td>
+<td>
+<p>integer; download increment value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return.vector</code></td>
+<td>
+<p>logical; whether to return GI numbers as character vector (another variant is list of vectors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check.result</code></td>
+<td>
+<p>logical; check if download was done correctly.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>term</code></td>
+<td>
+<p>character; search query.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>temp.dir</code></td>
+<td>
+<p>character; name and path of directory for downloaded temporary files (only for "Windows" OS)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delete.temp</code></td>
+<td>
+<p>logical; delete downloaded files (only for "Windows" OS, does not delete directory).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical; show messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gis.list</code></td>
+<td>
+<p>list of previously downloaded GIs vectors.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function sends the query to NCBI database and returns sequence identifiers according to the query. By default the
+query is organism, so the function returns GI numbers for all sequences that are associated with the requested organism.
+For example, if <code>org.name = "Homo sapiens"</code> the function will download GI numbers for all sequences that answer the query
+"Homo sapiens[Organism]". For any other query use parameter <code>term</code>.
+</p>
+<p>The function downloads GI numbers by piecemeal, by several pieces in one block. The size of the block is defined by parameter
+<code>step</code>. It is useful if by any reason the download was interrupted, so later it is possible to reload only
+the missing blocks without the need to reload the entire amount of data. By default, all available GI numbers are downloaded,
+but you may also choose start and finish notes by specifying the parameters <code>n.start</code> and <code>n.stop</code>. The numeration starts with 1, not 0.
+At the end the resulting list of blocks (list of character vectors) is unlisted into one character vector. You may prevent this by setting
+<code>return.vector = FALSE</code>. Also, regardless of <code>return.vector</code> settings, the list of blocks is returned if the download was somehow compromised.
+</p>
+<p>If download was corrupted you may use <code>get_GIs_fix()</code> function to reload the missing block. The corrupted list of blocks
+should be set in <code>gis.list</code> parameter. You may also check and reload data when <code>get_GIs()</code> function is running
+by specifying <code>check.result = TRUE</code>.
+</p>
+<p>The function checks for user's OS type. For Windows temporal files are created while downloading,
+so <code>temp.dir</code> and <code>delete.temp</code> parameters should be set. This helps to solve the
+"routines:SSL23_GET_SERVER_HELLO:tlsv1 alert protocol version" problem by using <code>curl</code> instead of <code>RCurl</code>.
+However it slows down the function.If there is no <code>temp.dir</code> directory, it will be
+created and will not be removed (only temporal files will be deleted if <code>delete.temp = TRUE</code>).
+</p>
+<p>In progress the functions turn off and on scientific notation.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>get_GIs()</code> returns character vector of GI numbers. If <code>return.vector = FALSE</code> or there are missing data,
+list of character vectors is returned.
+</p>
+<p><code>get_GIs_fix()</code> returns list of character vectors.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>get_GIs</code>: Retrieves NCBI sequence identifiers (GIs) for given organism name or taxon identifier.
+</p>
+</li>
+<li> <p><code>get_GIs_fix</code>: Checks the downloads and tries to retrieve the compromised data.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Elena N. Filatova
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">gi.list&lt;-get_GIs(org.name="txid9606", db="nucleotide",
+                n.start=1, n.stop=3, step=1,
+                return.vector = FALSE, check.result=TRUE,
+                temp.dir = tempdir(),  delete.temp=TRUE)
+
+</code></pre>
+
+
+</div>

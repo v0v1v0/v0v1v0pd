@@ -1,0 +1,257 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DIFtree</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Item focussed Trees for the Identification of Items in Differential Item Functioning</h2>
+
+<h3>Description</h3>
+
+<p>A function to estimate item focussed trees for simultaneous selection of items and variables 
+that induce DIF (Differential Item Functioning) in dichotomous or polytomous items. DIF detection can be
+based on the Rasch Model (dichotomous case), the Logistic Regression Approach (dichotomous case) or the Partial Credit Model (polytomous case).
+The basic method of item focussed recursive partitioning in Rasch Models is described in Tutz and Berger (2015).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DIFtree(Y, X, model = c("Rasch", "Logistic", "PCM"), type = c("udif",
+  "dif", "nudif"), alpha = 0.05, nperm = 1000, trace = FALSE,
+  penalize = FALSE, ...)
+
+## S3 method for class 'DIFtree'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>Matrix or Data.frame of binary 0/1 or categorical response (rows correspond to persons, columns correspond to items)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Data.frame of (not scaled) covariates (rows correspond to persons, columns correspond to covariates)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>Type of model to be fitted; can be <code>"Rasch"</code>, <code>"Logistic"</code> or <code>"PCM"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Type of DIF to be modelled; one out of <code>"udif"</code>, <code>"dif"</code> and <code>"nudif"</code>. 
+For <code>"Rasch"</code> and <code>"PCM"</code> only uniform DIF can be modelled and therefore <code>type</code> will be ignored.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha</code></td>
+<td>
+<p>Global significance level for the permutation tests</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nperm</code></td>
+<td>
+<p>Number of permutations used for the permutation tests</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>If true, information about the estimation progress is printed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>penalize</code></td>
+<td>
+<p>If true, a small ridge penalty is added to ensure existence of model parameters; only for <code>"Rasch"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to or from other methods</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Object of class <code>"DIFtree"</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The methods require 0/1 coded answers on binary items (<code>"Rasch"</code> and <code>"Logistic"</code>) or categorical answers on polytomous items (<code>"PCM"</code>). 
+Items with DIF are gradually identified by recursive partitioning.
+</p>
+<p>For <code>"Rasch"</code> one yields a model with linear predictors 
+</p>
+<p style="text-align: center;"><code class="reqn">eta_{pi}=theta_p-tr_i(x_p),</code>
+</p>
+
+<p>where <code class="reqn">theta_p</code> correspond to the ability and <code class="reqn">x_p</code> correspond to the covariate vector of person p. 
+</p>
+<p>For <code>"Logistic"</code> one yields a model with linear predictors 
+</p>
+
+<ul>
+<li>
+<p> Uniform DIF, <code>type="udif"</code>
+</p>
+<p style="text-align: center;"><code class="reqn">eta_{pi}=S_p beta_i+tr_i(x_p),</code>
+</p>
+
+<p>where <code class="reqn">S_p</code> corresponds to the test score and <code class="reqn">x_p</code> corresponds to the covariate vector of person p.
+</p>
+</li>
+<li>
+<p> DIF and Non-Uniform DIF, <code>type="dif", "nudif"</code>
+</p>
+<p style="text-align: center;"><code class="reqn">eta_{pi}=tr_i(x_p)+tr_i(S_p,x_p),</code>
+</p>
+
+<p>where <code class="reqn">S_p</code> corresponds to the test score and <code class="reqn">x_p</code> corresponds to the covariate vector of person p. 
+</p>
+</li>
+</ul>
+<p>For <code>"PCM"</code> one yields a model with linear predictors 
+</p>
+<p style="text-align: center;"><code class="reqn">eta_{pir}=theta_p-tr_{ir}(x_p),</code>
+</p>
+
+<p>where <code class="reqn">theta_p</code> correspond to the ability and <code class="reqn">x_p</code> correspond to the covariate vector of person p.
+</p>
+<p>Significance of each split is verified by permutation tests. The result of the permutation tests 
+can strongly depend on the number of permutations <code>nperm</code>.
+In the case of pure terminal nodes estimates of the model do not exist. If <code>penalize=TRUE</code> 
+a small ridge penalty is added during estimation to ensure existence of all parameters.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class <code>"DIFtree"</code>. 
+An object of class <code>"DIFtree"</code> is a list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>Matrix with detailed information about all executed splits during the estimation process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p>List of estimated coefficients for items with and without DIF. 
+Structure of <code>coefficients</code> depends on <code>model</code> and <code>type</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pvalues</code></td>
+<td>
+<p>P-values of each permutation test during the estimation process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>devs</code></td>
+<td>
+<p>Maximal value statistics <code class="reqn">T_j</code> of the selected variables in each iteration during the estimation process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crit</code></td>
+<td>
+<p>Critical values of each permutation test during the estimation process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Y</code></td>
+<td>
+<p>Response matrix used in the estimation process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>Model matrix used in the estimation process</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>persons</code></td>
+<td>
+<p>Number of persons</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>items</code></td>
+<td>
+<p>Number of items</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Moritz Berger &lt;moritz.berger@imbie.uni-bonn.de&gt; <br><a href="http://www.imbie.uni-bonn.de/personen/dr-moritz-berger/">http://www.imbie.uni-bonn.de/personen/dr-moritz-berger/</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Berger, Moritz and Tutz, Gerhard (2016): Detection of Uniform and Non-Uniform Differential Item Functioning 
+by Item Focussed Trees, Journal of Educational and Behavioral Statistics 41(6), 559-592.
+</p>
+<p>Bollmann, Stella, Berger, Moritz &amp; Tutz, Gerhard (2018): Item-Focussed Trees for the Detection 
+of Differential Item Functioning in Partial Credit Models, Educational and Psychological Measurement 78(5), 781-804.
+</p>
+<p>Swaminathan, Hariharan and Rogers, H Jane (1990): Detecting differential item functioning 
+using logistic regression procedures, Journal of Educational Measurements 27(4), 361-370.
+</p>
+<p>Tutz, Gerhard and Berger, Moritz (2016): Item focussed Trees for the Identification of Items
+in Differential Item Functioning, Psychometrika 81(3), 727-750.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>plot.DIFtree</code>, <code>predict.DIFtree</code>, <code>summary.DIFtree</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(data_sim_Rasch)
+data(data_sim_PCM)
+ 
+Y1 &lt;- data_sim_Rasch[,1]
+X1 &lt;- data_sim_Rasch[,-1]
+
+Y2 &lt;- data_sim_PCM[,1]
+X2 &lt;- data_sim_PCM[,-1]
+ 
+## Not run: 
+ 
+mod1 &lt;- DIFtree(Y=Y1,X=X1,model="Logistic",type="udif",alpha=0.05,nperm=1000,trace=TRUE)
+print(mod1)
+
+mod2 &lt;- DIFtree(Y=Y2,X=X2,model="PCM",alpha=0.05,nperm=100,trace=TRUE)
+print(mod2)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

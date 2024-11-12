@@ -1,0 +1,167 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>b2ML</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+MCMC estimates for the (multilevel) b2 model
+</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the (multilevel) b2 model parameters, which is the bidirectional counterpart of the multilevel p2 model as described in Zijlstra, Van Duijn and Snijders (2006) &lt;doi: 10.1027/1614-2241.2.1.42&gt;.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">b2ML(nets, actor = NULL, density = NULL, adapt = NULL, burnin = NULL, center = NULL, 
+separate= NULL, densVar = NULL, seed = NULL) 
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nets</code></td>
+<td>
+<p>List with n dichotomous symmetric dependent networks.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>actor</code></td>
+<td>
+<p>Optional matrix with a stacked actor covariate, corresponding to the n networks. Multiple actor covariates can be added as a formula object, see example below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>density</code></td>
+<td>
+<p>Optional matrix with symmetric a stacked density covariate, with dimensions similar to the n dependent networks. Multiple density covariates can be added as a formula object, see example below</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>adapt</code></td>
+<td>
+<p>Optional number of adaptive sequenses (default is 100).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>burnin</code></td>
+<td>
+<p>Optional specification of number of burn-in iterations (default is 5000).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>center</code></td>
+<td>
+<p>Optional argument for centering predictors (default is TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>separate</code></td>
+<td>
+<p>Optional argument for estimating separate coefficients for the n dependent networks (default is FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>densVar</code></td>
+<td>
+<p>Optional argument for estimating densty variance at the network level (default is TRUE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Optonal specification of random seed (delfault is 1).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a fitted model of class b2ML, to be opened with the function summary().
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Bonne J.H. Zijlstra <a href="mailto:b.j.h.zijlstra@uva.nl">b.j.h.zijlstra@uva.nl</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Zijlstra, B. J., Van Duijn, M. A., &amp; Snijders, T. A. (2006). The Multilevel p2 Model A random effects model for the analysis of multiple social networks. <em>Methodology: European Journal of Research Methods for the Behavioral and Social Sciences</em>, 2(1), 42.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# create two very small networks with covariates for illustrative purposes
+Y1 &lt;- matrix(c( 0,1,1,1,1,1,1,1,1,0,
+                1,0,1,0,1,1,1,1,1,1,
+                1,1,0,0,1,1,1,1,0,1,
+                1,0,0,0,1,0,0,1,0,0,
+                1,1,1,1,0,1,1,0,1,1,
+                1,1,1,0,1,0,1,0,1,1,
+                1,1,1,0,1,1,0,1,1,1,
+                1,1,1,1,0,0,1,0,0,1,
+                1,1,0,0,1,1,1,0,0,1,
+                0,1,1,0,1,1,1,1,1,0), ncol=10) 
+Y2 &lt;- matrix(c( 0,0,1,0,1,1,0,1,0,0,
+                0,0,0,0,0,0,0,1,1,0,
+                1,0,0,1,0,1,0,1,0,0,
+                0,0,1,0,0,0,1,1,0,0,
+                1,0,0,0,0,0,1,1,0,0,
+                1,0,1,0,0,0,1,1,0,0,
+                0,0,0,1,1,1,0,1,0,0,
+                1,1,1,1,1,1,1,0,0,1,
+                0,1,0,0,0,0,0,0,0,0,
+                0,0,0,0,0,0,0,1,0,0), ncol=10) 
+Y &lt;- list(Y1, Y2)                
+Aa1 &lt;- c(1,0,1,0,1,1,0,1,0,1)
+Aa2 &lt;- c(1,0,0,1,0,0,1,1,0,1)
+Aa &lt;- list(Aa1, Aa2)
+Aat &lt;- do.call(plyr::rbind.fill.matrix, Aa)
+Ab1 &lt;- c(0,0,0,0,0,0,0,0,0,0)
+Ab2 &lt;- c(1,1,1,1,1,1,1,1,1,1)
+Ab &lt;- list(Ab1, Ab2)
+Abt &lt;- do.call(plyr::rbind.fill.matrix, Ab)
+Da1 &lt;- abs(matrix(rep(Aa1,10), byrow = FALSE, ncol= 10) -
+            matrix(rep(Aa1,10), byrow = TRUE, ncol= 10))
+Da2 &lt;- abs(matrix(rep(Aa2,10), byrow = FALSE, ncol= 10) -
+            matrix(rep(Aa2,10), byrow = TRUE, ncol= 10))
+Da &lt;- list(Da1, Da2)
+Dat &lt;- do.call(plyr::rbind.fill.matrix, Da)
+
+# estimate b2 model for two networks
+M1 &lt;- b2ML(Y,actor= ~ Aat + Abt, density = ~ Dat, adapt = 10, burnin = 100, densVar = FALSE)
+summary(M1)
+# Notice: burn-in, and number of adaptive sequenses are 
+# much smaller than recommended to keep computation time low.
+# recommended code: 
+## Not run: 
+M1 &lt;- b2ML(Y,actor= ~ Aat + Abt, density = ~ Dat, densVar = FALSE)
+summary(M1)
+
+## End(Not run)
+
+# estimate b2 model for a single network
+M2 &lt;- b2ML(list(Y[[1]]),actor= ~ Aat[1:10,], density = ~ Dat[1:10,], adapt = 10, burnin = 100, 
+densVar = FALSE)
+summary(M2)
+# Notice: burn-in, and number of adaptive sequenses are 
+# much smaller than recommended to keep computation time low.
+# recommended code: 
+## Not run: 
+M2 &lt;- b2ML(list(Y[[1]]),actor= ~ Aat[1:10,], density = ~ Dat[1:10,], densVar = FALSE)
+summary(M2)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

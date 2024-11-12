@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>Predictor</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predictor class description</h2>
+
+<h3>Description</h3>
+
+<p>A wrapper class for generic ML algorithms (xgboost, RF, BART, rpart, etc.)
+in order to standardize the predictions given by different algorithms to be
+compatible with the interpretability functions.
+</p>
+<p>The necessary variables are model, data, y. The other variables are
+optional, and depend on the use cases. Type should be used only when
+a prediction function is NOT specified.
+</p>
+<p>The outputs of the algorithm must be the values if it is regression, or
+probabilities if classification. For classification problems with more than
+two categories, the output comes out as vectors of probabilities for the
+specified "class" category. Because this is for ML interpretability,
+other types of predictions (ex: predictions that spit out the factor) are not allowed.
+</p>
+
+
+<h3>Public fields</h3>
+
+<div class="r6-fields">
+
+<dl>
+<dt><code>data</code></dt>
+<dd>
+<p>The training data that was used during training for the model. This should
+be a data frame matching the data frame the model was given for training, which
+includes the label or outcome.</p>
+</dd>
+<dt><code>model</code></dt>
+<dd>
+<p>The object corresponding to the trained model that we want to make a
+Predictor object for. If this model doesn't have a generic predict method,
+the user has to provide a custom predict function that accepts a data frame.</p>
+</dd>
+<dt><code>task</code></dt>
+<dd>
+<p>The prediction task the model is trained to perform ('classification' or 'regression').</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>The class for which we get predictions. We specify this to get the predictions
+(such as probabilites) for an observation being in a specific class (e.g. Male or Female).
+This parameter is necessary for classification predictions with more than a single vector
+of predictions.</p>
+</dd>
+<dt><code>prediction.function</code></dt>
+<dd>
+<p>An optional parameter if the model doesn't have a
+generic prediction function. This should take a data frame and return a
+vector of predictions for each observation in the data frame.</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>The name of the outcome feature in the 'data' data frame.</p>
+</dd>
+</dl>
+</div>
+
+
+<h3>Methods</h3>
+
+
+
+<h4>Public methods</h4>
+
+
+<ul>
+<li> <p><a href="#method-Predictor-new"><code>Predictor$new()</code></a>
+</p>
+</li>
+<li> <p><a href="#method-Predictor-clone"><code>Predictor$clone()</code></a>
+</p>
+</li>
+</ul>
+<hr>
+<a id="method-Predictor-new"></a>
+
+
+
+<h4>Method <code>new()</code>
+</h4>
+
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Predictor$new(
+  model = NULL,
+  data = NULL,
+  predict.func = NULL,
+  y = NULL,
+  task = NULL,
+  class = NULL,
+  type = NULL
+)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>model</code></dt>
+<dd>
+<p>The object corresponding to the trained model that we want to make a
+Predictor object for. If this model doesn't have a generic predict method,
+the user has to provide a custom predict function that accepts a data frame.</p>
+</dd>
+<dt><code>data</code></dt>
+<dd>
+<p>The training data that was used during training for the model. This should
+be a data frame matching the data frame the model was given for training, including
+the label or outcome.</p>
+</dd>
+<dt><code>predict.func</code></dt>
+<dd>
+<p>An optional parameter if the model doesn't have a
+generic prediction function. This should take a data frame and return a
+vector of predictions for each observation in the data frame.</p>
+</dd>
+<dt><code>y</code></dt>
+<dd>
+<p>The name of the outcome feature in the 'data' data frame.</p>
+</dd>
+<dt><code>task</code></dt>
+<dd>
+<p>The prediction task the model is trained to perform ('classification' or 'regression').</p>
+</dd>
+<dt><code>class</code></dt>
+<dd>
+<p>The class for which we get predictions. We specify this to get the predictions
+(such as probabilites) for an observation being in a specific class (e.g. Male or Female).
+This parameter is necessary for classification predictions with more than a single vector
+of predictions.</p>
+</dd>
+<dt><code>type</code></dt>
+<dd>
+<p>The type of predictions done (i.e. 'response' for predicted probabliities for classification).
+This feature should only be used if no predict.func is specified.</p>
+</dd>
+</dl>
+</div>
+
+
+
+<h5>Returns</h5>
+
+<p>A 'Predictor' object.
+</p>
+
+
+<hr>
+<a id="method-Predictor-clone"></a>
+
+
+
+<h4>Method <code>clone()</code>
+</h4>
+
+<p>The objects of this class are cloneable with this method.
+</p>
+
+
+<h5>Usage</h5>
+
+<div class="r"><pre>Predictor$clone(deep = FALSE)</pre></div>
+
+
+
+<h5>Arguments</h5>
+
+<div class="arguments">
+
+<dl>
+<dt><code>deep</code></dt>
+<dd>
+<p>Whether to make a deep clone.</p>
+</dd>
+</dl>
+</div>
+
+
+
+
+<h3>Note</h3>
+
+<p>The class that wraps a machine learning model in order to provide a
+standardized method for predictions for different models.
+prediction method must be constructed, with optional argument of type
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library(distillML)
+library(Rforestry)
+set.seed(491)
+data &lt;- iris
+
+test_ind &lt;- sample(1:nrow(data), nrow(data)%/%5)
+train_reg &lt;- data[-test_ind,]
+test_reg &lt;- data[test_ind,]
+
+
+forest &lt;- forestry(x=data[,-1],
+                   y=data[,1])
+
+forest_predictor &lt;- Predictor$new(model = forest, data=train_reg,
+                                  y="Sepal.Length", task = "regression")
+
+</code></pre>
+
+
+</div>

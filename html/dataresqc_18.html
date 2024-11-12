@@ -1,0 +1,128 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>qc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Apply all tests</h2>
+
+<h3>Description</h3>
+
+<p>Perform all quality tests at once on multiple stations and multiple
+variables.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">qc(Data, Metadata = NULL, outpath, time_offset = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>Either a character vector of paths to SEF files, a data frame
+or a list of data frames with 7 columns (one data frame for each station):
+variable code, year, month, day, hour, minute, value.
+Each data frame can contain more than one variable code.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Metadata</code></td>
+<td>
+<p>A data frame with 7 columns: station ID, latitude, longitude,
+altitude, variable code, units, resolution. If <code>Data</code> is a list, the station 
+IDs must appear in the same order of the respective elements in the list.
+'resolution' can be either 'daily' (or 'd') or 'subdaily' (or 's').
+If <code>Data</code> is a vector, <code>Metadata</code> is ignored and all the
+required information is read from the SEF files.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outpath</code></td>
+<td>
+<p>Character string giving the path where the output is saved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time_offset</code></td>
+<td>
+<p>Numerical vector (of length 1 or equal to the number of 
+analysed stations) of the number of hours to add to the time 
+to obtain local time. This is used for tests on day and night temperature.
+Recycled for all stations if only one value is given. Data not stored
+in SEF files (i.e., not in UTC) are typically already expressed in local time:
+in this case the offset is zero (the default).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This is a wrapper of all functions that can be applied to the variables given
+in <code>Data</code> (except the plotting functions).
+</p>
+<p><code>Data</code> can include any supported variable (see Variables) from 
+different stations. The algorithm
+will select the tests that can be applied to each variable. Note that some
+tests require more than one variable from the same station.
+</p>
+<p>This function produces flag files (one for each variable at each
+station). The filenames follow the standard 
+'qc_&lt;stationID&gt;_&lt;varcode&gt;_&lt;resolution&gt;.txt'.
+Each files contains a table of flagged values, with the last column
+indicating the tests failed by each flagged observation.
+</p>
+<p>The flag files can be edited by hand to remove or add flags. The flags can 
+then be added to the 'Meta' column of SEF files by using the function 
+write_flags.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The tests will use their default parameters (e.g. thresholds). To use
+custum parameters run the tests one by one.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Yuri Brugnara
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Testing all variables for Rosario de Santa Fe
+
+# Create a data frame with all data from list Rosario
+# For daily data we need to add the hour and minute columns (NAs)
+Ros &lt;- Rosario
+Ros$Tx[,c("Hour","Minute")] &lt;- NA
+Ros$Tn[,c("Hour","Minute")] &lt;- NA
+Ros$rr[,c("Hour","Minute")] &lt;- NA
+Ros &lt;- do.call("rbind", Ros)
+Ros &lt;- Ros[, c("Var","Year","Month","Day","Hour","Minute","Value")]
+
+# Create a data frame with metadata including data resolution
+df_meta &lt;- do.call("rbind", Meta)
+df_meta &lt;- df_meta[which(df_meta$id=="Rosario"), ]
+df_meta$res &lt;- c("s", "s", "d", "d", "s", "s", "d", rep("s",4))
+
+# Run all qc tests at once
+# Time for Rosario is in UTC, therefore an offset is needed to get local time 
+qc(Ros, df_meta, outpath = tempdir(), time_offset=-4.28)
+
+
+# Testing one variable at one station
+qc(Bern$ta, cbind(Meta$ta[which(Meta$ta$id=="Bern"),],"s"), 
+   outpath = tempdir(), time_offset=0)
+   
+</code></pre>
+
+
+</div>

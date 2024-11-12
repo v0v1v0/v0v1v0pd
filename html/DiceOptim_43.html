@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>sampleFromEI</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sampling points according to the expected improvement criterion</h2>
+
+<h3>Description</h3>
+
+<p>Samples <code>n</code> points from a distribution proportional to the expected
+improvement (EI) computed from a <code>km</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">sampleFromEI(
+  model,
+  minimization = TRUE,
+  n = 1,
+  initdistrib = NULL,
+  lower = rep(0, model@d),
+  upper = rep(1, model@d),
+  T = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minimization</code></td>
+<td>
+<p>logical specifying if EI is used in minimiziation or in
+maximization,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>number of points to be sampled,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>initdistrib</code></td>
+<td>
+<p>matrix of candidate points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>T</code></td>
+<td>
+<p>optional scalar : if provided, it replaces the current minimum (or
+maximum) of observations.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>n*d</code> matrix containing the sampled points. If <code>NULL</code>, <code>1000*d</code> points 
+are obtained by latin hypercube sampling,
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Sebastien Marmin 
+</p>
+<p>Clement Chevalier 
+</p>
+<p>David Ginsbourger
+</p>
+
+
+<h3>References</h3>
+
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global
+optimization of expensive black-box functions, <em>Journal of Global
+Optimization</em>, 13, 455-492.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EI</code>, <code>km</code>, <code>qEI</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+
+set.seed(004)
+
+# a 9-points factorial design, and the corresponding responses
+d &lt;- 2
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+lower &lt;- c(0,0)
+upper &lt;- c(1,1)
+names(response.branin) &lt;- "y" 
+
+
+# model identification
+fitted.model &lt;- km(~1, design=design.fact, response=response.branin, 
+                   covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# sample a 30 point batch
+batchSize &lt;- 30
+x &lt;- sampleFromEI(model = fitted.model, n = batchSize, lower = lower, upper = upper)
+
+# graphics 
+# displays the EI criterion, the design points in black and the EI-sampled points in red.
+nGrid &lt;- 15
+gridAxe1 &lt;- seq(lower[1],upper[1],length=nGrid)
+gridAxe2 &lt;- seq(lower[2],upper[2],length=nGrid)
+grid &lt;- expand.grid(gridAxe1,gridAxe2)
+aa &lt;- apply(grid,1,EI,model=fitted.model)
+myMat &lt;- matrix(aa,nrow=nGrid)
+image(x = gridAxe1, y = gridAxe2, z = myMat, 
+      col = colorRampPalette(c("darkgray","white"))(5*10), 
+      ylab = names(design.fact)[1], xlab=names(design.fact)[2], 
+      main = "Sampling from the expected improvement criterion", 
+      axes = TRUE, zlim = c(min(myMat), max(myMat)))
+contour(x = gridAxe1, y = gridAxe2, z = myMat, 
+        add = TRUE, nlevels = 10)
+points(x[,1],x[,2],pch=19,col='red')
+points(fitted.model@X[,1],fitted.model@X[,2],pch=19)
+
+
+</code></pre>
+
+
+</div>

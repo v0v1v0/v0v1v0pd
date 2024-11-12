@@ -1,0 +1,227 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>log1pmx</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Accurate  <code>log(1+x) - x</code>  Computation</h2>
+
+<h3>Description</h3>
+
+<p>Compute </p>
+<p style="text-align: center;"><code class="reqn">\log(1+x) - x</code>
+</p>
+
+<p>accurately also for small <code class="reqn">x</code>, i.e., <code class="reqn">|x| \ll 1</code>.
+</p>
+<p>Since April 2021, the pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> code version <code>log1pmx()</code> also works
+for "mpfr" numbers (from package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>).
+</p>
+<p><code>rlog1(x)</code>, provided mostly for reference and reproducibility, is
+used in TOMS Algorithm 708, see e.g. the reference of <code>lgamma1p</code>.
+and computes <em>minus</em> log1pmx(x), i.e., <code class="reqn">x - \log(1+x)</code>,
+using (argument reduction) and a rational approximation when
+<code class="reqn">x \in [-0.39, 0.57)</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">log1pmx (x, tol_logcf = 1e-14, eps2 = 0.01, minL1 = -0.79149064,
+         trace.lcf = FALSE,
+         logCF = if(is.numeric(x)) logcf else logcfR.)
+log1pmxC(x)  # TODO in future: arguments (minL1, eps2, tol_logcf),
+             # possibly with *different* defaults (!)
+rlog1(x)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric (or, for <code>log1pmx()</code> only, <code>"mpfr"</code>
+number) vector with values <code class="reqn">x &gt; -1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tol_logcf</code></td>
+<td>
+<p>a non-negative number indicating the tolerance
+(maximal relative error) for the auxiliary <code>logcf()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps2</code></td>
+<td>
+<p>non-negative cutoff where the algorithm switches from a few
+terms, to using <code>logcf()</code> explicitly.  Note that for
+more accurate mpfr-numbers the default <code>eps = .01</code> is too large,
+even more so when the tolerance is lowered (from <code>1e-14</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minL1</code></td>
+<td>
+<p>negative cutoff, called <code>minLog1Value</code> in Morten
+Welinder's C code for <code>log1pmx()</code> in ‘<span class="file">R/src/nmath/pgamma.c</span>’,
+hard coded there to -0.79149064 which seems not optimal for
+computation of <code>log1pmx()</code>, at least in some cases, and hence
+<b>the default may be changed in the future</b>.  Also, for mpfr numbers,
+the default -0.79149064 may well be far from optimal.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace.lcf</code></td>
+<td>
+<p><code>logical</code> used in
+<code>logcf(.., trace=trace.lcf)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logCF</code></td>
+<td>
+<p>the <code>function</code> to be used as
+<code>logcf()</code>.  The default chooses the pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> <code>logcfR()</code>
+when <code>x</code> is not numeric, and chooses the C-based <code>logcf()</code>
+when <code>is.numeric(x)</code> is true.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<p>In order to provide full (double precision) accuracy,
+the computations happens differently in three regions for <code class="reqn">x</code>,
+</p>
+<p style="text-align: center;"><code class="reqn">m_l = \code{minL1} = -0.79149064</code>
+</p>
+<p> is the first cutpoint,
+</p>
+
+<dl>
+<dt>
+<code class="reqn">x &lt; m_l</code> or <code class="reqn">x &gt; 1</code>:</dt>
+<dd>
+<p>use <code>log1pmx(x) := log1p(x) - x</code>,</p>
+</dd>
+<dt>
+<code class="reqn">|x| &lt; \epsilon_2</code>:</dt>
+<dd>
+<p>use
+<code class="reqn">t((((2/9 * y + 2/7)y + 2/5)y + 2/3)y - x)</code>,</p>
+</dd>
+<dt>
+<code class="reqn">x \in [ml,1]</code>, and <code class="reqn">|x| \ge \epsilon_2</code>:</dt>
+<dd>
+<p>use
+<code class="reqn">t(2y logcf(y, 3, 2) - x)</code>,</p>
+</dd>
+</dl>
+<p>where <code class="reqn">t := \frac{x}{2 + x}</code>, and <code class="reqn">y := t^2</code>.
+</p>
+<p>Note that the formulas based on <code class="reqn">t</code> are based on the (fast
+converging) formula
+</p>
+<p style="text-align: center;"><code class="reqn">\log(1+x) = 2\left(r + \frac{r^3}{3}+ \frac{r^5}{5} + \ldots\right),</code>
+</p>
+
+<p>where <code class="reqn">r := x/(x+2)</code>, see the reference.
+</p>
+<p><code>log1pmxC()</code> is an interface to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> C API (‘<span class="file">Rmathlib</span>’) function.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a numeric vector (with the same attributes as <code>x</code>).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>A translation of Morten Welinder's C code of Jan 2005, see R's bug
+issue <a href="https://bugs.R-project.org/show_bug.cgi?id=7307">PR#7307</a>, parametrized and tuned by Martin Maechler.
+</p>
+
+
+<h3>References</h3>
+
+<p>Abramowitz, M. and Stegun, I. A. (1972)
+<em>Handbook of Mathematical Functions</em>. New York: Dover.
+<a href="https://en.wikipedia.org/wiki/Abramowitz_and_Stegun">https://en.wikipedia.org/wiki/Abramowitz_and_Stegun</a> provides
+links to the full text which is in public domain.<br>
+Formula (4.1.29), p.68.
+</p>
+<p>Martin Mächler (2021).
+
+<em>log1pmx, ... Computing ... Probabilities in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span></em>.
+(<span class="pkg">DPQ</span> package vignette)
+
+
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>logcf</code>, the auxiliary function,
+<code>lgamma1p</code> which calls <code>log1pmx</code>, <code>log1p</code>; also
+<code>expm1x)()</code> which computes <code>expm1(x) - x</code>
+accurately, whereas
+<code>log1pmx(x)</code> computes <code>log1p(x) - x</code> accurately
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">(doExtras &lt;- DPQ:::doExtras()) # TRUE e.g. if interactive()
+n1 &lt;- if(doExtras) 1001 else 201
+curve(log1pmx, -.9999, 7, n=n1); abline(h=0, v=-1:0, lty=3)
+curve(log1pmx, -.1,  .1,  n=n1); abline(h=0, v=0, lty=3)
+curve(log1pmx, -.01, .01, n=n1) -&gt; l1xz2; abline(h=0, v=0, lty=3)
+## C and R versions correspond closely:
+with(l1xz2, stopifnot(all.equal(y, log1pmxC(x), tol = 1e-15)))
+
+e &lt;- if(doExtras) 2^-12 else 2^-8; by.p &lt;- 1/(if(doExtras) 256 else 64)
+xd &lt;- c(seq(-1+e, 0+100*e, by=e), seq(by.p, 5, by=by.p)) # length 676 or 5476 if do.X.
+plot(xd, log1pmx(xd), type="l", col=2, main = "log1pmx(x)")
+abline(h=0, v=-1:0, lty=3)
+
+## --- Compare rexp1() with log1pmx() ----------------------------
+x &lt;- seq(-0.5, 5/8, by=1/256)
+all.equal(log1pmx(x), -rlog1(x), tol = 0) # 2.838e-16 {|rel.error| &lt;= 1.33e-15}
+stopifnot(all.equal(log1pmx(x), -rlog1(x), tol = 1e-14))
+## much more closely:
+x &lt;- c(-1+1e-9, -1+1/256, -(127:50)/128, (-199:295)/512, 74:196/128)
+if(is.unsorted(x)) stop("x must be sorted for plots")
+rlog1.x &lt;- rlog1(x)
+summary(relD &lt;- sfsmisc::relErrV(log1pmx(x), -rlog1.x))
+n.relD &lt;- relD * 2^53
+table(n.relD)
+## 64-bit Linux F36 (gcc 12.2.1):
+## -6  -5  -4  -3  -2  -1   0   2   4   6   8  10  12  14
+##  2   3  13  24  79  93 259 120  48  22  14  15   5   1
+stopifnot(-10 &lt;= n.relD, n.relD &lt;= 20) # above Lnx: [-6, 14]
+
+if(requireNamespace("Rmpfr")) {
+  relE &lt;- Rmpfr::asNumeric(sfsmisc::relErrV(log1pmx(Rmpfr::mpfr(x,128)), -rlog1(x)))
+  plot(x, pmax(2^-54, abs(relE)), log="y", type="l", main= "|rel.Err| of rlog1(x)")
+  rl1.c &lt;- c(-.39, 0.57, -.18, .18) # the cutoffs used inside rlog1()
+  lc &lt;- "gray"
+  abline(v = rl1.c, col=lc, lty=2)
+  axis(3, at=rl1.c, col=lc, cex.axis=3/4, mgp=c(2,.5,0))
+  abline(h= (1:4)*2^-53,  lty=3, col = (cg &lt;- adjustcolor(1, 1/4)))
+  axis(4, at=(1:4)*2^-53, labels=expression(frac(epsilon[c],2), epsilon[c],
+                                            frac(3,2)*epsilon[c], 2*epsilon[c]),
+       cex.axis = 3/4, tcl=-1/4, las = 1, mgp=c(1.5,.5,0), col=cg)
+  ## it seems the -.18 +.18 cutoffs should be slightly moved "outside"
+}
+
+## much more graphics etc in ../tests/dnbinom-tst.R  (and the vignette, see above)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,113 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>scale_value</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>scale_value</h2>
+
+<h3>Description</h3>
+
+<p>Check and interpret <code>value</code> on <code>scale</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">scale_value(value, scale)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>A wide range of possible value types, including  integer, double, character and list vectors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+<p>A DexiScale or derived object.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The result is produced depending on <code>value</code> and <code>scale</code> according to the following tables.
+For any scale type:
+</p>
+<pre>
+value                          result
+------------------------------+------------------
+NULL                           NULL
+length(value == 0)             NULL
+NA                             scale$full_range()
+other types                    ERROR
+value contains any NULL or NA  ERROR
+------------------------------+------------------
+</pre>
+<p>For continuous scales:
+</p>
+<pre>
+value                          result
+------------------------------+------------------
+length(value != 1)             ERROR
+character                      ERROR
+named object                   ERROR
+length(value == 1)             unclass(value)
+------------------------------+------------------
+</pre>
+<p>For discrete scales:
+</p>
+<pre>
+value                          result
+------------------------------+------------------
+distribution class             value
+all-integer numeric vector     value
+non all-integer numeric vector distribution(value)
+"*" or "undef"...              scale$full_range()
+list of value names            matched value set
+list of name=p                 distribution(value)
+------------------------------+------------------
+</pre>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Examples of successfully checked (witout error) values on a continuous scale
+scl &lt;- DexiContinuousScale()
+scale_value(NULL, scl)               # NA
+scale_value(c(), scl)                # NA
+scale_value(list(), scl)             # NA
+scale_value(character(), scl)        # NA
+scale_value(NA, scl)                 # NA
+scale_value(c(NA), scl)              # NA
+scale_value(15.5, scl)               # 15.5
+scale_value(distribution(15.5), scl) # 15.5
+
+# Examples of successfully checked (without error) values on a discrete scale
+scl &lt;- DexiDiscreteScale(values = c("low", "med", "high"))
+scale_value(NULL, scl)                        # NA
+scale_value(c(), scl)                         # NA
+scale_value(list(), scl)                      # NA
+scale_value(NA, scl)                          # NA
+scale_value("*", scl)                         # 1:3
+scale_value("Undefined", scl)                 # 1:3
+scale_value(2, scl)                           # 2
+scale_value(c(-1, 2, 4), scl)                 # c(-1, 2, 4))
+scale_value(distribution(c(-1, 2, 4)), scl)   # distribution(c(-1, 2, 4)))
+scale_value(c(-1, 2.2, 4), scl)               # distribution(c(-1, 2.2, 4)))
+scale_value("high", scl)                      # 3
+scale_value(c("low", "high"), scl)            # c(1,3))
+v &lt;- c(0.5, 0.4)
+names(v) &lt;- c("low", "high")
+scale_value(v, scl)                           # distribution(c(0.5, 0, 0.4)))
+scale_value(list(high = 1.1, low = 2.2), scl) # distribution(c(2.2, 0, 1.1)))
+
+</code></pre>
+
+
+</div>

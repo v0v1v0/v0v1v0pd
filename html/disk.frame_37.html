@@ -1,0 +1,73 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_chunk_mapper</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create function that applies to each chunk if disk.frame</h2>
+
+<h3>Description</h3>
+
+<p>A function to make it easier to create functions like <code>filter</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_chunk_mapper(chunk_fn, warning_msg = NULL, as.data.frame = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>chunk_fn</code></td>
+<td>
+<p>The dplyr function to create a mapper for</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warning_msg</code></td>
+<td>
+<p>The warning message to display when invoking the mapper</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as.data.frame</code></td>
+<td>
+<p>force the input chunk of a data.frame; needed for dtplyr</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+filter = create_chunk_mapper(dplyr::filter)
+
+#' example: creating a function that keeps only the first and last n row
+first_and_last &lt;- function(chunk, n, ...) {
+  nr = nrow(chunk)
+  print(nr-n+1:nr)
+  chunk[c(1:n, (nr-n+1):nr), ]
+}
+
+#' create the function for use with disk.frame
+first_and_last_df = create_chunk_mapper(first_and_last)
+
+mtcars.df = as.disk.frame(mtcars)
+
+#' the operation is lazy
+lazy_mtcars.df = mtcars.df %&gt;%
+  first_and_last_df(2)
+
+#' bring into R
+collect(lazy_mtcars.df)
+
+#' clean up
+delete(mtcars.df)
+
+</code></pre>
+
+
+</div>

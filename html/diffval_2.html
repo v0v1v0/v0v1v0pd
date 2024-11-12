@@ -1,0 +1,182 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>bigdata_tdv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>The Total Differential Value of a big phytosociological data set</h2>
+
+<h3>Description</h3>
+
+<p>Given a big phytosociological data set represented as a list, and a partition
+of the relevés in that list, this function calculates the respective Total
+Differential Value (TDV).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">bigdata_tdv(
+  phyto_list,
+  p,
+  n_rel,
+  output_type = "normal",
+  parallel = FALSE,
+  mc_cores = getOption("mc.cores", 2L)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>phyto_list</code></td>
+<td>
+<p>A list. This is a very light representation of what could
+be a usual phytosociological table, registering only taxa presences. Each
+component should uniquely represent a taxon and should contain a vector (of
+numeric values) with the relevé(s) id(s) where that taxon was observed.
+Relevé's ids are expected to be represented by consecutive integers,
+starting with 1. The components of the list might be named (e.g. using the
+taxon name) or empty (decreasing further memory burden). However, for
+<code>output_type == "normal"</code> taxa names are useful for output interpretation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>A vector of integer numbers with the partition of the relevés (i.e.,
+a k-partition, consisting in a vector with values from 1 to k, with length
+equal to the number of relevés in <code>phyto_list</code>, ascribing each relevé to
+one of the k groups).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_rel</code></td>
+<td>
+<p>The number of relevés in the <code>phyto_list</code>, obtained e.g.
+with <code>length(unique(unlist(phyto_list)))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_type</code></td>
+<td>
+<p>A character determining the amount of information returned
+by the function and also the amount of pre-validations. Possible values are
+"normal" (the default) and "fast".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>Logical. Should function <code>parallel::mclapply()</code>) be used to
+improve computation time by forking? Not available on Windows. Refer to
+that function manual for more information. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mc_cores</code></td>
+<td>
+<p>The number of cores to be passed to <code>parallel::mclapply()</code> if
+<code>parallel = TRUE</code>. See <code>parallel::mclapply()</code> for more information.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function accepts a list (<code>phyto_list</code>) representing a
+phytosociological data set, as well as a k-partition of its relevés (<code>p</code>),
+returning the corresponding TDV (see <code>tdv()</code> for an explanation
+on TDV).
+Partition <code>p</code> gives the group to which each relevé is ascribed, by
+increasing order of relevé id.
+Big phytosociological tables can occupy a significant amount of computer
+memory, which mostly relate to the fact that the absences (usually more
+frequent than presences) are also recorded in memory. The use of a list,
+focusing only on presences, reduces significantly the amount of needed
+memory to store all the information that a phytosociological table contains
+and also the computation time of TDV, allowing computations for big data
+sets.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>output_type = "normal"</code> (the default) pre-validations are done
+(which can take some time) and a list is returned, with the following
+components (see <code>tdv()</code> for the mathematical notation):
+</p>
+
+<dl>
+<dt>ifp</dt>
+<dd>
+<p>A matrix with the <code class="reqn">\frac{a}{b}</code> values for each taxon
+in each group, for short called the 'inner frequency of presences'.</p>
+</dd>
+<dt>ofda</dt>
+<dd>
+<p>A matrix with the <code class="reqn">\frac{c}{d}</code> values for each
+taxon in each group, for short called the 'outer frequency of
+differentiating absences'.</p>
+</dd>
+<dt>e</dt>
+<dd>
+<p>A vector with the <code class="reqn">e</code> values for each taxon, i.e., the
+number of groups containing that taxon.</p>
+</dd>
+<dt>diffval</dt>
+<dd>
+<p>A matrix with the <code class="reqn">DiffVal</code> for each taxon.</p>
+</dd>
+<dt>tdv</dt>
+<dd>
+<p>A numeric with the TDV of matrix <code style="white-space: pre;">⁠m_bin,⁠</code> given the partition
+<code>p</code>.</p>
+</dd>
+</dl>
+<p>If <code>output_type = "fast"</code>, only TDV is returned and no pre-validations are
+done.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tiago Monteiro-Henriques. E-mail: <a href="mailto:tmh.dev@icloud.com">tmh.dev@icloud.com</a>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Getting the Taxus baccata forests data set
+data(taxus_bin)
+
+# Creating a group partition, as the one presented in the original article of
+# the data set
+groups &lt;- rep(c(1, 2, 3), c(3, 11, 19))
+
+# Removing taxa occurring in only one relevé, in order to reproduce exactly
+# the example in the original article of the data set
+taxus_bin_wmt &lt;- taxus_bin[rowSums(taxus_bin) &gt; 1, ]
+
+# Calculating TDV using tdv()
+tdv(taxus_bin_wmt, groups)$tdv
+
+# Converting from the phytosociologic matrix format to the list format
+taxus_phyto_list &lt;- apply(taxus_bin_wmt, 1, function(x) which(as.logical(x)))
+
+# Getting the number of relevés in the list
+n_rel &lt;- length(unique(unlist(taxus_phyto_list)))
+
+# Calculating TDV using bigdata_tdv(), even if this is not a big matrix
+bigdata_tdv(
+  phyto_list = taxus_phyto_list,
+  p = groups,
+  n_rel = n_rel,
+  output_type = "normal"
+)$tdv
+
+</code></pre>
+
+
+</div>

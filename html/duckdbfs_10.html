@@ -1,0 +1,85 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>to_sf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert output to sf object</h2>
+
+<h3>Description</h3>
+
+<p>Convert output to sf object
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">to_sf(x, crs = NA, conn = cached_connection())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>a remote duckdb <code>tbl</code> (from <code>open_dataset</code>) or dplyr-pipeline thereof.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crs</code></td>
+<td>
+<p>The coordinate reference system, any format understood by <code>sf::st_crs</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>the connection object from the tbl.
+Takes a duckdb table (from <code>open_dataset</code>) or a dataset or dplyr
+pipline and returns an sf object. <strong>Important</strong>: the table must have
+a <code>geometry</code> column, which you will almost always have to create
+first.
+</p>
+<p>Note: <code>to_sf()</code> triggers collection into R.  This function is suitable
+to use at the end of a dplyr pipeline that will subset the data.
+Using this function on a large dataset without filtering first may
+exceed available memory.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>an <code>sf</code> class object (in memory).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+library(dplyr)
+csv_file &lt;- system.file("extdata/spatial-test.csv", package="duckdbfs")
+
+# Note that we almost always must first create a `geometry` column, e.g.
+# from lat/long columns using the `st_point` method.
+sf &lt;-
+  open_dataset(csv_file, format = "csv") |&gt;
+  mutate(geom = ST_Point(longitude, latitude)) |&gt;
+  to_sf()
+
+# We can use the full space of spatial operations, including spatial
+# and normal dplyr filters.  All operations are translated into a
+# spatial SQL query by `to_sf`:
+open_dataset(csv_file, format = "csv") |&gt;
+  mutate(geom = ST_Point(longitude, latitude)) |&gt;
+  mutate(dist = ST_Distance(geom, ST_Point(0,0))) |&gt;
+  filter(site %in% c("a", "b", "e")) |&gt;
+  to_sf()
+
+
+</code></pre>
+
+
+</div>

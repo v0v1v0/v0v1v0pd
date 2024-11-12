@@ -1,0 +1,161 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>add_trajectory</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Construct a trajectory given its milestone network and milestone percentages or progressions</h2>
+
+<h3>Description</h3>
+
+<p>Construct a trajectory given its milestone network and milestone percentages or progressions
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">add_trajectory(
+  dataset,
+  milestone_ids = NULL,
+  milestone_network,
+  divergence_regions = NULL,
+  milestone_percentages = NULL,
+  progressions = NULL,
+  allow_self_loops = FALSE,
+  ...
+)
+
+is_wrapper_with_trajectory(trajectory)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataset</code></td>
+<td>
+<p>A dataset created by <code>wrap_data()</code> or <code>wrap_expression()</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>milestone_ids</code></td>
+<td>
+<p>The ids of the milestones in the trajectory. Type: Character vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>milestone_network</code></td>
+<td>
+<p>The network of the milestones.
+Type: Data frame(from = character, to = character, length = numeric, directed = logical).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>divergence_regions</code></td>
+<td>
+<p>A data frame specifying the divergence
+regions between milestones (e.g. a bifurcation).
+Type: Data frame(divergence_id = character, milestone_id = character, is_start = logical).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>milestone_percentages</code></td>
+<td>
+<p>A data frame specifying what percentage milestone each cell
+consists of.
+Type: Data frame(cell_id = character, milestone_id = character, percentage = numeric).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>progressions</code></td>
+<td>
+<p>Specifies the progression of a cell along a transition in the milestone_network.
+Type: Data frame(cell_id = character, from = character, to = character, percentage = numeric).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>allow_self_loops</code></td>
+<td>
+<p>Whether to allow self loops
+Type: Logical</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>extra information to be stored in the dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trajectory</code></td>
+<td>
+<p>The trajectory as created by <code>infer_trajectory()</code> or <code>add_trajectory()</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>The dataset object with trajectory information, including:
+</p>
+
+<ul>
+<li> <p><em>milestone_ids</em>: The names of the milestones, a character vector.
+</p>
+</li>
+<li> <p><em>milestone_network</em>: The network between the milestones, a dataframe with the <em>from</em> milestone, <em>to</em> milestone, <em>length</em> of the edge, and whether it is <em>directed</em>.
+</p>
+</li>
+<li> <p><em>divergence_regions</em>: The regions between three or more milestones where cells are diverging, a dataframe with the divergence id (<em>divergence_id</em>), the milestone id (<em>milestone_id</em>) and whether this milestone is the start of the divergence (<em>is_start</em>)
+</p>
+</li>
+<li> <p><em>milestone_percentages</em>: For each cell its closeness to a particular milestone, a dataframe with the cell id (<em>cell_id</em>), the milestone id (<em>milestone_id</em>), and its <em>percentage</em> (a number between 0 and 1 where higher values indicate that a cell is close to the milestone).
+</p>
+</li>
+<li> <p><em>progressions</em>: For each cell its progression along a particular edge of the <em>milestone_network</em>. Contains the same information as <em>milestone_percentages</em>. A dataframe with cell id (<em>cell_id</em>), <em>from</em> milestone, <em>to</em> milestone, and its <em>percentage</em> (a number between 0 and 1 where higher values indicate that a cell is close to the <em>to</em> milestone and far from the <em>from</em> milestone).
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+library(tibble)
+
+dataset &lt;- wrap_data(cell_ids = letters)
+
+milestone_network &lt;- tribble(
+  ~from, ~to, ~length, ~directed,
+  "A", "B", 1, FALSE,
+  "B", "C", 2, FALSE,
+  "B", "D", 1, FALSE,
+)
+milestone_network
+progressions &lt;- milestone_network %&gt;%
+  sample_n(length(dataset$cell_ids), replace = TRUE, weight = length) %&gt;%
+  mutate(
+    cell_id = dataset$cell_ids,
+    percentage = runif(n())
+  ) %&gt;%
+  select(cell_id, from, to, percentage)
+progressions
+divergence_regions &lt;- tribble(
+  ~divergence_id, ~milestone_id, ~is_start,
+  "1", "A", TRUE,
+  "1", "B", FALSE,
+  "1", "C", FALSE
+)
+divergence_regions
+
+trajectory &lt;- add_trajectory(
+  dataset,
+  milestone_network = milestone_network,
+  divergence_regions = divergence_regions,
+  progressions = progressions
+)
+
+# for plotting the result, install dynplot
+#- dynplot::plot_graph(trajectory)
+</code></pre>
+
+
+</div>

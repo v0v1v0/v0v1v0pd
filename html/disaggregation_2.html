@@ -1,0 +1,91 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>build_mesh</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Build mesh for disaggregaton model</h2>
+
+<h3>Description</h3>
+
+<p><em>build_mesh</em> function takes a sf object and mesh arguments to build an appropriate mesh for the spatial field.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">build_mesh(shapes, mesh_args = NULL, mesh.args = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>shapes</code></td>
+<td>
+<p>sf covering the region under investigation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh_args</code></td>
+<td>
+<p>list of parameters that control the mesh structure. <em>convex</em>, <em>concave</em> and <em>resolution</em>,
+to control the boundary of the inner mesh, and <em>max.edge</em>, <em>cutoff</em> and <em>offset</em>, to control the  mesh itself,
+with the parameters having the same meaning as in the INLA functions <em>inla.convex.hull</em> and <em>inla.mesh.2d</em>.
+<em>cut</em> has been deprecated - use <em>cutoff</em> instead.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh.args</code></td>
+<td>
+<p>Deprecated.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The mesh is created by finding a tight boundary around the polygon data, and creating a fine mesh within the boundary
+and a coarser mesh outside. This speeds up computation time by only having a very fine mesh within the area of interest
+and having a small region outside with a coarser mesh to avoid edge effects.
+</p>
+<p>Six mesh parameters can be specified as arguments: <em>convex</em>, <em>concave</em> and <em>resolution</em>,
+to control the boundary of the inner mesh, and <em>max.edge</em>, <em>cutoff</em> and <em>offset</em>, to control the  mesh itself,
+with the names meaning the same as used by the fmesher functions <em>fm_nonconvex_hull_inla</em> and <em>fm_mesh_2d</em>.
+</p>
+<p>Defaults are:
+pars &lt;- list(convex = -0.01, concave = -0.5, resolution = 300, max.edge = c(3.0, 8), cutoff = 0.4, offset = c(1, 15)).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An inla.mesh object
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+polygons &lt;- list()
+for(i in 1:14) {
+  row &lt;- ceiling(i/10)
+  col &lt;- ifelse(i %% 10 != 0, i %% 10, 10)
+  xmin = 2*(col - 1); xmax = 2*col; ymin = 2*(row - 1); ymax = 2*row
+polygons[[i]] &lt;- list(cbind(c(xmin, xmax, xmax, xmin, xmin),
+                            c(ymax, ymax, ymin, ymin, ymax)))
+}
+
+polys &lt;- lapply(polygons, sf::st_polygon)
+response_df &lt;- data.frame(area_id = 1:100,
+                          response = runif(100, min = 0, max = 10))
+spdf &lt;- sf::st_sf(polys, response_df)
+
+my_mesh &lt;- build_mesh(spdf)
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,387 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DImodelsMulti</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Multivariate Diversity-Interactions (DI) Models with Repeated Measures</h2>
+
+<h3>Description</h3>
+
+<p>This package is an add-on to the <span class="pkg">'DImodels'</span> package (Moral <em>et al.</em>, 2023).
+It enables the fitting of Diversity-Interactions (DI) models for (1) univariate repeated measures
+responses(Finn <em>et al.</em>, 2013), (2) multivariate responses at a single point in time
+(Dooley <em>et al.</em>, 2015), or (3) multivariate repeated measures responses. These
+responses will come from a biodiversity and ecosystem function (BEF) relationship study which
+aims to test the relationship between ecosystem functioning and ecosystem design, including
+species identities, interactions, and additional factors such as treatments and time. This data
+can be used to construct a regression model through the main function of this package
+<code>DImulti</code>. <br></p>
+
+
+<h3>Details</h3>
+
+<p><strong>Data</strong> <br></p>
+<p>This package is intended for use with data containing multiple ecosystem function responses
+and/or time points from a biodiversity and ecosystem function (BEF) relationship study.
+The dataset should contain a column for each species' proportion, so that each row of these columns sum
+to one.
+Each row of the data should also contain an identifier for the experimental unit being referenced,
+these identifiers must be unique to each experimental unit, but remain consistent over time and
+across functions.
+For each experimental unit included there must be recordings of either: <br>
+- a single community level ecosystem function response variable taken at multiple time points
+(repeated measures), <br>
+- multiple community level ecosystem function responses (multivariate), or <br>
+- multiple community level ecosystem function responses taken at multiple time points
+(multivariate repeated measures). <br>
+Ecosystem functions may be stored in a long or wide format while repeated measures must be stored
+in a long format. <br></p>
+<p><strong>Introduction to multivariate &amp; repeated measures Diversity-Interactions models</strong> <br></p>
+<p>Diversity-Interactions (DI) models are a regression based approach to modelling the biodiversity
+ecosystem function (BEF) relationship
+which assumes that the main driver behind changes in ecosystem functioning is the initial
+relative abundance (or proportions) of the
+species present. These models can be estimated using least squares estimation methods. <br>
+An example of a univariate DI model can be seen below, <br></p>
+<p style="text-align: center;"><code class="reqn"> y =  \sum^{S}_{i=1}{\beta_{i} p_{i}} +
+ \sum^{S}_{\substack{i,j=1 \\ i&lt;j}}{\delta_{ij}(p_{i}p_{j})^{\theta} + \alpha A + \epsilon }</code>
+</p>
+
+<p>where the response <code class="reqn">y</code> represents the recorded ecosystem function, <code class="reqn">p_{i}</code> represents the
+initial proportion of the <code class="reqn">i^{th}</code>
+species, therefore the <code class="reqn">p</code> values sum to 1 and form a simplex space, and scales the ID effect
+of the species, <code class="reqn">\beta_{i}</code>; if no
+species interactions or treatments are required in the model, the response <code class="reqn">y</code> is the
+weighted average of the species identity effects.
+<code class="reqn">S</code> represents the number of unique species present in the study. Similarly to the ID effect,
+the interaction effect, <code class="reqn">\delta</code>,
+between species is scaled by some combination of the products of species proportions, which
+depends on the interaction structure chosen.
+The example above shows the full pairwise structure, which has a unique interaction term,
+<code class="reqn">\delta_{ij}</code>, per pair of species <code class="reqn">i</code> &amp; <code class="reqn">j</code>.
+The nonlinear term <code class="reqn">\theta</code> (Connolly <em>et al.</em>, 2013; Vishwakarma <em>et al.</em>, 2023)
+is included in the model to allow the shape of the BEF relationship to change. This parameter
+can be estimated using profile log-likelihood optimisation (Brent, 1973) or can be assigned a
+set value based on an <em>a priori</em> assumption/knowledge.
+<code class="reqn">A</code> may include blocks or treatment terms, and <code class="reqn">\alpha</code> is a vector of the
+corresponding effect coefficients. <br>
+For further details of univariate DI modelling, see <code>?DImodels</code>, Kirwan <em>et al.</em>,
+2009, and Moral <em>et al.</em>, 2023. <br></p>
+<p>The multivariate DI model (Dooley <em>et al.</em>, 2015) extends the DI modelling framework to
+allow for the estimation of multiple ecosystem functions simultaneously, accounting for any
+existing covariance between functions through the error term. These models can be further
+extended through the introduction of repeated measures over multiple time points.
+<br>
+The structure for such models is:
+</p>
+<p style="text-align: center;"><code class="reqn"> y_{kmt} =  \sum^{S}_{i=1}{\beta_{ikt} p_{im}} +
+\sum^{S}_{\substack{i,j=1 \\ i&lt;j}}{\delta_{ijkt}(p_{im}p_{jm})^{\theta_{k}}} +
+\alpha_{kt}A + \epsilon_{kmt} </code>
+</p>
+
+<p>where <code class="reqn">y_{kmt}</code> refers to the value of the <code class="reqn">k^{th}</code> ecosystem function from the
+<code class="reqn">m^{th}</code> experimental unit at a time point
+<code class="reqn">t</code>. For an experimental unit <code class="reqn">m</code>, <code class="reqn">\beta_{ikt}</code> scaled by <code class="reqn">p_{im}</code> is the
+expected contribution of the <code class="reqn">i^{th}</code> species to the <code class="reqn">k^{th}</code> response at time point
+<code class="reqn">t</code> and is referred to as the <code class="reqn">i^{th}</code> species' ID effect.
+The value of the nonlinear parameter <code class="reqn">\theta</code> is allowed to vary between ecosystem functions,
+in turn allowing the fixed effect structure to change across functions, in recognition that the
+nature of the species interactions could change between ecosystem functions. <br></p>
+<p>In the case that a dataset contains only a single ecosystem function, the corresponding subscript
+<code class="reqn">k</code> can simply be removed from the equation, the same can be said for the removal of the
+subscript <code class="reqn">t</code> in the instance that a dataset contains a single time point. <br></p>
+<p><strong>The structure of the error term</strong> <br></p>
+<p>For a univariate DI model, the error term is assumed to follow a normal distribution with mean
+<code class="reqn">0</code> and variance <code class="reqn">\sigma^{2}</code>.
+</p>
+<p style="text-align: center;"><code class="reqn"> \epsilon \sim N(0, \sigma^{2})</code>
+</p>
+
+<p>When the model is extended to fit multivariate (<code class="reqn">k&gt;1</code>) and/or repeated measures (<code class="reqn">t&gt;1</code>)
+data, the error term is now assumed to follow a multivariate normal distribution with mean
+<code class="reqn">0</code> and variance <code class="reqn">\Sigma^{*}</code>.
+</p>
+<p style="text-align: center;"><code class="reqn"> \epsilon \sim MVN(0, \Sigma^{*}) </code>
+</p>
+
+<p><code class="reqn">\Sigma^{*}</code> is a block diagonal matrix, with one <code class="reqn">kt</code> x <code class="reqn">kt</code> block, <code class="reqn">\Sigma</code>,
+for each experimental unit <code class="reqn">m</code>. We refer to <code class="reqn">\Sigma</code> as the variance covariance matrix
+for our ecosystem functions and time points. Typically, it includes a unique variance
+per combination of ecosystem functions and time points along the diagonal and a unique covariance
+between each pair of combinations on the off-diagonal. Autocorrelation structures may be
+implemented on the matrix <code class="reqn">\Sigma</code>, either to simplify the estimation process or based
+on <em>a priori</em> knowledge. One structure is chosen for the ecosystem functions and another for
+repeated measures/time points, the two matrices are then estimated independently and combined
+using the Kronecker product (<code class="reqn">\otimes</code>), a matrix multiplication method. In the case that
+the data is only multivariate (<code class="reqn">k&gt;1</code> &amp; <code class="reqn">t=1</code>) or only has repeated measures (<code class="reqn">k=1</code> &amp;
+<code class="reqn">t&gt;1</code>), only one autocorrelation structure needs to be chosen, with no multiplication
+necessary. <br>
+Three such structures are currently available in this package for repeated measures responses,
+and two are available for multivariate responses: <br></p>
+
+<ol>
+<li> <p><strong>UN</strong>: When each element of <code class="reqn">\Sigma</code> is set to estimate independently, it is
+said to be unstructured or follow the general structure and is the preferred option in the case
+that there is no a priori information on the nature of these relationships.
+<code>corSymm</code> <br></p>
+</li>
+<li> <p><strong>CS</strong>: A simpler structure is compound symmetry,
+where it is assumed that each ecosystem function or time point has the same variance value
+<code class="reqn">\sigma^{2}</code> and each pair has the same covariance value <code class="reqn">\sigma^{2}\rho</code>. This
+structure is not preferred for use with multiple ecosystem functions as it provides no
+meaningful interpretation, however it is allowed in this package if the model requires
+simplification. <code>corCompSymm</code> <br></p>
+</li>
+<li> <p><strong>AR(1)</strong>: An autocorrelation structure exclusive to repeated measures data is an
+autoregressive model of order one, which assumes that, each time point has the same variance,
+<code class="reqn">\sigma^{2}</code>, and as the distance in pairs of time points increases, the covariance between
+them changes by a factor of <code class="reqn">\rho</code>. <code>corAR1</code>
+</p>
+</li>
+</ol>
+<h3>Author(s)</h3>
+
+<p>Laura Byrne [aut, cre], Rishabh Vishwakarma [aut], Rafael de Andrade Moral [aut],
+Caroline Brophy [aut] <br><br>
+Maintainer: Laura Byrne <a href="mailto:byrnel54@tcd.ie">byrnel54@tcd.ie</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Vishwakarma, R., Byrne, L., Connolly, J., de Andrade Moral, R. and Brophy, C., 2023. <br>
+Estimation of the non-linear parameter in Generalised Diversity-Interactions models is
+unaffected by change in structure of the interaction terms. <br>
+Environmental and Ecological Statistics, 30(3), pp.555-574. <br></p>
+<p>Moral, R.A., Vishwakarma, R., Connolly, J., Byrne, L., Hurley, C., Finn, J.A. and Brophy, C.,
+2023. <br>
+Going beyond richness: Modelling the BEF relationship using species identity, evenness,
+richness and species interactions via the DImodels R package. <br>
+Methods in Ecology and Evolution, 14(9), pp.2250-2258. <br></p>
+<p>Dooley, A., Isbell, F., Kirwan, L., Connolly, J., Finn, J.A. and Brophy, C., 2015. <br>
+Testing the effects of diversity on ecosystem multifunctionality using a multivariate model. <br>
+Ecology Letters, 18(11), pp.1242-1251. <br></p>
+<p>Finn, J.A., Kirwan, L., Connolly, J., Sebastia, M.T., Helgadottir, A., Baadshaug, O.H.,
+Belanger, G., Black, A., Brophy, C., Collins, R.P. and Cop, J., 2013. <br>
+Ecosystem function enhanced by combining four functional types of plant species in intensively
+managed grassland mixtures: a 3-year continental-scale field experiment.<br>
+Journal of Applied Ecology, 50(2), pp.365-375 .<br></p>
+<p>Connolly, J., Bell, T., Bolger, T., Brophy, C., Carnus, T., Finn, J.A., Kirwan, L., Isbell, F.,
+Levine, J., Luscher, A. and Picasso, V., 2013. <br>
+An improved model to predict the effects of changing biodiversity levels on ecosystem
+function. <br>
+Journal of Ecology, 101(2), pp.344-355. <br></p>
+<p>Kirwan, L., Connolly, J., Finn, J.A., Brophy, C., Luscher, A., Nyfeler, D. and Sebastia, M.T.,
+2009. <br>
+Diversity-interaction modeling: estimating contributions of species identities and interactions
+to ecosystem function. <br>
+Ecology, 90(8), pp.2032-2038. <br></p>
+<p>Brent, R.P., 1973. <br>
+Some efficient algorithms for solving systems of nonlinear equations. <br>
+SIAM Journal on Numerical Analysis, 10(2), pp.327-344. <br></p>
+
+
+<h3>See Also</h3>
+
+<p>This package:
+<code>DImulti</code> <br>
+Example datasets:
+<code>dataBEL</code>,
+<code>dataSWE</code>,
+<code>simRM</code>,
+<code>simMV</code>,
+<code>simMVRM</code> <br>
+Package family:
+<code>DImodels,
+   autoDI,
+   DI,
+   DI_data</code> <br>
+Modelling package:
+<code>nlme</code>,
+<code>gls</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+#################################################################################################
+#################################################################################################
+
+
+## Modelling Examples
+
+# For a more thorough example of the workflow of this package, please see vignette
+# DImulti_workflow using the following code:
+
+
+vignette("DImulti_workflow")
+
+
+## The simMVRM dataset
+#
+# This simulated dataset contains multiple ecosystem functions (k=3) and multiple time points
+# (t=2). The dataset was
+# simulated using unstructured Sigma matrices.
+# The true values can be found in the help file for the data, ?simMVRM
+
+data(simMVRM)
+head(simMVRM)
+
+# We will start the analysis with a call to the package's main function, DImulti().
+# We begin the call by specifying the column indices holding the initial species proportions
+# (p_i) through 'prop' and the columns which hold the ecosystem response values through 'y'.
+# Since our data is multivariate, we include the 'eco_func' parameter, specifying "na" as our
+# data is in a wide format (multiple columns in 'y') and "un" to fit an unstructured Sigma
+# for our ecosystem functions.
+# The data also contains repeated measures, so we include the 'time' parameter, specifying "time"
+# as the column containing the time point indicator for each row and "ar1" to fit an AR(1)
+# autocorrelation structure for our time points.
+# Next, we specify that the experimental unit identifier is in column 1 through 'unit_IDs'. We
+# indicate that we do not want to estimate the non-linear parameter theta, but do not provide
+# any values, opting for the default value of 1.
+# We specify a full pairwise (FULL) interaction structure through 'DImodel' and estimate the
+# model using maximum likelihood (ML) as we may compare models.
+# Finally, we provide the data object simMVRM through 'data'.
+
+simModel_FULL &lt;- DImulti(prop = 2:5, y = 6:8, eco_func = c("na", "un"), time = c("time", "ar1"),
+                         unit_IDs = 1, estimate_theta = FALSE, DImodel = "FULL", method = "ML",
+                         data = simMVRM)
+
+# simModel_FULL is an object of custom class DImulti, which can be used with a number of S3
+# methods and any method compatible with gls objects. We use summary() to examine the model fit,
+# including fixed effect coefficients and the variance covariance matrix Sigma.
+
+print(simModel_FULL)
+
+# From this summary, we can see that there are many coefficients, a number of which are not
+# statistically significant at an
+# alpha level of 0.05, therefore this model may not be ideal for our data. We refit the model
+# using an average interaction structure instead as it reduces the number of interaction terms
+# to 1 per ecosystem function and time point.
+
+simModel_AV &lt;- DImulti(prop = 2:5, y = 6:8, eco_func = c("na", "un"), time = c("time", "ar1"),
+                       unit_IDs = 1, estimate_theta = FALSE, DImodel = "AV", method = "ML",
+                       data = simMVRM)
+print(simModel_AV)
+
+# This model looks like it is a better fit, with less insignificant terms, but we can test this
+# formally using a likelihood ratio test, as the DImodels interaction structures are nested in
+# nature (with the exception of "ADD" and "FG", which are on the same level in the nesting
+# hierarchy).
+# This will test the null hypothesis that the likelihood of the two models do not significantly
+# differ, in other words, the added parameters of the more complex model are not worth it.
+
+anova(simModel_FULL, simModel_AV)
+
+# As the p-value is greater than our selected alpha value (0.05), we fail to reject the null
+# hypothesis and so continue with the simpler model, simModel_AV.
+# We can confirm this result by using information criteria such as AIC or BIC.
+# We select the model with the lower value as it indicates a better fit.
+# We use the second order versions of AIC and BIC (AICc and BICc) as we have a large number of
+# terms, which can cause AIC and BIC to favour more complex models.
+
+AICc(simModel_FULL); AICc(simModel_AV)
+BICc(simModel_FULL); BICc(simModel_AV)
+
+# We refit our chosen model using the REML estimation method to have unbiased estimates.
+
+simModel_AV &lt;- DImulti(prop = 2:5, y = 6:8, eco_func = c("na", "un"), time = c("time", "ar1"),
+                       unit_IDs = 1, estimate_theta = FALSE, DImodel = "AV", method = "REML",
+                       data = simMVRM)
+
+# We can now examine the variance covariance matrix, Sigma, and the fixed effect coefficients,
+# which can be retrieved from our initial summary() check or individually.
+
+coef(simModel_AV)
+simModel_AV$vcov
+
+# An example of what we can infer from this is that ecosystem functions Y1 and Y2 have a positive
+# covariance at time 1, while Y3 has a negative covariance with both Y1 and Y2 at the same time
+# point. This means that maximising Y1 would not negatively impact Y2 but it would be at the cost
+# of Y3. However, as our interaction term is positive and significant at this time point for all
+# three ecosystem functions, we should be able to include a mixture of species that have positive
+# ID effects for each response to help mitigate this trade-off.
+# We can also predict from the model if we want to compare responses from different conditions,
+# even those not included in the original data.
+
+predict(simModel_AV, newdata = simMVRM[which(simMVRM$plot == 1:2), ])
+
+
+#################################################################################################
+## The Belgium dataset
+#
+# This real world dataset contains multiple ecosystem functions (k=3) at a single time point
+# (t=1). The dataset also contains seeding density as a treatment in the form of a factor with
+# two levels (1, -1). More detail can be found at ?dataBEL.
+
+data(dataBEL)
+head(dataBEL)
+
+# We begin with the main function DImulti(), passing the initial species proportions column names
+# through 'prop' and the response value column name through 'y'.
+# As the data is in a long or stacked format, we specify the ecosystem function type through the
+# first index of the 'eco_func' parameter, along with specifying that we want an unstructured
+# Sigma for these response types.
+# The experimental unit ID is stored in the column "Plot" and so we pass this to 'unit_IDs'.
+# Rather than estimating the nonlinear parameter theta, we opt to provide a value for each
+# ecosystem function type through the parameter 'theta', which will be applied to the
+# interaction terms as a power. In this case, we use functional group (FG) interactions, which
+# requires an additional argument FG to be provided, specifying which group each species present
+# in 'prop' belongs to. In this case, we group the grasses and the legumes.
+# We include the treatment Density as an additional fixed effect.
+# We opt to use the REML estimation method as we will not be doing any model comparisons.
+# Finally, we specify the data object, dataBEL, through 'data'.
+
+belModel &lt;- DImulti(prop = c("G1", "G2", "L1", "L2"), y = "Y", eco_func = c("Var", "un"),
+                    unit_IDs = "Plot", theta = c(0.5, 1, 1.2), DImodel = "FG",
+                    FG = c("Grass", "Grass", "Legume", "Legume"), extra_fixed = ~ Density,
+                    method = "REML", data = dataBEL)
+
+# We can now print the output from our model, stored in belModel with class DImulti.
+
+print(belModel)
+
+
+#################################################################################################
+## The Sweden dataset
+#
+# This real-world dataset contains a single ecosystem function read at multiple time points
+# (k=1 &amp; t=3). The data contains two treatments, TREAT and DENS, each with two levels
+# 1 &amp; 2 and High &amp; Low, respectively.
+# More details can be found at ?dataSWE
+
+data(dataSWE)
+head(dataSWE)
+
+# We transform the "YEARN" column to factors to better act as groups in our models, giving us a
+# coefficient per year number as opposed to acting as a continuous scaling factor.
+
+dataSWE$YEARN &lt;- as.factor(dataSWE$YEARN)
+
+# We use the DImulti() function to fit a repeated measures DI model to this data.
+# We specify the column indices 5 through 8 for our initial species proportions and the response
+# value column name "YIELD".
+# As there are multiple time points (repeated measures), we use the parameter 'time', providing
+# the column name containing the time identifier through the first index and the desired Sigma
+# structure (compound symmetry) through the second.
+# The experimental unit ID is stored in column index two, which is passed through 'unit_IDs'.
+# The interaction structure chosen is the average interaction term, "AV".
+# We include both of the treatment terms, TREAT and DENS, as extra fixed effects crossed with
+# each ID effect, the interaction effect, and with each other.
+# We opt to use the REML
+# estimation method for the model as we will not be doing any model comparisons.
+# Finally, we specify the data object, dataSWE, through 'data'
+
+SWEmodel &lt;- DImulti(prop = 5:8, y = c("YIELD"), time = c("YEARN", "CS"),
+                    unit_IDs = 2, DImodel = "AV", extra_fixed = ~ 1:(TREAT:DENS),
+                    method = "REML", data = dataSWE)
+
+print(SWEmodel)
+
+
+</code></pre>
+
+
+</div>

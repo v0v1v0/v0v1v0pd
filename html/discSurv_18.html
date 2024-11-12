@@ -1,0 +1,104 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estCumInz</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimates Cumulative Incidence Function for Discrete Time Competing Risks Models</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the cumulative incidence function of a discrete time competing risks model 
+given covariates P(T &lt;= t, event = k | x).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estCumInz(hazards, eventFocus)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>hazards</code></td>
+<td>
+<p>Estimated discrete hazard rates of all events ("numeric matrix"). 
+Each column represents one event. The first column is assumed to contain the censoring case 
+and the discrete hazards should only vary over time in each row.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventFocus</code></td>
+<td>
+<p>Column that represent the discrete hazards of the primary event ("integer vector").</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The covariates set is required to be constant across rows.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns cumulative incidence function of the primary event. 
+If argument <em>nonparCI</em> is set to TRUE, then a list is returned: 
+The first element includes the cumulative incidence function. 
+The second list element contains the lower and the third list element the upper bound of
+the pointwise confidence intervals.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Lee M, Feuer EJ, Fine JP (2018).
+“On the analysis of discrete time competing risks data.”
+<em>Biometrics</em>, <b>74</b>, 1468-1481.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>compRisksGEE</code>, <code>dataLongCompRisks</code>, 
+<code>dataLongCompRisksTimeDep</code>, <code>geeglm</code>,
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example with unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Select subsample
+SubUnempDur &lt;- UnempDur [1:100, ]
+
+# Estimate GEE models for all events
+estGEE &lt;- compRisksGEE(datShort = SubUnempDur, dataTransform = "dataLongCompRisks", 
+corstr = "independence", formulaVariable =~ timeInt + age + ui + logwage * ui, 
+eventColumns = c("censor1", "censor2", "censor3", "censor4"), timeColumn = "spell")
+
+# Estimate hazards of all events given the covariates of third person
+SubUnempDurLong &lt;- dataLongCompRisks(dataShort = SubUnempDur, 
+eventColumns = c("censor1", "censor2", "censor3", "censor4"), timeColumn = "spell") 
+preds &lt;- predict(estGEE, subset(SubUnempDurLong, obj == 3))
+
+# Estimate cumulative incidence function
+cumInzGEE &lt;- estCumInz(preds, eventFocus = 2)
+cumInzGEE
+
+</code></pre>
+
+
+</div>

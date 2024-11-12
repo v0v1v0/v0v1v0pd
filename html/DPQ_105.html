@@ -1,0 +1,152 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>logcf</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Continued Fraction Approximation of Log-Related Power Series</h2>
+
+<h3>Description</h3>
+
+<p>Compute a continued fraction approximation to the series (infinite sum)
+</p>
+<p style="text-align: center;"><code class="reqn">\sum_{k=0}^\infty \frac{x^k}{i +k\cdot d} = \frac{1}{i} + \frac{x}{i+d} +
+    \frac{x^2}{i+2*d} + \frac{x^3}{i+3*d} + \ldots</code>
+</p>
+
+<p>Needed as auxiliary function in <code>log1pmx()</code> and <code>lgamma1p()</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">					
+logcfR (x, i, d, eps, maxit = 10000L, trace = FALSE)
+logcfR.(x, i, d, eps, maxit = 10000L, trace = FALSE)
+logcf  (x, i, d, eps, trace = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>numeric vector of values typically less than 1.
+"mpfr" (of potentially high precision, package <a href="https://CRAN.R-project.org/package=Rmpfr"><span class="pkg">Rmpfr</span></a>) work in
+<code>logcfR*(x,*)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>positive numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>non-negative numeric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>positive number, the convergence tolerance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+<p>a positive integer, the maximal number of iterations or
+terms in the truncated series used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>logical (or non-negative integer in the future) indicating
+if (and how much) diagnostic output should be printed to the console
+during the computations.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<dl>
+<dt>
+<code>logcfR.()</code>:</dt>
+<dd>
+<p>a pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version where the iterations happen
+vectorized in <code>x</code>, only for those components <code>x[i]</code> they
+have not yet converged.  This is particularly beneficial for
+not-very-short <code>"mpfr"</code> vectors <code>x</code>, and still conceptually
+equivalent to the <code>logcfR()</code> version.</p>
+</dd>
+<dt>
+<code>logcfR()</code>:</dt>
+<dd>
+<p>a pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version where each <code>x[i]</code> is
+treated separately, hence “properly” vectorized, but slowly so.</p>
+</dd>
+<dt>
+<code>logcf()</code>:</dt>
+<dd>
+<p>only for <code>numeric</code> <code>x</code>, calls
+into (a clone of) <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own (non-API currently) <code>logcf()</code> C
+Rmathlib function.</p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>a numeric-alike vector with the same attributes as <code>x</code>.  For the
+<code>logcfR*()</code> versions, an <code>"mpfr"</code> vector if <code>x</code> is one.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Rescaling is done by (namespace hidden) “global”
+<code>scalefactor</code> which is <code class="reqn">2^{256}</code>, represented exactly (in
+<code>double</code> precision).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler, based on <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s ‘<span class="file">nmath/pgamma.c</span>’ implementation.</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lgamma1p</code>, <code>log1pmx</code>, and
+<code>pbeta</code>, whose prinicipal algorithm has evolved from TOMS 708.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+x &lt;- (-2:1)/2
+logcf (x, 2,3, eps=1e-7, trace=TRUE) # shows iterations for each x[]
+logcfR(x, 2,3, eps=1e-7, trace=TRUE) # 1 line per x[]
+logcfR(x, 2,3, eps=1e-7, trace= 2  ) # shows iterations for each x[]
+
+n &lt;- 2049; x &lt;- seq(-1,1, length.out = n)[-n] ; stopifnot(diff(x) == 1/1024)
+plot(x, (lcf &lt;- logcf(x, 2,3, eps=1e-12)), type="l", col=2)
+lcR &lt;- logcfR (x, 2,3, eps=1e-12); all.equal(lcf, lcR , tol=0)
+lcR.&lt;- logcfR.(x, 2,3, eps=1e-12); all.equal(lcf, lcR., tol=0)
+stopifnot(exprs = {
+  all.equal(lcf, lcR., tol=1e-14)# seen 0 (!)
+  all.equal(lcf, lcR,  tol=1e-14)# seen 0 (!) -- failed for a while
+})
+
+l32 &lt;- curve(logcf(x, 3,2, eps=1e-7), -3, 1)
+abline(h=0,v=1, lty=3, col="gray50")
+plot(y~x, l32, log="y", type = "o", main = "logcf(*, 3,2)  in log-scale")
+</code></pre>
+
+
+</div>

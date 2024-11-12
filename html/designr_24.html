@@ -1,0 +1,111 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>simLMM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simulate data from a linear mixed-effects model</h2>
+
+<h3>Description</h3>
+
+<p>This function simulates artificial data from a linear mixed-effects model. Parameters can either be set by hand using the parameters listed below *or* using a fitted <code>lmerMod</code> object.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">simLMM(
+  formula,
+  data = NULL,
+  Fixef,
+  VC_sd,
+  CP = 0,
+  LMM = NULL,
+  empirical = FALSE,
+  verbose = TRUE,
+  family = "gaussian"
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula as used in a call to the <code>lmer</code> function: a one-sided linear formula object describing both the fixed-effects and random-effects part of the model, with no response variable to the left of the <code>~</code> operator.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing the variables named in <code>formula</code>. Optional if <code>LMM</code> is provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Fixef</code></td>
+<td>
+<p>a vector of all fixed-effect model parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>VC_sd</code></td>
+<td>
+<p>standard deviations of the variance components for the random effects. This is a list of vectors, where different list entries reflect different grouping structures, and each vector contains standard deviations of variance components (random intercepts and random slopes) for one grouping factor. The last list entry is the standard deviation of the residual noise term (for <code>gaussian</code> or <code>lognormal</code> families only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CP</code></td>
+<td>
+<p>correlation parameters of the random effects. If <code>CP</code> is a single number, then all CP are set to this same value. If <code>CP</code> is a vector of length equal to the number of grouping factor, then each vector entry specifies one fixed value for all CP associated with this grouping factor. Otherwise, <code>CP</code> can be a list of correlation matrices, which specifies a full correlation matrix for each grouping structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>LMM</code></td>
+<td>
+<p>if a <code>lmerMod</code> object containing a fitted <code>lmer</code> model is provided, then <code>simLMM</code> uses the estimated model parameters for data simulation. Note: If <code>LMM</code> is provided, <code>formula</code>, <code>Fixef</code>, <code>VC_sd</code>, <code>CP</code>, and <code>family</code> are taken from the provided fitted model, the arguments are ignored in the model call, and a warning is given.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>empirical</code></td>
+<td>
+<p>logical. If true, <code>Fixef</code> specify the empirical not population fixed effects parameters. <code>empirical=TRUE</code> does not work for residual Bernoulli noise, and not if continuous covariates are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>logical. If <code>TRUE</code> (default), then information about the used model parameters is provided. If <code>FALSE</code>, then no output is generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>family</code></td>
+<td>
+<p>string specifying the response distribution: <code>"gaussian"</code> (default) assumes a normal distribution, <code>binomial</code> specifies a Bernoulli distribution with a logit link function, <code>"lognormal"</code> specifies a log-normal distribution; with <code>"lp"</code>, only the linear predictor is generated with no residual noise.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+design &lt;-
+  fixed.factor("X", levels=c("X1", "X2")) +
+  random.factor("Subj", instances=30)
+dat &lt;- design.codes(design)
+contrasts(dat$X) &lt;- c(-1, +1)
+
+dat$ysim &lt;- simLMM(formula = ~ 1 + X + (1 + X | Subj),
+                   data = dat,
+                   Fixef = c(200, 10),
+                   VC_sd = list(c(30,10), 50),
+                   CP = 0.3,
+                   empirical = TRUE)
+
+dat$Xn &lt;- ifelse(dat$X=="X1",-1,1)
+# lme4::lmer(ysim ~ Xn + (Xn || Subj), data=dat, control=lmerControl(calc.derivs=FALSE))
+
+</code></pre>
+
+
+</div>

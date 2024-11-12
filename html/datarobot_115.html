@@ -1,0 +1,209 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>GetDeploymentServiceStats</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Retrieve service health statistics for a deployment.</h2>
+
+<h3>Description</h3>
+
+<p>Retrieve service health statistics for a deployment.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">GetDeploymentServiceStats(
+  deploymentId,
+  modelId = NULL,
+  start = NULL,
+  end = NULL,
+  executionTimeQuantile = NULL,
+  responseTimeQuantile = NULL,
+  slowRequestsThreshold = NULL,
+  segmentAttribute = NULL,
+  segmentValue = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>deploymentId</code></td>
+<td>
+<p>character. The ID of the deployment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modelId</code></td>
+<td>
+<p>character. Optional. The ID of the model to query. If provided, only data for this
+specific model will be retrieved; otherwise, data for the deployment's default model will be
+retrieved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>POSIXct. Optional. The start time of the reporting period for monitoring data.
+Defaults to seven days prior to the end of the period. Sub-hour resolution is not permitted,
+and the timezone must be <code>UTC</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>end</code></td>
+<td>
+<p>POSIXct. Optional. The end time of the reporting period for monitoring data. Defaults
+to the next top of the hour. Sub-hour resolution is not permitted, and the timezone must be
+<code>UTC</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>executionTimeQuantile</code></td>
+<td>
+<p>numeric. Optional. Quantile for the <code>executionTime</code> metric. Defaults
+to 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>responseTimeQuantile</code></td>
+<td>
+<p>numeric. Optional. Quantile for the <code>responseTime</code> metric. Defaults
+to 0.5.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>slowRequestsThreshold</code></td>
+<td>
+<p>integer. Optional. Threshold for the <code>slowRequests</code> metric.
+Defaults to 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>segmentAttribute</code></td>
+<td>
+<p>character. Optional. The name of an attribute used for segment analysis.
+See <code>SegmentAnalysisAttribute</code> for permitted values. Added in DataRobot 2.20.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>segmentValue</code></td>
+<td>
+<p>character. Optional. The value of <code>segmentAttribute</code>. Added in DataRobot
+2.20.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object representing service health metrics for the deployment, containing:
+</p>
+
+<ul>
+<li>
+<p> modelId character. The ID of the deployment model for which monitoring data was
+retrieved.
+</p>
+</li>
+<li>
+<p> period list. The duration of the reporting period, containing:
+</p>
+
+<ul>
+<li>
+<p> start POSIXct. Start of the reporting period.
+</p>
+</li>
+<li>
+<p> end POSIXct. End of the reporting period.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> metrics list. Service health metrics for the deployment, containing:
+</p>
+
+<ul>
+<li>
+<p> totalPredictions integer. Total number of prediction rows.
+</p>
+</li>
+<li>
+<p> totalRequests integer. Total number of prediction requests performed.
+</p>
+</li>
+<li>
+<p> slowRequests integer. Number of requests with response time greater than
+<code>slowRequestsThreshold</code>.
+</p>
+</li>
+<li>
+<p> responseTime numeric. Request response time at <code>responseTimeQuantile</code> in
+milliseconds. May be NA.
+</p>
+</li>
+<li>
+<p> executionTime numeric. Request execution time at <code>executionTimeQuantile</code> in
+milliseconds. May be NA.
+</p>
+</li>
+<li>
+<p> medianLoad integer. Median request rate, in requests per minute.
+</p>
+</li>
+<li>
+<p> peakLoad integer. Greatest request rate, in requests per minute.
+</p>
+</li>
+<li>
+<p> userErrorRate numeric. Ratio of user errors to the total number of requests.
+</p>
+</li>
+<li>
+<p> serverErrorRate numeric. Ratio of server errors to the total number of requests.
+</p>
+</li>
+<li>
+<p> numConsumers integer. Number of unique users performing requests.
+</p>
+</li>
+<li>
+<p> cacheHitRatio numeric. The ratio of cache hits to requests.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> segmentAttribute character. Added in DataRobot 2.20. The name of the segment on which
+segment analysis was performed.
+</p>
+</li>
+<li>
+<p> segmentValue character. Added in DataRobot 2.20. The value of the segmentAttribute.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+  deploymentId &lt;- "59a5af20c80891534e3c2bde"
+  startTime = ISOdate(2020, 12, 25, 1, 0, 0, tz = "UTC")
+  endTime = ISOdate(2021, 01, 06, 1, 0, 0, tz = "UTC")
+  GetDeploymentServiceStats(deploymentId, startTime, endTime)
+
+## End(Not run)
+## Not run: 
+  deploymentId &lt;- "59a5af20c80891534e3c2bde"
+  GetDeploymentServiceStats(deploymentId,
+                            segmentAttribute = SegmentAnalysisAttribute$DataRobotRemoteIP,
+                            segmentValue = "192.168.0.1")
+
+## End(Not run)
+</code></pre>
+
+
+</div>

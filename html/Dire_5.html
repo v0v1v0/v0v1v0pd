@@ -1,0 +1,652 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>mml</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Marginal Maximum Likelihood Estimation of Linear Models</h2>
+
+<h3>Description</h3>
+
+<p>Implements a survey-weighted marginal maximum estimation, a type of
+regression where the outcome is a latent trait (such as student ability).
+Instead of using an estimate, the likelihood function marginalizes student
+ability. Includes a variety of variance estimation strategies.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">mml(
+  formula,
+  stuItems,
+  stuDat,
+  idVar,
+  dichotParamTab = NULL,
+  polyParamTab = NULL,
+  testScale = NULL,
+  Q = 30,
+  minNode = -4,
+  maxNode = 4,
+  polyModel = c("GPCM", "GRM"),
+  weightVar = NULL,
+  multiCore = FALSE,
+  bobyqaControl = NULL,
+  composite = TRUE,
+  strataVar = NULL,
+  PSUVar = NULL,
+  fast = TRUE,
+  calcCor = TRUE,
+  verbose = 0
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>a <code>formula</code>
+object in the style of <code>lm</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stuItems</code></td>
+<td>
+<p>a <code>data.frame</code> where each row represents a single student's response to one item.
+The columns must include the <code>idVar</code> column, a <code>key</code> column, and a
+<code>score</code> column. Values in the <code>score</code> column are checked against expectations
+(based on <code>dichotParamTab</code> and <code>polyParamTab</code>) and when
+<code>verbose</code> is &gt;= 1 a table of expected and actual levels is printed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stuDat</code></td>
+<td>
+<p>a <code>data.frame</code> with a single row per student. Predictors in
+the <code>formula</code> must be in <code>stuDat</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idVar</code></td>
+<td>
+<p>a variable name on <code>stuDat</code> that is the identifier. Every 
+ID from <code>stuDat</code> must appear on <code>stuItems</code> and vice versa.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dichotParamTab</code></td>
+<td>
+<p>a <code>data.frame</code> of dichotomous item information, see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polyParamTab</code></td>
+<td>
+<p>a <code>data.frame</code> of polytomous item information, see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>testScale</code></td>
+<td>
+<p>a <code>data.frame</code> of scaling information, see Details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>an integer; the number of integration points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minNode</code></td>
+<td>
+<p>a numeric; the smallest integration point for the latent variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxNode</code></td>
+<td>
+<p>a numeric; the largest integration point for the latent variable</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>polyModel</code></td>
+<td>
+<p>polytomous response model;
+one of <code>GPCM</code> for the Graded Partial Credit Model
+or <code>GRM</code> for the Graded Response Model</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightVar</code></td>
+<td>
+<p>a variable name on <code>stuDat</code> that is the full sample weight</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multiCore</code></td>
+<td>
+<p>allows the <code>foreach</code> package to be used. You should
+have already setup the 
+<code>registerDoParallel</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bobyqaControl</code></td>
+<td>
+<p>deprecated. A list that gets passed to the <code>bobyqa</code> optimizer in <code>minqa</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>composite</code></td>
+<td>
+<p>a logical indicating if an overall test should be treated as
+a composite score; a composite is a weighted average of the
+subscales in it.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strataVar</code></td>
+<td>
+<p>character naming a variable on <code>stuDat</code>, the variable indicating the
+stratum for each row. Used in post-hoc robust variance estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>PSUVar</code></td>
+<td>
+<p>character naming a variable on <code>stuDat</code>; the primary sampling unit
+(PSU) variable. Used in post-hoc robust variance estimation. The values
+do not need to be unique across strata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fast</code></td>
+<td>
+<p>a logical indicating if cpp code should be used in <code>mml</code> processes. This should 
+yield speed-ups to runs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>calcCor</code></td>
+<td>
+<p>set to <code>TRUE</code> to calculate covariances. Needed to estimate variances and form plausible values</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>integer, negative or zero for no details, increasingly verbose messages at one and two</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The <code>mml</code> function models a latent outcome conditioning on
+item response data, covariate data, item parameter information,
+and scaling information.
+These four parts are broken up into at least one argument each.
+Student item response data go into <code>stuItems</code>; whereas student
+covariates, weights, and sampling information go into <code>stuDat</code>.
+The <code>dichotParamTab</code> and <code>polyParamTab</code>
+contain item parameter information for dichotomous and polytomous items,
+respectively—the item parameter data is the result of an existing
+item parameter scaling. In the case of 
+the National Assessment of Educational Progress (NAEP),
+they can be found online, for example, at
+<a href="https://nces.ed.gov/nationsreportcard/tdw/analysis/scaling_irt.aspx">NAEP technical documentation</a>.
+Finally, information about scaling and subscale weights for composites are put in <code>testScale</code>.
+</p>
+<p>The model for dichotomous responses data is, by default, three Parameter Logit
+(3PL), unless the item parameter information provided by users suggests
+otherwise. For example, if the scaling used a two Parameter Logit (2PL) model,
+then the guessing parameter can simply be set to zero. For polytomous
+responses data, the model is dictated by the <code>polyModel</code> argument.
+</p>
+<p>The <code>dichotParamTab</code> argument is a <code>data.frame</code> with a column named
+<code>ItemID</code> that identifies the items and agrees with
+the <code>key</code> column in the <code>stuItems</code> argument,
+and, for  a 3PL item, columns <code>slope</code>,
+<code>difficulty</code>, and <code>guessing</code> for the “a”, “d”, and
+“g” parameters, respectively; see the vignette for details of
+the 3PL model. Users can also use the column names directly from the
+vignette notation (“a”, “d”, and “g”) if they prefer.
+Items that are missing (<code>NA</code>) are not used in the likelihood function. 
+Users wishing to apply a special behavior for a subset of items can use
+set those items to an invalid score and put that in the <code>dichotParamTab</code>
+column <code>missingCode</code>. They are then scored as if they are <code>missingValue</code>
+proportion correct. To use the guessing parameter for the proportion correct
+set <code>missingValue</code> to “c”.
+</p>
+<p>The <code>polyParamTab</code> has columns <code>ItemID</code> that must match with the
+<code>key</code> from <code>stuItems</code>, as well as <code>slope</code>
+(which can also be called <code>a</code>) that corresponds to the <code>a</code>
+parameter in the vignette.
+Users must also specify the location of the cut points (<code class="reqn">d_{cj}</code> in the vignette)
+which are named <code>d1</code>, <code>d2</code>, ..., up to <code>dn</code> where <code>n</code> is
+one less than the number of score points. Some people prefer to also apply a 
+shift to all of these and this shift is applied when there is a column named
+<code>itemLocation</code> by simply adding that to every <code>d*</code> column. Items
+are not included in the likelihood for an individual when their value on <code>stuItems</code>
+is <code>NA</code>, but no provision is made for guessing, nor special provision for 
+missing codes in polytomous items.
+</p>
+<p>For both <code>dichotParamTab</code> and <code>polyParamTab</code> users wishing
+to use a <code>D</code> paramter of 1.7 (or any other value) may specify that, per item,
+in a column named <code>D</code>. 
+</p>
+<p>When there are multiple constructs, subscales, or the user wants a composite
+score, additional, optional, columns <code>test</code> and <code>subtest</code> can be used. 
+these columns can be numeric or text, they must agree with the same 
+columns in <code>testScale</code> to scale the results. 
+</p>
+<p>Student data are broken up into two parts. The item response data goes
+into <code>stuItems</code>, and the student covariates for the formula go into
+<code>stuDat</code>. Information about items, such as item difficulties, is in 
+<code>paramTab</code>. All dichotomous items are assumed to be 
+3PL, though by setting the guessing parameter to zero, the user
+can use a 2PL or the one Parameter Logit (1PL) or Rasch models.
+The model for polytomous responses data is dictated by the <code>polyModel</code>
+argument.
+</p>
+<p>The marginal maximum likelihood then integrates the product of the student
+ability from the assessment data, and the estimate from the linear model
+estimates each student's ability based on the <code>formula</code> provided
+and a residual standard error term. This integration happens from the
+minimum node to the maximum node in the <code>control</code> argument (described
+later in this section) with <code>Q</code> quadrature points. 
+</p>
+<p>The <code>stuItems</code> argument has the scored student data. It is a list where
+each element is named with student ID and contains
+a <code>data.frame</code> with at least two columns.
+The first required column is named
+<code>key</code> and shows the item name as it appears in <code>paramTab</code>;
+the second column in named
+<code>score</code> and shows the score for that item. For dichotomous
+items, the <code>score</code> is 0 or 1. For <code>GPCM</code> items, the scores
+start at zero as well. For <code>GRM</code>, the scores start at 1.
+</p>
+<p>For a <code>GPCM</code> model, <code>P0</code> is the “a” parameter, and the other 
+columns are the “d” parameters; see the vignette for details
+of the GPCM model.
+</p>
+<p>The quadrature points then are a range from <code>minNode</code> to <code>maxNode</code>
+with a total of <code>Q</code> nodes.
+</p>
+
+
+<h3>Value</h3>
+
+<p>When called for a single subscale or overall score, returns object of class <code>mmlMeans</code>. 
+This is a list with elements: 
+</p>
+
+<ul>
+<li>
+<p><code>call</code> the call used to generate this <code>mml.means</code> object
+</p>
+</li>
+<li>
+<p><code>coefficients</code> the unscaled marginal maximum likelihood regression coefficients
+</p>
+</li>
+<li>
+<p><code>LogLik</code> the log-likelihood of the fit model
+</p>
+</li>
+<li>
+<p><code>X</code> the design matrix of the marginal maximum likelihood regression
+</p>
+</li>
+<li>
+<p><code>Convergence</code> a convergence note from the optimizer
+</p>
+</li>
+<li>
+<p><code>location</code> used for scaling the estimates
+</p>
+</li>
+<li>
+<p><code>scale</code> used for scaling the estimates
+</p>
+</li>
+<li>
+<p><code>lnlf</code> the log-likelihood function of the unscaled parameters 
+</p>
+</li>
+<li>
+<p><code>rr1</code> the density function of each individual, conditional only on item responses in <code>stuItems</code>
+</p>
+</li>
+<li>
+<p><code>stuDat</code> the <code>stuDat</code> argument
+</p>
+</li>
+<li>
+<p><code>weightVar</code> the name of the weight variable on <code>stuDat</code>
+</p>
+</li>
+<li>
+<p><code>nodes</code> the nodes the likelihood was evaluated on
+</p>
+</li>
+<li>
+<p><code>iterations</code> the number of iterations required to reach convergence
+</p>
+</li>
+<li>
+<p><code>obs</code> the number of observations used
+</p>
+</li>
+<li>
+<p><code>weightedObs</code> the weighted N for the observations
+</p>
+</li>
+<li>
+<p><code>strataVar</code> the column name of the stratum variable on stuDat; potentially used for variance estimation
+</p>
+</li>
+<li>
+<p><code>PSUVar</code> the column name of the PSU variable on stuDat; potentially used for variance estimation
+</p>
+</li>
+<li>
+<p><code>itemScorePoints</code> a data frame that shows item IDs, the number of score points, expected scores (both from the paramTab arguments), as well as the occupied score points
+</p>
+</li>
+<li>
+<p><code>stuItems</code> the data frame passed to <code>mml</code> reformatted for use in mml
+</p>
+</li>
+<li>
+<p><code>formula</code> the formula passed to <code>mml</code>
+</p>
+</li>
+<li>
+<p><code>contrasts</code> the contrasts used in forming the design matrix
+</p>
+</li>
+<li>
+<p><code>xlevels</code> the levels of the covariates used in forming the design matrix
+</p>
+</li>
+<li>
+<p><code>polyModel</code> the value of the argument of the same name passed to <code>mml</code>
+</p>
+</li>
+<li>
+<p><code>paramTab</code> a data frame that condenses <code>dichotParamTab</code> and <code>polyParamTab</code>
+</p>
+</li>
+<li>
+<p><code>fast</code> the value of the argument of the same name passed to <code>mml</code>
+</p>
+</li>
+<li>
+<p><code>idVar</code> the value of the argument of the same name passed to <code>mml</code>
+</p>
+</li>
+<li>
+<p><code>posteriorEsts</code> the posterior estimates for the people in <code>stuDat</code> included in the model
+</p>
+</li>
+</ul>
+<p>When a composite score is computed there are several subscales run and the return is a <code>mmlCompositeMeans</code>. Many elements are themselves list with one element per construct.
+this is a list with elements:
+</p>
+
+<ul>
+<li>
+<p><code>call</code> the call used to generate this <code>mml.means</code> object
+</p>
+</li>
+<li>
+<p><code>coefficients</code> matrix of the unscaled marginal maximum likelihood regression coefficients, each row represents a subscale, each column represents a coefficient
+</p>
+</li>
+<li>
+<p><code>X</code> the design matrix of the marginal maximum likelihood regression
+</p>
+</li>
+<li>
+<p><code>rr1</code> a list of elements, each the rr1 object for a subscale (see <code>mmlMeans</code> output)
+</p>
+</li>
+<li>
+<p><code>ids</code> The ID variable used for each row of <code>stuDat</code>
+</p>
+</li>
+<li>
+<p><code>Convergence</code> a vector of convergence notes from the optimizer
+</p>
+</li>
+<li>
+<p><code>lnlfl</code> a list of log-likelihood functions of the unscaled parameters, by construct
+</p>
+</li>
+<li>
+<p><code>stuDat</code> a list of <code>stuDat</code> data frames, as used when fitting each construct, filtered to just relevant student records
+</p>
+</li>
+<li>
+<p><code>weightVar</code> the name of the weight variable on <code>stuDat</code>
+</p>
+</li>
+<li>
+<p><code>nodes</code> the nodes the likelihood was evaluated on
+</p>
+</li>
+<li>
+<p><code>iterations</code> a vector of the number of iterations required to reach convergence on each construct
+</p>
+</li>
+<li>
+<p><code>obs</code> a vector of the the number of observations used on each construct
+</p>
+</li>
+<li>
+<p><code>testScale</code> the <code>testScale</code> used to scale the data
+</p>
+</li>
+<li>
+<p><code>weightedObs</code> a vector of the weighted N for the observations
+</p>
+</li>
+<li>
+<p><code>SubscaleVC</code> the covariance matrix of subscales. The residuals are assumed to be multivariate normal with this covairiance matrix
+</p>
+</li>
+<li>
+<p><code>idVar</code> the name of the identifier used on <code>stuDat</code> and <code>stuItems</code> data
+</p>
+</li>
+<li>
+<p><code>resl</code> list of mmlMeans objects, one per construct
+</p>
+</li>
+<li>
+<p><code>strataVar</code> the column name of the stratum variable on <code>stuDat</code>; potentially used for variance estimation
+</p>
+</li>
+<li>
+<p><code>PSUVar</code> the column name of the PSU variable on <code>stuDat</code>; potentially used for variance estimation
+</p>
+</li>
+<li>
+<p><code>stuItems</code> the data frame passed to <code>mml</code> reformatted for use in mml
+</p>
+</li>
+<li>
+<p><code>formula</code> the formula passed to <code>mml</code>
+</p>
+</li>
+<li>
+<p><code>contrasts</code> the contrasts used in forming the design matrix
+</p>
+</li>
+<li>
+<p><code>xlevels</code> the levels of the covariates used in forming the design matrix
+</p>
+</li>
+<li>
+<p><code>polyModel</code> the value of the argument of the same name passed to <code>mml</code>
+</p>
+</li>
+<li>
+<p><code>posteriorEsts</code> the list of posterior estimates for the people in <code>stuDat</code> included in the model
+</p>
+</li>
+<li>
+<p><code>SubscaleVC</code> the matrix of latent correlations across constructs
+</p>
+</li>
+</ul>
+<p><code>LogLik</code> is not returned because there is no likelihood for a composite model.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Harold Doran, Paul Bailey, Claire Kelley, Sun-joo Lee, and Eric Buehler
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+require(EdSurvey)
+
+# 1) make param tab for dichotomous items
+dichotParamTab &lt;- data.frame(ItemID = c("m109801", "m020001", "m111001",
+                                        "m046301", "m046501", "m051501",
+                                        "m111601", "m111301", "m111201",
+                                        "m110801", "m110101"),
+                             test = rep("composite",11),
+                             subtest = c(rep("num",6),rep("alg",5)),
+                             slope = c(0.96, 0.69, 0.83,
+                                       0.99, 1.03, 0.97,
+                                       1.45, 0.59, 0.34,
+                                       0.18, 1.20),
+                             difficulty = c(-0.37, -0.55,  0.85,
+                                            -0.97, -0.14,  1.21,
+                                             0.53, -1.84, -0.46,
+                                             2.43,  0.70),
+                             guessing = c(0.16, 0.00, 0.17,
+                                          0.31, 0.37, 0.18,
+                                          0.28, 0.15, 0.09,
+                                          0.05, 0.18),
+                             D = rep(1.7, 11),
+                             MODEL = rep("3pl", 11))
+
+# param tab for GPCM items
+polyParamTab &lt;- data.frame(ItemID = factor(c("m0757cl", "m066501")),
+                           test = rep("composite",2),
+                           subtest = rep("alg",2),
+                           slope = c(0.43, 0.52), # could also be called "a"
+                           itemLocation = c(-1.21, -0.96), # added to d1 ... dn
+                           d1 = c(2.38, -0.56), 
+                           d2 = c(-0.57, 0.56),
+                           d3 = c(-1.18, NA),
+                           D = c(1.7, 1.7),
+                           scorePoints = c(4L, 3L)) # number of score points, read d1 to d(n-1)
+# read-in NAEP Primer data 
+sdf &lt;- readNAEP(system.file("extdata/data", "M36NT2PM.dat", package = "NAEPprimer"))
+# read in these items
+items &lt;- c(as.character(dichotParamTab$ItemID), as.character(polyParamTab$ItemID))
+# dsex, student sex
+# origwt, full sample weights
+# repgrp1, stratum indicator
+# jkunit, PSU indicator
+edf &lt;- getData(data=sdf, varnames=c(items, "dsex", "origwt", "repgrp1", "jkunit", "sdracem"),
+               omittedLevels = FALSE, returnJKreplicates=FALSE)
+# make up a student ID
+edf$sid &lt;- paste0("S",1:nrow(edf))
+# apply simplified scoring
+for(i in 1:length(items)) {
+  coli &lt;- items[i]
+  # save the original
+  rawcol &lt;- paste0(coli,"raw")
+  edf[,rawcol] &lt;- edf[,coli]
+  if( coli %in% dichotParamTab$ItemID) {
+    edf[,coli] &lt;- ifelse(grepl("[ABCDE]", edf[,rawcol]), 0, NA)
+    edf[,coli] &lt;- ifelse(grepl("*", edf[,rawcol]), 1, edf[,coli])
+  } else {
+    # scale for m066501
+    edf[,coli] &lt;- ifelse(grepl("Incorrect", edf[,rawcol]), 0, NA)
+    edf[,coli] &lt;- ifelse(grepl("Partial", edf[,rawcol]), 1, edf[,coli])
+    edf[,coli] &lt;- ifelse(grepl("Correct", edf[,rawcol]), 2, edf[,coli])
+    # scale for m0757cl
+    edf[,coli] &lt;- ifelse(grepl("None correct", edf[,rawcol]), 0, edf[,coli])
+    edf[,coli] &lt;- ifelse(grepl("One correct", edf[,rawcol]), 1, edf[,coli])
+    edf[,coli] &lt;- ifelse(grepl("Two correct", edf[,rawcol]), 2, edf[,coli])
+    edf[,coli] &lt;- ifelse(grepl("Three correct", edf[,rawcol]), 3, edf[,coli])
+  }
+  edf[,rawcol] &lt;- NULL # delete original
+}
+
+# stuItems has one row per student/item combination
+stuItems &lt;- edf[,c("sid", items)]
+stuItems &lt;- reshape(data=stuItems, varying=c(items), idvar=c("sid"),
+                    direction="long", v.names="score", times=items, timevar="key")
+# stuDat is one row per student an contains student-level information
+stuDat &lt;- edf[,c("sid", "origwt", "repgrp1", "jkunit", "dsex", "sdracem")]
+
+# testDat shows scaling and weights for subtests, an overall score can be treated as a subtest
+testDat &lt;- data.frame(test=c("composite", "composite") ,
+                      subtest=c("num", "alg"),
+                      location=c(277.1563, 280.2948),
+                      scale=c(37.7297, 36.3887),
+                      subtestWeight=c(0.3,0.7))
+
+# estimate a regression for Algebra subscale
+mmlA &lt;- mml(alg ~ dsex,
+            stuItems=stuItems, stuDat=stuDat,
+            dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
+            testScale=testDat,
+            idVar="sid", weightVar="origwt", # these are column names on stuDat
+            strataVar="repgrp1", PSUVar="jkunit")
+# summary, with Taylor standard errors
+mmlAs &lt;- summary.mmlMeans(mmlA, varType="Taylor")
+
+
+# estimate a regression for Numeracy subscale
+mmlN &lt;- mml(num ~ dsex,
+            stuItems=stuItems, stuDat=stuDat,
+            dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
+            testScale=testDat,
+            idVar="sid", weightVar="origwt", # these are column names on stuDat
+            strataVar="repgrp1", PSUVar="jkunit")
+# summary, with Taylor standard errors
+mmlNs &lt;- summary.mmlMeans(mmlN, varType="Taylor")
+mmlNs
+
+# draw plausible values for mmlA
+head(pvd &lt;- drawPVs.mmlMeans(mmlA))
+# alternative specification
+head(pvs &lt;- drawPVs.mmlMeans(summary.mmlMeans(mmlA, varType="Taylor"), stochasticBeta=TRUE))
+
+# composite regression 
+mmlC &lt;- mml(composite ~ dsex ,
+            stuItems=stuItems, stuDat=stuDat,
+            dichotParamTab=dichotParamTab, polyParamTab=polyParamTab,
+            testScale=testDat,
+            idVar="sid", weightVar="origwt", # these are column names on stuDat
+            strataVar="repgrp1", PSUVar="jkunit")
+# summary, with Taylor standard errors
+summary(mmlC, varType="Taylor")
+
+# draw plausible values for mmlC
+head(pvd &lt;- drawPVs.mmlCompositeMeans(mmlC))
+# alternative specification 
+mmlCsum &lt;- summary.mmlCompositeMeans(mmlC, varType="Taylor")
+head(pvs &lt;- drawPVs.mmlCompositeMeans(mmlCsum, stochasticBeta=TRUE))
+
+
+## End(Not run)
+</code></pre>
+
+
+</div>

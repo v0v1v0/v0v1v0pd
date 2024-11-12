@@ -1,0 +1,254 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>create_MIQP.Rd</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Internal functions that support the export of (mixed) integer quadratic or linear problems in MPS format
+</h2>
+
+<h3>Description</h3>
+
+<p>create_MIQP creates an MPS format character object,
+write_MPSILP saves a single integer linear problem in MPS format (used in the user-visible write_MSPILPlist).
+The functions work, if neither Mosek nor Gurobi is available.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">create_MIQP(nruns, nlevels, resolution=3, distinct=TRUE,
+              start=NULL, forced=NULL, forMosek=FALSE)
+write_MPSILP(file, qco=NULL, qcoinfo=NULL,
+              cvec=NULL, bvec=NULL, Amat=NULL, bsense=NULL, boundmat=NULL,
+              name = "EnforceResolution", commentline="* no comment")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>nruns</code></td>
+<td>
+
+<p>positive integer; number of runs
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nlevels</code></td>
+<td>
+
+<p>vector of integers (&gt;=2); numbers of factor levels
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resolution</code></td>
+<td>
+
+<p>positive integer; the minimum resolution requested
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distinct</code></td>
+<td>
+
+<p>logical; if TRUE (default), restricts counting vector to 0/1 entries, which means that the resulting array is requested to have distinct rows; otherwise, duplicate rows are permitted, i.e. the counting vector can have arbitrary non-negative integers. Designs with distinct runs are usually better; in addition, binary variables are easier to handle by the optimization algorithm. Nevertheless, there are occasions where a better array is found faster with option <code>distinct=FALSE</code>, even if it has distinct rows.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+
+<p>a starting value for the algorithm: can be a array matrix with entries 1 to number of levels for each column, or a counting vector for the full factorial in lexicographic order; if specified, <code>start</code> must specify an array with the appropriate number of rows and columns, the requested resolution and, if <code>distinct = TRUE</code>, also contain distinct rows (matrix) or 0/1 elements only. <code>start</code> cannot be combined with <code>search.orders=TRUE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forced</code></td>
+<td>
+
+<p>for <code>resolution &gt; 1</code> only;<br>
+runs to force into the solution design; can be given as an array matrix with the appropriate number of columns and less than <code>nruns</code> rows or a counting vector for the full factorial in lexicographic order with sum smaller than <code>nruns</code>; if <code>distinct=TRUE</code>, <code>forced</code> must have distinct rows (matrix) or 0/1 elements only.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forMosek</code></td>
+<td>
+
+<p>logical</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>file</code></td>
+<td>
+
+<p>character string that provides the path to the save file
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qco</code></td>
+<td>
+
+<p>an object of class <code>qco</code> that can be used as input for function <code>Rmosek::mosek</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qcoinfo</code></td>
+<td>
+
+<p>contains information on the <code>qco</code> object (keeping that information in <code>qco</code> itself hinders execution of <code>Rmosek::mosek</code>)
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cvec</code></td>
+<td>
+
+<p>coefficients of linear objective function
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bvec</code></td>
+<td>
+
+<p>RHS of the constraints
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Amat</code></td>
+<td>
+
+<p>matrix of coefficients for the LHS of the constraints
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bsense</code></td>
+<td>
+
+<p>directions of constraints (character vector with elements <code>"E"</code> for equal, <code>"G"</code> for greater, <code>"L"</code> for less or <code>"N"</code> for not restricted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boundmat</code></td>
+<td>
+
+<p>matrix of lower (first row) and upper (second row) bounds for the variables
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>name</code></td>
+<td>
+
+<p>name to be written into the name field of the mps file
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>commentline</code></td>
+<td>
+
+<p>comment to be written directly underneath the name (comments have to start with a *)
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The functions do <em>not</em> do any problem solving, they serve the sole purpose of exporting problems so that they can be addressed by solvers other than Mosek or Gurobi. The target solver must be able to process the MPS format.
+</p>
+<p><code>write_MPSILP</code> writes a single problem to an MPS file. The function is used by function <code>write_MPSILPlist</code>.
+</p>
+<p><code>create_MIQP</code> creates a quadratic problem in MPS format, using a general quadratic representation (section <code>Q</code>) for external solvers (default) or Mosek format with conic quadratic constraints (<code>forMosek=TRUE</code>); the function is used by function <code>write_MPSMIQP</code>.
+</p>
+<p>The start array for <code>create_MIQP</code> can be made available from a previous linear optimization (though this is not enforced).
+If an admissible start array is provided, <code>write_MPSMIQP</code> initially prints the GWLP of that start array.
+Otherwise, it warns of inadmissibility. The start value cannot be stored in the MPS file. Instead, for a non-NULL start array,
+a separate file (suffix <code>.start</code>) is created, and users have to work out how they can make their solver use that start solution.
+Note that the availability of a start array can improve the ability of a solver to find an optimum solution. However, this is not always the case,
+there are also instances for which a better solution is found without providing a start solution.
+</p>
+<p>Note that it can take a long time to write the problems, if the problem has many variables (the number of variables is <code>prod(nlevels)</code>).
+</p>
+
+
+<h3>Value</h3>
+
+<p>Function <code>create_MIPQ</code> creates a list object of class <code>qco</code>, see also section "Details".
+</p>
+<p>Function <code>write_MPSILP</code> does not return a value.
+</p>
+
+
+<h3>Note</h3>
+
+<p>The functions are not meant for situations, for which a full factorial design would be huge. Even though the functions do not solve anything, MPS files will be very large and writing them will be quite slow for such cases.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Ulrike Groemping
+</p>
+
+
+<h3>References</h3>
+
+<p>Groemping, U. and Fontana, R. (2019). An Algorithm for Generating Good Mixed Level Factorial Designs. <em>Computational Statistics &amp; Data Analysis</em> <b>137</b>, 101-114. doi:10.1016/j.csda.2019.01.020.
+</p>
+<p>Mosek ApS (2017a). MOSEK version w.x.y.z documentation. Accessible at: <a href="https://www.mosek.com/documentation/">https://www.mosek.com/documentation/</a>. This package has been developed using version 8.1.0.23 (accessed August 29 2017).
+</p>
+<p>Mosek ApS (2017b). MOSEK Rmosek Package 8.1.y.z. <a href="https://docs.mosek.com/8.1/rmosek/index.html">https://docs.mosek.com/8.1/rmosek/index.html</a>.
+<em>!!! In normal R speak, this is the documentation of the Rmosek package version 8.0.69 (or whatever comes next), when applied on top of the Mosek version 8.1.y.z (this package has been devoloped with Mosek version 8.1.0.23 and will likely not work for Mosek versions before 8.1). !!! (accessed August 29 2017)</em>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See also <code>write_MPSILPlist</code> and <code>write_MPSMIQP</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+## can also be run with gurobi_MIParray instead of mosek_MIParray
+## there are of course better ways to obtain good arrays for these parameters
+## (e.g. function FrF2 from package FrF2)
+problemlist &lt;- create_ILPlist(16, c(2,2,4,8), resolution=2, kmax=4)
+feld
+names(attributes(feld))
+attr(feld, "MIPinfo")$info
+
+## using a start value
+start &lt;- DoE.base::L16.2.8.8.1[,1:5]
+feld &lt;- mosek_MIParray(16, rep(2,5), resolution=4, start=start)
+
+## counting vector representation of the start value could also be used
+DoE.MIParray:::dToCount(start-1)
+   ## "-1", because the function requires values starting with 0
+   ## 32 elements for the full factorial in lexicographic order, 16 ones for the runs
+
+## extending an existing array
+force &lt;- matrix(as.numeric(as.matrix(DoE.base::undesign(DoE.base::oa.design(L8.2.7)))), nrow=8)
+feld &lt;- mosek_MIParray(16, rep(2,7), resolution=3, kmax=4, forced=force)
+attr(feld, "MIPinfo")$info
+
+## End(Not run)
+</code></pre>
+
+
+</div>

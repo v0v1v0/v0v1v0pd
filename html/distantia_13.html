@@ -1,0 +1,116 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>leastCostMatrix</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Computes a least cost matrix from a distance matrix.</h2>
+
+<h3>Description</h3>
+
+<p>Computes the constrained (by sample order) minimum sum of distances among samples in two multivariate time-series by finding the least cost path between the first and last samples in a distance matrix computed by <code>distanceMatrix</code>. The minimum distance is found trough an efficient dynamic programming algorithm that first solves the local least cost path between adjacent samples, and uses the partial solutions to find the global solution.
+</p>
+<p>The algorithm is based on the sequence slotting algorithm described by Birks and Gordon (1985). In its original version, the algorithm searches for the least cost path between a given sample of one sequence (A) and the samples of the other sequence (B) in orthogonal directions (either one step in the x axis or one step in the y axis), which allows to locate the two samples in B between which the target sample in A "belongs" (has the least distance to). Therefore, the algorithm is in fact ordering the samples in both sequences to virtually create a single sequence (as in <code>B1, A1, A2, B2, etc</code>) with the samples ordered in the way that minimizes the global distance among them.
+</p>
+<p>This function provides an additional option that allows to include the diagonals in the search of the least cost path through the <code>diagonal</code> argument (which is <code>FALSE</code> by default). This modification allows to find, for each sample in A, the most similar sample in B, and align them together, if the distance among them is lower than the one found in the orthogonal directions. Both options give highly correlated least cost distances for the same matrices, but have different applications.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">leastCostMatrix(
+  distance.matrix = NULL,
+  diagonal = FALSE,
+  parallel.execution = TRUE
+  )
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>distance.matrix</code></td>
+<td>
+<p>numeric matrix or list of numeric matrices, a distance matrix produced by <code>distanceMatrix</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diagonal</code></td>
+<td>
+<p>boolean, if <code>TRUE</code>, diagonals are included in the computation of the least cost path. Defaults to <code>FALSE</code>, as the original algorithm did not include diagonals in the computation of the least cost path.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel.execution</code></td>
+<td>
+<p>boolean, if <code>TRUE</code> (default), execution is parallelized, and serialized if <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list of matrices with the same dimensions as <code>distance.matrix</code> with the cumulative least cost among samples. The value of the lower-right cell (in the actual data matrix, not in the plotted version!) represents the sum of the least cost path across all samples.
+</p>
+
+<ul>
+<li>
+<p> Birks, H.J.B.  and Gordon, A.D. (1985) Numerical Methods in Quaternary Pollen Analysis. Academic Press.
+</p>
+</li>
+<li>
+<p> Clark, R.M., (1985) A FORTRAN program for constrained sequence-slotting based on minimum combined path length. Computers &amp; Geosciences, Volume 11, Issue 5, Pages 605-617. Doi: https://doi.org/10.1016/0098-3004(85)90089-5.
+</p>
+</li>
+<li>
+<p> Thompson, R., Clark, R.M. (1989) Sequence slotting for stratigraphic correlation between cores: theory and practice. Journal of Paleolimnology, Volume 2, Issue 3, pp 173–184
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+
+
+#loading data
+data(sequenceA)
+data(sequenceB)
+
+#preparing datasets
+AB.sequences &lt;- prepareSequences(
+ sequence.A = sequenceA,
+ sequence.A.name = "A",
+ sequence.B = sequenceB,
+ sequence.B.name = "B",
+ merge.mode = "complete",
+ if.empty.cases = "zero",
+ transformation = "hellinger"
+ )
+
+#computing distance matrix
+AB.distance.matrix &lt;- distanceMatrix(
+ sequences = AB.sequences,
+ grouping.column = "id",
+ method = "manhattan",
+ parallel.execution = FALSE
+ )
+
+#computing least cost matrix
+AB.least.cost.matrix &lt;- leastCostMatrix(
+ distance.matrix = AB.distance.matrix,
+ diagonal = FALSE,
+ parallel.execution = FALSE
+ )
+
+#plot
+par(mfrow=c(1,2))
+plotMatrix(distance.matrix = AB.distance.matrix)
+plotMatrix(distance.matrix = AB.least.cost.matrix)
+dev.off()
+
+
+
+</code></pre>
+
+
+</div>

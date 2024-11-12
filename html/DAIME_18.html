@@ -1,0 +1,140 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>timetostratratecont</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Transform Patterns from Time into Stratigraphic Height (Continuous)
+</h2>
+
+<h3>Description</h3>
+
+<p>This function transforms a given continuous temporal pattern into the corresponding stratigraphic pattern. The transformation is based on the age model derived from the given deposition rate. Essentially a wrapper of <code>patterntransform(...,direction='time to height',depositionmodel='piecewise linear deposition rate',patternmode='piecewise linear')</code> kept for backwards compatibility of the package. It is recommended to use <code>patterntransform</code> instead of this function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">timetostratratecont(xdep, ydep, xsig, ysig, pos = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>xdep</code></td>
+<td>
+
+<p>Vector of strictly increasing real numbers 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ydep</code></td>
+<td>
+
+<p>Vector of the same length of <code>xdep</code>, containing strictly positive real numbers. <code>xdep</code> and <code>ydep</code> define the deposition rate in the sense that <code>depositionrate=approxfun(xdep,ydep)</code>
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xsig</code></td>
+<td>
+
+<p>Vector of strictly increasing real numbers 
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ysig</code></td>
+<td>
+
+<p>Vector of the same length of <code>xsig</code>, containing positive real numbers. <code>xsig</code> and <code>ysig</code> define the temporal pattern in the sense that <code>temporalpat=approxfun(xsig,ysig)</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pos</code></td>
+<td>
+
+<p>OPTIONAL. Vector of points in time height that will be transformed into stratigraphic height, and determine where the stratigraphic pattern is evaluated. Default setting is a vector spanning the interval of interest with evenly spaced points (no. is chosen by the code)
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>Returns a list containing:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>height </code></td>
+<td>
+<p>vector containing stratigraphic heights</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>val </code></td>
+<td>
+<p>vector containign the values of the stratigraphic pattern at <code>height</code></p>
+</td>
+</tr>
+</table>
+<p>The stratigraphic pattern can be approximated using <code>stratpat=approxfun(height,val)</code>
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Niklas Hohmann
+</p>
+
+
+<h3>References</h3>
+
+<p>Hohmann, Niklas. 2018. Quantifying the Effects of Changing Deposition Rates and Hiatii on the Stratigraphic Distribution of Fossils. &lt;doi:10.13140/RG.2.2.23372.51841&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>patterntransform</code> for the more general function underlying this wrapper
+</p>
+<p>For an overview of the functions in the DAIME package, see its vignette (available via <code>vignette("DAIME")</code> )
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">##define deposition rate
+xdep=seq(0,12,length.out=100)
+ydep=splinefunH(x=c(0,2,4,6,8,10,12),y=c(1,5,6,1,0.5,1,6),m=c(0,1.5,-0.5,-0.5,0,0.5,0))(xdep)
+#Plot deposition rate
+plot(xdep,ydep,type='l',main='Deposition Rate',xlab='Time',ylab='Sediment per Time Unit')
+
+#define a temporal pattern
+xsig= seq(0,12,length.out=100)
+ysig=splinefunH(x=c(0,4,12),y=c(0.5,2,0.5),m=c(0,0,0))(xsig)
+plot(xsig,ysig,type='l',main='Temporal Pattern',xlab='Time',ylab='Intensity')
+
+##transform temporal pattern into stratigraphic pattern (pattern observable in the section)
+reslist=timetostratratecont(xdep,ydep,xsig,ysig)
+plot(reslist$height,reslist$val,type='l',xlab='Stratigraphic Height',
+  ylab='Intensity',main='Stratigraphic Pattern')
+  
+##with removal of sediment
+ydep=splinefunH(x=c(0,2,4,6,8,10,12),y=c(1,5,6,-2,5,1,6),m=c(0,1.5,-0.5,-0.5,0,0.5,0))(xdep)
+#Plot deposition rate
+plot(xdep,ydep,type='l',main='Deposition Rate',xlab='Time',ylab='Sediment per Time Unit')
+reslist=timetostratratecont(xdep,ydep,xsig,ysig)
+plot(reslist$height,reslist$val,type='l',xlab='Stratigraphic Height',
+  ylab='Intensity',main='Stratigraphic Pattern',ylim=c(0,1))
+#the spike is because the deposition rate is very small when it transitions from 
+#negative to positive, generating a punctual extreme condensation
+  
+</code></pre>
+
+
+</div>

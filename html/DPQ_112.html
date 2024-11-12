@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lssum</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compute Logarithm of a Sum with Signed Large Summands</h2>
+
+<h3>Description</h3>
+
+<p>Properly compute <code class="reqn">\log(x_1 + \ldots + x_n)</code>
+for given log absolute values <code>lxabs = </code>
+<code class="reqn">log(|x_1|),.., log(|x_n|)</code>
+and corresponding signs <code>signs = </code> <code class="reqn">sign(x_1),.., sign(x_n)</code>.  Here,
+<code class="reqn">x_i</code> is of arbitrary sign.
+</p>
+<p>Notably this works in many cases where the direct sum would have summands
+that had overflown to <code>+Inf</code> or underflown to <code>-Inf</code>.
+</p>
+<p>This is a (simpler, vector-only) version of <code>copula:::lssum()</code> (CRAN
+package <a href="https://CRAN.R-project.org/package=copula"><span class="pkg">copula</span></a>). 
+</p>
+<p>Note that the <em>precision</em> is often not the problem for the direct
+summation, as <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s <code>sum()</code> internally uses
+<code>"long double"</code> precision on most platforms.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lssum(lxabs, signs, l.off = max(lxabs), strict = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>lxabs</code></td>
+<td>
+<p>n-vector of values <code class="reqn">\log(|x_1|), \ldots, \log(|x_n|)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>signs</code></td>
+<td>
+<p>corresponding signs <code class="reqn">sign(x_1), \ldots, sign(x_n)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>l.off</code></td>
+<td>
+<p>the offset to substract and re-add; ideally in the order of <code>max(.)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strict</code></td>
+<td>
+<p><code>logical</code> indicating if the function should stop on some negative sums.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p style="text-align: center;"><code class="reqn">
+    log(x_1 + .. + x_n) =
+    = log(sum(x)) = log(sum(sign(x)*|x|)) =
+    = log(sum(sign(x)*exp(log(|x|)))) =
+    = log(exp(log(x0))*sum(signs*exp(log(|x|)-log(x0)))) =
+    = log(x0) + log(sum(signs* exp(log(|x|)-log(x0)))) =
+    = l.off + log(sum(signs* exp(lxabs - l.off )))
+  </code>
+</p>
+
+
+
+<h3>Author(s)</h3>
+
+<p>Marius Hofert and Martin Maechler (for package <a href="https://CRAN.R-project.org/package=copula"><span class="pkg">copula</span></a>).
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>lsum()</code> which computes an exponential sum in log scale
+with <em>out</em> signs.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">rSamp &lt;- function(n, lmean, lsd = 1/4, roundN = 16) {
+  lax &lt;- sort((1+1e-14*rnorm(n))*round(roundN*rnorm(n, m = lmean, sd = lsd))/roundN)
+  sx &lt;- rep_len(c(-1,1), n)
+  list(lax=lax, sx=sx, x = sx*exp(lax))
+}
+
+set.seed(101)
+L1 &lt;- rSamp(1000, lmean = 700) # here, lssum() is not needed (no under-/overflow)
+summary(as.data.frame(L1))
+ax &lt;- exp(lax &lt;- L1$lax)
+hist(lax); rug(lax)
+hist( ax); rug( ax)
+sx &lt;- L1$sx
+table(sx)
+(lsSimple &lt;- log(sum(L1$x)))           # 700.0373
+(lsS &lt;- lssum(lxabs = lax, signs = sx))# ditto
+lsS - lsSimple # even exactly zero (in 64b Fedora 30 Linux which has nice 'long double')
+stopifnot(all.equal(700.037327351478, lsS, tol=1e-14), all.equal(lsS, lsSimple))
+
+L2 &lt;- within(L1, { lax &lt;- lax + 10; x &lt;- sx*exp(lax) }) ; summary(L2$x) # some -Inf, +Inf
+(lsSimpl2 &lt;- log(sum(L2$ x)))                    # NaN
+(lsS2 &lt;- lssum(lxabs = L2$ lax, signs = L2$ sx)) # 710.0373
+stopifnot(all.equal(lsS2, lsS + 10, tol = 1e-14))
+</code></pre>
+
+
+</div>

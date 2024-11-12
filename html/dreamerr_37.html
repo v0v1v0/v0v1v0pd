@@ -1,0 +1,162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>stop_up</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Stops (or warns in) sub-function execution</h2>
+
+<h3>Description</h3>
+
+<p>Useful if you employ non-user level sub-functions within user-level functions or
+if you want string interpolation in error messages. When an error is thrown in the sub
+function, the error message will integrate the call of the user-level function, which
+is more informative and appropriate for the user. It offers a similar functionality for <code>warning</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">stop_up(..., up = 1, msg = NULL, envir = parent.frame(), verbatim = FALSE)
+
+stopi(..., envir = parent.frame())
+
+warni(..., envir = parent.frame(), immediate. = FALSE)
+
+warn_up(
+  ...,
+  up = 1,
+  immediate. = FALSE,
+  envir = parent.frame(),
+  verbatim = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Objects that will be coerced to character and will compose the error message.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>up</code></td>
+<td>
+<p>The number of frames up, default is 1. The call in the error message will be based on the function <code>up</code> frames up the stack. See examples. If you have many calls to <code>stop_up</code>/<code>warn_up</code> with a value of <code>up</code> different than one, you can use <code>set_up</code> to change the default value of <code>up</code> within the function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>msg</code></td>
+<td>
+<p>A character vector, default is <code>NULL</code>. If provided, this message will be displayed right under the error message. This is mostly useful when the text contains formatting because the function <code>stop</code> used to send the error message erases any formatting.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>envir</code></td>
+<td>
+<p>An environment, default is <code>parent.frame()</code>. Only relevant if the error/warning message contains
+interpolation (interpolation is performed with <a href="https://github.com/lrberge/stringmagic">stringmagic</a>). It tells
+where the variables to be interpolated should be found. In general you should not worry about this argument.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbatim</code></td>
+<td>
+<p>Logical scalar, default is <code>FALSE</code>. By default the error/warning message allows variable
+interpolation with <a href="https://github.com/lrberge/stringmagic">stringmagic</a>. To disable interpolation,
+use <code>verbatim = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>immediate.</code></td>
+<td>
+<p>Whether the warning message should be prompted directly. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>These functions are really made for package developers to facilitate the good practice of providing informative user-level error/warning messages.
+</p>
+<p>The error/warning messages allow variable interpolation by making use of <a href="https://github.com/lrberge/stringmagic">stringmagic</a>'s interpolation.
+</p>
+
+
+<h3>Functions</h3>
+
+
+<ul>
+<li> <p><code>stopi()</code>: Error messages with string interpolation
+</p>
+</li>
+<li> <p><code>warni()</code>: Warnings with string interpolation
+</p>
+</li>
+<li> <p><code>warn_up()</code>: Warnings at the level of user-level functions
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Laurent Berge
+</p>
+
+
+<h3>See Also</h3>
+
+<p>For general argument checking, see <code>check_arg()</code> and <code>check_set_arg()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# We create a main user-level function
+# The computation is done by an internal function
+# Here we compare stop_up with a regular stop
+
+main_function = function(x = 1, y = 2){
+  my_internal_function(x, y)
+}
+
+my_internal_function = function(x, y){
+  if(!is.numeric(x)){
+    stop_up("Argument 'x' must be numeric but currently isn't.")
+  }
+
+  # Now regular stop
+  if(!is.numeric(y)){
+    stop("Argument 'y' must be numeric but currently isn't.")
+  }
+
+  nx = length(x)
+  ny = length(y)
+  if(nx != ny){
+    # Note that we use string interpolation with {}
+    warn_up("The lengths of x and y don't match: {nx} vs {ny}.")
+  }
+
+  x + y
+}
+
+# Let's compare the two error messages
+# stop_up:
+try(main_function(x = "a"))
+# =&gt; the user understands that the problem is with x
+
+# Now compare with the regular stop:
+try(main_function(y = "a"))
+# Since the user has no clue of what my_internal_function is,
+#  s/he will be puzzled of what to do to sort this out
+
+# Same with the warning =&gt; much clearer with warn_up
+main_function(1, 1:2)
+
+
+</code></pre>
+
+
+</div>

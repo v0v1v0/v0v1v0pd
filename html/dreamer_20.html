@@ -1,0 +1,265 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dreamer_mcmc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Bayesian Model Averaging of Dose Response Models</h2>
+
+<h3>Description</h3>
+
+<p>This function performs Bayesian model averaging with a selection
+of dose response models.  See model for all possible
+models.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dreamer_mcmc(
+  data,
+  ...,
+  n_adapt = 1000,
+  n_burn = 1000,
+  n_iter = 10000,
+  n_chains = 4,
+  silent = FALSE,
+  convergence_warn = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a dataframe with column names of "dose" and "response" for
+individual patient data.  Optional columns "n" and "sample_var" can
+be specified if aggregate data is supplied, but it is recommended that
+patient-level data be supplied where possible for continuous models, as the
+posterior weights differ if aggregated data is used.
+For aggregated continuous
+data, "response" should be the average of "n" subjects with a sample
+variance of "sample_var".  For aggregated binary data, "response" should
+be the number of successes, "n" should be the total number of subjects
+(the "sample_var" column is irrelevant in binary cases and is ignored).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>model definitions created using the model creation functions
+in model.  If arguments are named, the names are
+retained in the return values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_adapt</code></td>
+<td>
+<p>the number of MCMC iterations to tune the MCMC algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_burn</code></td>
+<td>
+<p>the number of burn-in MCMC samples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_iter</code></td>
+<td>
+<p>the number of MCMC samples to collect after tuning and burn-in.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_chains</code></td>
+<td>
+<p>the number of separate, independent, MCMC chains to run.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>silent</code></td>
+<td>
+<p>logical indicating if MCMC progress bars should be suppressed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence_warn</code></td>
+<td>
+<p>logical (default <code>TRUE</code>) indicating if the
+Gelman-Rubin diagnostics should be run to detect convergence issues.
+Warnings are thrown if the upper bound of the Gelman-Rubin statistic
+is greater than 1.1.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The Bayesian model averaging approach uses data, multiple models,
+priors on each model's parameters, and a prior weight for each model.
+Using these inputs, each model is fit independently, and the output from
+the models is used to calculate posterior weights for each model.
+See Gould (2018) for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A named list with S3 class "dreamer_bma" and "dreamer".  The list
+contains the following fields:
+</p>
+
+<ul>
+<li>
+<p> doses: a vector of the unique ordered doses in the data.
+</p>
+</li>
+<li>
+<p> times: a vector of the unique ordered times in the data.
+</p>
+</li>
+<li>
+<p> w_prior: a named vector with the prior probabilities of each model.
+</p>
+</li>
+<li>
+<p> w_post: a named vector with the posterior probabilities of each model.
+</p>
+</li>
+<li>
+<p> The individual MCMC fits for each model.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Gould, A. L. (2019).  BMA-Mod: A Bayesian model averaging strategy for
+determining dose-response relationships in the presence of model
+uncertainty. Biometrical Journal, 61(5), 1141-1159.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(888)
+data &lt;- dreamer_data_linear(
+  n_cohorts = c(20, 20, 20),
+  dose = c(0, 3, 10),
+  b1 = 1,
+  b2 = 3,
+  sigma = 5
+)
+
+# Bayesian model averaging
+output &lt;- dreamer_mcmc(
+  data = data,
+  n_adapt = 1e3,
+  n_burn = 1e2,
+  n_iter = 1e3,
+  n_chains = 2,
+  silent = TRUE,
+  mod_linear = model_linear(
+    mu_b1 = 0,
+    sigma_b1 = 1,
+    mu_b2 = 0,
+    sigma_b2 = 1,
+    shape = 1,
+    rate = .001,
+    w_prior = 1 / 2
+  ),
+  mod_quad = model_quad(
+    mu_b1 = 0,
+    sigma_b1 = 1,
+    mu_b2 = 0,
+    sigma_b2 = 1,
+    mu_b3 = 0,
+    sigma_b3 = 1,
+    shape = 1,
+    rate = .001,
+    w_prior = 1 / 2
+  )
+)
+# posterior weights
+output$w_post
+# plot posterior dose response
+plot(output)
+
+# LONGITUDINAL
+library(ggplot2)
+set.seed(889)
+data_long &lt;- dreamer_data_linear(
+  n_cohorts = c(10, 10, 10, 10), # number of subjects in each cohort
+  doses = c(.25, .5, .75, 1.5), # dose administered to each cohort
+  b1 = 0, # intercept
+  b2 = 2, # slope
+  sigma = .5, # standard deviation,
+  longitudinal = "itp",
+  times = c(0, 12, 24, 52),
+  t_max = 52, # maximum time
+  a = .5,
+  c1 = .1
+)
+
+## Not run: 
+ggplot(data_long, aes(time, response, group = dose, color = factor(dose))) +
+   geom_point()
+
+## End(Not run)
+
+output_long &lt;- dreamer_mcmc(
+   data = data_long,
+   n_adapt = 1e3,
+   n_burn = 1e2,
+   n_iter = 1e3,
+   n_chains = 2,
+   silent = TRUE, # make rjags be quiet,
+   mod_linear = model_linear(
+      mu_b1 = 0,
+      sigma_b1 = 1,
+      mu_b2 = 0,
+      sigma_b2 = 1,
+      shape = 1,
+      rate = .001,
+      w_prior = 1 / 2, # prior probability of the model
+      longitudinal = model_longitudinal_itp(
+         mu_a = 0,
+         sigma_a = 1,
+         a_c1 = 0,
+         b_c1 = 1,
+         t_max = 52
+      )
+   ),
+   mod_quad = model_quad(
+      mu_b1 = 0,
+      sigma_b1 = 1,
+      mu_b2 = 0,
+      sigma_b2 = 1,
+      mu_b3 = 0,
+      sigma_b3 = 1,
+      shape = 1,
+      rate = .001,
+      w_prior = 1 / 2,
+      longitudinal = model_longitudinal_linear(
+         mu_a = 0,
+         sigma_a = 1,
+         t_max = 52
+      )
+   )
+)
+
+## Not run: 
+# plot longitudinal dose-response profile
+plot(output_long, data = data_long)
+plot(output_long$mod_quad, data = data_long) # single model
+
+# plot dose response at final timepoint
+plot(output_long, data = data_long, times = 52)
+plot(output_long$mod_quad, data = data_long, times = 52) # single model
+
+## End(Not run)
+</code></pre>
+
+
+</div>

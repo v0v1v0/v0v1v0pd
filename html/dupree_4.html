@@ -1,0 +1,108 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dupree</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Detect code duplication between the code-blocks in a set of files</h2>
+
+<h3>Description</h3>
+
+<p>This function identifies all code-blocks in a set of files and then computes
+a similarity score between those code-blocks to help identify functions /
+classes that have a high level of duplication, and could possibly be
+refactored.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dupree(files, min_block_size = 40, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>files</code></td>
+<td>
+<p>A set of files over which code-duplication
+should be measured.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_block_size</code></td>
+<td>
+<p><code>dupree</code> uses a notion of non-trivial
+symbols.  These are the symbols / code-words that remain after filtering
+out really common symbols like <code>&lt;-</code>, <code>,</code>, etc. After filtering
+out these symbols from each code-block, only those blocks containing at
+least <code>min_block_size</code> symbols are used in the inter-block
+code-duplication measurement.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Unused at present.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Code-blocks under a size threshold are disregarded before analysis (the size
+threshold is controlled by <code>min_block_size</code>); and only top-level code
+blocks are considered.
+</p>
+<p>Every sufficiently large code-block in the input files will be present in
+the results at least once. If code-block X and code-block Y are present in
+a row of the resulting data-frame, then either X is the closest match to Y,
+or Y is the closest match to X (or possibly both) according to the
+similarity score; as such, some code-blocks may be present multiple times in
+the results.
+</p>
+<p>Similarity between code-blocks is calculated using the
+longest-common-subsequence (<code>lcs</code>) measure from the package
+<code>stringdist</code>. This measure is applied to a tokenised version of the
+code-blocks. That is, each function name / operator / variable in the code
+blocks is converted to a unique integer so that a code-block can be
+represented as a vector of integers and the <code>lcs</code> measure is applied to
+each pair of these vectors.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>tibble</code>. Each row in the table summarises the
+comparison between two code-blocks (block 'a' and block 'b') in the input
+files. Each code-block in the pair is indicated by: i) the file
+(<code>file_a</code> / <code>file_b</code>) that contains it; ii) its position within
+that file (<code>block_a</code> / <code>block_b</code>; 1 being the first code-block in
+a given file); and iii) the line where that code-block starts in that file
+(<code>line_a</code> / <code>line_b</code>). The pairs of code-blocks are ordered by
+decreasing similarity. Any match that is returned is either the top hit for
+block 'a' or for block 'b' (or both).
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># To quantify duplication between the top-level code-blocks in a file
+example_file &lt;- system.file("extdata", "duplicated.R", package = "dupree")
+dup &lt;- dupree(example_file, min_block_size = 10)
+dup
+
+# For the block-pair with the highest duplication, we print the first four
+# lines:
+readLines(example_file)[dup$line_a[1] + c(0:3)]
+readLines(example_file)[dup$line_b[1] + c(0:3)]
+
+# The code-blocks in the example file are rather small, so if
+# `min_block_size` is too large, none of the code-blocks will be analysed
+# and the results will be empty:
+dupree(example_file, min_block_size = 40)
+</code></pre>
+
+
+</div>

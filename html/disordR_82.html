@@ -1,0 +1,153 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>misc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Miscellaneous functions</h2>
+
+<h3>Description</h3>
+
+<p>This page documents various functions that work for disords, and I will
+add to these from time to time as I add new functions that make sense
+for disord objects.  Functions like <code>sin()</code> and <code>abs()</code> work
+as expected: they take and return <code>disord</code> objects with the same
+hash as <code>x</code> (which means that idiom like <code>x + sin(x)</code> is
+accepted).  However, there are a few functions that are a little more
+involved:
+</p>
+
+<ul>
+<li>
+<p><code>rev()</code> reverses its argument and returns a <code>disord</code>
+object with a reversed hash, which ensures that <code>rev(rev(x))==x</code>
+(and the two are consistent).
+</p>
+</li>
+<li>
+<p><code>sort()</code> returns a vector of sorted elements (not a
+<code>disord</code>)
+</p>
+</li>
+<li>
+<p><code>length()</code> returns the length of the data component of the
+object
+</p>
+</li>
+<li>
+<p><code>sapply(X,f)</code> returns a disord object which is the result of
+applying <code>f()</code> to each element of <code>X</code>.
+</p>
+</li>
+<li>
+<p><code>match(x,table)</code> should behave as expected but note that if
+<code>table</code> is a <code>disord</code>, the result is not defined (because it
+is not known where the elements of <code>x</code> occur in <code>table</code>).
+Nevertheless <code>x %in% table</code> is defined and returns a
+<code>disord</code> object.
+</p>
+</li>
+<li>
+<p><code>lapply(x,f)</code> returns
+<code>disord(lapply(elements(x),f,...),h=hash(x))</code>.  Note that double
+square bracket extraction, as in <code>x[[i]]</code>, is disallowed (see
+<code>extract.Rd</code>).
+</p>
+</li>
+<li>
+<p><code>which()</code> returns a <code>disind</code> object when given a
+Boolean  <code>disord</code>
+</p>
+</li>
+<li>
+<p><code>unlist()</code> takes a <code>disord</code> list, flattens it and
+returns a <code>disord</code> vector.  It requires the <code>recursive</code> flag
+of <code>base::unlist()</code> to be <code>TRUE</code>, which it is by default,
+interpreting this to mean “kill all the structure in any
+sublists”.  If the list comprises only length-one vectors, the
+returned value retains the same hash as the argument; if not, a new
+hash is generated.
+</p>
+</li>
+<li>
+<p><code>diff()</code> is undefined for <code>disord</code> objects.
+</p>
+</li>
+</ul>
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Object of class <code>disord</code></p>
+</td>
+</tr></table>
+<h3>Value</h3>
+
+<p>Returns a disord</p>
+
+
+<h3>Note</h3>
+
+<p>Some functionality is not yet implemented.  Factors, lists, and named
+vectors do not behave entirely consistently in the package;
+<code>paste()</code> gives inconsistent results when called with disords.
+</p>
+<p>Also, <code>for()</code> loops are incompatible with disord discipline, as
+they impose an ordering (<code>for()</code> accesses the <code>.Data</code> slot of
+its argument, which is a regular <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> vector).  Thus:
+</p>
+<pre>
+&gt; (a &lt;- disord(1:3))
+A disord object with hash 555f6bea49e58a2c2541060a21c2d4f9078c3086 and elements
+[1] 1 2 3
+(in some order)
+&gt; for(i in a){print(i)}
+[1] 1
+[1] 2
+[1] 3
+&gt; 
+</pre>
+<p>Above, we see that <code>for()</code> uses the ordering of the <code>.Data</code>
+slot of S4 object <code>a</code>, even though <code>elements()</code> has
+not been explicitly called.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Robin K. S. Hankin</p>
+
+
+<h3>See Also</h3>
+
+<p><code>extract</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">a &lt;- disord(c(a=1,b=2,c=7))
+a
+names(a)
+length(a)
+sqrt(a)
+
+
+# powers() and vars() in the mvp package return lists; see the vignette
+# for more discussion.
+
+l &lt;- disord(list(3,6:9,1:10))  
+sapply(l,length)
+
+unlist(l)
+
+## Quick illustration of rev():
+
+revstring &lt;- function(s){paste(rev(unlist(strsplit(s, NULL))),collapse="")}
+x &lt;- rdis()
+revstring(hash(x)) == hash(rev(x))
+
+</code></pre>
+
+
+</div>

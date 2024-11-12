@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynarski</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+A Natural Experiment Concerning Subsidized College Education
+</h2>
+
+<h3>Description</h3>
+
+<p>The data are from Susan Dynarski (2003)'s study of the effects of a subsidy for college education provided Social Security to children whose fathers had died.  The subsidy was eliminated in 1982.  As presented here, the data are only a portion of the data used in Dynarski (2003), specifically the period from 1979-1981 when the subsidy was available.  The data set here is Table 14.1 of "Design of Observational Studies" (2nd edition), where it was used with the limited goal of illustrating matching techniques.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data("dynarski")</code></pre>
+
+
+<h3>Format</h3>
+
+<p>A data frame with 2820 observations on the following 10 variables.
+</p>
+
+<dl>
+<dt><code>id</code></dt>
+<dd>
+<p>identification number</p>
+</dd>
+<dt><code>zb</code></dt>
+<dd>
+<p>treatment indicator, zb=1 if 1979-1981 with father deceased,
+or zb=0 if 1979-1981 with father alive</p>
+</dd>
+<dt><code>faminc</code></dt>
+<dd>
+<p>family income, in units of tens of thousands of dollars</p>
+</dd>
+<dt><code>incmiss</code></dt>
+<dd>
+<p>indicator for missing family income</p>
+</dd>
+<dt><code>black</code></dt>
+<dd>
+<p>1 if black, 0 otherwise</p>
+</dd>
+<dt><code>hisp</code></dt>
+<dd>
+<p>1 if hispanic, 0 otherwise</p>
+</dd>
+<dt><code>afqtpct</code></dt>
+<dd>
+<p>test score percentile, Armed Forces Qualifications Test</p>
+</dd>
+<dt><code>edmissm</code></dt>
+<dd>
+<p>indicator for missing education of mother</p>
+</dd>
+<dt><code>edm</code></dt>
+<dd>
+<p>education of mother, 1 is &lt;high school, 2 is high school,
+3 is some college, 4 is a BA degree or higher</p>
+</dd>
+<dt><code>female</code></dt>
+<dd>
+<p>1 if female, 0 if male</p>
+</dd>
+</dl>
+<h3>Details</h3>
+
+<p>The examples reproduce steps in Chapter 14 of "Design of Observational Studies" (2nd edition).  Portions of the examples require you to load Ben Hansen's 'optmatch' package and accept its academic license; these portions of the examples do not run automatically.  Hansen's 'optmatch' package uses the Fortran code of Bertsekas and Tseng (1988).
+</p>
+
+
+<h3>Source</h3>
+
+<p>Dynarski (2003).
+</p>
+
+
+<h3>References</h3>
+
+<p>Bertsekas, D. P. and Tseng, P. (1988) &lt;doi:10.1007/BF02288322&gt; "The relax codes for linear minimum cost network flow problems". Annals of Operations Research, 13(1), 125-190.
+</p>
+<p>Dynarski, S. M. (2003) &lt;doi:10.1257/000282803321455287&gt; "Does aid matter? Measuring the effect of student aid on college attendance and completion". American Economic Review, 93(1), 279-288.
+</p>
+<p>Hansen, B. B. (2007) &lt;https://www.r-project.org/conferences/useR-2007/program/presentations/hansen.pdf&gt; "Flexible, optimal matching for observational studies". R News, 7, 18-24.
+</p>
+<p>Hansen, B. B. and Klopfer, S. O. (2006)
+&lt;doi:10.1198/106186006X137047&gt; "Optimal full matching and related designs via network flows". Journal of Computational and Graphical Statistics, 15(3), 609-627.
+</p>
+<p>Rosenbaum, P. R. (1989). "Optimal matching for observational studies" &lt;doi:10.1080/01621459.1989.10478868&gt; Journal of the American Statistical Association, 84(408), 1024-1032.
+</p>
+<p>Rosenbaum, P. R. (1991) &lt;doi:10.1111/j.2517-6161.1991.tb01848.x&gt; A characterization of optimal designs for observational studies. Journal of the Royal Statistical Society: Series B (Methodological), 53(3), 597-610.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#
+data(dynarski)
+# Table 14.1 of "Design of Observational Studies" (2nd edition)
+head(dynarski)
+# Table 14.2 of "Design of Observational Studies" (2nd edition)
+zb&lt;-dynarski$zb
+zbf&lt;-factor(zb,levels=c(1,0),labels=c("Father deceased",
+    "Father not deceased"))
+table(zbf)
+Xb&lt;-dynarski[,3:10]
+
+# Estimate the propensity score, Rosenbaum (2010, Section 14.3)
+p&lt;-glm(zb~Xb$faminc+Xb$incmiss+Xb$black+Xb$hisp
+    +Xb$afqtpct+Xb$edmissm+Xb$edm+Xb$female,
+    family=binomial)$fitted.values
+# Figure 14.1 in "Design of Observational Studies" (2nd edition)
+boxplot(p~zbf,ylab="Propensity score",main="1979-1981 Cohort")
+
+# Read about missing covariate values in section 14.4
+# of "Design of Observational Studies" (2nd edition)
+
+# Robust Mahalanobis distance matrix, treated x control
+dmat&lt;-smahal(zb,Xb)
+dim(dmat)
+# Table 14.3 in "Design of Observational Studies" (2nd edition)
+round(dmat[1:5,1:5],2)
+
+# Add a caliper on the propensity score using a penalty function
+dmat&lt;-addcaliper(dmat,zb,p,caliper=.2)
+dim(dmat)
+# Table 14.4 in "Design of Observational Studies" (2nd edition)
+round(dmat[1:5,1:5],2)
+## Not run: 
+# YOU MUST LOAD the 'optmatch' package and accept its license to continue.
+# Note that the 'optmatch' package has changed since 2010.  It now suggests
+# that you indicate the data explicitly as data=dynarski.
+
+# Creating a 1-to-10 match, as in section 14.6 of
+# "Design of Observational Studies" (2nd edition)
+# This may take a few minutes.
+m&lt;-fullmatch(dmat,data=dynarski,min.controls = 10,max.controls = 10,
+    omit.fraction = 1379/2689)
+length(m)
+sum(matched(m))
+1441/11 # There are 131 matched sets, 1 treated, 10 controls
+
+# Alternative, simpler code to do the same thing
+m2&lt;-pairmatch(dmat,controls=10,data=dynarski)
+# Results are the same:
+sum(m[matched(m)]!=m2[matched(m2)])
+
+# Housekeeping
+im&lt;-as.integer(m)
+dynarski&lt;-cbind(dynarski,im)
+dm&lt;-dynarski[matched(m),]
+dm&lt;-dm[order(dm$im,1-dm$zb),]
+
+# Table 14.5 in "Design of Observational Studies" (2nd edition)
+which(dm$id==10)
+dm[188:198,]
+which(dm$id==396)
+dm[23:33,]
+which(dm$id==3051)
+dm[1068:1078,]
+# In principle, there can be a tie, in which several different
+# matched samples all minimize the total distance.  On my
+# computer, this calculation reproduces Table 14.5, but were
+# there a tie, 'optmatch' should return one of the tied optimal
+# matches, but not any particular one.
+
+## End(Not run)
+</code></pre>
+
+
+</div>

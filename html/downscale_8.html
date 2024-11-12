@@ -1,0 +1,248 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>upgrain.threshold</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Exploration of trade-offs in threshold selection for upgraining</h2>
+
+<h3>Description</h3>
+
+<p>Explores the NoData threshold selection for upgraining whilst keeping a constant extent across scales. The thresholds are the quantity of unsampled cells at the atlas scale allowed within each cell at the largest grain size. A low threshold means that many unsampled cells will be assigned as absences, whereas a high threshold will mean that many sampled cells and many presence records will be excluded. These trade-offs are plotted, and four possible threshold choices are suggested and their maps presented.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">upgrain.threshold(atlas.data, cell.width = NULL, scales,
+                  thresholds = seq(0, 1, 0.01), plot = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>atlas.data</code></td>
+<td>
+<p>either a raster file of presence-absence; a spatial points object of class sf where the data frame contains a single column of presence (1) and absences (0); or a data frame of sampled cells, which must contain columns named 'x', 'y' and 'presence'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cell.width</code></td>
+<td>
+<p>if data is a data frame or sf spatial points object, the cell widths of sampled cells. If data is a raster then leave as default (<code>= NULL</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scales</code></td>
+<td>
+<p>the number of cells to upgrain. Upgraining will happen by factors of 2 - ie if scales = 3, the atlas data will be aggregated in 2x2 cells, 4x4 cells and 8x8 cells.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thresholds</code></td>
+<td>
+<p>a vector of thresholds between and including 0 and 1 for the quantity of unsampled NA cells that can be included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>Two sets of four plots (hit return to see the next set). Default = TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A more detailed description is available at <code>vignette("Upgraining", package = "downscale")</code>.
+</p>
+<p>In order to <code>downscale</code> we need to <code>upgrain</code> our atlas data across several scales. However, if the atlas data is not rectangular, as we aggregate cells during upgraining then the extent also increases.
+</p>
+<p><img src="../help/figures/Original.png" width="100%" alt="Figure: Original.png"></p>
+<p>Instead we must ensure the extent is constant across all scales by fixing the extent at all grain sizes to the extent of the largest grain size and convert our proportion of occupied cells back to area of occupancy by using the standardised extent (not the original atlas data extent).
+</p>
+<p>However, if we fix the extent there is trade-off between assigning large areas of unsampled areas as absence, and discarding sampled areas and known Occurrences. The <code>upgrain.threshold</code> function allows visualisations of this trade-off at the atlas scale through four plots:
+</p>
+
+
+<table>
+<tr>
+<td style="text-align: left;">
+a) </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">  The total standardised extent; </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+b) </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">  The number of unsampled cells added and assigned as absences, and the number of sampled cells excluded and assigned as No Data; </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+c) </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">  The proportion of the original atlas data retained; </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+d) </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">  The proportion of known Occurrences excluded. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+</td>
+</tr>
+</table>
+<p>The final choice of threshold is up to the user on a case-by-case basis but we propose four threshold criteria in this function:
+
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+      Threshold </td>
+<td style="text-align: left;">  Method </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> Description </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      0  </td>
+<td style="text-align: left;"> All_Sampled  </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;"> All of the original atlas data is included. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      Species specific </td>
+<td style="text-align: left;">	All_Occurrences </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">	The threshold where no occurrences in the atlas data are excluded. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      Atlas specific </td>
+<td style="text-align: left;">	Gain_Equals_Loss </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">	The threshold where the number of sampled atlas cells reclassified as No Data equals the number of unsampled exterior cells reclassified as absence. In this threshold the new standardised extent also equals the extent of the original atlas data. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      1 </td>
+<td style="text-align: left;">	Sampled_Only </td>
+<td style="text-align: left;"> </td>
+<td style="text-align: left;">	Only cells that contain 100% sampled atlas data are included. </td>
+</tr>
+<tr>
+<td style="text-align: left;">
+      </td>
+</tr>
+</table>
+<p>The function also creates maps for each of these four thresholds. In the example case this clearly demonstrates the trade-off between generating assumptions about unsampled areas, and losing data (and Occurrences) for the sampled atlas data.
+</p>
+<p><img src="../help/figures/Maps.png" width="100%" alt="Figure: Maps.png"></p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list contatining two objects:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Thresholds</code></td>
+<td>
+<p>the threshold values for the four default threshold selections.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data</code></td>
+<td>
+<p>Data frame containing six columns:
+</p>
+
+<table>
+<tr>
+<td style="text-align: left;">
+     <code>Thresholds</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Thresholds tested.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>SampledExluded</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Number of sampled cells exluded.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>SampledIncluded</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Number of sampled cells included.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>UnsampledAdded</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Number of unsampled NoData cells added.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>Extent</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Total number of cells included.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     <code>OccurrencesExluded</code> </td>
+<td style="text-align: left;">  </td>
+<td style="text-align: left;"> Number of cells with presence records excluded.</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+     </td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Charles Marsh &lt;<a href="mailto:charlie.marsh@mailbox.org">charlie.marsh@mailbox.org</a>&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Groom, Q., Marsh, C.J., Gavish, Y. Kunin, W.E. (2018). How to predict fine resolution occupancy from coarse occupancy data, <em>Methods in Ecology and Evolution</em>. 9(11), 2273-2284.
+</p>
+<p>Marsh, C.J, Barwell, L.J., Gavish, Y., Kunin, W.E. (2018). downscale: An R package for downscaling species occupancy from coarse-grain data to predict occupancy at fine-grain sizes, <em>Journal of Statistical Software</em> 86(Code Snippet 3), 1-20.
+</p>
+<p>Marsh, C.J, Gavish, Y., Kunin, W.E., Brummitt N.A. (2019). Mind the gap: Can downscaling Area of Occupancy overcome sampling gaps when assessing IUCN Red List status?, <em>Diversity and Distributions</em> 25, 1832-1845.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## example species data
+data.file &lt;- system.file("extdata", "atlas_data.txt", package = "downscale")
+atlas.data &lt;- read.table(data.file, header = TRUE)
+
+## if the input data is a data frame it must have the columns "x", "y"
+## and "presence"
+head(atlas.data)
+
+thresh &lt;- upgrain.threshold(atlas.data = atlas.data,
+                            cell.width = 10,
+                            scales = 3,
+                            thresholds = seq(0, 1, 0.02))
+
+## the four optional thresholds
+thresh$Thresholds
+head(thresh$Data)
+</code></pre>
+
+
+</div>

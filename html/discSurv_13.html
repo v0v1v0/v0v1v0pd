@@ -1,0 +1,219 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataLongCompRisksTimeDep</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data Long Competing Risks Time Dependent Covariates Transformation</h2>
+
+<h3>Description</h3>
+
+<p>Transforms short data format to long format for discrete survival modelling
+in the case of competing risks with right censoring. Covariates may vary
+over time.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataLongCompRisksTimeDep(
+  dataSemiLong,
+  timeColumn,
+  eventColumns,
+  eventColumnsAsFactor = FALSE,
+  idColumn,
+  timeAsFactor = FALSE,
+  responseAsFactor = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataSemiLong</code></td>
+<td>
+<p>Original data in semi-long format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character giving the column name of the observed times("logical vector"). It
+is required that the observed times are discrete ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumns</code></td>
+<td>
+<p>Character vector giving the column names of the event
+indicators (excluding censoring column)("character vector"). It is required that all events are
+binary encoded. If the sum of all event indicators is zero, then this is
+interpreted as a censored observation. Alternatively a column name of a
+factor representing competing events can be given. In this case the argument
+<em>eventColumnsAsFactor</em> has to be set TRUE and the first level is assumed to
+represent censoring.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumnsAsFactor</code></td>
+<td>
+<p>Should the argument eventColumns be intepreted
+as column name of a factor variable ("logical vector")? Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idColumn</code></td>
+<td>
+<p>Name of column of identification number of persons as
+character("character vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeAsFactor</code></td>
+<td>
+<p>Should the time intervals be coded as factor ("logical vector")? Default is
+FALSE. In the default settings the discrete time intervals 
+are treated as quantitative ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>responseAsFactor</code></td>
+<td>
+<p>Should the response columns be given as factor ("logical vector")? 
+Default is FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>There may be some intervals, where no additional information on the
+covariates is observed (e. g. observed values in interval one and three but
+two is missing). In this case it is assumed, that the values from the last
+observation stay constant over time until a new measurement was done.
+</p>
+<p>In contrast to continuous survival (see e. g. <code>Surv</code>) 
+the start and stop time notation is not used here. In discrete time survival analysis the only relevant
+information is to use the stop time. Start time does not matter, because all discrete intervals need to be  
+included in the long data set format to ensure consistent estimation. It is assumed that the supplied 
+data set <em>dataSemiLong</em> contains all repeated measurements of each cluster in semi-long format (e. g. persons). 
+For further information see example <em>Start-stop notation</em>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Original data set in long format with additional columns </p>
+
+<ul>
+<li> <p>obj Gives identification number of objects (row index in short
+format) (integer) </p>
+</li>
+<li> <p>timeInt Gives number of discrete time intervals
+(factor) </p>
+</li>
+<li> <p>responses Columns with dimension count of events + 1
+(censoring) </p>
+ <ul>
+<li> <p>e0 No event (observation censored in specific
+interval) </p>
+</li>
+<li> <p>e1 Indicator of first event, 1 if event takes place and 0
+otherwise </p>
+</li>
+<li>
+<p> ... ...  </p>
+</li>
+<li> <p>ek Indicator of last k-th event, 1 if event
+takes place and 0 otherwise</p>
+</li>
+</ul>
+<p>If argument responseAsFactor=TRUE, then responses will be coded as factor in one column.
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Fahrmeir L (2005).
+“Discrete Survival-Time Models.”
+In <em>Encyclopedia of Biostatistics</em>, chapter Survival Analysis.
+John Wiley \&amp; Sons. <br><br>
+Thompson Jr. WA (1977).
+“On the Treatment of Grouped Observations in Life Studies.”
+<em>Biometrics</em>, <b>33</b>, 463-470.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contToDisc</code>, <code>dataLong</code>,
+<code>dataLongCompRisks</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example Primary Biliary Cirrhosis data
+library(survival)
+pbcseq_example &lt;- pbcseq
+
+# Convert to months
+pbcseq_example$day &lt;- ceiling(pbcseq_example$day/30) + 1
+names(pbcseq_example)[7] &lt;- "month"
+pbcseq_example$status &lt;- factor(pbcseq_example$status)
+
+# Convert to long format for time varying effects
+pbcseq_exampleLong &lt;- dataLongCompRisksTimeDep(dataSemiLong = pbcseq_example, timeColumn = "month", 
+eventColumns = "status", eventColumnsAsFactor = TRUE, idColumn = "id", 
+timeAsFactor = TRUE)
+head(pbcseq_exampleLong)
+
+#####################
+# Start-stop notation
+
+library(survival)
+?pbcseq
+
+# Choose subset of patients
+subsetID &lt;- unique(pbcseq$id)[1:100]
+pbcseq_mod &lt;- pbcseq[pbcseq$id %in% subsetID, ]
+
+# Convert to start stop notation
+pbcseq_mod_split &lt;- split(pbcseq_mod, pbcseq_mod$id)
+pbcseq_mod_split &lt;- lapply(1:length(pbcseq_mod_split), function(x) {
+
+ cbind(pbcseq_mod_split[[x]], 
+ start_time=c(0, pbcseq_mod_split[[x]][ - dim(pbcseq_mod_split[[x]])[1], "day"]),
+ stop_time=pbcseq_mod_split[[x]][, "day"])
+ 
+})
+pbcseq_mod &lt;- do.call(rbind, pbcseq_mod_split)
+
+# Convert stop time to months
+intervalDef &lt;- c(quantile(pbcseq_mod$stop_time, probs = seq(0.1, 0.9, by=0.1)), Inf)
+names(pbcseq_mod)
+pbcseq_mod &lt;- contToDisc(dataShort = pbcseq_mod, timeColumn = "stop_time", 
+                         intervalLimits = intervalDef, equi = FALSE)
+pbcseq_mod$status &lt;- factor(pbcseq_mod$status)
+
+# Conversion to data long format
+pbcseq_mod_long &lt;- dataLongCompRisksTimeDep(dataSemiLong = pbcseq_mod, timeColumn = "timeDisc", 
+                                           eventColumns = "status",
+                                          idColumn = "id", 
+                                           eventColumnsAsFactor = TRUE, 
+                                          responseAsFactor = TRUE,
+                                          timeAsFactor = TRUE)
+head(pbcseq_mod_long)
+
+</code></pre>
+
+
+</div>

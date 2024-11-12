@@ -1,0 +1,291 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>owl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Integrated Outcome-weighted Learning for Estimating Optimal DTRs
+</h2>
+
+<h3>Description</h3>
+
+<p>This function implements a variety of outcome-weighted learning methods for estimating general K-stage DTRs. Different loss functions - SVM hinge loss, SVM ramp loss, binomial deviance loss, and L2 loss - can be adopted to solve the weighted classification problem at each stage. Augmentation in the outcomes is allowed to improve efficiency especially when there are multiple stages with a small sample size. Cross validation is conducted to choose the best tuning parameters if any.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">owl(H, AA, RR, n, K, pi='estimated', res.lasso=TRUE, loss='hinge', kernel='linear',
+augment=FALSE, c=2^(-2:2), sigma=c(0.03,0.05,0.07), s=2.^(-2:2), m=4)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>subject history information before treatment for the <code>K</code> stages. It can be a vector or a matrix when only baseline information is used in estimating the DTR; otherwise, it would be a list of length <code>K</code>. Please standardize all the variables in <code>H</code> to have mean 0 and standard deviation 1 before using <code>H</code> as the input. See details for how to construct H.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AA</code></td>
+<td>
+<p>observed treatment assignments for all subjects at the <code>K</code> stages. It is a vector if <code>K=1</code>, or a list of <code>K</code> vectors corresponding to the <code>K</code> stages. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RR</code></td>
+<td>
+<p>observed reward outcomes for all subjects at the <code>K</code> stages. It is a vector if <code>K=1</code>, or a list of <code>K</code> vectors corresponding to the <code>K</code> stages. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>sample size, number of subjects in the dataset</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>number of stages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>treatment assignment probabilities of the observed treatments for all subjects at the K stages. It is a vector if <code>K=1</code>, or a list of <code>K</code> vectors corresponding to the <code>K</code> stages. It can be a user specified input if the treatment assignment probabilities are known.  The default is <code>pi="estimated"</code>, that is we estimate the treatment assignment probabilities based on lasso-penalized logistic regressions with <code class="reqn">H_k</code> being the predictors at each stage k.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res.lasso</code></td>
+<td>
+<p>whether or not to use lasso penalty in the regression to take residuals for constructing the weights. The default is <code>res.lasso=TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loss</code></td>
+<td>
+<p>loss function for sovling the weighted classification problem at each stage. The options are <code>"hinge", "ramp", "logit", "logit.lasso", "l2", "l2.lasso"</code>. <code>"hinge"</code> and <code>"ramp"</code> are for the SVM hinge loss and SVM ramp loss. <code>"logit"</code> and <code>"logit.lasso"</code> are for the binomial deviance loss used in the logistic regression, where lasso penalty is applied under <code>"logit.lasso"</code>. <code>"l2"</code> and <code>"l2.lasso"</code> are for the L2 or square loss, where lasso penalty is applied under <code>"l2.lasso"</code>. The default is <code>loss="hinge"</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>kernel</code></td>
+<td>
+<p>kernel function to use under SVM hinge loss or SVM ramp loss. <code>"linear"</code> and <code>"rbf"</code> kernel are implemented under SVM hinge loss; <code>"linear"</code> kernel is implemented under SVM ramp loss. The default is <code>kernel="linear"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>augment</code></td>
+<td>
+<p>whether or not to use augmented outcomes at each stage. Augmentation is recommended when there are multiple stages and the sample size is small. The default is <code>augment=FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>a vector specifies the values of the regularization parameter C for tuning under SVM hinge loss or SVM ramp loss. The default is <code>c=2^(-2:2)</code>. In practice, a wider range of <code>c</code> can be specified based on the data. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>a vector specifies the values of the positive parameter <code class="reqn">\sigma</code> in the RBF kernel for tuning under SVM hinge loss, i.e., when <code>loss="hinge"</code> and <code>kernel="rbf"</code>. The default is  <code>sigma=c(0.03,0.05,0.07)</code>. In practice, a wider range of <code>sigma</code> can be specified based on the data. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>a vector specifies the values of the slope parameter in the SVM ramp loss for tuning, i.e., when <code>loss="ramp"</code> and <code>kernel="linear"</code>.
+The default is <code>c=2^(-2:2)</code>. In practice, a wider range of <code>s</code> can be specified based on the data. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>number of folds in the m-fold cross validation for choosing the tuning parameters <code>c</code>, <code>sigma</code> or <code>s</code>. It is also used for choosing the tuning parameter of the lasso penalty when <code>res.lasso=T</code>, <code>loss="logit.lasso"</code> or <code>loss="l2.lasso"</code> is specified. The default is <code>m=4</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A patient's history information prior to the treatment at stage k can be constructed recursively as <code class="reqn">H_k = (H_{k-1},  A_{k-1}, R_{k-1}, X_k)</code> with <code class="reqn">H_1=X_1</code>, where <code class="reqn">X_k</code> is subject-specific variables collected at stage k just prior to the treatment, <code class="reqn">A_k</code> is the treatment at stage <code class="reqn">k</code>, and <code class="reqn">R_k</code> is the outcome observed post the treatment at stage <code class="reqn">k</code>. Higher order or interaction terms can also be easily incorporated in <code class="reqn">H_k</code>, e.g., <code class="reqn">H_k = (H_{k-1}, A_{k-1}, R_{k-1}, X_k, H_{k-1}A_{k-1}, R_{k-1}A_{k-1},  X_kA_{k-1})</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of results is returned as an object. It contains the following attributes:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>stage1 </code></td>
+<td>
+<p>a list of stage 1 results, ...</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stageK </code></td>
+<td>
+<p>a list of stage K results</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>valuefun </code></td>
+<td>
+<p>overall empirical value function under the estimated DTR</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>benefit </code></td>
+<td>
+<p>overall empirical benefit function under the estimated DTR</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>treatment assignment probabilities of the observed treatments for each subject at the K stages. It is a list of K vectors. If <code>pi='estimated'</code> is specified as input, the estimated treatment assignment probabilities from lasso-penalized logistic regressions will be returned. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>object type corresponding to the specified <code>loss</code> and <code>kernel</code> </p>
+</td>
+</tr>
+</table>
+<p>In each stage's result, a list is returned which consists of
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>beta0</code></td>
+<td>
+<p>estimated coefficient of the intercept in the decision function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>beta</code></td>
+<td>
+<p>estimated coefficients of <code class="reqn">H_k</code> in the decision function. It's not returned with RBF kernel under SVM hinge loss.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>fitted decision function for each subject</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probability</code></td>
+<td>
+<p>estimated probability that treatment 1 (vs. -1) is the optimal treatment for each subject in the sample. It's calculated by exp(fit)/(1 + exp(fit)).  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment</code></td>
+<td>
+<p>the estimated optimal treatment for each subject</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>c</code></td>
+<td>
+<p>the best regularization parameter C in SVM hinge loss or SVM ramp loss, chosen from the values specified in <code>c</code> via cross validation </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sigma</code></td>
+<td>
+<p>the best parameter <code class="reqn">\sigma</code> in the RBF kernel, chosen from the values specified in <code>sigma</code> via cross validation </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>s</code></td>
+<td>
+<p>the best slope parameter s in the ramp loss, chosen from the values specified in <code>s</code> via cross validation. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>iter</code></td>
+<td>
+<p>number of iterations under SVM ramp loss</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alpha1</code></td>
+<td>
+<p>the solution to the Lagrangian dual problem under SVM hinge loss or SVM ramp loss. It is used for constructing the decision function on the new sample. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>the input H, returned only under SVM hinge loss with RBF kernel. It is used for constructing the RBF kernel on the new sample. </p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Yuan Chen, Ying Liu, Donglin Zeng, Yuanjia Wang
+</p>
+<p>Maintainer: Yuan Chen &lt;yc3281@columbia.edu&gt;&lt;irene.yuan.chen@gmail.com&gt;
+</p>
+
+
+<h3>References</h3>
+
+<p>Liu, Y., Wang, Y., Kosorok, M., Zhao, Y., &amp; Zeng, D. (2014). Robust hybrid learning for estimating personalized dynamic treatment regimens. arXiv preprint. arXiv, 1611.
+</p>
+<p>Liu, Y., Wang, Y., Kosorok, M., Zhao, Y., &amp; Zeng, D. (2018). Augmented Outcome-weighted Learning for Estimating Optimal Dynamic Treatment Regimens. Statistics in Medicine. In press.
+</p>
+<p>Zhao, Y., Zeng, D., Rush, A. J., &amp; Kosorok, M. R. (2012). Estimating individualized treatment rules using outcome weighted learning. Journal of the American Statistical Association, 107(499), 1106-1118.
+</p>
+<p>Zhao, Y. Q., Zeng, D., Laber, E. B., &amp; Kosorok, M. R. (2015). New statistical learning methods for estimating optimal dynamic treatment regimes. Journal of the American Statistical Association, 110(510), 583-598.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>predict.owl</code>, <code>sim_Kstage</code>, <code>ql</code>
+
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># simulate 2-stage training and test sets
+n_train = 100
+n_test = 500
+n_cluster = 10
+pinfo = 10
+pnoise = 20
+
+train = sim_Kstage(n_train, n_cluster, pinfo, pnoise, K=2)
+H1_train = scale(train$X)
+H2_train = scale(cbind(H1_train, train$A[[1]], H1_train * train$A[[1]]))
+pi_train = list(rep(0.5, n_train), rep(0.5, n_train))
+
+test = sim_Kstage(n_test, n_cluster, pinfo, pnoise, train$centroids, K=2)
+H1_test = scale(test$X)
+H2_test = scale(cbind(H1_test, test$A[[1]], H1_test * train$A[[1]]))
+pi_test = list(rep(0.5, n_test), rep(0.5, n_test))
+
+# estimate DTR with owl on the training sample
+owl_train = owl(H=list(H1_train, H2_train), AA=train$A, RR=train$R, n=n_train, K=2, pi=pi_train,
+    loss='hinge', augment=TRUE, m=3)
+owl_train$stage1$beta
+owl_train$stage1$treatment
+owl_train$valuefun
+
+# apply the estimated DTR to the test sample
+owl_test = predict(owl_train, H=list(H1_test, H2_test), AA=test$A, RR=test$R, K=2, pi=pi_test)
+owl_test$treatment
+owl_test$valuefun
+</code></pre>
+
+
+</div>

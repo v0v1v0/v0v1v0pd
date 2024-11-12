@@ -1,0 +1,200 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>apply_dpqr</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Utilities for <code>distributions3</code> objects</h2>
+
+<h3>Description</h3>
+
+<p>Various utility functions to implement methods for distributions with a
+unified workflow, in particular to facilitate working with vectorized
+<code>distributions3</code> objects.
+These are particularly useful in the computation of densities, probabilities, quantiles,
+and random samples when classical d/p/q/r functions are readily available for
+the distribution of interest.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">apply_dpqr(d, FUN, at, elementwise = NULL, drop = TRUE, type = NULL, ...)
+
+make_support(min, max, d, drop = TRUE)
+
+make_positive_integer(n)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>d</code></td>
+<td>
+<p>A <code>distributions3</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>Function to be computed. Function should be of type <code>FUN(at, d)</code>, where
+<code>at</code> is the argument at which the function should be evaluated (e.g., a quantile,
+probability, or sample size) and <code>d</code> is a <code>distributions3</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>at</code></td>
+<td>
+<p>Specification of values at which <code>FUN</code> should be evaluated, typically a
+numeric vector (e.g., of quantiles, probabilities, etc.) but possibly also a matrix or data
+frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>elementwise</code></td>
+<td>
+<p>logical. Should each element of <code>d</code> only be evaluated at the
+corresponding element of <code>at</code> (<code>elementwise = TRUE</code>) or at all elements
+in <code>at</code> (<code>elementwise = FALSE</code>). Elementwise evaluation is only possible
+if the length of <code>d</code> and <code>at</code> is the same and in that case a vector of
+the same length is returned. Otherwise a matrix is returned. The default is to use
+<code>elementwise = TRUE</code> if possible, and otherwise <code>elementwise = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>logical. Should the result be simplified to a vector if possible (by
+dropping the dimension attribute)? If <code>FALSE</code> a matrix is always returned.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>Character string used for naming, typically one of <code>"density"</code>, <code>"logLik"</code>,
+<code>"probability"</code>, <code>"quantile"</code>, and <code>"random"</code>. Note that the <code>"random"</code>
+case is processed differently internally in order to vectorize the random number
+generation more efficiently.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to be passed to  <code>FUN</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min, max</code></td>
+<td>
+<p>Numeric vectors. Minima and maxima of the supports of a <code>distributions3</code> object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>numeric. Number of observations for computing random draws. If <code>length(n) &gt; 1</code>,
+the length is taken to be the number required (consistent with base R as, e.g., for <code>rnorm()</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Implementing a new distribution based on the provided utility functions
+## Illustration: Gaussian distribution
+## Note: Gaussian() is really just a copy of Normal() with a different class/distribution name
+
+
+## Generator function for the distribution object.
+Gaussian &lt;- function(mu = 0, sigma = 1) {
+  stopifnot(
+    "parameter lengths do not match (only scalars are allowed to be recycled)" =
+      length(mu) == length(sigma) | length(mu) == 1 | length(sigma) == 1
+  )
+  d &lt;- data.frame(mu = mu, sigma = sigma)
+  class(d) &lt;- c("Gaussian", "distribution")
+  d
+}
+
+## Set up a vector Y containing four Gaussian distributions:
+Y &lt;- Gaussian(mu = 1:4, sigma = c(1, 1, 2, 2))
+Y
+
+## Extract the underlying parameters:
+as.matrix(Y)
+
+
+## Extractor functions for moments of the distribution include
+## mean(), variance(), skewness(), kurtosis().
+## These can be typically be defined as functions of the list of parameters.
+mean.Gaussian &lt;- function(x, ...) {
+  rlang::check_dots_used()
+  setNames(x$mu, names(x))
+}
+## Analogously for other moments, see distributions3:::variance.Normal etc.
+
+mean(Y)
+
+
+## The support() method should return a matrix of "min" and "max" for the
+## distribution. The make_support() function helps to set the right names and
+## dimension.
+support.Gaussian &lt;- function(d, drop = TRUE, ...) {
+  min &lt;- rep(-Inf, length(d))
+  max &lt;- rep(Inf, length(d))
+  make_support(min, max, d, drop = drop)
+}
+
+support(Y)
+
+
+## Evaluating certain functions associated with the distribution, e.g.,
+## pdf(), log_pdf(), cdf() quantile(), random(), etc. The apply_dpqr()
+## function helps to call the typical d/p/q/r functions (like dnorm,
+## pnorm, etc.) and set suitable names and dimension.
+pdf.Gaussian &lt;- function(d, x, elementwise = NULL, drop = TRUE, ...) {
+  FUN &lt;- function(at, d) dnorm(x = at, mean = d$mu, sd = d$sigma, ...)
+  apply_dpqr(d = d, FUN = FUN, at = x, type = "density", elementwise = elementwise, drop = drop)
+}
+
+## Evaluate all densities at the same argument (returns vector):
+pdf(Y, 0)
+
+## Evaluate all densities at several arguments (returns matrix):
+pdf(Y, c(0, 5))
+
+## Evaluate each density at a different argument (returns vector):
+pdf(Y, 4:1)
+
+## Force evaluation of each density at a different argument (returns vector)
+## or at all arguments (returns matrix):
+pdf(Y, 4:1, elementwise = TRUE)
+pdf(Y, 4:1, elementwise = FALSE)
+
+## Drawing random() samples also uses apply_dpqr() with the argument
+## n assured to be a positive integer.
+random.Gaussian &lt;- function(x, n = 1L, drop = TRUE, ...) {
+  n &lt;- make_positive_integer(n)
+  if (n == 0L) {
+    return(numeric(0L))
+  }
+  FUN &lt;- function(at, d) rnorm(n = at, mean = d$mu, sd = d$sigma)
+  apply_dpqr(d = x, FUN = FUN, at = n, type = "random", drop = drop)
+}
+
+## One random sample for each distribution (returns vector):
+random(Y, 1)
+
+## Several random samples for each distribution (returns matrix):
+random(Y, 3)
+
+
+## For further analogous methods see the "Normal" distribution provided
+## in distributions3.
+methods(class = "Normal")
+
+</code></pre>
+
+
+</div>

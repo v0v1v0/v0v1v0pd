@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dlmFilter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>DLM filtering</h2>
+
+<h3>Description</h3>
+
+<p>The functions applies Kalman filter to compute filtered
+values of the state vectors, together with their
+variance/covariance matrices. By default the function returns an object 
+of class <code>"dlmFiltered"</code>. Methods for <code>residuals</code> and <code>tsdiag</code> 
+for objects of class <code>"dlmFiltered"</code> exist.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dlmFilter(y, mod, debug = FALSE, simplify = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>the data. <code>y</code> can be a vector, a matrix, a univariate or
+multivariate time series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>an object of class <code>dlm</code>, or a list with components
+<code>m0</code>, <code>C0</code>, 
+<code>FF</code>, <code>V</code>, <code>GG</code>, <code>W</code>, and optionally <code>JFF</code>,
+<code>JV</code>, <code>JGG</code>, <code>JW</code>, and <code>X</code>, defining the model
+and the parameters of the prior distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>if <code>FALSE</code>, faster C code will be used, otherwise
+all the computations will be performed in R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplify</code></td>
+<td>
+<p>should the data be included in the output?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<p>The calculations are based on the singular value decomposition (SVD)
+of the relevant matrices. Variance matrices are returned in terms of
+their SVD.
+</p>
+<p>Missing values are allowed in <code>y</code>.
+</p>
+
+
+<h3>Value</h3>
+
+
+<p>A list with the components described below. If <code>simplify</code> is 
+<code>FALSE</code>, the returned list has class <code>"dlmFiltered"</code>. 
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The input data, coerced to a matrix. This is present only if 
+<code>simplify</code> is <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mod</code></td>
+<td>
+<p>The argument <code>mod</code> (possibly simplified).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>Time series (or matrix) of filtered values of the state vectors.
+The series starts one time unit before the first observation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U.C</code></td>
+<td>
+<p>See below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D.C</code></td>
+<td>
+<p>Together with <code>U.C</code>, it gives the SVD
+of the variances of the estimation errors.
+The variance of <code class="reqn">m[t,]-theta[t,]</code> is given by
+<code>U.C[[t]] %*% diag(D.C[t,]^2) %*% t(U.C[[t]])</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>a</code></td>
+<td>
+<p>Time series (or matrix) of predicted values of the state vectors
+given the observations up and including the previous time unit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>U.R</code></td>
+<td>
+<p>See below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>D.R</code></td>
+<td>
+<p>Together with <code>U.R</code>, it gives the SVD
+of the variances of the prediction errors.
+The variance of <code class="reqn">a[t,]-theta[t,]</code> is given by
+<code>U.R[[t]] %*% diag(D.R[t,]^2) %*% t(U.R[[t]])</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>f</code></td>
+<td>
+<p>Time series (or matrix) of one-step-ahead forecast of the
+observations.</p>
+</td>
+</tr>
+</table>
+<h3>Warning</h3>
+
+<p>The observation variance <code>V</code> in <code>mod</code> must be nonsingular.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Giovanni Petris <a href="mailto:GPetris@uark.edu">GPetris@uark.edu</a></p>
+
+
+<h3>References</h3>
+
+<p>Zhang, Y. and Li, X.R., Fixed-interval smoothing algorithm
+based on singular value decomposition, <em>Proceedings of the 1996
+IEEE International Conference on Control Applications</em>.<br>
+Giovanni Petris (2010), An R Package for Dynamic Linear
+Models. Journal of Statistical Software, 36(12), 1-16.
+<a href="https://www.jstatsoft.org/v36/i12/">https://www.jstatsoft.org/v36/i12/</a>.<br>
+Petris, Petrone, and Campagnoli, Dynamic Linear Models with R,
+Springer (2009).   
+</p>
+
+
+<h3>See Also</h3>
+
+<p>See <code>dlm</code> for a description of dlm objects,
+<code>dlmSvd2var</code> to obtain a variance matrix from its SVD,
+<code>dlmMLE</code> for maximum likelihood estimation, 
+<code>dlmSmooth</code> for Kalman smoothing, and
+<code>dlmBSample</code> for drawing from the posterior distribution
+of the state vectors.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">nileBuild &lt;- function(par) {
+  dlmModPoly(1, dV = exp(par[1]), dW = exp(par[2]))
+}
+nileMLE &lt;- dlmMLE(Nile, rep(0,2), nileBuild); nileMLE$conv
+nileMod &lt;- nileBuild(nileMLE$par)
+V(nileMod)
+W(nileMod)
+nileFilt &lt;- dlmFilter(Nile, nileMod)
+nileSmooth &lt;- dlmSmooth(nileFilt)
+plot(cbind(Nile, nileFilt$m[-1], nileSmooth$s[-1]), plot.type='s',
+     col=c("black","red","blue"), ylab="Level", main="Nile river", lwd=c(1,2,2))
+</code></pre>
+
+
+</div>

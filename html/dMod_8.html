@@ -1,0 +1,118 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>addReaction</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Add reaction to reaction table</h2>
+
+<h3>Description</h3>
+
+<p>Add reaction to reaction table
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">addReaction(eqnlist, from, to, rate, description = names(rate))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>eqnlist</code></td>
+<td>
+<p>equation list, see eqnlist</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>from</code></td>
+<td>
+<p>character with the left hand side of the reaction, e.g. "2*A + B"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>to</code></td>
+<td>
+<p>character with the right hand side of the reaction, e.g. "C + 2*D"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rate</code></td>
+<td>
+<p>character. The rate associated with the reaction. The name is employed as a description
+of the reaction.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>description</code></td>
+<td>
+<p>Optional description instead of <code>names(rate)</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of class eqnlist.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">f &lt;- eqnlist()
+f &lt;- addReaction(f, "2*A+B", "C + 2*D", "k1*B*A^2")
+f &lt;- addReaction(f, "C + A", "B + A", "k2*C*A")
+
+
+
+  # Write your example here. You can also add more Start..End blocks if needed.
+  # Please mask all output such as print() with the special tag
+  #    
+  # such that the test is not littered. Statements guarded by  are enabled
+  # in the example file which is extracted from this test file. To extract the
+  # example run
+  #    extractExamples()
+  # on the R command line.
+    
+    ## Generate another equation list
+    eq &lt;- eqnlist()
+    eq &lt;- addReaction(eq, "A", "pA", "act_A * A * stimulus", "Phosphorylation of A")
+    eq &lt;- addReaction(eq, "pA", "A", "deact_A * pA", "Deposphorylation of pA")
+    eq &lt;- addReaction(eq, "2*pA", "pA_pA", "form_complex_pA * pA^2", "Complex formation of pA")
+    eq &lt;- addReaction(eq, "B", "pB", "act_B * B * pA_pA", "Phosphorylation of B")
+    eq &lt;- addReaction(eq, "pB", "B", "deact_B * pB", "Deposphorylation of pB")
+    
+    ## Extract data.frame of reactions
+    reactions &lt;- getReactions(eq)
+     print(reactions)
+    
+    ## Get conserved quantities
+    cq &lt;- conservedQuantities(eq$smatrix)
+     print(cq)
+    
+    ## Get fluxes
+    fluxes &lt;- getFluxes(eq)
+     print(fluxes)
+    
+    ## Subsetting of equation list
+    subeq1 &lt;- subset(eq, "pB" %in% Product)
+     print(subeq1)
+    subeq2 &lt;- subset(eq, grepl("not_available", Description))
+     print(subeq2)
+    
+    ## Time derivatives of observables
+    observables &lt;- eqnvec(pA_obs = "s1*pA", tA_obs = "s2*(A + pA)")
+    dobs &lt;- dot(observables, eq)
+    
+    ## Combined equation vector for ODE and observables
+    f &lt;- c(as.eqnvec(eq), dobs)
+     print(f)
+    
+    
+  
+</code></pre>
+
+
+</div>

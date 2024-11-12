@@ -1,0 +1,250 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>con_contradictions</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Checks user-defined contradictions in study data</h2>
+
+<h3>Description</h3>
+
+<p>This approach considers a contradiction if impossible combinations of data
+are observed in one participant. For example, if age of a participant is
+recorded repeatedly the value of age is (unfortunately) not able to decline.
+Most cases of contradictions rest on comparison of two variables.
+</p>
+<p>Important to note, each value that is used for comparison may represent a
+possible characteristic but the combination of these two values is considered
+to be impossible. The approach does not consider implausible or inadmissible
+values.
+</p>
+<p>Descriptor
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">con_contradictions(
+  resp_vars = NULL,
+  study_data,
+  meta_data,
+  label_col,
+  threshold_value,
+  check_table,
+  summarize_categories = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resp_vars</code></td>
+<td>
+<p>variable list the name of the measurement variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold_value</code></td>
+<td>
+<p>numeric from=0 to=100. a numerical value
+ranging from 0-100</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_table</code></td>
+<td>
+<p>data.frame contradiction rules table.  Table defining
+contradictions. See details for
+its required structure.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>summarize_categories</code></td>
+<td>
+<p>logical Needs a column 'tag' in the
+<code>check_table</code>.
+If set, a summary output is generated for the
+defined categories plus one plot per
+category.
+<code>inheritParams</code> <code>acc_distributions</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Algorithm of this implementation:</h4>
+
+
+<ul>
+<li>
+<p> Select all variables in the data with defined contradiction rules (static
+metadata column CONTRADICTIONS)
+</p>
+</li>
+<li>
+<p> Remove missing codes from the study data (if defined in the metadata)
+</p>
+</li>
+<li>
+<p> Remove measurements deviating from limits defined in the metadata
+</p>
+</li>
+<li>
+<p> Assign label to levels of categorical variables (if applicable)
+</p>
+</li>
+<li>
+<p> Apply contradiction checks on predefined sets of variables
+</p>
+</li>
+<li>
+<p> Identification of measurements fulfilling contradiction rules. Therefore
+two output data frames are generated:
+</p>
+
+<ul>
+<li>
+<p> on the level of observation to flag each contradictory value
+combination, and
+</p>
+</li>
+<li>
+<p> a summary table for each contradiction check.
+</p>
+</li>
+</ul>
+</li>
+<li>
+<p> A summary plot illustrating the number of contradictions is generated.
+</p>
+</li>
+</ul>
+<p>List function.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>If <code>summarize_categories</code> is <code>FALSE</code>:
+A list with:
+</p>
+
+<ul>
+<li> <p><code>FlaggedStudyData</code>: The first output of the contradiction function is a
+data frame of similar dimension regarding the number
+of observations in the study data. In addition, for
+each applied check on the variables an additional
+column is added which flags observations with a
+contradiction given the applied check.
+</p>
+</li>
+<li> <p><code>SummaryTable</code>: The second output summarizes this information into one
+data frame. This output can be used to provide an
+executive overview on the amount of contradictions. This
+output is meant for automatic digestion within pipelines.
+</p>
+</li>
+<li> <p><code>SummaryData</code>: The third output is the same as <code>SummaryTable</code> but for
+human readers.
+</p>
+</li>
+<li> <p><code>SummaryPlot</code>: The fourth output visualizes summarized information
+of <code>SummaryData</code>.
+</p>
+</li>
+</ul>
+<p>if <code>summarize_categories</code> is <code>TRUE</code>, other objects are returned:
+one per category named by that category (e.g. "Empirical") containing a
+result for contradictions within that category only. Additionally, in the
+slot <code>all_checks</code> a result as it would have been returned with
+<code>summarize_categories</code> set to <code>FALSE</code>. Finally, a slot <code>SummaryData</code> is
+returned containing sums per Category and an according ggplot in
+<code>SummaryPlot</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><a href="https://dataquality.qihs.uni-greifswald.de/VIN_con_impl_contradictions.html">Online Documentation</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+load(system.file("extdata", "meta_data.RData", package = "dataquieR"))
+load(system.file("extdata", "study_data.RData", package = "dataquieR"))
+check_table &lt;- read.csv(system.file("extdata",
+  "contradiction_checks.csv",
+  package = "dataquieR"
+),
+header = TRUE, sep = "#"
+)
+check_table[1, "tag"] &lt;- "Logical"
+check_table[1, "Label"] &lt;- "Becomes younger"
+check_table[2, "tag"] &lt;- "Empirical"
+check_table[2, "Label"] &lt;- "sex transformation"
+check_table[3, "tag"] &lt;- "Empirical"
+check_table[3, "Label"] &lt;- "looses academic degree"
+check_table[4, "tag"] &lt;- "Logical"
+check_table[4, "Label"] &lt;- "vegetarian eats meat"
+check_table[5, "tag"] &lt;- "Logical"
+check_table[5, "Label"] &lt;- "vegan eats meat"
+check_table[6, "tag"] &lt;- "Empirical"
+check_table[6, "Label"] &lt;- "non-veg* eats meat"
+check_table[7, "tag"] &lt;- "Empirical"
+check_table[7, "Label"] &lt;- "Non-smoker buys cigarettes"
+check_table[8, "tag"] &lt;- "Empirical"
+check_table[8, "Label"] &lt;- "Smoker always scrounges"
+check_table[9, "tag"] &lt;- "Logical"
+check_table[9, "Label"] &lt;- "Cuff didn't fit arm"
+check_table[10, "tag"] &lt;- "Empirical"
+check_table[10, "Label"] &lt;- "Very mature pregnant woman"
+label_col &lt;- "LABEL"
+threshold_value &lt;- 1
+con_contradictions(
+  study_data = study_data, meta_data = meta_data, label_col = label_col,
+  threshold_value = threshold_value, check_table = check_table
+)
+check_table[1, "tag"] &lt;- "Logical, Age-Related"
+check_table[10, "tag"] &lt;- "Empirical, Age-Related"
+con_contradictions(
+  study_data = study_data, meta_data = meta_data, label_col = label_col,
+  threshold_value = threshold_value, check_table = check_table
+)
+con_contradictions(
+  study_data = study_data, meta_data = meta_data, label_col = label_col,
+  threshold_value = threshold_value, check_table = check_table,
+  summarize_categories = TRUE
+)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

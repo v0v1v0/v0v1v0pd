@@ -1,0 +1,192 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DRR-class</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dimensionality Reduction via Regression</h2>
+
+<h3>Description</h3>
+
+<p>An S4 Class implementing Dimensionality Reduction via Regression (DRR).
+</p>
+
+
+<h3>Details</h3>
+
+<p>DRR is a non-linear extension of PCA that uses Kernel Ridge regression.
+</p>
+
+
+<h3>Slots</h3>
+
+
+<dl>
+<dt><code>fun</code></dt>
+<dd>
+<p>A function that does the embedding and returns a
+dimRedResult object.</p>
+</dd>
+<dt><code>stdpars</code></dt>
+<dd>
+<p>The standard parameters for the function.</p>
+</dd>
+</dl>
+<h3>General usage</h3>
+
+<p>Dimensionality reduction methods are S4 Classes that either be used
+directly, in which case they have to be initialized and a full
+list with parameters has to be handed to the <code>@fun()</code>
+slot, or the method name be passed to the embed function and
+parameters can be given to the <code>...</code>, in which case
+missing parameters will be replaced by the ones in the
+<code>@stdpars</code>.
+</p>
+
+
+<h3>Parameters</h3>
+
+<p>DRR can take the following parameters:
+</p>
+
+<dl>
+<dt>ndim</dt>
+<dd>
+<p>The number of dimensions</p>
+</dd>
+<dt>lambda</dt>
+<dd>
+<p>The regularization parameter for the ridge
+regression.</p>
+</dd>
+<dt>kernel</dt>
+<dd>
+<p>The kernel to use for KRR, defaults to
+<code>"rbfdot"</code>.</p>
+</dd>
+<dt>kernel.pars</dt>
+<dd>
+<p>A list with kernel parameters, elements depend
+on the kernel used, <code>"rbfdot"</code> uses <code>"sigma"</code>.</p>
+</dd>
+<dt>pca</dt>
+<dd>
+<p>logical, should an initial pca step be performed,
+defaults to <code>TRUE</code>.</p>
+</dd>
+<dt>pca.center</dt>
+<dd>
+<p>logical, should the data be centered before the
+pca step. Defaults to <code>TRUE</code>.</p>
+</dd>
+<dt>pca.scale</dt>
+<dd>
+<p>logical, should the data be scaled before the
+pca ste. Defaults to <code>FALSE</code>.</p>
+</dd>
+<dt>fastcv</dt>
+<dd>
+<p>logical, should <code>fastCV</code> from the
+CVST package be used instead of normal cross-validation.</p>
+</dd>
+<dt>fastcv.test</dt>
+<dd>
+<p>If <code>fastcv = TRUE</code>, separate test data set for fastcv.</p>
+</dd>
+<dt>cv.folds</dt>
+<dd>
+<p>if <code>fastcv = FALSE</code>, specifies the number of
+folds for crossvalidation.</p>
+</dd>
+<dt>fastkrr.nblocks</dt>
+<dd>
+<p>integer, higher values sacrifice numerical
+accuracy for speed and less memory, see below for details.</p>
+</dd>
+<dt>verbose</dt>
+<dd>
+<p>logical, should the cross-validation results be
+printed out.</p>
+</dd>
+</dl>
+<h3>Implementation</h3>
+
+<p>Wraps around <code>drr</code>, see there for details. DRR is
+a non-linear extension of principal components analysis using Kernel
+Ridge Regression (KRR, details see <code>constructKRRLearner</code>
+and <code>constructFastKRRLearner</code>). Non-linear
+regression is used to explain more variance than PCA. DRR provides
+an out-of-sample extension and a backward projection.
+</p>
+<p>The most expensive computations are matrix inversions therefore the
+implementation profits a lot from a multithreaded BLAS library.
+The best parameters for each KRR are determined by cross-validaton
+over all parameter combinations of <code>lambda</code> and
+<code>kernel.pars</code>, using less parameter values will speed up
+computation time. Calculation of KRR can be accelerated by
+increasing <code>fastkrr.nblocks</code>, it should be smaller than
+n^1/3 up to sacrificing some accuracy, for details see
+<code>constructFastKRRLearner</code>. Another way to speed up
+is to use <code>pars$fastcv = TRUE</code> which might provide a more
+efficient way to search the parameter space but may also miss the
+global maximum, I have not ran tests on the accuracy of this method.
+</p>
+
+
+<h3>References</h3>
+
+<p>Laparra, V., Malo, J., Camps-Valls, G.,
+2015. Dimensionality Reduction via Regression in Hyperspectral
+Imagery. IEEE Journal of Selected Topics in Signal Processing
+9, 1026-1036. doi:10.1109/JSTSP.2015.2417833
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other dimensionality reduction methods: 
+<code>AutoEncoder-class</code>,
+<code>DiffusionMaps-class</code>,
+<code>DrL-class</code>,
+<code>FastICA-class</code>,
+<code>FruchtermanReingold-class</code>,
+<code>HLLE-class</code>,
+<code>Isomap-class</code>,
+<code>KamadaKawai-class</code>,
+<code>MDS-class</code>,
+<code>NNMF-class</code>,
+<code>PCA-class</code>,
+<code>PCA_L1-class</code>,
+<code>UMAP-class</code>,
+<code>dimRedMethod-class</code>,
+<code>dimRedMethodList()</code>,
+<code>kPCA-class</code>,
+<code>nMDS-class</code>,
+<code>tSNE-class</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+if(requireNamespace(c("kernlab", "DRR"), quietly = TRUE)) {
+
+dat &lt;- loadDataSet("variable Noise Helix", n = 200)[sample(200)]
+
+emb &lt;- embed(dat, "DRR", ndim = 3)
+
+plot(dat, type = "3vars")
+plot(emb, type = "3vars")
+
+# We even have function to reconstruct, also working for only the first few dimensions
+rec &lt;- inverse(emb, getData(getDimRedData(emb))[, 1, drop = FALSE])
+plot(rec, type = "3vars")
+}
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

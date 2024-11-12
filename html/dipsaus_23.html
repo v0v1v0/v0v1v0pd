@@ -1,0 +1,175 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>async_works</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run jobs in other R sessions without waiting</h2>
+
+<h3>Description</h3>
+
+<p>This function has been deprecated. Please use
+<code>lapply_callr</code> instead.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">async_works(
+  X,
+  FUN,
+  ...,
+  .globals = NULL,
+  .name = "Untitled",
+  .rs = FALSE,
+  .wait = TRUE,
+  .chunk_size = Inf,
+  .nworkers = future::availableCores(),
+  .simplify = FALSE,
+  .quiet = FALSE,
+  .log
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>vector or list to be applied</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>FUN</code></td>
+<td>
+<p>function with the first argument to be each element of <code>X</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments to be passed to <code>FUN</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.globals</code></td>
+<td>
+<p>global variables to be evaluated in <code>FUN</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.name</code></td>
+<td>
+<p>job names, used if backed by <code>rstudioapi</code> jobs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.rs</code></td>
+<td>
+<p>whether to use <code>rstudioapi</code> jobs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.wait</code></td>
+<td>
+<p>whether to wait for the results</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.chunk_size</code></td>
+<td>
+<p>used only when <code>.wait=FALSE</code>, chunk size for each
+workers at a time. Only useful for printing progress messages, but might
+slow down the process when <code>.chunk_size</code> is too small</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.nworkers</code></td>
+<td>
+<p>number of workers at a time</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.simplify</code></td>
+<td>
+<p>whether to simplify the results, i.e. merge list of results
+to vectors or arrays</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.quiet</code></td>
+<td>
+<p>whether to suppress the printing messages</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.log</code></td>
+<td>
+<p>internally used</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Unlike <code>future</code> package, where the global variables can be
+automatically detected, <code>async_works</code> require users to specify global
+variables explicitly via <code>.globals</code>
+</p>
+<p><code>async_works</code> is almost surely slower than <code>future.apply</code> packages.
+However, it provides a functionality that <code>future.apply</code> can hardly
+achieve: being non-block. When setting <code>.wait=FALSE</code>, the process will
+run in the background, and one may run as many of these tasks as they want.
+This is especially useful when large data generating process occurs (
+such as read in from a file, process, generate summarizing reports).
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>.wait=TRUE</code>, returns the applied results of <code>FUN</code> on
+each of <code>X</code>. The result types depend on <code>.simplify</code> (compare
+the difference between <code>lapply</code> and <code>sapply</code>). If
+<code>.wait=FALSE</code>, then returns a function that can check the result. The
+function takes <code>timeout</code> argument that blocks the session at
+most <code>timeout</code> seconds waiting for the results. See examples.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+# requires a sub-process to run the code
+
+# Basic usage
+a &lt;- 1
+async_works(1:10, function(ii){
+  ii + a # sub-process don't know a, hence must pass a as globals
+}, .globals = list(a = a))
+
+# non-blocking case
+system.time({
+  check &lt;- async_works(1:10, function(ii){
+    # simulating process, run run run
+    Sys.sleep(ii)
+    Sys.getpid()
+  }, .wait = FALSE)
+})
+
+# check the results
+res &lt;- check(timeout = 0.1)
+attr(res, 'resolved') # whether it's resolved
+
+# block the session waiting for the results
+res &lt;- check(timeout = Inf)
+attr(res, 'resolved')
+
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

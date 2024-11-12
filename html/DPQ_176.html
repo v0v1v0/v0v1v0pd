@@ -1,0 +1,439 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>pnt</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Non-central t Probability Distribution - Algorithms and Approximations</h2>
+
+<h3>Description</h3>
+
+<p>Compute different approximations for the non-central t-Distribution
+cumulative probability distribution function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+
+pntR      (t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+           use.pnorm = (df &gt; 4e5 ||
+                        ncp^2 &gt; 2*log(2)*1021), # .Machine$double.min.exp = -1022
+                                          itrmax = 1000, errmax = 1e-12, verbose = TRUE)
+pntR1     (t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+           use.pnorm = (df &gt; 4e5 ||
+                        ncp^2 &gt; 2*log(2)*1021),
+                                          itrmax = 1000, errmax = 1e-12, verbose = TRUE)
+
+pntP94    (t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+                                          itrmax = 1000, errmax = 1e-12, verbose = TRUE)
+pntP94.1  (t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+                                          itrmax = 1000, errmax = 1e-12, verbose = TRUE)
+
+pnt3150   (t, df, ncp, lower.tail = TRUE, log.p = FALSE, M = 1000, verbose = TRUE)
+pnt3150.1 (t, df, ncp, lower.tail = TRUE, log.p = FALSE, M = 1000, verbose = TRUE)
+
+pntLrg    (t, df, ncp, lower.tail = TRUE, log.p = FALSE)
+
+pntJW39   (t, df, ncp, lower.tail = TRUE, log.p = FALSE)
+pntJW39.0 (t, df, ncp, lower.tail = TRUE, log.p = FALSE)
+
+
+
+
+
+
+
+pntVW13 (t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+           keepS = FALSE, verbose = FALSE)
+
+pntGST23_T6  (t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+              y1.tol = 1e-8, Mterms = 20, alt = FALSE, verbose = TRUE)
+pntGST23_T6.1(t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+              y1.tol = 1e-8, Mterms = 20, alt = FALSE, verbose = TRUE)
+
+## *Non*-asymptotic, (at least partly much) better version of R's Lenth(1998) algorithm
+pntGST23_1(t, df, ncp, lower.tail = TRUE, log.p = FALSE,
+           j0max = 1e4, # for now
+           IxpqFUN = Ixpq,
+           alt = FALSE, verbose = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>t</code></td>
+<td>
+<p>vector of quantiles (called <code>q</code> in <code>pt(..)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>degrees of freedom (<code class="reqn">&gt; 0</code>, maybe non-integer).  <code>df
+      = Inf</code> is allowed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncp</code></td>
+<td>
+<p>non-centrality parameter <code class="reqn">\delta \ge 0</code>;
+If omitted, use the central t distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>log, log.p</code></td>
+<td>
+<p>logical; if TRUE, probabilities p are given as log(p).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower.tail</code></td>
+<td>
+<p>logical; if TRUE (default), probabilities are
+<code class="reqn">P[X \le x]</code>, otherwise, <code class="reqn">P[X &gt; x]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.pnorm</code></td>
+<td>
+<p><code>logical</code> indicating if the
+<code>pnorm()</code> approximation of Abramowitz and Stegun (26.7.10)
+should be used, which is available as <code>pntLrg()</code>.
+</p>
+<p>The default corresponds to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> <code>pt()</code>'s own behaviour (which
+is suboptimal).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>itrmax</code></td>
+<td>
+<p>number of iterations / terms.</p>
+</td>
+</tr>
+</table>
+<table><tr style="vertical-align: top;">
+<td><code>errmax</code></td>
+<td>
+<p>convergence bound for the iterations.</p>
+</td>
+</tr></table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p><code>logical</code> or integer determining the amount of
+diagnostic print out to the console.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>positive integer specifying the number of terms to use in the series.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepS</code></td>
+<td>
+<p><code>logical</code> indicating if the function should
+return a <code>list</code> with component <code>cdf</code> and other
+informational elements, or just the CDF values directly (by default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y1.tol</code></td>
+<td>
+<p>positive tolerance for warning if <code class="reqn">y:= t^2/(t^2 + df)</code>
+is too close to 1 (as the formulas use <code class="reqn">1/(1-y)</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Mterms</code></td>
+<td>
+<p>number of summation terms for <code>pntGST23_T6()</code>.</p>
+</td>
+</tr>
+</table>
+<table>
+<tr style="vertical-align: top;">
+<td><code>j0max</code></td>
+<td>
+<p><em>experimental</em>: large integer limiting the summation
+terms in <code>pntGST23_1()</code> .</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>IxpqFUN</code></td>
+<td>
+<p>the (scaled) incomplete beta function <code class="reqn">I_x(p,q)</code> to be
+used;  currently, it defaults to the <code>Ixpq</code> function derived from
+Nico Temme's Maple code for “Table 1” in Gil et al. (2023).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alt</code></td>
+<td>
+<p><code>logical</code> specifying if and how log-scale should
+be used.  <b>Experimental</b> and not-yet-tested.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to <code>IxpqFUN()</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+<dl>
+<dt>
+<code>pntR1()</code>:</dt>
+<dd>
+<p>a pure <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version of the (C level)
+code of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s own <code>pt()</code>, additionally giving more
+flexibility (via arguments <code>use.pnorm</code>, <code>itrmax</code>, <code>errmax</code>
+whose defaults here have been hard-coded in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s C code called by <code>pt()</code>).
+</p>
+<p>This implements an improved version of the AS 243 algorithm from
+Lenth(1989); </p>
+
+<dl>
+<dt>
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s help on non-central <code>pt()</code> says:</dt>
+<dd>
+<p><em>This computes the lower tail only, so the upper tail suffers from
+cancellation and a warning will be given when this is likely to be
+significant.</em></p>
+</dd>
+<dt>and (in ‘Note:’)</dt>
+<dd>
+<p><em>The code for non-zero
+<code>ncp</code> is principally intended to be used for moderate
+values of <code>ncp</code>: it will not be highly accurate,
+especially in the tails, for large values.</em></p>
+</dd>
+</dl>
+</dd>
+<dt>
+<code>pntR()</code>:</dt>
+<dd>
+<p>the <code>Vectorize()</code>d version of <code>pntR1()</code>.</p>
+</dd>
+<dt>
+<code>pntP94()</code>, <code>pntP94.1()</code>:</dt>
+<dd>
+<p>New versions of
+<code>pntR1()</code>, <code>pntR()</code>; using the Posten (1994) algorithm.
+<code>pntP94()</code> is the <code>Vectorize()</code>d version of
+<code>pntP94.1()</code>.</p>
+</dd>
+<dt>
+<code>pnt3150()</code>, <code>pnt3150.1()</code>:</dt>
+<dd>
+<p>Simple inefficient but hopefully correct version of pntP94..()
+This is really a direct implementation of formula
+(31.50), p.532 of Johnson, Kotz and Balakrishnan (1995)
+</p>
+</dd>
+<dt>
+<code>pntLrg()</code>:</dt>
+<dd>
+<p>provides the <code>pnorm()</code>
+approximation (to the non-central <code class="reqn">t</code>) from
+Abramowitz and Stegun (26.7.10), p.949; which should be employed only for
+<em>large</em> <code>df</code> and/or <code>ncp</code>.</p>
+</dd>
+<dt>
+<code>pntJW39.0()</code>:</dt>
+<dd>
+<p>use the Jennett &amp; Welch (1939) approximation
+see Johnson et al. (1995), p. 520, after (31.26a).  This is still
+<em>fast</em> for huge <code>ncp</code> but has <em>wrong</em> asymptotic tail
+for <code class="reqn">|t| \to \infty</code>.  Crucially needs <code class="reqn">b=</code><code>b_chi(df)</code>.</p>
+</dd>
+<dt>
+<code>pntJW39()</code>:</dt>
+<dd>
+<p>is an improved version of <code>pntJW39.0()</code>,
+using <code class="reqn">1-b =</code><code>b_chi(df, one.minus=TRUE)</code> to avoid
+cancellation when computing <code class="reqn">1 - b^2</code>.</p>
+</dd>
+</dl>
+<dl>
+<dt>
+<code>pntGST23_T6()</code>:</dt>
+<dd>
+<p>(and <code>pntGST23_T6.1()</code> for
+informational purposes only) use the Gil et al.(2023)'s
+approximation of their Theorem 6.</p>
+</dd>
+<dt>
+<code>pntGST23_1()</code>:</dt>
+<dd>
+<p>implements Gil et al.(2023)'s direct
+<code>pbeta()</code> based formula (1), which is very close to
+Lenth's algorithm.</p>
+</dd>
+<dt>
+<code>pntVW13()</code>:</dt>
+<dd>
+<p>use MM's <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> translation of Viktor
+Witkowský (2013)'s matlab implementation.</p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>a number for <code>pntJKBf1()</code> and <code>.pntJKBch1()</code>.
+</p>
+<p>a numeric vector of the same length as the maximum of the lengths of
+<code>x, df, ncp</code> for  <code>pntJKBf()</code> and <code>.pntJKBch()</code>.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Martin Maechler</p>
+
+
+<h3>References</h3>
+
+<p>Johnson, N.L., Kotz, S. and Balakrishnan, N. (1995)
+<em>Continuous Univariate Distributions Vol~2</em>, 2nd ed.; Wiley;
+chapter 31, Section <em>5  Distribution Function</em>, p.514 ff
+</p>
+<p>Lenth, R. V. (1989). <em>Algorithm AS 243</em> —
+Cumulative distribution function of the non-central <code class="reqn">t</code> distribution,
+<em>JRSS C (Applied Statistics)</em> <b>38</b>, 185–189.
+</p>
+<p>Abramowitz, M. and Stegun, I. A. (1972)
+<em>Handbook of Mathematical Functions</em>. New York: Dover;
+formula (26.7.10), p.949
+</p>
+<p>Posten, Harry O. (1994)
+A new algorithm for the noncentral t distribution function,
+<em>Journal of Statistical Computation and Simulation</em> <b>51</b>, 79–87;
+<a href="https://doi.org/10.1080/00949659408811623">doi:10.1080/00949659408811623</a>.
+</p>
+<p>– not yet implemented – <br> 
+Chattamvelli, R. and Shanmugam, R. (1994)
+An enhanced algorithm for noncentral t-distribution,
+<em>Journal of Statistical Computation and Simulation</em> <b>49</b>, 77–83.
+<a href="https://doi.org/10.1080/00949659408811561">doi:10.1080/00949659408811561</a>
+</p>
+<p>– not yet implemented – <br> 
+Akahira, Masafumi. (1995).
+A higher order approximation to a percentage point of the noncentral t distribution,
+<em>Communications in Statistics - Simulation and Computation</em> <b>24</b>:3, 595–605;
+<a href="https://doi.org/10.1080/03610919508813261">doi:10.1080/03610919508813261</a>
+</p>
+
+<p>Michael Perakis and Evdokia Xekalaki (2003)
+On a Comparison of the Efficacy of Various Approximations of the Critical Values for Tests on the Process Capability Indices CPL, CPU, and Cpk,
+<em>Communications in Statistics - Simulation and Computation</em> <b>32</b>, 1249–1264;
+<a href="https://doi.org/10.1081/SAC-120023888">doi:10.1081/SAC-120023888</a>
+</p>
+<p>Witkovský, Viktor (2013)
+A Note on Computing Extreme Tail Probabilities of the Noncentral T Distribution with Large
+Noncentrality Parameter,
+<em>Acta Universitatis Palackianae Olomucensis, Facultas Rerum Naturalium, Mathematica</em>
+
+<b>52</b>(2), 131–143. 
+</p>
+<p>Gil A., Segura J., and Temme N.M. (2023)
+New asymptotic representations of the noncentral t-distribution,
+<em>Stud Appl Math.</em> <b>151</b>, 857–882; <a href="https://doi.org/10.1111/sapm.12609">doi:10.1111/sapm.12609</a> ;
+acronym “GST23”.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>pt</code>, for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s version of non-central t probabilities.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tt &lt;- seq(0, 10, len = 21)
+ncp &lt;- seq(0, 6, len = 31)
+pt3R   &lt;- outer(tt, ncp, pt, , df = 3)
+pt3JKB &lt;- outer(tt, ncp, pntR, df = 3)# currently verbose
+stopifnot(all.equal(pt3R, pt3JKB, tolerance = 4e-15))# 64-bit Lnx: 2.78e-16
+
+
+## Gil et al.(2023) -- Table 1 p.869
+str(GST23_tab1 &lt;- read.table(header=TRUE, text = "
+ x     pnt_x_delta              Rel.accuracy   l_y   j_max
+ 5     0.7890745035061528e-20    0.20e-13    0.29178   254
+ 8     0.1902963697413609e-07    0.40e-12    0.13863   294
+11     0.4649258368179092e-03    0.12e-09    0.07845   310
+14     0.2912746016055676e-01    0.11e-07    0.04993   317
+17     0.1858422833307925e-00    0.41e-06    0.03441   321
+20     0.4434882973203470e-00    0.82e-05    0.02510   323"))
+
+x1 &lt;- c(5,8,11,14,17,20)
+(p1  &lt;- pt  (x1, df=10.3, ncp=20))
+(p1R &lt;- pntR(x1, df=10.3, ncp=20)) # verbose=TRUE  is default
+all.equal(p1, p1R, tolerance=0) # 4.355452e-15 {on x86_64} as have *no* LDOUBLE on R level
+stopifnot(all.equal(p1, p1R))
+## NB: According to Gil et al., the first value (x=5) is really wrong
+## p1.23 &lt;- .. Gil et al., Table 1:
+p1.23.11 &lt;- pntGST23_T6(x1, df=10.3, ncp=20, Mterms = 11)
+p1.23.20 &lt;- pntGST23_T6(x1, df=10.3, ncp=20, Mterms = 20, verbose=TRUE)
+                                        # ==&gt; Mterms = 11 is good only for x=5
+p1.23.50 &lt;- pntGST23_T6(x1, df=10.3, ncp=20, Mterms = 50, verbose=TRUE)
+
+x &lt;- 4:40 ; df &lt;- 10.3
+ncp &lt;- 20
+p1     &lt;- pt        (x, df=df, ncp=ncp)
+pG1    &lt;- pntGST23_1(x, df=df, ncp=ncp)
+pG1.bR &lt;- pntGST23_1(x, df=df, ncp=ncp,
+                     IxpqFUN = \(x, l_x=.5-x+.5, p, q) Ixpq(x,l_x, p,q))
+pG1.BR &lt;- pntGST23_1(x, df=df, ncp=ncp,
+                     IxpqFUN = \(x, l_x, p, q)   pbeta(x, p,q))
+cbind(x, p1, pG1, pG1.bR, pG1.BR)
+all.equal(pG1, p1,     tolerance=0) # 1.034 e-12
+all.equal(pG1, pG1.bR, tolerance=0) # 2.497031 e-13
+all.equal(pG1, pG1.BR, tolerance=0) # 2.924698 e-13
+all.equal(pG1.BR,pG1.bR,tolerance=0)# 1.68644  e-13
+stopifnot(exprs = {
+    all.equal(pG1, p1,     tolerance = 4e-12)
+    all.equal(pG1, pG1.bR, tolerance = 1e-12)
+    all.equal(pG1, pG1.BR, tolerance = 1e-12)
+  })
+
+ncp &lt;- 40 ## is  &gt; 37.62 = "critical" for Lenth' algorithm
+
+### --------- pntVW13() --------------------------------------------------
+## length 1 arguments:
+str(rr &lt;- pntVW13(t = 1, df = 2, ncp = 3, verbose=TRUE, keepS=TRUE))
+all.equal(rr$cdf, pt(1,2,3), tol = 0)#  "Mean relative difference: 4.956769e-12"
+stopifnot( all.equal(rr$cdf, pt(1,2,3)) )
+
+str(rr &lt;- pntVW13(t = 1:19, df = 2,    ncp = 3,    verbose=TRUE, keepS=TRUE))
+str(r2 &lt;- pntVW13(t = 1,    df = 2:20, ncp = 3,    verbose=TRUE, keepS=TRUE))
+str(r3 &lt;- pntVW13(t = 1,    df = 2:20, ncp = 3:21, verbose=TRUE, keepS=TRUE))
+
+pt1.10.5_T &lt;- 4.34725285650591657e-5 # Ex. 7 of Witkovsky(2013)
+pt1.10.5 &lt;- pntVW13(1, 10, 5)
+all.equal(pt1.10.5_T, pt1.10.5, tol = 0)# TRUE! (Lnx Fedora 40; 2024-07-04);
+			# 3.117e-16 (Macbuilder R 4.4.0, macOS Ventura 13.3.1)
+stopifnot(exprs = {
+    identical(rr$cdf, r1 &lt;- pntVW13(t = 1:19, df = 2, ncp = 3))
+    identical(r1[1], pntVW13(1, 2, 3))
+    identical(r1[7], pntVW13(7, 2, 3))
+    all.equal(pt1.10.5_T, pt1.10.5, tol = 9e-16)# NB even tol=0 (64 Lnx)
+})
+## However, R' pt() is only equal for the very first
+cbind(t = 1:19, pntVW = r1, pt = pt(1:19, 2,3))
+
+</code></pre>
+
+
+</div>

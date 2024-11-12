@@ -1,0 +1,159 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>csv_to_disk.frame</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Convert CSV file(s) to disk.frame format</h2>
+
+<h3>Description</h3>
+
+<p>Convert CSV file(s) to disk.frame format
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">csv_to_disk.frame(
+  infile,
+  outdir = tempfile(fileext = ".df"),
+  inmapfn = base::I,
+  nchunks = recommend_nchunks(sum(file.size(infile))),
+  in_chunk_size = NULL,
+  shardby = NULL,
+  compress = 50,
+  overwrite = TRUE,
+  header = TRUE,
+  .progress = TRUE,
+  backend = c("data.table", "readr", "LaF"),
+  chunk_reader = c("bigreadr", "data.table", "readr", "readLines"),
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>infile</code></td>
+<td>
+<p>The input CSV file or files</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outdir</code></td>
+<td>
+<p>The directory to output the disk.frame to</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inmapfn</code></td>
+<td>
+<p>A function to be applied to the chunk read in from CSV before
+the chunk is being written out. Commonly used to perform simple
+transformations. Defaults to the identity function (ie. no transformation)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nchunks</code></td>
+<td>
+<p>Number of chunks to output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>in_chunk_size</code></td>
+<td>
+<p>When reading in the file, how many lines to read in at
+once. This is different to nchunks which controls how many chunks are
+output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shardby</code></td>
+<td>
+<p>The column(s) to shard the data by. For example suppose
+'shardby = c("col1","col2")'  then every row where the values 'col1' and
+'col2' are the same will end up in the same chunk; this will allow merging
+by 'col1' and 'col2' to be more efficient</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>compress</code></td>
+<td>
+<p>For fst backends it's a number between 0 and 100 where 100 is
+the highest compression ratio.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>Whether to overwrite the existing directory</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>header</code></td>
+<td>
+<p>Whether the files have header. Defaults to TRUE</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>.progress</code></td>
+<td>
+<p>A logical, for whether or not to show progress</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>backend</code></td>
+<td>
+<p>The CSV reader backend to choose: "data.table" or "readr". 
+disk.frame does not have its own CSV reader. It uses either
+data.table::fread or readr::read_delimited. It is worth noting that
+data.table::fread does not detect dates and all dates are imported as
+strings, and you are encouraged to use fasttime to convert the strings to
+date. You can use the 'inmapfn' to do that. However, if you want automatic
+date detection, then backend="readr" may suit your needs. However, readr
+is often slower than data.table, hence data.table is chosen as the default.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>chunk_reader</code></td>
+<td>
+<p>Even if you choose a backend there can still be multiple
+strategies on how to approach the CSV reads. For example, data.table::fread
+tries to mmap the whole file which can cause the whole read process to
+fail. In that case we can change the chunk_reader to "readLines" which uses the
+readLines function to read chunk by chunk and still use data.table::fread
+to process the chunks. There are currently no strategies for readr backend,
+except the default one.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>passed to data.table::fread, disk.frame::as.disk.frame,
+disk.frame::shard</p>
+</td>
+</tr>
+</table>
+<h3>See Also</h3>
+
+<p>Other ingesting data: 
+<code>zip_to_disk.frame()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">tmpfile = tempfile()
+write.csv(cars, tmpfile)
+tmpdf = tempfile(fileext = ".df")
+df = csv_to_disk.frame(tmpfile, outdir = tmpdf, overwrite = TRUE)
+
+# clean up
+fs::file_delete(tmpfile)
+delete(df)
+</code></pre>
+
+
+</div>

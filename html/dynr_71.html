@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prep.regimes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Recipe function for creating regime switching (Markov transition) functions</h2>
+
+<h3>Description</h3>
+
+<p>Recipe function for creating regime switching (Markov transition) functions
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prep.regimes(values, params, covariates, deviation = FALSE, refRow)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p>matrix giving the values. Should have (number of Regimes) rows 
+and (number of regimes x number of covariates) columns</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>params</code></td>
+<td>
+<p>matrix of the same size as "values" consisting of the names of the parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>a vector of the names of the covariates to be used in the regime-switching functions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deviation</code></td>
+<td>
+<p>logical. Whether to use the deviation form or not.  See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>refRow</code></td>
+<td>
+<p>numeric. Which row is treated at the reference.  See Details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that each row of the transition probability matrix must sum to one. To accomplish this
+fix at least one transition log odds parameter in each row of "values" (including its intercept 
+and the regression slopes of all covariates) to 0.
+</p>
+<p>When <code>deviation=FALSE</code>, the non-deviation form of the multinomial logistic regression is used. This form has a separate intercept term for each entry of the transition probability matrix (TPM). When <code>deviation=TRUE</code>, the deviation form of the multinomial logistic regression is used. This form has an intercept term that is common to each column of the TPM. The rows are then distinguished by their own individual deviations from the common intercept. The deviation form requires the same reference column constraint as the non-deviation form; however, the deviation form also requires one row to be indicated as the reference row (described below). By default the reference row is taken to be the same as the reference column.
+</p>
+<p>The <code>refRow</code> argument determines which row is used as the intercept row. It is only
+used in the deviation form (i.e. <code>deviation=TRUE</code>). In the deviation form, one row of <code>values</code> and <code>params</code> contains the intercepts, other rows contain deviations from these intercepts. The <code>refRow</code> argument says which row contains the intercept terms. The default behavior for <code>refRow</code> is to be the same as the reference column.  The reference column is automatically detected. If we have problems detecting which is the reference column, then we provide error messages that are as helpful as we can make them.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Object of class 'dynrRegimes'
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Methods that can be used include: <code>print</code>, <code>printex</code>, <code>show</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#Two-regime example with a covariate, x; log odds (LO) parameters represented in default form,
+#2nd regime set to be the reference regime (i.e., have LO parameters all set to 0).
+#The values and params matrices are of size 2 (numRegimes=2) x 4 (numRegimes*(numCovariates+1)).
+#    The LO of staying within the 1st regime (corresponding to the (1,1) entry in the
+#              2 x 2 transition probability matrix for the 2 regimes) = a_11 + d_11*x
+#    The log odds of switching from the 1st to the 2nd regime (the (1,2) entry in the
+#              transition probability matrix) = 0
+#    The log odds of moving from regime 2 to regime 1 (the (2,1) entry) = a_21 + d_21*x
+#    The log odds of staying within the 2nd regime (the (2,2) entry) = 0
+b &lt;- prep.regimes(
+values=matrix(c(8,-1,rep(0,2),
+               -4,.1,rep(0,2)),
+             nrow=2, ncol=4, byrow=TRUE), 
+params=matrix(c("a_11","d_11x",rep("fixed",2),
+               "a_21","d_21x",rep("fixed",2)), 
+             nrow=2, ncol=4, byrow=TRUE), covariates=c("x"))
+ 
+# Same example as above, but expressed in deviation form by specifying 'deviation = TRUE'
+#    The LO of staying within the 1st regime (corresponding to the (1,1) entry in the
+#              2 x 2 transition probability matrix for the 2 regimes) = a_21 + a_11 + d_11*x
+#    The log odds of switching from the 1st to the 2nd regime (the (1,2) entry in the
+#              transition probability matrix) = 0
+#    The log odds of moving from regime 2 to regime 1 (the (2,1) entry) = a_21 + d_21*x
+#    The log odds of staying within the 2nd regime (the (2,2) entry) = 0            
+b &lt;- prep.regimes(
+values=matrix(c(8,-1,rep(0,2),
+               -4,.1,rep(0,2)),
+             nrow=2, ncol=4, byrow=TRUE), 
+params=matrix(c("a_11","d_11x",rep("fixed",2),
+               "a_21","d_21x",rep("fixed",2)), 
+             nrow=2, ncol=4, byrow=TRUE), covariates=c("x"), deviation = TRUE)
+             
+#An example of regime-switching with no covariates. The diagonal entries are fixed
+#at zero for identification purposes
+b &lt;- prep.regimes(values=matrix(0, 3, 3), 
+params=matrix(c('fixed', 'p12', 'p13', 
+                'p21', 'fixed', 'p23', 
+                'p31', 'p32', 'fixed'), 3, 3, byrow=TRUE))
+
+#An example of regime-switching with no covariates. The parameters for the second regime are 
+#  fixed at zero for identification purposes, making the second regime the reference regime.
+b &lt;- prep.regimes(values=matrix(0, 3, 3), 
+params=matrix(c('p11', 'fixed', 'p13',
+                'p21', 'fixed', 'p23', 
+                'p31', 'fixed', 'p33'), 3, 3, byrow=TRUE))
+
+#2 regimes with three covariates
+b &lt;- prep.regimes(values=matrix(c(0), 2, 8), 
+params=matrix(c(paste0('p', 8:15), rep(0, 8)), 2, 8), 
+covariates=c('x1', 'x2', 'x3'))
+
+</code></pre>
+
+
+</div>

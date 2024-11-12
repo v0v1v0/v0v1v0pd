@@ -1,0 +1,301 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gl.blast</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Aligns nucleotides sequences against those present in a target database
+using blastn</h2>
+
+<h3>Description</h3>
+
+<p>Basic Local Alignment Search Tool (BLAST; Altschul et al., 1990 &amp;
+1997) is a sequence comparison algorithm optimized for speed used to search
+sequence databases for optimal local alignments to a query. This function
+creates fasta files, creates databases to run BLAST, runs blastn and filters
+these results to obtain the best hit per sequence.
+</p>
+<p>This function can be used to run BLAST alignment of short-read (DArTseq
+data) and long-read sequences (Illumina, PacBio... etc). You can use
+reference genomes from NCBI, genomes from your private collection, contigs,
+scaffolds or any other genetic sequence that you would like to use as
+reference.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gl.blast(
+  x,
+  ref_genome,
+  task = "megablast",
+  Percentage_identity = 70,
+  Percentage_overlap = 0.8,
+  bitscore = 50,
+  number_of_threads = 2,
+  verbose = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>Either a genlight object containing a column named
+'TrimmedSequence' containing the sequence of the SNPs (the sequence tag)
+trimmed of adapters as provided by DArT; or a path to a fasta file with the
+query sequences [required].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ref_genome</code></td>
+<td>
+<p>Path to a reference genome in fasta of fna format
+[required].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>task</code></td>
+<td>
+<p>Four different tasks are supported: 1) “megablast”, for very
+similar sequences (e.g, sequencing errors), 2) “dc-megablast”, typically
+used for inter-species comparisons, 3) “blastn”, the traditional program
+used for inter-species comparisons, 4) “blastn-short”, optimized for
+sequences less than 30 nucleotides [default 'megablast'].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Percentage_identity</code></td>
+<td>
+<p>Not a very sensitive or reliable measure of
+sequence similarity, however it is a reasonable proxy for evolutionary
+distance. The evolutionary distance associated with a 10 percent change in
+Percentage_identity is much greater at longer distances. Thus, a change from
+80 – 70 percent identity might reflect divergence 200 million years earlier
+in time, but the change from 30 percent to 20 percent might correspond to a
+billion year divergence time change [default 70].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Percentage_overlap</code></td>
+<td>
+<p>Calculated as alignment length divided by the
+query length or subject length (whichever is shortest of the two lengths,
+i.e.  length / min(qlen,slen) ) [default 0.8].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bitscore</code></td>
+<td>
+<p>A rule-of-thumb for inferring homology, a bit score of 50
+is almost always significant [default 50].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>number_of_threads</code></td>
+<td>
+<p>Number of threads (CPUs) to use in blastn search
+[default 2].</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>verbose= 0, silent or fatal errors; 1, begin and end; 2,
+progress log ; 3, progress and results summary; 5, full report
+[default 2 or as specified using gl.set.verbosity]</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><strong>Installing BLAST</strong>
+</p>
+<p>You can download the BLAST installs from:
+<a href="https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/">https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/</a>
+</p>
+<p>It is important to install BLAST in a path that does not contain spaces for
+this function to work.
+</p>
+<p><strong>Running BLAST</strong>
+</p>
+<p>Four different tasks are supported: </p>
+ <ul>
+<li>
+<p> “megablast”, for very
+similar sequences (e.g, sequencing errors) </p>
+</li>
+<li>
+<p> “dc-megablast”, typically
+used for inter-species comparisons </p>
+</li>
+<li>
+<p> “blastn”, the traditional program
+used for inter-species comparisons </p>
+</li>
+<li>
+<p> “blastn-short”, optimized for
+sequences less than 30 nucleotides </p>
+</li>
+</ul>
+<p>If  you  are  running  a  BLAST alignment of  similar  sequences,  for
+example  Turtle  Genome  Vs Turtle Sequences, the recommended parameters
+are: task = “megablast”, Percentage_identity = 70, Percentage_overlap =  0.8
+and bitscore = 50.
+</p>
+<p>If you are running a BLAST alignment of highly dissimilar sequences because
+you are probably looking for sex linked  hits in  a distantly  related
+species,  and  you  are aligning for example sequences of Chicken Genome Vs
+Bassiana, the recommended parameters are: task = “dc-megablast”,
+Percentage_identity = 50, Percentage_overlap =  0.01 and bitscore = 30.
+</p>
+<p>Be aware that running BLAST might take a long time (i.e. days) depending of
+the size of your query, the size of your database and the number of threads
+selected for your computer.
+</p>
+<p><strong>BLAST output</strong>
+</p>
+<p>The BLAST output is formatted as a table using output format 6, with columns
+defined in the following order: </p>
+ <ul>
+<li>
+<p> qseqid - Query Seq-id </p>
+</li>
+<li>
+<p>sacc - Subject accession </p>
+</li>
+<li>
+<p> stitle - Subject Title </p>
+</li>
+<li>
+<p> qseq - Aligned
+part of query sequence </p>
+</li>
+<li>
+<p> sseq - Aligned part of subject sequence </p>
+</li>
+<li>
+<p>nident - Number of identical matches </p>
+</li>
+<li>
+<p> mismatch - Number of mismatches
+</p>
+</li>
+<li>
+<p> pident - Percentage of identical matches </p>
+</li>
+<li>
+<p> length - Alignment
+length </p>
+</li>
+<li>
+<p> evalue - Expect value </p>
+</li>
+<li>
+<p> bitscore - Bit score </p>
+</li>
+<li>
+<p> qstart -
+Start of alignment in query </p>
+</li>
+<li>
+<p> qend - End of alignment in query </p>
+</li>
+<li>
+<p>sstart - Start of alignment in subject </p>
+</li>
+<li>
+<p> send - End of alignment in
+subject </p>
+</li>
+<li>
+<p> gapopen - Number of gap openings </p>
+</li>
+<li>
+<p> gaps - Total number of
+gaps </p>
+</li>
+<li>
+<p> qlen - Query sequence length </p>
+</li>
+<li>
+<p> slen - Subject sequence length
+</p>
+</li>
+<li>
+<p> PercentageOverlap - length / min(qlen,slen) </p>
+</li>
+</ul>
+<p>Databases containing unfiltered aligned sequences, filtered aligned
+sequences and one hit per sequence are saved to the working directory
+(plot.dir tempdir if not set).
+</p>
+<p><strong>BLAST filtering</strong>
+</p>
+<p>BLAST output is filtered by ordering the hits of each sequence first by the
+highest percentage identity, then the highest percentage overlap and then
+the highest bitscore. Only one hit per sequence is kept based on these
+selection criteria.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If the input is a genlight object: returns a genlight object with one
+hit per sequence merged to the slot $other$loc.metrics. If the input is a
+fasta file: returns a dataframe with one hit per sequence.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Berenice Talamantes Becerra &amp; Luis Mijangos (Post to
+<a href="https://groups.google.com/d/forum/dartr">https://groups.google.com/d/forum/dartr</a>)
+</p>
+
+
+<h3>References</h3>
+
+
+<ul>
+<li>
+<p> Altschul, S. F., Gish, W., Miller, W., Myers, E. W., &amp; Lipman, D.
+J. (1990). Basic local alignment search tool. Journal of molecular biology,
+215(3), 403-410.
+</p>
+</li>
+<li>
+<p> Altschul, S. F., Madden, T. L., Schäffer, A. A., Zhang, J., Zhang,
+Z., Miller, W., &amp; Lipman, D. J. (1997). Gapped BLAST and PSI-BLAST: a new
+generation of protein database search programs. Nucleic acids research,
+25(17), 3389-3402.
+</p>
+</li>
+<li>
+<p> Pearson, W. R. (2013). An introduction to sequence similarity
+(“homology”) searching. Current protocols in bioinformatics, 42(1), 3-1.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><code>gl.print.history</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+res &lt;- gl.blast(x = testset.gl, ref_genome = "sequence.fasta")
+# display of reports saved in the temporal directory
+# open the reports saved in the temporal directory
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

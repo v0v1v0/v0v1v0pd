@@ -1,0 +1,258 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dove2</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Durability of Vaccine Efficacy</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the potentially waning long-term efficacy of vaccines in
+randomized, placebo-controlled clinical trials with staggered
+enrollment of participants and sequential crossover of placebo recipients.
+The log hazard ratio for the vaccine effect is assumed to be a 
+piecewise linear function of time since vaccination, whereas the
+baseline hazard function is nonparametric.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dove2(
+  formula,
+  data,
+  plots = TRUE,
+  changePts = NULL,
+  constantVE = FALSE,
+  timePts = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula object, with the response on the left-hand side of a
+'~' operator, and the covariates and vaccine() function on the right-hand side.  
+The response must be a survival analysis object as returned by the 'Surv'
+function of the <span class="pkg">survival</span> package. See Details for further information.
+The vaccine() function must be used to specify the entry time and
+vaccination information. See ?vaccine and Details for further
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data.frame object. The data.frame in which to interpret the
+variable names in formula. Must contain the entry time, the event time,
+the event status, the vaccination status,
+the vaccination time, and the covariates. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plots</code></td>
+<td>
+<p>A logical object. If TRUE (default), plots of the estimated 
+VE in reducing the attack rate, the estimated VE in reducing the hazard rate, 
+and their 95% confidence intervals will be automatically generated. 
+If FALSE, plots will not be generated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>changePts</code></td>
+<td>
+<p>A numerical vector object or NULL. The potential change
+points (in days) of the piece-wise log-linear hazard ratio for the
+vaccine effect. See Details 
+for further information. If NULL, one change point will automatically be 
+selected among {28, 35, 42, 49, 56} (Weeks 4, 5, 6, 7, 8) by the 
+Akaike information criterion (AIC).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>constantVE</code></td>
+<td>
+<p>A logical object. If FALSE (default), VE is allowed to 
+vary after the last change point. If TRUE, VE is assumed to be 
+constant after the last change point.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timePts</code></td>
+<td>
+<p>A numerical vector object or NULL. The endpoints (in days) 
+of the time periods for which the VE in reducing the attack rate are to
+be estimated. If NULL, a default sequence 
+<code class="reqn">t_1, 2t_1, 3t_1, \dots</code> will be used, where <code class="reqn">t_1</code> is the first 
+change point. The sequence ends at the maximum of the event times from all 
+participants. This input is ignored when constantVE = TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In dove2(), the log hazard ratio for the vaccine effect is a piecewise 
+linear function of time since vaccination.
+Its sister function, dove(), allows the hazard ratio to be a 
+nonparametric function of time for which confidence intervals are not 
+provided. The approach implemented in dove2() provides more precise and 
+more stable estimates of vaccine efficacy on the hazard rate and includes 
+proper confidence intervals.
+</p>
+<p>The information required for an analysis is 
+</p>
+
+<dl>
+<dt>Entry Time:</dt>
+<dd>
+<p>Calendar time when the participant enters the 
+trial.</p>
+</dd>
+<dt>Event Time:</dt>
+<dd>
+<p>Calendar time when the participant experiences
+the clinical event of interest (e.g., symptomatic COVID-19) or the
+follow-up ends, whichever occurs first.</p>
+</dd>
+<dt>Event Status:</dt>
+<dd>
+<p>Binary indicator taking value 1 if the clinical
+event of interest occurs before the end of follow-up and 0 otherwise.</p>
+</dd>
+<dt>Vaccination Status:</dt>
+<dd>
+<p>Binary indicator taking value 1 if
+vaccination occurs before the end of follow-up and 0 otherwise.</p>
+</dd>
+<dt>Vaccination Time:</dt>
+<dd>
+<p>Calendar time when vaccination takes place,
+with NA, Inf, or an arbitrary non-negative value
+if the participant is not vaccinated.</p>
+</dd>
+<dt>Covariates:</dt>
+<dd>
+<p>Baseline covariates (e.g., priority group, age, 
+ethnicity).</p>
+</dd>
+</dl>
+<p>Note that all the time variables are measured from the start of the 
+clinical trial and are specified in units of days. 
+For each individual, the entry_time, event_time, and vaccination_time must satisfy
+entry_time <code class="reqn">\le</code> event_time and entry_time <code class="reqn">\le</code> vaccination_time. 
+If entry_time &gt; event_time or entry_time &gt; vaccination_time, the case will be 
+removed from the analysis and a message will be generated.  
+</p>
+<p>The general structure of the formula input is
+</p>
+<pre>
+  Surv(event_time, event_status) ~ covariates + 
+    vaccine(entry_time, vaccination_status, vaccination_time)
+  </pre>
+<p>The response variable must be a survival analysis object as returned by the
+'Surv()' function of package <span class="pkg">survival</span>, where event_time is the
+observation time (formal argument 'time') and event_status is the status
+indicator input (formal argument 'event'). Specifically, 
+</p>
+<pre>Surv(time = event_time, event = event_status)</pre>
+<p>The covariates can be either numerical or categorical.
+If categorical covariates are provided, all other categories are compared to the first category.
+A model without covariates is also allowed.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An S3 object of class DOVE containing a list with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>call</code></td>
+<td>
+<p>The unevaluated call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>changePts</code></td>
+<td>
+<p>The changePts of the analysis.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>A matrix containing the estimated (log) hazard ratio of
+each covariate, together with the estimated standard error, the 95%
+confidence interval, and the two-sided p-value for testing no covariate
+effect. NA if no covariate is included in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vaccine</code></td>
+<td>
+<p>A list containing one or three elements, depending on the 
+value of constantVE. 
+If constantVE = TRUE, the only element is named 'VE' and is a vector 
+containing the estimate of constant VE, its standard error estimate, 
+and the 95% confidence interval.
+If constantVE = FALSE, three matrices are returned. The first matrix 
+named 'VE_a' contains the daily VE estimates in reducing the attack 
+rate, together with the 95% confidence intervals. The second matrix 
+named 'VE_h' contains the daily VE estimates in reducing the hazard rate,
+together with the 95% confidence intervals.
+The third matrix named 'VE_period' contains the estimates of VE in
+reducing the attack rate over successive time periods according to
+timePts, together with the 95% confidence intervals.</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Lin, D-Y, Gu, Y., Zeng, D., Janes, H. E., and Gilbert, P. B. (2021). 
+Evaluating vaccine efficacy against SARS-CoV-2 infection. 
+Clinical Infectious Diseases, ciab630, https://doi.org/10.1093/cid/ciab630.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(doveData)
+
+set.seed(1234)
+smp &lt;- sample(1L:nrow(x = doveData), size = 2500L)
+
+# NOTE: This sample size is chosen for example only -- larger data sets
+# should be used.
+# See the vignette for a full analysis of the doveData dataset
+
+# Fit the model with default settings
+dove2(formula = Surv(event.time, event.status) ~ priority + sex + 
+                vaccine(entry.time, vaccine.status, vaccine.time), 
+      data = doveData[smp,])
+
+# Specify Week 4 as the change point
+# Assume a potentially waning VE after 4 weeks
+# Estimate VE_a over 0-4, 4-16, 16-28, 28-40 weeks
+dove2(formula = Surv(event.time, event.status) ~ priority + sex + 
+                vaccine(entry.time, vaccine.status, vaccine.time), 
+      data = doveData[smp,],
+      changePts = 4*7,
+      timePts = c(4, 16, 28, 40)*7)
+      
+# Specify multiple change points at Weeks 4 and 8
+# Assume a constant VE after 8 weeks
+dove2(formula = Surv(event.time, event.status) ~ priority + sex + 
+                vaccine(entry.time, vaccine.status, vaccine.time), 
+      data = doveData[smp,],
+      changePts = c(4, 8)*7,
+      constantVE = TRUE)
+</code></pre>
+
+
+</div>

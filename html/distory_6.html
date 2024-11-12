@@ -1,0 +1,176 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dist.multiPhylo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Geodesic Distance Between Phylogenetic Trees</h2>
+
+<h3>Description</h3>
+
+<p>Computes the geodesic distance of a list of phylogenetic trees using a
+polynomial algorithm.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dist.multiPhylo(x, method = "geodesic", force.multi2di = FALSE,
+                outgroup = NULL, convert.multifurcating = FALSE,
+                use.random.resolution = FALSE, scale = NULL,
+                verbose = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A list of ape trees (class 'phylo'). The list does not have to be of
+class 'multiPhylo'. The function will also accept a list of strings of
+trees in Newick format, or a single string with trees in Newick format
+separated by semicolons. All the trees must have the same tip labels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+
+<p>Determines which distance method is used. Options are 'geodesic' for the
+tree space geodesic distance, or 'edgeset' for the number of edges
+(defined by splits of tips) that are different.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>force.multi2di</code></td>
+<td>
+
+<p>Force conversion of every tree to strict bifurcating through the ape
+function 'multi2di', using the use.random.resolution as its parameter.
+This option should not be used in conjunction with specification of an
+outgroup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outgroup</code></td>
+<td>
+
+<p>Specifies an outgroup to root each tree with respect to. This calls the
+ape function 'root' on every tree in the list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convert.multifurcating</code></td>
+<td>
+
+<p>Setting this option will check every tree for multifurcations using the
+ape function 'is.binary.phylo' - if it returns FALSE, the ape function
+'multi2di' will be called on it. Note that this does not ensure a tree
+is strictly binary, since ape considers an unrooted tree binary even if
+the root node is trifurcating. This option can be used in conjunction
+with specification of an outgroup.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.random.resolution</code></td>
+<td>
+
+<p>Specifies the parameter to 'multi2di' if needed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scale</code></td>
+<td>
+
+<p>Specifies a scale to make all trees unformly scaled (that is, the sum of
+all edges will be uniform)scale to make all trees unformly scaled (that
+is, the sum of all edge lengths will be uniform). The parameter can
+either be a tree of class <code>phylo</code> or a numeric value for the sum of
+all edge lengths.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+
+<p>Turns on incremental status updates and more warnings. Helpful for large
+computations.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function computes the geodesic distance according to Billera et. al.
+using an algorithm based off of the polynomial time algorithm of Owen
+and Provan. Since it corresponds to a formal definition of tree-space as
+a space of strictly binary trees, no mulifurcations are allowed, including
+on the root node. In addition, negative and 0-lengthed edges are clamped to
+a very small value (DBL_MIN) for technical reasons.
+</p>
+<p>The Newick parser supports only a subset of the Newick format. In
+particular, it does not at the moment allow for internal node labels, only
+weights. Weights will be automatically set to 1 if not specified. It may be
+necessary to clean data in ape to make the trees conform to this.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a distance matrix of class 'dist' representing the pairwise
+geodesic distances between all input trees. Keep in mind this distance
+matrix is not Euclidean. N/A values are provided in the case of an error in
+determining the distance.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>John Chakerian</p>
+
+
+<h3>References</h3>
+
+<p>Chakerian, J. and Holmes, S. P. Computational Tools for Evaluating
+Phylogenetic and Heirarchical Clustering Trees. arXiv:1006.1015v1.
+</p>
+<p>Billera, L. J., Holmes, S. P., and Vogtmann, K. (2001) Geometry of the space
+of phylogenetic trees. <em>Advances in Applied Mathematics</em>,
+<b>27</b>, 733–767.
+</p>
+<p>Megan Owen and J. Scott Provan (2010) A fast algorithm for computing
+geodesic distances in tree space. <em>IEEE/ACM Transactions on
+Computational Biology and Bioinformatics</em>, 14 Jan. 2010.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>dist.dna</code>, <code>boot.phylo</code>,
+<code>cmdscale</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(woodmouse)
+otree &lt;- root(nj(dist.dna(woodmouse)), "No305", resolve.root=TRUE)
+breps &lt;- 250
+
+trees &lt;- boot.phylo(otree, woodmouse, B=breps, function(x)
+    root(nj(dist.dna(x)), "No305", resolve.root=TRUE), trees = TRUE)
+
+combined.trees &lt;- c(list(otree), trees$trees)
+tree.dists &lt;- dist.multiPhylo(combined.trees)
+
+mdres &lt;- cmdscale(tree.dists, k=breps, add=TRUE)
+plot(mdres$points[,1], mdres$points[,2], col = c("red", rep("black", breps)))
+text(mdres$points[,1], mdres$points[,2], labels = 1:(breps + 1),
+     cex = 0.7, adj = c(0, 2))
+</code></pre>
+
+
+</div>

@@ -1,0 +1,260 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>getMetric</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate dose-volume-histogram metrics</h2>
+
+<h3>Description</h3>
+
+<p>Simultaneously calculates multiple metrics for multiple cumulative DVHs.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">getMetric(x, metric, patID, structure,
+           sortBy=c("none", "observed", "patID", "structure", "metric"),
+          splitBy=c("none", "patID", "structure", "metric"),
+           interp=c("linear", "spline", "ksmooth"), fixed=TRUE, ...)
+
+## S3 method for class 'DVHs'
+getMetric(x, metric, patID, structure,
+           sortBy=c("none", "observed", "patID", "structure", "metric"),
+          splitBy=c("none", "patID", "structure", "metric"),
+           interp=c("linear", "spline", "ksmooth"), fixed=TRUE, ...)
+
+## S3 method for class 'DVHLst'
+getMetric(x, metric, patID, structure,
+           sortBy=c("none", "observed", "patID", "structure", "metric"),
+          splitBy=c("none", "patID", "structure", "metric"),
+           interp=c("linear", "spline", "ksmooth"), fixed=TRUE, ...)
+
+## S3 method for class 'DVHLstLst'
+getMetric(x, metric, patID, structure,
+           sortBy=c("none", "observed", "patID", "structure", "metric"),
+          splitBy=c("none", "patID", "structure", "metric"),
+           interp=c("linear", "spline", "ksmooth"), fixed=TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>One cumulative DVH (object of class <code>DVHs</code>, multiple cumulative DVHs from one patient with multiple structures (object of class <code>DVHLst</code>), or multiple cumulative DVHs from many patients, each with multiple structures (object of class <code>DVHLstLst</code>). See <code>readDVH</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p><code>character</code> vector defining one or more DVH metrics. See Details for their definition. For metrics involving the relative dose, the DVH must contain the prescription dose.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>patID</code></td>
+<td>
+<p><code>character</code> vector. Calculate given DVH metrics for these patients only. If missing, DVH metrics are calculated for all patients. Can be a regular expression if additional argument <code>fixed=FALSE</code> is supplied as well, see <code>regex</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>structure</code></td>
+<td>
+<p><code>character</code> vector. Calculate given DVH metrics for these structures only. If missing, DVH metrics are calculated for all structures. Can be a regular expression if additional argument <code>fixed=FALSE</code> is supplied as well, see <code>regex</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sortBy</code></td>
+<td>
+<p><code>character</code> vector giving the sorting criteria for the output data frame.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splitBy</code></td>
+<td>
+<p><code>character</code> vector. Split results into a list of data frames where list components are defined by groups from combining these variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interp</code></td>
+<td>
+<p><code>character</code>. Method of interpolation between DVH points: Linear interpolation using <code>approx</code>, monotone Hermite spline interpolation using <code>splinefun</code>, or local polynomial regression using <code>locpoly</code> with kernel bandwidth chosen by the direct plug-in method using <code>dpill</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p><code>logical</code>. Use <code>fixed=FALSE</code> for regular expression matching of <code>patID</code> and <code>structure</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to <code>getEUD</code> (for <code>metric="DEUD"</code>), <code>getTCP</code> (for <code>metric="DTCP"</code>), or <code>getNTCP</code> (for <code>metric="DNTCP"</code>).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>A <em>pre-specified</em> DVH metric is one of the following character strings:
+</p>
+
+<ul>
+<li> <p><code>"DMEAN"</code>: The volume-weighted mean dose of the structure.
+</p>
+</li>
+<li> <p><code>"DMEDIAN"</code>: Median dose, equal to D50%
+</p>
+</li>
+<li> <p><code>"DMIN"</code>: The minimum dose of the non-zero-dose voxels in the structure.
+</p>
+</li>
+<li> <p><code>"DMAX"</code>: The maximum dose of the non-zero-dose voxels in the structure.
+</p>
+</li>
+<li> <p><code>"DSD"</code>: The standard deviation of the dose in the structure.
+</p>
+</li>
+<li> <p><code>"DRX"</code>: The prescription dose.
+</p>
+</li>
+<li> <p><code>"DHI"</code>: The Homogeneity Index according to ICRU 83: (D2%-D98%)/D50%.
+</p>
+</li>
+<li> <p><code>"DEUD"</code>: The generalized equivalent uniform dose (gEUD). See <code>getEUD</code> for mandatory and optional parameters.
+</p>
+</li>
+<li> <p><code>"DNTCP"</code>: The normal tissue complication probability (NTCP). See <code>getNTCP</code> for mandatory and optional parameters.
+</p>
+</li>
+<li> <p><code>"DTCP"</code>: The tumor control probability (TCP). See <code>getNTCP</code> for mandatory and optional parameters.
+</p>
+</li>
+</ul>
+<p>A <em>free</em> DVH metric is a character string which has three mandatory elements and one optional element in the following order (AAPM TG263 2018, section 9.2, note that complementary / cold metrics are not yet implemented):
+</p>
+
+<ul>
+<li>
+<p> 1st letter <code>"D"</code> or <code>"V"</code>: <code>"D"</code> If the requested value is a dose, <code>"V"</code> if it is a volume.
+</p>
+</li>
+<li>
+<p> 2nd element <code>&lt;number&gt;</code>: If the first letter is <code>"D"</code>, this gives the volume for which the dose value of the cumulative DVH should be reported. If the first letter is <code>"V"</code>, this gives the dose for which the volume value of the cumulative DVH should be reported.
+</p>
+</li>
+<li>
+<p> 3rd element <code>&lt;measurement unit&gt;</code>: The measurement unit for the 2nd element of the metric. Absolute volumes are indicated by <code>"CC"</code> for cubic centimeter, relative volumes by <code>"%"</code>. Absolute doses are indicated by <code>"Gy"</code> for Gray, <code>"cGy"</code> for Centigray, or <code>"eV/g"</code> for uncalibrated dose in DVHs exported by PRIMO. Relative doses are indicated by <code>"%"</code>.
+</p>
+</li>
+<li>
+<p> Optional 4th element <code>_&lt;measurement unit&gt;</code>: The measurement unit of the output value. Possible units are as for the 3rd element. If missing, dose is reported as absolute dose in the measurement unit used in the DVH. Volume is reported as relative volume in %.
+</p>
+</li>
+</ul>
+<p>Examples:
+</p>
+
+<ul>
+<li> <p><code>"D1%"</code>: Minimal absolute dose for the "hottest" 1% of the structure, i.e., the maximally irradiated 1% of the structure was exposed to at least this absolute dose.
+</p>
+</li>
+<li> <p><code>"D1CC_%"</code>: Minimal relative dose (% of prescription dose) for the maximally irradiated cm^3 of the structure.
+</p>
+</li>
+<li> <p><code>"V500cGy"</code>: Relative structure volume in % that was exposed to at least 500cGy.
+</p>
+</li>
+<li> <p><code>"V10%_CC"</code>: Absolute structure volume in cm^3 that was exposed to at least 10% of prescription dose.
+</p>
+</li>
+</ul>
+<p>If volume or dose values outside the range of possible values for a structure are requested, metrics cannot be calculated, and the result will be <code>NA</code> with a warning.
+</p>
+<p>DMEAN, DMEDIAN, DMIN, DMAX, DSD are taken from the exported DVH if present. Otherwise, the differential DVH is generated and used for calculating these metrics.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A data frame or a list with details on the calculated metrics.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>patID</code></td>
+<td>
+<p>Patient ID</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>structure</code></td>
+<td>
+<p>Structure</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>metric</code></td>
+<td>
+<p>The calculated DVH metric</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>observed</code></td>
+<td>
+<p>The observed value for the DVH metric</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>American Association of Physicists in Medicine (AAPM) Task Group TG263 (2018). Standardizing Nomenclatures in Radiation Oncology. <a href="https://www.aapm.org/pubs/reports/RPT_263.pdf">https://www.aapm.org/pubs/reports/RPT_263.pdf</a> (section 9.2 "Guidelines for DVH metrics")
+</p>
+<p>Rancati et al. (2004). Fitting late rectal bleeding data using different NTCP models: results from an Italian multi-centric study (AIROPROS0101). Radiotherapy Oncology, 73, 21-32.
+</p>
+<p>Wu et al. (2002). Optimization of intensity modulated radiotherapy plans based on the equivalent uniform dose. International Journal of Radiation Oncology Biology Physics, 52, 224-235.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>saveMetric</code>,
+<code>getEUD</code>,
+<code>getNTCP</code>,
+<code>getTCP</code>,
+<code>getEQD2</code>,
+<code>approxfun</code>,
+<code>splinefun</code>,
+<code>dpill</code>,
+<code>locpoly</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">getMetric(dataMZ, c("D1CC", "V10%_CC"),
+          sortBy=c("metric", "structure", "observed"))
+
+# matching patients are P123 and P234
+# matching structures are AMYOCL and AMYOCR
+getMetric(dataMZ, c("D1CC", "V10%_CC"),
+          patID="23",
+          structure=c("AMYOC", "VALVE"),
+          splitBy="patID",
+          fixed=FALSE)
+
+# gEUD with a=2
+getMetric(dataMZ[[c(1, 1)]], "DEUD", EUDa=2)
+
+# gEUD based on EQD2 with a=2, 20 fractions
+getMetric(dataMZ[[c(1, 1)]], "DEUD", EUDa=2, EUDfd=1.8)
+
+# NTCP Lyman probit model with TD50=20, m=4, n=0.5
+getMetric(dataMZ[[c(1, 1)]], "DNTCP",
+          NTCPtd50=20, NTCPm=4, NTCPn=0.5, NTCPtype="probit")
+</code></pre>
+
+
+</div>

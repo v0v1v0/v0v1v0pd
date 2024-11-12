@@ -1,0 +1,204 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>did_imputation</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Borusyak, Jaravel, and Spiess (2021) Estimator</h2>
+
+<h3>Description</h3>
+
+<p>Treatment effect estimation and pre-trend testing in staggered adoption
+diff-in-diff designs with an imputation approach of Borusyak, Jaravel, and
+Spiess (2021)
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">did_imputation(
+  data,
+  yname,
+  gname,
+  tname,
+  idname,
+  first_stage = NULL,
+  wname = NULL,
+  wtr = NULL,
+  horizon = NULL,
+  pretrends = NULL,
+  cluster_var = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A <code>data.frame</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yname</code></td>
+<td>
+<p>String. Variable name for outcome. Use <code>fixest</code> c() syntax
+for multiple lhs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gname</code></td>
+<td>
+<p>String. Variable name for unit-specific date of treatment
+(never-treated should be zero or <code>NA</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tname</code></td>
+<td>
+<p>String. Variable name for calendar period.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idname</code></td>
+<td>
+<p>String. Variable name for unique unit id.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>first_stage</code></td>
+<td>
+<p>Formula for Y(0).
+Formula following <code>fixest::feols</code>.
+Fixed effects specified after "<code>|</code>".
+If not specified, then just unit and time fixed effects will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wname</code></td>
+<td>
+<p>String. Variable name for estimation weights of observations.
+This is used in estimating Y(0) and also augments treatment effect weights.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>wtr</code></td>
+<td>
+<p>Character vector of treatment weight names
+(see horizon for standard static and event-study weights)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>horizon</code></td>
+<td>
+<p>Integer vector of event_time or <code>TRUE</code>. This only applies if <code>wtr</code> is left
+as <code>NULL</code>. if specified, weighted averages/sums of treatment effects will be
+reported for each of these horizons separately (i.e. tau0 for the treatment
+period, tau1 for one period after treatment, etc.).
+If <code>TRUE</code>, all horizons are used.
+If <code>wtr</code> and <code>horizon</code> are null, then the static treatment effect is calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pretrends</code></td>
+<td>
+<p>Integer vector or <code>TRUE</code>. Which pretrends to estimate.
+If <code>TRUE</code>, all <code>pretrends</code> are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cluster_var</code></td>
+<td>
+<p>String. Varaible name for clustering groups. If not
+supplied, then <code>idname</code> is used as default.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The imputation-based estimator is a method of calculating treatment effects
+in a difference-in-differences framework. The method estimates a model for
+Y(0) using untreated/not-yet-treated observations and predicts Y(0) for the
+treated observations hat(Y_it(0)). The difference between treated and
+predicted untreated outcomes Y_it(1) - hat(Y_it(0)) serves as an estimate
+for the treatment effect for unit i in period t. These are then averaged to
+form average treatment effects for groups of it.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A <code>data.frame</code> containing treatment effect term, estimate, standard
+error and confidence interval. This is in <code>tidy</code> format.
+</p>
+
+
+<h3>Examples</h3>
+
+<p>Load example dataset which has two treatment groups and homogeneous treatment effects
+</p>
+<div class="sourceCode r"><pre># Load Example Dataset
+data("df_hom", package="did2s")
+</pre></div>
+
+
+<h4>Static TWFE</h4>
+
+<p>You can run a static TWFE fixed effect model for a simple treatment indicator
+</p>
+<div class="sourceCode r"><pre>did_imputation(data = df_hom, yname = "dep_var", gname = "g",
+               tname = "year", idname = "unit")
+#&gt; # A tibble: 1 x 6
+#&gt;   lhs     term  estimate std.error conf.low conf.high
+#&gt;   &lt;chr&gt;   &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+#&gt; 1 dep_var treat     2.00    0.0182     1.97      2.04
+</pre></div>
+
+
+
+<h4>Event Study</h4>
+
+<p>Or you can use relative-treatment indicators to estimate an event study estimate
+</p>
+<div class="sourceCode r"><pre>did_imputation(data = df_hom, yname = "dep_var", gname = "g",
+               tname = "year", idname = "unit", horizon=TRUE)
+#&gt; # A tibble: 21 x 6
+#&gt;    lhs     term  estimate std.error conf.low conf.high
+#&gt;    &lt;chr&gt;   &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+#&gt;  1 dep_var 0         1.97    0.0425     1.89      2.05
+#&gt;  2 dep_var 1         2.05    0.0434     1.97      2.14
+#&gt;  3 dep_var 2         2.03    0.0432     1.95      2.12
+#&gt;  4 dep_var 3         1.97    0.0428     1.88      2.05
+#&gt;  5 dep_var 4         1.97    0.0420     1.88      2.05
+#&gt;  6 dep_var 5         2.03    0.0423     1.95      2.11
+#&gt;  7 dep_var 6         2.04    0.0450     1.95      2.13
+#&gt;  8 dep_var 7         2.00    0.0437     1.91      2.08
+#&gt;  9 dep_var 8         2.02    0.0440     1.93      2.10
+#&gt; 10 dep_var 9         1.96    0.0440     1.87      2.04
+#&gt; # ... with 11 more rows
+</pre></div>
+
+
+
+<h4>Example from Cheng and Hoekstra (2013)</h4>
+
+<p>Here's an example using data from Cheng and Hoekstra (2013)
+</p>
+<div class="sourceCode r"><pre># Castle Data
+castle &lt;- haven::read_dta("https://github.com/scunning1975/mixtape/raw/master/castle.dta")
+
+did_imputation(data = castle, yname = "c(l_homicide, l_assault)", gname = "effyear",
+              first_stage = ~ 0 | sid + year,
+              tname = "year", idname = "sid")
+#&gt; # A tibble: 2 x 6
+#&gt;   lhs        term  estimate std.error conf.low conf.high
+#&gt;   &lt;chr&gt;      &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+#&gt; 1 l_homicide treat   0.0798    0.0609  -0.0395     0.199
+#&gt; 2 l_assault  treat   0.0496    0.0513  -0.0510     0.150
+</pre></div>
+
+
+
+</div>

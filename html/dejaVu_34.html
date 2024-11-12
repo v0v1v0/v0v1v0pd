@@ -1,0 +1,92 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>weighted_j2r</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Create a weighted_j2r <code>ImputeMechanism</code> object</h2>
+
+<h3>Description</h3>
+
+<p>Missing counts for a subject in the active treatment arm will be imputed according to a point 
+(determined by <code>trt.weight</code>) between the means of the placebo and treatment arms,
+conditioned on the number of events. Missing counts for subjects in the 
+placebo arm will be imputed according to the mean of the placebo arm, conditioned
+on the subject's observed number of events.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">weighted_j2r(trt.weight, delta = c(1, 1), proper = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>trt.weight</code></td>
+<td>
+<p>See details</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+<p>If <code>trt.weight=1</code> then delta is a vector of length 2
+(control.delta,treatment.delta) and the mean number of expected events for the imputed missing data is
+multiplied by the appropriate delta</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>proper</code></td>
+<td>
+<p>If <code>proper=TRUE</code> then proper imputation is performed, in which each imputation
+is created based on parameters values drawn from the (approximate) posterior distribution of the
+imputation model. If <code>proper=FALSE</code>, improper imputation is performed. This means all 
+imputed datasets are generated conditional on the maximum likelihood estimates of the parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If <code>trt.weight</code> = 0 then imputation using this mechanism will follow 
+the jump to reference (j2r) model whereby missing counts for subjects 
+in both arms will be imputed according to the mean of the placebo arm 
+conditioned on the subject's observed number of events
+</p>
+<p>If <code>trt.weight</code> = 1 then imputation using this mechanism will follow 
+the MAR model whereby missing counts for subjects 
+in each arm will be imputed according to the event rate of subjects in its treatment group 
+conditioned on the subject's observed number of events
+</p>
+<p>See the User guide vignette for further details
+</p>
+
+
+<h3>Value</h3>
+
+<p>An <code>ImputeMechanism</code> object
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ImputeMechanism.object</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">sim &lt;- SimulateComplete(study.time=365,number.subjects=50,
+event.rates=c(0.01,0.005),dispersions=0.25)
+sim.with.MCAR.dropout &lt;- SimulateDropout(sim,
+                     drop.mechanism = ConstantRateDrop(rate = 0.0025))
+fit &lt;- Simfit(sim.with.MCAR.dropout)
+imps &lt;- Impute(fit, weighted_j2r(trt.weight=0), 10)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,121 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DR.SC</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Joint dimension reduction and spatial clustering</h2>
+
+<h3>Description</h3>
+
+<p>Joint dimension reduction and spatial clustering for scRNA-seq and spatial transcriptomics data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+## S3 method for class 'Seurat'
+DR.SC(seu, K, q=15,  platform= c('Visium', "ST", "Other_SRT", "scRNAseq"),...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>seu</code></td>
+<td>
+<p>an object of class "Seurat". The details of this object are given under 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q</code></td>
+<td>
+<p>a positive integer, specify the number of latent features to be extracted, default as 15.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>a positive  integer or integer vector, specify the number of clusters. When <code>K</code> is a vector, it is automatically selected by MBIC criteria. Users can also use BIC and AIC  to select K or refine model with MBIC by argument <code>pen.const</code> in the function selectModel.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>platform</code></td>
+<td>
+<p>a string, specify the platform of the provided data, default as "Visium". There are more platforms to be chosen, including ("Visuim", "ST", "Other_SRT") and "scRNAseq", where the first group means there are spatial coordinates information in the metadata of seu, named "row" and "col" and a Hidden Markov random field is used to model the unobserved class label using spatial coordinates ("Other_SRT" represents the other SRT platforms except for 'Visium' and 'ST'), and the other group "scRNAseq" means there is no spatial information in object seu and a multinomial model is used to model the unobserved class labels. The platform helps to calculate the adjacency matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other arguments to pass into DR.SC_fit function.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>seu is an object named <code>Seurat</code>, thich can easily created by R package Seurat.
+DR-SC  model can be applied to analyze both single cell RNA sequencing data and spatially resoved transcriptomics (SRT) data. 
+</p>
+<p>If the data are collected by the single cell RNA sequencing techonologies which means there is no spatial information in object seu then a multinomial model is used to model the unobserved class labels. 
+</p>
+<p>If the data is collected by the spatial transcriptomics technologies, then there are spatial coordinates information in the metadata of seu, named "row" and "col". DR-SC model uses a Hidden Markov random field to model the spatial coordinates.  <code>DR.SC</code> supports different platforms of SRT data, such as 'Visium', 'ST' and any other platforms 'Other_SRT'.
+</p>
+<p>For lattice grids in ST platform (ST), the interior spot has four neighbors (left, right, up and down),the boundary spot has three neighbors, and the spot in the corner has two neighbors. For hexagon grids, such as spatial coordinate in 10X Visium platform (Visium), the interior spot has six neighbors. For the irregular coordinates in other platforms (Other_SRT), Euclidean distance is adopted to decide whether a spot is an neighbor of another spot. For example, if the Euclidean distance between spot A and B is less than a radius, then A is taken as the neighbourhood of B. See function getAdj for more details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>DR.SC returns a revised  <code>Seurat</code> object. There are two revisions in the seu: 1. the metadata is added a new column named <code>spatial.drsc.cluster</code> that represents the clustering results from DR-SC model, and the <code>Idents(seu)</code> is assigned with <code>spatial.drsc.cluster</code>. 2. a DimReduc object named <code>dr-sc</code> is added in the slot <code>reductions</code>, which represents the features extracted by DR-SC model.
+</p>
+
+
+<h3>Note</h3>
+
+<p>nothing
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Wei Liu
+</p>
+
+
+<h3>References</h3>
+
+<p><a href="https://academic.oup.com/nar/article/50/12/e72/6555431">Wei Liu, Xu Liao, Yi Yang, Huazhen Lin, Joe Yeong, Xiang Zhou, Xingjie Shi &amp; Jin Liu (2022). Joint dimension reduction and clustering analysis of single-cell RNA-seq and spatial transcriptomics data, Nucleic Acids Research, gkac219.</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p>None
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## we generate the spatial transcriptomics data with lattice neighborhood, i.e. ST platform.
+seu &lt;- gendata_RNAExp(height=10, width=10,p=50, K=4,platform="ST")
+library(Seurat)
+seu &lt;- NormalizeData(seu, verbose=FALSE)
+# choose 100 highly variable features
+# seu &lt;- FindVariableFeatures(seu, nfeatures = 100)
+# maxIter = 2 is only used for illustration, and user can use default.
+# seu1 &lt;- DR.SC(seu, K=4, platform = 'ST', maxIter=2,verbose=FALSE)
+
+# choose spatially variable features (SVGs)
+seu &lt;- FindSVGs(seu, nfeatures = 40, verbose=FALSE)
+# use SVGs to fit DR.SC model
+# maxIter = 2 is only used for illustration, and user can use default.
+seu1 &lt;- DR.SC(seu, K=4,platform = 'ST', maxIter=2, verbose=TRUE)
+
+</code></pre>
+
+
+</div>

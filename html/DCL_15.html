@@ -1,0 +1,82 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ItriangleBDCL</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Incurred data (BDCL example)
+</h2>
+
+<h3>Description</h3>
+
+<p>Real motor data from a major insurer. 
+It is a yearly run-off (incremental) triangle consisting of the incurred data during 19 years. These data were used in the empirical illustration provided by Martinez-Miranda, Nielsen and Verrall (2013).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">data(ItriangleBDCL)</code></pre>
+
+
+<h3>Format</h3>
+
+<p>Matrix with dimension 19 by 19: 19 undewriting years and 19 development years.
+</p>
+
+
+<h3>References</h3>
+
+<p>Martinez-Miranda, M.D., Nielsen, J.P. and Verrall, R. (2013) Double Chain Ladder and Bornhuetter-Fergusson. <em>North American Actuarial Journal</em>, 17(2), 101-113.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data(ItriangleBDCL)
+data(XtriangleBDCL)
+m&lt;-nrow(XtriangleBDCL)
+
+clm.I&lt;-clm(ItriangleBDCL)
+alpha.I&lt;-clm.I$alpha
+# The total paid for each accident year in the past
+Ri.X&lt;-rowSums(XtriangleBDCL,na.rm=TRUE)
+# Incurred outstanding numbers
+Ri.CL.incurred&lt;-alpha.I-Ri.X
+Total.CL.incurred&lt;- sum(Ri.CL.incurred,na.rm=TRUE)
+
+## Compare with CL on paid data
+clm.X&lt;-clm(XtriangleBDCL)
+Xhat&lt;-as.matrix(clm.X$triangle.hat)
+Ri.CL.paid&lt;-rowSums(Xhat)-rowSums(XtriangleBDCL,na.rm=TRUE)
+Total.CL.paid&lt;- sum(Ri.CL.paid,na.rm=TRUE)
+
+# the predictions by rows
+data.frame(underw.year=c(1:m,"Total"),CLM.paid=c(Ri.CL.paid,Total.CL.paid),
+           CLM.incurred=round(c(Ri.CL.incurred,Total.CL.incurred),4))
+
+# now the predictions by diagonals
+inflat.factor&lt;-Ri.CL.incurred/Ri.CL.paid
+inflat.factor[Ri.CL.paid==0]&lt;-1
+# the lower triangle from incurred chain ladder is defined as:
+Ihat&lt;-Xhat
+for (i in 1:m) Ihat[i,]&lt;-Xhat[i,]*inflat.factor[i]
+# now the sums by diagonals
+Diag.CL.paid&lt;-sapply(split(Xhat, row(Xhat)+col(Xhat)), sum, na.rm=TRUE)
+Dclm.paid&lt;-c(Diag.CL.paid[-(1:m)])
+Total.CL.paid&lt;- sum(Dclm.paid,na.rm=TRUE)
+Dclm.paid&lt;-c(Dclm.paid,Total.CL.paid)
+
+Diag.CL.inc&lt;-sapply(split(Ihat, row(Ihat)+col(Ihat)), sum, na.rm=TRUE)
+Dclm.inc&lt;-c(Diag.CL.inc[-(1:m)])
+Total.CL.inc&lt;- sum(Dclm.inc,na.rm=TRUE)
+Dclm.inc&lt;-c(Dclm.inc,Total.CL.inc)
+
+# A table with the chain ladder predictions (paid and incurred data)
+data.frame(Future.years=c(1:(m-1),'Tot.'),
+    clm.paid=round(Dclm.paid),clm.incurred=round(Dclm.inc))
+</code></pre>
+
+
+</div>

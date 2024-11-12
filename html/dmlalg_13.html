@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>print.regsdml</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Printing regsdml fits</h2>
+
+<h3>Description</h3>
+
+<p>This is a method for the class <code>regsdml</code>.
+It prints
+objects of class <code>regsdml</code>, which typically result from a function
+call to <code>regsdml</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'regsdml'
+print(x, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>An object of class <code>regsdml</code>. This object usually results
+from a function call to <code>regsdml</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments passed to or from other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>By default, <code>summary(x)</code> is called. Please see
+<code>summary.regsdml</code> for further details.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>regsdml</code>,
+<code>summary.regsdml</code>,
+<code>confint.regsdml</code>,
+<code>coef.regsdml</code>,
+<code>vcov.regsdml</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Generate some data:
+set.seed(19)
+# true linear parameter
+beta0 &lt;- 1
+n &lt;- 40
+# observed confounder
+w &lt;- pi * runif(n, -1, 1)
+# instrument
+a &lt;- 3 * tanh(2 * w) + rnorm(n, 0, 1)
+# unobserved confounder
+h &lt;- 2 * sin(w) + rnorm(n, 0, 1)
+# linear covariate
+x &lt;- -1 * abs(a) - h - 2 * tanh(w) + rnorm(n, 0, 1)
+# response
+y &lt;- beta0 * x - 3 * cos(pi * 0.25 * h) + 0.5 * w ^ 2 + rnorm(n, 0, 1)
+
+## Estimate the linear coefficient from x to y
+## (The parameters are chosen small enough to make estimation fast):
+## Caveat: A spline estimator is extrapolated, which raises a warning message.
+## Extrapolation lies in the nature of our method. To omit the warning message
+## resulting from the spline estimator, another estimator may be used.
+fit &lt;- regsdml(a, w, x, y,
+               gamma = exp(seq(-4, 1, length.out = 4)),
+               S = 3,
+               do_regDML_all_gamma = TRUE,
+               cond_method = c("forest",  # for E[A|W]
+                               "spline",  # for E[X|W]
+                               "spline"), # for E[Y|W]
+               params = list(list(ntree = 1), NULL, NULL))
+print(fit)
+</code></pre>
+
+
+</div>

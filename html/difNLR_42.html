@@ -1,0 +1,196 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estimNLR</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Non-Linear Regression DIF models estimation.</h2>
+
+<h3>Description</h3>
+
+<p>Estimates parameters of non-linear regression models
+for DIF detection using either non-linear least squares or
+maximum likelihood method.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estimNLR(y, match, group, formula, method, lower, upper, start)
+
+## S3 method for class 'estimNLR'
+print(x, ...)
+
+## S3 method for class 'estimNLR'
+vcov(object, sandwich = FALSE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>numeric: binary vector of responses.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>match</code></td>
+<td>
+<p>numeric: vector of matching criterion.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>numeric: binary vector of group membership. <code>"0"</code> for reference group, <code>"1"</code> for focal group.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>formula: specification of the model. Can be obtained by <code>formulaNLR()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>character: method used to estimate parameters. The options are <code>"nls"</code> for non-linear least
+squares (default), <code>"likelihood"</code> for maximum likelihood method, and <code>"irls"</code> for maximum likelihood
+estimation with iteratively reweighted least squares. See <strong>Details</strong>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>numeric: lower bounds for parameters of model specified in <code>formula</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>numeric: upper bounds for parameters of model specified in <code>formula</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>start</code></td>
+<td>
+<p>numeric: initial parameters. Can be obtained by <code>startNLR()</code> function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>an object of <code>"estimNLR"</code> class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other generic parameters for S3 methods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of <code>"estimNLR"</code> class.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sandwich</code></td>
+<td>
+<p>logical: should be sandwich estimator used for covariance
+matrix of parameters when using <code>method = "nls"</code>? Default is
+<code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Function offers either non-linear least squares estimation via
+<code>nls</code> function, maximum likelihood method with
+<code>"L-BFGS-B"</code> method via <code>optim</code> function,
+or maximum likelihood method with iteratively reweighted least
+squares via <code>glm</code> function.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Adela Hladka (nee Drabinova) <br>
+Institute of Computer Science of the Czech Academy of Sciences <br>
+Faculty of Mathematics and Physics, Charles University <br><a href="mailto:hladka@cs.cas.cz">hladka@cs.cas.cz</a> <br></p>
+<p>Patricia Martinkova <br>
+Institute of Computer Science of the Czech Academy of Sciences <br><a href="mailto:martinkova@cs.cas.cz">martinkova@cs.cas.cz</a> <br></p>
+
+
+<h3>References</h3>
+
+<p>Hladka, A. (2021). Statistical models for detection of differential
+item functioning. Dissertation thesis. Faculty of Mathematics and
+Physics, Charles University.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># loading data
+data(GMAT)
+y &lt;- GMAT[, 1] # item 1
+match &lt;- scale(rowSums(GMAT[, 1:20])) # standardized total score
+group &lt;- GMAT[, "group"] # group membership variable
+
+# formula for 3PL model with the same guessing
+M &lt;- formulaNLR(model = "3PLcg", type = "both")
+
+# starting values for 3PL model with the same guessing for item 1
+start &lt;- startNLR(GMAT[, 1:20], group, model = "3PLcg", parameterization = "classic")
+start &lt;- start[[1]][M$M0$parameters]
+
+# non-linear least squares
+fitNLSM0 &lt;- estimNLR(
+  y = y, match = match, group = group,
+  formula = M$M0$formula, method = "nls",
+  lower = M$M0$lower, upper = M$M0$upper, start = start
+)
+fitNLSM0
+
+coef(fitNLSM0)
+logLik(fitNLSM0)
+vcov(fitNLSM0)
+vcov(fitNLSM0, sandwich = TRUE)
+fitted(fitNLSM0)
+residuals(fitNLSM0)
+
+# maximum likelihood method
+fitLKLM0 &lt;- estimNLR(
+  y = y, match = match, group = group,
+  formula = M$M0$formula, method = "likelihood",
+  lower = M$M0$lower, upper = M$M0$upper, start = start
+)
+fitLKLM0
+
+coef(fitLKLM0)
+logLik(fitLKLM0)
+vcov(fitLKLM0)
+fitted(fitLKLM0)
+residuals(fitLKLM0)
+
+# iteratively reweighted least squares for 2PL model
+M &lt;- formulaNLR(model = "2PL", parameterization = "logistic")
+fitIRLSM1 &lt;- estimNLR(
+  y = y, match = match, group = group,
+  formula = M$M1$formula, method = "irls"
+)
+fitIRLSM1
+
+coef(fitIRLSM1)
+logLik(fitIRLSM1)
+vcov(fitIRLSM1)
+fitted(fitIRLSM1)
+residuals(fitIRLSM1)
+</code></pre>
+
+
+</div>

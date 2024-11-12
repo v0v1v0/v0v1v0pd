@@ -1,0 +1,212 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>crossbasis</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2> Generate a Cross-Basis Matrix for a DLNM </h2>
+
+<h3>Description</h3>
+
+<p>The function generates the basis matrices for the two dimensions of predictor and lags, given the functions selected to model the relationship in each space. Then, these one-dimensions basis matrices are combined in order to create the related cross-basis matrix, which can be included in a model formula to fit distributed lag linear (DLMs) and non-linear models (DLNMs).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">crossbasis(x, lag, argvar=list(), arglag=list(), group=NULL, ...)
+
+## S3 method for class 'crossbasis'
+summary(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x </code></td>
+<td>
+<p> either a numeric vector representing a complete series of ordered observations (for time series data), or a matrix of exposure histories over the same lag period for each observation. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lag </code></td>
+<td>
+<p> either an integer scalar or vector of length 2, defining the the maximum lag or the lag range, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>argvar, arglag </code></td>
+<td>
+<p> lists of arguments to be passed to the function <code>onebasis</code> for generating the two basis matrices for predictor and lags, respectively. See Details below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group </code></td>
+<td>
+<p> a factor or a list of factors defining groups of observations. Only for time series data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object </code></td>
+<td>
+<p> a object of class <code>"crossbasis"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>... </code></td>
+<td>
+<p> additional arguments. See Details below.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The argument <code>x</code> defines the type of data. If a <code class="reqn">n</code>-dimensional vector, the data are interpreted as a time series of equally-spaced and complete observations. If a <code class="reqn">n \times (L-\ell_0+1)</code> matrix, the data are interpreted as a set of complete exposure histories at equally-spaced lags over the same lag period from <code class="reqn">\ell_0</code> to <code class="reqn">L</code> for each observation. The latter is general and can be used for applying DLMs and DLNMs beyond time series data. Lags are usually positive integers: if not provided, by default the minimum lag <code class="reqn">L0</code> is set to 0, and the maximum lag <code class="reqn">L</code> is set to 0 if <code>x</code> is a vector or to <code>ncol(x)-1</code> otherwise. Negative lags are rarely needed but allowed.
+</p>
+<p>The lists in <code>argvar</code> and <code>arglag</code> are passed to <code>onebasis</code>, which calls existing or user-defined functions to build the related basis matrices. The two lists should contain the argument <code>fun</code> defining the chosen function, and a set of additional arguments of the function. The <code>argvar</code> list is applied to <code>x</code>, in order to generate the matrix for the space of the predictor. The <code>arglag</code> list is applied to a new vector given by the sequence obtained by <code>lag</code>, in order to generate the matrix for the space of lags. By default, the basis functions for lags are defined with an intercept (if not otherwise stated). Some arguments can be automatically re-set by <code>onebasis</code>. Then, the two set of basis matrices are combined in order to create the related cross-basis matrix.
+</p>
+<p>Common choices for <code>fun</code> are represented by <code>ns</code> and <code>bs</code> from package <span class="pkg">splines</span> or by the internal functions of the package <span class="pkg">dlnm</span>, namely <code>poly</code>, <code>strata</code>, <code>thr</code>, <code>integer</code> and <code>lin</code>. In particular, DLMs can be considered a special case of DLNMs with a linear function in <code>argvar</code>. Functions <code>ps</code> and <code>cr</code> are used to specify penalized models with an external method (see <code>cbPen</code>). See <code>help(onebasis)</code> and the help pages of these functions for information on the additional arguments to be specified. Also, other existing or user-defined functions can be applied.
+</p>
+<p>The argument <code>group</code>, only used for time series data, defines groups of observations representing independent series. Each series must be consecutive, complete and ordered.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A matrix object of class <code>"crossbasis"</code> which can be included in a model formula in order to fit a DLM or DLNM. It contains the attributes <code>df</code> (vector of length 2 with the df for each dimension), <code>range</code> (range of the original vector of observations), <code>lag</code> (lag range), <code>argvar</code> and <code>arglag</code> (lists of arguments defining the basis functions in each space, which can be modified if compared to lists used in the call). The method <code>summary.crossbasis</code> returns a summary of the cross-basis matrix and the related attributes, and can be used to check the options for the basis functions chosen for the two dimensions.
+</p>
+
+
+<h3>Warnings</h3>
+
+<p>In previous versions of the package the function adopted a different usage. In particular, the <code>argvar</code> list should not include a <code>cen</code> argument any more (see Note in this help page or <code>onebasis</code>). Users are strongly suggested to comply with the current usage, as backward compatibility may be discontinued in future versions of the package.
+</p>
+<p>Meaningless combinations of arguments in <code>argvar</code> and <code>arglag</code> passed to <code>onebasis</code> could lead to collinear variables, with identifiability problems in the model and the exclusion of some of them.
+</p>
+<p>It is strongly recommended to avoid the inclusion of an intercept in the basis for <code>x</code> (<code>intercept</code> in <code>argvar</code> should be <code>FALSE</code>, as default), otherwise a rank-deficient cross-basis matrix will be specified, causing some of the cross-variables to be excluded in the regression model. Conversely, an intercept is included by default in the basis for the space of lags.
+</p>
+
+
+<h3>Note</h3>
+
+<p>Missing values in <code>x</code> are allowed, but this causes the observation (for non-time series data with <code>x</code> as a matrix) or the following observations corresponding to the lag period (for time series data with <code>x</code> as a vector series) to be set to <code>NA</code>. Although correct, this could generate computational problems in the presence of a high number of missing observations.
+</p>
+<p>The name of the crossbasis object will be used by <code>crosspred</code> in order to extract the related estimated parameters. If more than one variable is transformed through cross-basis functions in the same model, different names must be specified.
+</p>
+<p>Before version 2.2.0 of <span class="pkg">dlnm</span>, the <code>argvar</code> list could include a <code>cen</code> argument to be passed internally to <code>onebasis</code> for centering the basis. This step is now moved to the prediction stage, with a <code>cen</code> argument in <code>crosspred</code> or <code>crossreduce</code> (see the related help pages). For backward compatibility, the use of <code>cen</code> in <code>crossbasis</code> is still allowed (with a warning), but may be discontinued in future versions.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Antonio Gasparrini &lt;<a href="mailto:antonio.gasparrini@lshtm.ac.uk">antonio.gasparrini@lshtm.ac.uk</a>&gt;</p>
+
+
+<h3>References</h3>
+
+<p>Gasparrini A. Distributed lag linear and non-linear models in R: the package dlnm. <em>Journal of Statistical Software</em>. 2011;<b>43</b>(8):1-20. [freely available <a href="http://www.ag-myresearch.com/2011_gasparrini_jss.html">here</a>].
+</p>
+<p>Gasparrini A, Scheipl F, Armstrong B, Kenward MG. A penalized framework for distributed lag non-linear models. <em>Biometrics</em>. 2017;<b>73</b>(3):938-948. [freely available <a href="http://www.ag-myresearch.com/2017_gasparrini_biomet.html">here</a>]
+</p>
+<p>Gasparrini A. Modeling exposure-lag-response associations with distributed lag non-linear models. <em>Statistics in Medicine</em>. 2014;<b>33</b>(5):881-899. [freely available <a href="http://www.ag-myresearch.com/2014_gasparrini_statmed.html">here</a>]
+</p>
+<p>Gasparrini A., Armstrong, B.,Kenward M. G. Distributed lag non-linear models. <em>Statistics in Medicine</em>. 2010;<b>29</b>(21):2224-2234. [freely available <a href="http://www.ag-myresearch.com/2010_gasparrini_statmed.html">here</a>]
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>onebasis</code> to generate one-dimensional basis matrices. The <code>cb smooth constructor</code> for cross-basis penalized spline smooths. <code>crosspred</code> to obtain predictions after model fitting. The method function <code>plot</code> to plot several type of graphs.
+</p>
+<p>See <code>dlnm-package</code> for an introduction to the package and for links to package vignettes providing more detailed information.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">### example of application in time series analysis - see vignette("dlnmTS")
+
+# create the crossbasis objects and summarize their contents
+cb1.pm &lt;- crossbasis(chicagoNMMAPS$pm10, lag=15, argvar=list(fun="lin"),
+  arglag=list(fun="poly",degree=4))
+cb1.temp &lt;- crossbasis(chicagoNMMAPS$temp, lag=3, argvar=list(df=5),
+  arglag=list(fun="strata",breaks=1))
+summary(cb1.pm)
+summary(cb1.temp)
+
+# run the model and get the predictions for pm10
+library(splines)
+model1 &lt;- glm(death ~ cb1.pm + cb1.temp + ns(time, 7*14) + dow,
+  family=quasipoisson(), chicagoNMMAPS)
+pred1.pm &lt;- crosspred(cb1.pm, model1, at=0:20, bylag=0.2, cumul=TRUE)
+
+# plot the lag-response curves for specific and incremental cumulative effects
+plot(pred1.pm, "slices", var=10, col=3, ylab="RR", ci.arg=list(density=15,lwd=2),
+  main="Lag-response curve for a 10-unit increase in PM10")
+plot(pred1.pm, "slices", var=10, col=2, cumul=TRUE, ylab="Cumulative RR",
+  main="Lag-response curve of incremental cumulative effects")
+
+### example of application beyond time series - see vignette("dlnmExtended")
+
+# generate the matrix of exposure histories from the 5-year periods
+Qnest &lt;- t(apply(nested, 1, function(sub) exphist(rep(c(0,0,0,sub[5:14]), 
+  each=5), sub["age"], lag=c(3,40))))
+
+# define the cross-basis
+cbnest &lt;- crossbasis(Qnest, lag=c(3,40), argvar=list("bs",degree=2,df=3),
+  arglag=list(fun="ns",knots=c(10,30),intercept=FALSE))
+summary(cbnest)
+
+# run the model and predict
+library(survival)
+mnest &lt;- clogit(case~cbnest+strata(riskset), nested)
+pnest &lt;- crosspred(cbnest,mnest, cen=0, at=0:20*5)
+
+# bi-dimensional exposure-lag-response association
+plot(pnest, zlab="OR", xlab="Exposure", ylab="Lag (years)")
+# lag-response curve for dose 60
+plot(pnest, var=50, ylab="OR for exposure 50", xlab="Lag (years)", xlim=c(0,40))
+# exposure-response curve for lag 10
+plot(pnest, lag=5, ylab="OR at lag 5", xlab="Exposure", ylim=c(0.95,1.15))
+
+### example of extended predictions - see vignette("dlnmExtended")
+
+# compute exposure profiles and exposure history
+expnested &lt;- rep(c(10,0,13), c(5,5,10))
+hist &lt;- exphist(expnested, time=length(expnested), lag=c(3,40))
+
+# predict association with a specific exposure history
+pnesthist &lt;- crosspred(cbnest, mnest, cen=0, at=hist)
+with(pnesthist, c(allRRfit,allRRlow,allRRhigh))
+
+### example of user-defined functions - see vignette("dlnmExtended")
+
+# define a log function
+mylog &lt;- function(x) log(x+1)
+
+# define the cross-basis
+cbnest2 &lt;- crossbasis(Qnest, lag=c(3,40), argvar=list("mylog"),
+  arglag=list(fun="ns",knots=c(10,30),intercept=FALSE))
+summary(cbnest2)
+
+# run the model and predict
+mnest2 &lt;- clogit(case~cbnest2+strata(riskset), nested)
+pnest2 &lt;- crosspred(cbnest2, mnest2, cen=0, at=0:20*5)
+
+# plot and compare with previous fit
+plot(pnest2, zlab="OR", xlab="Exposure", ylab="Lag (years)")
+plot(pnest2, var=50, ylab="OR for exposure 50", xlab="Lag (years)", xlim=c(0,40))
+lines(pnest, var=50, lty=2)
+plot(pnest2, lag=5, ylab="OR at lag 5", xlab="Exposure", ylim=c(0.95,1.15))
+lines(pnest, lag=5, lty=2)
+
+### example of penalized models - see vignette("dlnmPenalized")
+
+# to be added soon
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,137 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>npdf_cox</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cox model for grouped survival data with nonparametric discrete shared frailties</h2>
+
+<h3>Description</h3>
+
+<p>This function fits a Cox proportional hazards model to grouped survival data, where the shared group-specific frailties have a nonparametric discrete distribution.  An EM algorithm is used to maximise the marginal partial likelihood.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">npdf_cox(formula, groups, data, K = 2, estK = TRUE,
+  criterion = "BIC", eps_conv = 10^-4, se_method = c("louis",
+  "exact"))
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula expression in conventional R linear modelling
+syntax. The response must be a survival time constructed by the
+<code>Surv</code> function from the <span class="pkg">survival</span> package, and
+any covariates are given on the right-hand
+side.  For example,
+</p>
+<p><code>Surv(time, dead) ~ age + sex</code>
+</p>
+<p>Only <code>Surv</code> objects of <code>type="right"</code> are supported, corresponding to right-censored observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>groups</code></td>
+<td>
+<p>name of the variable which indicates the group in which each individual belongs (e.g. the hospital that the individual is treated in).  This can be integer, factor or character.  The name should be unquoted.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame in which to find variables supplied in
+<code>formula</code>.  If not given, the variables should be in the working
+environment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>initial number of latent populations, or clusters of groups which have the same discrete frailty.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estK</code></td>
+<td>
+<p>If <code>TRUE</code> (the default) then
+multiple models are fitted with number of latent groups ranging from 1 to <code>K</code>.  The "best fitting" model according to the criterion specified in <code>criterion</code> is then highlighted when printing the object returned by this function.
+</p>
+<p>If <code>FALSE</code> then the number of latent populations is fixed at <code>K</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>criterion</code></td>
+<td>
+<p>Criterion used to choose the best-fitting model to highlight when <code>estK</code> is <code>TRUE</code>.
+</p>
+<p><code>"Laird"</code> for the Laird criterion. Running from K latent populations to 1 latent population, this criterion selects the maximum number of latent populations that are non empty as the best K.
+</p>
+<p><code>"AIC"</code> for Akaike's information criterion.
+</p>
+<p><code>"BIC"</code> for the Bayesian information criterion (the default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps_conv</code></td>
+<td>
+<p>convergence tolerance for the EM algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se_method</code></td>
+<td>
+<p>Method or methods used to compute the standard errors.  A character vector containing one or more of the following:
+</p>
+<p><code>"louis"</code> The method of Louis (1982) based on an approximation to the information matrix.
+</p>
+<p><code>"exact"</code> In this method the standard errors are computed directly from the observed information matrix obtained by analytic differentiation.
+</p>
+<p><code>"numeric"</code> This method uses numerical differentiation to approximate the information matrix, and is substantially slower.
+</p>
+<p>By default this is <code>c("louis","exact")</code> because these two methods are equally fast. So that SEs from both these two methods are calculated and presented.   Set <code>se_method=NULL</code> to compute no standard errors.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>If <code>estK=FALSE</code> this returns a list of class <code>npdf</code> which includes information about the model fit, including estimates and standard errors.
+</p>
+<p>If <code>estK=TRUE</code> this returns a list of class <code>npdflist</code>.  This has an element <code>models</code> that contains a list of length <code>K</code>, with one component of class <code>npdf</code> for each fitted model.
+</p>
+<p><code>comparison</code> is a matrix composed of <code>K</code> rows and 5 columns (<code>K</code>, <code>K_fitted</code>, <code>llik</code>, <code>AIC</code>, <code>BIC</code>). <code>K_fitted</code> is the number of estimated latent populations, which can be equal to or less than <code>K</code>. <code>llik</code> stands for log-likelihood, <code>AIC</code> for Akaike Information Criterion and <code>BIC</code> for Bayesian Information Criterion.
+</p>
+<p><code>Kopt</code> is optimal model under each criterion.
+</p>
+<p><code>criterion</code> is the preferred criterion.
+</p>
+<p>In either case, the data frame used for the fit (the "model frame") is appended as a component <code>mf</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Gasperoni, F., Ieva, F., Paganoni, A.M., Jackson, C. and Sharples, L. (2018). Nonparametric frailty Cox models for hierarchical time-to-event data. <em>Biostatistics</em>.
+</p>
+<p>Laird, N. (1978). Nonparametric maximum likelihood estimation of a mixing distribution. <em>Journal of the American Statistical Association</em>, 73(364), 805–811.
+</p>
+<p>Louis, T. A. (1982). Finding the observed information matrix when using the EM algorithm. <em>Journal of the Royal Statistical Society. Series B</em>, 44(2), 226–233.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">test &lt;- npdf_cox( Surv(time, status) ~ x, groups=family, data=weibdata2030, K = 4, eps_conv=10^-4)
+test    # optimal model (by all criteria) has 2 latent populations
+test$models[[1]] # examine alternative model with 1 latent population
+
+</code></pre>
+
+
+</div>

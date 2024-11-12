@@ -1,0 +1,284 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>newton</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Simple R level Newton Algorithm, Mostly for Didactical Reasons</h2>
+
+<h3>Description</h3>
+
+<p>Given the function <code>G()</code> and its derivative <code>g()</code>,
+<code>newton()</code> uses the Newton method, starting at <code>x0</code>,
+to find a point xp at which G is zero.  <code>G()</code> and <code>g()</code>
+may each depend on the same parameter (vector) <code>z</code>.
+</p>
+<p>Convergence typically happens when the stepsize becomes smaller than
+<code>eps</code>.
+</p>
+<p><code>keepAll = TRUE</code>  to also get  the vectors of consecutive values of
+x and G(x, z);
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">
+newton(x0, G, g, z,
+       xMin = -Inf, xMax = Inf, warnRng = TRUE,
+       dxMax = 1000, eps = 0.0001, maxiter = 1000L,
+       warnIter = missing(maxiter) || maxiter &gt;= 10L,
+       keepAll = NA)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x0</code></td>
+<td>
+<p>numeric start value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G, g</code></td>
+<td>
+<p>must be <code>function</code>s, mathematically of their first
+argument, but they can accept parameters; <code>g()</code> must be the
+derivative of <code>G</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>z</code></td>
+<td>
+<p>parameter vector for <code class="reqn">G()</code> and <code class="reqn">g()</code>, to be kept fixed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xMin, xMax</code></td>
+<td>
+<p>numbers defining the allowed range for x during the
+iterations; e.g., useful to set to <code>0</code> and <code>1</code> during quantile
+search.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warnRng</code></td>
+<td>
+<p><code>logical</code> specifying if a <code>warning</code> should be
+signalled when start value <code>x0</code> is outside <code>[xMin, xMax]</code> and
+hence will be changed to one of the boundary values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dxMax</code></td>
+<td>
+<p>maximal step size in <code class="reqn">x</code>-space.  (The default <code>1000</code>
+is quite arbitrary, do set a good maximal step size yourself!)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eps</code></td>
+<td>
+<p>positive number, the <em>absolute</em> convergence tolerance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxiter</code></td>
+<td>
+<p>positive integer, specifying the maximal number of Newton
+iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warnIter</code></td>
+<td>
+<p>logical specifying if a <code>warning</code> should be
+signalled when the algorithm has not converged in <code>maxiter</code> iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>keepAll</code></td>
+<td>
+<p>logical specifying if the full sequence of x- and G(x,*)
+values should be kept and returned: </p>
+
+<dl>
+<dt>
+<code>NA</code>,</dt>
+<dd>
+<p>the default: <code>newton</code> returns a
+small list of final “data”, with 4 components
+<code>x</code><code class="reqn"> = x*</code>, <code>G</code><code class="reqn">= G(x*, z)</code>,
+<code>it</code>, and <code>converged</code>.</p>
+</dd>
+<dt>
+<code>TRUE</code>:</dt>
+<dd>
+<p>returns an extended <code>list</code>, in
+addition containing the vectors <code>x.vec</code> and <code>G.vec</code>.</p>
+</dd>
+<dt>
+<code>FALSE</code>:</dt>
+<dd>
+<p>returns only the <code class="reqn">x*</code> value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Because of the quadrativc convergence at the end of the Newton algorithm,
+often <code class="reqn">x^*</code> satisfies approximately <code class="reqn"> | G(x*, z)| &lt; eps^2 </code>.
+</p>
+<p><code>newton()</code> can be used to compute the quantile function of a
+distribution, if you have a good starting value, and provide
+the cumulative probability and density functions as <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> functions <code>G</code>
+and <code>g</code> respectively.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The result always contains the final x-value <code class="reqn">x*</code>, and typically some
+information about convergence, depending on the value of <code>keepAll</code>,
+see above:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>the optimal <code class="reqn">x^*</code> value (a number).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>the function value <code class="reqn">G(x*, z)</code>, typically very close to zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>it</code></td>
+<td>
+<p>the integer number of iterations used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>convergence</code></td>
+<td>
+<p>logical indicating if the Newton algorithm converged
+within <code>maxiter</code> iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x.vec</code></td>
+<td>
+<p>the full vector of x values, <code class="reqn">\{x0,\ldots,x^*\}</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G.vec</code></td>
+<td>
+<p>the vector of function values (typically tending to zero),
+i.e., <code>G(x.vec, .)</code> (even when <code>G(x, .)</code> would not vectorize).</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Martin Maechler, ca. 2004</p>
+
+
+<h3>References</h3>
+
+<p>Newton's Method on Wikipedia,
+<a href="https://en.wikipedia.org/wiki/Newton%27s_method">https://en.wikipedia.org/wiki/Newton%27s_method</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>uniroot()</code> is much more sophisticated, works without
+derivatives and is generally faster than <code>newton()</code>.
+</p>
+<p><code>newton(.)</code> is currently crucially used (only) in our function
+<code>qchisqN()</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## The most simple non-trivial case :  Computing SQRT(a)
+  G &lt;- function(x, a) x^2 - a
+  g &lt;- function(x, a) 2*x
+
+  newton(1, G, g, z = 4  ) # z = a -- converges immediately
+  newton(1, G, g, z = 400) # bad start, needs longer to converge
+
+## More interesting, and related to non-central (chisq, e.t.) computations:
+## When is  x * log(x) &lt; B,  i.e., the inverse function of G = x*log(x) :
+xlx &lt;- function(x, B) x*log(x) - B
+dxlx &lt;- function(x, B) log(x) + 1
+
+Nxlx &lt;- function(B) newton(B, G=xlx, g=dxlx, z=B, maxiter=Inf)$x
+N1   &lt;- function(B) newton(B, G=xlx, g=dxlx, z=B, maxiter = 1)$x
+N2   &lt;- function(B) newton(B, G=xlx, g=dxlx, z=B, maxiter = 2)$x
+
+Bs &lt;- c(outer(c(1,2,5), 10^(0:4)))
+plot (Bs, vapply(Bs, Nxlx, pi), type = "l", log ="xy")
+lines(Bs, vapply(Bs, N1  , pi), col = 2, lwd = 2, lty = 2)
+lines(Bs, vapply(Bs, N2  , pi), col = 3, lwd = 3, lty = 3)
+
+BL &lt;- c(outer(c(1,2,5), 10^(0:6)))
+plot (BL, vapply(BL, Nxlx, pi), type = "l", log ="xy")
+lines(BL, BL, col="green2", lty=3)
+lines(BL, vapply(BL, N1  , pi), col = 2, lwd = 2, lty = 2)
+lines(BL, vapply(BL, N2  , pi), col = 3, lwd = 3, lty = 3)
+## Better starting value from an approximate 1 step Newton:
+iL1 &lt;- function(B) 2*B / (log(B) + 1)
+lines(BL, iL1(BL), lty=4, col="gray20") ## really better ==&gt; use it as start
+
+Nxlx &lt;- function(B) newton(iL1(B), G=xlx, g=dxlx, z=B, maxiter=Inf)$x
+N1   &lt;- function(B) newton(iL1(B), G=xlx, g=dxlx, z=B, maxiter = 1)$x
+N2   &lt;- function(B) newton(iL1(B), G=xlx, g=dxlx, z=B, maxiter = 2)$x
+
+plot (BL, vapply(BL, Nxlx, pi), type = "o", log ="xy")
+lines(BL, iL1(BL),  lty=4, col="gray20")
+lines(BL, vapply(BL, N1  , pi), type = "o", col = 2, lwd = 2, lty = 2)
+lines(BL, vapply(BL, N2  , pi), type = "o", col = 3, lwd = 2, lty = 3)
+## Manual 2-step Newton
+iL2 &lt;- function(B) { lB &lt;- log(B) ; B*(lB+1) / (lB * (lB - log(lB) + 1)) }
+lines(BL, iL2(BL), col = adjustcolor("sky blue", 0.6), lwd=6)
+##==&gt;  iL2() is very close to true curve
+## relative error:
+iLtrue &lt;- vapply(BL, Nxlx, pi)
+cbind(BL, iLtrue, iL2=iL2(BL), relErL2 = 1-iL2(BL)/iLtrue)
+## absolute error (in log-log scale; always positive!):
+plot(BL, iL2(BL) - iLtrue, type = "o", log="xy", axes=FALSE)
+if(requireNamespace("sfsmisc")) {
+  sfsmisc::eaxis(1)
+  sfsmisc::eaxis(2, sub10=2)
+} else {
+  cat("no 'sfsmisc' package; maybe  install.packages(\"sfsmisc\")  ?\n")
+  axis(1); axis(2)
+}
+## 1 step from iL2()  seems quite good:
+B. &lt;- BL[-1] # starts at 2
+NL2 &lt;- lapply(B., function(B) newton(iL2(B), G=xlx, g=dxlx, z=B, maxiter=1))
+str(NL2)
+iL3 &lt;- sapply(NL2, `[[`, "x")
+cbind(B., iLtrue[-1], iL2=iL2(B.), iL3, relE.3 = 1- iL3/iLtrue[-1])
+x. &lt;- iL2(B.)
+all.equal(iL3, x. - xlx(x., B.) / dxlx(x.)) ## 7.471802e-8
+## Algebraic simplification of one newton step :
+all.equal((x.+B.)/(log(x.)+1), x. - xlx(x., B.) / dxlx(x.), tol = 4e-16)
+iN1 &lt;- function(x, B) (x+B) / (log(x) + 1)
+B &lt;- 12345
+iN1(iN1(iN1(B, B),B),B)
+Nxlx(B)
+</code></pre>
+
+
+</div>

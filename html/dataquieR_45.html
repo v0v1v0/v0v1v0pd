@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>com_segment_missingness</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Summarizes missingness for individuals in specific segments</h2>
+
+<h3>Description</h3>
+
+
+
+<h4>This implementation can be applied in two use cases:</h4>
+
+
+<ol>
+<li>
+<p> participation in study segments is not recorded by respective variables,
+e.g. a participant's refusal to attend a specific examination is not
+recorded.
+</p>
+</li>
+<li>
+<p> participation in study segments is recorded by respective
+variables.
+</p>
+</li>
+</ol>
+<p>Use case <em>(1)</em> will be common in smaller studies. For the calculation of
+segment missingness it is assumed that study variables are nested in
+respective segments. This structure must be specified in the static metadata.
+The R-function identifies all variables within each segment and returns TRUE
+if all variables within a segment are missing, otherwise FALSE.
+</p>
+<p>Use case <em>(2)</em> assumes a more complex structure of study data and metadata.
+The study data comprise so-called intro-variables (either TRUE/FALSE or codes
+for non-participation). The column <code>PART_VAR</code> in the metadata is
+filled by variable-IDs indicating for each variable the respective
+intro-variable. This structure has the benefit that subsequent calculation of
+item missingness obtains correct denominators for the calculation of
+missingness rates.
+</p>
+<p>Descriptor
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">com_segment_missingness(
+  study_data,
+  meta_data,
+  group_vars = NULL,
+  meta_data_segment,
+  strata_vars = NULL,
+  label_col,
+  threshold_value,
+  direction,
+  color_gradient_direction,
+  expected_observations = c("HIERARCHY", "ALL", "SEGMENT"),
+  exclude_roles = c(VARIABLE_ROLES$PROCESS)
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_vars</code></td>
+<td>
+<p>variable the name of a variable used for grouping,
+defaults to <em>NULL</em> for not grouping output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data_segment</code></td>
+<td>
+<p>data.frame Segment level metadata. Optional.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata_vars</code></td>
+<td>
+<p>variable the name of a variable used for stratification,
+defaults to NULL for not grouping output</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threshold_value</code></td>
+<td>
+<p>numeric from=0 to=100. a numerical value ranging
+from 0-100</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>direction</code></td>
+<td>
+<p>enum low | high. "high" or "low", i.e. are deviations
+above/below the threshold critical. This argument is deprecated and replaced by <em>color_gradient_direction</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>color_gradient_direction</code></td>
+<td>
+<p>enum above | below. "above" or "below", i.e. are deviations
+above or below the threshold critical? (default: above)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expected_observations</code></td>
+<td>
+<p>enum HIERARCHY | ALL | SEGMENT. If ALL, all
+observations are expected to comprise
+all study segments. If SEGMENT, the
+<code>PART_VAR</code> is expected to point
+to a variable with values of 0 and 1,
+indicating whether the variable was
+expected to be observed for each data
+row. If HIERARCHY, this is also
+checked recursively, so, if a variable
+points to such a participation variable,
+and that other variable does has also
+a <code>PART_VAR</code> entry pointing
+to a variable, the observation of the
+initial variable is only
+expected, if both segment variables are
+1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude_roles</code></td>
+<td>
+<p>variable roles a character (vector) of variable roles
+not included</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+
+
+<h4>Implementation and use of thresholds</h4>
+
+<p>This implementation uses one threshold to discriminate critical from
+non-critical values. If direction is above than all values below the
+threshold_value are normal (displayed in dark blue in the plot and flagged
+with GRADING = 0 in the dataframe). All values above the threshold_value are
+considered critical. The more they deviate from the threshold the displayed
+color shifts to dark red. All critical values are highlighted with GRADING =
+1 in the summary data frame. By default, highest values are always shown in
+dark red irrespective of the absolute deviation.
+</p>
+<p>If direction is below than all values above the threshold_value are normal
+(displayed in dark blue, GRADING = 0).
+</p>
+
+
+
+<h4>Hint</h4>
+
+<p>This function does not support a <code>resp_vars</code> argument but <code>exclude_roles</code> to
+specify variables not relevant for detecting a missing segment.
+</p>
+<p>List function.
+</p>
+
+
+
+<h3>Value</h3>
+
+<p>a list with:
+</p>
+
+<ul>
+<li> <p><code>SummaryData</code>: data frame about segment missingness
+</p>
+</li>
+<li> <p><code>SummaryPlot</code>: ggplot2 heatmap plot: a heatmap-like graphic that
+highlights critical values depending on the respective
+threshold_value and direction.
+</p>
+</li>
+</ul>
+<h3>See Also</h3>
+
+<p><a href="https://dataquality.qihs.uni-greifswald.de/VIN_com_impl_segment_missingness.html">Online Documentation</a>
+</p>
+
+
+</div>

@@ -1,0 +1,123 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>setCached</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Cache-tracking assignment</h2>
+
+<h3>Description</h3>
+
+<p>Cache expression values and automatically recalculate them when their
+dependencies change
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  symbol %&lt;-% expr
+  expr %-&gt;% symbol
+  setCached(symbol, expr, extra = NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>symbol</code></td>
+<td>
+
+<p>A variable name to associate with the expression, unquoted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expr</code></td>
+<td>
+
+<p>The expression to cache, taking dependencies into account.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>extra</code></td>
+<td>
+
+<p>An unquoted expression to be considered an extra part of the state,
+in addition to the automatically determined dependencies. Will be
+evaluated every time the variable is accessed to determine whether
+it should be recalculated.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+
+<p>Additional settings, see <code>depcache.options</code>.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Sets up the variable <var>symbol</var> to automatically recalculate the
+value of <code>expr</code> any time its dependencies change, using
+<code>makeActiveBinding</code> and the same mechanisms that power
+<code>cache</code>.
+</p>
+<p>Initially, <code>expr</code> is loaded from <code>cache</code> or
+evaluated, and the hash is remembered. When the variable named by
+<var>symbol</var> is accessed, its dependencies are hashed together with
+<code>expr</code> (this may be done recursively if the dependencies are
+themselves active bindings set up the same way). If the hash changes,
+the value of <code>expr</code> is again loaded from <code>cache</code> (if
+available) or evaluated anew.
+</p>
+<p>To prevent infinite loops during dependency calculation, <var>symbol</var>
+is automatically skipped, but a self-dependent <code>expr</code> is probably
+a bad idea anyway.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns the value of <code>expr</code>, invisibly. Called for the side
+effect of creating an active binding with a name specified by
+<code>symbol</code>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>cache</code>, <code>makeActiveBinding</code></p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  
+  a &lt;- 1
+  # will evaluate the expression first
+  x %&lt;-% { message('evaluating expression "x"'); a + 1 }
+  x # 2
+  # will reuse cached value
+  {
+    message('evaluating expression "y"')
+    a + 1
+    # even if written a bit differently
+  } %-&gt;% y
+  y # 2
+  a &lt;- -1
+  # will evaluate the expression again
+  x # 0
+  # will load the new cached value
+  y # 0
+  setCached(z, x + y)
+  a &lt;- 0
+  z # recalculates all three
+  
+</code></pre>
+
+
+</div>

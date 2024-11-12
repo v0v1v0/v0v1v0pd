@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SKF</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>(Fast) Stationary Kalman Filter</h2>
+
+<h3>Description</h3>
+
+<p>A simple and fast C++ implementation of the Kalman Filter for stationary data with time-invariant system matrices and missing data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SKF(X, A, C, Q, R, F_0, P_0, loglik = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>numeric data matrix (<code class="reqn">T \times n</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>A</code></td>
+<td>
+<p>transition matrix (<code class="reqn">rp \times rp</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>C</code></td>
+<td>
+<p>observation matrix (<code class="reqn">n \times rp</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Q</code></td>
+<td>
+<p>state covariance (<code class="reqn">rp \times rp</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>R</code></td>
+<td>
+<p>observation covariance (<code class="reqn">n \times n</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F_0</code></td>
+<td>
+<p>initial state vector (<code class="reqn">rp \times 1</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P_0</code></td>
+<td>
+<p>initial state covariance (<code class="reqn">rp \times rp</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>logical. Compute log-likelihood?</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The underlying state space model is:
+</p>
+<p style="text-align: center;"><code class="reqn">\textbf{x}_t = \textbf{C} \textbf{F}_t + \textbf{e}_t \sim N(\textbf{0}, \textbf{R})</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\textbf{F}_t = \textbf{A F}_{t-1} + \textbf{u}_t \sim N(\textbf{0}, \textbf{Q})</code>
+</p>
+
+<p>where <code class="reqn">x_t</code> is <code>X[t, ]</code>. The filter then first performs a time update (prediction)
+</p>
+<p style="text-align: center;"><code class="reqn">\textbf{F}_t = \textbf{A F}_{t-1}</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\textbf{P}_t = \textbf{A P}_{t-1}\textbf{A}' + \textbf{Q}</code>
+</p>
+
+<p>where <code class="reqn">P_t = Cov(F_t)</code>. This is followed by the measurement update (filtering)
+</p>
+<p style="text-align: center;"><code class="reqn">\textbf{K}_t = \textbf{P}_t \textbf{C}' (\textbf{C P}_t \textbf{C}' + \textbf{R})^{-1}</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\textbf{F}_t = \textbf{F}_t + \textbf{K}_t (\textbf{x}_t - \textbf{C F}_t)</code>
+</p>
+
+<p style="text-align: center;"><code class="reqn">\textbf{P}_t = \textbf{P}_t - \textbf{K}_t\textbf{C P}_t</code>
+</p>
+
+<p>If a row of the data is all missing the measurement update is skipped i.e. the prediction becomes the filtered value. The log-likelihood is
+computed as
+</p>
+<p style="text-align: center;"><code class="reqn">1/2 \sum_t \log(|St|)-e_t'S_te_t-n\log(2\pi)</code>
+</p>
+
+<p>where <code class="reqn">S_t = (C P_t C' + R)^{-1}</code> and <code class="reqn">e_t = x_t - C F_t</code> is the prediction error.
+</p>
+<p>For further details see any textbook on time series such as Shumway &amp; Stoffer (2017), which provide an analogous R implementation in <code>astsa::Kfilter0</code>.
+For another fast (C-based) implementation that also allows time-varying system matrices and non-stationary data see <code>FKF::fkf</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Predicted and filtered state vectors and covariances.
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>F</code></td>
+<td>
+<p><code class="reqn">T \times rp</code> filtered state vectors. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P</code></td>
+<td>
+<p><code class="reqn">rp \times rp \times T</code> filtered state covariances. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>F_pred</code></td>
+<td>
+<p><code class="reqn">T \times rp</code> predicted state vectors. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>P_pred</code></td>
+<td>
+<p><code class="reqn">rp \times rp \times T</code> predicted state covariances. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>loglik</code></td>
+<td>
+<p>value of the log likelihood. </p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Shumway, R. H., &amp; Stoffer, D. S. (2017). Time Series Analysis and Its Applications: With R Examples. Springer.
+</p>
+<p>Harvey, A. C. (1990). Forecasting, structural time series models and the Kalman filter.
+</p>
+<p>Hamilton, J. D. (1994). Time Series Analysis. Princeton university press.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>FIS</code> <code>SKFS</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># See ?SKFS
+
+</code></pre>
+
+
+</div>

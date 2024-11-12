@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>defit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting Differential Equations to Time Series Data</h2>
+
+<h3>Description</h3>
+
+<p>Use numerical optimization to fit ordinary differential equations (ODEs) to time series data to examine the dynamic relationships between variables or the characteristics of a dynamical system. It can now be used to estimate the parameters of ODEs up to second order, and can also apply to multilevel systems.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">defit(data, model, guess = NULL, method = NULL, plot = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a data frame containing all model variables. The "time" column must be included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>a string specifying the model to be used. The "=~" operator is used to define variables, with the name of the variable user defined on the left and the name of the variable in the data on the right. The '~' operator specifies a differential equation, with the dependent variable on the left and the independent variables on the right. See also ‘Details’.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>guess</code></td>
+<td>
+<p>an optional vector that allows the user to give starting values for the model parameters, including the model coefficients and variable initial states.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method</code></td>
+<td>
+<p>an optional string indicating which optimizer to use. The default method is subject to the specific model. The available options are 'Nelder-Mead','L-BFGS-B','SANN' and 'BFGS'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plot</code></td>
+<td>
+<p>an optional TRUE or FALSE that TRUE will draw the plot of the raw data and the predicted values.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>We suggest choosing the method by default. The guess values contain the coefficient of the model and initial values (the values of t0). Different models have different number of values.
+</p>
+<p>Time(param) sequence for which output is wanted; the first value of times must be the initial time.
+</p>
+<div class="sourceCode r"><pre># eg1. An example of the univariate second-order differential equation (damped oscillator model)
+data('example1')
+model1 &lt;- '
+   X =~ myX
+   time =~ myTime
+   X(2) ~ X(1) + X
+  '
+result1 &lt;- defit(data = example1, model = model1)
+#&gt; Program will fit the data with a univariate second-order differential equation.
+#&gt; The differential equation is:
+#&gt; x(2) = beta1 * x + beta2 * x(1)
+#&gt; Optimizing...
+#&gt; Finishing optimization...
+#&gt; Estimating R_squared
+#&gt; Estimating RMSE
+#&gt; Estimating Hessian
+# result1$table get the result
+# names(result1) get all names of object
+
+#--------------
+# eg3. An example of the multilevel univariate second-order differential equation
+data('example3')
+model3 &lt;- '
+   X =~ current
+   time =~ myTime
+   X(2) ~ X(1) + X + (1 + X(1) + X | year)
+   '
+example3_use &lt;- example3[(example3["year"] &gt;= 2015)&amp;(example3["year"] &lt;= 2018),] # Note: select a subset of the data as an example.
+example3_c &lt;- scale_within(example3_use, model3) # note: centering X variable by year
+result3 &lt;- defit(data=example3_c,model = model3,plot=FALSE)
+#&gt; subject checking
+#&gt; Random effects and fixed effects have been defined
+#&gt; Estimating population parameter 
+#&gt; Waiting...
+#&gt; next...subject...2015
+#&gt; next...subject...2016
+#&gt; next...subject...2017
+#&gt; next...subject...2018
+#&gt; Estimating R_squared
+#&gt; Estimating RMSE
+#&gt; Estimating Hessian
+
+#--------------
+# eg4. An example of the multilevel bivariate first-order differential equations
+data('example3')
+model4 &lt;- '
+   X =~ current
+   Y =~ expected
+   time =~ myTime
+   X(1) ~ X + Y + (1 + X + Y | year)
+   Y(1) ~ X + Y + (1 + X + Y | year)
+   '
+example4_use &lt;- example3[(example3["year"] &gt;= 2015)&amp;(example3["year"] &lt;= 2018),] # Note: select a subset of the data as an example.
+example4_c &lt;- scale_within(example4_use, model4) # centering X and Y variable by year
+result4 &lt;- defit(data=example4_c,model = model4,plot=FALSE)
+#&gt; subject checking
+#&gt; Random effects and fixed effects have been defined
+#&gt; Estimating parameters 
+#&gt; Waiting...
+#&gt; next...subject...2015
+#&gt; next...subject...2016
+#&gt; next...subject...2017
+#&gt; next...subject...2018
+#&gt; Estimating R_squared
+#&gt; Estimating RMSE
+#&gt; Estimating Hessian
+</pre></div>
+
+
+<h3>Value</h3>
+
+<p>object: directly type the defit object will print all results. The function summary is used to print the summary of all results, and the exact values of each result can be extracted by the "$" operator.
+</p>
+<p>userdata: the data that contains a sequence 'seq' starting from 1, the original time variable 'time', and all other variables user defined.
+</p>
+<p>parameter: the best set of parameters found, including parameter values, gradient, convergence, message and hessian matrix.
+</p>
+<p>predict: a dataframe of model predicted variable states at each time point.
+</p>
+<p>r_squared: r_squared is the square of the correlation between the observed values and the predicted values, representing the proportion of variance explained by the model.
+</p>
+<p>RMSE: RMSE (Root Mean Squared Error) is the standard deviation of the residuals.
+</p>
+<p>SE: a symmetric matrix giving standard error of the model parameters.
+</p>
+<p>equation: a string prints the estimated differential equations and initial states.
+</p>
+<p>table: a summary table of parameter estimates and their corresponding SEs.
+</p>
+<p>convergence: a message returns the result of the optimization convergence check.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">#eg2. An example of bivariate first-order differential equation
+data('example2')
+model2 &lt;- '
+    # define variable
+    X =~ myX
+    Y =~ myY
+
+    # define time
+    time =~ myTime
+
+    # define differential equation
+    X(1) ~ X + Y
+    Y(1) ~ Y + X
+  '
+result2 &lt;- defit(data = example2, model = model2)
+result2
+# extract details and values
+# result2$summary()
+# result2$userdata
+# result2$parameter$par
+# result2$equation
+# result2$table
+# result2$plot()
+
+</code></pre>
+
+
+</div>

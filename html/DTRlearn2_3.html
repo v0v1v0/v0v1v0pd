@@ -1,0 +1,160 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict.owl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Predict from a Fitted "owl" Object
+</h2>
+
+<h3>Description</h3>
+
+<p>This function serves two purposes from a fitted "owl" object. It can recommend treatments for a new independent sample with partial or full subject features observed up to a certain stage. If subject feautures, treatment assignments and outcomes are fully observed in the new sample, this function can also evaluate the estimated DTR on this new sample, returning the empirical value function and benefit function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'owl'
+predict(object, H, AA=NULL, RR=NULL, K, pi=NULL, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>fitted "owl" object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>H</code></td>
+<td>
+<p>subject history information before treatment at the <code>K</code> stages for all subjects in the new sample. It should be constructed the same way as the H in fitting the owl <code>object</code>. See <code>owl</code> for how to construct H. Partial history information is allowed - when first j (j&lt;=K) stages of H is specified, the first j stage treatments will be recommended.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>AA</code></td>
+<td>
+<p>observed treatment assignments at the <code>K</code> stages for all subjects in the new sample. It is a vector if <code>K=1</code>, or a list of <code>K</code> vectors corresponding to the <code>K</code> stages. If not specified, treatments will be recommended for the new sample instead of DTR evaluation. The default is <code>AA=NULL</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>RR</code></td>
+<td>
+<p>observed outcomes at the <code>K</code> stages for all subjects in the new sample. It is a vector if <code>K=1</code>, or a list of <code>K</code> vectors corresponding to the <code>K</code> stages. If not specified, treatments will be recommended for the new sample instead of DTR evaluation. The default is <code>RR=NULL</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>K</code></td>
+<td>
+<p>number of stages of <code>H</code> observed in the new sample</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>treatment assignment probabilities of the observed treatments at the K stages for all subjects in the new sample. It is a vector if <code>K=1</code>, or a list of <code>K</code> vectors corresponding to the <code>K</code> stages. It can be unspecified if one is only interested in treatment recommendations for the new sample. If both <code>AA</code> and <code>RR</code> are specified while <code>pi</code> is not specified, we will estimate the treatment assignment probabilities based on lasso-penalized logistic regressions with predictors being <code class="reqn">H_k</code> at each stage k. The default is <code>pi=NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>further arguments passed to or from other methods.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fit</code></td>
+<td>
+<p>fitted decision functions at the K stages for each subject in the new sample. It is a list of K vectors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probability</code></td>
+<td>
+<p>estimated probability that treatment 1 (vs. -1) is the optimal treatment at each stage for each subject in the new sample. It's calculated by exp(fit)/(1 + exp(fit)). It is a list of K vectors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>treatment</code></td>
+<td>
+<p>recommennded optimal treatments at the K stages for each subject in the new sample. It is a list of K vectors.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>valuefun </code></td>
+<td>
+<p>overall empirical value function under the fitted DTR evaluated on the new sample. It is returned only when <code>AA</code> and <code>RR</code> are fully specified for the K stages.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>benefit </code></td>
+<td>
+<p>overall empirical benefit function under the estimated DTR evaluated on the new sample. It is returned only when <code>AA</code> and <code>RR</code> are fully specified for the K stages.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pi</code></td>
+<td>
+<p>treatment assignment probabilities of the assigned treatments at the K stages for each subject in the new sample. If <code>pi</code> is not specified but <code>H</code> and <code>AA</code> are specified for the K stages, the estimated treatment assignment probabilities from lasso-penalized logistic regressions with <code class="reqn">H_k</code> being the predictors at each stage k will be returned.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Yuan Chen, Ying Liu, Donglin Zeng, Yuanjia Wang
+</p>
+<p>Maintainer: Yuan Chen &lt;yc3281@columbia.edu&gt;&lt;irene.yuan.chen@gmail.com&gt;
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>owl</code>, <code>sim_Kstage</code>, <code>ql</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># simulate 2-stage training and test sets
+n_train = 100
+n_test = 500
+n_cluster = 10
+pinfo = 10
+pnoise = 20
+
+train = sim_Kstage(n_train, n_cluster, pinfo, pnoise, K=2)
+H1_train = scale(train$X)
+H2_train = scale(cbind(H1_train, train$A[[1]], H1_train * train$A[[1]]))
+pi_train = list(rep(0.5, n_train), rep(0.5, n_train))
+
+test = sim_Kstage(n_test, n_cluster, pinfo, pnoise, train$centroids, K=2)
+H1_test = scale(test$X)
+H2_test = scale(cbind(H1_test, test$A[[1]], H1_test * train$A[[1]]))
+pi_test = list(rep(0.5, n_test), rep(0.5, n_test))
+
+# estimate DTR with owl on the training sample
+owl_train = owl(H=list(H1_train, H2_train), AA=train$A, RR=train$R, n=n_train, K=2,
+    pi=pi_train, loss='hinge', augment=TRUE, m=3)
+
+# evaluate the DTR when full information are observed on the new sample
+owl_test = predict(owl_train, H=list(H1_test, H2_test), AA=test$A, RR=test$R, K=2)
+owl_test$treatment
+owl_test$valuefun
+owl_test$pi
+
+# recommned the first-stage treatments only
+owl_test2 = predict(owl_train, H=H1_test, K=1)
+owl_test$treatment
+
+</code></pre>
+
+
+</div>

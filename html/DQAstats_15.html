@@ -1,0 +1,173 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>generate_datamap</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>generate_datamap helper function</h2>
+
+<h3>Description</h3>
+
+<p>Internal function to generate the dashboard data maps
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">generate_datamap(results, mdr, db, rv, headless = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>results</code></td>
+<td>
+<p>A list object. The list should contain the results
+'rv$results_descriptive'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mdr</code></td>
+<td>
+<p>A data.table object containing the MDR.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>db</code></td>
+<td>
+<p>A character string. The name of the corresponding database.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rv</code></td>
+<td>
+<p>A list object. Internal list simulating Shiny's
+'reactive values'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>headless</code></td>
+<td>
+<p>A boolean (default: FALSE). Indicating, if the function is
+run only in the console (headless = TRUE) or on a GUI frontend
+(headless = FALSE).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A data.table with the results of the datamap.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># runtime &gt; 5 sec.
+utils_path &lt;- system.file(
+  "demo_data/utilities/",
+  package = "DQAstats"
+)
+mdr_filename &lt;- "mdr_example_data.csv"
+rv &lt;- list()
+rv$mdr &lt;- read_mdr(
+  utils_path = utils_path,
+  mdr_filename &lt;- mdr_filename
+)
+
+source_system_name &lt;- "exampleCSV_source"
+target_system_name &lt;- "exampleCSV_target"
+
+rv &lt;- c(rv, create_helper_vars(
+  mdr = rv$mdr,
+  source_db = source_system_name,
+  target_db = target_system_name
+))
+# save source/target vars
+rv$source$system_name &lt;- source_system_name
+rv$target$system_name &lt;- target_system_name
+rv$source$system_type &lt;- "csv"
+rv$target$system_type &lt;- "csv"
+
+rv$log$logfile_dir &lt;- tempdir()
+
+# set headless (without GUI, progressbars, etc.)
+rv$headless &lt;- TRUE
+
+# set configs
+demo_files &lt;- system.file("demo_data", package = "DQAstats")
+Sys.setenv("EXAMPLECSV_SOURCE_PATH" = demo_files)
+Sys.setenv("EXAMPLECSV_TARGET_PATH" = demo_files)
+
+# get configs
+rv$source$settings &lt;- DIZutils::get_config_env(
+  system_name = rv$source$system_name,
+  logfile_dir = rv$log$logfile_dir,
+  headless = rv$headless
+)
+rv$target$settings &lt;- DIZutils::get_config_env(
+  system_name = tolower(rv$target$system_name),
+  logfile_dir = rv$log$logfile_dir,
+  headless = rv$headless
+)
+
+# set start_time (e.g. when clicking the 'Load Data'-button in shiny
+rv$start_time &lt;- format(Sys.time(), usetz = TRUE, tz = "CET")
+
+# define restricting date
+rv$restricting_date$use_it &lt;- FALSE
+
+# load source data
+tempdat &lt;- data_loading(
+  rv = rv,
+  system = rv$source,
+  keys_to_test = rv$keys_source
+)
+rv$data_source &lt;- tempdat$outdata
+
+# load target data
+tempdat &lt;- data_loading(
+  rv = rv,
+  system = rv$target,
+  keys_to_test = rv$keys_target
+)
+rv$data_target &lt;- tempdat$outdata
+
+rv$data_plausibility$atemporal &lt;- get_atemp_plausis(
+  rv = rv,
+  atemp_vars = rv$pl$atemp_vars,
+  mdr = rv$mdr,
+  headless = rv$headless
+)
+
+# add the plausibility raw data to data_target and data_source
+for (i in names(rv$data_plausibility$atemporal)) {
+  for (k in c("source_data", "target_data")) {
+    w &lt;- gsub("_data", "", k)
+    raw_data &lt;- paste0("data_", w)
+    rv[[raw_data]][[i]] &lt;-
+      rv$data_plausibility$atemporal[[i]][[k]][[raw_data]]
+    rv$data_plausibility$atemporal[[i]][[k]][[raw_data]] &lt;- NULL
+  }
+  gc()
+}
+
+# calculate descriptive results
+rv$results_descriptive &lt;- descriptive_results(
+  rv = rv,
+  headless = rv$headless
+)
+
+generate_datamap(
+  results = rv$results_descriptive,
+  db = rv$target$system_name,
+  mdr = rv$mdr,
+  rv = rv,
+  headless = rv$headless
+)
+
+</code></pre>
+
+
+</div>

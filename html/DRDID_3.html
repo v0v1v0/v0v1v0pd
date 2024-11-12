@@ -1,0 +1,276 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>drdid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Locally efficient doubly robust DiD estimators for the ATT</h2>
+
+<h3>Description</h3>
+
+<p><code>drdid</code> is used to compute the locally efficient doubly robust estimators for the ATT
+in difference-in-differences (DiD) setups. It can be used with panel or stationary repeated cross section data.
+Data should be store in "long" format.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">drdid(
+  yname,
+  tname,
+  idname,
+  dname,
+  xformla = NULL,
+  data,
+  panel = TRUE,
+  estMethod = c("imp", "trad"),
+  weightsname = NULL,
+  boot = FALSE,
+  boot.type = c("weighted", "multiplier"),
+  nboot = 999,
+  inffunc = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>yname</code></td>
+<td>
+<p>The name of the outcome variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tname</code></td>
+<td>
+<p>The name of the column containing the time periods.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>idname</code></td>
+<td>
+<p>The name of the column containing the unit id name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dname</code></td>
+<td>
+<p>The name of the column containing the treatment group (=1 if observation is treated in the post-treatment, =0 otherwise)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>xformla</code></td>
+<td>
+<p>A formula for the covariates to include in the model. It should be of the form <code>~ X1 + X2</code>
+(intercept should not be listed as it is always automatically included). Default is NULL which is equivalent to <code>xformla=~1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>The name of the data.frame that contains the data.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>panel</code></td>
+<td>
+<p>Whether or not the data is a panel dataset. The panel dataset should be provided in long format – that
+is, where each row corresponds to a unit observed at a particular point in time.  The default is TRUE.
+When <code>panel = FALSE</code>, the data is treated
+as stationary repeated cross sections.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>estMethod</code></td>
+<td>
+<p>the method to estimate the nuisance parameters.
+The default is "imp" which uses weighted least squares to estimate the outcome regressions and
+inverse probability tilting to the estimate the the propensity score, leading to the improved locally efficient  DR DiD estimator
+proposed by Sant'Anna and Zhao (2020). The other alternative is "trad",
+which then uses OLS to estimate outcome regressions and maximum likelihood to estimate propensity score. This leads
+to the "traditional" locally efficient DR DiD estimator proposed by Sant'Anna and Zhao (2020).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weightsname</code></td>
+<td>
+<p>The name of the column containing the sampling weights. If NULL, then every observation has the same weights. The weights are normalized and therefore enforced to have mean 1 across all observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot</code></td>
+<td>
+<p>Logical argument to whether bootstrap should be used for inference. Default is <code>FALSE</code> and analytical
+standard errors are reported.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boot.type</code></td>
+<td>
+<p>Type of bootstrap to be performed (not relevant if <code>boot = FALSE</code>). Options are "weighted" and "multiplier".
+If <code>boot = TRUE</code>, default is "weighted".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nboot</code></td>
+<td>
+<p>Number of bootstrap repetitions (not relevant if boot = <code>FALSE</code>). Default is 999.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inffunc</code></td>
+<td>
+<p>Logical argument to whether influence function should be returned. Default is <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>When panel data are available (<code>panel = TRUE</code>), the <code>drdid</code> function implements the
+locally efficient doubly robust difference-in-differences (DiD) estimator for the average treatment effect
+on the treated (ATT) defined in equation (3.1) in Sant'Anna and Zhao (2020). This estimator makes use of
+a logistic propensity score model for the probability of being in the treated group,
+and of a linear regression model for the outcome evolution among the comparison units.
+</p>
+<p>When only stationary repeated cross-section data are available (<code>panel = FALSE</code>), the <code>drdid</code> function
+implements the locally efficient doubly robust difference-in-differences (DiD) estimator for the
+average treatment effect on the treated (ATT) defined in equation (3.4) in Sant'Anna and Zhao (2020).
+This estimator makes use of a logistic propensity score model for the probability of being in the
+treated group, and of (separate) linear regression models for the outcome of both treated and comparison units,
+in both pre and post-treatment periods.
+</p>
+<p>When one sets <code>estMethod = "imp"</code> (the default), the nuisance parameters (propensity score and
+outcome regression parameters) are estimated using the methods described in Sections 3.1 and 3.2 of
+Sant'Anna and Zhao (2020). In short, the propensity score parameters are estimated using the inverse
+probability tilting estimator proposed by Graham, Pinto and Pinto (2012), and the outcome
+regression coefficients are estimated using weighted least squares,where the weights depend on
+the propensity score estimates; see Sant'Anna and Zhao (2020) for details.
+</p>
+<p>When one sets <code>estMethod = "trad"</code>, the propensity score parameters are estimated using maximum
+likelihood, and the outcome regression coefficients are estimated using ordinary least squares.
+</p>
+<p>The main advantage of using <code>estMethod = "imp"</code> is that the resulting estimator is not only
+locally efficient and doubly robust for the ATT, but it is also doubly robust for inference;
+see Sant'Anna and Zhao (2020) for details.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>ATT</code></td>
+<td>
+<p>The DR DiD point estimate</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>se</code></td>
+<td>
+<p> The DR DiD standard error</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uci</code></td>
+<td>
+<p>Estimate of the upper bound of a 95% CI for the ATT</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lci</code></td>
+<td>
+<p>Estimate of the lower bound of a 95% CI for the ATT</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boots</code></td>
+<td>
+<p>All Bootstrap draws of the ATT, in case bootstrap was used to conduct inference. Default is NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>att.inf.func</code></td>
+<td>
+<p>Estimate of the influence function. Default is NULL</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ps.flag</code></td>
+<td>
+<p>Convergence Flag for the propensity score estimation
+(only active if <code>estMethod = "imp"</code>.): =0 if <code>trust</code> algorithm converged,
+=1 if IPT (original) algorithm converged (in case it was used), =2 if
+GLM logit estimator was used (i.e., if both <code>trust</code> and IPT
+did not converged).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>call.param</code></td>
+<td>
+<p>The matched call.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>argu</code></td>
+<td>
+<p>Some arguments used in the call (panel, estMethod, boot, boot.type, nboot, type="dr")</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p><cite>Graham, Bryan, Pinto, Cristine, and Egel, Daniel (2012),
+"Inverse Probability Tilting for Moment Condition Models with Missing Data."
+Review of Economic Studies, vol. 79 (3), pp. 1053-1079, <a href="https://doi.org/10.1093/restud/rdr047">doi:10.1093/restud/rdr047</a></cite>
+</p>
+<p><cite>Sant'Anna, Pedro H. C. and Zhao, Jun. (2020),
+"Doubly Robust Difference-in-Differences Estimators." Journal of Econometrics, Vol. 219 (1), pp. 101-122,
+<a href="https://doi.org/10.1016/j.jeconom.2020.06.003">doi:10.1016/j.jeconom.2020.06.003</a></cite>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># -----------------------------------------------
+# Panel data case
+# -----------------------------------------------
+# Form the Lalonde sample with CPS comparison group
+eval_lalonde_cps &lt;- subset(nsw_long, nsw_long$treated == 0 | nsw_long$sample == 2)
+# Further reduce sample to speed example
+set.seed(123)
+unit_random &lt;- sample(unique(eval_lalonde_cps$id), 5000)
+eval_lalonde_cps &lt;- eval_lalonde_cps[eval_lalonde_cps$id %in% unit_random,]
+# -----------------------------------------------
+# Implement improved DR locally efficient DiD with panel data
+drdid(yname="re", tname = "year", idname = "id", dname = "experimental",
+      xformla= ~ age+ educ+ black+ married+ nodegree+ hisp+ re74,
+      data = eval_lalonde_cps, panel = TRUE)
+
+#Implement "traditional" DR locally efficient DiD with panel data
+drdid(yname="re", tname = "year", idname = "id", dname = "experimental",
+      xformla= ~ age+ educ+ black+ married+ nodegree+ hisp+ re74,
+      data = eval_lalonde_cps, panel = TRUE, estMethod = "trad")
+
+# -----------------------------------------------
+# Repeated cross section case
+# -----------------------------------------------
+# use the simulated data provided in the package
+#Implement "improved" DR locally efficient DiD with repeated cross-section data
+drdid(yname="y", tname = "post", idname = "id", dname = "d",
+      xformla= ~ x1 + x2 + x3 + x4,
+      data = sim_rc, panel = FALSE, estMethod = "imp")
+
+#Implement "traditional" DR locally efficient DiD with repeated cross-section data
+drdid(yname="y", tname = "post", idname = "id", dname = "d",
+      xformla= ~ x1 + x2 + x3 + x4,
+      data = sim_rc, panel = FALSE, estMethod = "trad")
+
+</code></pre>
+
+
+</div>

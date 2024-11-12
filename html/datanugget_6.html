@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>refine.DN</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Refine Data Nuggets
+</h2>
+
+<h3>Description</h3>
+
+<p>This function refines the data nuggets found in an object of class datanugget created using the create.DN function.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">refine.DN(x,
+          DN,
+          EV.tol = .9,
+          max.splits = 5,
+          min.nugget.size = 2,
+          delta = 2,
+          seed = 291102,
+          no.cores = (detectCores() - 1),
+          make.pbs = TRUE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+
+<p>A data matrix (data frame, data table, matrix, etc.) containing only entries of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DN</code></td>
+<td>
+
+<p>An object of class data nugget created using the create.DN function.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EV.tol</code></td>
+<td>
+
+<p>A value designating the percentile for finding the corresponding quantile that will designate how large the largest eigenvalue of the covariance matrix of a data nugget can be before it must be split. Must be of class numeric and within (0,1).
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max.splits</code></td>
+<td>
+
+<p>A value designating the maximum amount of attempts that will be made to split data nuggets according to their largest eigenvalue before the algorithm breaks. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min.nugget.size</code></td>
+<td>
+
+<p>A value designating the minimum amount of observations a data nugget created from a split must contain. Must be of class numeric and greater than 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>delta</code></td>
+<td>
+
+<p>Ratio between the first and second eigenvalues of the covariance matrix of a data nugget to force its split. Default is 2.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+
+<p>Random seed for replication. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>no.cores</code></td>
+<td>
+
+<p>Number of cores used for parallel processing. If '0' then parallel processing is not used. Must be of class numeric.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>make.pbs</code></td>
+<td>
+
+<p>Print progress bars? Must be TRUE or FALSE.
+</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Data nuggets can be refined by attempting to make all of the data nugget shapes as spherical as possible. This is achieved by designating an eigenvalue tolerance (EV.tol) which is used to give a lower threshold for a data nugget's deviation from sphericity, respectively.
+</p>
+<p>If the largest eigenvalue of a data nugget's covariance matrix has a ratio greater than the quantile associated with the percentile given by EV.tol, this data nugget is split into two smaller data nuggets using K-means clustering.
+</p>
+<p>However, if either of the two data nuggets created by this split have less than the designated minimum data nugget size (min.nugget.size), then the split is cancelled and the data nugget remains as is. This function refines data nuggets using Algorithm 2 provided in the reference.
+</p>
+<p>Updated: When data nuggets are not spherical, with the ratio between the first and second eigenvalues of the covariance matrix of the data nugget is greater than <code>delta</code> (its default value is 2), the data nugget is split.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class datanugget:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Data Nuggets</code></td>
+<td>
+<p>DN.num by (ncol(x)+3) data frame containing the information for the data nuggets created (index, center, weight, scale).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Data Nugget Assignments</code></td>
+<td>
+<p>Vector of length nrow(x) containing the data nugget assignment of each observation in x.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Traymon Beavers, Javier Cabrera, Mariusz Lubomirski
+</p>
+
+
+<h3>References</h3>
+
+<p>Beavers, T. E., Cheng, G., Duan, Y., Cabrera, J., Lubomirski, M., Amaratunga, D., &amp; Teigler, J. E. (2024). Data Nuggets: A Method for Reducing Big Data While Preserving Data Structure. Journal of Computational and Graphical Statistics, 1-21.
+</p>
+<p>Cherasia, K. E., Cabrera, J., Fernholz, L. T., &amp; Fernholz, R. (2022). Data Nuggets in Supervised Learning. <em>In Robust and Multivariate Statistical Methods: Festschrift in Honor of David E. Tyler</em> (pp. 429-449). Cham: Springer International Publishing.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+    ## small example
+    X = cbind.data.frame(rnorm(10^3),
+                         rnorm(10^3),
+                         rnorm(10^3))
+
+    suppressMessages({
+
+      my.DN = create.DN(x = X,
+                        R = 500,
+                        delete.percent = .1,
+                        DN.num1 = 500,
+                        DN.num2 = 250,
+                        no.cores = 0,
+                        make.pbs = FALSE)
+
+      my.DN2 = refine.DN(x = X,
+                         DN = my.DN,
+                         EV.tol = .9,
+                         min.nugget.size = 2,
+                         max.splits = 5,
+                         no.cores = 0,
+                         make.pbs = FALSE)
+
+    })
+
+    my.DN2$`Data Nuggets`
+    my.DN2$`Data Nugget Assignments`
+
+    
+
+      ## large example
+      X = cbind.data.frame(rnorm(5*10^4),
+                           rnorm(5*10^4),
+                           rnorm(5*10^4),
+                           rnorm(5*10^4),
+                           rnorm(5*10^4))
+
+      my.DN = create.DN(x = X,
+                        R = 5000,
+                        delete.percent = .9,
+                        DN.num1 = 10^4,
+                        DN.num2 = 2000,
+                        no.cores = 2)
+
+      my.DN2 = refine.DN(x = X,
+                         DN = my.DN,
+                         EV.tol = .9,
+                         min.nugget.size = 2,
+                         max.splits = 5,
+                         no.cores = 2)
+
+      my.DN2$`Data Nuggets`
+      my.DN2$`Data Nugget Assignments`
+
+    
+
+</code></pre>
+
+
+</div>

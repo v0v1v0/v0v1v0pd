@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dbWithTransaction</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Self-contained SQL transactions</h2>
+
+<h3>Description</h3>
+
+<p>Given that transactions are implemented, this function
+allows you to pass in code that is run in a transaction.
+The default method of <code>dbWithTransaction()</code> calls <code>dbBegin()</code>
+before executing the code,
+and <code>dbCommit()</code> after successful completion,
+or <code>dbRollback()</code> in case of an error.
+The advantage is
+that you don't have to remember to do <code>dbBegin()</code> and <code>dbCommit()</code> or
+<code>dbRollback()</code> – that is all taken care of.
+The special function <code>dbBreak()</code> allows an early exit with rollback,
+it can be called only inside <code>dbWithTransaction()</code>.
+</p>
+
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dbWithTransaction(conn, code, ...)
+
+dbBreak()
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>A DBIConnection object, as returned by
+<code>dbConnect()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>code</code></td>
+<td>
+<p>An arbitrary block of R code.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Other parameters passed on to methods.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>DBI implements <code>dbWithTransaction()</code>, backends should need to override this
+generic only if they implement specialized handling.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dbWithTransaction()</code> returns the value of the executed code.
+</p>
+
+
+<h3>Failure modes</h3>
+
+<p>Failure to initiate the transaction
+(e.g., if the connection is closed
+or invalid
+of if <code>dbBegin()</code> has been called already)
+gives an error.
+</p>
+
+
+<h3>Specification</h3>
+
+<p><code>dbWithTransaction()</code> initiates a transaction with <code>dbBegin()</code>, executes
+the code given in the <code>code</code> argument, and commits the transaction with
+<code>dbCommit()</code>.
+If the code raises an error, the transaction is instead aborted with
+<code>dbRollback()</code>, and the error is propagated.
+If the code calls <code>dbBreak()</code>, execution of the code stops and the
+transaction is silently aborted.
+All side effects caused by the code
+(such as the creation of new variables)
+propagate to the calling environment.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+con &lt;- dbConnect(RSQLite::SQLite(), ":memory:")
+
+dbWriteTable(con, "cash", data.frame(amount = 100))
+dbWriteTable(con, "account", data.frame(amount = 2000))
+
+# All operations are carried out as logical unit:
+dbWithTransaction(
+  con,
+  {
+    withdrawal &lt;- 300
+    dbExecute(con, "UPDATE cash SET amount = amount + ?", list(withdrawal))
+    dbExecute(con, "UPDATE account SET amount = amount - ?", list(withdrawal))
+  }
+)
+
+# The code is executed as if in the current environment:
+withdrawal
+
+# The changes are committed to the database after successful execution:
+dbReadTable(con, "cash")
+dbReadTable(con, "account")
+
+# Rolling back with dbBreak():
+dbWithTransaction(
+  con,
+  {
+    withdrawal &lt;- 5000
+    dbExecute(con, "UPDATE cash SET amount = amount + ?", list(withdrawal))
+    dbExecute(con, "UPDATE account SET amount = amount - ?", list(withdrawal))
+    if (dbReadTable(con, "account")$amount &lt; 0) {
+      dbBreak()
+    }
+  }
+)
+
+# These changes were not committed to the database:
+dbReadTable(con, "cash")
+dbReadTable(con, "account")
+
+dbDisconnect(con)
+
+</code></pre>
+
+
+</div>

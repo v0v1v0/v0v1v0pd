@@ -1,0 +1,82 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>diagnosis_helpers</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Explore your design diagnosis</h2>
+
+<h3>Description</h3>
+
+<p>Explore your design diagnosis
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">get_diagnosands(diagnosis)
+
+get_simulations(diagnosis)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>diagnosis</code></td>
+<td>
+<p>A design diagnosis created by <code>diagnose_design</code>.</p>
+</td>
+</tr></table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Two-arm randomized experiment
+design &lt;-
+  declare_model(
+    N = 500,
+    gender = rbinom(N, 1, 0.5),
+    X = rep(c(0, 1), each = N / 2),
+    U = rnorm(N, sd = 0.25),
+    potential_outcomes(Y ~ 0.2 * Z + X + U)
+  ) +
+  declare_inquiry(ATE = mean(Y_Z_1 - Y_Z_0)) +
+  declare_sampling(S = complete_rs(N = N, n = 200)) +
+  declare_assignment(Z = complete_ra(N = N, m = 100)) +
+  declare_measurement(Y = reveal_outcomes(Y ~ Z)) +
+  declare_estimator(Y ~ Z, inquiry = "ATE")
+
+## Not run: 
+# Diagnose design using default diagnosands
+diagnosis &lt;- diagnose_design(design)
+diagnosis
+
+# Use get_diagnosands to explore diagnosands:
+get_diagnosands(diagnosis)
+
+# Use get_simulations to explore simulations
+get_simulations(diagnosis)
+
+# Exploring user-defined diagnosis your own diagnosands
+my_diagnosands &lt;-
+  declare_diagnosands(median_bias = median(estimate - estimand),
+                      absolute_error = mean(abs(estimate - estimand)))
+
+diagnosis &lt;- diagnose_design(design, diagnosands = my_diagnosands)
+diagnosis
+
+tidy(diagnosis)
+
+reshape_diagnosis(diagnosis)
+
+get_diagnosands(diagnosis)
+
+get_simulations(diagnosis)
+
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,225 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fastEGO.nsteps</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Sequential EI maximization and model re-estimation, with a number of
+iterations fixed in advance by the user</h2>
+
+<h3>Description</h3>
+
+<p>Executes <em>nsteps</em> iterations of the EGO method to an object of class
+<code>km</code>.  At each step, a kriging model is
+re-estimated (including covariance parameters re-estimation) based on the
+initial design points plus the points visited during all previous
+iterations; then a new point is obtained by maximizing the Expected
+Improvement criterion (<code>EI</code>).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">fastEGO.nsteps(
+  model,
+  fun,
+  nsteps,
+  lower,
+  upper,
+  control = NULL,
+  trace = 0,
+  n.cores = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>an object of class <code>km</code> ,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>the objective function to be minimized,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>an integer representing the desired number of iterations,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>an optional list of control parameters for EGO. One
+can control
+</p>
+<p><code>"warping"</code> whether or not a warping is applied to the outputs (default FALSE)
+</p>
+<p><code>"cov.reestim"</code> whether or not the covariance parameters are estimated at
+each step (default TRUE)
+<code>"gpmean.trick"</code> whether or not EI should be replaced periodically by the GP mean
+(default FALSE)
+</p>
+<p><code>"gpmean.freq"</code> frequency at which EI is replaced by the GP mean (default 1e4)
+</p>
+<p><code>"always.sample"</code> if TRUE, forces observation even if it creates poor conditioning</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trace</code></td>
+<td>
+<p>between -1 (no trace) and 3 (full messages)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.cores</code></td>
+<td>
+<p>number of cores used for EI maximisation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters to be given to <code>fun</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>par</code></td>
+<td>
+<p>a data frame representing the additional points visited during
+the algorithm,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>value</code></td>
+<td>
+<p>a data frame representing the response values at the points
+given in <code>par</code>,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>npoints</code></td>
+<td>
+<p>an integer representing the number of parallel computations
+(=1 here),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsteps</code></td>
+<td>
+<p>an integer representing the desired number of iterations
+(given in argument),</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastmodel</code></td>
+<td>
+<p>an object of class <code>km</code>
+corresponding to the last kriging model fitted. If warping is true, 
+<code>y</code> values are normalized (warped) and will not match <code>value</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Victor Picheny
+</p>
+
+
+<h3>References</h3>
+
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global
+optimization of expensive black-box functions, <em>Journal of Global
+Optimization</em>, 13, 455-492.
+</p>
+<p>J. Mockus (1988), <em>Bayesian Approach to Global Optimization</em>. Kluwer
+academic publishers.
+</p>
+<p>T.J. Santner, B.J. Williams, and W.J. Notz (2003), <em>The design and
+analysis of computer experiments</em>, Springer.
+</p>
+<p>M. Schonlau (1997), <em>Computer experiments and global optimization</em>,
+Ph.D. thesis, University of Waterloo.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>EI</code>, <code>max_crit</code>, <code>EI.grad</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+set.seed(123)
+###############################################################
+### 	10 ITERATIONS OF EGO ON THE BRANIN FUNCTION, 	   ####
+###	 STARTING FROM A 9-POINTS FACTORIAL DESIGN         ####
+###############################################################
+
+# a 9-points factorial design, and the corresponding response
+d &lt;- 2
+n &lt;- 9
+design.fact &lt;- expand.grid(seq(0,1,length=3), seq(0,1,length=3)) 
+names(design.fact)&lt;-c("x1", "x2")
+design.fact &lt;- data.frame(design.fact) 
+names(design.fact)&lt;-c("x1", "x2")
+response.branin &lt;- apply(design.fact, 1, branin)
+response.branin &lt;- data.frame(response.branin) 
+names(response.branin) &lt;- "y" 
+
+# model identification
+fitted.model1 &lt;- km(~1, design=design.fact, response=response.branin, 
+covtype="gauss", control=list(pop.size=50,trace=FALSE), parinit=c(0.5, 0.5))
+
+# EGO n steps
+nsteps &lt;- 5 
+lower &lt;- rep(0,d) 
+upper &lt;- rep(1,d)     
+oEGO &lt;- fastEGO.nsteps(model=fitted.model1, fun=branin, nsteps=nsteps, lower=lower, upper=upper)
+print(oEGO$par)
+print(oEGO$value)
+
+# graphics
+n.grid &lt;- 15 # Was 20, reduced to 15 for speeding up compilation
+x.grid &lt;- y.grid &lt;- seq(0,1,length=n.grid)
+design.grid &lt;- expand.grid(x.grid, y.grid)
+response.grid &lt;- apply(design.grid, 1, branin)
+z.grid &lt;- matrix(response.grid, n.grid, n.grid)
+contour(x.grid, y.grid, z.grid, 40)
+title("Branin function")
+points(design.fact[,1], design.fact[,2], pch=17, col="blue")
+points(oEGO$par, pch=19, col="red")
+text(oEGO$par[,1], oEGO$par[,2], labels=1:nsteps, pos=3)
+
+</code></pre>
+
+
+</div>

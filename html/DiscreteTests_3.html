@@ -1,0 +1,205 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>binom_test_pv</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Binomial Tests</h2>
+
+<h3>Description</h3>
+
+<p><code>binom_test_pv()</code> performs an exact or approximate binomial test about the
+probability of success in a Bernoulli experiment. In contrast to
+<code>stats::binom.test()</code>, it is vectorised, only calculates p-values and
+offers a normal approximation of their computation. Furthermore, it is
+capable of returning the discrete p-value supports, i.e. all observable
+p-values under a null hypothesis. Multiple tests can be evaluated
+simultaneously. In two-sided tests, several procedures of obtaining the
+respective p-values are implemented.
+</p>
+<p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated"><img src="../help/figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a><br><strong>Note</strong>: Please use <code>binom_test_pv()</code>! The older <code>binom.test.pv()</code> is
+deprecated in order to migrate to snake case. It will be removed in a future
+version.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">binom_test_pv(
+  x,
+  n,
+  p = 0.5,
+  alternative = "two.sided",
+  ts_method = "minlike",
+  exact = TRUE,
+  correct = TRUE,
+  simple_output = FALSE
+)
+
+binom.test.pv(
+  x,
+  n,
+  p = 0.5,
+  alternative = "two.sided",
+  ts.method = "minlike",
+  exact = TRUE,
+  correct = TRUE,
+  simple.output = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>integer vector giving the number of successes.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>integer vector giving the number of trials.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>p</code></td>
+<td>
+<p>numerical vector of hypothesised probabilities of success.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>alternative</code></td>
+<td>
+<p>character vector that indicates the alternative hypotheses; each value must be one of <code>"two.sided"</code> (the default), <code>"less"</code> or <code>"greater"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ts_method, ts.method</code></td>
+<td>
+<p>single character string that indicates the two-sided p-value computation method (if any value in <code>alternative</code> equals <code>"two.sided"</code>) and must be one of <code>"minlike"</code> (the default), <code>"blaker"</code>, <code>"absdist"</code> or <code>"central"</code> (see details). Ignored, if <code>exact = FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exact</code></td>
+<td>
+<p>logical value that indicates whether p-values are to be calculated by exact computation (<code>exact = TRUE</code>; the default) or by a continuous approximation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correct</code></td>
+<td>
+<p>logical value that indicates if a continuity correction is to be applied (<code>correct = TRUE</code>; the default) or not. Ignored, if <code>exact = TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simple_output, simple.output</code></td>
+<td>
+<p>logical value that indicates whether an R6 class object, including the tests' parameters and support sets, i.e. all observable p-values under each null hypothesis, is to be returned (see below).</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The parameters <code>x</code>, <code>n</code>, <code>p</code> and <code>alternative</code> are vectorised. They are
+replicated automatically to have the same lengths. This allows multiple
+hypotheses to be tested simultaneously.
+</p>
+<p>If <code>p = NULL</code>, it is tested if the probability of success is 0.5 with
+the alternative being specified by <code>alternative</code>.
+</p>
+<p>For exact computation, various procedures of determining two-sided p-values
+are implemented.
+</p>
+
+<dl>
+<dt><code>"minlike"</code></dt>
+<dd>
+<p>The standard approach in <code>stats::fisher.test()</code> and
+<code>stats::binom.test()</code>. The probabilities of the
+likelihoods that are equal or less than the observed one
+are summed up. In Hirji (2006), it is referred to as the
+<em>Probability-based</em> approach.</p>
+</dd>
+<dt><code>"blaker"</code></dt>
+<dd>
+<p>The minima of the observations' lower and upper tail
+probabilities are combined with the opposite tail not
+greater than these minima. More details can be found in
+Blaker (2000) or Hirji (2006), where it is referred to as
+the <em>Combined Tails</em> method.</p>
+</dd>
+<dt><code>"absdist"</code></dt>
+<dd>
+<p>The probabilities of the absolute distances from the
+expected value that are greater than or equal to the
+observed one are summed up. In Hirji (2006), it is
+referred to as the <em>Distance from Center</em> approach.</p>
+</dd>
+<dt><code>"central"</code></dt>
+<dd>
+<p>The smaller values of the observations' simply doubles
+the minimum of lower and upper tail probabilities. In
+Hirji (2006), it is referred to as the <em>Twice the
+Smaller Tail</em> method.</p>
+</dd>
+</dl>
+<p>For non-exact (i.e. continuous approximation) approaches, <code>ts_method</code> is
+ignored, since all its methods would yield the same p-values. More
+specifically, they all converge to the doubling approach as in
+<code>ts_mthod = "central"</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>If <code>simple.output = TRUE</code>, a vector of computed p-values is returned.
+Otherwise, the output is a <code>DiscreteTestResults</code> R6 class object, which
+also includes the p-value supports and testing parameters. These have to be
+accessed by public methods, e.g. <code style="white-space: pre;">⁠$get_pvalues()⁠</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Agresti, A. (2002). <em>Categorical data analysis</em> (2nd ed.). New York: John
+Wiley &amp; Sons. pp. 14-15. <a href="https://doi.org/10.1002/0471249688">doi:10.1002/0471249688</a>
+</p>
+<p>Blaker, H. (2000) Confidence curves and improved exact confidence intervals
+for discrete distributions. <em>Canadian Journal of Statistics</em>,
+<strong>28</strong>(4), pp. 783-798. <a href="https://doi.org/10.2307/3315916">doi:10.2307/3315916</a>
+</p>
+<p>Hirji, K. F. (2006). <em>Exact analysis of discrete data</em>. New York: Chapman
+and Hall/CRC. pp. 55-83. <a href="https://doi.org/10.1201/9781420036190">doi:10.1201/9781420036190</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>stats::binom.test()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Constructing
+k &lt;- c(4, 2, 2, 14, 6, 9, 4, 0, 1)
+n &lt;- c(18, 12, 10)
+p &lt;- c(0.5, 0.2, 0.3)
+
+# Computation of exact two-sided p-values ("blaker") and their supports
+results_ex  &lt;- binom_test_pv(k, n, p, ts_method = "blaker")
+raw_pvalues &lt;- results_ex$get_pvalues()
+pCDFlist    &lt;- results_ex$get_pvalue_supports()
+
+# Computation of normal-approximated one-sided p-values ("less") and their supports
+results_ap  &lt;- binom_test_pv(k, n, p, "less", exact = FALSE)
+raw_pvalues &lt;- results_ap$get_pvalues()
+pCDFlist    &lt;- results_ap$get_pvalue_supports()
+
+</code></pre>
+
+
+</div>

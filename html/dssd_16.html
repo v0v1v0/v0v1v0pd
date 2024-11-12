@@ -1,0 +1,125 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>make.region</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Creates a Region object</h2>
+
+<h3>Description</h3>
+
+<p>This creates an instance of the Region class which defines the study
+area for the survey.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">make.region(
+  region.name = "region",
+  strata.name = character(0),
+  units = character(0),
+  shape = NULL,
+  dist.for.win = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>region.name</code></td>
+<td>
+<p>the region name</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>strata.name</code></td>
+<td>
+<p>the strata names (character vector, same length as the
+number of areas in the shapefile / sf object). If not supplied "A", "B",
+"C", ... will be assigned. The strata names should be provided in the 
+order they appear in the shapefile. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>units</code></td>
+<td>
+<p>measurement units; either <code>"m"</code> for metres or <code>"km"</code> for
+kilometres. If the shapefile has a projection file associated with it the units
+will be taken from there.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>shape</code></td>
+<td>
+<p>shapefile path to .shp file or an sf object of class sf, sfc or sfg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dist.for.win</code></td>
+<td>
+<p>logical indicating if the region is being created via
+Distance for Windows (default = FALSE). See details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The strata names should be provided in the order the strata are
+presented in the shapefile or sf shape object. This can be simply checked 
+after creating the region by plotting it and checking that the key correctly
+identifies the strata. Note that the order Distance for Windows displays the
+strata in sometimes differs from the order in which they are stored in the
+shapefile. If running from Distance for Windows then this will be checked 
+and if they don't match a warning will be displayed saying that they are
+being re-ordered.
+</p>
+
+
+<h3>Value</h3>
+
+<p>object of class Region
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Laura Marshall
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># A basic study rectangular study region
+region &lt;- make.region()
+plot(region)
+
+#Load the region from a projected shapefile
+shapefile.name &lt;- system.file("extdata", "TrackExample.shp", package = "dssd")
+region &lt;- make.region(region.name = "study area",
+                      shape = shapefile.name)
+plot(region)
+
+#Load a multi strata unprojected shapefile
+shapefile.name &lt;- system.file("extdata", "AreaRStrata.shp", package = "dssd")
+# Need to load shapefile first as it is not projected
+sf.shape &lt;- sf::read_sf(shapefile.name)
+# Check current coordinate reference system
+sf::st_crs(sf.shape)
+# Define a European Albers Equal Area projection
+proj4string &lt;- "+proj=aea +lat_1=43 +lat_2=62 +lat_0=30 +lon_0=-9 +x_0=0 +
+                y_0=0 +ellps=intl +units=km"
+# Project the study area on to a flat plane
+projected.shape &lt;- sf::st_transform(sf.shape, crs = proj4string)
+# Create region with default strata names
+region &lt;- make.region(region.name = "study area",
+                      shape = projected.shape)
+# By plotting the region we can verify the order of the strata
+plot(region)
+
+</code></pre>
+
+
+</div>

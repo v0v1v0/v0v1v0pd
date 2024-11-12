@@ -1,0 +1,214 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>validation_ui</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Validation module</h2>
+
+<h3>Description</h3>
+
+<p>Check that a dataset respect some validation expectations.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">validation_ui(id, display = c("dropdown", "inline"), max_height = NULL, ...)
+
+validation_server(
+  id,
+  data,
+  n_row = NULL,
+  n_col = NULL,
+  n_row_label = i18n("Valid number of rows"),
+  n_col_label = i18n("Valid number of columns"),
+  btn_label = i18n("Dataset validation:"),
+  rules = NULL,
+  bs_version = 3
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>id</code></td>
+<td>
+<p>Module's ID.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>display</code></td>
+<td>
+<p>Display validation results in a dropdown menu
+by clicking on a button or display results directly in interface.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>max_height</code></td>
+<td>
+<p>Maximum height for validation results element, useful if you have many rules.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments passed to <code>actionButton</code> or <code>uiOutput</code> depending on display mode,
+you cannot use <code>inputId</code>/<code>outputId</code>, <code>label</code> or <code>icon</code> (button only).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>a <code>reactive</code> function returning a <code>data.frame</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_row, n_col</code></td>
+<td>
+<p>A one-sided formula to check number of rows and columns respectively, see below for examples.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_row_label, n_col_label</code></td>
+<td>
+<p>Text to be displayed with the result of the check for number of rows/columns.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>btn_label</code></td>
+<td>
+<p>Label for the dropdown button, will be followed by validation result.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rules</code></td>
+<td>
+<p>An object of class <code>validator</code> created with <code>validate::validator</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bs_version</code></td>
+<td>
+<p>Bootstrap version used, it may affect rendering, especially status badges.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+
+<ul>
+<li>
+<p> UI: HTML tags that can be included in shiny's UI
+</p>
+</li>
+<li>
+<p> Server: a <code>list</code> with two slots:
+</p>
+
+<ul>
+<li> <p><strong>status</strong>: a <code>reactive</code> function returning the best status available between <code>"OK"</code>, <code>"Failed"</code> or <code>"Error"</code>.
+</p>
+</li>
+<li> <p><strong>details</strong>: a <code>reactive</code> function returning a <code>list</code> with validation details.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(datamods)
+library(shiny)
+
+if (requireNamespace("validate")) {
+  library(validate)
+
+  # Define some rules to be applied to data
+  myrules &lt;- validator(
+    is.character(Manufacturer) | is.factor(Manufacturer),
+    is.numeric(Price),
+    Price &gt; 12, # we should use 0 for testing positivity, but that's for the example
+    !is.na(Luggage.room),
+    in_range(Cylinders, min = 4, max = 8),
+    Man.trans.avail %in% c("Yes", "No")
+  )
+  # Add some labels
+  label(myrules) &lt;- c(
+    "Variable Manufacturer must be character",
+    "Variable Price must be numeric",
+    "Variable Price must be strictly positive",
+    "Luggage.room must not contain any missing values",
+    "Cylinders must be between 4 and 8",
+    "Man.trans.avail must be 'Yes' or 'No'"
+  )
+  # you can also add a description()
+
+  ui &lt;- fluidPage(
+    tags$h2("Validation"),
+    fluidRow(
+      column(
+        width = 4,
+        radioButtons(
+          inputId = "dataset",
+          label = "Choose dataset:",
+          choices = c("mtcars", "MASS::Cars93")
+        ),
+        tags$p("Dropdown example:"),
+        validation_ui("validation1"),
+
+        tags$br(),
+
+        tags$p("Inline example:"),
+        validation_ui("validation2", display = "inline")
+      ),
+      column(
+        width = 8,
+        tags$b("Status:"),
+        verbatimTextOutput("status"),
+        tags$b("Details:"),
+        verbatimTextOutput("details")
+      )
+    )
+  )
+
+  server &lt;- function(input, output, session) {
+
+    dataset &lt;- reactive({
+      if (input$dataset == "mtcars") {
+        mtcars
+      } else {
+        MASS::Cars93
+      }
+    })
+
+    results &lt;- validation_server(
+      id = "validation1",
+      data = dataset,
+      n_row = ~ . &gt; 20, # more than 20 rows
+      n_col = ~ . &gt;= 3, # at least 3 columns
+      rules = myrules
+    )
+
+    validation_server(
+      id = "validation2",
+      data = dataset,
+      n_row = ~ . &gt; 20, # more than 20 rows
+      n_col = ~ . &gt;= 3, # at least 3 columns
+      rules = myrules
+    )
+
+    output$status &lt;- renderPrint(results$status())
+    output$details &lt;- renderPrint(results$details())
+
+  }
+
+  if (interactive())
+    shinyApp(ui, server)
+}
+</code></pre>
+
+
+</div>

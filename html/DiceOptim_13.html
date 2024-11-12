@@ -1,0 +1,248 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>easyEGO</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>User-friendly wrapper of the functions <code>fastEGO.nsteps</code> and <code>TREGO.nsteps</code>.
+Generates initial DOEs and kriging models (objects of class <code>km</code>), 
+and executes <code>nsteps</code> iterations of either EGO or TREGO.</h2>
+
+<h3>Description</h3>
+
+<p>User-friendly wrapper of the functions <code>fastEGO.nsteps</code> and <code>TREGO.nsteps</code>.
+Generates initial DOEs and kriging models (objects of class <code>km</code>), 
+and executes <code>nsteps</code> iterations of either EGO or TREGO.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">easyEGO(
+  fun,
+  budget,
+  lower,
+  upper,
+  X = NULL,
+  y = NULL,
+  control = list(trace = 1, seed = 42),
+  n.cores = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>fun</code></td>
+<td>
+<p>scalar function to be minimized,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>budget</code></td>
+<td>
+<p>total number of calls to the objective and constraint functions,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>vector of lower bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>vector of upper bounds for the variables to be optimized over,</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X</code></td>
+<td>
+<p>initial design of experiments. If not provided, X is taken as a maximin LHD with budget/3 points</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>initial set of objective observations <code class="reqn">f(X)</code>. Computed if not provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>control</code></td>
+<td>
+<p>an optional list of control parameters. See "Details".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n.cores</code></td>
+<td>
+<p>number of cores for parallel computation</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>additional parameters to be given to <code>fun</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Does not require knowledge on kriging models (objects of class <code>km</code>)  <br>
+The <code>control</code> argument is a list that can supply any of the following components: <br></p>
+
+<ul>
+<li> <p><code>trace</code>: between -1 and 3
+</p>
+</li>
+<li> <p><code>seed</code>: to fix the seed of the run
+</p>
+</li>
+<li> <p><code>cov.reestim</code>: Boolean, if TRUE (default) the covariance parameters are re-estimated at each iteration
+</p>
+</li>
+<li> <p><code>model.trend</code>: trend for the GP model
+</p>
+</li>
+<li> <p><code>lb, ub</code>: lower and upper bounds for the GP covariance ranges
+</p>
+</li>
+<li> <p><code>nugget</code>: optional nugget effect
+</p>
+</li>
+<li> <p><code>covtype</code>: covariance of the GP model (default "matern5_2")
+</p>
+</li>
+<li> <p><code>optim.method</code>: optimisation of the GP hyperparameters (default "BFGS")
+</p>
+</li>
+<li> <p><code>multistart</code>: number of restarts of BFGS
+</p>
+</li>
+<li> <p><code>gpmean.trick, gpmean.freq</code>: Boolean and integer, resp., for the gpmean trick
+</p>
+</li>
+<li> <p><code>scaling</code>: Boolean, activates input scaling
+</p>
+</li>
+<li> <p><code>warping</code>: Boolean, activates output warping
+</p>
+</li>
+<li> <p><code>TR</code>: Boolean, activates TREGO instead of EGO
+</p>
+</li>
+<li> <p><code>trcontrol</code>: list of parameters of the trust region, see <code>TREGO.nsteps</code>
+</p>
+</li>
+<li> <p><code>always.sample</code>: Boolean, activates force observation even if it leads to poor conditioning
+</p>
+</li>
+</ul>
+<h3>Value</h3>
+
+<p>A list with components:
+</p>
+
+<ul>
+<li>
+<p><code>par</code>: the best feasible point
+</p>
+</li>
+<li>
+<p><code>values</code>: a vector of the objective and constraints at the point given in <code>par</code>,
+</p>
+</li>
+<li>
+<p><code>history</code>: a list containing all the points visited by the algorithm (<code>X</code>) and their corresponding objectives (<code>y</code>).
+</p>
+</li>
+<li>
+<p><code>model</code>: the last GP model, class <code>km</code>
+</p>
+</li>
+<li>
+<p><code>control</code>: full list of control values, see "Details"
+</p>
+</li>
+<li>
+<p><code>res</code>: the output of either <code>fastEGO.nsteps</code> or <code>TREGO.nsteps</code>
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Victor Picheny
+</p>
+
+
+<h3>References</h3>
+
+<p>D.R. Jones, M. Schonlau, and W.J. Welch (1998), Efficient global
+optimization of expensive black-box functions, <em>Journal of Global
+Optimization</em>, 13, 455-492.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(parallel)
+library(DiceOptim)
+set.seed(123)
+
+#########################################################
+### 	10 ITERATIONS OF TREGO ON THE BRANIN FUNCTION, ####
+###	 STARTING FROM A 9-POINTS FACTORIAL DESIGN       ####
+########################################################
+
+# a 9-points factorial design, and the corresponding response
+ylim=NULL
+fun &lt;- branin; d &lt;- 2
+budget &lt;- 5*d
+lower &lt;- rep(0,d)
+upper &lt;- rep(1,d)
+n.init &lt;- 2*d
+
+control &lt;- list(n.init=2*d, TR=TRUE, nugget=1e-5, trcontrol=list(algo="TREGO"), multistart=1)
+
+res1 &lt;- easyEGO(fun=fun, budget=budget, lower=lower, upper=upper, control=control, n.cores=1)
+
+par(mfrow=c(3,1))
+y &lt;- res1$history$y
+steps &lt;- res1$res$all.steps
+success &lt;- res1$res$all.success
+sigma &lt;- res1$res$all.sigma
+ymin &lt;- cummin(y)
+pch &lt;- rep(1, length(sigma))
+col &lt;- rep("red", length(sigma))
+pch[which(!steps)] &lt;- 2
+col[which(success)] &lt;- "darkgreen"
+
+pch2 &lt;- c(rep(3, n.init), pch)
+col2 &lt;- c(rep("black", n.init), col)
+plot(y, col=col2, ylim=ylim, pch=pch2, lwd=2, xlim=c(0, budget))
+lines(ymin, col="darkgreen")
+abline(v=n.init+.5)
+
+plot(n.init + (1:length(sigma)), sigma, xlim=c(0, budget), ylim=c(0, max(sigma)), 
+pch=pch, col=col, lwd=2, main="TR size") 
+lines(n.init + (1:length(sigma)), sigma, xlim=c(0, budget)) 
+abline(v=n.init+.5)
+
+plot(NA, xlim=c(0, budget), ylim=c(0, 1), main="x0 (coordinates)")
+for (i in 1:d) {
+  lines(n.init + (1:nrow(res1$res$all.x0)), res1$res$all.x0[,i]) 
+  points(n.init + (1:nrow(res1$res$all.x0)), res1$res$all.x0[,i], pch=pch, col=col, lwd=2) 
+}
+abline(v=n.init+.5)
+
+par(mfrow=c(1,1))
+pairs(res1$model@X, pch=pch2, col=col2)
+
+</code></pre>
+
+
+</div>

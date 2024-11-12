@@ -1,0 +1,211 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>density_area</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Density Area</h2>
+
+<h3>Description</h3>
+
+<p>A convenience function to get just the areas of density polygons.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">density_area(
+  x,
+  y,
+  probs = 0.5,
+  as_sf = FALSE,
+  as_list = FALSE,
+  range_mult = 0.25,
+  rangex = NULL,
+  rangey = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>x, y</code></td>
+<td>
+<p>Numeric data dimensions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>probs</code></td>
+<td>
+<p>Probabilities to compute density polygons for</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_sf</code></td>
+<td>
+<p>Should the returned values be sf::sf? Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>as_list</code></td>
+<td>
+<p>Should the returned value be a list? Defaults to <code>TRUE</code> to
+work well with tidyverse list columns</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>range_mult</code></td>
+<td>
+<p>A multiplier to the range of <code>x</code> and <code>y</code> across which the
+probability density will be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rangex, rangey</code></td>
+<td>
+<p>Custom ranges across <code>x</code> and <code>y</code> ranges across which the
+probability density will be estimated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments to be passed to <code>ggdensity::get_hdr()</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If both <code>rangex</code> and <code>rangey</code> are defined, <code>range_mult</code> will be disregarded.
+If only one or the other of <code>rangex</code> and <code>rangey</code> are defined, <code>range_mult</code>
+will be used to produce the range of the undefined one.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list of data frames, if <code>as_list=TRUE</code>, or just a data frame,
+if <code>as_list=FALSE</code>.
+</p>
+
+
+<h4>Data frame output</h4>
+
+<p>If <code>as_sf=FALSE</code>, the data frame has the following columns:
+</p>
+
+<dl>
+<dt>level_id</dt>
+<dd>
+<p>An integer id for each probability level</p>
+</dd>
+<dt>prob</dt>
+<dd>
+<p>The probability level (originally passed to <code>probs</code>)</p>
+</dd>
+<dt>area</dt>
+<dd>
+<p>The area of the HDR polygon</p>
+</dd>
+</dl>
+<h4>sf output</h4>
+
+<p>If <code>as_sf=TRUE</code>, the data frame has the following columns:
+</p>
+
+<dl>
+<dt>level_id</dt>
+<dd>
+<p>An integer id for each probability level</p>
+</dd>
+<dt>prob</dt>
+<dd>
+<p>The probability level (originally passed to <code>probs</code>)</p>
+</dd>
+<dt>geometry</dt>
+<dd>
+<p>The <code>sf::st_polygon()</code> of the HDR</p>
+</dd>
+<dt>area</dt>
+<dd>
+<p>The area of the HDR polygon</p>
+</dd>
+</dl>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(densityarea)
+library(dplyr)
+library(sf)
+
+ggplot2_inst &lt;- require(ggplot2)
+
+# basic usage
+
+set.seed(10)
+x &lt;- rnorm(100)
+y &lt;- rnorm(100)
+
+density_area(x,
+             y,
+             probs = ppoints(50)) -&gt;
+  poly_areas_df
+
+head(poly_areas_df)
+
+# Plotting the relationship between probability level and area
+if(ggplot2_inst){
+  ggplot(poly_areas_df,
+         aes(prob, area)) +
+    geom_line()
+}
+
+# Tidyverse usage
+
+data(s01)
+
+## Data preprocessing
+
+s01 |&gt;
+  mutate(log_F2 = -log(F2),
+         log_F1 = -log(F1)) -&gt;
+  s01
+
+### Data frame output
+
+s01 |&gt;
+  group_by(name) |&gt;
+  reframe(density_area(log_F2,
+                       log_F1,
+                       probs = ppoints(10))) -&gt;
+  s01_areas_df
+
+if(ggplot2_inst){
+  s01_areas_df |&gt;
+    ggplot(aes(prob, area)) +
+    geom_line()
+}
+
+### Including sf output
+
+s01 |&gt;
+  group_by(name) |&gt;
+  reframe(density_area(log_F2,
+                       log_F1,
+                       probs = ppoints(10),
+                       as_sf = TRUE)) |&gt;
+  st_sf() -&gt;
+  s01_areas_sf
+
+if(ggplot2_inst){
+  s01_areas_sf |&gt;
+    arrange(desc(prob)) |&gt;
+    ggplot() +
+    geom_sf(aes(fill = area))
+}
+</code></pre>
+
+
+</div>

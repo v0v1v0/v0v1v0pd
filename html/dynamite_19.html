@@ -1,0 +1,156 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>fitted.dynamitefit</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Extract Fitted Values of a Dynamite Model</h2>
+
+<h3>Description</h3>
+
+<p>Fitted values for a <code>dynamitefit</code> object, i.e.,
+<code class="reqn">E(y_t | newdata, \theta)</code> where <code class="reqn">\theta</code> contains all the
+model parameters. See also
+<code>predict.dynamitefit()</code> for multi-step predictions.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'dynamitefit'
+fitted(
+  object,
+  newdata = NULL,
+  n_draws = NULL,
+  thin = 1,
+  expand = TRUE,
+  df = TRUE,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>[<code>dynamitefit</code>]<br> The model fit object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>newdata</code></td>
+<td>
+<p>[<code>data.frame</code>]<br> Data used in predictions.
+If <code>NULL</code> (default), the data used in model estimation is used for
+predictions as well.
+There should be no new time points that were not present in the data that
+were used to fit the model, and no new group levels can be included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_draws</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> Number of posterior samples to use,
+default is <code>NULL</code> which uses all samples without permuting (with chains
+concatenated). If <code>n_draws</code>is smaller than <code>ndraws(object)</code>, a random
+subset of <code>n_draws</code> posterior samples are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>thin</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> Use only every <code>thin</code> posterior sample.
+This can be beneficial with when the model object contains
+large number of samples. Default is <code>1</code> meaning that all samples are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expand</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code> (the default), the output
+is a single <code>data.frame</code> containing the original <code>newdata</code> and the
+predicted values. Otherwise, a <code>list</code> is returned with two components,
+<code>simulated</code> and <code>observed</code>, where the first contains only the
+predicted values, and the second contains the original <code>newdata</code>.
+Setting <code>expand</code> to <code>FALSE</code> can help conserve memory because <code>newdata</code>
+is not replicated <code>n_draws</code> times in the output.
+This argument is ignored if <code>funs</code> are provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> If <code>TRUE</code> (default) the output
+consists of <code>data.frame</code> objects, and <code>data.table</code> objects otherwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Ignored.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A <code>data.frame</code> containing the fitted values.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Obtaining predictions
+<code>predict.dynamitefit()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data.table::setDTthreads(1) # For CRAN
+fitted(gaussian_example_fit, n_draws = 2L)
+
+set.seed(1)
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  fit &lt;- dynamite(
+    dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
+    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+    time = "time",
+    group = "id",
+    chains = 1,
+    refresh = 0
+  )
+
+  if (requireNamespace("dplyr") &amp;&amp;
+    requireNamespace("tidyr") &amp;&amp;
+    base::getRversion() &gt;= "4.1.0") {
+
+    # One-step ahead samples (fitted values) from the posterior
+    # (first time point is fixed due to lag in the model):
+    fitted(fit) |&gt;
+      dplyr::filter(time &gt; 2) |&gt;
+      ggplot2::ggplot(ggplot2::aes(time, LakeHuron_fitted, group = .draw)) +
+      ggplot2::geom_line(alpha = 0.5) +
+      # observed values
+      ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
+      ggplot2::theme_bw()
+
+    # Posterior predictive distribution given the first time point:
+    predict(fit, type = "mean") |&gt;
+      dplyr::filter(time &gt; 2) |&gt;
+      ggplot2::ggplot(ggplot2::aes(time, LakeHuron_mean, group = .draw)) +
+      ggplot2::geom_line(alpha = 0.5) +
+      # observed values
+      ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
+      ggplot2::theme_bw()
+  }
+ }
+
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,290 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>DiSCo</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Distributional Synthetic Controls</h2>
+
+<h3>Description</h3>
+
+<p>This function implements the distributional synthetic controls (DiSCo) method from Gunsilius (2023).
+as well as the alternative mixture of distributions approach.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">DiSCo(
+  df,
+  id_col.target,
+  t0,
+  M = 1000,
+  G = 1000,
+  num.cores = 1,
+  permutation = FALSE,
+  q_min = 0,
+  q_max = 1,
+  CI = FALSE,
+  boots = 500,
+  replace = TRUE,
+  uniform = FALSE,
+  cl = 0.95,
+  graph = FALSE,
+  qmethod = NULL,
+  qtype = 7,
+  seed = NULL,
+  simplex = FALSE,
+  mixture = FALSE,
+  grid.cat = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>df</code></td>
+<td>
+<p>Data frame or data table containing the distributional data for the target and control units. The data table should contain the following columns:
+</p>
+
+<ul>
+<li> <p><code>y_col </code> A numeric vector containing the outcome variable for each unit. Units can be individuals, states, etc., but they should be nested within a larger unit (e.g. individuals or counties within a state)
+</p>
+</li>
+<li> <p><code>id_col </code> A numeric vector containing the aggregate IDs of the units. This could be, for example, the state if the units are counties or individuals
+</p>
+</li>
+<li> <p><code>time_col </code> A vector containing the time period of the observation for each unit. This should be a monotonically increasing integer.
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>id_col.target</code></td>
+<td>
+<p>Variable indicating the name of the target unit, as specified in the id_col column of the data table.
+This variable can be any type, as long as it is the same type as the id_col column of the data table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>t0</code></td>
+<td>
+<p>Integer indicating period of treatment.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>M</code></td>
+<td>
+<p>Integer indicating the number of control quantiles to use in the DiSCo method. Default is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>G</code></td>
+<td>
+<p>Integer indicating the number of grid points for the grid on which the estimated functions are evaluated. Default is 1000.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num.cores</code></td>
+<td>
+<p>Integer, number of cores to use for parallel computation. Default is 1. If the <code>permutation</code> or <code>CI</code> arguments are set to TRUE, this can be slow and it is recommended to set this to 4 or more, if possible.
+If you get an error in "all cores" or similar, try setting num.cores=1 to see the precise error value.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>permutation</code></td>
+<td>
+<p>Logical, indicating whether to use the permutation method for computing the optimal weights. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_min</code></td>
+<td>
+<p>Numeric, minimum quantile to use. Set this together with <code>q_max</code> to restrict the range of quantiles used to construct the synthetic control.
+Default is 0 (all quantiles). Currently NOT implemented for the <code>mixture</code> approach.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>q_max</code></td>
+<td>
+<p>Numeric, maximum quantile to use. Set this together with <code>q_min</code> to restrict the range of quantiles used to construct the synthetic control.
+Default is 1 (all quantiles). Currently NOT implemented for the <code>mixture</code> approach.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>CI</code></td>
+<td>
+<p>Logical, indicating whether to compute confidence intervals for the counterfactual quantiles. Default is FALSE.
+The confidence intervals are computed using the bootstrap procedure described in Van Dijcke et al. (2024).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>boots</code></td>
+<td>
+<p>Integer, number of bootstrap samples to use for computing confidence intervals. Default is 500.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>Logical, indicating whether to sample with replacement when computing the bootstrap samples. Default is TRUE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uniform</code></td>
+<td>
+<p>Logical, indicating whether to construct uniform bootstrap confidence intervals. Default is FALSE
+If FALSE, the confidence intervals are pointwise.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cl</code></td>
+<td>
+<p>Numeric, confidence level for the (two-sided) confidence intervals.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>graph</code></td>
+<td>
+<p>Logical, indicating whether to plot the permutation graph as in Figure 3 of the paper. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qmethod</code></td>
+<td>
+<p>Character, indicating the method to use for computing the quantiles of the target distribution. The default is NULL, which uses the <code>quantile</code> function from the stats package.
+Other options are "<code>qkden</code>" (based on smoothed kernel density function) and "<code>extreme</code>" (based on parametric extreme value distributions).
+Both are substantially slower than the default method but may be useful for fat-tailed distributions with few data points at the upper quantiles. Alternatively, one could use the q_max option to restrict the range of quantiles used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>qtype</code></td>
+<td>
+<p>Integer, indicating the type of quantile to compute when using  <code>quantile</code> in the <code>qmethod</code> argument.
+The default 7. See the documentation for the <code>quantile</code> function for more information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>seed</code></td>
+<td>
+<p>Integer, seed for the random number generator. This needs to be set explicitly in the function call, since it will invoke <code>RNGkind</code> which will set the seed for each core
+when using parallel processes. Default is NULL, which does not set a seed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>simplex</code></td>
+<td>
+<p>Logical, indicating whether to use to constrain the optimal weights to the unit simplex. Default is FALSE, which only constrains the weights to sum up to 1 but allows them to be negative.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mixture</code></td>
+<td>
+<p>Logical, indicating whether to use the mixture of distributions approach instead.
+See Section 4.3. in Gunsilius (2023). This approach minimizes the distance between the CDFs
+instead of the quantile functions, and is preferred for categorical variables. When working with such variables, one should
+also provide a list of support points in the <code>grid.cat</code> parameter. When that is provided, this parameter is automatically set to TRUE. Default is FALSE.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grid.cat</code></td>
+<td>
+<p>List, containing the discrete support points for a discrete grid to be used with the mixture of distributions approach.
+This is useful for constructing synthetic distributions for categorical variables. Default is NULL, which uses a continuous grid based on the other parameters.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function is called for every time period in the DiSCo function. It implements the DiSCo method for a single time period, as well as the mixture of distributions approach.
+The corresponding results for each time period can be accessed in the <code>results.periods</code> list of the output of the DiSCo function. The DiSCo function returns the average weight for each unit across all periods,
+calculated as a uniform mean, as well as the counterfactual target distribution produced as the weighted average of the control distributions for each period, using these averaged weights.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containing the following elements:
+</p>
+
+<ul>
+<li> <p><code>results.periods</code> A list containing, for each time period, the elements described in the return argument of <code>DiSCo_iter</code>, as well as the following additional elements:
+</p>
+
+<ul><li> <p><code>DiSco</code>
+</p>
+
+<ul>
+<li> <p><code>quantile </code> The counterfactual quantiles for the target unit.
+</p>
+</li>
+<li> <p><code>weights </code> The optimal weights for the target unit.
+</p>
+</li>
+<li> <p><code>cdf </code> The counterfactual CDF for the target unit.
+</p>
+</li>
+</ul>
+</li></ul>
+</li>
+<li> <p><code>weights</code> A numeric vector containing the synthetic control weights for the control units, averaged over time.
+When <code>mixture</code> is TRUE, these are the weights for the mixture of distributions, otherwise they are the weights for the quantile-based approach.
+</p>
+</li>
+<li> <p><code>CI</code> A list containing the confidence intervals for the counterfactual quantiles and CDFs, if <code>CI</code> is TRUE.
+Each element contains two named subelements called <code>upper</code>, <code>lower</code>, <code>se</code> which
+are the upper and lower confidence bands and the standard error of the estimate, respectively.
+They are G x T matrices where G is the specified number of grid points and T is the number of time periods.
+The elements are:
+</p>
+
+<ul>
+<li> <p><code>cdf</code> The bootstrapped CDF
+</p>
+</li>
+<li> <p><code>quantile</code> The bootstrapped quantile
+</p>
+</li>
+<li> <p><code>quantile_diff</code> The bootstrapped quantile difference
+</p>
+</li>
+<li> <p><code>cdf_diff</code> The bootstrapped CDF difference
+</p>
+</li>
+<li> <p><code>bootmat</code> A list containing the raw bootstrapped samples for the counterfactual quantiles and CDFs, if <code>CI</code> is TRUE.
+These are not meant to be accessed directly, but are used by <code>DiSCoTEA</code> to compute aggregated standard errors. Advanced users
+may wish to access these directly for further analysis. The element names should be self-explanatory.
+#' </p>
+</li>
+<li> <p><code>control_ids</code> A list containing the control unit IDs used for each time period, which can be used to identify the weights
+associated with each control as the returned weights have the same order as the control IDs.
+</p>
+</li>
+<li> <p><code>perm </code> A <code>permut</code> object containing the results of the permutation method, if <code>permutation</code> is TRUE.
+Call <code>summary</code> on this object to print the overall results of the permutation test.
+#' </p>
+</li>
+<li> <p><code>evgrid</code> A numeric vector containing the grid points on which the quantiles were evaluated.
+</p>
+</li>
+<li> <p><code>params</code> A list containing the parameters used in the function call.
+</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Gunsilius FF (2023).
+“Distributional synthetic controls.”
+<em>Econometrica</em>, <b>91</b>(3), 1105–1117.<br><br> Van Dijcke D, Gunsilius F, Wright AL (2024).
+“Return to Office and the Tenure Distribution.”
+Working Paper 2024-56, University of Chicago, Becker Friedman Institute for Economics.()
+</p>
+
+
+</div>

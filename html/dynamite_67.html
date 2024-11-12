@@ -1,0 +1,355 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dynamite</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimate a Bayesian Dynamic Multivariate Panel Model</h2>
+
+<h3>Description</h3>
+
+<p>Fit a Bayesian dynamic multivariate panel model (DMPM) using Stan for
+Bayesian inference. The <span class="pkg">dynamite</span> package supports a wide range of
+distributions and allows the user to flexibly customize the priors for the
+model parameters. The dynamite model is specified using standard <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> formula
+syntax via <code>dynamiteformula()</code>. For more information and examples,
+see 'Details' and the package vignettes.
+</p>
+<p>The <code>formula</code> method returns the model definition as a quoted expression.
+</p>
+<p>Information on the estimated dynamite model can be obtained via
+<code>print</code> including the following: The model formula, the data, the smallest
+effective sample sizes, largest Rhat and summary statistics of the
+time- and group-invariant model parameters.
+</p>
+<p>The <code>summary()</code> method provides statistics of the posterior samples of the
+model; this is an alias of <code>as.data.frame.dynamitefit()</code> with
+<code>summary = TRUE</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dynamite(
+  dformula,
+  data,
+  time,
+  group = NULL,
+  priors = NULL,
+  backend = "rstan",
+  verbose = TRUE,
+  verbose_stan = FALSE,
+  stanc_options = list("O0"),
+  threads_per_chain = 1L,
+  grainsize = NULL,
+  custom_stan_model = NULL,
+  debug = NULL,
+  ...
+)
+
+## S3 method for class 'dynamitefit'
+formula(x, ...)
+
+## S3 method for class 'dynamitefit'
+print(x, full_diagnostics = FALSE, ...)
+
+## S3 method for class 'dynamitefit'
+summary(object, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dformula</code></td>
+<td>
+<p>[<code>dynamiteformula</code>]<br> The model formula.
+See <code>dynamiteformula()</code> and 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>[<code>data.frame</code>, <code>tibble::tibble</code>, or <code>data.table::data.table</code>]<br>
+The data that contains the variables in the model in long format.
+Supported column types are <code>integer</code>, <code>logical</code>, <code>double</code>, and
+<code>factor</code>. Columns of type <code>character</code> will be converted to factors.
+Unused factor levels will be dropped. The <code>data</code> can contain missing
+values which will simply be ignored in the estimation in a case-wise
+fashion (per time-point and per channel). Input <code>data</code> is converted to
+channel specific matrix representations via <code>stats::model.matrix.lm()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>time</code></td>
+<td>
+<p>[<code>character(1)</code>]<br> A column name of <code>data</code> that denotes the
+time index of observations. If this variable is a factor, the integer
+representation of its levels are used internally for defining the time
+indexing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group</code></td>
+<td>
+<p>[<code>character(1)</code>]<br> A column name of <code>data</code> that denotes the
+unique groups or <code>NULL</code> corresponding to a scenario without any groups.
+If <code>group</code> is <code>NULL</code>, a new column <code>.group</code> is created with constant
+value <code>1L</code> is created indicating that all observations belong to the same
+group. In case of name conflicts with <code>data</code>, see the <code>group_var</code> element
+of the return object to get the column name of the new variable.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>priors</code></td>
+<td>
+<p>[<code>data.frame</code>]<br> An optional data frame with prior
+definitions. See <code>get_priors()</code> and 'Details'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>backend</code></td>
+<td>
+<p>[<code>character(1)</code>]<br> Defines the backend interface to Stan,
+should be  either <code>"rstan"</code> (the default) or <code>"cmdstanr"</code>. Note that
+<code>cmdstanr</code> needs to be installed separately as it is not on CRAN. It also
+needs the actual <code>CmdStan</code> software. See https://mc-stan.org/cmdstanr/ for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> All warnings and messages are suppressed
+if set to <code>FALSE</code>. Defaults to <code>TRUE</code>. Setting this to <code>FALSE</code> will also
+disable checks for perfect collinearity in the model matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose_stan</code></td>
+<td>
+<p>[<code>logical(1)</code>]<br> This is the <code>verbose</code> argument for
+<code>rstan::sampling()</code>. Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>stanc_options</code></td>
+<td>
+<p>[<code>list()</code>]<br> This is the <code>stanc_options</code> argument
+passed to the compile method of a <code>CmdStanModel</code> object via
+<code>cmdstanr::cmdstan_model()</code> when <code>backend = "cmdstanr"</code>.
+Defaults to <code>list("O0")</code>. To enable level one compiler optimizations,
+use <code>list("O1")</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>threads_per_chain</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> A Positive integer defining the
+number of parallel threads to use within each chain. Default is <code>1</code>. See
+<code>rstan::rstan_options()</code> and <code>cmdstanr::sample()</code> for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grainsize</code></td>
+<td>
+<p>[<code>integer(1)</code>]<br> A positive integer defining the
+suggested size of the partial sums when using within-chain parallelization.
+Default is number of time points divided by <code>threads_per_chain</code>.
+Setting this to <code>1</code> leads the workload division entirely to the internal
+scheduler. The performance of the within-chain parallelization can be
+sensitive to the choice of <code>grainsize</code>, see Stan manual on reduce-sum for
+details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>custom_stan_model</code></td>
+<td>
+<p>[<code>character(1)</code>]<br> An optional character string
+that either contains a customized Stan model code or a path to a <code>.stan</code>
+file that contains the code. Using this will override the generated model
+code. For expert users only.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>debug</code></td>
+<td>
+<p>[<code>list()</code>]<br> A named list of form <code>name = TRUE</code> indicating
+additional objects in the environment of the <code>dynamite</code> function which are
+added to the return object. Additionally, values <code>no_compile = TRUE</code> and
+<code>no_sampling = TRUE</code> can be used to skip the compilation of the Stan code
+and sampling steps respectively. This can be useful for debugging when
+combined with <code>model_code = TRUE</code>, which adds the Stan model code to the
+return object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>For <code>dynamite()</code>, additional arguments to <code>rstan::sampling()</code> or
+<code>cmdstanr::sample()</code>, such as <code>chains</code> and <code>cores</code> (<code>chains</code> and
+<code>parallel_chains</code> in <code>cmdstanr</code>). For <code>summary()</code>, additional arguments to
+<code>as.data.frame.dynamitefit()</code>. For <code>print()</code>, further arguments
+to the print method for tibbles (see tibble::formatting). Not used for
+<code>formula()</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>[<code>dynamitefit</code>]<br> The model fit object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>full_diagnostics</code></td>
+<td>
+<p>By default, the effective sample size (ESS) and Rhat
+are computed only for the time- and group-invariant parameters
+(<code>full_diagnostics = FALSE</code>). Setting this to <code>TRUE</code> computes ESS and Rhat
+values for all model parameters, which can take some time for complex models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>[<code>dynamitefit</code>]<br> The model fit object.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The best-case scalability of <code>dynamite</code> in terms of data size should be
+approximately linear in terms of number of time points and and number of
+groups, but as wall-clock time of the MCMC algorithms provided by Stan can
+depend on the discrepancy of the data and the model (and the subsequent
+shape of the posterior), this can vary greatly.
+</p>
+
+
+<h3>Value</h3>
+
+<p><code>dynamite</code> returns a <code>dynamitefit</code> object which is a list containing
+the following components:
+</p>
+
+<ul>
+<li> <p><code>stanfit</code><br> A <code>stanfit</code> object, see <code>rstan::sampling()</code> for details.
+</p>
+</li>
+<li> <p><code>dformulas</code><br> A list of <code>dynamiteformula</code> objects for internal use.
+</p>
+</li>
+<li> <p><code>data</code><br> A processed version of the input <code>data</code>.
+</p>
+</li>
+<li> <p><code>data_name</code><br> Name of the input data object.
+</p>
+</li>
+<li> <p><code>stan</code><br> A <code>list</code> containing various elements related to Stan model
+construction and sampling.
+</p>
+</li>
+<li> <p><code>group_var</code><br> Name of the variable defining the groups.
+</p>
+</li>
+<li> <p><code>time_var</code><br> Name of the variable defining the time index.
+</p>
+</li>
+<li> <p><code>priors</code><br> Data frame containing the used priors.
+</p>
+</li>
+<li> <p><code>backend</code><br> Either <code>"rstan"</code> or <code>"cmdstanr"</code> indicating which
+package was used in sampling.
+</p>
+</li>
+<li> <p><code>call</code><br> Original function call as an object of class <code>call</code>.
+</p>
+</li>
+</ul>
+<p><code>formula</code> returns a quoted expression.
+</p>
+<p><code>print</code> returns <code>x</code> invisibly.
+</p>
+<p><code>summary</code> returns a <code>data.frame</code>.
+</p>
+
+
+<h3>References</h3>
+
+<p>Santtu Tikka and Jouni Helske (2023). <code>dynamite</code>: An <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> Package for Dynamic
+Multivariate Panel Models. arXiv preprint,
+<a href="https://arxiv.org/abs/2302.01607">https://arxiv.org/abs/2302.01607</a>.
+</p>
+<p>Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
+from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
+<a href="https://osf.io/preprints/socarxiv/mdwu5/">https://osf.io/preprints/socarxiv/mdwu5/</a>.
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Model fitting
+<code>dynamice()</code>,
+<code>get_priors()</code>,
+<code>update.dynamitefit()</code>
+</p>
+<p>Model formula construction
+<code>dynamiteformula()</code>,
+<code>lags()</code>,
+<code>lfactor()</code>,
+<code>random_spec()</code>,
+<code>splines()</code>
+</p>
+<p>Model outputs
+<code>as.data.frame.dynamitefit()</code>,
+<code>as.data.table.dynamitefit()</code>,
+<code>as_draws_df.dynamitefit()</code>,
+<code>coef.dynamitefit()</code>,
+<code>confint.dynamitefit()</code>,
+<code>get_code()</code>,
+<code>get_data()</code>,
+<code>get_parameter_dims()</code>,
+<code>get_parameter_names()</code>,
+<code>get_parameter_types()</code>,
+<code>ndraws.dynamitefit()</code>,
+<code>nobs.dynamitefit()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">data.table::setDTthreads(1) # For CRAN
+
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  fit &lt;- dynamite(
+    dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
+      lags(type = "varying") +
+      splines(df = 20),
+    gaussian_example,
+    "time",
+    "id",
+    chains = 1,
+    refresh = 0
+  )
+}
+
+
+data.table::setDTthreads(1) # For CRAN
+formula(gaussian_example_fit)
+
+data.table::setDTthreads(1) # For CRAN
+print(gaussian_example_fit)
+
+data.table::setDTthreads(1) # For CRAN
+summary(gaussian_example_fit,
+  types = "beta",
+  probs = c(0.05, 0.1, 0.9, 0.95)
+)
+
+</code></pre>
+
+
+</div>

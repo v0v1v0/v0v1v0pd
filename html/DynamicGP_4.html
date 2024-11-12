@@ -1,0 +1,313 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>lasvdGP</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Local Approximate SVD-Based GP Models
+</h2>
+
+<h3>Description</h3>
+
+<p>Fits a local approximate SVD-based GP model on a test set
+<code>X0</code>, training/design set <code>design</code> and response matrix
+<code>resp</code>. The local neighborhood sets consist of <code>nn</code> out of
+which <code>n0</code> points are selected by the Euclidean distance with
+respect to the test points. The remaining <code>nn</code>-<code>n0</code>
+neighborhood points are selected sequentially by a greedy algorithm
+proposed by Zhang et al. (2018). This function supports the
+parallelization via both the R packages "parallel" and the OpenMP
+library.</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">lasvdGP(design, resp, X0=design, n0=10, nn=20,
+        nfea = min(1000,nrow(design)),
+        nsvd = nn, nadd = 1, frac = .95, gstart = 0.0001,
+        resvdThres = min(5, nn-n0), every = min(5,nn-n0),
+        nstarts = 5,centralize=FALSE, maxit=100,
+        errlog = "", nthread = 1, clutype="PSOCK")
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> An <code class="reqn">N</code> by <code class="reqn">d</code> matrix of <code class="reqn">N</code> training/design
+inputs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p> An <code class="reqn">L</code> by <code class="reqn">N</code> response matrix of <code>design</code>,
+where <code class="reqn">L</code> is the length of the time series outputs, <code class="reqn">N</code> is
+the number of design points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>X0</code></td>
+<td>
+<p> An <code class="reqn">M</code> by <code class="reqn">d</code> matrix of <code class="reqn">M</code> test inputs. The
+localized SVD-based GP models will be fitted on every point (row) of
+<code>X0</code>. The default value of <code>X0</code> is <code>design</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n0</code></td>
+<td>
+
+<p>The number of points in the initial neighborhood set. The initial
+neighborhood set is selected by the Euclidean distance. The default
+value is 10.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nn</code></td>
+<td>
+
+<p>The total number of neighborhood points. The <code>nn-n0</code> points are
+selected sequentially by the proposed algorithm. The default value
+is 20.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nfea</code></td>
+<td>
+
+<p>The number of feasible points within which to select the
+neighborhood points. This function will only consider the
+<code>nfea</code> design points closest to the test point in terms of
+Euclidean distance when selecting neighborhood points. The default
+value is the minimum of <code class="reqn">N</code> and 1000.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nsvd</code></td>
+<td>
+
+<p>The number of design points closest to the test points on whose
+response matrix to perform the initial singular value
+decomposition. The default value is <code>nn</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nadd</code></td>
+<td>
+
+<p>The number of neighborhood points selected at one iteration. The
+default value is 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frac</code></td>
+<td>
+
+<p>The threshold in the cumulative percentage criterion to select the
+number of SVD bases. The default value is 0.95.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gstart</code></td>
+<td>
+
+<p>The starting number and upper bound for estimating the nugget
+parameter. If <code>gstart = sqrt(.Machine$double.eps)</code>, the nugget
+parameter will be fixed at <code>sqrt(.Machine$double.eps)</code>, since
+<code>sqrt(.Machine$double.eps)</code> is the lower bound of the nugget
+term. The default value is 0.0001.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resvdThres</code></td>
+<td>
+
+<p>The threshold to re-perform SVD. After every <code>resvdThres</code>
+points have been included into the neighborhood set, the SVD of the
+response matrix will be re-performed and the SVD-based GP model will
+be refitted. The default value is the minimum of <code>nn</code>-<code>n0</code>
+and 5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>every</code></td>
+<td>
+
+<p>The threshold to refit GP models without re-perform SVD. After every
+<code>every</code> points have been included into the neighborhood set,
+the GP models will be refitted. But the SVD will not be
+re-performed. It is suggested <code>every</code> &lt;= <code>resvdThres</code>. The
+default value is the minimum of <code>nn</code>-<code>n0</code> and 5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstarts</code></td>
+<td>
+
+<p>The number of starting points used in the numerical maximization of
+the posterior density function. The larger <code>nstarts</code> will
+typically lead to more accurate prediction but longer computational
+time. The default value is 5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>centralize</code></td>
+<td>
+
+<p>If <code>centralize=TRUE</code> the response matrix will be centralized
+(subtract the mean) before the start of the algorithm. The mean will
+be added to the predictive mean at the finish of the algorithm. The
+default value is <code>FALSE</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxit</code></td>
+<td>
+
+<p>Maximum number of iterations in the numerical optimization algorithm
+for maximizing the posterior density function. The default value is
+100.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>errlog</code></td>
+<td>
+
+<p>The path of a log file that records the errors occur in the process of fitting
+local SVD-based GP models. If an empty string is provided, no log file will be
+produced.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nthread</code></td>
+<td>
+
+<p>The number of threads (processes) used in parallel execution of this
+function. <code>nthread=1</code> implies no parallelization. The default
+value is 1.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clutype</code></td>
+<td>
+
+<p>The type of parallization utilized by this function. If <code>clutype="OMP"</code>,
+it will use the OpenMP parallelization. Otherwise, it indicates the
+type of cluster in the R package "parallel" . The default value is "PSOCK".
+Required only if <code>nthread</code>&gt;1.
+</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>pmean</code></td>
+<td>
+
+<p>An <code class="reqn">L</code> by <code class="reqn">M</code> matrix of posterior predicted mean for the response at
+the test set <code>X0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ps2</code></td>
+<td>
+
+<p>An <code class="reqn">L</code> by <code class="reqn">M</code> matrix of posterior predicted variance for the response at
+the test set <code>X0</code>.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>flags</code></td>
+<td>
+
+<p>A vector of integers of length <code class="reqn">M</code> which indicates the status for fitting the
+local SVD-based GP models for each of the <code class="reqn">M</code> input points in the test set.
+The value <code class="reqn">0</code> indicates successful fitting, the value <code class="reqn">1</code> indicates an
+error in Cholesky decomposition of the correlation matrices, the value <code class="reqn">2</code>
+indicates an error in SVD of the local response matrix, the value <code class="reqn">3</code> indicates
+an error in optimizing the nugget term.
+</p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Ru Zhang <a href="mailto:heavenmarshal@gmail.com">heavenmarshal@gmail.com</a>,
+</p>
+<p>C. Devon Lin <a href="mailto:devon.lin@queensu.ca">devon.lin@queensu.ca</a>,
+</p>
+<p>Pritam Ranjan <a href="mailto:pritamr@iimidr.ac.in">pritamr@iimidr.ac.in</a></p>
+
+
+<h3>References</h3>
+
+<p>Zhang, R., Lin, C. D. and Ranjan, P. (2018) <em>Local Gaussian
+Process Model for Large-scale Dynamic Computer Experiments</em>,
+Journal of Computational and Graphical Statistics, <br> DOI:
+10.1080/10618600.2018.1473778.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>knnsvdGP</code>, <code>svdGP</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">library("lhs")
+forretal &lt;- function(x,t,shift=1)
+{
+    par1 &lt;- x[1]*6+4
+    par2 &lt;- x[2]*16+4
+    par3 &lt;- x[3]*6+1
+    t &lt;- t+shift
+    y &lt;- (par1*t-2)^2*sin(par2*t-par3)
+}
+timepoints &lt;- seq(0,1,len=200)
+design &lt;- lhs::randomLHS(100,3)
+test &lt;- lhs::randomLHS(20,3)
+
+## evaluate the response matrix on the design matrix
+resp &lt;- apply(design,1,forretal,timepoints)
+
+n0 &lt;- 14
+nn &lt;- 15
+gs &lt;- sqrt(.Machine$double.eps)
+
+## lasvdGP with mutiple (5) start points for GP model estimation,
+## It use the R package "parallel" for parallelization
+retlamsp &lt;- lasvdGP(design,resp,test,n0,nn,frac=.95,gstart=gs,
+                    centralize=TRUE,nstarts=5,nthread=2,clutype="PSOCK")
+
+## lasvdGP with single start point for GP model estimation,
+## It does not use parallel computation
+retlass &lt;- lasvdGP(design,resp,test,n0,nn,frac=.95,gstart=gs,
+                   centralize=TRUE,nstarts=1,nthread=1)
+
+</code></pre>
+
+
+</div>

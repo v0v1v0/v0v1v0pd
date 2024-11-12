@@ -1,0 +1,183 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>plot_moments</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Plot function: Display the influence of a covariate</h2>
+
+<h3>Description</h3>
+
+<p>This function takes a dataframe of predictions with one row per prediction
+and one column for every explanatory variable. Then, those predictions are
+held constant while one specific variable is varied over it's whole range
+(min-max). Then, the constant variables with the varied interest variables
+are predicted and plotted against the expected value and the variance of the
+underlying distribution.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">plot_moments(
+  model,
+  int_var,
+  pred_data = NULL,
+  rug = FALSE,
+  samples = FALSE,
+  uncertainty = FALSE,
+  ex_fun = NULL,
+  palette = "viridis",
+  vary_by = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>model</code></td>
+<td>
+<p>A fitted model on which the plots are based.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>int_var</code></td>
+<td>
+<p>The variable for which influences of the moments shall be
+graphically displayed. Has to be in character form.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pred_data</code></td>
+<td>
+<p>Combinations of covariate data, sometimes also known as
+"newdata", including the variable of interest, which will be ignored in
+later processing.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rug</code></td>
+<td>
+<p>Should the resulting plot be a rug plot?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>samples</code></td>
+<td>
+<p>If the provided model is a bamlss model, should the moment
+values be "correctly" calculated, using the transformed samples? See
+details for details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uncertainty</code></td>
+<td>
+<p>If <code>TRUE</code>, displays uncertainty measures about the
+covariate influences. Can only be <code>TRUE</code> if samples is also
+<code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ex_fun</code></td>
+<td>
+<p>An external function <code>function(par) {...}</code> which
+calculates a measure, whose dependency from a certain variable is of
+interest. Has to be specified in character form. See examples for an
+example.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>palette</code></td>
+<td>
+<p>See <code>plot_dist</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vary_by</code></td>
+<td>
+<p>Variable name in character form over which to vary the
+mean/reference values of explanatory variables. It is passed to
+set_mean. See that documentation for further details.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The target of this function is to display the influence of a selected effect
+on the predicted moments of the modeled distribution. The motivation for
+computing influences on the moments of a distribution is its
+interpretability: In most cases, the parameters of a distribution do not
+equate the moments and as such are only indirectly location, scale or shape
+properties, making the computed effects hard to understand.
+</p>
+<p>Navigating through the disarray of link functions, non-parametric effects and
+transformations to moments, <code>plot_moments()</code> supports a wide range of
+target distributions. See dists for details.
+</p>
+<p>Whether a distribution is supported or not depends on whether the underlying
+<code>R</code> object possesses functions to calculate the moments of the
+distribution from the predicted parameters. To achieve this for as many
+distributional families as possible, we worked together with both the authors
+of gamlss (Rigby and Stasinopoulos 2005) and bamlss (Umlauf et
+al. 2018) and implemented the moment functions for almost all available
+distributions in the respective packages. The betareg family was
+implemented in distreg.vis as well.
+</p>
+
+
+<h3>References</h3>
+
+<p>Rigby RA, Stasinopoulos DM (2005). "Generalized Additive Models
+for Location, Scale and Shape." Journal of the Royal Statistical Society C,
+54(3), 507-554.
+</p>
+<p>Umlauf, N, Klein N, Zeileis A (2018). "BAMLSS: Bayesian
+Additive Models for Location, Scale and Shape (and Beyond)." Journal of
+Computational and Graphical Statistics, 27(3), 612-627.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Generating some data
+dat &lt;- model_fam_data(fam_name = "LOGNO")
+
+# Estimating the model
+library("gamlss")
+model &lt;- gamlss(LOGNO ~ ps(norm2) + binomial1,
+                ~ ps(norm2) + binomial1,
+                data = dat, family = "LOGNO")
+
+# Get newdata by either specifying an own data.frame, or using set_mean()
+# for obtaining mean vals of explanatory variables
+ndata_user &lt;- dat[1:5, c("norm2", "binomial1")]
+ndata_auto &lt;- set_mean(model_data(model))
+
+# Influence graphs
+plot_moments(model, int_var = "norm2", pred_data = ndata_user) # cont. var
+plot_moments(model, int_var = "binomial1", pred_data = ndata_user) # discrete var
+plot_moments(model, int_var = "norm2", pred_data = ndata_auto) # with new ndata
+
+# If pred_data argument is omitted plot_moments uses mean explanatory
+# variables for prediction (using set_mean)
+plot_moments(model, int_var = "norm2")
+
+# Rug Plot
+plot_moments(model, int_var = "norm2", rug = TRUE)
+
+# Different colour palette
+plot_moments(model, int_var = "binomial1", palette = "Dark2")
+
+# Using an external function
+ineq &lt;- function(par) {
+  2 * pnorm((par[["sigma"]] / 2) * sqrt(2)) - 1
+}
+plot_moments(model, int_var = "norm2", pred_data = ndata_user, ex_fun = "ineq")
+
+</code></pre>
+
+
+</div>

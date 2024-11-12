@@ -1,0 +1,221 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>ED.drc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Estimating effective doses</h2>
+
+<h3>Description</h3>
+
+<p><code>ED</code> estimates effective doses (ECp/EDp/ICp) for given reponse levels.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">  ## S3 method for class 'drc'
+ED(object, respLev, interval = c("none", "delta", "fls", "tfls"), 
+  clevel = NULL, level = ifelse(!(interval == "none"), 0.95, NULL),
+  reference = c("control", "upper"), type = c("relative", "absolute"), lref, uref,
+  bound = TRUE, od = FALSE, vcov. = vcov, display = TRUE, pool = TRUE, logBase = NULL, 
+  multcomp = FALSE, ...)  
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>an object of class 'drc'.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>respLev</code></td>
+<td>
+<p>a numeric vector containing the response levels.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>interval</code></td>
+<td>
+<p>character string specifying the type of confidence intervals to be supplied. The default is "none". 
+Use "delta" for asymptotics-based confidence intervals (using the delta method and the t-distribution).
+Use "fls" for from logarithm scale based confidence intervals (in case the parameter in the model is log(ED50) as for
+the <code>llogistic2</code>) models. The only alternative for model-robust fits is using inverse regression.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>clevel</code></td>
+<td>
+<p>character string specifying the curve id in case on estimates for a specific curve or compound is requested. By default estimates
+are shown for all curves.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>numeric. The level for the confidence intervals. The default is 0.95.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>reference</code></td>
+<td>
+<p>character string. Is the upper limit or the control level the reference?</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>type</code></td>
+<td>
+<p>character string. Whether the specified response levels are absolute or relative (default).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lref</code></td>
+<td>
+<p>numeric value specifying the lower limit to serve as reference.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>uref</code></td>
+<td>
+<p>numeric value specifying the upper limit to serve as reference (e.g., 100%).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bound</code></td>
+<td>
+<p>logical. If TRUE only ED values between 0 and 100% are allowed. FALSE is useful for hormesis models.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>od</code></td>
+<td>
+<p>logical. If TRUE adjustment for over-dispersion is used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vcov.</code></td>
+<td>
+<p>function providing the variance-covariance matrix. <code>vcov</code> is the default, 
+but <code>sandwich</code> is also an option (for obtaining robust standard errors).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>display</code></td>
+<td>
+<p>logical. If TRUE results are displayed. Otherwise they are not (useful in simulations).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pool</code></td>
+<td>
+<p>logical. If TRUE curves are pooled. Otherwise they are not. This argument only works for models with independently fitted curves as specified in <code>drm</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>logBase</code></td>
+<td>
+<p>numeric. The base of the logarithm in case logarithm transformed dose values are used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multcomp</code></td>
+<td>
+<p>logical to switch on output for use with the package multcomp (which needs to be activated first). Default is FALSE (corresponding to the original output).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>see the details section below.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For hormesis models (<code>braincousens</code> and <code>cedergreen</code>), the additional 
+arguments <code>lower</code> and <code>upper</code> may be supplied. These arguments specify the lower and upper limits 
+of the bisection method used to find the ED values.  The lower and upper limits need to be smaller/larger 
+than the EDx level to be calculated. The default limits are 0.001 and 1000 for <code>braincousens</code> and 
+0.0001 and 10000 for <code>cedergreen</code> and <code>ucedergreen</code>, but this may need to be modified 
+(for <code>cedergreen</code> the upper limit may need to be increased and for <code>ucedergreen</code> 
+the lower limit may need to be increased). Note that the lower limit should not be set to 0 (use instead 
+something like 1e-3, 1e-6, ...).
+</p>
+
+
+<h3>Value</h3>
+
+<p>An invisible matrix containing the shown matrix with two or more columns, containing the estimates 
+and the corresponding estimated standard errors and possibly lower and upper confidence limits.
+Or, alternatively, a list with elements that may be plugged directly into <code>parm</code> 
+in the package <em>multcomp</em> (in case the argument <code>multcomp</code> is TRUE).
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Christian Ritz</p>
+
+
+<h3>See Also</h3>
+
+<p><code>backfit</code>, <code>isobole</code>, and <code>maED</code> use <code>ED</code> for specific calculations involving estimated ED values.
+</p>
+<p>The related function <code>EDcomp</code> may be used for estimating differences and ratios of ED values, 
+whereas <code>compParm</code> may be used to compare other model parameters. 
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Fitting 4-parameter log-logistic model
+ryegrass.m1 &lt;- drm(ryegrass, fct = LL.4())
+
+## Calculating EC/ED values
+ED(ryegrass.m1, c(10, 50, 90)) 
+## first column: the estimates of ED10, ED50 and ED90
+## second column: the corresponding estimated standard errors 
+
+### How to use the argument 'ci'
+
+## Also displaying 95% confidence intervals
+ED(ryegrass.m1, c(10, 50, 90), interval = "delta")
+
+## Comparing delta method and back-transformed 
+##  confidence intervals for ED values
+
+## Fitting 4-parameter log-logistic 
+##  in different parameterisation (using LL2.4)
+ryegrass.m2 &lt;- drm(ryegrass, fct = LL2.4())  
+
+ED(ryegrass.m1, c(10, 50, 90), interval = "fls")
+ED(ryegrass.m2, c(10, 50, 90), interval = "delta")
+
+
+### How to use the argument 'bound'
+
+## Fitting the Brain-Cousens model
+lettuce.m1 &lt;- drm(weight ~ conc, 
+data = lettuce, fct = BC.4())
+
+### Calculating ED[-10]
+
+# This does not work
+#ED(lettuce.m1, -10)  
+
+## Now it does work
+ED(lettuce.m1, -10, bound = FALSE)  # works
+ED(lettuce.m1, -20, bound = FALSE)  # works
+
+## The following does not work for another reason: ED[-30] does not exist 
+#ED(lettuce.m1, -30, bound = FALSE)  
+
+</code></pre>
+
+
+</div>

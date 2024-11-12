@@ -1,0 +1,174 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>prep_add_missing_codes</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Insert missing codes for <code>NA</code>s based on rules</h2>
+
+<h3>Description</h3>
+
+<p>Insert missing codes for <code>NA</code>s based on rules
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">prep_add_missing_codes(
+  resp_vars,
+  study_data,
+  meta_data,
+  label_col,
+  rules,
+  use_value_labels,
+  overwrite = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>resp_vars</code></td>
+<td>
+<p>variable list the name of the measurement variables to be
+modified, all from <code>rules</code>, if omitted</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>study_data</code></td>
+<td>
+<p>data.frame the data frame that contains the measurements</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>meta_data</code></td>
+<td>
+<p>data.frame the data frame that contains metadata
+attributes of study data</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>label_col</code></td>
+<td>
+<p>variable attribute the name of the column in the metadata
+with labels of variables</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>rules</code></td>
+<td>
+<p>data.frame with the columns:
+</p>
+
+<ul>
+<li> <p><code>resp_vars</code>: Variable, whose <code>NA</code>-values should be replaced by jump codes
+</p>
+</li>
+<li> <p><code>CODE_CLASS</code>: Either <code>MISSING</code> or <code>JUMP</code>: Is the currently described case
+an expected missing value (<code>JUMP</code>) or not (<code>MISSING</code>)
+</p>
+</li>
+<li> <p><code>CODE_VALUE</code>: The jump code or missing code
+</p>
+</li>
+<li> <p><code>CODE_LABEL</code>: A label describing the reason for the missing value
+</p>
+</li>
+<li> <p><code>RULE</code>: A rule in <code>REDcap</code> style (see, e.g.,
+<a href="https://help.redcap.ualberta.ca/help-and-faq/project-best-practices/data-quality/example-data-quality-rules"><code>REDcap</code> help</a>,
+<a href="https://www.ctsi.ufl.edu/files/2017/06/Calculated-Fields-%E2%80%93-REDCap-How.pdf"><code>REDcap</code> how-to</a>), and
+<a href="https://www.iths.org/wp-content/uploads/REDCap-Branching-Logic-2017-202.pdf"><code>REDcap</code> branching logic</a>
+that describes cases for the missing
+</p>
+</li>
+</ul>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_value_labels</code></td>
+<td>
+<p>logical In rules for factors, use the value labels,
+not the codes. Defaults to <code>TRUE</code>, if any
+<code>VALUE_LABELS</code> are given in the metadata.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>overwrite</code></td>
+<td>
+<p>logical Also insert missing codes, if the values are not
+<code>NA</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a <code>list</code> with the entries:
+</p>
+
+<ul>
+<li> <p><code>ModifiedStudyData</code>: Study data with <code>NA</code>s replaced by the <code>CODE_VALUE</code>
+</p>
+</li>
+<li> <p><code>ModifiedMetaData</code>: Metadata having the new codes amended in the columns
+<code>JUMP_LIST</code> or <code>MISSING_LIST</code>, respectively
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+load(system.file("extdata", "study_data.RData", package = "dataquieR"))
+load(system.file("extdata", "meta_data.RData", package = "dataquieR"))
+vn &lt;- subset(r$ModifiedMetaData, LABEL == "PREGNANT_0", VAR_NAMES)[[1]]
+rules &lt;- tibble::tribble(
+  ~resp_vars, ~CODE_CLASS, ~CODE_LABEL, ~CODE_VALUE, ~RULE,
+  "PREGNANT_0", "JUMP", "No pregnancies in males", "9999", '[SEX_0]=1',
+ )
+ r &lt;- prep_add_missing_codes(NA, study_data, meta_data,
+   label_col = "LABEL", rules, use_value_labels = FALSE)
+ subset(r$ModifiedMetaData, LABEL == "PREGNANT_0", JUMP_LIST)
+ subset(meta_data, LABEL == "PREGNANT_0", JUMP_LIST)
+ table(study_data[[vn]])
+ table(r$ModifiedStudyData[[vn]])
+ r &lt;- prep_add_missing_codes(NA, study_data, meta_data,
+   label_col = "LABEL", rules, use_value_labels = FALSE, overwrite = TRUE)
+ table(study_data[[vn]])
+ table(r$ModifiedStudyData[[vn]])
+
+rules &lt;- tibble::tribble(
+  ~resp_vars, ~CODE_CLASS, ~CODE_LABEL, ~CODE_VALUE, ~RULE,
+  "PREGNANT_0", "JUMP", "No pregnancies in males", "9999", '[SEX_0]="males"',
+ )
+ r &lt;- prep_add_missing_codes(NA, study_data, meta_data,
+   label_col = "LABEL", rules, use_value_labels = TRUE, overwrite = FALSE)
+ table(study_data[[vn]])
+ table(r$ModifiedStudyData[[vn]])
+
+rules &lt;- tibble::tribble(
+  ~resp_vars, ~CODE_CLASS, ~CODE_LABEL, ~CODE_VALUE, ~RULE,
+  "PREGNANT_0", "JUMP", "No pregs in males", "9999", '[v00002]="males"',
+ )
+ r &lt;- prep_add_missing_codes(NA, study_data, meta_data,
+   label_col = "LABEL", rules, use_value_labels = TRUE, overwrite = FALSE)
+ table(study_data[[vn]])
+ table(r$ModifiedStudyData[[vn]])
+ devtools::load_all(".")
+
+study_data$v00002 &lt;- ifelse(study_data$v00002 == "0", "females", "males")
+meta_data[meta_data$LABEL == "SEX_0", "VALUE_LABELS"] &lt;- "females|males"
+rules &lt;- tibble::tribble(
+  ~resp_vars, ~CODE_CLASS, ~CODE_LABEL, ~CODE_VALUE, ~RULE,
+  "PREGNANT_0", "JUMP", "No pregnancies in males", "9999", '[v00002]="males"',
+)
+r &lt;- prep_add_missing_codes(NA, study_data, meta_data,
+                            label_col = "LABEL", rules, use_value_labels = TRUE, overwrite = FALSE)
+table(study_data[[vn]])
+table(r$ModifiedStudyData[[vn]])
+
+## End(Not run)
+</code></pre>
+
+
+</div>

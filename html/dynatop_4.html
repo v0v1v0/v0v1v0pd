@@ -1,0 +1,78 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>resample_xts</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Functions to resample an xts time series</h2>
+
+<h3>Description</h3>
+
+<p>Takes an xts time series object and resamples then to a new time step.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">resample_xts(obs, dt, is.rate = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>obs</code></td>
+<td>
+<p>A times series (xts) object with a POSIXct index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>New time interval in seconds</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>is.rate</code></td>
+<td>
+<p>If TRUE then these are rates i.e m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.
+</p>
+<p>Because of the methods used the results:
+</p>
+<p>- are not accurate when the input data does not have a constant timestep. The code issues a warning and proceeds assuming the data are equally spaced with the modal timestep.
+- do not guarantee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An xts object with the new timestep
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># Resample Swindale Rainfall to hourly intervals
+require(dynatop)
+data("Swindale")
+obs &lt;- Swindale$obs
+cobs &lt;- resample_xts(obs, dt=60*60) # hourly data
+dobs &lt;- resample_xts(cobs,dt=15*60) # back to 15 minute data
+cdobs &lt;- resample_xts(dobs,dt=60*60) # back to hourly data - checks time stamp conversion
+obs &lt;- obs[zoo::index(obs)&lt;=max(zoo::index(cobs)),]
+
+# check totals
+stopifnot( all.equal(sum(obs),sum(cobs)) )
+stopifnot( all.equal(sum(obs),sum(dobs)) )
+stopifnot( all.equal(cobs,cdobs) )
+</code></pre>
+
+
+</div>

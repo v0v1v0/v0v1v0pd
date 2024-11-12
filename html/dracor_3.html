@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>draco_decode</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Decode Draco encoded raw bytes containing mesh or point cloud data</h2>
+
+<h3>Description</h3>
+
+<p>Decode Draco encoded raw bytes containing mesh or point cloud data
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">draco_decode(data, mesh3d = TRUE, ...)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p><code>raw</code> bytes containing Draco data e.g. as read by
+<code>readBin</code> OR a character vector containing a URL or a path to a
+file on disk.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mesh3d</code></td>
+<td>
+<p>Whether to return <code>rgl::mesh3d</code> object (when <code>TRUE</code>,
+the default) or something as close as possible to what is provided by the
+Draco library (when <code>FALSE</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Additional arguments passed to <code>download.file</code> when
+data is a URL (e.g. <code>quiet=TRUE</code> or <code>method</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that the Draco library returns 0-based indices for the faces
+whereas R in general and <code>rgl::mesh3d</code> in particular expect 1-based
+indices. When <code>mesh3d=FALSE</code>, the result will have 0-based indices as
+returned by the Draco library.
+</p>
+<p>If <code>data</code> is an http/https URL it will be downloaded to a temporary
+location on disk (using <code>download.file</code>). If <code>data</code> is a
+character vector that does not look like a URL then it is assumed to refer
+to a file on disk (which will be read with <code>readBin</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a <code>rgl::mesh3d</code> object or a list containing elements
+<code>points</code> and (for meshes). <code>faces</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# fetch test data
+# originally downloaded from:
+carurl='https://github.com/google/draco/blob/master/testdata/car.drc?raw=true'
+## Not run: 
+car.m=draco_decode(carurl)
+
+## End(Not run)
+# use cached version in package for example
+car.m=draco_decode(system.file('draco/car.drc', package = 'dracor'))
+str(car.m)
+
+## show the result
+if(requireNamespace("rgl", quietly=TRUE)) {
+rgl::shade3d(car.m, col='red')
+
+## demonstrate conversion of raw form to rgl::mesh3d object
+car.raw=draco_decode(carurl, mesh3d=FALSE)
+str(car.raw)
+car.m2 = rgl::tmesh3d(
+  vertices = car.raw$points,
+  indices = car.raw$faces + 1,
+  homogeneous = FALSE)
+}
+
+</code></pre>
+
+
+</div>

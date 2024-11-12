@@ -1,0 +1,165 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>SL2D</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>
+Squared <code class="reqn">L_{2}</code> Discrepancy Approach for Estimating the
+Solution to the Inverse Problem
+</h2>
+
+<h3>Description</h3>
+
+<p>This function fits an SVD-based GP model on the
+training dataset <code>design</code> and response matrix <code>resp</code>, and
+minimizes the squared <code class="reqn">L_{2}</code> discrepancy between the target
+response and the predicted mean of the SVD-based GP model on the
+test set <code>candidate</code> to estimate the solution to the inverse
+problem. It is a naive approach for estimating the solution provided
+in Chapter 4 of Zhang (2018).
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">SL2D(design,resp,yobs,candidate,frac=.95,nstarts=5,
+     mtype=c("zmean","cmean","lmean"),
+     gstart=0.0001)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> An <code class="reqn">N</code> by <code class="reqn">d</code> matrix of <code class="reqn">N</code>
+training/design inputs.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>resp</code></td>
+<td>
+<p> An <code class="reqn">L</code> by <code class="reqn">N</code> response matrix of <code>design</code>,
+where <code class="reqn">L</code> is the length of the time series outputs, <code class="reqn">N</code> is
+the number of design points.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>yobs</code></td>
+<td>
+<p> A vector of length <code class="reqn">L</code> of the time-series valued
+field observations or the target response.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>candidate</code></td>
+<td>
+<p> An <code class="reqn">M</code> by <code class="reqn">d</code> matrix of <code class="reqn">M</code> candidate points
+on which the estimated solution to the inverse problem is extracted.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>frac</code></td>
+<td>
+
+<p>The threshold in the cumulative percentage criterion to select the
+number of SVD bases. The default value is 0.95.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nstarts</code></td>
+<td>
+
+<p>The number of starting points used in the numerical maximization of
+the posterior density function. The larger <code>nstarts</code> will
+typically lead to more accurate prediction but longer computational
+time. The default value is 5.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mtype</code></td>
+<td>
+<p> The type of mean functions for the GP models. The choice
+"zmean" denotes zero-mean, "cmean" indicates constant-mean, "lmean" indicates
+linear-mean. The default choice is "zmean".
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>gstart</code></td>
+<td>
+<p> The starting number and upper bound for estimating the
+nugget parameter. If <code>gstart = sqrt(.Machine$double.eps)</code>, the
+nugget parameter will be fixed at <code>sqrt(.Machine$double.eps)</code>,
+since <code>sqrt(.Machine$double.eps)</code> is the lower bound of the
+nugget term. The default value is 0.0001.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<table><tr style="vertical-align: top;">
+<td><code>xhat</code></td>
+<td>
+<p>The estimated solution to the inverse problem obtained from the
+candidate set <code>candidate</code>.</p>
+</td>
+</tr></table>
+<h3>Author(s)</h3>
+
+<p>Ru Zhang <a href="mailto:heavenmarshal@gmail.com">heavenmarshal@gmail.com</a>,
+</p>
+<p>C. Devon Lin <a href="mailto:devon.lin@queensu.ca">devon.lin@queensu.ca</a>,
+</p>
+<p>Pritam Ranjan <a href="mailto:pritamr@iimidr.ac.in">pritamr@iimidr.ac.in</a></p>
+
+
+<h3>References</h3>
+
+<p> Zhang, R. (2018) <em>Modeling and Analysis of Dynamic Computer Experiments</em>,
+PhD thesis, Queen's University, ON, Canada.</p>
+
+
+<h3>See Also</h3>
+
+<p><code>ESL2D</code>, <code>saEI</code>, <code>svdGP</code>.</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  library("lhs")
+  forretal &lt;- function(x,t,shift=1)
+  {
+    par1 &lt;- x[1]*6+4
+    par2 &lt;- x[2]*16+4
+    par3 &lt;- x[3]*6+1
+    t &lt;- t+shift
+    y &lt;- (par1*t-2)^2*sin(par2*t-par3)
+  }
+  timepoints &lt;- seq(0,1,len=200)
+  design &lt;- lhs::randomLHS(30,3)
+  candidate &lt;- lhs::randomLHS(500,3)
+  candidate &lt;- rbind(candidate,design)
+
+  ## evaluate the response matrix on the design matrix
+  resp &lt;- apply(design,1,forretal,timepoints)
+  x0 &lt;- runif(3)
+  y0 &lt;- forretal(x0,timepoints)
+  yobs &lt;- y0+rnorm(200,0,sd(y0)/sqrt(50))
+  xhat &lt;- SL2D(design,resp,yobs,candidate,nstarts=1)
+  yhat &lt;- forretal(xhat,timepoints)
+
+  ## draw a figure to illustrate
+  plot(y0,ylim=c(min(y0,yhat),max(y0,yhat)))
+  lines(yhat,col="red")
+</code></pre>
+
+
+</div>

@@ -1,0 +1,326 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dr4pl</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting 4 Parameter Logistic (4PL) models to dose-response data.</h2>
+
+<h3>Description</h3>
+
+<p>This function fits a 4PL model to dose-response data. Users can
+obtain fitted parameter estimates as return values. Using auxiliary functions
+provided by this R package, users can plot a fitted dose-response curve and
+obtain confidence intervals of true parameters. In addition, the goodness-of-fit
+test for model adequacy of the 4PL models can be performed when replicates are
+available for each dose level.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dr4pl(...)
+
+## S3 method for class 'formula'
+dr4pl(
+  formula,
+  data = list(),
+  init.parm = dr4pl_theta(),
+  trend = "auto",
+  method.init = "Mead",
+  method.robust = "squared",
+  method.optim = "Nelder-Mead",
+  use.Hessian = FALSE,
+  level = 0.9999,
+  failure.message = FALSE,
+  upperl = NULL,
+  lowerl = NULL,
+  ...
+)
+
+## S3 method for class 'data.frame'
+dr4pl(
+  data,
+  dose,
+  response,
+  init.parm = dr4pl_theta(),
+  trend = "auto",
+  method.init = "Mead",
+  method.robust = "squared",
+  method.optim = "Nelder-Mead",
+  use.Hessian = FALSE,
+  level = 0.9999,
+  failure.message = FALSE,
+  upperl = NULL,
+  lowerl = NULL,
+  ...
+)
+
+## Default S3 method:
+dr4pl(
+  dose,
+  response,
+  init.parm = dr4pl_theta(),
+  trend = "auto",
+  method.init = "Mead",
+  method.robust = "squared",
+  method.optim = "Nelder-Mead",
+  use.Hessian = FALSE,
+  level = 0.9999,
+  failure.message = FALSE,
+  upperl = NULL,
+  lowerl = NULL,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Further arguments to be passed to <code>constrOptim</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>Symbolic description of the model to be fit. Either of the
+form 'response ~ dose' or as a data frame with response values in first
+column and dose values in second column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Data frame containing variables in the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>init.parm</code></td>
+<td>
+<p>Either a call to [dr4pl_theta], or a Vector of initial parameters
+to be optimized in the model.
+</p>
+
+<ul>
+<li>
+<p> UpperLimit:  <code class="reqn">\theta[1]</code>
+</p>
+</li>
+<li>
+<p> IC50/EC50: <code class="reqn">\theta[2]</code>
+</p>
+</li>
+<li>
+<p> Slope: <code class="reqn">\theta[3]</code>
+</p>
+</li>
+<li>
+<p> LowerLimit: <code class="reqn">\theta[4]</code>
+</p>
+</li>
+</ul>
+<p>dr4pl assumes <code class="reqn">\theta[1]&gt;\theta[4]</code>. Note that when using upperl and
+lowerl, the user may need to set this parameter because the estimated
+parameters may not be within the feasible region.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>trend</code></td>
+<td>
+<p>Indicator of whether a dose-response curve is a decreasing
+<code class="reqn">\theta[3]&lt;0</code> or increasing curve <code class="reqn">\theta[3]&gt;0</code>. The default is "auto"
+which indicates that the trend of the curve is automatically determined by
+data. The option "decreasing" will impose a restriction <code class="reqn">\theta[3]&lt;=0</code>
+while the option "increasing" will impose a restriction <code class="reqn">\theta[3]&gt;=0</code> in an
+optimization process.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method.init</code></td>
+<td>
+<p>Method of obtaining initial values of the parameters.
+If this parameter is left unassigned, a default "Mead" method will be used.
+Assign "logistic" to use the logistic method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method.robust</code></td>
+<td>
+<p>Parameter to select loss function for the robust estimation
+method to be used to fit a model. The argument NULL indicates the sum of squares
+loss, "absolute" indicates the absolute deviation loss, "Huber" indicates Huber's
+loss and "Tukey" indicates Tukey's biweight loss.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>method.optim</code></td>
+<td>
+<p>Method of optimization of the loss function specified by
+<code>method.robust</code>. This function argument is directly passed to the function
+<code>constrOptim</code> which is provided in the <span class="pkg">base</span> package of R.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use.Hessian</code></td>
+<td>
+<p>Indicator of whether the Hessian matrix (TRUE) or the
+gradient vector is used in the Hill bounds.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>level</code></td>
+<td>
+<p>Confidence level to be used in Hill bounds computation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>failure.message</code></td>
+<td>
+<p>Indicator of whether a message indicating attainment of
+the Hill bounds and possible resolutions will be printed to the console (TRUE)
+or hidden (FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upperl</code></td>
+<td>
+<p>Either NULL or a numeric vector of length 4 that specifies the upper limit
+for the initial parameters of <code class="reqn">c(\theta[1],\theta[2],\theta[3],\theta[4])</code> during the
+optimization process. By default no upperl is assumed. If the user wants to constain only
+some parameter values, set desired numeric bound in the appropriate position and fill Inf
+to impose no upper bounds on other values. All upperl values must be greater than
+corresponding initalized parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lowerl</code></td>
+<td>
+<p>Either NULL or a numeric vector of length 4 that specifies the lower limit
+for the initial parameters of <code class="reqn">c(\theta[1],\theta[2],\theta[3],\theta[4])</code> during the
+optimization process. By default no lowerl is assumed. If the user wants to constain only
+some parameter values, set desired numeric bound in the appropriate position and fill -Inf
+to impose no lower bounds on other values. All lowerl values must be greater than
+corresponding initalized parameters.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dose</code></td>
+<td>
+<p>Vector of dose levels</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p>Vector of responses</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>This function fits a 4 parameter logistic (4PL) model to dose-response
+data. A formula of the model is
+</p>
+<p style="text-align: center;"><code class="reqn">\theta[1]+(\theta[4]-\theta[1])/(1+(z/\theta[2])^\theta[3])</code>
+</p>
+
+<p><code>method.init</code> specifies an initialization method to get initial parameter
+estimates based on data. The currently supported initialization methods are
+"logistic" and 'Mead'. For further details, see the vignette.
+</p>
+<p><code>method.optim</code> specifies an optimization method to be used in
+"constrOptim" function. The currently supported optimization techniques
+include "Nelder-Mead", "BFGS", "CG", "L-BFGS-B", "SANN" and "Brent". For
+further details, see the help page of <code>optim</code>.
+</p>
+<p><code>method.robust</code> chooses a robust estimation method among 4 methods.
+The method of estimation is usually identified by the loss function of the
+method. This package supports 4 types of loss functions: sum-of-squares loss,
+absolute deviation loss, Huber's loss and Tukey's biweight loss. Each of
+loss function is explained in detail in the vignette.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A 'dr4pl' object for which "confint", "gof", "print" and "summary"
+methods are implemented. For details, see the help page of each method.
+For example, type <code>?confint.dr4pl</code> to obtain the confidence intervals
+of parameters of the 'dr4pl' object.
+</p>
+
+
+<h3>Methods (by class)</h3>
+
+
+<ul>
+<li> <p><code>formula</code>: General 4PL model fitting function for analysis of
+dose-response relation.
+</p>
+</li>
+<li> <p><code>data.frame</code>: Method for when formula argument is missing.
+dose and response arguments are necessary
+</p>
+</li>
+<li> <p><code>default</code>: Used in the default case, supplying a single dose and
+response variable
+</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Hyowon An, <a href="mailto:ahwbest@gmail.com">ahwbest@gmail.com</a>
+</p>
+<p>Justin T. Landis, <a href="mailto:jtlandis314@gmail.com">jtlandis314@gmail.com</a>
+</p>
+<p>Aubrey G. Bailey, <a href="mailto:aubreybailey@gmail.com">aubreybailey@gmail.com</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>confint.dr4pl</code>, <code>gof.dr4pl</code>,
+<code>print.dr4pl</code>, <code>summary.dr4pl</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">  ##Assign method.init = "logistic" to use logistic method of estimation.
+  ##default method
+  a &lt;- dr4pl(dose = sample_data_1$Dose,
+             response = sample_data_1$Response,
+             method.init = "logistic")
+  plot(a)
+
+  ##Use default or Assign method.init = "Mead" to use Mead's method of estimation.
+  # Use method.robust to select desired loss function
+  # formula method
+  b &lt;- dr4pl(formula = Response~Dose,
+             data = sample_data_4,
+             method.init = "Mead",
+             method.robust = "Tukey" )
+  plot(b)
+
+  #data.frame method
+  c &lt;- dr4pl(data = sample_data_10,
+             dose = Dose,
+             response = Response)
+  plot(c)
+
+  ##compatable with ggplot
+  library(ggplot2) #load ggplot2
+  c &lt;- dr4pl(Response~Dose,
+             data = drc_error_2,
+             method.optim = "CG",
+             trend = "decreasing" )
+  d &lt;- plot(c, x.breaks = c(.00135, .0135, .135, 1.35, 13.5))
+  d + theme_grey()
+</code></pre>
+
+
+</div>

@@ -1,0 +1,112 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>model_performance</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Dataset Level Model Performance Measures</h2>
+
+<h3>Description</h3>
+
+<p>Function <code>model_performance()</code> calculates various performance measures for classification and regression models.
+For classification models following measures are calculated: F1, accuracy, recall, precision and AUC.
+For regression models following measures are calculated: mean squared error, R squared, median absolute deviation.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">model_performance(explainer, ..., cutoff = 0.5)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>explainer</code></td>
+<td>
+<p>a model to be explained, preprocessed by the <code>explain</code> function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>other parameters</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutoff</code></td>
+<td>
+<p>a cutoff for classification models, needed for measures like recall, precision, ACC, F1. By default 0.5.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An object of the class <code>model_performance</code>.
+</p>
+<p>It's a list with following fields:
+</p>
+
+<ul>
+<li> <p><code>residuals</code> - data frame that contains residuals for each observation
+</p>
+</li>
+<li> <p><code>measures</code> - list with calculated measures that are dedicated for the task, whether it is regression, binary classification or multiclass classification.
+</p>
+</li>
+<li> <p><code>type</code> - character that specifies type of the task.
+</p>
+</li>
+</ul>
+<h3>References</h3>
+
+<p>Explanatory Model Analysis. Explore, Explain, and Examine Predictive Models. <a href="https://ema.drwhy.ai/">https://ema.drwhy.ai/</a>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# regression
+
+library("ranger")
+apartments_ranger_model &lt;- ranger(m2.price~., data = apartments, num.trees = 50)
+explainer_ranger_apartments  &lt;- explain(apartments_ranger_model, data = apartments[,-1],
+                             y = apartments$m2.price, label = "Ranger Apartments")
+model_performance_ranger_aps &lt;- model_performance(explainer_ranger_apartments )
+model_performance_ranger_aps
+plot(model_performance_ranger_aps)
+plot(model_performance_ranger_aps, geom = "boxplot")
+plot(model_performance_ranger_aps, geom = "histogram")
+
+# binary classification
+
+titanic_glm_model &lt;- glm(survived~., data = titanic_imputed, family = "binomial")
+explainer_glm_titanic &lt;- explain(titanic_glm_model, data = titanic_imputed[,-8],
+                         y = titanic_imputed$survived)
+model_performance_glm_titanic &lt;- model_performance(explainer_glm_titanic)
+model_performance_glm_titanic
+plot(model_performance_glm_titanic)
+plot(model_performance_glm_titanic, geom = "boxplot")
+plot(model_performance_glm_titanic, geom = "histogram")
+
+# multilabel classification
+
+HR_ranger_model &lt;- ranger(status~., data = HR, num.trees = 50,
+                               probability = TRUE)
+explainer_ranger_HR  &lt;- explain(HR_ranger_model, data = HR[,-6],
+                             y = HR$status, label = "Ranger HR")
+model_performance_ranger_HR &lt;- model_performance(explainer_ranger_HR)
+model_performance_ranger_HR
+plot(model_performance_ranger_HR)
+plot(model_performance_ranger_HR, geom = "boxplot")
+plot(model_performance_ranger_HR, geom = "histogram")
+
+
+
+</code></pre>
+
+
+</div>

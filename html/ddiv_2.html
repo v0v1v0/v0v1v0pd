@@ -1,0 +1,142 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>IVfeature</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculate IV feature from a IV curve</h2>
+
+<h3>Description</h3>
+
+<p>Calculate IV feature from the given IV curve with one step
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">IVfeature(I, V, crt = 0.2, num = 75, crtvalb = 0.3)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>I</code></td>
+<td>
+<p>A vector of current values from IV data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>V</code></td>
+<td>
+<p>A vector of voltage values from IV data frame</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crt</code></td>
+<td>
+<p>A value to set for how large of regression coefficient change rate we use as not changing much. This is due to the value of IV curve, suggestion is to test this function with several IV curves for your data and find the proper value. The default is 0.2.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>num</code></td>
+<td>
+<p>A value of number of consecutive data points in the moving window used to calculate the slope of the windows and flat areas for extracting Isc and Rsh. The default is 75.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>crtvalb</code></td>
+<td>
+<p>A value to set the change of I(current) we want to use as changing very much (to detect the end of IV curve). Suggestion is to test this function with several IV curves for your data and find the proper value. The default is 0.3</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Note that IV curve should have voltage ordered from the smalles value to the largest value.
+</p>
+<p>This function can gives result for IV curves with more than one steps, but the results are not accurate.
+To extract IV features for IV curves with more than one steps, or unsure about the steps of IV curves, please use IVExtractResult().
+For IV curve has only one step, this function can be used.
+</p>
+
+
+<h3>Value</h3>
+
+<p>a list of the following items:
+</p>
+
+<ul>
+<li>
+<p> "Isc": short-circuit current, which is the current through the solar cell when the voltage across the solar cell is zero.
+</p>
+</li>
+<li>
+<p> "Rsh": shunt resistance, which is the inverse slope of the IV curve near Isc.
+</p>
+</li>
+<li>
+<p> "Voc": open-circuit voltage, which is the maximum voltage from a solar cell and occurs at zero current.
+</p>
+</li>
+<li>
+<p> "Rs": series resistance, which is the inverse slope of the IV curve near Voc.
+</p>
+</li>
+<li>
+<p> "Pmp": maximum power for a solar cell/PV module.
+</p>
+</li>
+<li>
+<p> "Imp": current at maximum power.
+</p>
+</li>
+<li>
+<p> "Vmp": voltage at maximum power.
+</p>
+</li>
+<li>
+<p> "FF": fill factor, which is the ratio of maximum power from a solar cell to the product of Voc and Isc.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">#this IV curve is of step=1
+#if IV curve is of step&gt;1, please use IVsteps to first find the number of
+#steps and change points, then apply this function for each steps
+#load the data provided in the package
+data(IV_step1)
+IV1 &lt;- data.frame(IV_step1)
+result &lt;- IVfeature(IV1$I,IV1$V,crt=0.2,num=75,crtvalb=0.3)
+
+data("IV_timeseries")
+df &lt;- IV_timeseries
+result &lt;- data.frame()
+for (i in 1:length(df$tmst)){
+  IV = df$ivdf[i]
+  IV &lt;- as.character(IV)
+  IV = data.frame(IV = strsplit(IV,'#'))
+  names(IV) &lt;- 'IV'
+  IV$IV &lt;- as.character(IV$IV)
+  IV &lt;- tidyr::separate(IV,"IV",into = c("V","I"),sep = '\\*')
+  IV &lt;- IV[-1,]
+  IV$V = as.numeric(as.character(IV$V))
+  IV$I=as.numeric(as.character(IV$I))
+  IV=IV[order(IV$V,decreasing=FALSE),]
+  IV_frame &lt;- data.frame(IV)
+  trial=try(IVfeature(IV_frame$I,IV_frame$V),silent=TRUE)
+  if ('try-error' %in% class(trial)){
+    temp &lt;-  data.frame(NA,NA,NA,NA,NA,NA,NA,NA)
+    names(temp) &lt;- c('Isc','Rsh','Voc','Rs','Pmp','Imp','Vmp','FF')
+  }else{
+    temp &lt;- data.frame(trial)
+  }
+  result &lt;- rbind(result,temp)
+ }
+ result &lt;- cbind(df,result)
+</code></pre>
+
+
+</div>

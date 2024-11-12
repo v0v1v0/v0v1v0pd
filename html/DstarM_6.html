@@ -1,0 +1,388 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>estDstarM</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Do a D*M analysis</h2>
+
+<h3>Description</h3>
+
+<p>Do a D*M analysis
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">estDstarM(
+  formula = NULL,
+  data,
+  tt,
+  restr = NULL,
+  fixed = list(),
+  lower,
+  upper,
+  Optim = list(),
+  DstarM = TRUE,
+  SE = 0,
+  oscPdf = TRUE,
+  splits = rep(0L, (ncondition)),
+  forceRestriction = TRUE,
+  mg = NULL,
+  h = 1,
+  pars,
+  fun.density = Voss.density,
+  args.density = list(),
+  fun.dist = chisq,
+  args.dist = list(tt = tt),
+  verbose = 1L,
+  useRcpp = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula object of the form:
+<code>binary response ~ reaction time + condition1 * condition2 * ... conditionN</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A dataframe for looking up data specified in formula.
+For backwards compatibility this can also be with: a column named <code>rt</code> containing response times in ms,
+a column named <code>response</code> containing at most 2 response options, and an
+optional column named <code>condition</code> containing a numeric index as to which conditions
+observations belong.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tt</code></td>
+<td>
+<p>A time grid on which the density function will be evaluated.
+Should be larger than the highest observed reaction time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restr</code></td>
+<td>
+<p>A restriction matrix where each column depicts one condition.
+The number of rows should match the number of parameters (and be equal to the length of lower).
+The contents of <code>restr</code> should be numbers, identical numbers means that these parameters
+(either within or between condition) will be constrained. Different numbers means parameters
+will not be constrained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>A matrix that allows for fixing parameters to certain values.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lower</code></td>
+<td>
+<p>Should be a vector containing lower bounds for each parameter.
+Has a default if <code>fun.density == Voss.density</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>upper</code></td>
+<td>
+<p>Should be a vector containing upper bounds for each parameter.
+Has a default if <code>fun.density == Voss.density</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Optim</code></td>
+<td>
+<p>a named list with identical arguments to <code>DEoptim.control</code>.
+In addition, if <code>verbose</code> == TRUE <code>Optim$steptol</code> can be a vector, i.e.
+<code>c(200, 50, 10)</code> means: Do 200 iterations then check for convergence, do 50
+iterations then check for convergence, check every 10 iterations for convergence until
+itermax is reached. Defaults to <code>Optim = list(reltol = 1e-6, itermax = 1e3,
+steptol = 50, CR = .9, trace = 0, parallelType = 0)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DstarM</code></td>
+<td>
+<p>If TRUE a D*M analysis is done, otherwise the Chi square distance
+between data and model is minimized.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>SE</code></td>
+<td>
+<p>positive value, how many standard error to add to the variance to relax
+the variance restriction a bit.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>oscPdf</code></td>
+<td>
+<p>Logical, if TRUE check for oscillations in calculated densities and
+remove densities with oscillations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>Numeric vector determining which conditions have an equal nondecision density.
+Identical values in two positions indicate that the conditions corresponding to the indices
+of those values have an identical nondecision distribution.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>forceRestriction</code></td>
+<td>
+<p>if TRUE the variance restriction is enforced.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mg</code></td>
+<td>
+<p>Supply a data density, useful if a uniform kernel approximation does not suffice.
+Take care that densities of response categories within conditions are degenerate and therefore integrate to the proportion a category was observed (and not to 1).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>bandwidth of a uniform kernel used to generate data based densities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pars</code></td>
+<td>
+<p>Optional parameter vector to supply if one wishes to evaluate the objective
+function in a given parameter vector. Only used if <code>itermax</code> equal zero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun.density</code></td>
+<td>
+<p>Function used to calculate densities. See details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args.density</code></td>
+<td>
+<p>A names list containing additional arguments to be send to fun.density.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun.dist</code></td>
+<td>
+<p>Function used to calculate distances between densities.
+Defaults to a chi-square distance.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args.dist</code></td>
+<td>
+<p>A named list containing additional arguments to be send to fun.dist.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Numeric, should intermediate output be printed? Defaults to 1, higher values result in more progress output.
+Estimation will speed up if set to 0. If set to TRUE, <code>Optim$trace</code> will be
+forced to 0, hereby disabling the build in printing of <code>DEoptim</code>. To enable the
+printing of <code>DEoptim</code>, set <code>verbose</code> to 0 and specify <code>Optim$trace</code>.
+<code>Optim</code>. If set to 1, ETA refers to the expected maximum time until completion (when the iterations limit is reached).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useRcpp</code></td>
+<td>
+<p>Logical, setting this to true will make the objective function use an Rcpp implementation
+of <code>Voss.density</code> with the distance function <code>chisq</code>. This gains speed at the cost of flexibility.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Response options will be alphabetically sorted and the first response option will be
+treated as the 'lower' option. This means that if the observed proportion of the first
+response options is higher, the drift speed will most likely be negative.
+</p>
+<p><code>fun.density</code> allows a user to specify a custom density function. This function must (at least) take the following arguments:
+<code>t</code>: a vector specifying at which time points to calculate the density
+<code>pars</code>: a parameter vector
+<code>boundary</code>: character 'upper' or 'lower' specifying for which response option the density will be calculated.
+<code>DstarM</code>: Logical, if TRUE the density should not describe the nondecision density, if FALSE it should describe the nondecision density.
+Any additional arguments can be passed to <code>fun.density</code> via the argument <code>args.density</code>.
+If one intends to use a custom density function it is recommended to test the function first with <code>testFun</code>.
+When specifying a custom density function it is probably also necessary to change the lower and upper bounds of the parameter space.
+</p>
+<p>For purposes of speed, the function can be run in parallel by providing the argument <code>Optim = list(parallelType = 1)</code>.
+See <code>DEoptim.control</code> for details. Also, for Ratcliff models the objective function has been rewritten in Rcpp.
+This limits some functionality but does result in a faster estimation. Usage of Rcpp can be enabled via <code>useRcpp = TRUE</code>.
+</p>
+<p>When verbose is set to 1, the ETA is an estimated of the time it takes to execute ALL iterations.
+Convergence can (and is usually) reached before then.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Returns a list of class <code>DstarM.fitD</code> that contains:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>Bestvals</code></td>
+<td>
+<p>Named numeric vector. Contains the best parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fixed</code></td>
+<td>
+<p>Numeric vector. Contains the best parameter estimates.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>GlobalOptimizer</code></td>
+<td>
+<p>List. All output from the call to <code>DEoptim</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>Debug</code></td>
+<td>
+<p>List. contains the number of DEoptim iterations, the number of function evaluation of the objective function, and the maximum number of iterations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>note</code></td>
+<td>
+<p>String. A possible note that is used for summary purposes</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>tt</code></td>
+<td>
+<p>Numeric vector. Contains the time grid used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>g.hat</code></td>
+<td>
+<p>Numeric matrix. Named columns represent the (possibly smoothed) densities of the data distribution of each condition-response pair.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>modelDist</code></td>
+<td>
+<p>Numeric matrix. Named columns represent the densities of the model evaluated at grid <code>tt</code> with parameters <code>Bestvals</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ncondition</code></td>
+<td>
+<p>Numeric scalar. The number of conditions</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.data</code></td>
+<td>
+<p>Numeric vector. The variance of each condition-response pair. There are as many values as hypothesized nondecision densities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>var.m</code></td>
+<td>
+<p>Numeric vector. The variance of the model distributions. There are as many values as hypothesized nondecision densities.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restr.mat</code></td>
+<td>
+<p>Numeric matrix. Contains the restrictions used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>splits</code></td>
+<td>
+<p>Numeric vector. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n</code></td>
+<td>
+<p>Numeric scalar. The total number of observations.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>DstarM</code></td>
+<td>
+<p>Logical. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun.density</code></td>
+<td>
+<p>Function. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fun.dist</code></td>
+<td>
+<p>Function. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>h</code></td>
+<td>
+<p>Scalar. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args.density</code></td>
+<td>
+<p>Named list. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>args.dist</code></td>
+<td>
+<p>Named list. Equal to the input argument with the same name.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# simulate data with three stimuli of different difficulty.
+# this implies different drift rates across conditions.
+# define a time grid. A more reasonable stepsize is .01; this is just for speed.
+tt = seq(0, 5, .1)
+pars = c(.8, 2, .5, .5, .5, # condition 1
+        .8, 3, .5, .5, .5,  # condition 2
+        .8, 4, .5, .5, .5)  # condition 3
+pdfND = dbeta(tt, 10, 30)
+# simulate data
+data = simData(n = 3e3, pars = pars, tt = tt, pdfND = pdfND)
+# define restriction matrix
+restr = matrix(1:5, 5, 3)
+restr[2, 2:3] = 6:7 # allow drift rates to differ
+# fix variance parameters
+fixed = matrix(c('sz1', .5, 'sv1', .5), 2, 2)
+## Not run: 
+# Run D*M analysis
+res = estDstarM(data = data, tt = tt, restr = restr, fixed = fixed)
+coef(res)
+summary(res)
+
+## End(Not run)
+</code></pre>
+
+
+</div>

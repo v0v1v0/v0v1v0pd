@@ -1,0 +1,124 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>import_flobs</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Import flobs.</h2>
+
+<h3>Description</h3>
+
+<p>Import <code>flob</code>s to SQLite database column from directory.
+Values in file name are matched to table primary key to determine where to write flob.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">import_flobs(
+  column_name,
+  table_name,
+  conn,
+  dir = ".",
+  sep = "_-_",
+  pattern = ".*",
+  sub = FALSE,
+  exists = FALSE,
+  recursive = FALSE,
+  replace = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>column_name</code></td>
+<td>
+<p>A string of the name of the BLOB column.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>table_name</code></td>
+<td>
+<p>A string of the name of the existing table.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>conn</code></td>
+<td>
+<p>A SQLite connection object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dir</code></td>
+<td>
+<p>A string of the path to the directory to import files from.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sep</code></td>
+<td>
+<p>A string of the separator between values in file names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pattern</code></td>
+<td>
+<p>A regular expression specifying the pattern file names must match.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sub</code></td>
+<td>
+<p>A logical scalar specifying whether to import flobs based on their filename (sub = FALSE)
+or the name of their subdirectory (sub = TRUE) which must only contain 1 file.
+If sub = NA and replace = TRUE then the names of the
+subdirectories are used irrespective of whether they include files and existing
+flobs are deleted if the corresponding subdirectory is empty.
+If sub = TRUE or sub = NA then recursion is just one subfolder deep.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exists</code></td>
+<td>
+<p>A logical scalar specifying whether the column must (TRUE) or
+mustn't (FALSE) already exist or whether it doesn't matter (NA).
+IF FALSE, a new BLOB column is created.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>recursive</code></td>
+<td>
+<p>A flag indicating whether to recurse into file directory (TRUE) or not (FALSE).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>replace</code></td>
+<td>
+<p>A flag indicating whether to replace existing flobs (TRUE) or not (FALSE).</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>An invisible named vector indicating file name and whether the file was
+successfully written to database.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">conn &lt;- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+DBI::dbGetQuery(conn, "CREATE TABLE Table1 (CharColumn TEXT PRIMARY KEY NOT NULL)")
+DBI::dbWriteTable(conn, "Table1", data.frame(CharColumn = c("a", "b")), append = TRUE)
+key &lt;- data.frame(CharColumn = "a", stringsAsFactors = FALSE)[0,,drop = FALSE]
+dir &lt;- tempdir()
+write.csv(key, file.path(dir, "a.csv"))
+import_flobs("BlobColumn", "Table1", conn, dir)
+DBI::dbDisconnect(conn)
+</code></pre>
+
+
+</div>

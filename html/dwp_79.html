@@ -1,0 +1,258 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>modelFilter</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Run Models through a Sieve to Filter out Dubious Fits</h2>
+
+<h3>Description</h3>
+
+<p>A set of fitted models (<code>ddArray</code>) is filtered according 
+to a set of criteria that test for high AIC, high-influence points, and
+plausibility of the tail probabilities of each fitted distribution.
+<code>modelFilter</code> will either auto-select the best model according to a set
+of pre-defined, objective criteria or will will return all models that meet
+a set of user-defined, or default criteria. A table of how the models
+score according to each criterion is printed to the console.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">modelFilter(dmod, sieve = "default", quiet = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dmod</code></td>
+<td>
+<p>a <code>ddArray</code> object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>sieve</code></td>
+<td>
+<p>a list of criteria for ordering models</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quiet</code></td>
+<td>
+<p>boolean to suppress (<code>quiet = TRUE</code>) or allow 
+(<code>quiet = FALSE</code>) messages from <code>modelFilter</code></p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The criteria to test are entered in a list (<code>sieve</code>) with components:
+</p>
+
+<ol>
+<li> <p><code>$rtail</code> = vector of probabilities that define a checkpoints on distributions
+to avoid situations where a model that may fit well within the range of data
+is nonetheless implausible because it predicts a significant or substantial 
+probability of carcasses falling great distances from the nearest turbine. 
+The default is to check whether or not a distribution predicts that less than 
+50% of carcasses fall within 80 meters, 90% within 120 meters, 95% within 
+150 meters, or 99% within 200 meters. Distributions that fall below any of 
+these points (for example predicting only 42% within 80 meters or only 74% 
+within 120 meters) fail the default <code>rtail</code> test. The format of the 
+default for  the test is <code>$rtail = c(p80 = 0.5, p120 = 0.90, 
+  p150 = 0.95, p200 = 0.99)</code>. Users may override the default by using, for example, 
+<code>sieve = list(rtail = c(p80 = 0.8, p120 = 0.99, p150 = 0.99, p200 = 0.999))</code>
+in the argument list for a more stringent test or for a situation where
+turbines are small or winds are light. Alternatively, users may forego the
+test altogether by entering <code>sieve = list(rtail = FALSE)</code>. If specific
+probabilities are provided, they must be in a vector of length 4 with names
+"<code>p80</code>" etc. as in the examples above.
+</p>
+</li>
+<li> <p><code>$ltail</code> = vector of probabilities that define checkpoints on distributions
+to avoid situations where the search radius is short and a distribution that
+fits the limited data set well but crashes to zero just outside the search
+radius. The default is to check whether or not a distribution predicts that
+greater than 50% of carcasses fall with 20 meters or 90% within 50 meters.
+Distributions that pass above either of these checkpoints (for example
+predicting 61% of carcasses within 20 meters or 93% within 50 meters)
+are eliminated by the default <code>ltail</code> test. The format of the default for
+the test is <code>$ltail = c(p20 = 0.5, p50 = 0.90)</code>. Users may override the
+default by using, for example, <code>sieve = list(rtail = c(p20 = 0.6, p50 = 0.8))</code>
+in the argument list for a situation where it is known that carcasses beyond
+50 meters are common.
+</p>
+</li>
+<li> <p><code>$aic</code> = a numeric scalar cutoff value for model's delta AICc
+scores. Models with AICc scores exceeding the minimum AICc among all the 
+fitted models by <code>sieve$aic</code> or more fail the test. The default value 
+is 10. Users may override the default by using, for example, 
+<code>sieve = list(aic = 7)</code> in the argument list to use a delta AIC score 
+of 7 as the cutoff or may forego the test altogether by setting 
+<code>sieve = list(aic = FALSE)</code>
+</p>
+</li>
+<li> <p><code>$hin</code> = <code>TRUE</code> or <code>FALSE</code> to test for high influence points,
+the presence of which cast doubt on the reliability of the model. The function
+defines "high influence" as models with high leverage points, namely, points
+with <code class="reqn">\frac{h}{1 - h} &gt;  \frac{2p}{n - 2p}</code> 
+(where <code class="reqn">h</code> is leverage, <code class="reqn">p</code> is the number of parameters in the model, 
+and <code class="reqn">n</code> is the search radius) with Cook's distance <code>&gt; 8/(n - 2*p)</code>. 
+The criteria for high influence points were adapted from Brian Ripley's GLM 
+diagnostics package <code>boot</code> (<code>glm.diag</code>). The test is 
+perhaps most valuable in identifying distributions with high probability of 
+carcasses landing well beyond what could reasonably be expected.
+</p>
+</li>
+</ol>
+<p>Several choices of pre-defined <code>sieve</code>s are available (or, as described 
+above, users may define their own criteria):
+</p>
+
+<dl>
+<dt><code>sieve = "default"</code></dt>
+<dd>
+<p>The models are ordered by the following
+criteria: 
+</p>
+
+<ol>
+<li>
+<p> extensibility
+</p>
+</li>
+<li>
+<p> weight of right tail (discounting models that predict implausibly 
+high proportions of carcasses beyond the search radius)
+</p>
+</li>
+<li>
+<p> weight of the left tail (discounting models that predict implausibly 
+high proportions of carcasses near the turbines)
+</p>
+</li>
+<li>
+<p> AICc test (discounting models with delta AICc &gt; 10)
+</p>
+</li>
+<li>
+<p> high influence points (discounting models in which one or more of the
+data points exert a high influence on the fitted model, according to 
+Ripley's GLM  diagnostics package <code>boot</code> (<code>glm.diag</code>))
+</p>
+</li>
+<li>
+<p> ranking by AICc
+</p>
+</li>
+</ol>
+<p>Precise definitions of the default sieve parameters are given in 
+<code>sieve_default</code>.</p>
+</dd>
+<dt><code>sieve = NULL</code></dt>
+<dd>
+<p>Returns a list of the extensible models without
+scoring them by other model selection criteria.</p>
+</dd>
+<dt><code>sieve = "win"</code></dt>
+<dd>
+<p>Sorts models by high-influence points and AICc</p>
+</dd>
+<dt><code>sieve = list(&lt;custom&gt;)</code></dt>
+<dd>
+<p>User provides a custom sieve, which may
+be a modification of the default sieve or de novo. To modify the default,
+use, for example, <code>sieve = list(hin = FALSE)</code> to disable the <code>hin</code>
+test but keep the other default tests, or <code>sieve = list(aic = 7)</code> to
+use 7 rather than 10 as the AIC cutoff, or 
+<code>sieve = list(ltail = c(p20 = 0.3, p50 = 0.8))</code> to use a more stringent 
+left tail test that requires CDF graphs to pass below the points (20, 0.3) 
+and (50, 0.8). Custom <code>ltail</code> and <code>rtail</code> parameters must match the 
+formats of the default tests, but their probabilities may vary. To turn off
+the <code>aic</code> filter, use <code>sieve = list(aic = Inf)</code>. To turn off the
+<code>ltail</code> filter, use  <code>sieve = list(ltail = c(p20 = 1, p50 = 1))</code>.
+To turn off the <code>rtail</code> filter, use 
+<code>sieve = list(rtail = c(p80 = 0, p120 = 0, p150 = 0, p200 = 0))</code>. These
+custom components may be mixed and matched as desired.</p>
+</dd>
+</dl>
+<h3>Value</h3>
+
+<p>An <code>fmod</code> object, which is an unordered list of extensible models if
+<code>sieve = NULL</code>; otherwise, a list of class <code>fmod</code> with following 
+components:
+</p>
+
+<dl>
+<dt><code>$filtered</code></dt>
+<dd>
+<p>the selected <code>dd</code> object or a <code>ddArray</code> list of
+models that passed the tests</p>
+</dd>
+<dt><code>$scores</code></dt>
+<dd>
+<p>a matrix with all models tested (rownames = model names) and 
+the results of each test (columns <code>aic_test</code>, <code>rtail</code>, 
+<code>ltail</code>, <code>hin</code>, <code>aic</code>)</p>
+</dd>
+<dt><code>$sieve</code></dt>
+<dd>
+<p>the test criteria, stored in a list with
+</p>
+ 
+<ul>
+<li> <p><code>$aic_test</code> = cutoff for AIC
+</p>
+</li>
+<li> <p><code>$hin</code> = boolean to indicate whether high influence points were
+considered
+</p>
+</li>
+<li> <p><code>$rtail</code> = numeric vector giving the probabilities that the
+right tail of the distribution must exceed at distances of 80, 120, 
+150, and 200 meters in order to pass
+</p>
+</li>
+<li> <p><code>$ltail</code> = numeric vector giving the probabilities that the 
+left tail of the distribution must NOT exceed at distances of 20 and 
+50 meters in order to pass
+</p>
+</li>
+</ul>
+</dd>
+<dt><code>models</code></dt>
+<dd>
+<p>a list (<code>ddArray</code> object) of all models tested</p>
+</dd>
+<dt><code>note</code></dt>
+<dd>
+<p>notes on the tests</p>
+</dd>
+</dl>
+<p>When a <code>fmod</code> object is printed, only a small subset of the elements are
+shown. To see a full list of the objects, use <code>names(x)</code>, where <code>x</code>
+is the name of the <code>fmod</code> return value. The elements
+can be extracted in the usual R way via, for example, <code>x$sieve</code> or 
+<code>x[["sieve"]]</code>.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"> data(layout_simple)
+ data(carcass_simple)
+ sitedata &lt;- initLayout(layout_simple)
+ ringdata &lt;- prepRing(sitedata)
+ ringsWithCarcasses &lt;- addCarcass(carcass_simple, data_ring = ringdata)
+ distanceModels &lt;- ddFit(ringsWithCarcasses)
+ stats(distanceModels)
+ stats(distanceModels[["tnormal"]])
+ stats(distanceModels[["lognormal"]])
+ 
+</code></pre>
+
+
+</div>

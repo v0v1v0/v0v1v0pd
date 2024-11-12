@@ -1,0 +1,271 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>difeq</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Solve difference equation</h2>
+
+<h3>Description</h3>
+
+<p>Solve a difference (or recurrence) equation by iterating it a
+number of times.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">difeq(y, steps, target, parms, ..., n_out = 0L, n_history = 0L,
+  grow_history = FALSE, return_history = n_history &gt; 0, dllname = "",
+  parms_are_real = TRUE, ynames = names(y), outnames = NULL,
+  return_by_column = TRUE, return_initial = TRUE, return_step = TRUE,
+  return_output_with_y = TRUE, restartable = FALSE,
+  return_minimal = FALSE)
+
+difeq_continue(obj, steps, y = NULL, ..., copy = FALSE, parms = NULL,
+  return_history = NULL, return_by_column = NULL, return_initial = NULL,
+  return_step = NULL, return_output_with_y = NULL, restartable = NULL)
+
+yprev(step, i = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>y</code></td>
+<td>
+<p>The initial state of the system.  Must be a numeric
+vector (and will be passed through <code>as.numeric</code> by this
+function).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>steps</code></td>
+<td>
+<p>A vector of steps to return the system at.  The
+<em>first</em> step is taken as step zero, and the solution will
+be recorded at every other step in the vector.  So to step a
+system from time zero to times 1, 2, 3, ..., n use 0:n.  Must be
+integer values and will be passed through <code>as.integer</code>
+(which may truncate or otherwise butcher non-integer values).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>The target function to advance.  This can either be
+an R function taking arguments <code>n, i, t, y, parms</code> or be a
+scalar character with the name of a compiled function with
+arguments <code>size_t n, size_t step, double time, const double
+*y, double *dydt, size_t n_out, double *output void *data</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms</code></td>
+<td>
+<p>Parameters to pass through to the difference function</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Dummy arguments - nothing is allowed here, but this
+means that all further arguments <em>must</em> be specified by
+name (not order) so I can easily reorder them later on.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_out</code></td>
+<td>
+<p>The number of output variables (in addition to the
+difference equation variables).  If given, then an R function
+must return an <em>attribute</em> <code>output</code> with the output
+variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>n_history</code></td>
+<td>
+<p>The number of iterations of history to save
+during the simulation.  By default, no history is saved.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>grow_history</code></td>
+<td>
+<p>Logical indicating if history should be grown
+during the simulation.  If <code>FALSE</code> (the default) then when
+history is used it is overwritten as needed (so only the most
+recent <code>n_history</code> elements are saved.  This may require
+some tuning so that you have enough history to run your
+simulation (i.e. to the longest delay) or an error will be
+thrown when it underflows.  The required history length will
+vary with your delay sizes and with the timestep for dopri.  If
+<code>TRUE</code>, then history will grow as the buffer is exhausted.
+The growth is geometric, so every time it reaches the end of the
+buffer it will increase by a factor of about 1.6 (see the
+<code>ring</code> documentation).  This may consume more memory than
+necessary, but may be useful where you don't want to care about
+picking the history length carefully.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_history</code></td>
+<td>
+<p>Logical indicating if history is to be
+returned.  By default, history is returned if <code>n_history</code>
+is nonzero.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dllname</code></td>
+<td>
+<p>Name of the shared library (without extension) to
+find the function <code>func</code> in the case where <code>func</code>
+refers to compiled function.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parms_are_real</code></td>
+<td>
+<p>Logical, indicating if <code>parms</code> should
+be treated as vector of doubles by <code>func</code> (when it is a
+compiled function).  If <code>TRUE</code> (the default), then
+<code>REAL(parms)</code>, which is <code>double*</code> is passed through.
+If <code>FALSE</code> then if <code>params</code> is an externalptr type
+(<code>EXTPTRSXP</code>) we pass through the result of
+<code>R_ExternalPtrAddr</code>, otherwise we pass <code>params</code>
+through unmodified as a <code>SEXP</code>.  In the last case, in your
+target function you will need to include <code>&lt;Rinternals.h&gt;</code>,
+cast to <code>SEXP</code> and then pull it apart using the R API (or
+Rcpp).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ynames</code></td>
+<td>
+<p>Logical, indicating if the output should be named
+following the names of the input vector <code>y</code>.
+Alternatively, if <code>ynames</code> is a character vector of the
+same length as <code>y</code>, these will be used as the output names.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>outnames</code></td>
+<td>
+<p>An optional character vector, used when
+<code>n_out</code> is greater than 0, to name the model output matrix.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_by_column</code></td>
+<td>
+<p>Logical, indicating if the output should be
+returned organised by column (rather than row).  This incurs a
+slight cost for transposing the matrices.  If you can work with
+matrices that are transposed relative to <code>deSolve</code>, then
+set this to <code>FALSE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_initial</code></td>
+<td>
+<p>Logical, indicating if the output should
+include the initial conditions.  Specifying <code>FALSE</code> avoids
+binding this onto the output.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_step</code></td>
+<td>
+<p>Logical, indicating if a row (or column if
+<code>return_by_column</code> is <code>TRUE</code>) representing step is included.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_output_with_y</code></td>
+<td>
+<p>Logical, indicating if the output
+should be bound together with the returned matrix <code>y</code> (as
+it is with <code>deSolve</code>).  If <code>FALSE</code>, then output will
+be returned as the attribute <code>output</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>restartable</code></td>
+<td>
+<p>Logical, indicating if the problem should be
+restartable.  If <code>TRUE</code>, then the return value of a
+simulation can be passed to <code>difeq_restart</code> to continue the
+simulation after arbitrary changes to the state or the
+parameters.  Note that this is really only useful for delay
+difference equations where you want to keep the history but make
+changes to the parameters or to the state vector while keeping
+the history of the problem so far.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_minimal</code></td>
+<td>
+<p>Shorthand option - if set to <code>TRUE</code>
+then it sets all of <code>return_by_column</code>,
+<code>return_initial</code>, <code>return_time</code>,
+<code>return_output_with_y</code> to <code>FALSE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>obj</code></td>
+<td>
+<p>An object to continue from; this must be the results of
+running a simulation with the option <code>restartable =
+TRUE</code>.  Note that continuing a problem moves the pointer along
+in time (unless <code>copy = TRUE</code>, and that the incoming time
+(<code>times[[1]]</code>) must equal the previous time <em>exactly</em>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>copy</code></td>
+<td>
+<p>Logical, indicating if the pointer should be copied
+before continuing.  If <code>TRUE</code>, this is non-destructive with
+respect to the data in the original pointer so the problem can
+be restarted multiple times.  By default this is <code>FALSE</code>
+because there is a (potentially very small) cost to this
+operation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>step</code></td>
+<td>
+<p>The step to access (not that this is not an offset,
+but the actual step; within your target function you'd write
+things like <code>yprev(step - 1)</code> to get the previous step.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>i</code></td>
+<td>
+<p>index within the state vector <code>y</code> to return.  The
+index here is R-style base-1 indexing, so pass <code>1</code> in to
+access the first element.  This can be left <code>NULL</code> to
+return all the elements or a vector longer than one.</p>
+</td>
+</tr>
+</table>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Here is a really simple equation that just increases by 'p' each
+# time (p is the parameter vector and could be any R structure).
+rhs &lt;- function(i, y, p) y + p
+
+y0 &lt;- 1
+t &lt;- 0:10
+p &lt;- 5
+dde::difeq(y0, t, rhs, p)
+</code></pre>
+
+
+</div>

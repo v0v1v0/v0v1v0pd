@@ -1,0 +1,216 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dove</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Durability of Vaccine Efficacy</h2>
+
+<h3>Description</h3>
+
+<p>Estimates the potentially waning long-term efficacy of vaccines in
+randomized, placebo-controlled clinical trials with staggered
+enrollment of participants and sequential crossover of placebo recipients.
+The hazard ratio for the vaccine effect is a nonparametric 
+function of time.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dove(formula, data, plots = TRUE, timePts = NULL, bandwidth = NULL)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>A formula object, with the response on the left-hand side of a
+'~' operator, and the covariates and vaccine() function on the right-hand side.  
+The response must be a survival object as returned by the 'Surv'
+function of the <span class="pkg">survival</span> package. See Details for further information.
+The vaccine() function must be used to specify the entry time and
+vaccination information. See ?vaccine and Details for further
+information.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data.frame object. The data.frame in which to interpret the
+variable names in formula. Must contain the entry time, the event time,
+the event status, the vaccination status,
+the vaccination time, and any covariates. All time variables must
+be provided in units of days. See Details.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>plots</code></td>
+<td>
+<p>A logical object. If TRUE, plots of the estimated
+curve of vaccine efficacy in reducing attack rate and
+the estimated curve of vaccine efficacy in reducing the hazard rate
+will be automatically generated. If FALSE, plots will not be
+generated, but the data are available through the returned value object.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timePts</code></td>
+<td>
+<p>A numeric vector object or NULL. The endpoints of the time 
+periods for which the vaccine efficacy in reducing the attack rate is
+to be shown. If NULL, a default sequence of 60-day intervals is used.
+If tau &lt; 60 days, this input must be provided.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bandwidth</code></td>
+<td>
+<p>A numeric object. Tuning parameter for the 
+bandwidth used for kernel estimation of the vaccine efficacy in 
+reducing the hazard rate; this input is ignored if plots=FALSE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>In dove(), the hazard ratio for the vaccine effect is a nonparametric 
+function of time for which
+confidence intervals are not provided. The sister function, dove2(), 
+assumes that the log hazard ratio for the vaccine effect is a piecewise 
+linear function of time; 
+it provides more precise and more stable estimates of vaccine efficacy on 
+the hazard rate and includes proper confidence intervals.
+</p>
+<p>The information required for an analysis is 
+</p>
+
+<dl>
+<dt>Entry Time:</dt>
+<dd>
+<p>Calendar time when the participant enters the 
+trial.</p>
+</dd>
+<dt>Event Time:</dt>
+<dd>
+<p>Calendar time when the participant experiences
+the clinical event of interest (e.g., symptomatic COVID-19) or their
+follow-up ends, whichever occurs first.</p>
+</dd>
+<dt>Event Status:</dt>
+<dd>
+<p>Binary indicator taking value 1 if the clinical
+event of interest occurs before the end of follow-up and 0 otherwise.</p>
+</dd>
+<dt>Vaccination Status:</dt>
+<dd>
+<p>Binary indicator taking value 1 if
+vaccination occurs before the end of follow-up and 0 otherwise.</p>
+</dd>
+<dt>Vaccination Time:</dt>
+<dd>
+<p>Calendar time when vaccination takes place,
+with an arbitrary non-negative value if the participant is not vaccinated.</p>
+</dd>
+<dt>Covariates:</dt>
+<dd>
+<p>Baseline covariates (e.g., priority group, age, 
+ethnicity).</p>
+</dd>
+</dl>
+<p>Note that all times are to be specified relative to the start of the trial
+and are specified in units of days. Thus, for individuals that received 
+vaccination, entry_time &lt;= vaccination_time &lt;= event_time. And for
+individuals that did not receive vaccination, 
+entry_time &lt;= event_time; for these participants,
+vaccination_time can take any non-negative value (including NA or Inf).
+</p>
+<p>The general structure of the formula input is
+</p>
+<pre>
+  Surv(event_time, event_status) ~ covariates + 
+    vaccine(entry_time, vaccination_time, vaccination_status)
+  </pre>
+<p>The response variable must be a survival analysis object as returned by the
+'Surv()' function of package <span class="pkg">survival</span>, where event_time is the
+observation time (formal argument 'time') and event_status is the status
+indicator input (formal argument 'event'). Specifically, 
+</p>
+<pre>Surv(time = event_time, event = event_status)</pre>
+<p>The covariates can include categorical variables, for which
+all other categories are compared to the first category.
+</p>
+<p>The vaccination and entry_time information must be specified through function 
+'vaccine()'. Specifically, 
+</p>
+<pre>vaccine(entry_time, vaccination_status, vaccination_time)</pre>
+<p>For participants that did not receive the vaccine, vaccination_time
+can take any non-negative value (including NA or Inf). For individuals
+that received vaccination, if 
+vaccination_time &gt; event_time, or vaccination_time &lt; entry_time, the 
+case will be removed from the analysis and a message will be generated.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An S3 object of class DOVE containing a list with elements
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p>A matrix containing the estimated hazard ratio of each
+covariate, together with the (estimated) standard error, the 95%
+confidence interval, and the two-sided p-value for testing no covariate
+effect.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>vaccine</code></td>
+<td>
+<p>A list containing two elements. The first element is
+the matrix containing the estimates of the vaccine efficacy in
+reducing the attack rate at all observed event 
+times (VE_a), together with the 95% 
+confidence intervals, as well as the vaccine efficacy in
+reducing the hazard rate at these times (VE_h). These results 
+will be shown in graphical form if input plots = TRUE.
+The second element is the matrix containing the estimates of vaccine
+efficacy in reducing the attack rate over successive time periods,
+together with the 95% confidence intervals.
+</p>
+</td>
+</tr>
+</table>
+<h3>References</h3>
+
+<p>Lin, DY, Zeng, D, and Gilbert, PB (2021). Evaluating the 
+long-term efficacy of COVID-19 vaccines. Clinical Infectious Diseases, 
+ciab226, https://doi.org/10.1093/cid/ciab226.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(doveData)
+
+set.seed(1234)
+
+ind &lt;- sample(1:nrow(x = doveData), 500, FALSE)
+
+# NOTE: This sample size is chosen for example only -- larger data sets
+# should be used.
+# See the vignette for a full analysis of the doveData dataset
+
+dove(formula = Surv(event.time, event.status) ~ priority + sex + 
+                vaccine(entry.time, vaccine.status, vaccine.time),
+     data = doveData[ind,])
+</code></pre>
+
+
+</div>

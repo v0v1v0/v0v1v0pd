@@ -1,0 +1,94 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>det.query</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Density Estimation Based on Distribution Element Trees</h2>
+
+<h3>Description</h3>
+
+<p>The function <code>det.query</code> evaluates probability densities at the query points <code>x</code> based on a distribution element tree (DET). The latter is calculable with <code>det.construct</code> based on available data.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">det.query(det, x, cores = 1)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>det</code></td>
+<td>
+<p>distribution element tree object resulting from <code>det.construct</code> based on data with <code>d</code> components or dimensions.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x</code></td>
+<td>
+<p>matrix containing <code>n</code> query points (columns) with <code>d</code> components or dimensions (rows).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>for large query-point sets, <code>cores &gt; 1</code> allows for parallel tree query using the indicated number of cores. <code>cores = Inf</code> allocates half of the available cores (see <code>detectCores</code>). The default is <code>cores = 1</code> corresponding to serial tree query.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>A vector containing the probability density at the query points <code>x</code> is returned.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## 1d example
+require(stats); require(graphics)
+# DET generation based on Gaussian/uniform data
+det &lt;- det.construct(t(c(rnorm(1e5,2,3),runif(1e5)-3)))
+# density evaluation based on DET at equidistant query points
+x &lt;- t(seq(-10,14,0.01)); p &lt;- det.query(det, x)
+# compare DET estimate (black) against Gaussian/uniform reference (red)
+plot(x, p, type = "l", col = "black")
+lines(x, (dnorm(x,2,3)+dunif(x+3))/2, col = "red")
+
+## 2d example
+require(stats); require(graphics)
+# mean and covariance of Gaussian, data generation
+mu &lt;- c(3,5); C &lt;- matrix(c(4.0,-2.28,-2.28,1.44), nrow = 2)
+A &lt;- eigen(C); B &lt;- diag(A$values); A &lt;- A$vectors
+x &lt;- matrix(rnorm(2e4), nrow = 2)
+x &lt;- t(A %*% (sqrt(B) %*% x) + mu %*% t(rep(1,ncol(x))))
+# bounds and resolution of x1-x2 query grid
+lb &lt;- c(-5,0); ub &lt;- c(11,10); np &lt;- c(320,200)
+x1 &lt;- lb[1] + (ub[1]-lb[1])*((1:np[1])-0.5)/np[1]
+x2 &lt;- lb[2] + (ub[2]-lb[2])*((1:np[2])-0.5)/np[2]
+xp &lt;- rbind(rep(x1,np[2]), rep(x2,each = np[1])) # grid points
+# plotting
+split.screen(c(2, 2)); screen(1)
+plot(x, type = "p", pch = ".", asp = 1, main = "data")
+# DET estimator
+det &lt;- det.construct(t(x))
+yd &lt;- matrix(det.query(det, xp), nrow = np[1])
+screen(2)
+image(list(x = x1, y = x2, z = yd), asp = 1,
+      col = grDevices::gray((100:0)/100), main = "det")
+# Gaussian density for comparison
+yr &lt;- yr &lt;- exp(-1/2 * colSums(
+   (t(solve(C)) %*% (xp - mu%*%t(rep(1,ncol(xp))))) *
+                    (xp - mu%*%t(rep(1,ncol(xp)))))
+                              ) / sqrt((2*pi)^2*det(C))
+yr &lt;- matrix(yr, nrow = np[1])
+screen(3)
+image(list(x = x1, y = x2, z = yr), asp = 1,
+      col = grDevices::gray((100:0)/100), main = "reference")
+</code></pre>
+
+
+</div>

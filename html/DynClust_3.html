@@ -1,0 +1,162 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>GetClusteringResults</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Get clustering step result</h2>
+
+<h3>Description</h3>
+
+<p><code>GetClusteringResults</code> returns the results of the
+clustering procedure <code>RunClustering</code>
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">GetClusteringResults(data.array, res.listdenois, res.cluster)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data.array</code></td>
+<td>
+<p>a (2D or 3D)+T array containing the
+original dynamic sequence of images (the dataset). The
+last dimension is the time.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res.listdenois</code></td>
+<td>
+<p>the list resulting from the
+<code>RunDenoising</code> procedure applied to
+<code>data.array</code>. This parameter may be replaced by the
+component <code>info.den</code> of the former.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>res.cluster</code></td>
+<td>
+<p>the list resulting from a call to
+<code>RunClustering</code></p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>a list containing two components <code>clust.array</code> and
+<code>clust.map</code>. <code>clust.array</code> is an array with same
+dimension as the original sequence <code>data.array</code>
+containing the clustered version. <code>clust.map</code> is an
+array with only spatial dimensions of <code>data.array</code>
+whose elements provide the cluster number at each location.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Tiffany Lieury, Christophe Pouzat, Yves Rozenholc
+</p>
+
+
+<h3>References</h3>
+
+<p>Rozenholc, Y. and Reiss, M. (2012) <em>Preserving time
+structures while denoising a dynamical image</em>, Mathematical
+Methods for Signal and Image Analysis and Representation
+(Chapter 12), Florack, L. and Duits, R. and Jongbloed, G.
+and van~Lieshout, M.-C. and Davies, L. Ed.,
+Springer-Verlag, Berlin
+</p>
+<p>Lieury, T. and Pouzat, C. and Rozenholc, Y. (submitted)
+<em>Spatial denoising and clustering of dynamical image
+sequence: application to DCE imaging in medicine and
+calcium imaging in neurons</em>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>RunDenoising</code>, <code>RunClustering</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+## Not run: 
+    library(DynClust)
+    
+    ## use fluorescence calcium imaging of neurons performed with Fura 2 excited at 340 nm
+    data('adu340_4small',package='DynClust')
+    
+    ## Gain of the CCD camera:
+    G &lt;- 0.146
+    ## readout variance of the CCD camera:
+    sro2 &lt;- (16.4)^2
+    ## Stabilization of the variance to get a normalized dataset (variance=1)
+    FT &lt;- 2*sqrt(adu340_4small/G + sro2)
+    FT.range = range(FT)
+    
+    ## launches the denoising step on the dataset with a statistical level of 5%
+    FT.den.tmp &lt;- RunDenoising(FT,1,mask.size=NA,nproc=2)
+    
+    ## launches the clustering step on the dataset with a statistical level of 5%
+    FT.clust.tmp  &lt;- RunClustering(FT,FT.den.tmp,nproc=2)
+    n.cluster &lt;- length(FT.clust.tmp$clusters)
+    print(paste(n.cluster,'clusters using variance set to',sqrt(FT.den.tmp$var),'^2'))
+    
+    ## get the classified version of the data array and the map of the clusters
+    FT.clust.res &lt;- GetClusteringResults(FT,FT.den.tmp,FT.clust.tmp)
+    
+    ## plotting results of the clusterization
+    par(mfrow=c(2,2))
+    image(FT.clust.res$clust.map,col=rainbow(n.cluster))
+    title('Cluster map')
+    matplot(FT.clust.res$clust.center,col=rainbow(n.cluster),type="l",lwd=0.1,lty=1)
+    title('Cluster centers')
+
+    ## and more: original and clustered slices at time 50
+    image(FT[,,50],zlim=FT.range,col=grey(seq(0,1,length=n.cluster)))
+    title('Original sequence at time 50')
+    image(FT.clust.res$clust.array[,,50],zlim=FT.range,col=grey(seq(0,1,length=n.cluster)))
+    title('Clustered sequence at time 50')
+
+    ####################################################################################
+    ## reapply clustering with twice the nominal variance: forces stronger clustering ##
+    ####################################################################################
+
+    ## launches the denoising step on the dataset with a statistical level of 5%
+    FT.den.tmp &lt;- RunDenoising(FT,2,mask.size=NA,nproc=2)
+
+    ## launches the clustering step on the dataset with a statistical level of 5%
+    FT.clust.tmp  &lt;- RunClustering(FT,FT.den.tmp,nproc=2)
+    n.cluster &lt;- length(FT.clust.tmp$clusters)
+    print(paste(n.cluster,'clusters using twice the nominal variance'))
+    
+    ## get the classified version of the data array and the map of the clusters
+    FT.clust.res &lt;- GetClusteringResults(FT,FT.den.tmp,FT.clust.tmp)
+    
+    ## plotting results of the clusterization
+    par(mfrow=c(2,2))
+    image(FT.clust.res$clust.map,col=rainbow(n.cluster))
+    title('Cluster map')
+    matplot(FT.clust.res$clust.center,col=rainbow(n.cluster),type="l",lwd=0.1,lty=1)
+    title('Cluster centers')
+
+    ## and more: original and clustered slices at time 50
+    image(FT[,,50],zlim=FT.range,col=grey(seq(0,1,length=n.cluster)))
+    title('Original sequence at time 50')
+    image(FT.clust.res$clust.array[,,50],zlim=FT.range,col=grey(seq(0,1,length=n.cluster)))
+    title('Clustered sequence at time 50')
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,229 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>di_iterate</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Iteratively calculate disproportionate impact using multiple method for many variables.</h2>
+
+<h3>Description</h3>
+
+<p>Iteratively calculate disproportionate impact via the percentage point gap (PPG), proportionality index, and 80% index methods for many success variables, disaggregation variables, and scenarios.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">di_iterate(
+  data,
+  success_vars,
+  group_vars,
+  cohort_vars = NULL,
+  scenario_repeat_by_vars = NULL,
+  exclude_scenario_df = NULL,
+  weight_var = NULL,
+  include_non_disagg_results = TRUE,
+  ppg_reference_groups = "overall",
+  min_moe = 0.03,
+  use_prop_in_moe = FALSE,
+  prop_sub_0 = 0.5,
+  prop_sub_1 = 0.5,
+  di_prop_index_cutoff = 0.8,
+  di_80_index_cutoff = 0.8,
+  di_80_index_reference_groups = "hpg",
+  check_valid_reference = TRUE,
+  parallel = FALSE,
+  parallel_n_cores = parallel::detectCores(),
+  parallel_split_to_disk = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>A data frame for which to iterate DI calculations for a set of variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>success_vars</code></td>
+<td>
+<p>A character vector of success variable names to iterate across.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>group_vars</code></td>
+<td>
+<p>A character vector of group (disaggregation) variable names to iterate across.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cohort_vars</code></td>
+<td>
+<p>(Optional) A character vector of the same length as <code>success_vars</code> to indicate the cohort variable to be used for each variable specified in <code>success_vars</code>.  A vector of length 1 could be specified, in which case the same cohort variable is used for each success variable.  If not specified, then a single cohort is assumed for all success variables.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>scenario_repeat_by_vars</code></td>
+<td>
+<p>(Optional) A character vector of variables to repeat DI calculations for across all combination of these variables.  For example, the following variables could be specified:
+</p>
+
+<ul>
+<li>
+<p> Ed Goal: Degree/Transfer, Shot-term Career, Non-credit
+</p>
+</li>
+<li>
+<p> First time college student: Yes, No
+</p>
+</li>
+<li>
+<p> Full-time status: Yes, No
+</p>
+</li>
+</ul>
+<p>Each combination of these variables (eg, full time, first time college students with an ed goal of degree/transfer as one combination) would constitute an iteration / sample for which to calculate disproportionate impact for outcomes listed in <code>success_vars</code> and for the disaggregation variables listed in <code>group_vars</code>. The overall rate of success for full time, first time college students with an ed goal of degree/transfer would just include these students and not others.  Each variable specified is also collapsed to an '- All' group so that the combinations also reflect all students of a particular category.  The total number of combinations for the previous example would be (+1 representing the all category): (3 + 1) x (2 + 1) x (2 + 1) = 36.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>exclude_scenario_df</code></td>
+<td>
+<p>(Optional) A data frame with variables that match <code>scenario_repeat_by_vars</code> for specifying the combinations to exclude from DI calculations.  Following the example specified above, one could choose to exclude part-time non-credit students from consideration.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>weight_var</code></td>
+<td>
+<p>(Optional) A character variable specifying the weight variable if the input data set is summarized (i.e.,  the the success variables specified in <code>success_vars</code> contain count of successes).  Weight here corresponds to the denominator when calculating the success rate.  Defaults to <code>NULL</code> for an input data set where each row describes each individual.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>include_non_disagg_results</code></td>
+<td>
+<p>A logical variable specifying whether or not the non-disaggregated results should be returned; defaults to <code>TRUE</code>.  When <code>TRUE</code>, a new variable <code>`- None`</code> is added to the data set with a single data value <code>'- All'</code>, and this variable is added <code>group_vars</code> as a disaggregation/group variable.  The user would want these results returned to review non-disaggregated results.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ppg_reference_groups</code></td>
+<td>
+<p>Either <code>'overall'</code>, <code>'hpg'</code>, <code>'all but current'</code>, or a character vector of the same length as <code>group_vars</code> that indicates the reference group value for each group variable in <code>group_vars</code> when determining disproportionate impact using the percentage point gap method.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>min_moe</code></td>
+<td>
+<p>The minimum margin of error to be used in the PPG calculation, passed to di_ppg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>use_prop_in_moe</code></td>
+<td>
+<p>Whether the estimated proportions should be used in the margin of error calculation by the PPG, passed to di_ppg.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop_sub_0</code></td>
+<td>
+<p>passed to di_ppg; defaults to 0.50.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>prop_sub_1</code></td>
+<td>
+<p>passed to di_ppg; defaults to 0.50.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_prop_index_cutoff</code></td>
+<td>
+<p>Threshold used for determining disproportionate impact using the proportionality index; passed to di_prop_index; defaults to 0.80.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_80_index_cutoff</code></td>
+<td>
+<p>Threshold used for determining disproportionate impact using the 80% index; passed to di_80_index; defaults to 0.80.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>di_80_index_reference_groups</code></td>
+<td>
+<p>Either <code>'overall'</code>, <code>'hpg'</code>, <code>'all but current'</code>, or a character vector of the same length as <code>group_vars</code> that indicates the reference group value for each group variable in <code>group_vars</code> when determining disproportionate impact using the 80% index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>check_valid_reference</code></td>
+<td>
+<p>Check whether <code>ppg_reference_groups</code> and <code>di_80_index_reference_groups</code> contain valid values; defaults to <code>TRUE</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel</code></td>
+<td>
+<p>If <code>TRUE</code>, then perform calculations in parallel based on the scenarios specified by <code>scenario_repeat_by_vars</code>.  Defaults to <code>FALSE</code>.  Parallel execution is based on the <code>parallel</code> package included in base R, using parLapply on Windows and mclapply on POSIX-based systems (Linux/Mac).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel_n_cores</code></td>
+<td>
+<p>The number of CPU cores to use if <code>parallel=TRUE</code>.  Defaults to the maximum number CPU cores on the system.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>parallel_split_to_disk</code></td>
+<td>
+<p>If <code>TRUE</code> and <code>parallel=TRUE</code>, then create intermediate data sets for each scenario generated by <code>scenario_repeat_by_vars</code>, write them to disk, and import the required data set when necessary for each scenario executing in parallel.  This feature is useful when the data set specified by <code>data</code> is very large and parallel execution is desired for speed in order to reduce the likelihood of consuming all the system's memory and crashing.  Note that there is an overhead I/O cost on speed when this feature is used.  Defaults to <code>FALSE</code>.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>Iteratively calculate disproportionate impact via the percentage point gap (PPG), proportionality index, and 80% index methods for all combinations of <code>success_vars</code>, <code>group_vars</code>, and <code>cohort_vars</code>, for each combination of subgroups specified by <code>scenario_repeat_by_vars</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A summarized data set (data frame) consisting of:
+</p>
+
+<ul>
+<li> <p><code>success_variable</code> (elements of <code>success_vars</code>),
+</p>
+</li>
+<li> <p><code>disaggregation</code> (elements of <code>group_vars</code>),
+</p>
+</li>
+<li> <p><code>cohort</code> (values corresponding to the variables specified in <code>cohort_vars</code>,
+</p>
+</li>
+<li> <p><code>di_indicator_ppg</code> (1 if there is disproportionate impact per the percentage point gap method, 0 otherwise),
+</p>
+</li>
+<li> <p><code>di_indicator_prop_index</code> (1 if there is disproportionate impact per the proportionality index, 0 otherwise),
+</p>
+</li>
+<li> <p><code>di_indicator_80_index</code> (1 if there is disproportionate impact per the 80% index, 0 otherwise), and
+</p>
+</li>
+<li>
+<p> other relevant fields returned from di_ppg, di_prop_index,  and di_80_index.
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">library(dplyr)
+data(student_equity)
+# Multiple group variables
+di_iterate(data=student_equity, success_vars=c('Transfer')
+  , group_vars=c('Ethnicity', 'Gender'), cohort_vars=c('Cohort')
+  , ppg_reference_groups='overall')
+</code></pre>
+
+
+</div>

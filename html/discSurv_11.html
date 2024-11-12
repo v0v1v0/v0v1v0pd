@@ -1,0 +1,252 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>dataLong</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Data Long Transformation</h2>
+
+<h3>Description</h3>
+
+<p>Transform data from short format into long format for discrete survival
+analysis and right censoring. Data is assumed to include no time varying
+covariates, e. g. no follow up visits are allowed. It is assumed that the
+covariates stay constant over time, in which no information is available.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">dataLong(
+  dataShort,
+  timeColumn,
+  eventColumn,
+  timeAsFactor = FALSE,
+  remLastInt = FALSE,
+  aggTimeFormat = FALSE,
+  lastTheoInt = NULL
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dataShort</code></td>
+<td>
+<p>Original data in short format ("class data.frame").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeColumn</code></td>
+<td>
+<p>Character giving the column name of the observed times. It
+is required that the observed times are discrete ("integer vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>eventColumn</code></td>
+<td>
+<p>Column name of the event indicator ("character vector").
+It is required that this is a binary variable with 1=="event" and
+0=="censored".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>timeAsFactor</code></td>
+<td>
+<p>Should the time intervals be coded as factor ("logical vector")? 
+Default is FALSE. In the default settings the column is treated as quantitative variable ("numeric vector").</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>remLastInt</code></td>
+<td>
+<p>Should the last theoretical interval be removed in long
+format ("logical vector")? Default setting (FALSE) is no deletion. This is only important, if the short format
+data includes the last theoretic interval [a_q, Inf). There are only events
+in the last theoretic interval, so the discrete hazard is always one and these
+observations have to be excluded for estimation.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>aggTimeFormat</code></td>
+<td>
+<p>Instead of the usual long format, should every
+observation have all time intervals ("logical vector")? Default is standard
+long format (FALSE). In the case of nonlinear risk score models, the time effect has
+to be integrated out before these can be applied to the C-index.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lastTheoInt</code></td>
+<td>
+<p>Gives the number of the last theoretic interval ("integer vector"). 
+Only used, if argument <em>aggTimeFormat</em> is set to TRUE.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>If the data has continuous survival times, the response may be transformed
+to discrete intervals using function <code>contToDisc</code>. If the data
+set has time varying covariates the function <code>dataLongTimeDep</code>
+should be used instead. In the case of competing risks and no time varying
+covariates see function <code>dataLongCompRisks</code>.
+</p>
+
+
+<h3>Value</h3>
+
+<p>Original data.frame with three additional columns: </p>
+ <ul>
+<li>
+<p>obj Index of persons as integer vector </p>
+</li>
+<li> <p>timeInt Index of time
+intervals (factor) </p>
+</li>
+<li> <p>y Response in long format as binary vector.
+1=="event happens in period timeInt" and zero otherwise. 
+If argument <em>responseAsFactor</em> is set to TRUE, then responses will be coded as factor 
+in one column.</p>
+</li>
+</ul>
+<h3>Author(s)</h3>
+
+<p>Thomas Welchowski <a href="mailto:welchow@imbie.meb.uni-bonn.de">welchow@imbie.meb.uni-bonn.de</a>
+</p>
+<p>Matthias Schmid <a href="mailto:matthias.schmid@imbie.uni-bonn.de">matthias.schmid@imbie.uni-bonn.de</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Tutz G, Schmid M (2016).
+<em>Modeling discrete time-to-event data</em>.
+Springer Series in Statistics. <br><br>
+Fahrmeir L (2005).
+“Discrete Survival-Time Models.”
+In <em>Encyclopedia of Biostatistics</em>, chapter Survival Analysis.
+John Wiley \&amp; Sons. <br><br>
+Thompson Jr. WA (1977).
+“On the Treatment of Grouped Observations in Life Studies.”
+<em>Biometrics</em>, <b>33</b>, 463-470.
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>contToDisc</code>, <code>dataLongTimeDep</code>,
+<code>dataLongCompRisks</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+# Example unemployment data
+library(Ecdat)
+data(UnempDur)
+
+# Select subsample
+subUnempDur &lt;- UnempDur [1:100, ]
+head(subUnempDur)
+
+# Convert to long format
+UnempLong &lt;- dataLong (dataShort = subUnempDur, timeColumn = "spell", eventColumn = "censor1")
+head(UnempLong, 20)
+
+# Is there exactly one observed event of y for each person?
+splitUnempLong &lt;- split(UnempLong, UnempLong$obj)
+all(sapply(splitUnempLong, function (x) sum(x$y))==subUnempDur$censor1) # TRUE
+
+# Second example: Acute Myelogenous Leukemia survival data
+library(survival)
+head(leukemia)
+leukLong &lt;- dataLong(dataShort = leukemia, timeColumn = "time", 
+eventColumn = "status", timeAsFactor=TRUE)
+head(leukLong, 30)
+
+# Estimate discrete survival model
+estGlm &lt;- glm(formula = y ~ timeInt + x, data=leukLong, family = binomial())
+summary(estGlm)
+
+# Estimate survival curves for non-maintained chemotherapy
+newDataNonMaintained &lt;- data.frame(timeInt = factor(1:161), x = rep("Nonmaintained"))
+predHazNonMain &lt;- predict(estGlm, newdata = newDataNonMaintained, type = "response")
+predSurvNonMain &lt;- cumprod(1-predHazNonMain)
+
+# Estimate survival curves for maintained chemotherapy
+newDataMaintained &lt;- data.frame(timeInt = factor(1:161), x = rep("Maintained"))
+predHazMain &lt;- predict(estGlm, newdata = newDataMaintained, type = "response")
+predSurvMain &lt;- cumprod(1-predHazMain)
+
+# Compare survival curves
+plot(x = 1:50, y = predSurvMain [1:50], xlab = "Time", ylab = "S(t)", las = 1, 
+type = "l", main = "Effect of maintained chemotherapy on survival of leukemia patients")
+lines(x = 1:161, y = predSurvNonMain, col = "red")
+legend("topright", legend = c("Maintained chemotherapy", "Non-maintained chemotherapy"), 
+col = c("black", "red"), lty = rep(1, 2))
+# The maintained therapy has clearly a positive effect on survival over the time range
+
+##############################################
+# Simulation
+# Single event in case of right-censoring
+
+# Simulate multivariate normal distribution
+library(discSurv)
+library(mvnfast)
+set.seed(-1980)
+X &lt;- mvnfast::rmvn(n = 1000, mu = rep(0, 10), sigma = diag(10))
+
+
+# Specification of discrete hazards with 11 theoretical intervals
+betaCoef &lt;- seq(-1, 1, length.out = 11)[-6]
+timeInt &lt;- seq(-1, 1, length.out = 10)
+linPred &lt;- c(X %*% betaCoef)
+hazTimeX &lt;- cbind(sapply(1:length(timeInt), 
+                        function(x) exp(linPred+timeInt[x]) / (1+exp(linPred+timeInt[x])) ), 1)
+
+
+# Simulate discrete survival and censoring times in 10 observed intervals
+discT &lt;- rep(NA, dim(hazTimeX)[1])
+discC &lt;- rep(NA, dim(hazTimeX)[1])
+for( i in 1:dim(hazTimeX)[1] ){
+ 
+ discT[i] &lt;- sample(1:11, size = 1, prob = estMargProb(haz=hazTimeX[i, ]))
+ discC[i] &lt;- sample(1:11, size = 1, prob = c(rep(1/11, 11)))
+}
+
+
+# Calculate observed times, event indicator and specify short data format
+eventInd &lt;- discT &lt;= discC
+obsT &lt;- ifelse(eventInd, discT, discC)
+eventInd[obsT == 11] &lt;- 0
+obsT[obsT == 11] &lt;- 10
+simDatShort &lt;- data.frame(obsT = obsT, event = as.numeric(eventInd), X)
+
+
+# Convert data to discrete data long format
+simDatLong &lt;- dataLong(dataShort = simDatShort, timeColumn = "obsT", eventColumn = "event",
+timeAsFactor=TRUE)
+
+
+# Estimate discrete-time continuation ratio model
+formSpec &lt;- as.formula(paste("y ~ timeInt + ", 
+                            paste(paste("X", 1:10, sep=""), collapse = " + "), sep = ""))
+modelFit &lt;- glm(formula = formSpec, data = simDatLong, family = binomial(link = "logit"))
+summary(modelFit)
+
+
+# Compare estimated to true coefficients
+coefModel &lt;- coef(modelFit)
+MSE_covariates &lt;- mean((coefModel[11:20]-timeInt)^2)
+MSE_covariates
+# -&gt; Estimated coefficients are near true coefficients
+
+</code></pre>
+
+
+</div>

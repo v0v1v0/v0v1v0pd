@@ -1,0 +1,178 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>gzc</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Calculates instantaneous frequency using the GZC method</h2>
+
+<h3>Description</h3>
+
+<p>Calculates instantaneous frequency using the Generalised
+Zero-Crossing method from Huang et al., 2009. General wrapper for the
+<code>gzc.algorithm</code> function that does all the actual work.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">gzc(
+  emd = NULL,
+  ini = NULL,
+  m = NULL,
+  dt = NULL,
+  repl = 1,
+  mode = NULL,
+  dtout = NULL,
+  output = 1,
+  warn = TRUE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>emd</code></td>
+<td>
+<p>emd-type object</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ini</code></td>
+<td>
+<p>an optional vector of length n of the eventual initial Intrinsic
+Mode Function xy would be a demodulation of, if it is a demodulation. It will
+be integrated to the results as mode 1.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>a matrix of the amplitude values (xy) of the components, each
+column being a component. Each column should have the same number of non NA
+values. Vectors, for 1 component, are accepted. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dt</code></td>
+<td>
+<p>the depth or time value. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>repl</code></td>
+<td>
+<p>the amount of replicates in m. Is overridden by emd.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mode</code></td>
+<td>
+<p>the mode sequence index to give to each replicated IMFs</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dtout</code></td>
+<td>
+<p>the dt values to sample the frequency and amplitude from if
+<code>output = 2</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output</code></td>
+<td>
+<p>the style of the output, whether 0, 1 or 2. 0 provides the raw
+output of <code>gzc.algorithm</code>, 1 and 2 provides a matrix with $dt
+(depth/time), $f (frequency) and $a ()amplitude, but with <code>output = 1</code>
+the matrix provides the dt only at the extremas and zero-crossings, whereas
+with <code>output = 2</code> the dt values
+are the ones provided with the <code>dtout</code> parameter. 1 is better for
+plots, 2 allows easier calculations to be performed downstream.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>warn</code></td>
+<td>
+<p>whether to warn if the sampling interval defined by the
+<code>dtout</code> parameter is to small (redirected from
+<code>StratigrapheR::tie.lim</code>)</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>depending on the output parameter:
+</p>
+<p><code>output = 0</code> provides the raw output of <code>gzc.algorithm</code>,
+with $ldt and $rdt (the left and right boundaries of the depth/time
+intervals), $f (frequency) and $a (amplitude). To that are added $repl (the
+replicate id) and $mode (the mode id)
+</p>
+<p><code>output = 1</code> or <code>2</code> provides a matrix with $dt,
+$f and $a, but with <code>output = 1</code> the matrix provides the dt only at
+the extremas and zero-crossings, whereas with <code>output = 2</code> the dt values
+are the ones provided with the <code>out</code> parameter. <code>1</code> is better for
+plots, <code>2</code> allows easier calculations to be performed downstream.
+</p>
+
+
+<h3>References</h3>
+
+<p>Huang, Norden E., Zhaohua Wu, Steven R. Long, Kenneth C. Arnold,
+Xianyao Chen, and Karin Blank. 2009. "On Instantaneous Frequency". Advances
+in Adaptive Data Analysis 01 (02): 177–229.
+https://doi.org/10.1142/S1793536909000096.
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">set.seed(42)
+
+n &lt;- 600
+t &lt;- seq_len(n)
+
+p1 &lt;- 30
+p2 &lt;- 240
+
+xy &lt;- (1 + 0.6 * sin(t*2*pi/p2)) * sin(t*2*pi/p1)  + 2 * sin(t*2*pi/p2) +
+  rnorm(n, sd = 0.5) + t * 0.01
+
+inter_dt &lt;- round(runif(length(xy), min = 0.5, max = 1.5),1)
+
+dt &lt;- cumsum(inter_dt)
+dec &lt;- extricate(xy, dt, nimf = 7, repl = 1, comb = 50,
+                  factor_noise = 10, sifting = 10, speak = TRUE)
+
+## Not run: 
+plot_emd(dec, dir = tempdir())
+## End(Not run)
+
+integrity(xy, dec)
+parsimony(dec)
+
+res &lt;- gzc(dec)
+
+numb &lt;- 4
+
+opar &lt;- par('mfrow')
+
+par(mfrow = c(1,2))
+
+plot(dec$m[,numb], dec$dt, type = "l",
+     main = paste("Mode", numb, " + Amplitude"),
+     xlab = "xy", ylab = "dt", ylim = c(0, 600))
+lines(res$a[,numb], res$dt[,numb], col = "red", lwd = 2)
+
+plot(1/res$f[,numb], res$dt[,numb], ylim = c(0,600),
+     xlab = "Period", ylab = "dt", log = "x",
+     type = "l", col = "red", lwd = 2, main = "Period")
+
+par(mfrow = opar)
+
+</code></pre>
+
+
+</div>

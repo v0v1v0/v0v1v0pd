@@ -1,0 +1,296 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>predict</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Predict posterior mean and variance/covariance</h2>
+
+<h3>Description</h3>
+
+<p>Acts on a <code>gp</code>, <code>dgp2</code>, or <code>dgp3</code> object.
+Calculates posterior mean and variance/covariance over specified input 
+locations.  Optionally calculates expected improvement (EI) or entropy 
+over candidate inputs.  Optionally utilizes SNOW parallelization.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">## S3 method for class 'gp'
+predict(
+  object,
+  x_new,
+  lite = TRUE,
+  return_all = FALSE,
+  EI = FALSE,
+  entropy_limit = NULL,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'dgp2'
+predict(
+  object,
+  x_new,
+  lite = TRUE,
+  store_latent = FALSE,
+  mean_map = TRUE,
+  return_all = FALSE,
+  EI = FALSE,
+  entropy_limit = NULL,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'dgp3'
+predict(
+  object,
+  x_new,
+  lite = TRUE,
+  store_latent = FALSE,
+  mean_map = TRUE,
+  return_all = FALSE,
+  EI = FALSE,
+  entropy_limit = NULL,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'gpvec'
+predict(
+  object,
+  x_new,
+  m = object$m,
+  ordering_new = NULL,
+  lite = TRUE,
+  return_all = FALSE,
+  EI = FALSE,
+  entropy_limit = NULL,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'dgp2vec'
+predict(
+  object,
+  x_new,
+  m = object$m,
+  ordering_new = NULL,
+  lite = TRUE,
+  store_latent = FALSE,
+  mean_map = TRUE,
+  return_all = FALSE,
+  EI = FALSE,
+  entropy_limit = NULL,
+  cores = 1,
+  ...
+)
+
+## S3 method for class 'dgp3vec'
+predict(
+  object,
+  x_new,
+  m = object$m,
+  ordering_new = NULL,
+  lite = TRUE,
+  store_latent = FALSE,
+  mean_map = TRUE,
+  return_all = FALSE,
+  EI = FALSE,
+  entropy_limit = NULL,
+  cores = 1,
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>object</code></td>
+<td>
+<p>object from <code>fit_one_layer</code>, <code>fit_two_layer</code>, or 
+<code>fit_three_layer</code> with burn-in already removed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>x_new</code></td>
+<td>
+<p>matrix of predictive input locations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lite</code></td>
+<td>
+<p>logical indicating whether to calculate only point-wise 
+variances (<code>lite = TRUE</code>) or full covariance 
+(<code>lite = FALSE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>return_all</code></td>
+<td>
+<p>logical indicating whether to return mean and point-wise
+variance prediction for ALL samples (only available for <code>lite = TRUE</code>)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>EI</code></td>
+<td>
+<p>logical indicating whether to calculate expected improvement 
+(for minimizing the response)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>entropy_limit</code></td>
+<td>
+<p>optional limit state for entropy calculations (separating
+passes and failures), default value of <code>NULL</code> bypasses entropy
+calculations</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>number of cores to utilize in parallel</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>N/A</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>store_latent</code></td>
+<td>
+<p>logical indicating whether to store and return mapped 
+values of latent layers (two or three layer models only)</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mean_map</code></td>
+<td>
+<p>logical indicating whether to map hidden layers using 
+conditional mean (<code>mean_map = TRUE</code>) or using a random sample
+from the full MVN distribution (two or three layer models only),
+<code>mean_map = FALSE</code> is not yet implemented for fits with 
+<code>vecchia = TRUE</code></p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>m</code></td>
+<td>
+<p>size of Vecchia conditioning sets (only for fits with 
+<code>vecchia = TRUE</code>), defaults to the <code>m</code> used for MCMC</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ordering_new</code></td>
+<td>
+<p>optional ordering for Vecchia approximation, must correspond
+to rows of <code>x_new</code>, defaults to random, is applied to all layers
+in deeper models</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>All iterations in the object are used for prediction, so samples 
+should be burned-in.  Thinning the samples using <code>trim</code> will speed 
+up computation.  Posterior moments are calculated using conditional 
+expectation and variance.  As a default, only point-wise variance is 
+calculated.  Full covariance may be calculated using <code>lite = FALSE</code>. 
+</p>
+<p>Expected improvement is calculated with the goal of minimizing the 
+response.  See Chapter 7 of Gramacy (2020) for details.  Entropy is 
+calculated based on two classes separated by the specified limit.  
+See Sauer (2023, Chapter 3) for details.
+</p>
+<p>SNOW parallelization reduces computation time but requires 
+more memory storage.
+</p>
+
+
+<h3>Value</h3>
+
+<p>object of the same class with the following additional elements:
+</p>
+
+<ul>
+<li> <p><code>x_new</code>: copy of predictive input locations
+</p>
+</li>
+<li> <p><code>mean</code>: predicted posterior mean, indices correspond to 
+<code>x_new</code> locations
+</p>
+</li>
+<li> <p><code>s2</code>: predicted point-wise variances, indices correspond to 
+<code>x_new</code> locations (only returned when <code>lite = TRUE</code>)
+</p>
+</li>
+<li> <p><code>mean_all</code>: predicted posterior mean for each sample (column
+indices), only returned when <code>return_all = TRUE</code>
+</p>
+</li>
+<li> <p><code>s2_all</code> predicted point-wise variances for each sample (column
+indices), only returned when <code>return-all = TRUE</code>
+</p>
+</li>
+<li> <p><code>Sigma</code>: predicted posterior covariance, indices correspond to 
+<code>x_new</code> locations (only returned when <code>lite = FALSE</code>)
+</p>
+</li>
+<li> <p><code>EI</code>: vector of expected improvement values, indices correspond 
+to <code>x_new</code> locations (only returned when <code>EI = TRUE</code>)
+</p>
+</li>
+<li> <p><code>entropy</code>: vector of entropy values, indices correspond to 
+<code>x_new</code> locations (only returned when <code>entropy_limit</code> is
+numeric)
+</p>
+</li>
+<li> <p><code>w_new</code>: list of hidden layer mappings (only returned when 
+<code>store_latent = TRUE</code>), list index corresponds to iteration and 
+row index corresponds to <code>x_new</code> location (two or three layer 
+models only)
+</p>
+</li>
+<li> <p><code>z_new</code>: list of hidden layer mappings (only returned when 
+<code>store_latent = TRUE</code>), list index corresponds to iteration and 
+row index corresponds to <code>x_new</code> location (three layer models only) 
+</p>
+</li>
+</ul>
+<p>Computation time is added to the computation time of the existing object.
+</p>
+
+
+<h3>References</h3>
+
+<p>Sauer, A. (2023). Deep Gaussian process surrogates for computer experiments. 
+*Ph.D. Dissertation, Department of Statistics, Virginia Polytechnic Institute and State University.*
+<br><br>
+Sauer, A., Gramacy, R.B., &amp; Higdon, D. (2023). Active learning for deep 
+Gaussian process surrogates. *Technometrics, 65,* 4-18.  arXiv:2012.08015
+<br><br>
+Sauer, A., Cooper, A., &amp; Gramacy, R. B. (2023). Vecchia-approximated deep Gaussian 
+processes for computer experiments. 
+*Journal of Computational and Graphical Statistics, 32*(3), 824-837.  arXiv:2204.02904
+<br><br>
+Barnett, S., Beesley, L. J., Booth, A. S., Gramacy, R. B., &amp; Osthus D. (2024). Monotonic 
+warpings for additive and deep Gaussian processes. *In Review.* arXiv:2408.01540
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R"># See ?fit_one_layer, ?fit_two_layer, or ?fit_three_layer
+# for examples
+
+</code></pre>
+
+
+</div>

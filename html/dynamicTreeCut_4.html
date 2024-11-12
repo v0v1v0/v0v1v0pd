@@ -1,0 +1,325 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>cutreeHybrid</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Hybrid Adaptive Tree Cut for Hierarchical Clustering Dendrograms</h2>
+
+<h3>Description</h3>
+
+<p>Detect clusters in a dendorgram produced by the function <code>hclust</code>.  
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">cutreeHybrid(
+      # Input data: basic tree cutiing
+      dendro, distM,
+
+      # Branch cut criteria and options
+      cutHeight = NULL, minClusterSize = 20, deepSplit = 1,
+
+      # Advanced options
+      maxCoreScatter = NULL, minGap = NULL,
+      maxAbsCoreScatter = NULL, minAbsGap = NULL,
+
+      minSplitHeight = NULL, minAbsSplitHeight = NULL,
+
+      # External (user-supplied) measure of branch split
+      externalBranchSplitFnc = NULL, minExternalSplit = NULL,
+      externalSplitOptions = list(),
+      externalSplitFncNeedsDistance = NULL,
+      assumeSimpleExternalSpecification = TRUE,
+
+
+      # PAM stage options
+      pamStage = TRUE, pamRespectsDendro = TRUE,
+      useMedoids = FALSE,
+      maxPamDist = cutHeight,
+      respectSmallClusters = TRUE,
+
+      # Various options
+      verbose = 2, indent = 0)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>dendro</code></td>
+<td>
+<p>a hierarchical clustering dendorgram such as one returned by <code>hclust</code>.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>distM</code></td>
+<td>
+<p>Distance matrix that was used as input to <code>hclust</code>.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cutHeight</code></td>
+<td>
+<p>Maximum joining heights that will be considered. It defaults to 99
+of the range between the 5th percentile and the maximum of the joining heights on the dendrogram.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minClusterSize</code></td>
+<td>
+<p>Minimum cluster size.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>deepSplit</code></td>
+<td>
+<p>Either logical or integer in the range 0 to 4. Provides a rough control over 
+sensitivity to cluster splitting. The higher the value, the more and smaller clusters will be produced. 
+A finer control can be achieved via <code>maxBranchCor</code>, <code>minBranchSplit</code>, 
+<code>maxCoreScatter</code> and <code>minGap</code> below.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxCoreScatter</code></td>
+<td>
+<p> Maximum scatter of the core for a branch to be a cluster, given as the fraction
+of <code>cutHeight</code> relative to the 5th percentile of joining heights. See Details.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minGap</code></td>
+<td>
+<p>Minimum cluster gap given as the fraction of the difference between <code>cutHeight</code> and
+the 5th percentile of joining heights.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxAbsCoreScatter</code></td>
+<td>
+<p>Maximum scatter of the core for a branch to be a cluster given as absolute
+heights. If given, overrides <code>maxCoreScatter</code>.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minAbsGap</code></td>
+<td>
+<p> Minimum cluster gap given as absolute height difference. If given, overrides
+<code>minGap</code>.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minSplitHeight</code></td>
+<td>
+<p>Minimum split height given as the fraction of the difference between
+<code>cutHeight</code> and the 5th percentile of joining heights. Branches merging below this height will
+automatically be merged. Defaults to zero but is used only if <code>minAbsSplitHeight</code> below is <code>NULL</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minAbsSplitHeight</code></td>
+<td>
+<p>Minimum split height given as an absolute height.
+Branches merging below this height will automatically be merged. If not given (default), will be determined
+from <code>minSplitHeight</code> above.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>externalBranchSplitFnc</code></td>
+<td>
+<p>Optional function to evaluate split (dissimilarity) between two branches.
+Either a single function or a list in which each component is a function (see
+<code>assumeSimpleExternalSpecification</code> below for how to specify a single function).
+Each function can be specified by name (a character string) or the actual function object.
+Each given function must take arguments <code>branch1</code> and <code>branch2</code> that specify the
+indices of objects in
+the two branches whose dissimilarity is to be evaluated, and possibly other arguments. It must return a
+number that quantifies the dissimilarity of the two branches. The returned value will be compared to
+<code>minExternalSplit</code> (see below). This argument is only used for  method "hybrid".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>minExternalSplit</code></td>
+<td>
+<p>Thresholds to decide whether two branches should be merged. 
+It should be a numeric vector of the same length as the number of functions in
+<code>externalBranchSplitFnc</code> above. 
+Only used for method "hybrid". </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>externalSplitOptions</code></td>
+<td>
+<p>Further arguments to function <code>externalBranchSplitFnc</code>. If only one 
+external function is specified in <code>externalBranchSplitFnc</code> above, <code>externalSplitOptions</code> 
+can be a named
+list of arguments or a list with one component that is in turn  the named list of further arguments for
+<code>externalBranchSplitFnc[[1]]</code>. The argument <code>assumeSimpleExternalSpecification</code> controls which of 
+the two possibilities should be assumed. If multiple functions are specified in
+<code>externalBranchSplitFnc</code>,
+<code>externalSplitOptions</code>
+must be a list in which each component is a named list giving the further arguments for the corresponding 
+function in  <code>externalBranchSplitFnc</code>. Only used for method "hybrid".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>externalSplitFncNeedsDistance</code></td>
+<td>
+<p>Optional specification of whether the external branch split
+functions need the distance matrix as one of their arguments. Either <code>NULL</code> or a logical vector with
+one element per branch split function  that specifies whether the corresponding branch split function
+expects the distance matrix as one of its arguments. The default <code>NULL</code> is interpreted as a vector of
+<code>TRUE</code>. When dealing with a large number of objects, setting this argument to <code>FALSE</code> whenever
+possible can prevent unnecessary memory utilization.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>assumeSimpleExternalSpecification</code></td>
+<td>
+<p>Logical: when <code>minExternalSplit</code> above is a scalar (has
+length 1), should the function assume a simple specification of <code>externalBranchSplitFnc</code> and
+<code>externalSplitOptions</code>? If <code>TRUE</code>, <code>externalBranchSplitFnc</code> is taken as the function
+specification and <code>externalSplitOptions</code> the named list of options. This is suitable for simple direct
+calls of this function. If <code>FALSE</code>, <code>externalBranchSplitFnc</code> is assumed to be a list with a
+single component which specifies the function, and <code>externalSplitOptions</code> is a list with one
+component that is in turn the named list of further arguments for <code>externalBranchSplitFnc[[1]]</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pamStage</code></td>
+<td>
+<p>Logical, only used for method "hybrid".  If <code>TRUE</code>, the second (PAM-like) stage will be performed.
+</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>pamRespectsDendro</code></td>
+<td>
+<p>Logical, only used for method "hybrid". 
+If <code>TRUE</code>, the PAM stage will
+respect the dendrogram in the sense an object can be PAM-assigned only to clusters that lie below it on 
+the branch that the object is merged into.
+See <code>cutreeDynamic</code> for more details. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>useMedoids</code></td>
+<td>
+<p>if TRUE, the second stage will be use object to medoid distance; if FALSE, it
+will use average object to cluster distance. The default (FALSE) is recommended. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>maxPamDist</code></td>
+<td>
+<p>Maximum object distance to closest cluster that will result in the object
+assigned to that cluster. Defaults to <code>cutHeight</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>respectSmallClusters</code></td>
+<td>
+<p>If TRUE, branches that failed to be clusters in stage 1 only because of
+insufficient size will be assigned together in stage 2. If FALSE, all objects will be assigned
+individually.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>verbose</code></td>
+<td>
+<p>Controls the verbosity of the output. 0 will make the function completely quiet,
+values up to 4 gradually increase verbosity.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>indent</code></td>
+<td>
+<p>Controls indentation of printed messages (see <code>verbose</code> above). Each unit
+adds two spaces before printed messages; useful when several functions' output is to be nested. </p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>The function detects clusters in a hierarchical dendrogram based on the shape of branches on the
+dendrogram. For details on the method, see
+<a href="http://www.genetics.ucla.edu/labs/horvath/CoexpressionNetwork/BranchCutting">http://www.genetics.ucla.edu/labs/horvath/CoexpressionNetwork/BranchCutting</a>.
+</p>
+<p>In order to make the shape parameters <code>maxCoreScatter</code> and <code>minGap</code> more universal, their
+values are interpreted relative to <code>cutHeight</code> and the 5th percetile of the merging heights (we
+arbitrarily chose the 5th percetile rather than the minimum for reasons of stability). Thus, the absolute
+maximum allowable core scatter is calculated as <code>maxCoreScatter * (cutHeight - refHeight) +
+refHeight</code> and the absolute minimum allowable gap as <code>minGap * (cutHeight - refHeight)</code>, where
+<code>refHeight</code> is the 5th percentile of the merging heights.
+</p>
+
+
+<h3>Value</h3>
+
+<p>A list containg the following elements:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>labels</code></td>
+<td>
+<p>Numerical labels of clusters, with 0 meaning unassigned, label 1 labeling the largest
+cluster etc.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>cores</code></td>
+<td>
+<p>Numerical labels indicating cores of found clusters.  </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smallLabels</code></td>
+<td>
+<p>Numerical labels for branches that failed to be recognized clusters only
+because of insufficient number of objects.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mergeDiagnostics</code></td>
+<td>
+<p>A data.frame with one row  per merge in the input dendrogram. The columns give the
+values of the various merging criteria used by the algorithm. Missing data indicate that at least one of the
+"branches" merged was actually a singleton (single node) and hence the branch merging was automatic. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>mergeCriteria</code></td>
+<td>
+<p>Values of the merging thresholds. Either a copy of the corresponding input thresholds
+or values determined by <code>deepSplit</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>branches</code></td>
+<td>
+<p>A list detailing the deteced branch structure.  </p>
+</td>
+</tr>
+</table>
+<h3>Author(s)</h3>
+
+<p>Peter Langfelder, <a href="mailto:Peter.Langfelder@gmail.com">Peter.Langfelder@gmail.com</a>
+</p>
+
+
+<h3>References</h3>
+
+<p>Langfelder P, Zhang B, Horvath S, 2007.
+<a href="http://www.genetics.ucla.edu/labs/horvath/CoexpressionNetwork/BranchCutting">http://www.genetics.ucla.edu/labs/horvath/CoexpressionNetwork/BranchCutting</a>
+</p>
+
+
+<h3>See Also</h3>
+
+<p><code>hclust</code>, <code>as.dist</code> 
+</p>
+
+
+</div>

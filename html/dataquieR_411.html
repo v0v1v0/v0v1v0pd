@@ -1,0 +1,99 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>util_parse_assignments</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Utility function to parse assignments</h2>
+
+<h3>Description</h3>
+
+<p>This function parses labels &amp; level assignments in the format
+<code>1 = male | 2 = female</code>. The function also handles <code>m = male | f = female</code>,
+but this would not match the metadata concept. The split-character can
+be given, if not the default from SPLIT_CHAR is to be used, but this
+would also violate the metadata concept.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">util_parse_assignments(
+  text,
+  split_char = SPLIT_CHAR,
+  multi_variate_text = FALSE,
+  split_on_any_split_char = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>text</code></td>
+<td>
+<p>Text to be parsed</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split_char</code></td>
+<td>
+<p>Character separating assignments, may be a vector, then
+all will be tried and the the most likely matching one will
+be returned as attribute <code>split_char</code> of the result.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>multi_variate_text</code></td>
+<td>
+<p>don't paste text but parse element-wise</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>split_on_any_split_char</code></td>
+<td>
+<p>split on any split <code>split_char</code>, if &gt; 1 given.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>the parsed assignments as a named list
+</p>
+
+
+<h3>See Also</h3>
+
+<p>Other parser_functions: 
+<code>util_interpret_limits()</code>,
+<code>util_interpret_range()</code>,
+<code>util_parse_interval()</code>,
+<code>util_parse_redcap_rule()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+md &lt;- prep_get_data_frame("meta_data")
+vl &lt;- md$VALUE_LABELS
+vl[[50]] &lt;- "low&lt;medium &lt; high"
+a &lt;- util_parse_assignments(vl, split_char = c(SPLIT_CHAR, "&lt;"),
+  multi_variate_text = TRUE)
+b &lt;- util_parse_assignments(vl, split_char = c(SPLIT_CHAR, "&lt;"),
+  split_on_any_split_char = TRUE, multi_variate_text = TRUE)
+is_ordered &lt;- vapply(a, attr, "split_char", FUN.VALUE = character(1)) == "&lt;"
+md$VALUE_LABELS[[50]] &lt;- "low&lt;medium &lt; high"
+md$VALUE_LABELS[[51]] &lt;- "1 = low&lt; 2=medium &lt; 3=high"
+md$VALUE_LABELS[[49]] &lt;- "2 = medium&lt; 1=low &lt; 3=high" # counter intuitive
+with_sl &lt;- prep_scalelevel_from_data_and_metadata(study_data = "study_data",
+  meta_data = md)
+View(with_sl[, union(SCALE_LEVEL, colnames(with_sl))])
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

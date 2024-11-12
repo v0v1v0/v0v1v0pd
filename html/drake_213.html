@@ -1,0 +1,235 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>r_make</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Launch a drake function in a fresh new R process
+<a href="https://lifecycle.r-lib.org/articles/stages.html#stable"><img src="../help/figures/lifecycle-stable.svg" alt="[Stable]"></a>
+</h2>
+
+<h3>Description</h3>
+
+<p>The <code style="white-space: pre;">⁠r_*()⁠</code> functions, such as <code>r_make()</code>,
+enhance reproducibility by launching a <code>drake</code> function in
+a separate R process.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">r_make(source = NULL, r_fn = NULL, r_args = list())
+
+r_drake_build(
+  target,
+  character_only = FALSE,
+  ...,
+  source = NULL,
+  r_fn = NULL,
+  r_args = list()
+)
+
+r_outdated(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_recoverable(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_missed(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_deps_target(
+  target,
+  character_only = FALSE,
+  ...,
+  source = NULL,
+  r_fn = NULL,
+  r_args = list()
+)
+
+r_drake_graph_info(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_vis_drake_graph(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_sankey_drake_graph(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_drake_ggraph(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_text_drake_graph(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_predict_runtime(..., source = NULL, r_fn = NULL, r_args = list())
+
+r_predict_workers(..., source = NULL, r_fn = NULL, r_args = list())
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>source</code></td>
+<td>
+<p>Path to an R script file that
+loads packages, functions, etc. and returns a <code>drake_config()</code> object.
+There are 3 ways to set this path.
+</p>
+
+<ol>
+<li>
+<p> Pass an explicit file path.
+</p>
+</li>
+<li>
+<p> Call <code>options(drake_source = "path_to_your_script.R")</code>.
+</p>
+</li>
+<li>
+<p> Just create a file called "_drake.R" in your working directory
+and supply nothing to <code>source</code>.
+</p>
+</li>
+</ol>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_fn</code></td>
+<td>
+<p>A <code>callr</code> function such as <code>callr::r</code> or <code>callr::r_bg</code>.
+Example: <code>r_make(r_fn = callr::r)</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>r_args</code></td>
+<td>
+<p>List of arguments to <code>r_fn</code>, not including <code>func</code> or <code>args</code>.
+Example:
+<code>r_make(r_fn = callr::r_bg, r_args = list(stdout = "stdout.log"))</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>target</code></td>
+<td>
+<p>Name of the target.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>character_only</code></td>
+<td>
+<p>Logical, whether <code>name</code> should be treated
+as a character or a symbol
+(just like <code>character.only</code> in <code>library()</code>).</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>Arguments to the inner function. For example, if you want to call
+<code>r_vis_drake_graph()</code>, the inner function is <code>vis_drake_graph()</code>, and
+<code>selfcontained</code> is an example argument you could supply to the ellipsis.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p><code>drake</code> searches your environment
+to detect dependencies, so functions like <code>make()</code>, <code>outdated()</code>, etc.
+are designed to run in fresh clean R sessions. Wrappers <code>r_make()</code>,
+<code>r_outdated()</code>, etc. run reproducibly even if your current R session
+is old and stale.
+</p>
+<p><code>r_outdated()</code> runs the four steps below.
+<code>r_make()</code> etc. are similar.
+</p>
+
+<ol>
+<li>
+<p> Launch a new <code>callr::r()</code> session.
+</p>
+</li>
+<li>
+<p> In that fresh session, run the R script from the <code>source</code> argument.
+This script loads packages, functions, global options, etc.
+and calls <code>drake_config()</code> at the very end. <code>drake_config()</code>
+is the preprocessing step of <code>make()</code>, and it accepts
+all the same arguments as <code>make()</code> (e.g. <code>plan</code> and <code>targets</code>).
+</p>
+</li>
+<li>
+<p> In that same session, run <code>outdated()</code>
+with the <code>config</code> argument from step 2.
+</p>
+</li>
+<li>
+<p> Return the result back to main process
+(e.g. your interactive R session).
+</p>
+</li>
+</ol>
+<h3>Recovery</h3>
+
+<p><code>make(recover = TRUE, recoverable = TRUE)</code>
+powers automated data recovery.
+The default of <code>recover</code> is <code>FALSE</code> because
+targets recovered from the distant past may have been generated
+with earlier versions of R and earlier package environments
+that no longer exist.
+</p>
+<p>How it works: if <code>recover</code> is <code>TRUE</code>,
+<code>drake</code> tries to salvage old target values from the cache
+instead of running commands from the plan.
+A target is recoverable if
+</p>
+
+<ol>
+<li>
+<p> There is an old value somewhere in the cache that
+shares the command, dependencies, etc.
+of the target about to be built.
+</p>
+</li>
+<li>
+<p> The old value was generated with <code>make(recoverable = TRUE)</code>.
+</p>
+</li>
+</ol>
+<p>If both conditions are met, <code>drake</code> will
+</p>
+
+<ol>
+<li>
+<p> Assign the most recently-generated admissible data to the target, and
+</p>
+</li>
+<li>
+<p> skip the target's command.
+</p>
+</li>
+</ol>
+<h3>See Also</h3>
+
+<p><code>make()</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">## Not run: 
+isolate_example("quarantine side effects", {
+if (requireNamespace("knitr", quietly = TRUE)) {
+writeLines(
+  c(
+    "library(drake)",
+    "load_mtcars_example()",
+    "drake_config(my_plan, targets = c(\"small\", \"large\"))"
+  ),
+  "_drake.R" # default value of the `source` argument
+)
+cat(readLines("_drake.R"), sep = "\n")
+r_outdated()
+r_make()
+r_outdated()
+}
+})
+
+## End(Not run)
+</code></pre>
+
+
+</div>

@@ -1,0 +1,133 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>champion_challenger</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Compare machine learning models</h2>
+
+<h3>Description</h3>
+
+<p>Determining if one model is better than the other one is a difficult task. Mostly because there is a lot of fields that have to be
+covered to make such a judgement. Overall performance, performance on the crucial subset, distribution of residuals, those are only
+few among many ideas related to that issue. Following function allow user to create a report based on various sections. Each says something different
+about relation between champion and challengers. <code>DALEXtra</code> package share 3 base sections which are <code>funnel_measure</code>
+<code>overall_comparison</code> and <code>training_test_comparison</code> but any object that has generic <code>plot</code> function can
+be included at report.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">champion_challenger(
+  sections,
+  dot_size = 4,
+  output_dir_path = getwd(),
+  output_name = "Report",
+  model_performance_table = FALSE,
+  title = "ChampionChallenger",
+  author = Sys.info()[["user"]],
+  ...
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>sections</code></td>
+<td>
+<p>- list of sections to be attached to report. Could be sections available with DALEXtra which are <code>funnel_measure</code>
+<code>training_test_comparison</code>, <code>overall_comparison</code> or any other explanation that can work with <code>plot</code> function. Please
+provide name for not standard sections, that will be presented as section titles. Otherwise class of the object will be used.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>dot_size</code></td>
+<td>
+<p>- dot_size argument passed to <code>plot.funnel_measure</code> if <code>funnel_measure</code> section present</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_dir_path</code></td>
+<td>
+<p>- path to directory where Report should be created. By default it is current working directory.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>output_name</code></td>
+<td>
+<p>- name of the Report. By default it is "Report"</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>model_performance_table</code></td>
+<td>
+<p>- If TRUE and <code>overall_comparison</code> section present, table of scores will be displayed.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>title</code></td>
+<td>
+<p>- Title for report, by default it is "ChampionChallenger".</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>author</code></td>
+<td>
+<p>- Author of , report. By default it is current user name.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>...</code></td>
+<td>
+<p>- other parameters passed to rmarkdown::render.</p>
+</td>
+</tr>
+</table>
+<h3>Value</h3>
+
+<p>rmarkdown report
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+library("mlr")
+library("DALEXtra")
+task &lt;- mlr::makeRegrTask(
+ id = "R",
+  data = apartments,
+   target = "m2.price"
+ )
+ learner_lm &lt;- mlr::makeLearner(
+   "regr.lm"
+ )
+ model_lm &lt;- mlr::train(learner_lm, task)
+ explainer_lm &lt;- explain_mlr(model_lm, apartmentsTest, apartmentsTest$m2.price, label = "LM")
+
+ learner_rf &lt;- mlr::makeLearner(
+ "regr.ranger"
+ )
+ model_rf &lt;- mlr::train(learner_rf, task)
+ explainer_rf &lt;- explain_mlr(model_rf, apartmentsTest, apartmentsTest$m2.price, label = "RF")
+
+ learner_gbm &lt;- mlr::makeLearner(
+ "regr.gbm"
+ )
+ model_gbm &lt;- mlr::train(learner_gbm, task)
+ explainer_gbm &lt;- explain_mlr(model_gbm, apartmentsTest, apartmentsTest$m2.price, label = "GBM")
+
+
+ plot_data &lt;- funnel_measure(explainer_lm, list(explainer_rf, explainer_gbm),
+                          nbins = 5, measure_function = DALEX::loss_root_mean_square)
+
+champion_challenger(list(plot_data), dot_size = 3, output_dir_path = tempdir())
+
+
+</code></pre>
+
+
+</div>

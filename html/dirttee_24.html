@@ -1,0 +1,252 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>expectreg.aft</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Expectile regression for right censored event times using an auxiliary likelihood</h2>
+
+<h3>Description</h3>
+
+<p>Estimate a set of conditional expectiles or quantiles with semiparametric predictors
+in accelerated failure time models.
+For the estimation, the asymmetric loss functions are reformulated into auxiliary likelihoods.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">expectreg.aft(
+   formula,
+   data = NULL,
+   smooth = c("cvgrid", "aic", "bic", "lcurve", "fixed"), 
+   lambda = 1, 
+   expectiles = NA, ci = FALSE)
+
+qureg.aft(
+   formula, 
+   data = NULL, 
+   smooth = c( "cvgrid", "aic", "bic", "lcurve", "fixed"), 
+   lambda = 1, 
+   quantiles = NA, 
+   ci = FALSE)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p>An R formula object consisting of the response variable, '~' and the sum of all effects that should be taken into consideration. Each semiparametric effect has to be given through the function <code>rb</code>. The response needs to be a call of <code>Surv</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p>Optional data frame containing the variables used in the model, if the data is not explicitely given in the formula.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth</code></td>
+<td>
+<p>There are different smoothing algorithms that tune <code>lambda</code> to prevent overfitting. Caution, the currently implemented smoothing algorithms can take a long time. Cross validation is done with a grid search ('<code>cvgrid</code>'). The function can also use a supplied fixed penalty ('<code>fixed</code>'). The numerical minimisation is also possible with AIC or BIC as score ('<code>aic</code>', '<code>bic</code>'). The L-curve ('<code>lcurve</code>') is a new experimental grid search by Frasso and Eilers.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>lambda</code></td>
+<td>
+<p>The fixed penalty can be adjusted. Also serves as starting value for the smoothing algorithms.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>expectiles</code></td>
+<td>
+<p>In default setting, the expectiles (0.01,0.02,0.05,0.1,0.2,0.5,0.8,0.9,0.95,0.98,0.99) are calculated. You may specify your own set of expectiles in a vector. The option may be set to 'density' for the calculation of a dense set of expectiles that enhances the use of <code>cdf.qp</code> and <code>cdf.bundle</code> afterwards.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>ci</code></td>
+<td>
+<p>Whether a covariance matrix for confidence intervals and a <code>summary</code> is calculated.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>quantiles</code></td>
+<td>
+<p>Quantiles for which the regression should be performed.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For expectile regression, the LAWS loss function
+</p>
+<p style="text-align: center;"><code class="reqn"> S = \sum_{i=1}^{n}{ w_i(p)(y_i - \mu_i(p))^2} </code>
+</p>
+
+<p>with
+</p>
+<p><code class="reqn"> w_i(p) = p 1_{(y_i &gt; \mu_i(p))} + (1-p) 1_{(y_i &lt; \mu_i(p))} </code>
+</p>
+<p>is repackaged into the asymmetric normal distribution.
+Then, an accelerated failure time model is estimated.
+This function is based on the 'expectreg' package and uses the same functionality
+to include semiparametric predictors.
+</p>
+<p>For quantile regression, the loss function is replaced with a likelihood from the asymmetric laplace distribution.
+</p>
+
+
+<h3>Value</h3>
+
+<p>An object of class 'expectreg', which is basically a list consisting of:
+</p>
+<table>
+<tr style="vertical-align: top;">
+<td><code>lambda </code></td>
+<td>
+<p>The final smoothing parameters for all expectiles and for all effects in a list.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>intercepts </code></td>
+<td>
+<p>The intercept for each expectile.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>coefficients</code></td>
+<td>
+<p> A matrix of all the coefficients, for each base element
+a row and for each expectile a column. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>values</code></td>
+<td>
+<p> The fitted values for each observation and all expectiles,
+separately in a list for each effect in the model,
+sorted in order of ascending covariate values. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>response</code></td>
+<td>
+<p> Vector of the response variable. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covariates</code></td>
+<td>
+<p> List with the values of the covariates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>formula</code></td>
+<td>
+<p> The formula object that was given to the function. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>asymmetries</code></td>
+<td>
+<p> Vector of fitted expectile asymmetries as given by argument <code>expectiles</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>effects</code></td>
+<td>
+<p> List of characters giving the types of covariates. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>helper</code></td>
+<td>
+<p> List of additional parameters like neighbourhood structure for spatial effects or <code class="reqn">\phi</code> for kriging. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>design</code></td>
+<td>
+<p> Complete design matrix. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bases</code></td>
+<td>
+<p> Bases components of each covariate. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>fitted</code></td>
+<td>
+<p> Fitted values <code class="reqn"> \hat{y} </code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>covmat</code></td>
+<td>
+<p> Covariance matrix, estimated when <code>ci = TRUE</code>. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>diag.hatma</code></td>
+<td>
+<p> Diagonal of the hat matrix. Used for model selection criteria. </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>data</code></td>
+<td>
+<p> Original data </p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smooth_orig</code></td>
+<td>
+<p> Unchanged original type of smoothing. </p>
+</td>
+</tr>
+</table>
+<p><code>plot</code>, <code>predict</code>, <code>resid</code>,
+<code>fitted</code>, <code>effects</code>
+and further convenient methods are available for class 'expectreg'.
+</p>
+
+
+<h3>Author(s)</h3>
+
+<p>Fabian Otto-Sobotka <br> Carl von Ossietzky University Oldenburg <br><a href="https://uol.de">https://uol.de</a> <br></p>
+
+
+<h3>See Also</h3>
+
+<p><code>expectreg.ipc</code>, <code>expectreg.ls</code>
+</p>
+
+
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+data(colcancer)
+ex &lt;- c(0.05, 0.2, 0.5, 0.8, 0.95)
+c100 &lt;- colcancer[1:100,]
+exfit &lt;- expectreg.aft(Surv(logfollowup, death) ~ LNE, data = c100, expectiles = ex, smooth="f")
+coef(exfit)
+
+qu1 &lt;- qureg.aft(Surv(logfollowup, death) ~ LNE + sex, data=c100, smooth="fixed")
+coef(qu1)
+
+## Not run: 
+
+# takes some time
+qu2 &lt;- qureg.aft(Surv(logfollowup, death) ~ rb(LNE) + sex, data=colcancer[1:200,])
+
+## End(Not run)
+
+</code></pre>
+
+
+</div>

@@ -1,0 +1,213 @@
+<div class="container">
+
+<table style="width: 100%;"><tr>
+<td>s_semiarma</td>
+<td style="text-align: right;">R Documentation</td>
+</tr></table>
+<h2>Fitting of a Seasonal Semiparametric ARMA Model</h2>
+
+<h3>Description</h3>
+
+<p>Fit a seasonal semiparametric autoregressive moving-average 
+(S-Semi-ARMA) model to a univariate time series. The estimation is 
+in two steps: firstly, the series is detrended and seasonally adjusted using the
+function <code>deseats</code>. Then an ARMA model is fitted to the 
+residuals using <code>arima</code>.
+</p>
+
+
+<h3>Usage</h3>
+
+<pre><code class="language-R">s_semiarma(
+  yt,
+  smoothing_options = set_options(),
+  arma_options = list(ar_order = NULL, ma_order = NULL),
+  bwidth_start = 0.2,
+  inflation_rate = c("optimal", "naive"),
+  correction_factor = FALSE,
+  drop = NULL,
+  error_model = c("free", "ARMA"),
+  nar_lim = c(0, 3),
+  nma_lim = c(0, 3),
+  arma_mean = FALSE
+)
+</code></pre>
+
+
+<h3>Arguments</h3>
+
+<table>
+<tr style="vertical-align: top;">
+<td><code>yt</code></td>
+<td>
+<p>a numerical vector or a time series object of class <code>ts</code> or 
+that can be transformed with <code>as.ts</code> to an object of class 
+<code>ts</code>; for these observations, trend and seasonality will be obtained.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>smoothing_options</code></td>
+<td>
+<p>an S4 object of class <code>smoothing_options</code>, which 
+is returned by the function <code>set_options</code>; it 
+includes details about the
+options to consider in the locally weighted regression, such as the order of
+polynomial and the bandwidth for smoothing among others, for the nonparametric
+part of the model; the nonparametric model is fitted using 
+<code>deseats</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arma_options</code></td>
+<td>
+<p>a list with the two elements <code>ar_order</code> and 
+<code>ma_order</code> that indicates the AR and MA orders to consider for the 
+parametric part of the model.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>bwidth_start</code></td>
+<td>
+<p>a single numeric value that is only relevant if the slot
+<code>bwidth</code> in <code>smoothing_options</code> is set to <code>NA</code>; 
+as the bandwidth will then
+be selected automatically, <code>bwidth_start</code> sets the initial bandwidth for 
+the algorithm.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>inflation_rate</code></td>
+<td>
+<p>a character vector of length one that indicates, which inflation rate 
+to use in the bandwidth selection; for a local linear trend, we have 
+<code>inflation_rate = "optimal"</code> as the default, for a local cubic trend
+it is <code>inflation_rate = "naive"</code>, which correspond to inflation rates
+of 5/7 and 9/13, respectively.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>correction_factor</code></td>
+<td>
+<p>A logical vector of length one; theoretically, a 
+larger bandwidth to estimate the sum of autocovariances from residuals of 
+pilot trend and seasonality estimates is advisable than for estimating trend
+and seasonality; for <code>correction_factor = TRUE</code>, this is implemented;
+for <code>error_model = "ARMA"</code>, <code>correction_factor = FALSE</code> is 
+enforced; the default is <code>correction_factor = FALSE</code>, because it was
+found that setting this argument to <code>TRUE</code> often overestimates the 
+bandwidth.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>drop</code></td>
+<td>
+<p>a numeric vector of length one that indicates the proportion of 
+the observations to not include at each boundary in the bandwidth estimation 
+process, if a bandwidth is selected automatically; the default is 
+<code>drop = 0.1</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>error_model</code></td>
+<td>
+<p>a character vector of length one that indicates whether
+for <code>autocor = TRUE</code> the sum of autocovariances of the errors is 
+obtained purely nonparametrically (<code>"free"</code>) or whether an
+autoregressive moving-average (ARMA) model is assumed <code>"ARMA"</code>; the
+default is <code>error_model = "free"</code>.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nar_lim</code></td>
+<td>
+<p>only valid for <code>error_model = "ARMA"</code>; set the minimum and 
+maximum AR order to check via the BIC in each iteration of the algorithm via 
+a two-element vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>nma_lim</code></td>
+<td>
+<p>only valid for <code>error_model = "ARMA"</code>; set the minimum and
+maximum MA order to check via the BIC in each iteration of the algorithm via
+a two-element vector.</p>
+</td>
+</tr>
+<tr style="vertical-align: top;">
+<td><code>arma_mean</code></td>
+<td>
+<p>only valid for <code>error_model = "ARMA"</code>; decide whether to 
+include an estimate of the mean in the ARMA fitting for the detrended series.</p>
+</td>
+</tr>
+</table>
+<h3>Details</h3>
+
+<p>For information on the nonparametric regression step, see 
+<code>deseats</code>. After the trend and the seasonality have 
+been removed from the data, an autoregressive moving-average (ARMA) model
+is fitted to the residuals either with orders selected by the Bayesian
+information criterion (BIC) or with manually selected orders. The ARMA
+model is fitted using <code>arima</code>.
+</p>
+<p>All function arguments except for <code>arma_options</code> are identical to 
+those in <code>deseats</code>. If all elements in 
+<code>arma_options</code> are set to <code>NULL</code>, the ARMA model orders are 
+selected for <code class="reqn">p, q</code> from <code>nar_lim[[1]]</code> and <code>nma_lim[[1]]</code> up
+until <code>nar_lim[[2]]</code> and <code>nma_lim[[2]]</code> according to the BIC.
+</p>
+
+
+<h3>Value</h3>
+
+<p>The function returns and S4 object with the following elements (access them 
+via <code>@</code>):
+</p>
+
+<dl>
+<dt><code>decomp</code></dt>
+<dd>
+<p>an object of class <code>"mts"</code> that includes the 
+observed time series and its estimated components.</p>
+</dd>
+<dt><code>nonpar_model</code></dt>
+<dd>
+<p>an object of class <code>"deseats"</code>; this is 
+the result of applying <code>deseats</code>.</p>
+</dd>
+<dt><code>par_model</code></dt>
+<dd>
+<p>an object of class <code>"Arima"</code>; the result of 
+applying <code>arima</code> to the residuals of the nonparametric 
+estimation step.</p>
+</dd>
+</dl>
+<h3>Author(s)</h3>
+
+
+<ul>
+<li>
+<p> Dominik Schulz (Research Assistant) (Department of Economics, Paderborn
+University), <br>
+Author and Package Creator
+</p>
+</li>
+<li>
+<p> Yuanhua Feng (Department of Economics, Paderborn
+University), <br>
+Author
+</p>
+</li>
+</ul>
+<h3>Examples</h3>
+
+<pre><code class="language-R">
+Xt &lt;- log(EXPENDITURES)
+est &lt;- s_semiarma(Xt)
+est
+
+
+</code></pre>
+
+
+</div>
